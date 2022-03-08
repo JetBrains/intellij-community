@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollecto
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Version
 
 class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
@@ -58,11 +59,6 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
     private val EXTERNAL_SYSTEM_ID = GROUP.registerEvent("externalSystemId", EventFields.StringValidatedByEnum("value", "build_tools"))
     val JRE_TYPE_FIELD = EventFields.Enum("value", JreType::class.java) { it.description }
 
-    fun getJRETypeUsage(key: String, jreName: String?): MetricEvent {
-      val anonymizedName = getJreType(jreName)
-      return newMetric(key, anonymizedName)
-    }
-
     fun getJreType(jreName: String?): JreType {
       val jreType = JreType.values().find { it.description == jreName }
       val anonymizedName = when {
@@ -73,18 +69,11 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
       return anonymizedName
     }
 
-    fun getJREVersionUsage(project: Project, key: String, jreName: String?): MetricEvent {
-      val versionString = getJreVersion(project, jreName)
-
-      return newMetric(key, versionString)
-    }
-
     fun getJreVersion(project: Project, jreName: String?): String {
       val jdk = ExternalSystemJdkUtil.getJdk(project, jreName)
-      val versionString =
-        jdk?.versionString?.let { Version.parseVersion(it)?.let { parsed -> "${parsed.major}.${parsed.minor}" } }
-        ?: "unknown"
-      return versionString
+      return jdk?.versionString?.let<@NlsSafe String, String?> {
+        Version.parseVersion(it)?.let { parsed -> "${parsed.major}.${parsed.minor}" }
+      } ?: "unknown"
     }
 
     @JvmStatic
