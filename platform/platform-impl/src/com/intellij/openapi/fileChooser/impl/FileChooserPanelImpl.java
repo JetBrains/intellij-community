@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -507,7 +506,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     if (!cancelled.get()) {
       WatchKey watchKey = null;
-      if (myWatcher != null && directory.getFileSystem() == FileSystems.getDefault()) {
+      if (myWatcher != null && isLocalFs(directory)) {
         try {
           watchKey = directory.register(myWatcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE);
         }
@@ -635,12 +634,22 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private static boolean isDirectoryCaseSensitive(Path file) {
-    var cs = FileSystemUtil.readParentCaseSensitivity(file.toFile());
-    return cs == CaseSensitivity.SENSITIVE || cs == CaseSensitivity.UNKNOWN && SystemInfoRt.isFileSystemCaseSensitive;
+    if (isLocalFs(file)) {
+      var cs = FileSystemUtil.readParentCaseSensitivity(file.toFile());
+      return cs == CaseSensitivity.SENSITIVE ||
+             cs == CaseSensitivity.UNKNOWN && SystemInfo.isFileSystemCaseSensitive;
+    }
+    else {
+      return true;
+    }
   }
 
   private static boolean isJar(URI uri) {
     return "jar".equals(uri.getScheme());
+  }
+
+  private static boolean isLocalFs(Path file) {
+    return file.getFileSystem() == FileSystems.getDefault();
   }
 
   private static Future<Void> execute(Runnable operation) {
