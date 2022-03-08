@@ -186,4 +186,60 @@ having length == 3 && firstChar == 'b'
 select length, firstChar, max(s)
 """
   }
+
+  void testCount() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, count()
+"""
+  }
+
+  void testMin() {
+    testGinqHighlighting """
+from s in ['a', 'b', 'cd', 'ef']
+groupby s.size() as length
+select length, min(s)
+"""
+  }
+
+  void testMax() {
+    testGinqHighlighting """
+from s in ['a', 'b', 'cd', 'ef']
+groupby s.size() as length
+select length, max(s)
+"""
+  }
+
+  void testSum() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, sum(n)
+"""
+  }
+
+  void testAvg() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, avg(n)
+"""
+  }
+
+  void testMedian() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, median(n)
+"""
+  }
+
+  void testAgg() {
+    testGinqHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, agg(_g.stream().map(r -> r.n.toBigDecimal()).reduce(BigDecimal.ZERO, BigDecimal::add))
+"""
+  }
 }

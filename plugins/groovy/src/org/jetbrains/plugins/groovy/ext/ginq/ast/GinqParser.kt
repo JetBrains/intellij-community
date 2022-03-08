@@ -206,9 +206,12 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
   }
 
   private fun clearUnrecognizedQueries(call: GrMethodCall) {
+    // todo: n^2
     call.argumentList.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitMethodCall(innerCall: GrMethodCall) {
         unrecognizedQueryErrors.removeIf { it.first == innerCall }
+        innerCall.argumentList.accept(this)
+        innerCall.invokedExpression.accept(this)
       }
     })
   }
