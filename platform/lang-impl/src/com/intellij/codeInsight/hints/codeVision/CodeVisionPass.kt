@@ -63,7 +63,7 @@ class CodeVisionPass(
       }
     }
 
-    private fun saveToCache(project: Project,
+    internal fun saveToCache(project: Project,
                             editor: Editor,
                             providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
       val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
@@ -101,7 +101,12 @@ class CodeVisionPass(
   ) {
     fun applyTo(editor: Editor, project: Project) {
       ApplicationManager.getApplication().assertIsDispatchThread()
+      saveToCache(project, editor, providerIdToLenses)
       updateProviders(project, editor, providerIdToLenses)
+    }
+
+    override fun toString(): String {
+      return providerIdToLenses.toString()
     }
   }
 }
