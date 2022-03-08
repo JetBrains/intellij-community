@@ -94,7 +94,7 @@
       "disabledText": "Grey8",
       "disabledForeground": "Grey8",
       "inactiveForeground": "Grey8",
-      "disabledBackground": "Grey12",
+      "disabledBackground": "Grey13",
       "disabledBorderColor": "Grey10",
 
       "selectionBackground": "Blue13",
@@ -250,10 +250,17 @@
       "background": "Grey2",
       "borderColor": "Grey2",
       "foreground": "Grey13",
-      "MoreButton": {
+      "linkForeground": "Blue10",
+      "borderInsets": "4,4,4,0",
+      "Button": {
         "background": "Grey2",
-        "innerBorderColor": "Grey4",
+        "borderColor": "Grey7",
         "foreground": "Grey13"
+      },
+      "MoreButton": {
+        "background": "Grey1",
+        "innerBorderColor": "Grey4",
+        "foreground": "Grey10"
       }
     },
 
@@ -273,6 +280,7 @@
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
+        "background": "Grey12",
         "borderColor": "Grey12",
         "fontSizeOffset": {
           "os.default": -1,
@@ -286,6 +294,8 @@
       },
       "Toolbar.background": "Grey13"
     },
+
+    "ComplexPopup.Header.background": "Grey12",
 
     "CompletionPopup": {
       "foreground": "Grey2",
@@ -312,6 +322,7 @@
       "List.settingsBackground": "Grey12",
       "Advertiser": {
         "foreground": "Grey7",
+        "background": "Grey12",
         "borderInsets": "6,20,6,20"
       }
     },
@@ -373,7 +384,8 @@
       "background": "Grey2",
       "foreground": "Grey13",
       "infoForeground": "Grey7",
-      "shortcutForeground": "Grey7"
+      "shortcutForeground": "Grey7",
+      "linkForeground": "Blue10"
     },
 
     "HelpTooltip": {

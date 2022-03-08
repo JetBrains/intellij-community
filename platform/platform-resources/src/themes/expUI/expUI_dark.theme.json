@@ -227,6 +227,13 @@
     "Notification": {
       "background": "Grey3",
       "borderColor": "Grey4",
+      "linkForeground": "Blue9",
+      "borderInsets": "4,4,4,0",
+      "Button": {
+        "background": "Grey3",
+        "borderColor": "Grey7",
+        "foreground": "Grey14"
+      },
       "MoreButton": {
         "background": "Grey2",
         "innerBorderColor": "Grey4",
