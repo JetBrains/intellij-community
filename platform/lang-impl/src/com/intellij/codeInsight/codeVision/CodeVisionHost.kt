@@ -344,13 +344,14 @@ open class CodeVisionHost(val project: Project) {
       val providerWhoWantToUpdate = mutableListOf<String>()
 
       var everyProviderReadyToUpdate = true
+      val inlaySettingsEditor = isInlaySettingsEditor(editor)
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
         if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
-        if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
+        if (!inlaySettingsEditor && lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
           if (editor.lensContextOrThrow.hasProviderCodeVision(it.id)) {
             providerWhoWantToUpdate.add(it.id)
           }
