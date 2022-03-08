@@ -190,7 +190,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
       new IncorrectOperationException("'AnnotationHolder."+methodName + "()' method" + callerInfo + " is slow, non-incremental " +
                                       "and thus can cause unexpected behaviour (e.g. annoying blinking), " +
                                       "is deprecated and will be removed soon. " +
-                                      "Please use `newAnnotation().create()` instead"), callerClass == null ? getClass() : callerClass);
+                                      "Please use `newAnnotation(...).create()` instead"), callerClass == null ? getClass() : callerClass);
     // temporary fix, CLion guys promised to fix their annotator eventually
     if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
       //todo
