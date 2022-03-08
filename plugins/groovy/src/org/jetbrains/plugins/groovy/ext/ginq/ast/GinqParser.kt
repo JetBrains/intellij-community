@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.parents
+import com.intellij.psi.util.*
 import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
-import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
@@ -67,6 +65,10 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
 
   override fun visitMethodCall(methodCall: GrMethodCall) {
     super.visitMethodCall(methodCall)// todo: i18n
+    if (methodCall.getContainingGinq() != null) {
+      // was parsed as standalone ginq somewhere above
+      return
+    }
     clearUnrecognizedQueries(methodCall)
     val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
     if (callName == null) {
@@ -186,9 +188,9 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
 
   override fun visitExpression(expression: GrExpression) {
     if (expression != rootExpression && isApproximatelyGinq(expression)) {
-      val (innerErrors, expr) = parseGinqAsExpr(expression)
+      val (innerErrors) =
+        CachedValuesManager.getCachedValue(expression, rootGinq, CachedValueProvider { CachedValueProvider.Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
       errors.addAll(innerErrors)
-      expression.skipParenthesesDown()?.putUserData(injectedGinq, expr)
     }
     else {
       super.visitExpression(expression)
@@ -226,7 +228,6 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
   return e is GrMethodCall && e.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "select"
 }
 
-val injectedGinq: Key<GinqExpression> = Key.create("injected ginq expression")
 val rootGinq: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
 
 @Deprecated("too internal, hide under functions")
@@ -238,7 +239,7 @@ fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<G
       yield(topExpr)
       return@sequence
     }
-    val ginq = parent.getUserData(injectedGinq) ?: continue
+    val ginq = parent.getContainingGinq() ?: continue
     yield(ginq)
   }
 }
@@ -246,3 +247,7 @@ fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<G
 typealias ParsingError = Pair<PsiElement, @Nls String>
 
 val ginqKw = setOf("from", "where", "groupby", "having", "orderby", "limit", "on", "select") + joins
+
+fun PsiElement.getContainingGinq() : GinqExpression? {
+  return this.getUserData(rootGinq)?.upToDateOrNull?.get()?.second
+}

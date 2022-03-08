@@ -66,24 +66,11 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         .range(it.first)
         .descriptionAndTooltip(it.second)
         .textAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).create() }
-    val (from,
-      join,
-      where,
-      groupBy,
-      orderBy,
-      limit,
-      select
-    ) = getParsedGinqTree(macroCall) ?: return errors
     val keywords = mutableListOf<PsiElement?>()
-    keywords.addAllIfNotNull(from.fromKw, where?.whereKw, groupBy?.groupByKw, groupBy?.having?.havingKw, orderBy?.orderByKw, limit?.limitKw,
-                             select.selectKw)
-    keywords.addAll(join.mapNotNull { it.onCondition?.onKw })
-    keywords.addAll(join.map { it.joinKw })
     val softKeywords = mutableListOf<PsiElement?>()
-    softKeywords.addAll(orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
     macroCall.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitElement(element: GroovyPsiElement) {
-        val nestedGinq = element.getUserData(injectedGinq)
+        val nestedGinq = element.getContainingGinq()
         if (nestedGinq != null) {
           keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw,
                                    nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw,
@@ -92,9 +79,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           keywords.addAll(nestedGinq.joins.map { it.joinKw })
           softKeywords.addAll(nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList())
         }
-        else {
-          super.visitElement(element)
-        }
+        super.visitElement(element)
       }
     })
     return keywords.filterNotNull().mapNotNull {
@@ -105,7 +90,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
-    val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getUserData(injectedGinq)
+    val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getContainingGinq()
     if (ginq != null) {
       val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
       val container = if (invokedCall == "GQL") CommonClassNames.JAVA_UTIL_LIST else if (invokedCall == "GQ") ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE else null
@@ -136,7 +121,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   override fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement): Boolean {
     getParsedGinqTree(macroCall) ?: return false
     for (parent in element.parents(true)) {
-      if (parent.getUserData(injectedGinq) != null || parent.getUserData(rootGinq) != null) {
+      if (parent.getUserData(rootGinq) != null) {
         return false
       }
       if (parent.getUserData(UNTRANSFORMED_ELEMENT) != null) {

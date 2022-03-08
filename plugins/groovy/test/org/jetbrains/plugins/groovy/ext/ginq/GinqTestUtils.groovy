@@ -5,29 +5,25 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService
 
-abstract class BaseGinqTest extends GrHighlightingTestBase {
+@Singleton
+class GinqTestUtils {
 
   private static final RepositoryTestLibrary LIB_GINQ = new RepositoryTestLibrary("org.apache.groovy:groovy-ginq:4.0.0")
 
-  private static final LightProjectDescriptor GROOVY_4_0_WITH_GINQ =
-    new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_4_0 + LIB_GINQ) {
-      @Override
-      Sdk getSdk() {
-        return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false)
-      }
+  static final LightProjectDescriptor projectDescriptor = new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_4_0 + LIB_GINQ) {
+    @Override
+    Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false)
     }
+  }
 
-  final LightProjectDescriptor projectDescriptor = GROOVY_4_0_WITH_GINQ
-
-  @Override
-  void setUp() throws Exception {
-    super.setUp()
-    myFixture.project.getService(GroovyMacroRegistryService).refreshModule(module)
+  static void setUp(CodeInsightTestFixture fixture) throws Exception {
+    fixture.project.getService(GroovyMacroRegistryService).refreshModule(fixture.module)
   }
 }

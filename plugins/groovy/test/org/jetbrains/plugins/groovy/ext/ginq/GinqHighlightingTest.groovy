@@ -1,24 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq
 
+import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
 @CompileStatic
-class GinqHighlightingTest extends BaseGinqTest {
+class GinqHighlightingTest extends GrHighlightingTestBase {
+
+  final LightProjectDescriptor projectDescriptor = GinqTestUtils.projectDescriptor
 
   @Override
   void setUp() throws Exception {
     super.setUp()
+    GinqTestUtils.setUp(fixture)
     myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testKeywordHighlighting() {
     testHighlighting """
 <info descr="null">GQ</info> {
-    <info descr="null">from</info> n in [1, 2, 3]
-    <info descr="null">select</info> n
+    <info descr="null"><info descr="null">from</info></info> n in [1, 2, 3]
+    <info descr="null"><info descr="null">select</info></info> n
 }
 """, false, true, false
   }
