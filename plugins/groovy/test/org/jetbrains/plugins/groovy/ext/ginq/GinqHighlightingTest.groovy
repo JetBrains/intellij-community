@@ -82,4 +82,13 @@ GQ {
 }
 """, false, true, false
   }
+
+  void testExists() {
+    testHighlighting """
+GQ {
+    from n in [1, 2, 3]
+    where (from m in [2, 3] where m == n select m).exists()
+    select n
+}"""
+  }
 }

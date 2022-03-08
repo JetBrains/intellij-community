@@ -70,7 +70,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val softKeywords = mutableListOf<PsiElement?>()
     macroCall.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitElement(element: GroovyPsiElement) {
-        val nestedGinq = element.getContainingGinq()
+        val nestedGinq = element.getStoredGinq()
         if (nestedGinq != null) {
           keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw,
                                    nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw,
@@ -90,7 +90,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
-    val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getContainingGinq()
+    val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getStoredGinq()
     if (ginq != null) {
       val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
       val container = if (invokedCall == "GQL") CommonClassNames.JAVA_UTIL_LIST else if (invokedCall == "GQ") ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE else null
@@ -162,6 +162,12 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       call.returnType = clazz?.let { GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, it).type() }
 
       return processor.execute(call, state)
+    }
+    if (name == "exists" && processor.shouldProcessMethods()) {
+      val method = JavaPsiFacade.getInstance(macroCall.project)
+        .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)
+        ?.findMethodsByName("exists", false)?.singleOrNull() ?: return true
+      return processor.execute(method, state)
     }
     return true
   }

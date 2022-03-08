@@ -65,7 +65,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
 
   override fun visitMethodCall(methodCall: GrMethodCall) {
     super.visitMethodCall(methodCall)// todo: i18n
-    if (methodCall.getContainingGinq() != null) {
+    if (methodCall.getStoredGinq() != null) {
       // was parsed as standalone ginq somewhere above
       return
     }
@@ -182,6 +182,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         }
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
+      "exists" -> { methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement?.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
       else -> recordUnrecognizedQuery(methodCall)
     }
   }
@@ -239,7 +240,7 @@ fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<G
       yield(topExpr)
       return@sequence
     }
-    val ginq = parent.getContainingGinq() ?: continue
+    val ginq = parent.getStoredGinq() ?: continue
     yield(ginq)
   }
 }
@@ -248,6 +249,6 @@ typealias ParsingError = Pair<PsiElement, @Nls String>
 
 val ginqKw = setOf("from", "where", "groupby", "having", "orderby", "limit", "on", "select") + joins
 
-fun PsiElement.getContainingGinq() : GinqExpression? {
+fun PsiElement.getStoredGinq() : GinqExpression? {
   return this.getUserData(rootGinq)?.upToDateOrNull?.get()?.second
 }
