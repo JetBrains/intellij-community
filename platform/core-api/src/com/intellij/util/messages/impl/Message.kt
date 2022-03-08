@@ -11,8 +11,9 @@ internal class Message(
   // we don't bind args as part of MethodHandle creation, because object is not known yet - so, MethodHandle here is not ready to use
   @JvmField val methodName: String,
   // it allows us to cache MethodHandle per method and partially reuse it
-  @JvmField val args: Array<Any>,
-  @JvmField val handlers: Array<Any>
+  @JvmField val args: Array<Any>?,
+  @JvmField val handlers: Array<Any>,
+  @JvmField val bus: MessageBusImpl,
 ) {
   @JvmField
   val clientId = ClientId.getCurrentValue()

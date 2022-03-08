@@ -65,8 +65,6 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
   final void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
     boolean removed = childBuses.remove(childBus);
-    rootBus.waitingBuses.get().remove(childBus);
-
     childrenListChanged(this);
     LOG.assertTrue(removed);
   }
@@ -108,7 +106,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
       @Nullable Object @NotNull [] handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers);
       if (handlers.length != 0) {
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null);
+        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null, bus);
         hasHandlers = true;
       }
 
@@ -128,7 +126,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
         }
 
         hasHandlers = true;
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, exceptions);
+        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, exceptions, childBus);
       }
 
       if (exceptions != null) {
@@ -214,17 +212,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions
     // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
-    Set<MessageBusImpl> waitingBuses = rootBus.waitingBuses.get();
-    if (!waitingBuses.isEmpty()) {
-      waitingBuses.removeIf(bus -> {
-        MessageQueue messageQueue = bus.messageQueue.get();
-        Deque<Message> queue = messageQueue.queue;
-        return !queue.isEmpty() &&
-               queue.removeIf(message -> MessageBusConnectionImpl.nullizeHandlersFromMessage(message, topicAndHandlerPairs)) &&
-               messageQueue.current == null &&
-               queue.isEmpty();
-      });
-    }
+    rootBus.messageQueue.get().queue.removeIf(message -> MessageBusConnectionImpl.nullizeHandlersFromMessage(message, topicAndHandlerPairs));
     return false;
   }
 

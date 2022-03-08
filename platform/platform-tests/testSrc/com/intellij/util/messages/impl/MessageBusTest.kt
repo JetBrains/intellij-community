@@ -13,7 +13,6 @@ import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
-import com.intellij.util.messages.impl.MessageBusImpl.RootBus
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail

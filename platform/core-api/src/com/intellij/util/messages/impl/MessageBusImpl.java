@@ -43,8 +43,6 @@ public class MessageBusImpl implements MessageBus {
   static final Logger LOG = Logger.getInstance(MessageBusImpl.class);
   private static final Object NA = new Object();
 
-  final ThreadLocal<MessageQueue> messageQueue = ThreadLocal.withInitial(MessageQueue::new);
-
   final ConcurrentMap<Topic<?>, Object> publisherCache = new ConcurrentHashMap<>();
 
   final Collection<MessageHandlerHolder> subscribers = new ConcurrentLinkedQueue<>();
@@ -162,16 +160,15 @@ public class MessageBusImpl implements MessageBus {
         return NA;
       }
 
-      Set<MessageBusImpl> busQueue = bus.rootBus.waitingBuses.get();
-      if (!busQueue.isEmpty()) {
-        pumpWaitingBuses(busQueue);
+      MessageQueue queue = bus.rootBus.messageQueue.get();
+      if (!queue.queue.isEmpty()) {
+        pumpWaiting(queue);
       }
 
-      if (publish(method, args, bus.messageQueue.get())) {
+      if (publish(method, args, queue)) {
         // we must deliver messages now even if currently processing message queue, because if published as part of handler invocation,
         // handler code expects that message will be delivered immediately after publishing
-        busQueue.add(bus);
-        pumpWaitingBuses(busQueue);
+        pumpWaiting(queue);
       }
       return NA;
     }
@@ -182,7 +179,7 @@ public class MessageBusImpl implements MessageBus {
         return false;
       }
 
-      List<Throwable> exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null);
+      List<Throwable> exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null, bus);
       if (exceptions != null) {
         EventDispatcher.throwExceptions(exceptions);
       }
@@ -195,7 +192,8 @@ public class MessageBusImpl implements MessageBus {
                                                @Nullable Object @NotNull [] handlers,
                                                @Nullable MessageQueue jobQueue,
                                                @Nullable MessageDeliveryListener messageDeliveryListener,
-                                               @Nullable List<Throwable> exceptions) {
+                                               @Nullable List<Throwable> exceptions,
+                                               @NotNull MessageBusImpl bus) {
       MethodHandle methodHandle = MethodHandleCache.compute(method, args);
       if (jobQueue == null) {
         for (Object handler : handlers) {
@@ -205,7 +203,7 @@ public class MessageBusImpl implements MessageBus {
         }
       }
       else {
-        jobQueue.queue.offerLast(new Message(topic, methodHandle, method.getName(), args, handlers));
+        jobQueue.queue.offerLast(new Message(topic, methodHandle, method.getName(), args, handlers, bus));
       }
       return exceptions;
     }
@@ -238,7 +236,7 @@ public class MessageBusImpl implements MessageBus {
         }
 
         hasHandlers = true;
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, exceptions);
+        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, exceptions, bus);
       }
       while ((parentBus = parentBus.parentBus) != null);
 
@@ -274,16 +272,8 @@ public class MessageBusImpl implements MessageBus {
       Disposer.dispose(connectionDisposable);
     }
 
-    MessageQueue jobs = messageQueue.get();
-    messageQueue.remove();
-    if (!jobs.queue.isEmpty()) {
-      LOG.error("Not delivered events in the queue: " + jobs.queue);
-    }
-
-    if (parentBus == null) {
-      rootBus.waitingBuses.remove();
-    }
-    else {
+    rootBus.messageQueue.get().queue.removeIf(it -> it.bus == this);
+    if (parentBus != null) {
       parentBus.onChildBusDisposed(this);
     }
   }
@@ -302,22 +292,15 @@ public class MessageBusImpl implements MessageBus {
       return false;
     }
 
-    Set<MessageBusImpl> waitingBuses = rootBus.waitingBuses.get();
-    if (waitingBuses == null || waitingBuses.isEmpty()) {
-      return false;
+    MessageQueue jobQueue = rootBus.messageQueue.get();
+    Message current = jobQueue.current;
+    if (current != null && current.topic == topic && current.bus == this) {
+      return true;
     }
 
-    for (MessageBusImpl bus : waitingBuses) {
-      MessageQueue jobQueue = bus.messageQueue.get();
-      Message current = jobQueue.current;
-      if (current != null && current.topic == topic) {
+    for (Message message : jobQueue.queue) {
+      if (message.topic == topic && message.bus == this) {
         return true;
-      }
-
-      for (Message message : jobQueue.queue) {
-        if (message.topic == topic) {
-          return true;
-        }
       }
     }
     return false;
@@ -344,28 +327,26 @@ public class MessageBusImpl implements MessageBus {
     return result.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : result.toArray();
   }
 
-  private void messageRemoved(@NotNull MessageQueue messageQueue) {
-    if (messageQueue.current == null && messageQueue.queue.isEmpty()) {
-      rootBus.waitingBuses.get().remove(this);
-    }
-  }
-
-  private static void pumpWaitingBuses(@NotNull Collection<? extends MessageBusImpl> buses) {
+  private static void pumpWaiting(@NotNull MessageQueue jobQueue) {
     List<Throwable> exceptions = null;
-    for (MessageBusImpl bus : buses) {
+
+    Message job = jobQueue.current;
+    if (job != null) {
+      if (job.bus.isDisposed()) {
+        LOG.error("Accessing disposed message bus " + job.bus);
+      }
+      else {
+        exceptions = deliverMessage(job, jobQueue, null);
+      }
+    }
+
+    while ((job = jobQueue.queue.pollFirst()) != null) {
+      MessageBusImpl bus = job.bus;
       if (bus.isDisposed()) {
         LOG.error("Accessing disposed message bus " + bus);
-        continue;
       }
-
-      MessageQueue jobQueue = bus.messageQueue.get();
-      Message job = jobQueue.current;
-      if (job != null) {
-        exceptions = bus.deliverMessage(job, jobQueue, bus.messageDeliveryListener, exceptions);
-      }
-
-      while ((job = jobQueue.queue.pollFirst()) != null) {
-        exceptions = bus.deliverMessage(job, jobQueue, bus.messageDeliveryListener, exceptions);
+      else {
+        exceptions = deliverMessage(job, jobQueue, exceptions);
       }
     }
 
@@ -374,31 +355,30 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private @Nullable List<Throwable> deliverMessage(@NotNull Message job,
-                                                   @NotNull MessageQueue jobQueue,
-                                                   @Nullable MessageDeliveryListener messageDeliveryListener,
-                                                   @Nullable List<Throwable> exceptions) {
+  private static @Nullable List<Throwable> deliverMessage(@NotNull Message job,
+                                                          @NotNull MessageQueue jobQueue,
+                                                          @Nullable List<Throwable> prevExceptions) {
     try (AccessToken ignored = ClientId.withClientId(job.clientId)) {
       jobQueue.current = job;
       Object[] handlers = job.handlers;
-      List<Throwable> result = exceptions;
+      List<Throwable> exceptions = prevExceptions;
       for (int index = job.currentHandlerIndex, size = handlers.length, lastIndex = size - 1; index < size; ) {
         if (index == lastIndex) {
           jobQueue.current = null;
-          messageRemoved(jobQueue);
         }
 
         job.currentHandlerIndex++;
         Object handler = handlers[index];
         if (handler != null) {
-          result = invokeListener(job.method, job.methodName, job.args, job.topic, handler, messageDeliveryListener, result);
+          exceptions = invokeListener(job.method, job.methodName, job.args, job.topic, handler, job.bus.messageDeliveryListener,
+                                      exceptions);
         }
         if (++index != job.currentHandlerIndex) {
           // handler published some event and message queue including current job was processed as result, so, stop processing
-          return result;
+          return exceptions;
         }
       }
-      return result;
+      return exceptions;
     }
   }
 
@@ -489,7 +469,7 @@ public class MessageBusImpl implements MessageBus {
         }
       }
     }
-    bus.removeDisposedHandlers(topic, handler);
+    bus.rootBus.removeDisposedHandlers(topic, handler);
   }
 
   // this method is used only in CompositeMessageBus.notifyConnectionTerminated to clear subscriber cache in children
@@ -509,7 +489,7 @@ public class MessageBusImpl implements MessageBus {
       return;
     }
 
-    MessageQueue jobQueue = messageQueue.get();
+    MessageQueue jobQueue = rootBus.messageQueue.get();
     Deque<Message> jobs = jobQueue.queue;
     if (jobs.isEmpty()) {
       return;
@@ -529,7 +509,7 @@ public class MessageBusImpl implements MessageBus {
     for (Message job : newJobs) {
       // remove here will be not linear as job should be head (first element) in normal conditions
       jobs.removeFirstOccurrence(job);
-      exceptions = deliverMessage(job, jobQueue, messageDeliveryListener, exceptions);
+      exceptions = deliverMessage(job, jobQueue, exceptions);
     }
 
     if (exceptions != null) {
@@ -563,7 +543,7 @@ public class MessageBusImpl implements MessageBus {
       if (allHandlers.length == connectionHandlers.size()) {
         jobIterator.remove();
       }
-      filteredJob = new Message(job.topic, job.method, job.methodName, job.args, connectionHandlers.toArray());
+      filteredJob = new Message(job.topic, job.method, job.methodName, job.args, connectionHandlers.toArray(), job.bus);
       if (newJobs == null) {
         newJobs = new SmartList<>();
       }
@@ -626,72 +606,69 @@ public class MessageBusImpl implements MessageBus {
     }
     subscriberCache.clear();
   }
+}
 
-  static final class RootBus extends CompositeMessageBus {
-    private final AtomicReference<CompletableFuture<?>> compactionFutureRef = new AtomicReference<>();
-    private final AtomicInteger compactionRequest = new AtomicInteger();
-    private final AtomicInteger emptyConnectionCounter = new AtomicInteger();
+final class RootBus extends CompositeMessageBus {
+  private final AtomicReference<CompletableFuture<?>> compactionFutureRef = new AtomicReference<>();
+  private final AtomicInteger compactionRequest = new AtomicInteger();
+  private final AtomicInteger emptyConnectionCounter = new AtomicInteger();
 
-    /**
-     * Pending message buses in the hierarchy.
-     */
-    @SuppressWarnings("SSBasedInspection")
-    final ThreadLocal<Set<MessageBusImpl>> waitingBuses = ThreadLocal.withInitial(() -> new LinkedHashSet<>());
+  final ThreadLocal<MessageQueue> messageQueue = ThreadLocal.withInitial(MessageQueue::new);
 
-    RootBus(@NotNull MessageBusOwner owner) {
-      super(owner);
+  RootBus(@NotNull MessageBusOwner owner) {
+    super(owner);
+  }
+
+  void scheduleEmptyConnectionRemoving() {
+    int counter = emptyConnectionCounter.incrementAndGet();
+    if (counter < 128 || !emptyConnectionCounter.compareAndSet(counter, 0)) {
+      return;
     }
 
-    void scheduleEmptyConnectionRemoving() {
-      int counter = emptyConnectionCounter.incrementAndGet();
-      if (counter < 128 || !emptyConnectionCounter.compareAndSet(counter, 0)) {
-        return;
-      }
-
-      // The first thread detected a need for compaction schedules a compaction task.
-      // The task runs until all compaction requests are served.
-      if (compactionRequest.incrementAndGet() == 1) {
-        compactionFutureRef.set(CompletableFuture.runAsync(() -> {
-          int request;
-          do {
-            request = compactionRequest.get();
-            removeEmptyConnectionsRecursively();
-          }
-          while (!compactionRequest.compareAndSet(request, 0));
-        }, AppExecutorUtil.getAppExecutorService()));
-      }
-    }
-
-    @Override
-    public void dispose() {
-      CompletableFuture<?> compactionFuture = compactionFutureRef.getAndSet(null);
-      if (compactionFuture != null) {
-        compactionFuture.cancel(false);
-      }
-      compactionRequest.set(0);
-      super.dispose();
+    // The first thread detected a need for compaction schedules a compaction task.
+    // The task runs until all compaction requests are served.
+    if (compactionRequest.incrementAndGet() == 1) {
+      compactionFutureRef.set(CompletableFuture.runAsync(() -> {
+        int request;
+        do {
+          request = compactionRequest.get();
+          removeEmptyConnectionsRecursively();
+        }
+        while (!compactionRequest.compareAndSet(request, 0));
+      }, AppExecutorUtil.getAppExecutorService()));
     }
   }
 
-  private void removeDisposedHandlers(@NotNull Topic<?> topic, @NotNull Object handler) {
-    MessageQueue messageQueue = this.messageQueue.get();
-    if (!messageQueue.queue.isEmpty() &&
-        messageQueue.queue.removeIf(message -> {
-          for (int messageIndex = 0; messageIndex < message.handlers.length; messageIndex++) {
-            Object messageHandler = message.handlers[messageIndex];
-            if (messageHandler == null) {
-              return false;
-            }
-
-            if (message.topic == topic && messageHandler == handler) {
-              message.handlers[messageIndex] = null;
-              return message.handlers.length == 1;
-            }
-          }
-          return false;
-        })) {
-      messageRemoved(messageQueue);
+  @Override
+  public void dispose() {
+    CompletableFuture<?> compactionFuture = compactionFutureRef.getAndSet(null);
+    if (compactionFuture != null) {
+      compactionFuture.cancel(false);
     }
+    compactionRequest.set(0);
+    super.dispose();
+  }
+
+  void removeDisposedHandlers(@NotNull Topic<?> topic, @NotNull Object handler) {
+    MessageQueue messageQueue = this.messageQueue.get();
+    if (messageQueue.queue.isEmpty()) {
+      return;
+    }
+
+    messageQueue.queue.removeIf(message -> {
+      for (int messageIndex = 0; messageIndex < message.handlers.length; messageIndex++) {
+        Object messageHandler = message.handlers[messageIndex];
+        if (messageHandler == null) {
+          return false;
+        }
+
+        if (message.topic == topic && messageHandler == handler) {
+          message.handlers[messageIndex] = null;
+          return message.handlers.length == 1;
+        }
+      }
+      return false;
+    });
   }
 }
 

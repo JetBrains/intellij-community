@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -7,11 +7,9 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
-import com.intellij.util.messages.impl.MessageBusImpl.RootBus
 import org.assertj.core.api.Assertions
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
 
 class CwmMessageBusTest : LightPlatformTestCase() {
 
