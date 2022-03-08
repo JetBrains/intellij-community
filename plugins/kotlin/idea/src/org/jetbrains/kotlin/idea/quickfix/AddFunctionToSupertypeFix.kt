@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -67,7 +66,7 @@ class AddFunctionToSupertypeFix private constructor(
 
     private fun addFunction(functionData: FunctionData, project: Project) {
         project.executeWriteCommand(KotlinBundle.message("fix.add.function.supertype.progress")) {
-            element?.removeDefaultValueIfNeeded()
+            element?.removeDefaultValues()
 
             val classBody = functionData.targetClass.getOrCreateBody()
 
@@ -83,12 +82,10 @@ class AddFunctionToSupertypeFix private constructor(
         }
     }
 
-    private fun KtNamedFunction.removeDefaultValueIfNeeded() {
-        if (hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            valueParameters.forEach {
-                it.defaultValue?.delete()
-                it.equalsToken?.delete()
-            }
+    private fun KtNamedFunction.removeDefaultValues() {
+        valueParameters.forEach {
+            it.defaultValue?.delete()
+            it.equalsToken?.delete()
         }
     }
 
