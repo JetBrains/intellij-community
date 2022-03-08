@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.Companion.JRE_TYPE_FIELD
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
@@ -55,8 +56,8 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(IS_COMPOSITE_BUILDS.metric(setting.compositeBuild != null))
       usages.add(DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION.metric(setting.isDisableWrapperSourceDistributionNotification))
 
-      usages.add(ExternalSystemUsagesCollector.getJRETypeUsage("gradleJvmType", setting.gradleJvm))
-      usages.add(ExternalSystemUsagesCollector.getJREVersionUsage(project, "gradleJvmVersion", setting.gradleJvm))
+      usages.add(GRADLE_JVM_TYPE.metric(ExternalSystemUsagesCollector.getJreType(setting.gradleJvm)))
+      usages.add(GRADLE_JVM_VERSION.metric(ExternalSystemUsagesCollector.getJreVersion(project, setting.gradleJvm)))
 
       val gradleVersion = setting.resolveGradleVersion()
       if (gradleVersion.isSnapshot) {
@@ -89,7 +90,7 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.state", 3)
+    private val GROUP = EventLogGroup("build.gradle.state", 4)
     private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
     private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
     private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
@@ -107,8 +108,11 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
 
     private val DISTRIBUTION_TYPE = GROUP.registerEvent("distributionType",
                                                         EventFields.Enum("value", DistributionType::class.java) { it.name.lowercase() })
-    private val GRADLE_VERSION = GROUP.registerEvent("gradleVersion", EventFields.StringValidatedByRegexp("value", "version"))
+    private val VERSION_FIELD = EventFields.StringValidatedByRegexp("value", "version")
+    private val GRADLE_VERSION = GROUP.registerEvent("gradleVersion", VERSION_FIELD)
     private val PREFERRED_TEST_RUNNER = GROUP.registerEvent("preferredTestRunner",
                                                             EventFields.Enum("value", TestRunner::class.java){ it.name.lowercase() })
+    private val GRADLE_JVM_TYPE = GROUP.registerEvent("gradleJvmType", JRE_TYPE_FIELD)
+    private val GRADLE_JVM_VERSION = GROUP.registerEvent("gradleJvmVersion", VERSION_FIELD)
   }
 }
