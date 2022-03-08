@@ -286,11 +286,14 @@ public final class ExperimentalUI {
     setUIProperty("EditorTabs.underlineArc", 4, defaults);
     setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
     setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
-    // avoid getting EditorColorsManager too early
-    setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
-      EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      return ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
-    }, defaults);
+
+    if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
+      // avoid getting EditorColorsManager too early
+      setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
+        EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
+        return ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
+      }, defaults);
+    }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
       installInterFont(defaults);
