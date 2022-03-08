@@ -37,18 +37,20 @@ public class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
           }
           TextRange range = TextRange.create(start, end);
           holder.registerProblem(token, range, JavaBundle.message("inspection.javadoc.link.as.plain.text.message"),
-                                 new UrlToHtmlFix(token, range));
+                                 new UrlToHtmlFix(token, start, end));
         }
       }
     };
   }
 
   private static class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private final TextRange myRange;
+    private final int myStartOffset;
+    private final int myEndOffset;
 
-    protected UrlToHtmlFix(@Nullable PsiElement element, TextRange range) {
+    protected UrlToHtmlFix(@Nullable PsiElement element, int startOffset, int endOffset) {
       super(element);
-      myRange = range;
+      myStartOffset = startOffset;
+      myEndOffset = endOffset;
     }
 
     @Override
@@ -59,10 +61,10 @@ public class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
                        @NotNull PsiElement endElement) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document == null) return;
-      String text = myRange.substring(startElement.getText());
+      String text = startElement.getText().substring(myStartOffset, myEndOffset);
       int offset = startElement.getTextOffset();
       String wrappedLink = "<a href=\"" + text + "\">" + text + "</a>";
-      document.replaceString(offset + myRange.getStartOffset(), offset + myRange.getEndOffset(),
+      document.replaceString(offset + myStartOffset, offset + myEndOffset,
                              wrappedLink);
     }
 
