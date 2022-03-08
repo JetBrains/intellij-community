@@ -64,19 +64,25 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?):
       transformFile(appFile) { target ->
         writeNewZip(target) { zipCreator ->
           val packageIndexBuilder = PackageIndexBuilder()
-          copyZipRaw(appFile, packageIndexBuilder, zipCreator)
+          copyZipRaw(appFile, packageIndexBuilder, zipCreator) { entryName ->
+            entryName != "module-info.class"
+          }
 
           val mainJar = libDir.resolve(mainJarName)
           if (Files.exists(mainJar)) {
             // no such file in community (no closed sources)
-            copyZipRaw(mainJar, packageIndexBuilder, zipCreator)
+            copyZipRaw(mainJar, packageIndexBuilder, zipCreator) { entryName ->
+              entryName != "module-info.class"
+            }
             Files.delete(mainJar)
           }
 
           // packing to product.jar maybe disabled
           val productJar = libDir.resolve("product.jar")
           if (Files.exists(productJar)) {
-            copyZipRaw(productJar, packageIndexBuilder, zipCreator)
+            copyZipRaw(productJar, packageIndexBuilder, zipCreator) { entryName ->
+              entryName != "module-info.class"
+            }
             Files.delete(productJar)
           }
 
