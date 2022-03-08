@@ -79,6 +79,7 @@ fun runTestBuild(
       testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
         buildOptionsCustomizer(it)
         buildArtifactsReproducibilityTest.configure(it)
+        it.ant = true
       }, onFinish = { nextIteration ->
         onFinish(nextIteration)
         buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
