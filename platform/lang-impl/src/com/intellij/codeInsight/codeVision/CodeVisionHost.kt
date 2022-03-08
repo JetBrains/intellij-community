@@ -335,7 +335,7 @@ open class CodeVisionHost(val project: Project) {
                                       inTestSyncMode: Boolean = false,
                                       consumer: (List<Pair<TextRange, CodeVisionEntry>>, List<String>) -> Unit) {
     val precalculatedUiThings = providers.associate {
-      if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.groupId)) return@associate it.id to null
+      if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
     }
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
@@ -347,7 +347,7 @@ open class CodeVisionHost(val project: Project) {
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
-        if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.groupId)) return@forEach
+        if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
         if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {

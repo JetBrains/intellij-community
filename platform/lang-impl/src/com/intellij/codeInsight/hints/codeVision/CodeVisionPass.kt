@@ -34,17 +34,17 @@ class CodeVisionPass(
   companion object {
     @JvmStatic
     @Internal
-    fun collectData(editor: Editor, file: PsiFile) : CodeVisionData {
+    fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>) : CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
-      collect(EmptyProgressIndicator(), editor, file, providerIdToLenses)
+      collect(EmptyProgressIndicator(), editor, file, providerIdToLenses, providers)
       return CodeVisionData(providerIdToLenses)
     }
 
     private fun collect(progress: ProgressIndicator,
                         editor: Editor,
                         file: PsiFile,
-                        providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
-      val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
+                        providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>,
+                        providers: List<DaemonBoundCodeVisionProvider>) {
       val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
         val results = provider.computeForEditor(editor, file)
@@ -77,7 +77,7 @@ class CodeVisionPass(
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    collect(progress, editor, myFile, providerIdToLenses)
+    collect(progress, editor, myFile, providerIdToLenses, DaemonBoundCodeVisionProvider.extensionPoint.extensionList)
   }
 
   override fun doApplyInformationToEditor() {
