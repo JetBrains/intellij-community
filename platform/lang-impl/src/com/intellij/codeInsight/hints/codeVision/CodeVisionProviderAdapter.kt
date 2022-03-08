@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -26,6 +27,7 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
   }
 
   override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
+    if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
     val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
