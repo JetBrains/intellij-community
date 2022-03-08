@@ -718,8 +718,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertFalse(application.isWriteAccessAllowed());
           assertFalse(application.isWriteActionInProgress());
           assertFalse(application.isWriteActionPending());
-          assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
-
           if (nestingCount.get() < 2) {
             // strange to allow it but this is how a lot of code is
             application.runWriteAction(() -> { });
