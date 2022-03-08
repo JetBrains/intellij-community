@@ -565,7 +565,7 @@ public class GradleInstallationManager implements Disposable {
 
   private static boolean isGroovyJar(@NotNull String name) {
     name = StringUtil.toLowerCase(name);
-    return name.startsWith("groovy-all-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
+    return name.startsWith("groovy-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
   }
 
   @Nullable
