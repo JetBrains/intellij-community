@@ -14,14 +14,6 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
   final override val group: InlayGroup
     get() = InlayGroup.CODE_VISION_GROUP_NEW
 
-  override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    val codeVisionData = CodeVisionPass.collectData(editor, file)
-    return Runnable {
-      val project = editor.project ?: return@Runnable
-      codeVisionData.applyTo(editor, project)
-    }
-  }
-
   override val previewText: String? = null
 
   protected open val previewLanguage: Language? = null
