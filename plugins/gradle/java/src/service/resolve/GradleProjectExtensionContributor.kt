@@ -54,6 +54,7 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
       if (processMethods) {
         val extensionMethod = GrLightMethodBuilder(manager, extension.name).apply {
           returnType = type
+          containingClass = aClass
           addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
             .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
         }
