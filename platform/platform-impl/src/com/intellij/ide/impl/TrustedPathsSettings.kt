@@ -19,13 +19,15 @@ internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPath
   }
 
   fun isPathTrusted(path: Path): Boolean {
-    return try {
-      state.trustedPaths.map { Paths.get(it) }.any { it.isAncestor(path) }
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-      false
-    }
+    return state.trustedPaths.mapNotNull {
+      try {
+        Paths.get(it)
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+        null
+      }
+    }.any { it.isAncestor(path) }
   }
 
   fun getTrustedPaths(): List<String> = Collections.unmodifiableList(state.trustedPaths)
