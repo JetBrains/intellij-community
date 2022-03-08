@@ -93,9 +93,11 @@ fun resolveToAggregateFunction(place: PsiElement, name: String): PsiMethod? {
   val returnType = aggregateFunctions.getValue(name).second
   val actualArgType: PsiType
   val actualReturnType: PsiType
-  if (argType == JAVA_LANG_COMPARABLE) {
+  if (argType == JAVA_LANG_COMPARABLE || name == "agg") {
     val typeParam = proxy.addTypeParameter("T")
-    typeParam.extendsList.addReference(JAVA_LANG_COMPARABLE)
+    if (name != "agg") {
+      typeParam.extendsList.addReference(JAVA_LANG_COMPARABLE)
+    }
     actualArgType = typeParam.type()
     actualReturnType = actualArgType
   } else {
