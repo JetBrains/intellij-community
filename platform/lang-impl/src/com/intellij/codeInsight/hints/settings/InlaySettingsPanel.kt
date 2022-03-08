@@ -233,18 +233,20 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
     val fileType = model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
-    ReadAction.nonBlocking(Callable {
-      val file = model.createFile(project, fileType, editor.document)
-      val continuation = model.collectData(editor, file)
-      continuation
-    })
-      .finishOnUiThread(ModalityState.defaultModalityState()) { continuation ->
-        ApplicationManager.getApplication().runWriteAction {
-          continuation.run()
+    ApplicationManager.getApplication().invokeLater {
+      ReadAction.nonBlocking(Callable {
+        val file = model.createFile(project, fileType, editor.document)
+        val continuation = model.collectData(editor, file)
+        continuation
+      })
+        .finishOnUiThread(ModalityState.current()) { continuation ->
+          ApplicationManager.getApplication().runWriteAction {
+            continuation.run()
+          }
         }
-      }
-      .inSmartMode(project)
-      .submit(AppExecutorUtil.getAppExecutorService())
+        .inSmartMode(project)
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
   }
 
   private fun addDescription(@Nls s: String?) {
