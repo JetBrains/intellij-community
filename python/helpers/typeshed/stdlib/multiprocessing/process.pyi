@@ -1,6 +1,11 @@
 import sys
 from typing import Any, Callable, Mapping
 
+if sys.version_info >= (3, 8):
+    __all__ = ["BaseProcess", "current_process", "active_children", "parent_process"]
+else:
+    __all__ = ["BaseProcess", "current_process", "active_children"]
+
 class BaseProcess:
     name: str
     daemon: bool

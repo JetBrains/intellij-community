@@ -1,6 +1,7 @@
 import sys
 from _typeshed import SupportsRead
 from typing import IO, Any, NamedTuple, Union, overload
+from typing_extensions import final
 
 if sys.platform != "win32":
     _chtype = Union[str, bytes, int]
@@ -374,6 +375,7 @@ if sys.platform != "win32":
 
     class error(Exception): ...
 
+    @final
     class _CursesWindow:
         encoding: str
         @overload

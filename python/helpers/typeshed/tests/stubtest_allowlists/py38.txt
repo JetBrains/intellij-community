@@ -11,14 +11,14 @@ ast.Ellipsis.__new__
 ast.NameConstant.__new__
 ast.Num.__new__
 ast.Str.__new__
-asyncio.compat  # removed in 3.7
 asyncio.Future.__init__  # Usually initialized from c object
 asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
-asyncio.threads  # Added in Python 3.9
-asyncio.mixins  # Added in Python 3.10
+asyncio.locks._ContextManagerMixin.__enter__  # Always raises; deliberately omitted from the stub
+asyncio.locks._ContextManagerMixin.__exit__  # Always raises; deliberately omitted from the stub
 builtins.dict.get
+builtins.float.__set_format__  # Internal method for CPython test suite
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
@@ -27,8 +27,15 @@ collections.Callable
 collections.ItemsView.__reversed__
 collections.KeysView.__reversed__
 collections.ValuesView.__reversed__
+collections.Mapping.__reversed__  # Set to None at runtime for a better error message
+# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
+collections.Set.__rand__
+collections.Set.__ror__
+collections.Set.__rsub__
+collections.Set.__rxor__
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 dataclasses.field
+distutils.command.bdist_wininst  # see #6523
 dummy_threading.Condition.acquire
 dummy_threading.Condition.release
 dummy_threading.Event.isSet
@@ -37,13 +44,10 @@ dummy_threading.local.__new__
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
-functools.partialmethod.__get__
-functools.singledispatchmethod.__call__  # A lie to reflect that the descriptor get returns a callable
 gettext.install  # codeset default value is ['unspecified'] so can't be specified
 gettext.translation  # codeset default value is ['unspecified'] so can't be specified
 hmac.new  # Stub is a white lie; see comments in the stub
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
-importlib.metadata._meta  # Added in 3.10
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
@@ -52,7 +56,6 @@ multiprocessing.spawn._main
 pickle.Pickler.reducer_override  # implemented in C pickler
 queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
 random.Random.randrange  # missing undocumented arg _int
-random.randrange  # missing undocumented arg _int
 re.Pattern.scanner  # Undocumented and not useful. #6405
 sched.Event.__doc__  # __slots__ is overridden
 ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
@@ -75,7 +78,6 @@ typing.SupportsInt.__init__
 typing.SupportsRound.__init__
 typing._SpecialForm.__init__
 typing._SpecialForm.__new__
-unittest._log  # New in Python 3.9
 uuid.getnode  # undocumented, unused parameter getters that was later removed
 weakref.WeakValueDictionary.update
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
@@ -108,8 +110,6 @@ _dummy_thread.RLock
 _imp.source_hash
 contextvars.ContextVar.__class_getitem__
 datetime.datetime_CAPI
-distutils.command.bdist_wininst
-distutils.command.bdist_wininst.bdist_wininst
 distutils.dist.DistributionMetadata.set_classifiers
 distutils.dist.DistributionMetadata.set_keywords
 distutils.dist.DistributionMetadata.set_platforms
@@ -136,7 +136,6 @@ plistlib.Data.fromBase64
 pyexpat.XMLParserType.SkippedEntityHandler
 pyexpat.XMLParserType.intern
 stringprep.unicodedata  # re-exported from unicodedata
-sys.callstats
 tempfile.SpooledTemporaryFile.softspace
 tkinter.commondialog.[A-Z_]+
 tkinter.commondialog.TclVersion
@@ -155,7 +154,6 @@ tkinter.filedialog.TkVersion
 tkinter.filedialog.wantobjects
 tkinter.simpledialog.wantobjects
 tkinter.tix.wantobjects
-types.CoroutineType.cr_origin
 typing._SpecialForm.__call__
 unicodedata.UCD.is_normalized
 xml.parsers.expat.XMLParserType.SkippedEntityHandler

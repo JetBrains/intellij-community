@@ -13,8 +13,14 @@ _collections_abc.Generator.gi_code
 _collections_abc.Generator.gi_frame
 _collections_abc.Generator.gi_running
 _collections_abc.Generator.gi_yieldfrom
+_collections_abc.Mapping.__reversed__  # set to None at runtime for a better error message
 _collections_abc.Mapping.get  # Adding None to the Union messed up mypy
 _collections_abc.Sequence.index  # Supporting None in end is not mandatory
+# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
+_collections_abc.Set.__rand__
+_collections_abc.Set.__ror__
+_collections_abc.Set.__rsub__
+_collections_abc.Set.__rxor__
 _csv.Dialect.__init__  # C __init__ signature is inaccurate
 _socket.*
 _threading_local.local.__new__
@@ -48,6 +54,7 @@ sqlite3.Binary.__contains__  # C type that implements __getitem__
 builtins.object.__init__  # default C signature is incorrect
 builtins.property.__get__  # this function can accept no value for the type parameter.
 builtins.staticmethod.__get__  # this function can accept no value for the type parameter.
+builtins.type.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
 bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
 # The following CodecInfo properties are added in __new__
 codecs.CodecInfo.decode
@@ -65,7 +72,6 @@ configparser.SectionProxy.getboolean
 configparser.SectionProxy.getfloat
 configparser.SectionProxy.getint
 copy.PyStringMap  # defined only in Jython
-csv.__version__  # Always "1.0". Using this is likely a bug. #6398
 # The Dialect properties are initialized as None in Dialect but their values are enforced in _Dialect
 csv.Dialect.delimiter
 csv.Dialect.doublequote
@@ -92,6 +98,8 @@ enum.Enum.value
 enum.Flag.name
 enum.Flag.value
 enum.IntEnum.value
+hashlib.sha3_\d+  # Can be a class or a built-in function, can't be subclassed at runtime
+hashlib.shake_\d+  # Can be a class or a built-in function, can't be subclassed at runtime
 http.HTTPStatus.description  # set in __new__
 http.HTTPStatus.phrase  # set in __new__
 http.client.HTTPConnection.response_class  # the actual type at runtime is abc.ABCMeta
@@ -199,10 +207,10 @@ threading.Lock  # A factory function that returns 'most efficient lock'. Marking
 threading.RLock  # Similar to above
 multiprocessing.dummy.Lock  # Similar to above
 multiprocessing.dummy.RLock  # Similar to above
+# alias for a class defined elsewhere, mypy infers the variable has type `(*args) -> ForkingPickler` but stubtest infers the runtime type as <class ForkingPickler>
+multiprocessing.reduction.AbstractReducer.ForkingPickler
 tkinter.Misc.grid_propagate  # The noarg placeholder is a set value list
 tkinter.Misc.pack_propagate  # The noarg placeholder is a set value list
-tkinter.Misc.grid_columnconfigure  # an empty dict literal is actually a valid default for a TypedDict(total=False) parameter
-tkinter.Misc.grid_rowconfigure  # an empty dict literal is actually a valid default for a TypedDict(total=False) parameter
 tkinter.Tk.eval  # from __getattr__
 tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
 tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error
@@ -210,6 +218,9 @@ tkinter.font.Font.__getitem__  # Argument name differs (doesn't matter for __dun
 traceback.TracebackException.from_exception  # explicitly expanding arguments going into TracebackException __init__
 types.GetSetDescriptorType.__get__  # this function can accept no value for the type parameter.
 types.MemberDescriptorType.__get__  # this function can accept no value for the type parameter.
+types.MethodType.__closure__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.MethodType.__defaults__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.ModuleType.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
 types.ModuleType.__getattr__  # this doesn't exist at runtime
 types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
 typing.IO.__iter__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
@@ -236,14 +247,21 @@ xml.parsers.expat.expat_CAPI
 # Allowlist entries that cannot or should not be fixed
 # ==========
 _pydecimal.*  # See comments in file
+_weakref.ProxyType.__bytes__  # Doesn't really exist
 ast.NodeVisitor.visit_\w+  # Methods are discovered dynamically, see #3796
 # Weird special builtins that are typed as functions, but aren't functions
 builtins.copyright
 builtins.credits
 builtins.exit
+builtins.float.__getformat__  # Internal method for CPython test suite
 builtins.help
 builtins.license
 builtins.quit
+# These super() dunders don't seem to be particularly useful,
+# and having them pop up on autocomplete suggestions would be annoying
+builtins.super.__self__
+builtins.super.__self_class__
+builtins.super.__thisclass__
 # GetSetDescriptor that always raises AttributeError
 builtins.OSError.characters_written
 # Aliases for OSError
@@ -286,6 +304,7 @@ sys.tracebacklimit
 codecs.StreamReaderWriter.\w+
 codecs.StreamRecoder.\w+
 urllib.response.addbase.\w+
+weakref.ProxyType.__bytes__  # Doesn't actually exist
 
 # Dynamically created, has unnecessary *args
 turtle.ScrolledCanvas.find_all
@@ -313,6 +332,24 @@ builtins.reveal_locals
 builtins.reveal_type
 
 # __all__-related weirdness (see #6523)
+distutils.command.build
+distutils.command.build_py
+distutils.command.build_ext
+distutils.command.build_clib
+distutils.command.build_scripts
+distutils.command.clean
+distutils.command.install
+distutils.command.install_lib
+distutils.command.install_headers
+distutils.command.install_scripts
+distutils.command.install_data
+distutils.command.sdist
+distutils.command.register
+distutils.command.bdist
+distutils.command.bdist_dumb
+distutils.command.bdist_rpm
+distutils.command.check
+distutils.command.upload
 email.base64mime
 email.charset
 email.encoders
@@ -424,8 +461,6 @@ cgi.FieldStorage.read_multi
 cgi.FieldStorage.read_single
 cgi.FieldStorage.read_urlencoded
 cgi.FieldStorage.skip_lines
-cgi.print_arguments  # internal testing/debugging helper
-cgi.print_exception  # internal testing/debugging helper
 email.contentmanager.get_and_fixup_unknown_message_content
 email.contentmanager.get_message_content
 email.contentmanager.get_non_text_content
@@ -433,7 +468,6 @@ email.contentmanager.get_text_content
 email.contentmanager.set_bytes_content
 email.contentmanager.set_message_content
 email.contentmanager.set_text_content
-email.iterators.walk
 pipes.Template.makepipeline
 pipes.Template.open_r
 pipes.Template.open_w
@@ -649,7 +683,6 @@ pkgutil.ImpLoader.source
 # ==========
 # Exists at runtime, but missing from stubs
 # ==========
-__main__.\w+
 _json.encode_basestring
 _thread.LockType.acquire_lock
 _thread.LockType.locked_lock
@@ -665,7 +698,6 @@ bz2.BZ2File.peek
 codecs.StreamReader.charbuffertype
 codecs.StreamReader.seek
 codecs.StreamWriter.seek
-codecs.namereplace_errors
 configparser.ParsingError.filename
 configparser.RawConfigParser.converters
 ctypes.ARRAY
@@ -683,7 +715,6 @@ logging.config.DictConfigurator
 logging.config.dictConfigClass
 mimetypes.MimeTypes.add_type
 modulefinder.test
-multiprocessing.dummy.Pipe
 multiprocessing.managers.Server.accepter
 multiprocessing.managers.Server.create
 multiprocessing.managers.Server.debug_info
@@ -705,10 +736,7 @@ multiprocessing.managers.SyncManager.JoinableQueue
 multiprocessing.managers.SyncManager.Pool
 multiprocessing.pool.Pool.Process
 multiprocessing.pool.ThreadPool.Process
-multiprocessing.reducer
 multiprocessing.synchronize.Semaphore.get_value
-rlcompleter.Completer.attr_matches
-rlcompleter.Completer.global_matches
 tkinter.Misc.config
 tkinter.font.Font.counter
 tkinter.simpledialog.Dialog.apply
@@ -731,5 +759,4 @@ tkinter.tix.ScrolledTList
 tkinter.tix.ScrolledText
 tkinter.tix.ScrolledWindow
 tkinter.tix.Shell
-tracemalloc.BaseFilter
 turtle.TNavigator.speed

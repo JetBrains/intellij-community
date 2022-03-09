@@ -1,6 +1,8 @@
 import sys
 from typing import Any, Sequence
 
+__all__ = ["symtable", "SymbolTable", "Class", "Function", "Symbol"]
+
 def symtable(code: str, filename: str, compile_type: str) -> SymbolTable: ...
 
 class SymbolTable:

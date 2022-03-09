@@ -4,6 +4,8 @@ from typing import IO, Any, Callable
 from .decoder import JSONDecodeError as JSONDecodeError, JSONDecoder as JSONDecoder
 from .encoder import JSONEncoder as JSONEncoder
 
+__all__ = ["dump", "dumps", "load", "loads", "JSONDecoder", "JSONDecodeError", "JSONEncoder"]
+
 def dumps(
     obj: Any,
     *,

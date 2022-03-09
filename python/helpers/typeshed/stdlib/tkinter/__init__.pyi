@@ -8,6 +8,141 @@ from types import TracebackType
 from typing import Any, Callable, Generic, Mapping, Optional, Protocol, Sequence, TypeVar, Union, overload
 from typing_extensions import Literal, TypedDict
 
+if sys.version_info >= (3, 9):
+    __all__ = [
+        "TclError",
+        "NO",
+        "FALSE",
+        "OFF",
+        "YES",
+        "TRUE",
+        "ON",
+        "N",
+        "S",
+        "W",
+        "E",
+        "NW",
+        "SW",
+        "NE",
+        "SE",
+        "NS",
+        "EW",
+        "NSEW",
+        "CENTER",
+        "NONE",
+        "X",
+        "Y",
+        "BOTH",
+        "LEFT",
+        "TOP",
+        "RIGHT",
+        "BOTTOM",
+        "RAISED",
+        "SUNKEN",
+        "FLAT",
+        "RIDGE",
+        "GROOVE",
+        "SOLID",
+        "HORIZONTAL",
+        "VERTICAL",
+        "NUMERIC",
+        "CHAR",
+        "WORD",
+        "BASELINE",
+        "INSIDE",
+        "OUTSIDE",
+        "SEL",
+        "SEL_FIRST",
+        "SEL_LAST",
+        "END",
+        "INSERT",
+        "CURRENT",
+        "ANCHOR",
+        "ALL",
+        "NORMAL",
+        "DISABLED",
+        "ACTIVE",
+        "HIDDEN",
+        "CASCADE",
+        "CHECKBUTTON",
+        "COMMAND",
+        "RADIOBUTTON",
+        "SEPARATOR",
+        "SINGLE",
+        "BROWSE",
+        "MULTIPLE",
+        "EXTENDED",
+        "DOTBOX",
+        "UNDERLINE",
+        "PIESLICE",
+        "CHORD",
+        "ARC",
+        "FIRST",
+        "LAST",
+        "BUTT",
+        "PROJECTING",
+        "ROUND",
+        "BEVEL",
+        "MITER",
+        "MOVETO",
+        "SCROLL",
+        "UNITS",
+        "PAGES",
+        "TkVersion",
+        "TclVersion",
+        "READABLE",
+        "WRITABLE",
+        "EXCEPTION",
+        "EventType",
+        "Event",
+        "NoDefaultRoot",
+        "Variable",
+        "StringVar",
+        "IntVar",
+        "DoubleVar",
+        "BooleanVar",
+        "mainloop",
+        "getint",
+        "getdouble",
+        "getboolean",
+        "Misc",
+        "CallWrapper",
+        "XView",
+        "YView",
+        "Wm",
+        "Tk",
+        "Tcl",
+        "Pack",
+        "Place",
+        "Grid",
+        "BaseWidget",
+        "Widget",
+        "Toplevel",
+        "Button",
+        "Canvas",
+        "Checkbutton",
+        "Entry",
+        "Frame",
+        "Label",
+        "Listbox",
+        "Menu",
+        "Menubutton",
+        "Message",
+        "Radiobutton",
+        "Scale",
+        "Scrollbar",
+        "Text",
+        "OptionMenu",
+        "Image",
+        "PhotoImage",
+        "BitmapImage",
+        "image_names",
+        "image_types",
+        "Spinbox",
+        "LabelFrame",
+        "PanedWindow",
+    ]
+
 # Using anything from tkinter.font in this file means that 'import tkinter'
 # seems to also load tkinter.font. That's not how it actually works, but
 # unfortunately not much can be done about it. https://github.com/python/typeshed/pull/4346
@@ -142,6 +277,7 @@ class Variable:
     def trace_vdelete(self, mode, cbname) -> None: ...  # deprecated
     def trace_vinfo(self): ...  # deprecated
     trace = trace_variable  # deprecated
+    def __eq__(self, other: object) -> bool: ...
 
 class StringVar(Variable):
     def __init__(self, master: Misc | None = ..., value: str | None = ..., name: str | None = ...) -> None: ...
@@ -1062,7 +1198,7 @@ class Canvas(Widget, XView, YView):
     @overload
     def tag_bind(
         self,
-        tagOrId: str | int,
+        tagOrId: str | _CanvasItemId,
         sequence: str | None = ...,
         func: Callable[[Event[Canvas]], Any] | None = ...,
         add: Literal["", "+"] | bool | None = ...,
@@ -1072,16 +1208,16 @@ class Canvas(Widget, XView, YView):
         self, tagOrId: str | int, sequence: str | None, func: str, add: Literal["", "+"] | bool | None = ...
     ) -> None: ...
     @overload
-    def tag_bind(self, tagOrId: str | int, *, func: str, add: Literal["", "+"] | bool | None = ...) -> None: ...
-    def tag_unbind(self, tagOrId: str | int, sequence: str, funcid: str | None = ...) -> None: ...
+    def tag_bind(self, tagOrId: str | _CanvasItemId, *, func: str, add: Literal["", "+"] | bool | None = ...) -> None: ...
+    def tag_unbind(self, tagOrId: str | _CanvasItemId, sequence: str, funcid: str | None = ...) -> None: ...
     def canvasx(self, screenx, gridspacing: Any | None = ...): ...
     def canvasy(self, screeny, gridspacing: Any | None = ...): ...
     @overload
-    def coords(self) -> list[float]: ...
+    def coords(self, __tagOrId: str | _CanvasItemId) -> list[float]: ...
     @overload
-    def coords(self, __args: list[int] | list[float] | tuple[float, ...]) -> None: ...
+    def coords(self, __tagOrId: str | _CanvasItemId, __args: list[int] | list[float] | tuple[float, ...]) -> None: ...
     @overload
-    def coords(self, __x1: float, __y1: float, *args: float) -> None: ...
+    def coords(self, __tagOrId: str | _CanvasItemId, __x1: float, __y1: float, *args: float) -> None: ...
     # create_foo() methods accept coords as a list, a tuple, or as separate arguments.
     # Keyword arguments should be the same in each pair of overloads.
     def create_arc(self, *args, **kw) -> _CanvasItemId: ...

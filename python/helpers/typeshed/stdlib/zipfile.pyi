@@ -6,6 +6,38 @@ from types import TracebackType
 from typing import IO, Any, Callable, Iterable, Iterator, Protocol, Sequence, overload
 from typing_extensions import Literal
 
+if sys.version_info >= (3, 8):
+    __all__ = [
+        "BadZipFile",
+        "BadZipfile",
+        "error",
+        "ZIP_STORED",
+        "ZIP_DEFLATED",
+        "ZIP_BZIP2",
+        "ZIP_LZMA",
+        "is_zipfile",
+        "ZipInfo",
+        "ZipFile",
+        "PyZipFile",
+        "LargeZipFile",
+        "Path",
+    ]
+else:
+    __all__ = [
+        "BadZipFile",
+        "BadZipfile",
+        "error",
+        "ZIP_STORED",
+        "ZIP_DEFLATED",
+        "ZIP_BZIP2",
+        "ZIP_LZMA",
+        "is_zipfile",
+        "ZipInfo",
+        "ZipFile",
+        "PyZipFile",
+        "LargeZipFile",
+    ]
+
 _DateTuple = tuple[int, int, int, int, int, int]
 _ReadWriteMode = Literal["r", "w"]
 _ReadWriteBinaryMode = Literal["r", "w", "rb", "wb"]
@@ -152,7 +184,7 @@ class ZipFile:
 
     def __enter__(self: Self) -> Self: ...
     def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self, type: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
     ) -> None: ...
     def close(self) -> None: ...
     def getinfo(self, name: str) -> ZipInfo: ...

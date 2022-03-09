@@ -2,7 +2,21 @@ from _typeshed import Self, SupportsRead
 from typing import Any, Sequence
 
 from .builder import TreeBuilder
-from .element import PageElement, SoupStrainer as SoupStrainer, Tag as Tag
+from .element import (
+    CData as CData,
+    Comment as Comment,
+    Declaration as Declaration,
+    Doctype as Doctype,
+    NavigableString as NavigableString,
+    PageElement as PageElement,
+    ProcessingInstruction as ProcessingInstruction,
+    ResultSet as ResultSet,
+    Script as Script,
+    SoupStrainer as SoupStrainer,
+    Stylesheet as Stylesheet,
+    Tag as Tag,
+    TemplateString as TemplateString,
+)
 from .formatter import Formatter
 
 class GuessedAtParserWarning(UserWarning): ...

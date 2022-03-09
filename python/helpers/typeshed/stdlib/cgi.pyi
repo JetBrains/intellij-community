@@ -2,7 +2,42 @@ import sys
 from _typeshed import Self, SupportsGetItem, SupportsItemAccess
 from builtins import type as _type
 from collections.abc import Iterable, Iterator, Mapping
+from types import TracebackType
 from typing import IO, Any, Protocol
+
+if sys.version_info >= (3, 8):
+    __all__ = [
+        "MiniFieldStorage",
+        "FieldStorage",
+        "parse",
+        "parse_multipart",
+        "parse_header",
+        "test",
+        "print_exception",
+        "print_environ",
+        "print_form",
+        "print_directory",
+        "print_arguments",
+        "print_environ_usage",
+    ]
+else:
+    __all__ = [
+        "MiniFieldStorage",
+        "FieldStorage",
+        "parse",
+        "parse_qs",
+        "parse_qsl",
+        "parse_multipart",
+        "parse_header",
+        "test",
+        "print_exception",
+        "print_environ",
+        "print_form",
+        "print_directory",
+        "print_arguments",
+        "print_environ_usage",
+        "escape",
+    ]
 
 def parse(
     fp: IO[Any] | None = ...,
@@ -104,3 +139,11 @@ class FieldStorage:
     def __bool__(self) -> bool: ...
     # In Python 3 it returns bytes or str IO depending on an internal flag
     def make_file(self) -> IO[Any]: ...
+
+def print_exception(
+    type: type[BaseException] | None = ...,
+    value: BaseException | None = ...,
+    tb: TracebackType | None = ...,
+    limit: int | None = ...,
+) -> None: ...
+def print_arguments() -> None: ...

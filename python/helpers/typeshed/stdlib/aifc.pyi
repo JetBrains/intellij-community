@@ -4,6 +4,11 @@ from types import TracebackType
 from typing import IO, Any, NamedTuple, Union, overload
 from typing_extensions import Literal
 
+if sys.version_info >= (3, 9):
+    __all__ = ["Error", "open"]
+else:
+    __all__ = ["Error", "open", "openfp"]
+
 class Error(Exception): ...
 
 class _aifc_params(NamedTuple):

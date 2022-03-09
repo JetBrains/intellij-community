@@ -8,6 +8,8 @@ from types import TracebackType
 from typing import IO, Any, Callable, Pattern, Union
 from typing_extensions import Literal
 
+__all__ = ["IMAP4", "IMAP4_stream", "Internaldate2tuple", "Int2AP", "ParseFlags", "Time2Internaldate", "IMAP4_SSL"]
+
 # TODO: Commands should use their actual return types, not this type alias.
 #       E.g. Tuple[Literal["OK"], List[bytes]]
 _CommandResults = tuple[str, list[Any]]

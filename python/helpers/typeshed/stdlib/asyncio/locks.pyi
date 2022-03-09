@@ -7,6 +7,11 @@ from typing_extensions import Literal
 from .events import AbstractEventLoop
 from .futures import Future
 
+if sys.version_info >= (3, 7):
+    __all__ = ("Lock", "Event", "Condition", "Semaphore", "BoundedSemaphore")
+else:
+    __all__ = ["Lock", "Event", "Condition", "Semaphore", "BoundedSemaphore"]
+
 _T = TypeVar("_T")
 
 if sys.version_info >= (3, 9):

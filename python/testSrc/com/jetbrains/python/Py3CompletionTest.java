@@ -207,31 +207,24 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-20279
   public void testImplicitDunderClass() {
-    doTestByText("class First:\n" +
-                 "    def foo(self):\n" +
-                 "        print(__cl<caret>)");
-    myFixture.checkResult("class First:\n" +
-                          "    def foo(self):\n" +
-                          "        print(__class__)");
+    final List<String> inClassMethod = doTestByText("class First:\n" +
+                                                    "    def foo(self):\n" +
+                                                    "        print(__cl<caret>)");
+    assertNotNull(inClassMethod);
+    assertContainsElements(inClassMethod, PyNames.__CLASS__);
 
-    doTestByText("class First:\n" +
-                 "    @staticmethod\n" +
-                 "    def foo():\n" +
-                 "        print(__cl<caret>)");
-    myFixture.checkResult("class First:\n" +
-                          "    @staticmethod\n" +
-                          "    def foo():\n" +
-                          "        print(__class__)");
+    final List<String> inStaticMethod = doTestByText("class First:\n" +
+                                                     "    @staticmethod\n" +
+                                                     "    def foo():\n" +
+                                                     "        print(__cl<caret>)");
+    assertNotNull(inStaticMethod);
+    assertContainsElements(inStaticMethod, PyNames.__CLASS__);
 
-    doTestByText("class First:\n" +
-                 "    print(__cl<caret>)");
-    myFixture.checkResult("class First:\n" +
-                          "    print(__cl)");
+    assertNullOrEmpty(doTestByText("class First:\n" +
+                                   "    print(__cl<caret>)"));
 
-    doTestByText("def abc():\n" +
-                 "    print(__cl<caret>)");
-    myFixture.checkResult("def abc():\n" +
-                          "    print(__cl)");
+    assertNullOrEmpty(doTestByText("def abc():\n" +
+                                   "    print(__cl<caret>)"));
   }
 
   // PY-11208

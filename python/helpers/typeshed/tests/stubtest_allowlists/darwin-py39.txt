@@ -1,6 +1,4 @@
 _?curses.A_ITALIC
 
 # Exists at runtime, but missing from stubs
-asyncio.PidfdChildWatcher
-asyncio.unix_events.PidfdChildWatcher
 mmap.MADV_FREE

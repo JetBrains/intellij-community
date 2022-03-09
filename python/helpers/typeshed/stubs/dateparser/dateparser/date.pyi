@@ -1,22 +1,18 @@
 import collections
-import sys
 from _typeshed import Self as Self
+from collections.abc import Callable, Iterable, Iterator
 from datetime import datetime
-from typing import ClassVar, Iterable, Iterator, overload
+from typing import ClassVar, Pattern, overload
+from typing_extensions import Literal
 
 from dateparser import _Settings
 from dateparser.conf import Settings
 from dateparser.languages.loader import LocaleDataLoader
 from dateparser.languages.locale import Locale
 
-if sys.version_info >= (3, 8):
-    from re import Pattern
-    from typing import Literal
-else:
-    from typing import Pattern
-    from typing_extensions import Literal
-
+_DetectLanguagesFunction = Callable[[str, float], list[str]]
 _Period = Literal["time", "day", "week", "month", "year"]
+
 APOSTROPHE_LOOK_ALIKE_CHARS: list[str]
 RE_NBSP: Pattern[str]
 RE_SPACES: Pattern[str]
@@ -92,6 +88,7 @@ class DateDataParser:
     languages: list[str] | None
     locales: list[str] | tuple[str, ...] | set[str] | None
     region: str
+    detect_languages_function: _DetectLanguagesFunction | None
     previous_locales: collections.OrderedDict[Locale, None]
     def __init__(
         self,
@@ -101,6 +98,7 @@ class DateDataParser:
         try_previous_locales: bool = ...,
         use_given_order: bool = ...,
         settings: _Settings | None = ...,
+        detect_languages_function: _DetectLanguagesFunction | None = ...,
     ) -> None: ...
     def get_date_data(self, date_string: str, date_formats: list[str] | tuple[str, ...] | set[str] | None = ...) -> DateData: ...
     def get_date_tuple(self, date_string: str, date_formats: list[str] | tuple[str, ...] | set[str] | None = ...): ...

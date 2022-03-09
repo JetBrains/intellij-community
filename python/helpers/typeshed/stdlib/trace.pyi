@@ -4,6 +4,8 @@ from _typeshed import StrPath
 from typing import Any, Callable, Mapping, Optional, Sequence, TypeVar
 from typing_extensions import ParamSpec
 
+__all__ = ["Trace", "CoverageResults"]
+
 _T = TypeVar("_T")
 _P = ParamSpec("_P")
 _localtrace = Callable[[types.FrameType, str, Any], Callable[..., Any]]

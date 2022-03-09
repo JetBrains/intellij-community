@@ -3,6 +3,17 @@ from types import ModuleType, TracebackType
 from typing import Any, Sequence, TextIO, overload
 from typing_extensions import Literal
 
+__all__ = [
+    "warn",
+    "warn_explicit",
+    "showwarning",
+    "formatwarning",
+    "filterwarnings",
+    "simplefilter",
+    "resetwarnings",
+    "catch_warnings",
+]
+
 _ActionKind = Literal["default", "error", "ignore", "always", "module", "once"]
 
 filters: Sequence[tuple[str, str | None, type[Warning], str | None, int]]  # undocumented, do not mutate
