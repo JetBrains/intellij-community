@@ -365,11 +365,16 @@ open class CodeVisionHost(val project: Project) {
         }
         providerWhoWantToUpdate.add(it.id)
         try {
-          val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
-          results.addAll(result)
+          val state = it.computeForEditor2(editor, precalculatedUiThings[it.id])
+          if (state.isReady.not()) {
+            everyProviderReadyToUpdate = false
+          }
+          else {
+            results.addAll(state.result)
+          }
         }
         catch (e : ProcessCanceledException) {
-          throw e;
+          throw e
         }
         catch (e: Exception) {
           logger.error("Exception during computeForEditor for ${it.id}", e)
@@ -386,10 +391,6 @@ open class CodeVisionHost(val project: Project) {
         return@executeOnPooledThread
       }
 
-      if(results.isEmpty() && editor.lensContextOrThrow.hasOnlyPlaceholders()){
-        editor.lensContextOrThrow.discardPending()
-        return@executeOnPooledThread
-      }
 
       if (!inTestSyncMode) {
         application.invokeLater({

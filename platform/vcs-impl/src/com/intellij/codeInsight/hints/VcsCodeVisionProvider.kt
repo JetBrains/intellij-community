@@ -44,20 +44,21 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
   }
 
-  override fun computeForEditor(editor: Editor, uiData: Unit): List<Pair<TextRange, CodeVisionEntry>> {
+
+  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
-      val project = editor.project ?: return@runReadAction emptyList()
+      val project = editor.project ?: return@runReadAction CodeVisionState.NotReady()
       val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction emptyList()
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady()
       val language = file.language
 
-      val aspect = getAspect(file, editor) ?: return@runReadAction emptyList()
+      val aspect = getAspect(file, editor) ?: return@runReadAction CodeVisionState.Ready(emptyList())
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                    ?: return@runReadAction emptyList()
+                                    ?: return@runReadAction CodeVisionState.NotReady()
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
@@ -78,7 +79,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         e.printStackTrace()
         throw e
       }
-      return@runReadAction lenses
+      return@runReadAction CodeVisionState.Ready(lenses)
     }
   }
 
