@@ -23,18 +23,18 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   private boolean myShowTreeNodes = true;
 
   private final Project myProject;
-  private PsiElement myRootPsiElement = null;
+  private PsiElement myRootPsiElement;
   private final Object myRootElement = new Object();
 
-  public ViewerTreeStructure(Project project) {
+  ViewerTreeStructure(Project project) {
     myProject = project;
   }
 
-  public void setRootPsiElement(PsiElement rootPsiElement) {
+  void setRootPsiElement(PsiElement rootPsiElement) {
     myRootPsiElement = rootPsiElement;
   }
 
-  public PsiElement getRootPsiElement() {
+  PsiElement getRootPsiElement() {
     return myRootPsiElement;
   }
 
@@ -114,11 +114,17 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
       return myRootElement;
     }
     if (element instanceof PsiFile &&
-        InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)) != null) {
-      return new Inject(InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)),
+        InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost((PsiFile)element) != null) {
+      return new Inject(InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost((PsiFile)element),
                         (PsiElement)element);
     }
-    return element instanceof Inject ? ((Inject)element).getParent() : ((PsiElement)element).getContext();
+    if (element instanceof Inject) {
+      return ((Inject)element).getParent();
+    }
+    if (element instanceof PsiElement) {
+      return ((PsiElement)element).getContext();
+    }
+    return null;
   }
 
   @Override
@@ -148,19 +154,11 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return new ViewerNodeDescriptor(myProject, element, parentDescriptor);
   }
 
-  public boolean isShowWhiteSpaces() {
-    return myShowWhiteSpaces;
-  }
-
-  public void setShowWhiteSpaces(boolean showWhiteSpaces) {
+  void setShowWhiteSpaces(boolean showWhiteSpaces) {
     myShowWhiteSpaces = showWhiteSpaces;
   }
 
-  public boolean isShowTreeNodes() {
-    return myShowTreeNodes;
-  }
-
-  public void setShowTreeNodes(final boolean showTreeNodes) {
+  void setShowTreeNodes(final boolean showTreeNodes) {
     myShowTreeNodes = showTreeNodes;
   }
 
