@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
-import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
+import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDownOrNull
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
@@ -149,7 +149,7 @@ private fun computeInvocationKind(block: GrFunctionalExpression): InvocationKind
   if ((call.invokedExpression as? GrReferenceExpression)?.referenceName !in knownMethods) {
     return UNKNOWN
   }
-  if (call.getArguments()?.none { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } == true) {
+  if (call.getArguments()?.none { (it as? ExpressionArgument)?.expression?.skipParenthesesDownOrNull() === block } == true) {
     return UNKNOWN
   }
   val method = call.multiResolve(false).firstOrNull()?.element as? GrGdkMethod

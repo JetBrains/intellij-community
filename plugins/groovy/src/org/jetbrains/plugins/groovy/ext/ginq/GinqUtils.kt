@@ -55,7 +55,8 @@ private fun extractComponent(type : PsiType, className: String) : PsiType? {
 const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
   "org.apache.groovy.ginq.provider.collection.runtime.Queryable"
 
-data class GinqAggregateFunction(val name: String, val argFqn: String?, val resultTypeFqn: String)
+const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD: String =
+  "org.apache.groovy.ginq.provider.collection.runtime.NamedRecord"
 
 // name to argument and result type
 private val aggregateFunctions: Map<String, Pair<String, String>> = mapOf(

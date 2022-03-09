@@ -49,21 +49,9 @@ data class GinqExpression(
   val select: GinqSelectFragment,
 ) {
   fun getDataSourceFragments(): Iterable<GinqDataSourceFragment> = listOf(from) + joins
-
-  fun isValid() : Boolean {
-    return from.isValid() &&
-           joins.all { it.isValid() } &&
-           where?.isValid() ?: true &&
-           groupBy?.isValid() ?: true &&
-           orderBy?.isValid() ?: true &&
-           limit?.isValid() ?: true &&
-           select.isValid()
-  }
 }
 
-sealed interface GinqQueryFragment {
-  fun isValid() : Boolean
-}
+sealed interface GinqQueryFragment
 
 interface GinqDataSourceFragment {
   val alias: GrReferenceExpression
@@ -74,18 +62,14 @@ data class GinqFromFragment(
   val fromKw: PsiElement,
   override val alias: GrReferenceExpression,
   override val dataSource: GrExpression,
-) : GinqDataSourceFragment, GinqQueryFragment {
-  override fun isValid() : Boolean = fromKw.isValid && alias.isValid && dataSource.isValid
-}
+) : GinqDataSourceFragment, GinqQueryFragment
 
 data class GinqJoinFragment(
   val joinKw: PsiElement,
   override val alias: GrReferenceExpression,
   override val dataSource: GrExpression,
   val onCondition: GinqOnFragment?,
-) : GinqDataSourceFragment, GinqQueryFragment {
-  override fun isValid() : Boolean = joinKw.isValid && alias.isValid && dataSource.isValid
-}
+) : GinqDataSourceFragment, GinqQueryFragment
 
 interface GinqFilterFragment : GinqQueryFragment {
   val filter: GrExpression
@@ -94,41 +78,30 @@ interface GinqFilterFragment : GinqQueryFragment {
 data class GinqOnFragment(
   val onKw: PsiElement,
   override val filter: GrBinaryExpression,
-) : GinqFilterFragment, GinqQueryFragment {
-  override fun isValid() : Boolean = onKw.isValid && filter.isValid
-}
+) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqWhereFragment(
   val whereKw: PsiElement,
   override val filter: GrExpression,
-) : GinqFilterFragment, GinqQueryFragment {
-  override fun isValid() : Boolean = whereKw.isValid && filter.isValid
-}
+) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqHavingFragment(
   val havingKw: PsiElement,
   override val filter: GrExpression,
-) : GinqFilterFragment, GinqQueryFragment {
-  override fun isValid() : Boolean = havingKw.isValid && filter.isValid
-}
+) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqGroupByFragment(
   val groupByKw: PsiElement,
   val classifiers: List<AliasedExpression>,
   val having: GinqHavingFragment?,
-) : GinqQueryFragment {
-  override fun isValid() : Boolean =
-    groupByKw.isValid && classifiers.all { it.alias?.isValid ?: true && it.expression.isValid } && having?.isValid() ?: true
-}
+) : GinqQueryFragment
 
 data class AliasedExpression(val expression: GrExpression, val alias: GrClassTypeElement?)
 
 data class GinqOrderByFragment(
   val orderByKw: PsiElement,
   val sortingFields: List<Ordering>,
-) : GinqQueryFragment {
-  override fun isValid() : Boolean = orderByKw.isValid && sortingFields.all { it.orderKw?.isValid ?: true && it.sorter.isValid }
-}
+) : GinqQueryFragment
 
 sealed interface Ordering {
   val orderKw: PsiElement?
@@ -170,27 +143,15 @@ data class GinqLimitFragment(
   val limitKw: PsiElement,
   val offset: GrExpression,
   val size: GrExpression?,
-) : GinqQueryFragment {
-  override fun isValid() : Boolean = limitKw.isValid && offset.isValid && size?.isValid ?: true
-}
+) : GinqQueryFragment
 
 data class GinqSelectFragment(
   val selectKw: PsiElement,
   val distinct: GrReferenceExpression?,
   val projections: List<AggregatableAliasedExpression>,
-) : GinqQueryFragment {
-  override fun isValid() : Boolean = selectKw.isValid && projections.all { it.alias?.isValid ?: true && it.aggregatedExpression.isValid && it.aggregator?.isValid ?: true }
-}
+) : GinqQueryFragment
 
-/**
- * [aggregator]?'('[aggregatedExpression]')' ['as' [alias]]
- */
 data class AggregatableAliasedExpression(
-  val aggregator: GrExpression?,
   val aggregatedExpression: GrExpression,
-  val over: GinqOverFragment?,
   val alias: GrClassTypeElement?,
 )
-
-data class GinqOverFragment(
-  val overKw: PsiElement)

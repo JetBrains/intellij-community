@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
+import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDownOrNull
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
@@ -179,8 +180,9 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>())
                         ?: return
         val parsedArguments = arguments.map {
-          val (aliased, alias) = if (it is GrSafeCastExpression) it.operand to it.castTypeElement?.castSafelyTo<GrClassTypeElement>() else it to null
-          AggregatableAliasedExpression(null, aliased, null, alias)
+          val deep = it.skipParenthesesDownOrNull()
+          val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.castSafelyTo<GrClassTypeElement>() else it to null
+          AggregatableAliasedExpression(aliased, alias)
         }
         parsedArguments.forEach {
           it.aggregatedExpression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)

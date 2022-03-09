@@ -15,8 +15,6 @@ import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
-import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordType
-import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordType.Companion.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD
 import org.jetbrains.plugins.groovy.ext.ginq.types.GrSyntheticNamedRecordClass
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -92,6 +90,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
     val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getStoredGinq()
+    val facade = JavaPsiFacade.getInstance(macroCall.project)
     if (ginq != null) {
       val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
       val container = if (invokedCall == "GQL") CommonClassNames.JAVA_UTIL_LIST else if (invokedCall == "GQ") ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE else null
@@ -100,9 +99,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val componentType = if (singleProjection != null) {
           singleProjection.aggregatedExpression.type ?: PsiType.NULL
         } else {
-          GrNamedRecordType(ginq)
+          val namedRecord = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, expression.resolveScope)
+          namedRecord?.let { GrSyntheticNamedRecordClass(ginq, it).type() } ?: PsiType.NULL
         }
-        val facade = JavaPsiFacade.getInstance(macroCall.project)
         return facade.findClass(container, macroCall.resolveScope)?.let {
           facade.elementFactory.createType(it, componentType)
         }

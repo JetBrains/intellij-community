@@ -359,4 +359,11 @@ select n
 """
   }
 
+  void testAliasInParentheses() {
+    testGinqHighlighting """
+from n in [1]
+select (n as e)
+"""
+  }
+
 }
