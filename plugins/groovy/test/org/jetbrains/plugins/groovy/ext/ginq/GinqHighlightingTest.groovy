@@ -343,4 +343,20 @@ select n
 """
   }
 
+  void testLimit() {
+    testGinqHighlighting """
+from n in [1, 2, 3, 4, 5]
+limit 3
+select n
+"""
+  }
+
+  void testLimitAndOffset() {
+    testGinqHighlighting """
+from n in [1, 2, 3, 4, 5]
+limit 1, 3
+select n
+"""
+  }
+
 }

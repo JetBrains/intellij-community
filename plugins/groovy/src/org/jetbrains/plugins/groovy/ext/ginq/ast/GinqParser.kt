@@ -170,6 +170,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
           recordError(methodCall, "Expected one or two arguments for 'limit'")
           return
         }
+        arguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
         container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
       }
       "select" -> {
