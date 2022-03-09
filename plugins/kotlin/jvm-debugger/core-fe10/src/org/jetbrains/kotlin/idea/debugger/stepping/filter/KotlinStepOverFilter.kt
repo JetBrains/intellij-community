@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.idea.debugger.stepping.filter
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.project.Project
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinFakeLineNumber
+import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.debugger.safeVariables
@@ -47,25 +47,22 @@ data class LocationToken(val lineNumber: Int, val inlineVariables: List<String>)
     }
 }
 
-class KotlinStepOverFilter(
-    val project: Project,
-    private val tokensToSkip: Set<LocationToken>,
-    private val callerInfo: StepOverCallerInfo
-) : KotlinMethodFilter {
+abstract class KotlinStepOverFilter(locationStepOverStartedFrom: Location) : KotlinMethodFilter {
+    private val callerInfo = StepOverCallerInfo.from(locationStepOverStartedFrom)
+
     override fun locationMatches(context: SuspendContextImpl, location: Location): Boolean {
         // Never stop on compiler generated fake line numbers.
         if (isKotlinFakeLineNumber(location)) return false
 
         val stackFrame = context.frameProxy?.stackFrame ?: return true
-        val token = LocationToken.from(stackFrame)
         val callerInfo = StepOverCallerInfo.from(location)
-
         if (callerInfo.methodName != null && callerInfo.methodSignature != null && this.callerInfo == callerInfo) {
-            return token.lineNumber >= 0 && token !in tokensToSkip
-        } else {
-            return true
+            return isAcceptable(location, LocationToken.from(stackFrame))
         }
+        return true
     }
+
+    abstract fun isAcceptable(location: Location, locationToken: LocationToken): Boolean
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         throw IllegalStateException("Should not be called from Kotlin hint")

@@ -6,9 +6,6 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.sun.jdi.request.StepRequest
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverFilter
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
-import org.jetbrains.kotlin.idea.debugger.stepping.filter.StepOverCallerInfo
 
 sealed class KotlinStepAction {
     object JvmStepOver : KotlinStepAction() {
@@ -31,9 +28,8 @@ sealed class KotlinStepAction {
         }
     }
 
-    class KotlinStepOver(private val tokensToSkip: Set<LocationToken>, private val callerInfo: StepOverCallerInfo) : KotlinStepAction() {
+    class KotlinStepOver(private val filter: KotlinMethodFilter) : KotlinStepAction() {
         override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
-            val filter = KotlinStepOverFilter(debugProcess.project, tokensToSkip, callerInfo)
             return KotlinStepActionFactory.createKotlinStepOverCommand(debugProcess, suspendContext, ignoreBreakpoints, filter)
         }
     }

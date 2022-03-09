@@ -14,6 +14,9 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import com.sun.jdi.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -22,20 +25,22 @@ import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineNumber
-import org.jetbrains.kotlin.idea.debugger.*
+import org.jetbrains.kotlin.idea.debugger.findElementAtLine
+import org.jetbrains.kotlin.idea.debugger.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.safeMethod
+import org.jetbrains.kotlin.idea.debugger.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverFilter
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverParamDefaultImplsMethodFilter
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.StepOverCallerInfo
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
-import kotlin.math.max
-import kotlin.math.min
 
 class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
     override fun getStepOverCommand(
@@ -61,7 +66,6 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
     }
 
-    @TestOnly
     fun getStepIntoCommand(
         suspendContext: SuspendContextImpl,
         ignoreFilters: Boolean,
@@ -70,7 +74,6 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
     }
 
-    @TestOnly
     fun getStepOverCommand(
         suspendContext: SuspendContextImpl,
         ignoreBreakpoints: Boolean,
@@ -79,7 +82,6 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return DebuggerSteppingHelper.createStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
-    @TestOnly
     fun getStepOutCommand(suspendContext: SuspendContextImpl, debugContext: DebuggerContextImpl): DebugProcessImpl.ResumeCommand? {
         return getStepOutCommand(suspendContext, debugContext.sourcePosition)
     }
@@ -100,55 +102,8 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
 private fun SuspendContextImpl.getSourcePosition(): SourcePosition? =
     debugProcess.debuggerContext.sourcePosition
 
-private operator fun PsiElement?.contains(element: PsiElement): Boolean {
-    return this?.textRange?.contains(element.textRange) ?: false
-}
-
-private fun findInlineFunctionCalls(sourcePosition: SourcePosition): List<KtCallExpression> {
-    fun isInlineCall(expr: KtCallExpression): Boolean {
-        val resolvedCall = expr.resolveToCall() ?: return false
-        return InlineUtil.isInline(resolvedCall.resultingDescriptor)
-    }
-
-    return findCallsOnPosition(sourcePosition, ::isInlineCall)
-}
-
-private fun findCallsOnPosition(sourcePosition: SourcePosition, filter: (KtCallExpression) -> Boolean): List<KtCallExpression> {
-    val file = sourcePosition.file as? KtFile ?: return emptyList()
-    val lineNumber = sourcePosition.line
-
-    val lineElement = findElementAtLine(file, lineNumber)
-
-    if (lineElement !is KtElement) {
-        if (lineElement != null) {
-            val call = findCallByEndToken(lineElement)
-            if (call != null && filter(call)) {
-                return listOf(call)
-            }
-        }
-
-        return emptyList()
-    }
-
-    val start = lineElement.startOffset
-    val end = lineElement.endOffset
-
-    val allFilteredCalls = CodeInsightUtils.findElementsOfClassInRange(file, start, end, KtExpression::class.java)
-        .map { KtPsiUtil.getParentCallIfPresent(it as KtExpression) }
-        .filterIsInstance<KtCallExpression>()
-        .filter { filter(it) }
-        .toSet()
-
-    // It is necessary to check range because of multiline assign
-    var linesRange = lineNumber..lineNumber
-    return allFilteredCalls.filter {
-        val shouldInclude = it.getLineNumber() in linesRange
-        if (shouldInclude) {
-            linesRange = min(linesRange.first, it.getLineNumber())..max(linesRange.last, it.getLineNumber(false))
-        }
-        shouldInclude
-    }
-}
+private operator fun PsiElement?.contains(element: PsiElement): Boolean =
+    this?.textRange?.contains(element.textRange) ?: false
 
 interface KotlinMethodFilter : MethodFilter {
     fun locationMatches(context: SuspendContextImpl, location: Location): Boolean
@@ -169,29 +124,21 @@ fun getStepOverAction(
         return KotlinStepAction.StepInto(KotlinStepOverParamDefaultImplsMethodFilter.create(location, lineNumbers))
     }
 
-    val inlinedFunctionArgumentRangesToSkip =
-        method.getInlineFunctionAndArgumentVariablesToBordersMap()
+    val inlinedFunctionArgumentRangesToSkip = method.getInlineFunctionAndArgumentVariablesToBordersMap()
             .filter { !it.value.contains(location) }
             .values
     val positionManager = suspendContext.debugProcess.positionManager
-    val tokensToSkip = mutableSetOf(token)
-    for (candidate in method.allLineLocations() ?: emptyList()) {
-        val candidateStackFrame = StackFrameForLocation(frameProxy.stackFrame, candidate)
-        val candidateToken = LocationToken.from(candidateStackFrame)
-
-        val isAcceptable = candidateToken.lineNumber >= 0
-                && candidateToken.lineNumber != token.lineNumber
-                && inlinedFunctionArgumentRangesToSkip.none { it.contains(candidate) }
-                && candidateToken.inlineVariables.none { it !in token.inlineVariables }
-                && !isInlineFunctionFromLibrary(positionManager, candidate, candidateToken)
-                && !candidate.isOnFunctionDeclaration(positionManager)
-
-        if (!isAcceptable) {
-            tokensToSkip += candidateToken
-        }
+    val filter = object : KotlinStepOverFilter(location) {
+        override fun isAcceptable(location: Location, locationToken: LocationToken): Boolean =
+            locationToken.lineNumber >= 0
+                    && locationToken.lineNumber != token.lineNumber
+                    && inlinedFunctionArgumentRangesToSkip.none { it.contains(location) }
+                    && locationToken.inlineVariables.none { it !in token.inlineVariables }
+                    && !isInlineFunctionFromLibrary(positionManager, location, locationToken)
+                    && !location.isOnFunctionDeclaration(positionManager)
     }
 
-    return KotlinStepAction.KotlinStepOver(tokensToSkip, StepOverCallerInfo.from(location))
+    return KotlinStepAction.KotlinStepOver(filter)
 }
 
 private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean  =
@@ -254,18 +201,6 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
     return false
 }
 
-private class StackFrameForLocation(private val original: StackFrame, private val location: Location) : StackFrame by original {
-    override fun location() = location
-
-    override fun visibleVariables(): List<LocalVariable> {
-        return location.method()?.variables()?.filter { it.isVisible(this) } ?: throw AbsentInformationException()
-    }
-
-    override fun visibleVariableByName(name: String?): LocalVariable {
-        return location.method()?.variablesByName(name)?.firstOrNull { it.isVisible(this) } ?: throw AbsentInformationException()
-    }
-}
-
 fun PsiElement.getLineRange(): IntRange? {
     val startLineNumber = getLineNumber(true)
     val endLineNumber = getLineNumber(false)
@@ -278,26 +213,16 @@ fun PsiElement.getLineRange(): IntRange? {
 
 fun getStepOutAction(location: Location, frameProxy: StackFrameProxyImpl): KotlinStepAction {
     val stackFrame = frameProxy.safeStackFrame() ?: return KotlinStepAction.StepOut
-    val method = location.safeMethod() ?: return KotlinStepAction.StepOut
     val token = LocationToken.from(stackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.StepOut
     if (token.inlineVariables.isEmpty()) {
         return KotlinStepAction.StepOut
     }
-
-    val tokensToSkip = mutableSetOf(token)
-
-    for (candidate in method.allLineLocations() ?: emptyList()) {
-        val candidateStackFrame = StackFrameForLocation(frameProxy.stackFrame, candidate)
-        val candidateToken = LocationToken.from(candidateStackFrame)
-
-        val isAcceptable = candidateToken.lineNumber >= 0
-                && candidateToken.lineNumber != token.lineNumber
-                && token.inlineVariables.any { it !in candidateToken.inlineVariables }
-
-        if (!isAcceptable) {
-            tokensToSkip += candidateToken
-        }
+    val filter = object : KotlinStepOverFilter(location) {
+        override fun isAcceptable(location: Location, locationToken: LocationToken): Boolean =
+            locationToken.lineNumber >= 0
+                    && locationToken.lineNumber != token.lineNumber
+                    && token.inlineVariables.any { it !in locationToken.inlineVariables }
     }
 
-    return KotlinStepAction.KotlinStepOver(tokensToSkip, StepOverCallerInfo.from(location))
+    return KotlinStepAction.KotlinStepOver(filter)
 }
