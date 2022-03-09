@@ -35,10 +35,9 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public void loadState(@NotNull Element state) {
     super.loadState(state);
     for (VirtualFile file : super.getFiles()) {
-      if (!OverrideFileTypeManager.isOverridable(file.getFileType())) {
-        continue;
+      if (OverrideFileTypeManager.isOverridable(file.getFileType())) {
+        OverrideFileTypeManager.getInstance().addFile(file, PlainTextFileType.INSTANCE);
       }
-      OverrideFileTypeManager.getInstance().addFile(file, PlainTextFileType.INSTANCE);
     }
   }
 }
