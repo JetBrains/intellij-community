@@ -1044,10 +1044,14 @@ public abstract class DialogWrapper {
    */
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
-      if (myDialogPanel != null) {
-        myDialogPanel.apply();
-      }
+      applyFields();
       close(OK_EXIT_CODE);
+    }
+  }
+
+  protected void applyFields() {
+    if (myDialogPanel != null) {
+      myDialogPanel.apply();
     }
   }
 
