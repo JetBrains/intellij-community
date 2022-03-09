@@ -113,6 +113,8 @@ public final class ExperimentalUI {
     paths.put("actions/cancel.svg", "/expui/general/close.svg");
     paths.put("actions/close.svg", "/expui/general/closeSmall.svg");
     paths.put("actions/closeHovered.svg", "/expui/general/closeSmallHovered.svg");
+    paths.put("actions/dependencyAnalyzer.svg", "/expui/build/dependencyAnalyzer.svg");
+    paths.put("images/updateFolders.svg", "/expui/build/updateFolders.svg");
     paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("general/balloonError.svg", "/expui/status/error.svg");
