@@ -272,6 +272,9 @@ object InlayHintsUtils {
     return update(newPresentation.content as Content, editor, factory)
   }
 
+  /**
+   * Note that the range may still be invalid if document doesn't match PSI
+   */
   fun getTextRangeWithoutLeadingCommentsAndWhitespaces(element: PsiElement): TextRange {
     val start = SyntaxTraverser.psiApi().children(element).firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: element
 
