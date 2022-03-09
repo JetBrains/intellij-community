@@ -138,7 +138,6 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun processResolve(macroCall: GrMethodCall,
-                              scope: PsiElement,
                               processor: PsiScopeProcessor,
                               state: ResolveState,
                               place: PsiElement): Boolean {
@@ -172,6 +171,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     }
     if (processor.shouldProcessMethods()) {
       val aggregate = resolveToAggregateFunction(place, name)
+                      ?: resolveInOverClause(place, name)
       if (aggregate != null) {
         return processor.execute(aggregate, state)
       }

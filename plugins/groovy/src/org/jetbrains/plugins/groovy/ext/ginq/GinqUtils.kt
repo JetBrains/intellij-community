@@ -6,8 +6,11 @@ package org.jetbrains.plugins.groovy.ext.ginq
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentsOfType
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
@@ -54,6 +57,9 @@ private fun extractComponent(type : PsiType, className: String) : PsiType? {
 
 const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
   "org.apache.groovy.ginq.provider.collection.runtime.Queryable"
+
+const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_WINDOW : String =
+  "org.apache.groovy.ginq.provider.collection.runtime.Window"
 
 const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD: String =
   "org.apache.groovy.ginq.provider.collection.runtime.NamedRecord"
@@ -108,4 +114,41 @@ fun resolveToAggregateFunction(place: PsiElement, name: String): PsiMethod? {
   proxy.returnType = actualReturnType
   proxy.addParameter(GrLightParameter("arg", actualArgType, place))
   return proxy
+}
+
+fun resolveInOverClause(place: PsiElement, name: String): PsiMethod? {
+  val facade = JavaPsiFacade.getInstance(place.project)
+  val over = place.parentsOfType<GrMethodCallExpression>().firstOrNull { call ->
+    call.invokedExpression
+      .castSafelyTo<GrReferenceExpression>()
+      ?.takeIf { it.referenceName == "over"  && it.qualifierExpression != null } != null
+  } ?: return null
+  val qualifier = (over.invokedExpression as GrReferenceExpression).qualifierExpression!!
+  if (place == over.invokedExpression) {
+    val method = GrLightMethodBuilder(place.manager, "over")
+    if (!over.argumentList.isEmpty) {
+      method.addParameter(GrLightParameter("pagination", null, place))
+    }
+    method.navigationElement = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, place.resolveScope)?.findMethodsByName("over", false)?.singleOrNull() ?: method
+    return method
+  } else if (PsiTreeUtil.isAncestor(qualifier, place, false)) {
+    return resolveInOverQualifier(place, name)
+  } else {
+    return resolveAsPagination(place, name)
+  }
+}
+
+fun resolveAsPagination(place: PsiElement, name: String): PsiMethod? {
+  return null
+}
+
+fun resolveInOverQualifier(place: PsiElement, name: String): PsiMethod? {
+  val facade = JavaPsiFacade.getInstance(place.project)
+  if (name == "rowNumber") {
+    val proxy = GrLightMethodBuilder(place.manager, "rowNumber")
+    proxy.setReturnType(JAVA_LANG_LONG, place.resolveScope)
+    proxy.navigationElement = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_WINDOW, place.resolveScope)?.findMethodsByName("rowNumber", false)?.singleOrNull() ?: proxy
+    return proxy
+  }
+  return null
 }
