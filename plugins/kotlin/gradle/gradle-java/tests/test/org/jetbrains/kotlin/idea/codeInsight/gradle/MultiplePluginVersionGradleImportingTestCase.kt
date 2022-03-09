@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.Tested
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
+import org.junit.AssumptionViolatedException
 import org.junit.Rule
 import org.junit.runners.Parameterized
 import java.io.File
@@ -193,4 +194,35 @@ private fun localKotlinGradlePluginExists(): Boolean {
         .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/${MultiplePluginVersionGradleImportingTestCase.masterKotlinPluginVersion}")
 
     return localKotlinGradlePlugin.exists()
+}
+
+/***
+ * KTIJ-21316 Some MPP tests are failing with KGP and currently bundled Kotlin IDE Plugin
+ * Such tests can be muted until new Kotlin IDE plugin is bundled
+ *
+ * This util function attempts to run failing test and in case it pass reports an error.
+ */
+fun MultiplePluginVersionGradleImportingTestCase.assumeFailsDueToKTIJ21316(code: () -> Unit) {
+    if (kotlinPluginParameter == "master") {
+        try {
+            code()
+        } catch (e: AssertionError) {
+            throw AssumptionViolatedException(
+                """
+                    KTIJ-21316: This test is expected to fail with latest Kotlin Gradle Plugin.
+                    Wait for upgrade of bundled Kotlin IDE Plugin to >=1.6.10
+                """.trimIndent(),
+                e
+            )
+        }
+
+        throw AssertionError(
+            """
+                KTIJ-21316: It seems like bundled Kotlin IDE Plugin was upgraded.
+                And this test is no longer failing. Please REMOVE function `assumeFailsDueToKTIJ21316`!
+            """.trimIndent()
+        )
+    } else {
+        code()
+    }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.assumeFailsDueToKTIJ21316
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -35,7 +36,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.0+")
-    fun testMultiModulesHmpp() {
+    fun testMultiModulesHmpp() = assumeFailsDueToKTIJ21316 {
         val macosX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
         val linuxX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
         val iosX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.IOS_X64)
@@ -485,7 +486,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.4.30+")
-    fun testHmppLibAndConsumer() {
+    fun testHmppLibAndConsumer() = assumeFailsDueToKTIJ21316 {
         assumeTrue(
             "Test ignored, because of regression in 1.5.0 https://youtrack.jetbrains.com/issue/KT-46417",
             kotlinPluginVersion != parseKotlinVersion("1.5.0")
