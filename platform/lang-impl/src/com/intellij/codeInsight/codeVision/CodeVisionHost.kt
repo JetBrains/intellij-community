@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
@@ -355,13 +356,14 @@ open class CodeVisionHost(val project: Project) {
       val providerWhoWantToUpdate = mutableListOf<String>()
 
       var everyProviderReadyToUpdate = true
+      val inlaySettingsEditor = isInlaySettingsEditor(editor)
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
         if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
-        if (lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
+        if (!inlaySettingsEditor && lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
           if (editor.lensContextOrThrow.hasProviderCodeVision(it.id)) {
             providerWhoWantToUpdate.add(it.id)
           }
@@ -373,8 +375,13 @@ open class CodeVisionHost(val project: Project) {
         }
         providerWhoWantToUpdate.add(it.id)
         try {
-          val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
-          results.addAll(result)
+          val state = it.computeForEditor2(editor, precalculatedUiThings[it.id])
+          if (state.isReady.not()) {
+            everyProviderReadyToUpdate = false
+          }
+          else {
+            results.addAll(state.result)
+          }
         }
         catch (e: Exception) {
           if (e is ControlFlowException) throw e
@@ -393,10 +400,6 @@ open class CodeVisionHost(val project: Project) {
         return@executeOnPooledThread
       }
 
-      if(results.isEmpty() && editor.lensContextOrThrow.hasOnlyPlaceholders()){
-        editor.lensContextOrThrow.discardPending()
-        return@executeOnPooledThread
-      }
 
       if (!inTestSyncMode) {
         application.invokeLater({
