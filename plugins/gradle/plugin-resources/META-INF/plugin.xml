@@ -178,6 +178,13 @@
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
 
+    <action id="Gradle.DependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerAction"/>
+
+    <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
+
     <group id="Gradle.View.ActionsToolbar.LeftPanel">
       <separator/>
       <reference id="Gradle.ExecuteTask"/>
@@ -189,29 +196,36 @@
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
     </group>
 
-    <group id="Gradle.View.ProjectMenu">
+    <group id="Gradle.View.ActionsToolbar.CenterPanel">
+      <separator/>
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
-      <add-to-group group-id="ExternalSystemView.ProjectMenu"/>
+      <reference id="Gradle.DependencyAnalyzer"/>
+      <separator/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="last"/>
     </group>
 
-    <group id="Gradle.View.BaseProjectMenu">
+    <group id="Gradle.View.ProjectMenu">
       <separator/>
+      <reference id="Gradle.OpenProjectCompositeConfiguration"/>
       <reference id="Gradle.RefreshDependencies"/>
+      <reference id="Gradle.DependencyAnalyzer"/>
       <separator/>
-      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="last"/>
+      <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
     </group>
 
-    <action id="Gradle.DependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerAction">
-      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="after"
-                    relative-to-action="Gradle.RefreshDependencies"/>
+    <group id="Gradle.View.ModuleMenu">
+      <separator/>
+      <reference id="Gradle.DependencyAnalyzer"/>
+      <separator/>
       <add-to-group group-id="ExternalSystemView.ModuleMenu" anchor="last"/>
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="after"
-                    relative-to-action="ExternalSystem.SelectProjectDataToImport"/>
-    </action>
-    <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
-      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
-      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
-    </action>
+    </group>
+
+    <group id="Gradle.View.DependencyMenu">
+      <separator/>
+      <reference id="Gradle.DependencyAnalyzer"/>
+      <separator/>
+      <add-to-group group-id="ExternalSystemView.DependencyMenu" anchor="last"/>
+    </group>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 

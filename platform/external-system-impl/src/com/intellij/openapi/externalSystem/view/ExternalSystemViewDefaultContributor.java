@@ -327,6 +327,12 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       return myName;
     }
 
+    @Nullable
+    @Override
+    protected String getMenuId() {
+      return "ExternalSystemView.DependencyMenu";
+    }
+
     @Override
     public @NotNull DependencyNode getDependencyNode() {
       return ObjectUtils.chooseNotNull(myReferencedNode, myDependencyNode);
