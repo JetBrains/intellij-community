@@ -21,7 +21,11 @@ function set_java_home() {
             export JAVA_HOME="${JDK_REPO}/win"
             ;;
         Darwin)
-            export JAVA_HOME="${JDK_REPO}/mac/Contents/Home"
+            if [[ "$(uname -m)" == "arm64" ]]; then
+                export JAVA_HOME="${JDK_REPO}/mac-arm64/Contents/Home"
+            else
+                export JAVA_HOME="${JDK_REPO}/mac/Contents/Home"
+            fi
             ;;
         *)
             export JAVA_HOME="${JDK_REPO}/linux"
