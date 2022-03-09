@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.view;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyNode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
@@ -18,6 +19,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,7 @@ import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 /**
  * @author Vladislav.Soroka
@@ -103,6 +106,10 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myDataNode != null ? myDataNode.getData() : null;
   }
 
+  public @Nullable DependencyNode getDependencyNode() {
+    return null;
+  }
+
   @Override
   public NodeDescriptor getParentDescriptor() {
     return myParent;
@@ -134,29 +141,29 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myExternalProjectsView.getTaskActivator();
   }
 
-  @Nullable
-  public <DataType extends ExternalSystemNode<?>> DataType findParent(Class<DataType> parentClass) {
+  public @Nullable <DataType> DataType findNode(Class<DataType> aClass, @NotNull Function<ExternalSystemNode<?>, Object> map) {
     ExternalSystemNode<?> node = this;
-    while (true) {
-      node = node.myParent;
-      if (node == null || parentClass.isInstance(node)) {
+    while (node != null) {
+      var data = map.apply(node);
+      if (aClass.isInstance(data)) {
         //noinspection unchecked
-        return (DataType)node;
+        return (DataType)data;
       }
+      node = node.myParent;
     }
+    return null;
   }
 
-  @Nullable
-  public <DataType> DataType findParentData(Class<DataType> parentDataClass) {
-    ExternalSystemNode<?> node = this;
-    while (true) {
-      node = node.myParent;
-      if (node == null) return null;
-      if (node.getData() != null && parentDataClass.isInstance(node.getData())) {
-        //noinspection unchecked
-        return (DataType)node.getData();
-      }
-    }
+  public @Nullable <DataType extends ExternalSystemNode<?>> DataType findNode(Class<DataType> aClass) {
+    return findNode(aClass, it -> it);
+  }
+
+  public @Nullable <DataType extends DependencyNode> DataType findDependencyNode(Class<DataType> aClass) {
+    return findNode(aClass, it -> it.getDependencyNode());
+  }
+
+  public @Nullable <DataType extends ExternalSystemNode<?>> DataType findParent(Class<DataType> aClass) {
+    return ObjectUtils.doIfNotNull(myParent, p -> p.findNode(aClass));
   }
 
   public boolean isVisible() {
