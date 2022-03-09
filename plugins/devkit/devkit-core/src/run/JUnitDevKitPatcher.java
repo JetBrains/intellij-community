@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
@@ -74,8 +75,11 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
               .forEach(l -> vm.add("--add-opens " + l));
           }
         }
-        catch (IOException e) {
-          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'");
+        catch (ProcessCanceledException e) {
+          throw e; //unreachable
+        }
+        catch (Throwable e) {
+          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
         }
       }
     }
