@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
 import com.intellij.dvcs.push.PrePushHandler
@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.config.GitSharedSettings
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
@@ -49,8 +48,7 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
     }
   }
 
-  override fun getPresentableName(): String =
-    DevKitBundle.message("push.commit.handler.name")
+  override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.handler.name")
 
   override fun handle(pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result {
     if (!handlerIsApplicable())
@@ -87,11 +85,11 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
     val commitAsIs = invokeAndWait(modalityState) {
       @Suppress("DialogTitleCapitalization")
       MessageDialogBuilder.yesNo(
-        DevKitBundle.message("push.commit.message.lacks.issue.reference.title"),
-        DevKitBundle.message("push.commit.message.lacks.issue.reference.body", commitsInfo)
+        DevKitGitBundle.message("push.commit.message.lacks.issue.reference.title"),
+        DevKitGitBundle.message("push.commit.message.lacks.issue.reference.body", commitsInfo)
       )
-        .yesText(DevKitBundle.message("push.commit.message.lacks.issue.reference.commit"))
-        .noText(DevKitBundle.message("push.commit.message.lacks.issue.reference.edit"))
+        .yesText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit"))
+        .noText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit"))
         .asWarning()
         .ask(project = null)
     }
