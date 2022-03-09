@@ -64,8 +64,6 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
   private Finder myFinder;
   private LookupFilter myFilter;
 
-  private String myFileSpitRegExp;
-
   protected boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
   private final Set<Action> myDisabledTextActions;
@@ -108,8 +106,6 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
     myFinder = finder;
     myFilter = filter;
-
-    myFileSpitRegExp = myFinder.getSeparator().replaceAll("\\\\", "\\\\\\\\");
 
     myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -436,7 +432,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     synchronized (myLock) {
       macroMap = myMacroMap;
     }
-    FileTextFieldUtil.processCompletion(result, myFinder, myFilter, myFileSpitRegExp, macroMap);
+    FileTextFieldUtil.processCompletion(result, myFinder, myFilter, macroMap);
   }
 
   static void addMacroPaths(CompletionResult result, String typedText, @NotNull Finder finder, Map<String, String> macroMap) {

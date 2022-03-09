@@ -94,6 +94,20 @@ public class LocalFsFinder implements Finder {
     return File.separator;
   }
 
+  @Override
+  public @NotNull List<String> split(@NotNull String path) {
+    try {
+      Path pathObj = Path.of(normalize(path));
+      List<String> result = new ArrayList<>(pathObj.getNameCount() + 1);
+      result.add(pathObj.getRoot().toString());
+      for (Path part : pathObj) result.add(part.toString());
+      return result;
+    }
+    catch (InvalidPathException e) {
+      return Finder.super.split(path);
+    }
+  }
+
   public LocalFsFinder withBaseDir(@Nullable Path baseDir) {
     myBaseDir = baseDir;
     return this;
