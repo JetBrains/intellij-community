@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -185,34 +185,36 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
                 )
             }
 
-            if (!kotlinCustomSettings.ALLOW_TRAILING_COMMA) {
-                inPosition(parent = VALUE_ARGUMENT_LIST, left = LPAR).customRule { parent, _, _ ->
-                    if (kotlinCommonSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && needWrapArgumentList(parent.requireNode().psi)) {
+            inPosition(parent = VALUE_ARGUMENT_LIST, left = LPAR).customRule { parent, _, _ ->
+                when {
+                    kotlinCommonSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && needWrapArgumentList(parent.requireNode().psi) -> {
                         Spacing.createDependentLFSpacing(
                             0, 0,
                             excludeLambdasAndObjects(parent),
                             commonCodeStyleSettings.KEEP_LINE_BREAKS,
                             commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE
                         )
-                    } else {
-                        createSpacing(0)
                     }
-                }
 
-                inPosition(parent = VALUE_ARGUMENT_LIST, right = RPAR).customRule { parent, left, _ ->
-                    when {
-                        kotlinCommonSettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE ->
-                            Spacing.createDependentLFSpacing(
-                                0, 0,
-                                excludeLambdasAndObjects(parent),
-                                commonCodeStyleSettings.KEEP_LINE_BREAKS,
-                                commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE
-                            )
-                        left.requireNode().elementType == COMMA -> // incomplete call being edited
-                            createSpacing(1)
-                        else ->
-                            createSpacing(0)
+                    kotlinCustomSettings.ALLOW_TRAILING_COMMA -> null
+                    else -> createSpacing(0)
+                }
+            }
+
+            inPosition(parent = VALUE_ARGUMENT_LIST, right = RPAR).customRule { parent, left, _ ->
+                when {
+                    kotlinCommonSettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE -> {
+                        Spacing.createDependentLFSpacing(
+                            0, 0,
+                            excludeLambdasAndObjects(parent),
+                            commonCodeStyleSettings.KEEP_LINE_BREAKS,
+                            commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE
+                        )
                     }
+
+                    kotlinCustomSettings.ALLOW_TRAILING_COMMA -> null
+                    left.requireNode().elementType == COMMA -> /* incomplete call being edited */ createSpacing(1)
+                    else -> createSpacing(0)
                 }
             }
 

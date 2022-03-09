@@ -594,9 +594,19 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CallLParenthOnNextLine.after.kt");
             }
 
+            @TestMetadata("CallLParenthOnNextLineAndComma.after.kt")
+            public void testCallLParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallLParenthOnNextLineAndComma.after.kt");
+            }
+
             @TestMetadata("CallRParenthOnNextLine.after.kt")
             public void testCallRParenthOnNextLine() throws Exception {
                 runTest("testData/formatter/CallRParenthOnNextLine.after.kt");
+            }
+
+            @TestMetadata("CallRParenthOnNextLineAndComma.after.kt")
+            public void testCallRParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallRParenthOnNextLineAndComma.after.kt");
             }
 
             @TestMetadata("Cast.after.kt")
@@ -1746,9 +1756,19 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CallLParenthOnNextLine.after.inv.kt");
             }
 
+            @TestMetadata("CallLParenthOnNextLineAndComma.after.inv.kt")
+            public void testCallLParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallLParenthOnNextLineAndComma.after.inv.kt");
+            }
+
             @TestMetadata("CallRParenthOnNextLine.after.inv.kt")
             public void testCallRParenthOnNextLine() throws Exception {
                 runTest("testData/formatter/CallRParenthOnNextLine.after.inv.kt");
+            }
+
+            @TestMetadata("CallRParenthOnNextLineAndComma.after.inv.kt")
+            public void testCallRParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallRParenthOnNextLineAndComma.after.inv.kt");
             }
 
             @TestMetadata("CatchFinallyOnNewLine.after.inv.kt")
