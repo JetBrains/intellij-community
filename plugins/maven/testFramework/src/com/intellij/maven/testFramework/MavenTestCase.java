@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -150,7 +151,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
+        if (StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && StringUtil.notNullize(message).contains("Couldn't read shelf information")) {
           return false;
         }
         if ("JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category)) {
