@@ -84,7 +84,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   @Nullable
   protected Condition<? super AnAction> preselectAction() {
     LafManager lafMan = LafManager.getInstance();
-    return (a) -> ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
+    return (a) -> (a instanceof LafChangeAction) &&
+                  ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
   }
 
   public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
