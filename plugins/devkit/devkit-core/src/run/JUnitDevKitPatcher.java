@@ -75,7 +75,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
           }
         }
         catch (IOException e) {
-          LOG.warn("Failed to load --add-opens");
+          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'");
         }
       }
     }
