@@ -82,6 +82,8 @@ data class Constraints(
    *
    * 1. Layout manager aligns components by their visual bounds
    * 2. Cell size with gaps is calculated as component.bounds + [gaps] - [visualPaddings]
+   * 3. Cells that contain [JComponent] with own [GridLayout] calculate and update [visualPaddings] automatically.
+   * To disable this behaviour set [GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS] to false
    */
   var visualPaddings: Gaps = Gaps.EMPTY,
 
