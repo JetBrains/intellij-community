@@ -48,8 +48,11 @@ public final class ExistingTemplatesComponent {
   private Supplier<? extends EditorTextField> mySearchEditorProducer;
   private Runnable myExportRunnable;
   private Runnable myImportRunnable;
+  private final DefaultMutableTreeNode myNewTemplateNode;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
+  private boolean myTemplateChanged = false;
+  private boolean myNewTemplateAutoselect = false;
 
   ExistingTemplatesComponent(Project project) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
@@ -57,6 +60,9 @@ public final class ExistingTemplatesComponent {
     patternTree = createTree(patternTreeModel);
 
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
+
+    // 'New Template' node
+    root.add(myNewTemplateNode = new NewTemplateNode());
 
     // 'Recent' node
     root.add(myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
@@ -233,6 +239,17 @@ public final class ExistingTemplatesComponent {
     }
   }
 
+  public void templateChanged() {
+    if (!myTemplateChanged) {
+      myTemplateChanged = true;
+      if (!myNewTemplateNode.equals(getSelectedNode())) {
+        myNewTemplateAutoselect = true;
+        TreeUtil.selectInTree(myNewTemplateNode, false, patternTree, true);
+        myNewTemplateAutoselect = false;
+      }
+    }
+  }
+
   @NotNull
   private static DefaultMutableTreeNode getOrCreateCategoryNode(@NotNull DefaultMutableTreeNode root, String[] path) {
     DefaultMutableTreeNode result = root;
@@ -315,6 +332,8 @@ public final class ExistingTemplatesComponent {
     return panel;
   }
 
+  private static class NewTemplateNode extends DefaultMutableTreeNode {}
+
   private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
 
     private final TreeSpeedSearch mySpeedSearch;
@@ -333,14 +352,18 @@ public final class ExistingTemplatesComponent {
                                       boolean hasFocus) {
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       final Object userObject = treeNode.getUserObject();
-      if (userObject == null) return;
+      if (userObject == null && !(treeNode instanceof NewTemplateNode)) return;
 
       final Color background = UIUtil.getTreeBackground(selected, hasFocus);
       final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;
-      if (userObject instanceof Configuration) {
+      if (treeNode instanceof NewTemplateNode) {
+        text = SSRBundle.message("new.template.node");
+        style = SimpleTextAttributes.STYLE_BOLD;
+      }
+      else if (userObject instanceof Configuration) {
         text = ((Configuration)userObject).getName();
         style = SimpleTextAttributes.STYLE_PLAIN;
       }
@@ -355,8 +378,13 @@ public final class ExistingTemplatesComponent {
   public void onConfigurationSelected(Consumer<Configuration> consumer) {
     patternTree.addTreeSelectionListener(event -> {
       final var selection = patternTree.getLastSelectedPathComponent();
-      if (!(selection instanceof DefaultMutableTreeNode)) {
+      if (!(selection instanceof DefaultMutableTreeNode) || myNewTemplateAutoselect) {
         return;
+      }
+
+      if (myTemplateChanged) {
+        myNewTemplateNode.setUserObject(myConfigurationProducer.get());
+        myTemplateChanged = false;
       }
 
       final var configuration = ((DefaultMutableTreeNode)selection).getUserObject();

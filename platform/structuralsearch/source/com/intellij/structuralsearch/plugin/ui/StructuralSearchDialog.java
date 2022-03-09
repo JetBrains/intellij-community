@@ -147,6 +147,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       myAlarm.addRequest(runnable, 100);
     }
   };
+  private boolean myChangedConfiguration;
 
   // ui management
   private final Alarm myAlarm;
@@ -278,6 +279,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Override
   public void documentChanged(@NotNull final DocumentEvent event) {
     initValidation();
+    if (!myChangedConfiguration) {
+      myExistingTemplatesComponent.templateChanged();
+    }
   }
 
   private void initializeFilterPanel(@Nullable CompiledPattern compiledPattern) {
@@ -1070,7 +1074,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     if (searchEditor != null) {
       searchEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
-    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
+    setEditorContent(false, matchOptions.getSearchPattern());
 
     if (myReplace) {
       final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
@@ -1080,12 +1084,18 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (configuration instanceof ReplaceConfiguration) {
         final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
 
-        UIUtil.setContent(myReplaceCriteriaEdit, replaceOptions.getReplacement());
+        setEditorContent(true, replaceOptions.getReplacement());
       }
       else {
-        UIUtil.setContent(myReplaceCriteriaEdit, matchOptions.getSearchPattern());
+        setEditorContent(true, matchOptions.getSearchPattern());
       }
     }
+  }
+
+  private void setEditorContent(boolean replace, String text) {
+    myChangedConfiguration = true;
+    UIUtil.setContent(replace ? myReplaceCriteriaEdit : mySearchCriteriaEdit, text);
+    myChangedConfiguration = false;
   }
 
   private void saveConfiguration() {
