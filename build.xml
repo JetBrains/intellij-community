@@ -47,18 +47,21 @@
   <!-- build distribution archives for IntelliJ Community Edition in out/idea-ce/artifacts directory -->
   <!-- this is deprecated. please call installers.cmd directly -->
   <target name="build">
+    <echo message="***** Using ant is OBSOLETE, please call installers.cmd directly. See README.md *****" level="warning" />
     <jps-bootstrap class="OpenSourceCommunityInstallersBuildTarget" module="intellij.idea.community.build" />
   </target>
 
   <!-- run project tests -->
   <!-- this is deprecated. please use tests.cmd directly -->
   <target name="test">
+    <echo message="***** Using ant is OBSOLETE, please call tests.cmd directly. See README.md *****" level="warning" />
     <jps-bootstrap class="CommunityRunTestsBuildTarget" module="intellij.idea.community.build" />
   </target>
 
   <!-- Creates an updater-full.jar in ${intellij.build.output.root}/artifacts, it includes 'intellij.platform.updater' module with all its dependencies -->
   <!-- this is deprecated, please use full_updater.cmd directly -->
   <target name="fullupdater">
+    <echo message="***** Using ant is OBSOLETE, please call build/full_updater.cmd directly. See README.md *****" level="warning" />
     <jps-bootstrap class="FullUpdaterBuildTarget" module="intellij.idea.community.build" />
   </target>
 </project>
