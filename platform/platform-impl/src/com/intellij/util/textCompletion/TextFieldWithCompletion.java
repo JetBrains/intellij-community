@@ -45,7 +45,18 @@ public class TextFieldWithCompletion extends LanguageTextField {
                                  boolean autoPopup,
                                  boolean forceAutoPopup,
                                  boolean showHint) {
-    super(PlainTextLanguage.INSTANCE, project, value, new TextCompletionUtil.DocumentWithCompletionCreator(provider, autoPopup),
+    this(project, provider, value, oneLineMode, autoPopup, forceAutoPopup, showHint, false);
+  }
+
+  public TextFieldWithCompletion(@Nullable Project project,
+                                 @NotNull TextCompletionProvider provider,
+                                 @NotNull String value,
+                                 boolean oneLineMode,
+                                 boolean autoPopup,
+                                 boolean forceAutoPopup,
+                                 boolean showHint,
+                                 boolean forbidWordCompletion) {
+    super(PlainTextLanguage.INSTANCE, project, value, new TextCompletionUtil.DocumentWithCompletionCreator(provider, autoPopup, forbidWordCompletion),
           oneLineMode);
     myForceAutoPopup = forceAutoPopup;
     myShowHint = showHint;

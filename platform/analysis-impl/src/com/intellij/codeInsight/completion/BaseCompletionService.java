@@ -34,6 +34,8 @@ public class BaseCompletionService extends CompletionService {
   @ApiStatus.Internal
   public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
 
+  public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
+
   @Override
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
     myApiCompletionProcess = parameters.getProcess();

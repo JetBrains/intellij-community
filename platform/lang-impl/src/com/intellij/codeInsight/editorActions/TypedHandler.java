@@ -277,7 +277,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   public static void autoPopupCompletion(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {
-    if (charTyped == '.' || isAutoPopup(editor, file, charTyped)) {
+    boolean allowSlashes = Boolean.TRUE.equals(editor.getUserData(AutoPopupController.ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS));
+    if (charTyped == '.' || (allowSlashes && charTyped == '/') || isAutoPopup(editor, file, charTyped)) {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
   }
