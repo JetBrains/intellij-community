@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
   val parser = GinqParser(statementsOwner.statements.lastOrNull()?.castSafelyTo<GrExpression>())
   statementsOwner.statements.forEach { it.accept(parser) }
-  return gatherGinqExpression(parser.errors + parser.unrecognizedQueryErrors, parser.container)
+  return gatherGinqExpression(parser.errors, parser.container)
 }
 
 fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
@@ -62,15 +62,23 @@ private fun gatherGinqExpression(errors: List<ParsingError>,
 private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveElementVisitor() {
   val container: MutableList<GinqQueryFragment> = mutableListOf()
   val errors: MutableList<ParsingError> = mutableListOf()
-  val unrecognizedQueryErrors: MutableList<ParsingError> = mutableListOf()
+  var isTopLevel = true
 
   override fun visitMethodCall(methodCall: GrMethodCall) {
-    super.visitMethodCall(methodCall)// todo: i18n
+    if (isTopLevel) {
+      methodCall.invokedExpression.accept(this)
+      val currentTopLevel = isTopLevel
+      isTopLevel = false
+      methodCall.argumentList.accept(this)
+      isTopLevel = currentTopLevel
+    } else {
+      return super.visitMethodCall(methodCall)
+    }
+    // todo: i18n
     if (methodCall.getStoredGinq() != null) {
       // was parsed as standalone ginq somewhere above
       return
     }
-    clearUnrecognizedQueries(methodCall)
     val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
     if (callName == null) {
       recordError(methodCall.invokedExpression, "Expected method call")
@@ -192,7 +200,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
       "exists" -> { methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement?.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
-      else -> recordUnrecognizedQuery(methodCall)
+      else -> recordError(methodCall, "Unrecognized query")
     }
   }
 
@@ -208,21 +216,6 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
   }
   private fun recordError(element: PsiElement, message: @Nls String) {
     errors.add(element to message)
-  }
-
-  private fun recordUnrecognizedQuery(element: PsiElement) {
-    unrecognizedQueryErrors.add(element to "Unrecognized query")
-  }
-
-  private fun clearUnrecognizedQueries(call: GrMethodCall) {
-    // todo: n^2
-    call.argumentList.accept(object : GroovyRecursiveElementVisitor() {
-      override fun visitMethodCall(innerCall: GrMethodCall) {
-        unrecognizedQueryErrors.removeIf { it.first == innerCall }
-        innerCall.argumentList.accept(this)
-        innerCall.invokedExpression.accept(this)
-      }
-    })
   }
 
 }

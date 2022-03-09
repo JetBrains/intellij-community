@@ -126,7 +126,7 @@ fun resolveInOverClause(place: PsiElement, name: String): PsiMethod? {
   val qualifier = (over.invokedExpression as GrReferenceExpression).qualifierExpression!!
   if (place == over.invokedExpression) {
     val method = GrLightMethodBuilder(place.manager, "over")
-    if (!over.argumentList.isEmpty) {
+    if (over.argumentList.allArguments.isNotEmpty()) {
       method.addParameter(GrLightParameter("pagination", null, place))
     }
     method.navigationElement = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, place.resolveScope)?.findMethodsByName("over", false)?.singleOrNull() ?: method
