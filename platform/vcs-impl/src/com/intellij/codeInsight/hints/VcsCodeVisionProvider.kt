@@ -33,6 +33,7 @@ import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
+import java.lang.Integer.min
 import javax.swing.JComponent
 
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
@@ -63,10 +64,14 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
           if (visionLanguageContext.isAccepted(element)) {
             val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
             val codeAuthorInfo = getCodeAuthorInfo(element.project, textRange, editor, aspect)
+            val length = editor.document.textLength
+            val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
-            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()).apply { this.showInMorePopup = false })
+            val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
+            entry.showInMorePopup = false
+            lenses.add(adjustedRange to entry)
           }
         }
       }
