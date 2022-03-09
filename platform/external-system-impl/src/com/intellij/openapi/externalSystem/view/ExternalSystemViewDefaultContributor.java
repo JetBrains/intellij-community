@@ -240,6 +240,11 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     }
 
     @Override
+    public @Nullable DependencyNode getDependencyNode() {
+      return myDependenciesGraph;
+    }
+
+    @Override
     protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.PpLibFolder);
@@ -320,6 +325,11 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     @Override
     public String getName() {
       return myName;
+    }
+
+    @Override
+    public @NotNull DependencyNode getDependencyNode() {
+      return ObjectUtils.chooseNotNull(myReferencedNode, myDependencyNode);
     }
 
     @Override
