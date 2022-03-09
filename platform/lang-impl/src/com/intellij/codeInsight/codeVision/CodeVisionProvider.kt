@@ -43,9 +43,12 @@ interface CodeVisionProvider<T> {
    *
    * Note that this method is not executed under read action.
    */
-  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>>
+  @Deprecated("Use computeForEditor2 instead", ReplaceWith("computeForEditor2"))
+  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
-  /**
+  fun computeForEditor2(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
+
+    /**
    * Handle click on a lens at given range
    * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
    */

@@ -37,10 +37,10 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
 
   }
 
-  override fun computeForEditor(editor: Editor, uiData: Unit): List<Pair<TextRange, CodeVisionEntry>> {
-    val project = editor.project ?: return emptyList()
+  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
+    val project = editor.project ?: return CodeVisionState.NotReady()
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return emptyList()
+    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return CodeVisionState.NotReady()
     val document = editor.document
     // ranges may be slightly outdated, so we have to unsure that they fit the document
     val lenses = cached.codeVisionEntries.map {
@@ -53,7 +53,7 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
         it
       }
     }
-    return lenses
+    return CodeVisionState.Ready(lenses)
   }
 
   override fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry) {
