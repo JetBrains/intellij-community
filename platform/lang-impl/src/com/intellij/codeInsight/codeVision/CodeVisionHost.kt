@@ -156,6 +156,7 @@ open class CodeVisionHost(val project: Project) {
     val settings = CodeVisionSettings.instance()
     for (provider in providers) {
       if (!settings.isProviderEnabled(provider.id)) continue
+      if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue
       val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
         bypassBasedCollectors.add(placeholderCollector to provider)
@@ -235,6 +236,10 @@ open class CodeVisionHost(val project: Project) {
 
   open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
     val provider = getProviderById(entry.providerId) ?: return lifeSettingModel.defaultPosition.value
+    return getAnchorForProvider(provider)
+  }
+
+  private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind{
     return lifeSettingModel.codeVisionGroupToPosition[provider.name].nullIfDefault() ?: lifeSettingModel.defaultPosition.value
   }
 
