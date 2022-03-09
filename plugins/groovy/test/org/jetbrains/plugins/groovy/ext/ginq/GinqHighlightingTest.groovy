@@ -366,4 +366,13 @@ select (n as e)
 """
   }
 
+  void testRowNumber1() {
+    testGinqHighlighting """
+from n in [2, 1, null, 3]
+    select n, (rowNumber() over(orderby n)),
+              (rowNumber() over(orderby n in asc)),
+              (rowNumber() over(orderby n in desc))
+"""
+  }
+
 }

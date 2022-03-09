@@ -209,7 +209,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                 var rowsOrRangeArguments: List<GrExpression> = emptyList()
                 var localQualifier = argument.single()
                 while (localQualifier != null) {
-                  val call = localQualifier.castSafelyTo<GrMethodCallExpression>() ?: return super.visitMethodCallExpression(methodCallExpression)
+                  val call = localQualifier.castSafelyTo<GrMethodCall>() ?: return super.visitMethodCallExpression(methodCallExpression)
                   val invokedInner = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: return super.visitMethodCallExpression(methodCallExpression)
                   if (invokedInner.referenceName == "range" || invokedInner.referenceName == "rows") {
                     rowsOrRangeKw = invokedInner.referenceNameElement
@@ -238,7 +238,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
               super.visitMethodCallExpression(methodCallExpression)
             }
           })
-          AggregatableAliasedExpression(aliased, emptyList(), alias)
+          AggregatableAliasedExpression(aliased, windows, alias)
         }
         parsedArguments.forEach {
           it.aggregatedExpression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
