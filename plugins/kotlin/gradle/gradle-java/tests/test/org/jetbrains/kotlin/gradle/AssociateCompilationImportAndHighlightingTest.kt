@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.assumeFailsDueToKTIJ21316
 import org.jetbrains.kotlin.idea.codeInsight.gradle.facetSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
@@ -10,7 +11,7 @@ class AssociateCompilationImportAndHighlightingTest : MultiplePluginVersionGradl
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.4+")
-    fun testAssociateCompilationIntegrationTest() {
+    fun testAssociateCompilationIntegrationTest() = assumeFailsDueToKTIJ21316 {
         configureByFiles()
         importProject(false)
         val highlightingCheck = createHighlightingCheck(testLineMarkers = false)
