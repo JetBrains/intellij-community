@@ -1045,7 +1045,7 @@ private class NotificationComponent(val project: Project,
   private fun createAction(action: AnAction): JComponent {
     return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
                                         { link, _action -> runAction(_action, link) }, action) {
-      override fun getTextColor() = NotificationsUtil.getLinkButtonForeground()
+      override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
   }
 
@@ -1102,7 +1102,7 @@ private class NotificationComponent(val project: Project,
     component.isOpaque = false
     component.border = null
 
-    NotificationsUtil.configureHtmlEditorKit(component)
+    NotificationsUtil.configureHtmlEditorKit(component, false)
 
     if (myNotificationWrapper.notification!!.listener != null) {
       component.addHyperlinkListener { e ->
@@ -1127,7 +1127,7 @@ private class NotificationComponent(val project: Project,
     }
 
     myLafUpdater = Runnable {
-      NotificationsUtil.configureHtmlEditorKit(component)
+      NotificationsUtil.configureHtmlEditorKit(component, false)
       component.text = text
       component.revalidate()
       component.repaint()
@@ -1262,6 +1262,8 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class MyDropDownAction(val notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
@@ -1292,6 +1294,8 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class NotificationWrapper(notification: Notification) {
