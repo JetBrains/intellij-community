@@ -452,7 +452,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    NotificationsUtil.configureHtmlEditorKit(text);
+    NotificationsUtil.configureHtmlEditorKit(text, true);
     text.setForeground(layoutData.textColor);
 
     HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
@@ -717,7 +717,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     notification.setBalloon(balloon);
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
-      NotificationsUtil.configureHtmlEditorKit(text);
+      NotificationsUtil.configureHtmlEditorKit(text, true);
       text.setText(textContent);
       text.revalidate();
       text.repaint();
