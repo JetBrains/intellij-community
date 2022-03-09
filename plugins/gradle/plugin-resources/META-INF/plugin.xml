@@ -178,7 +178,9 @@
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
 
-    <action id="Gradle.DependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerAction"/>
+    <action id="Gradle.DependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="UML.Group"/>
+    </action>
 
     <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>

@@ -10,24 +10,64 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
 
 abstract class AbstractDependencyAnalyzerAction : AnAction(), DumbAware {
+
   abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
 
-  abstract fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView)
+  abstract fun getContributors(): List<Contributor<*>>
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val systemId = getSystemId(e) ?: return
     val dependencyAnalyzerManager = DependencyAnalyzerManager.getInstance(project)
     val dependencyAnalyzerView = dependencyAnalyzerManager.getOrCreate(systemId)
-    setSelectedState(e, dependencyAnalyzerView)
+    for (contributor in getContributors()) {
+      if (dependencyAnalyzerView.setSelectedState(contributor, e)) {
+        break
+      }
+    }
+  }
+
+  private fun <D : Any> DependencyAnalyzerView.setSelectedState(contributor: Contributor<D>, e: AnActionEvent): Boolean {
+    val selectedData = contributor.getSelectedData(e) ?: return false
+    val externalProjectPath = contributor.getExternalProjectPath(e, selectedData) ?: return false
+    val dependencyData = contributor.getDependencyData(e, selectedData)
+    val dependencyScope = contributor.getDependencyScope(e, selectedData)
+    if (dependencyData != null && dependencyScope != null) {
+      setSelectedDependency(externalProjectPath, dependencyData, dependencyScope)
+    }
+    else if (dependencyData != null) {
+      setSelectedDependency(externalProjectPath, dependencyData)
+    }
+    else {
+      setSelectedExternalProject(externalProjectPath)
+    }
+    return true
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
+    e.presentation.isEnabledAndVisible =
+      Registry.`is`("external.system.dependency.analyzer")
+      && getContributors().any { isApplicable(it, e) }
+  }
+
+  private fun <D : Any> isApplicable(contributor: Contributor<D>, e: AnActionEvent): Boolean {
+    val selectedData = contributor.getSelectedData(e) ?: return false
+    return contributor.getExternalProjectPath(e, selectedData) != null
   }
 
   init {
     templatePresentation.icon = AllIcons.Actions.DependencyAnalyzer
     templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
+  }
+
+  interface Contributor<Data : Any> {
+
+    fun getSelectedData(e: AnActionEvent): Data?
+
+    fun getExternalProjectPath(e: AnActionEvent, selectedData: Data): String?
+
+    fun getDependencyData(e: AnActionEvent, selectedData: Data): DependencyAnalyzerDependency.Data?
+
+    fun getDependencyScope(e: AnActionEvent, selectedData: Data): DependencyAnalyzerDependency.Scope?
   }
 }
