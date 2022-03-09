@@ -30,6 +30,7 @@ java.desktop/sun.swing=ALL-UNNAMED
 java.desktop/com.apple.eawt=ALL-UNNAMED
 java.desktop/com.apple.eawt.event=ALL-UNNAMED
 java.desktop/com.apple.laf=ALL-UNNAMED
+java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED
 jdk.attach/sun.tools.attach=ALL-UNNAMED
 jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED
 jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED
