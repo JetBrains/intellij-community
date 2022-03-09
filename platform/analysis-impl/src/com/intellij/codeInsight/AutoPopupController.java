@@ -29,7 +29,13 @@ public abstract class AutoPopupController {
    * Setting this user data key to the editor with a completion provider
    * removes from autopopup bottom panel with buttons and hints
    */
-  public static final Key<Boolean> SHOW_BOTTOM_PANEL_IN_LOOKUP_UI = Key.create("Show bottom panel in Auto-Popup");
+  public static final Key<Boolean> SHOW_BOTTOM_PANEL_IN_LOOKUP_UI = Key.create("Show Bottom Panel In Auto-Popup");
+  /**
+   * Setting this user data key to the editor with a completion provider
+   * allows showing auto popup for slashes
+   */
+  public static final Key<Boolean> ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS = Key.create("Allow Auto-Popup For Slashes In Paths");
+
   /**
    * If editor has Boolean.TRUE by this key completion popup would be shown without advertising text at the bottom.
    */

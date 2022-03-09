@@ -15,14 +15,41 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCompletion<T> {
-  private boolean myShowBottomPanel = false;
+  private final boolean myShowBottomPanel;
+  private final boolean myAllowAutoPopupWithSlash;
 
   public TextFieldWithAutoCompletionWithCache(@Nullable Project project,
                                               @NotNull TextFieldWithAutoCompletionWithCacheListProvider<T> provider,
-                                              boolean showCompletionHint, @Nullable String text, boolean showBottomPanel) {
-    super(project, provider, showCompletionHint, text);
+                                              boolean showCompletionHint, @Nullable String text) {
+    this(project, provider, showCompletionHint, text, true, false, false);
+  }
+
+  public TextFieldWithAutoCompletionWithCache(@Nullable Project project,
+                                              @NotNull TextFieldWithAutoCompletionWithCacheListProvider<T> provider,
+                                              boolean showCompletionHint, @Nullable String text,
+                                              boolean showBottomPanel) {
+    this(project, provider, showCompletionHint, text, showBottomPanel, false, false);
+  }
+
+  public TextFieldWithAutoCompletionWithCache(@Nullable Project project,
+                                              @NotNull TextFieldWithAutoCompletionWithCacheListProvider<T> provider,
+                                              boolean showCompletionHint, @Nullable String text,
+                                              boolean showBottomPanel, boolean allowAutoPopupWithSlash, boolean forbidWordCompletion) {
+    super(project, provider, showCompletionHint, forbidWordCompletion, text);
 
     myShowBottomPanel = showBottomPanel;
+    myAllowAutoPopupWithSlash = allowAutoPopupWithSlash;
+  }
+
+  @NotNull
+  public static TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
+                                                                    boolean prefixMatchesOnly,
+                                                                    @Nullable Project project,
+                                                                    @Nullable Icon icon,
+                                                                    boolean showCompletionHint,
+                                                                    @Nullable String text) {
+    return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon),
+                                                      showCompletionHint, text);
   }
 
   @NotNull
@@ -33,13 +60,31 @@ public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCo
                                                                     boolean showCompletionHint,
                                                                     @Nullable String text,
                                                                     boolean showBottomPanel) {
-    return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon), showCompletionHint, text, showBottomPanel);
+    return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon),
+                                                      showCompletionHint, text,
+                                                      showBottomPanel);
+  }
+
+  @NotNull
+  public static TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
+                                                                    boolean prefixMatchesOnly,
+                                                                    @Nullable Project project,
+                                                                    @Nullable Icon icon,
+                                                                    boolean showCompletionHint,
+                                                                    @Nullable String text,
+                                                                    boolean showBottomPanel,
+                                                                    boolean allowAutoPopupWithSlash,
+                                                                    boolean forbidWordCompletion) {
+    return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon),
+                                                      showCompletionHint, text,
+                                                      showBottomPanel, allowAutoPopupWithSlash, forbidWordCompletion);
   }
 
   @Override
   protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
     editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, myShowBottomPanel);
+    editor.putUserData(AutoPopupController.ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS, myAllowAutoPopupWithSlash);
     return editor;
   }
 
