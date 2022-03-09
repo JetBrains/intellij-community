@@ -3,7 +3,6 @@ package com.intellij.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A Processor + Flow, or the Poor man's Flow: a reactive-stream-like wrapper around [Processor].
@@ -82,6 +81,9 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
     @JvmStatic
     @JvmName("ofSequence")
     fun <T> Sequence<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
+
+    @JvmStatic
+    fun <T> Iterable<Plow<T>>.flattenPlow(): Plow<T> = of { pr -> all { it.processWith(pr) } }
 
     @JvmStatic
     fun <T> concat(vararg plows: Plow<T>): Plow<T> = of { pr -> plows.all { it.processWith(pr) } }
