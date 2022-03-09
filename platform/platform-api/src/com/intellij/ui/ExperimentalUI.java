@@ -110,6 +110,10 @@ public final class ExperimentalUI {
     paths.put("actions/edit.svg", "/expui/general/edit.svg");
     paths.put("actions/editSource.svg", "/expui/general/edit.svg");
     paths.put("actions/groupBy.svg", "/expui/general/groups.svg");
+    paths.put("actions/upload.svg", "/expui/general/upload.svg");
+    paths.put("actions/download.svg", "/expui/general/download.svg");
+    paths.put("actions/run_anything.svg", "/expui/general/runAnything.svg");
+    paths.put("actions/show.svg", "/expui/general/show.svg");
     paths.put("actions/cancel.svg", "/expui/general/close.svg");
     paths.put("actions/close.svg", "/expui/general/closeSmall.svg");
     paths.put("actions/closeHovered.svg", "/expui/general/closeSmallHovered.svg");
@@ -200,6 +204,7 @@ public final class ExperimentalUI {
     paths.put("actions/findAndShowNextMatches.svg", "expui/general/chevronDown.svg");
     paths.put("actions/findAndShowNextMatchesSmall.svg", "expui/general/chevronDown.svg");
     paths.put("general/filter.svg", "expui/general/filter.svg");
+    paths.put("vcs/history.svg", "/expui/general/history.svg");
     paths.put("vcs/changelist.svg", "expui/vcs/changelist.svg");
     paths.put("icons/outgoing.svg", "expui/vcs/changesPush@12x12.svg");
     paths.put("icons/incoming.svg", "expui/vcs/changesUpdate@12x12.svg");
