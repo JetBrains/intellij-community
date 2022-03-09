@@ -1,14 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.i18n
 
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/propertyQuotesValidation/")
 class DevKitPropertiesQuotesValidationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath(): String {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/propertyQuotesValidation"
+    return DevkitI18nTestUtil.TESTDATA_PATH + "inspections/propertyQuotesValidation"
   }
 
   @Throws(Exception::class)

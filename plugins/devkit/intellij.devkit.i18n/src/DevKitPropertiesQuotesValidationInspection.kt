@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.i18n
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.properties.PropertiesInspectionBase
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase
 import java.text.ChoiceFormat
 
 class DevKitPropertiesQuotesValidationInspection : PropertiesInspectionBase() {
@@ -27,7 +27,7 @@ class DevKitPropertiesQuotesValidationInspection : PropertiesInspectionBase() {
         val paramString = "{$quotedParam}"
         val idx = value.indexOf(paramString) + element.getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS)!!.startOffsetInParent 
         holder.registerProblem(element, TextRange(idx, idx + paramString.length),
-                               DevKitBundle.message("inspection.message.wrong.quotes.around.parameter.reference", paramString))
+                               DevKitI18nBundle.message("inspection.message.wrong.quotes.around.parameter.reference", paramString))
       }
     }
   }

@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
 import com.intellij.codeInspection.*;
@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
 import org.jetbrains.uast.UExpression;
@@ -131,7 +132,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     if (valueElement != null && valueElement.getStringValue() != null) {
       holder.createProblem(valueElement,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", valueElementName), null, fix);
+                           DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", valueElementName), null, fix);
     }
   }
 
@@ -141,7 +142,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     final BuildNumber buildNumber = PluginPlatformInfo.forDomElement(separator).getSinceBuildNumber();
     if (buildNumber != null && buildNumber.getBaselineVersion() >= 202) {
       holder.createProblem(separator, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.i18n.key"),
+                           DevKitI18nBundle.message("inspections.plugin.xml.i18n.key"),
                            null, new SeparatorKeyI18nQuickFix());
     }
   }
@@ -153,7 +154,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(parent);
 
     holder.createProblem(overrideText, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                         DevKitBundle.message("inspections.plugin.xml.i18n.name"),
+                         DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
                          null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null,
                                                                parent instanceof Action));
   }
@@ -171,7 +172,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup);
 
     holder.createProblem(actionOrGroup, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                         DevKitBundle.message("inspections.plugin.xml.i18n.name"),
+                         DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
                          null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null,
                                                                actionOrGroup instanceof Action));
   }
@@ -207,7 +208,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     final IPopupChooserBuilder<String> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(files)
       .setNamerForFiltering(x -> x)
-      .setTitle(DevKitBundle.message("inspections.plugin.xml.i18n.choose.bundle.4inspections.title")).
+      .setTitle(DevKitI18nBundle.message("inspections.plugin.xml.i18n.choose.bundle.4inspections.title")).
         setItemChosenCallback(selected -> {
           doFixConsumer.accept(selected);
         });
@@ -263,7 +264,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
     }
 
     @Override
@@ -304,7 +305,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
             psiFiles.add(tag.getContainingFile());
           }
           WriteCommandAction.runWriteCommandAction(
-            project, DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.command.name", "displayName"), null, () -> {
+            project, DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.command.name", "displayName"), null, () -> {
               for (XmlTag tag : tags) {
                 registerPropertyKey(project, tag, propertiesFile);
               }
@@ -358,7 +359,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitBundle.message("inspections.plugin.xml.i18n.name");
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.name");
     }
 
     @Override
@@ -416,7 +417,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
           psiFiles.add(t.getContainingFile());
         }
         WriteCommandAction
-          .runWriteCommandAction(project, DevKitBundle.message("inspections.plugin.xml.i18n.command.name"), null, () -> {
+          .runWriteCommandAction(project, DevKitI18nBundle.message("inspections.plugin.xml.i18n.command.name"), null, () -> {
                                    if (attachResourceBundle) {
                                      createResourceBundleTag(project, tags, propertiesFile);
                                    }
@@ -500,7 +501,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitBundle.message("inspections.plugin.xml.i18n.key");
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.key");
     }
 
     @Override
@@ -534,7 +535,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
             psiFiles.add(tag.getContainingFile());
           }
           WriteCommandAction.runWriteCommandAction(
-            project, DevKitBundle.message("inspections.plugin.xml.i18n.key.command.name"), null, () -> {
+            project, DevKitI18nBundle.message("inspections.plugin.xml.i18n.key.command.name"), null, () -> {
               for (XmlTag tag : tags) {
                 registerPropertyKey(project, tag, propertiesFile);
               }

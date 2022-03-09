@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.List;
@@ -112,7 +112,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     if (property == null) {
       if (required) {
         holder.createProblem(domElement,
-                             DevKitBundle.message("inspections.plugin.xml.capitalization.missing.resource.bundle.key", resourceKey));
+                             DevKitI18nBundle.message("inspections.plugin.xml.capitalization.missing.resource.bundle.key", resourceKey));
       }
     }
     else {
@@ -227,12 +227,12 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
       @Override
       public @IntentionName @NotNull String getName() {
-        return DevKitBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", escapedValue);
+        return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize", escapedValue);
       }
 
       @Override
       public @IntentionFamilyName @NotNull String getFamilyName() {
-        return DevKitBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize.family.name");
+        return DevKitI18nBundle.message("inspections.plugin.xml.capitalization.fix.properly.capitalize.family.name");
       }
 
       @Override
@@ -250,7 +250,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
 
     holder.createProblem(domElement,
-                         DevKitBundle.message("inspections.plugin.xml.capitalization.error",
+                         DevKitI18nBundle.message("inspections.plugin.xml.capitalization.error",
                                               escapedValue,
                                               capitalization == Nls.Capitalization.Title ? 0 : 1),
                          quickFix);

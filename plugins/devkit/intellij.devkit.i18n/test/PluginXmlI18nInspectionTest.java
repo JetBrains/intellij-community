@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -11,8 +11,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -23,7 +21,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
 
   @Override
   protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/pluginXmlI18n";
+    return DevkitI18nTestUtil.TESTDATA_PATH + "inspections/pluginXmlI18n";
   }
 
   @Override
@@ -66,7 +64,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
                                             "  </extension>\n" +
                                             "</idea-plugin>");
     IntentionAction action =
-      myFixture.getAvailableIntention(DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName"));
+      myFixture.getAvailableIntention(DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName"));
     assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResult("<idea-plugin>\n" +

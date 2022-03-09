@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/pluginXmlCapitalization/")
@@ -12,7 +11,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
 
   @Override
   protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/pluginXmlCapitalization";
+    return DevkitI18nTestUtil.TESTDATA_PATH + "inspections/pluginXmlCapitalization";
   }
 
   @Override
