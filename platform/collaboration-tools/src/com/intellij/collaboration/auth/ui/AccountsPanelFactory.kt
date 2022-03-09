@@ -6,6 +6,7 @@ import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
 import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
@@ -187,7 +188,8 @@ private constructor(private val disposable: Disposable,
                 detailsLoader.loadDetails(account)
               }
               catch (e: Throwable) {
-                AccountsDetailsLoader.Result.Error(e.message.orEmpty(), false)
+                val errorMessage = ExceptionUtil.getPresentableMessage(e)
+                AccountsDetailsLoader.Result.Error(errorMessage, false)
               }
               repaint(account)
             }
