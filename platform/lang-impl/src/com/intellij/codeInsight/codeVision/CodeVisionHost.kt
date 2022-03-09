@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -365,6 +367,9 @@ open class CodeVisionHost(val project: Project) {
         try {
           val result = it.computeForEditor(editor, precalculatedUiThings[it.id])
           results.addAll(result)
+        }
+        catch (e : ProcessCanceledException) {
+          throw e;
         }
         catch (e: Exception) {
           logger.error("Exception during computeForEditor for ${it.id}", e)
