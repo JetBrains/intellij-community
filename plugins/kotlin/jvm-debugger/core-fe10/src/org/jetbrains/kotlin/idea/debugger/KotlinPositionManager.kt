@@ -31,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
+import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
@@ -181,7 +183,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
             return KotlinReentrantSourcePosition(SourcePosition.createFromLine(psiFile, sourceLineNumber))
         }
-        return SourcePosition.createFromLine(psiFile, sourceLineNumber)
+        val sourcePosition = SourcePosition.createFromLine(psiFile, sourceLineNumber)
+        return decorateSourcePosition(location, sourcePosition)
     }
 
     private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
@@ -235,6 +238,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             .toList()
     }
 
+    class KotlinSourcePositionWithAllLineHighlighted(delegate: SourcePosition) : DelegateSourcePosition(delegate)
     class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)
 
     private fun getAlternativeSource(location: Location): PsiFile? {
@@ -486,6 +490,38 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 }
+
+private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
+    val lambda = sourcePosition.elementAt.parent
+    if (lambda !is KtFunctionLiteral) return sourcePosition
+    val lines = lambda.getLineRange() ?: return sourcePosition
+    if (!location.hasVisibleInlineLambdasOnLines(lines)) {
+        return KotlinPositionManager.KotlinSourcePositionWithAllLineHighlighted(sourcePosition)
+    }
+    return sourcePosition
+}
+
+private fun Location.getZeroBasedLineNumber(): Int =
+    DebuggerUtilsEx.getLineNumber(this, true)
+
+private fun Location.hasVisibleInlineLambdasOnLines(lines: IntRange): Boolean {
+    val method = safeMethod() ?: return false
+    return method.getInlineFunctionAndArgumentVariablesToBordersMap()
+        .asSequence()
+        .filter { (variable, _) ->
+            variable.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) &&
+                    variable is LocalVariableImpl &&
+                    variable.isVisible(this)
+        }
+        .any { (_, borders) ->
+            borders.start.getZeroBasedLineNumber() in lines &&
+                    borders.endInclusive.getZeroBasedLineNumber() in lines
+        }
+}
+
+// Copied from com.jetbrains.jdi.LocalVariableImpl.isVisible
+private fun LocalVariableImpl.isVisible(location: Location): Boolean =
+    scopeStart <= location && scopeEnd >= location
 
 internal fun Method.getInlineFunctionAndArgumentVariablesToBordersMap(): Map<LocalVariable, ClosedRange<Location>> {
     return getInlineFunctionOrArgumentVariables()
