@@ -33,7 +33,7 @@ public class DebuggerSteppingHelper {
                 if (location != null) {
                     try {
                         KotlinSteppingCommandProviderKt
-                                .getStepOverAction(location, sourcePosition, suspendContext, frameProxy)
+                                .getStepOverAction(location, suspendContext, frameProxy)
                                 .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
                                 .contextAction(suspendContext);
                         return;

@@ -12,8 +12,8 @@ import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
-import com.intellij.util.containers.addIfNotNull
 import com.sun.jdi.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -27,17 +27,13 @@ import org.jetbrains.kotlin.idea.debugger.stepping.filter.KotlinStepOverParamDef
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.LocationToken
 import org.jetbrains.kotlin.idea.debugger.stepping.filter.StepOverCallerInfo
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import kotlin.math.max
 import kotlin.math.min
 
@@ -159,8 +155,9 @@ interface KotlinMethodFilter : MethodFilter {
 }
 
 fun getStepOverAction(
-    location: Location, sourcePosition: SourcePosition,
-    suspendContext: SuspendContextImpl, frameProxy: StackFrameProxyImpl
+    location: Location,
+    suspendContext: SuspendContextImpl,
+    frameProxy: StackFrameProxyImpl
 ): KotlinStepAction {
     val stackFrame = frameProxy.safeStackFrame() ?: return KotlinStepAction.JvmStepOver
     val method = location.safeMethod() ?: return KotlinStepAction.JvmStepOver
@@ -172,22 +169,22 @@ fun getStepOverAction(
         return KotlinStepAction.StepInto(KotlinStepOverParamDefaultImplsMethodFilter.create(location, lineNumbers))
     }
 
-    val inlinedFunctionArgumentRangesToSkip = sourcePosition.collectInlineFunctionArgumentRangesToSkip()
+    val inlinedFunctionArgumentRangesToSkip =
+        method.getInlineFunctionAndArgumentVariablesToBordersMap()
+            .filter { !it.value.contains(location) }
+            .values
     val positionManager = suspendContext.debugProcess.positionManager
-
     val tokensToSkip = mutableSetOf(token)
     for (candidate in method.allLineLocations() ?: emptyList()) {
-        val candidateKotlinLineNumber =
-            suspendContext.getSourcePositionLine(candidate) ?:
-            candidate.safeKotlinPreferredLineNumber()
         val candidateStackFrame = StackFrameForLocation(frameProxy.stackFrame, candidate)
         val candidateToken = LocationToken.from(candidateStackFrame)
 
         val isAcceptable = candidateToken.lineNumber >= 0
                 && candidateToken.lineNumber != token.lineNumber
-                && inlinedFunctionArgumentRangesToSkip.none { range -> range.contains(candidateKotlinLineNumber) }
+                && inlinedFunctionArgumentRangesToSkip.none { it.contains(candidate) }
                 && candidateToken.inlineVariables.none { it !in token.inlineVariables }
                 && !isInlineFunctionFromLibrary(positionManager, candidate, candidateToken)
+                && !candidate.isOnFunctionDeclaration(positionManager)
 
         if (!isAcceptable) {
             tokensToSkip += candidateToken
@@ -196,6 +193,14 @@ fun getStepOverAction(
 
     return KotlinStepAction.KotlinStepOver(tokensToSkip, StepOverCallerInfo.from(location))
 }
+
+private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean  =
+    runReadAction {
+        val sourcePosition = positionManager.getSourcePosition(this) ?: return@runReadAction false
+        val file = sourcePosition.file as? KtFile ?: return@runReadAction false
+        val elementAtLine = findElementAtLine(file, sourcePosition.line)
+        elementAtLine is KtNamedFunction || elementAtLine?.parentOfType<KtParameterList>() != null
+    }
 
 internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): KotlinInlineFilter? {
     val location = suspendContext.location ?: return null
@@ -218,9 +223,6 @@ internal class KotlinInlineFilter(location: Location, method: Method) {
 fun Method.isSyntheticMethodForDefaultParameters(): Boolean {
     return isSynthetic && name().endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)
 }
-
-private fun SuspendContextImpl.getSourcePositionLine(location: Location) =
-    debugProcess.positionManager.getSourcePosition(location)?.line
 
 private fun isInlineFunctionFromLibrary(positionManager: PositionManager, location: Location, token: LocationToken): Boolean {
     if (token.inlineVariables.isEmpty()) {
@@ -252,60 +254,6 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
     return false
 }
 
-private fun SourcePosition.collectInlineFunctionArgumentRangesToSkip() = runReadAction {
-    val inlineFunctionCalls = findInlineFunctionCalls(this)
-    if (inlineFunctionCalls.isEmpty()) {
-        return@runReadAction emptyList()
-    }
-
-    val firstCall = inlineFunctionCalls.first()
-    val resolutionFacade = KotlinCacheService.getInstance(firstCall.project).getResolutionFacade(inlineFunctionCalls)
-    val bindingContext = resolutionFacade.analyze(firstCall, BodyResolveMode.FULL)
-
-    return@runReadAction inlineFunctionCalls.collectInlineFunctionArgumentRangesToSkip(bindingContext)
-}
-
-private fun List<KtCallExpression>.collectInlineFunctionArgumentRangesToSkip(bindingContext: BindingContext): List<IntRange> {
-    val ranges = mutableListOf<IntRange>()
-    for (call in this) {
-        ranges.addLambdaArgumentRanges(call)
-        val callDescriptor = call.getResolvedCall(bindingContext)?.resultingDescriptor ?: continue
-        ranges.addDefaultParametersRanges(call.valueArguments.size, callDescriptor)
-        /*
-            Also add the first line of the calling expression
-            to handle cases like this:
-                inline fun foo( // Add this line
-                    i: Int,
-                    j: Int
-                ) {
-                    ...
-                }
-        */
-        val callElement = callDescriptor.findPsi() as? KtElement ?: continue
-        val line = callElement.getLineNumber(start = true)
-        ranges.addIfNotNull(line..line)
-    }
-
-    return ranges
-}
-
-private fun MutableList<IntRange>.addLambdaArgumentRanges(call: KtCallExpression) {
-    for (arg in call.valueArguments) {
-        val expression = arg.getArgumentExpression()
-        val functionExpression = (expression as? KtLambdaExpression)?.functionLiteral ?: expression
-        val function = functionExpression as? KtFunction ?: continue
-        addIfNotNull(function.getLineRange())
-    }
-}
-
-private fun MutableList<IntRange>.addDefaultParametersRanges(nonDefaultArgumentsNumber: Int, callDescriptor: CallableDescriptor) {
-    val allArguments = callDescriptor.valueParameters
-    for (i in nonDefaultArgumentsNumber until allArguments.size) {
-        val argument = allArguments[i].findPsi() as? KtElement ?: continue
-        addIfNotNull(argument.getLineRange())
-    }
-}
-
 private class StackFrameForLocation(private val original: StackFrame, private val location: Location) : StackFrame by original {
     override fun location() = location
 
@@ -318,7 +266,7 @@ private class StackFrameForLocation(private val original: StackFrame, private va
     }
 }
 
-private fun KtElement.getLineRange(): IntRange? {
+fun PsiElement.getLineRange(): IntRange? {
     val startLineNumber = getLineNumber(true)
     val endLineNumber = getLineNumber(false)
     if (startLineNumber > endLineNumber) {
