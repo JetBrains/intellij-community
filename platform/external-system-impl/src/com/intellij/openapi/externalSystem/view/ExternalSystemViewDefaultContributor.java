@@ -322,6 +322,12 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       return myName;
     }
 
+    @Nullable
+    @Override
+    protected String getMenuId() {
+      return "ExternalSystemView.DependencyMenu";
+    }
+
     @Override
     protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
