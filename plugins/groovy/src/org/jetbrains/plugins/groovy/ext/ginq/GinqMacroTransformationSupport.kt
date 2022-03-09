@@ -75,7 +75,12 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
                                    nestedGinq.select.selectKw)
           keywords.addAll(nestedGinq.joins.mapNotNull { it.onCondition?.onKw })
           keywords.addAll(nestedGinq.joins.map { it.joinKw })
-          softKeywords.addAll((nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList()) + (nestedGinq.orderBy?.sortingFields?.mapNotNull { it.nullsKw } ?: emptyList()))
+          keywords.addAll(nestedGinq.select.projections.flatMap { projection ->
+            projection.windows.flatMap { listOfNotNull(it.overKw, it.rowsOrRangeKw, it.partitionKw, it.orderBy?.orderByKw) }
+          })
+          softKeywords.addAll((nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList()) +
+                              (nestedGinq.orderBy?.sortingFields?.mapNotNull { it.nullsKw } ?: emptyList()) +
+                              (nestedGinq.select.projections.flatMap { projection -> projection.windows.flatMap { window -> window.orderBy?.sortingFields?.flatMap { listOfNotNull(it.orderKw, it.nullsKw) } ?: emptyList() } }))
         }
         super.visitElement(element)
       }
@@ -125,9 +130,10 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement): Boolean {
-    getParsedGinqTree(macroCall) ?: return false
+    val tree = getParsedGinqTree(macroCall) ?: return false
+    val localRoots = tree.select.projections.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
     for (parent in element.parents(true)) {
-      if (parent.getUserData(rootGinq) != null) {
+      if (parent.getUserData(rootGinq) != null || localRoots.contains(parent)) {
         return false
       }
       if (parent.getUserData(UNTRANSFORMED_ELEMENT) != null) {

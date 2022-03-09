@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 
@@ -108,35 +106,13 @@ sealed interface Ordering {
   val nullsKw: PsiElement?
   val sorter: GrExpression
 
-  class Asc internal constructor(override val orderKw: PsiElement?,
-                                 override val nullsKw: PsiElement?,
-                                 override val sorter: GrExpression) : Ordering
+  data class Asc internal constructor(override val orderKw: PsiElement?,
+                                      override val nullsKw: PsiElement?,
+                                      override val sorter: GrExpression) : Ordering
 
-  class Desc internal constructor(override val orderKw: PsiElement?,
-                                  override val nullsKw: PsiElement?,
-                                  override val sorter: GrExpression) : Ordering
-
-  companion object {
-    fun from(expr: GrExpression): Ordering {
-      if (expr is GrBinaryExpression && expr.operationTokenType == GroovyElementTypes.KW_IN) {
-        val rightOperand = expr.rightOperand
-        val (orderKw, nullsKw) = if (rightOperand is GrReferenceExpression) {
-          rightOperand to null
-        } else if (rightOperand is GrMethodCall && rightOperand.invokedExpression is GrReferenceExpression) {
-          rightOperand.invokedExpression as GrReferenceExpression to
-            rightOperand.argumentList.expressionArguments.singleOrNull()?.takeIf { it.text == "nullsfirst" || it.text == "nullslast" }
-        } else null to null
-        return when (orderKw?.referenceName) {
-          "asc" -> Asc(orderKw, nullsKw, expr.leftOperand)
-          "desc" -> Desc(orderKw, nullsKw, expr.leftOperand)
-          else -> Asc(null, null, expr)
-        }
-      }
-      else {
-        return Asc(null, null, expr)
-      }
-    }
-  }
+  data class Desc internal constructor(override val orderKw: PsiElement?,
+                                       override val nullsKw: PsiElement?,
+                                       override val sorter: GrExpression) : Ordering
 }
 
 data class GinqLimitFragment(
@@ -153,5 +129,23 @@ data class GinqSelectFragment(
 
 data class AggregatableAliasedExpression(
   val aggregatedExpression: GrExpression,
+  val windows: List<GinqWindowFragment>,
   val alias: GrClassTypeElement?,
+)
+
+/**
+ * over(
+ *   [partitionby <expression> (, <expression>)*]
+ *   [orderby (<expression> [in asc | in desc]) (, <expression> [in asc | in desc])*
+ *      [rows <lower>, <upper> | range <lower>, <upper>]]
+ * )
+ */
+data class GinqWindowFragment(
+  val qualifier: GrExpression,
+  val overKw: PsiElement,
+  val partitionKw: PsiElement?,
+  val partitionArguments: List<GrExpression>,
+  val orderBy: GinqOrderByFragment?,
+  val rowsOrRangeKw: PsiElement?,
+  val rowsOrRangeArguments: List<GrExpression>,
 )

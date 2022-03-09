@@ -8,7 +8,9 @@ import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport
 import org.jetbrains.plugins.groovy.ext.ginq.joins
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -20,13 +22,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
 fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
-  val parser = GinqParser(statementsOwner.statements.lastOrNull()?.castSafelyTo<GrExpression>())
+  val parser = GinqParser()
   statementsOwner.statements.forEach { it.accept(parser) }
   return gatherGinqExpression(parser.errors, parser.container)
 }
 
 fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
-  GinqParser(psiGinq).also(psiGinq::accept).run { gatherGinqExpression(errors, container) }
+  GinqParser().also(psiGinq::accept).run { gatherGinqExpression(errors, container) }
 
 private fun gatherGinqExpression(errors: List<ParsingError>,
                                  container: List<GinqQueryFragment>): Pair<List<ParsingError>, GinqExpression?> {
@@ -59,7 +61,7 @@ private fun gatherGinqExpression(errors: List<ParsingError>,
 /**
  * **See:** org.apache.groovy.ginq.dsl.GinqAstBuilder
  */
-private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveElementVisitor() {
+private class GinqParser : GroovyRecursiveElementVisitor() {
   val container: MutableList<GinqQueryFragment> = mutableListOf()
   val errors: MutableList<ParsingError> = mutableListOf()
   var isTopLevel = true
@@ -163,7 +165,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
         container.add(GinqGroupByFragment(callKw, arguments, null))
       }
       "orderby" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map(Ordering.Companion::from)
+        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map(::getOrdering)
         if (arguments == null) {
           recordError(methodCall, "Expected a list of order fields")
           return
@@ -187,10 +189,56 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
           ?.takeIf { it.invokedExpression is GrReferenceExpression && (it.invokedExpression as GrReferenceExpression).referenceName == "distinct" }
         val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>())
                         ?: return
-        val parsedArguments = arguments.map {
-          val deep = it.skipParenthesesDownOrNull()
-          val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.castSafelyTo<GrClassTypeElement>() else it to null
-          AggregatableAliasedExpression(aliased, alias)
+        val parsedArguments = arguments.map { arg ->
+          val deep = arg.skipParenthesesDownOrNull()
+          val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.castSafelyTo<GrClassTypeElement>() else arg to null
+          val windows = mutableListOf<GinqWindowFragment>()
+          aliased.accept(object: GroovyRecursiveElementVisitor() {
+            override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
+              val invoked = methodCallExpression.invokedExpression.castSafelyTo<GrReferenceExpression>()?.takeIf { it.referenceName == "over" } ?: return super.visitMethodCallExpression(methodCallExpression)
+              val qualifier = invoked.qualifierExpression ?: return super.visitMethodCallExpression(methodCallExpression)
+              val argument = methodCallExpression.argumentList.allArguments.takeIf { it.size <= 1 } ?: return super.visitMethodCallExpression(methodCallExpression)
+              val overKw = invoked.referenceNameElement ?: return super.visitMethodCallExpression(methodCallExpression)
+              if (argument.isEmpty()) {
+                windows.add(GinqWindowFragment(qualifier, overKw, null, emptyList(), null, null, emptyList()))
+              } else {
+                var partitionKw: PsiElement? = null
+                var partitionArguments: List<GrExpression> = emptyList()
+                var orderBy: GinqOrderByFragment? = null
+                var rowsOrRangeKw: PsiElement? = null
+                var rowsOrRangeArguments: List<GrExpression> = emptyList()
+                var localQualifier = argument.single()
+                while (localQualifier != null) {
+                  val call = localQualifier.castSafelyTo<GrMethodCallExpression>() ?: return super.visitMethodCallExpression(methodCallExpression)
+                  val invokedInner = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: return super.visitMethodCallExpression(methodCallExpression)
+                  if (invokedInner.referenceName == "range" || invokedInner.referenceName == "rows") {
+                    rowsOrRangeKw = invokedInner.referenceNameElement
+                    rowsOrRangeArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
+                    rowsOrRangeArguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+                    localQualifier = invokedInner.qualifier
+                  } else if (invokedInner.referenceName == "partitionby") {
+                    partitionKw = invokedInner.referenceNameElement
+                    partitionArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
+                    partitionArguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+                    localQualifier = invokedInner.qualifier
+                  } else if (invokedInner.referenceName == "orderby") {
+                    val orderByKw = invokedInner.referenceNameElement!!
+                    val fields = call.argumentList.allArguments.toList().mapNotNull { it.castSafelyTo<GrExpression>()?.let(::getOrdering) }
+                    orderBy = GinqOrderByFragment(orderByKw, fields)
+                    orderBy.sortingFields.forEach { it.sorter.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+                    localQualifier = invokedInner.qualifier
+                  } else {
+                    return super.visitMethodCallExpression(methodCallExpression)
+                  }
+                }
+                windows.add(
+                  GinqWindowFragment(qualifier, overKw, partitionKw, partitionArguments, orderBy, rowsOrRangeKw, rowsOrRangeArguments))
+              }
+              qualifier.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+              super.visitMethodCallExpression(methodCallExpression)
+            }
+          })
+          AggregatableAliasedExpression(aliased, emptyList(), alias)
         }
         parsedArguments.forEach {
           it.aggregatedExpression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
@@ -205,7 +253,7 @@ private class GinqParser(val rootExpression: GrExpression?) : GroovyRecursiveEle
   }
 
   override fun visitExpression(expression: GrExpression) {
-    if (expression != rootExpression && isApproximatelyGinq(expression)) {
+    if (isApproximatelyGinq(expression)) {
       val (innerErrors) =
         CachedValuesManager.getCachedValue(expression, rootGinq, CachedValueProvider { CachedValueProvider.Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
       errors.addAll(innerErrors)
@@ -256,4 +304,26 @@ val ginqKw = setOf("from", "where", "groupby", "having", "orderby", "limit", "on
 
 fun PsiElement.getStoredGinq() : GinqExpression? {
   return this.getUserData(rootGinq)?.upToDateOrNull?.get()?.second
+}
+
+fun getOrdering(expr: GrExpression): Ordering {
+  if (expr is GrBinaryExpression && expr.operationTokenType == GroovyElementTypes.KW_IN) {
+    val rightOperand = expr.rightOperand
+    val (orderKw, nullsKw) = if (rightOperand is GrReferenceExpression) {
+      rightOperand to null
+    }
+    else if (rightOperand is GrMethodCall && rightOperand.invokedExpression is GrReferenceExpression) {
+      rightOperand.invokedExpression as GrReferenceExpression to
+        rightOperand.argumentList.expressionArguments.singleOrNull()?.takeIf { it.text == "nullsfirst" || it.text == "nullslast" }
+    }
+    else null to null
+    return when (orderKw?.referenceName) {
+      "asc" -> Ordering.Asc(orderKw, nullsKw, expr.leftOperand)
+      "desc" -> Ordering.Desc(orderKw, nullsKw, expr.leftOperand)
+      else -> Ordering.Asc(null, null, expr)
+    }
+  }
+  else {
+    return Ordering.Asc(null, null, expr)
+  }
 }

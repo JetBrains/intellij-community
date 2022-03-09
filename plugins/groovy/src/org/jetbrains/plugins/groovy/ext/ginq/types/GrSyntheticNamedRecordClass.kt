@@ -12,9 +12,8 @@ import org.jetbrains.plugins.groovy.ext.ginq.inferDataSourceComponentType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 
 /**
- * Some usages of a PsiType involve re-creating it with some psi factory. The result is a PsiImmediateClassType.
- * It means that we cannot store information about fields in an inheritor of PsiType.
- * Instead we use a "custom" PsiClass
+ * The results of GINQ execution reside in the `NamedRecord` class. This class does not provide any syntactic/bytecode info
+ * about its runtime contents, so we should predict the "fields" by our own means. This is similar to map literals.
  */
 class GrSyntheticNamedRecordClass(val typeParameters: List<PsiTypeParameter>,
                                   val typeMap: Map<String, Lazy<PsiType>>,
