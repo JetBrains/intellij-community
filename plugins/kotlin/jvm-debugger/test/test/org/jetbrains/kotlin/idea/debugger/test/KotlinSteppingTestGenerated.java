@@ -503,11 +503,6 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
                 runTest("testData/stepping/stepOver/inlineInObject.kt");
             }
 
-            @TestMetadata("kt14296.kt")
-            public void testKt14296() throws Exception {
-                runTest("testData/stepping/stepOver/kt14296.kt");
-            }
-
             @TestMetadata("kt14869.kt")
             public void testKt14869() throws Exception {
                 runTest("testData/stepping/stepOver/kt14869.kt");
