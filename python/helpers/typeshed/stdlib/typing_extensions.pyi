@@ -36,7 +36,7 @@ _TC = TypeVar("_TC", bound=Type[object])
 
 # unfortunately we have to duplicate this class definition from typing.pyi or we break pytype
 class _SpecialForm:
-    def __getitem__(self, typeargs: Any) -> object: ...
+    def __getitem__(self, parameters: Any) -> object: ...
     if sys.version_info >= (3, 10):
         def __or__(self, other: Any) -> _SpecialForm: ...
         def __ror__(self, other: Any) -> _SpecialForm: ...
@@ -150,6 +150,7 @@ NotRequired: _SpecialForm
 LiteralString: _SpecialForm
 Unpack: _SpecialForm
 
+@final
 class TypeVarTuple:
     __name__: str
     def __init__(self, name: str) -> None: ...

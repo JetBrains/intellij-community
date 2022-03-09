@@ -4,6 +4,57 @@ from datetime import datetime
 from enum import Enum
 from typing import IO, Any, Mapping, MutableMapping
 
+if sys.version_info >= (3, 9):
+    __all__ = ["InvalidFileException", "FMT_XML", "FMT_BINARY", "load", "dump", "loads", "dumps", "UID"]
+elif sys.version_info >= (3, 8):
+    __all__ = [
+        "readPlist",
+        "writePlist",
+        "readPlistFromBytes",
+        "writePlistToBytes",
+        "Data",
+        "InvalidFileException",
+        "FMT_XML",
+        "FMT_BINARY",
+        "load",
+        "dump",
+        "loads",
+        "dumps",
+        "UID",
+    ]
+elif sys.version_info >= (3, 7):
+    __all__ = [
+        "readPlist",
+        "writePlist",
+        "readPlistFromBytes",
+        "writePlistToBytes",
+        "Data",
+        "InvalidFileException",
+        "FMT_XML",
+        "FMT_BINARY",
+        "load",
+        "dump",
+        "loads",
+        "dumps",
+    ]
+else:
+    __all__ = [
+        "readPlist",
+        "writePlist",
+        "readPlistFromBytes",
+        "writePlistToBytes",
+        "Plist",
+        "Data",
+        "Dict",
+        "InvalidFileException",
+        "FMT_XML",
+        "FMT_BINARY",
+        "load",
+        "dump",
+        "loads",
+        "dumps",
+    ]
+
 class PlistFormat(Enum):
     FMT_XML: int
     FMT_BINARY: int
@@ -54,10 +105,19 @@ if sys.version_info < (3, 9):
     def writePlistToBytes(value: Mapping[str, Any]) -> bytes: ...
 
 if sys.version_info < (3, 7):
-    class Dict(dict[str, Any]):
+    class _InternalDict(dict[str, Any]):
         def __getattr__(self, attr: str) -> Any: ...
         def __setattr__(self, attr: str, value: Any) -> None: ...
         def __delattr__(self, attr: str) -> None: ...
+
+    class Dict(_InternalDict):  # deprecated
+        def __init__(self, **kwargs: Any) -> None: ...
+
+    class Plist(_InternalDict):  # deprecated
+        def __init__(self, **kwargs: Any) -> None: ...
+        @classmethod
+        def fromFile(cls: type[Self], pathOrFile: str | IO[bytes]) -> Self: ...
+        def write(self, pathOrFile: str | IO[bytes]) -> None: ...
 
 if sys.version_info < (3, 9):
     class Data:
@@ -71,6 +131,7 @@ if sys.version_info >= (3, 8):
         def __index__(self) -> int: ...
         def __reduce__(self: Self) -> tuple[type[Self], tuple[int]]: ...
         def __hash__(self) -> int: ...
+        def __eq__(self, other: object) -> bool: ...
 
 class InvalidFileException(ValueError):
     def __init__(self, message: str = ...) -> None: ...

@@ -2,6 +2,22 @@ import sys
 from _typeshed import StrPath
 from typing import IO, Sequence
 
+__all__ = [
+    "knownfiles",
+    "inited",
+    "MimeTypes",
+    "guess_type",
+    "guess_all_extensions",
+    "guess_extension",
+    "add_type",
+    "init",
+    "read_mime_types",
+    "suffix_map",
+    "encodings_map",
+    "types_map",
+    "common_types",
+]
+
 if sys.version_info >= (3, 8):
     def guess_type(url: StrPath, strict: bool = ...) -> tuple[str | None, str | None]: ...
 

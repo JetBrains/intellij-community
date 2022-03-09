@@ -8,6 +8,22 @@ from typing_extensions import Literal
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
+__all__ = [
+    "NamedTemporaryFile",
+    "TemporaryFile",
+    "SpooledTemporaryFile",
+    "TemporaryDirectory",
+    "mkstemp",
+    "mkdtemp",
+    "mktemp",
+    "TMP_MAX",
+    "gettempprefix",
+    "tempdir",
+    "gettempdir",
+    "gettempprefixb",
+    "gettempdirb",
+]
+
 # global variables
 TMP_MAX: int
 tempdir: str | None
@@ -293,9 +309,7 @@ class SpooledTemporaryFile(IO[AnyStr]):
 
     def rollover(self) -> None: ...
     def __enter__(self: Self) -> Self: ...
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None: ...
+    def __exit__(self, exc: type[BaseException] | None, value: BaseException | None, tb: TracebackType | None) -> None: ...
     # These methods are copied from the abstract methods of IO, because
     # SpooledTemporaryFile implements IO.
     # See also https://github.com/python/typeshed/pull/2452#issuecomment-420657918.
@@ -347,9 +361,7 @@ class TemporaryDirectory(Generic[AnyStr]):
 
     def cleanup(self) -> None: ...
     def __enter__(self) -> AnyStr: ...
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None: ...
+    def __exit__(self, exc: type[BaseException] | None, value: BaseException | None, tb: TracebackType | None) -> None: ...
     if sys.version_info >= (3, 9):
         def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 

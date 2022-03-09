@@ -2,8 +2,8 @@ import enum
 import socket
 import sys
 from _typeshed import ReadableBuffer, Self, StrOrBytesPath, WriteableBuffer
-from typing import Any, Callable, ClassVar, Iterable, NamedTuple, Optional, Union, overload
-from typing_extensions import Literal, TypedDict
+from typing import Any, Callable, Iterable, NamedTuple, Optional, Union, overload
+from typing_extensions import Literal, TypedDict, final
 
 _PCTRTT = tuple[tuple[str, str], ...]
 _PCTRTTT = tuple[_PCTRTT, ...]
@@ -307,7 +307,8 @@ class SSLSocket(socket.socket):
     server_side: bool
     server_hostname: str | None
     session: SSLSession | None
-    session_reused: bool | None
+    @property
+    def session_reused(self) -> bool | None: ...
     if sys.version_info >= (3, 7):
         def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     else:
@@ -392,8 +393,11 @@ class SSLContext:
         maximum_version: TLSVersion
         minimum_version: TLSVersion
         sni_callback: Callable[[SSLObject, str, SSLContext], None | int] | None
-        sslobject_class: ClassVar[type[SSLObject]]
-        sslsocket_class: ClassVar[type[SSLSocket]]
+        # The following two attributes have class-level defaults.
+        # However, the docs explicitly state that it's OK to override these attributes on instances,
+        # so making these ClassVars wouldn't be appropriate
+        sslobject_class: type[SSLObject]
+        sslsocket_class: type[SSLSocket]
     if sys.version_info >= (3, 8):
         keylog_filename: str
         post_handshake_auth: bool
@@ -441,10 +445,13 @@ class SSLContext:
 
 class SSLObject:
     context: SSLContext
-    server_side: bool
-    server_hostname: str | None
+    @property
+    def server_side(self) -> bool: ...
+    @property
+    def server_hostname(self) -> str | None: ...
     session: SSLSession | None
-    session_reused: bool
+    @property
+    def session_reused(self) -> bool: ...
     if sys.version_info >= (3, 7):
         def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     else:
@@ -471,6 +478,7 @@ class SSLObject:
     if sys.version_info >= (3, 8):
         def verify_client_post_handshake(self) -> None: ...
 
+@final
 class MemoryBIO:
     pending: int
     eof: bool
@@ -478,6 +486,7 @@ class MemoryBIO:
     def write(self, __buf: bytes) -> int: ...
     def write_eof(self) -> None: ...
 
+@final
 class SSLSession:
     id: bytes
     time: int

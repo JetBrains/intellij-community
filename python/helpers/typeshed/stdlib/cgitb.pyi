@@ -4,6 +4,8 @@ from typing import IO, Any, Callable, Optional
 
 _ExcInfo = tuple[Optional[type[BaseException]], Optional[BaseException], Optional[TracebackType]]
 
+__UNDEF__: object  # undocumented sentinel
+
 def reset() -> str: ...  # undocumented
 def small(text: str) -> str: ...  # undocumented
 def strong(text: str) -> str: ...  # undocumented

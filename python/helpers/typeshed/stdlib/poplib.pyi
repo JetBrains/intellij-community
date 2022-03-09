@@ -1,7 +1,13 @@
 import socket
 import ssl
-from typing import Any, BinaryIO, Pattern, overload
+import sys
+from typing import Any, BinaryIO, NoReturn, Pattern, overload
 from typing_extensions import Literal
+
+if sys.version_info >= (3, 10):
+    __all__ = ["POP3", "error_proto", "POP3_SSL"]
+else:
+    __all__ = ["POP3", "error_proto"]
 
 _LongResp = tuple[bytes, list[bytes], int]
 
@@ -59,4 +65,4 @@ class POP3_SSL(POP3):
         context: ssl.SSLContext | None = ...,
     ) -> None: ...
     # "context" is actually the last argument, but that breaks LSP and it doesn't really matter because all the arguments are ignored
-    def stls(self, context: Any = ..., keyfile: Any = ..., certfile: Any = ...) -> bytes: ...
+    def stls(self, context: Any = ..., keyfile: Any = ..., certfile: Any = ...) -> NoReturn: ...

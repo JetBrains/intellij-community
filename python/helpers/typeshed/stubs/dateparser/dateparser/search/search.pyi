@@ -1,5 +1,7 @@
 from typing import Any
 
+from ..date import _DetectLanguagesFunction
+
 RELATIVE_REG: Any
 
 def date_is_relative(translation): ...
@@ -25,5 +27,13 @@ class DateSearchWithDetection:
     search: Any
     def __init__(self) -> None: ...
     language_detector: Any
-    def detect_language(self, text, languages): ...
-    def search_dates(self, text, languages: Any | None = ..., settings: Any | None = ...): ...
+    def detect_language(
+        self, text, languages, settings: Any | None = ..., detect_languages_function: _DetectLanguagesFunction | None = ...
+    ): ...
+    def search_dates(
+        self,
+        text,
+        languages: Any | None = ...,
+        settings: Any | None = ...,
+        detect_languages_function: _DetectLanguagesFunction | None = ...,
+    ): ...

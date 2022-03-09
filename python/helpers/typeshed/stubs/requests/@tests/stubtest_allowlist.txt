@@ -16,8 +16,6 @@ requests.api.patch
 requests.api.post
 requests.api.put
 requests.api.request
-requests.compat.OrderedDict.fromkeys
-requests.compat.OrderedDict.setdefault
 requests.delete
 requests.get
 requests.head
@@ -29,8 +27,6 @@ requests.patch
 requests.post
 requests.put
 requests.request
-requests.sessions.OrderedDict.fromkeys
-requests.sessions.OrderedDict.setdefault
 requests.sessions.Session.delete
 requests.sessions.Session.get
 requests.sessions.Session.head
@@ -41,5 +37,3 @@ requests.sessions.Session.put
 requests.sessions.SessionRedirectMixin.resolve_redirects
 requests.structures.LookupDict.__getattr__
 requests.structures.LookupDict.get
-requests.utils.OrderedDict.fromkeys
-requests.utils.OrderedDict.setdefault

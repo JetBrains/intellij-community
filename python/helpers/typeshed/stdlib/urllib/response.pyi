@@ -4,6 +4,8 @@ from email.message import Message
 from types import TracebackType
 from typing import IO, Any, BinaryIO, Callable, Iterable
 
+__all__ = ["addbase", "addclosehook", "addinfo", "addinfourl"]
+
 class addbase(BinaryIO):
     fp: IO[bytes]
     def __init__(self, fp: IO[bytes]) -> None: ...

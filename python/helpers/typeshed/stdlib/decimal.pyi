@@ -8,6 +8,8 @@ _Decimal = Union[Decimal, int]
 _DecimalNew = Union[Decimal, float, str, tuple[int, Sequence[int], int]]
 _ComparableNum = Union[Decimal, float, numbers.Rational]
 
+__libmpdec_version__: str
+
 class DecimalTuple(NamedTuple):
     sign: int
     digits: tuple[int, ...]

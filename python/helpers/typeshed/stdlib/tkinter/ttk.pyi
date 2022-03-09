@@ -5,6 +5,62 @@ from tkinter.font import _FontDescription
 from typing import Any, Callable, Union, overload
 from typing_extensions import Literal, TypedDict
 
+if sys.version_info >= (3, 7):
+    __all__ = [
+        "Button",
+        "Checkbutton",
+        "Combobox",
+        "Entry",
+        "Frame",
+        "Label",
+        "Labelframe",
+        "LabelFrame",
+        "Menubutton",
+        "Notebook",
+        "Panedwindow",
+        "PanedWindow",
+        "Progressbar",
+        "Radiobutton",
+        "Scale",
+        "Scrollbar",
+        "Separator",
+        "Sizegrip",
+        "Spinbox",
+        "Style",
+        "Treeview",
+        "LabeledScale",
+        "OptionMenu",
+        "tclobjs_to_py",
+        "setup_master",
+    ]
+else:
+    __all__ = [
+        "Button",
+        "Checkbutton",
+        "Combobox",
+        "Entry",
+        "Frame",
+        "Label",
+        "Labelframe",
+        "LabelFrame",
+        "Menubutton",
+        "Notebook",
+        "Panedwindow",
+        "PanedWindow",
+        "Progressbar",
+        "Radiobutton",
+        "Scale",
+        "Scrollbar",
+        "Separator",
+        "Sizegrip",
+        "Style",
+        "Treeview",
+        "LabeledScale",
+        "OptionMenu",
+        "tclobjs_to_py",
+        "setup_master",
+    ]
+
 def tclobjs_to_py(adict: dict[Any, Any]) -> dict[Any, Any]: ...
 def setup_master(master: Any | None = ...): ...
 

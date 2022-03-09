@@ -4,6 +4,38 @@ from _typeshed import Self
 from socket import socket as _socket
 from typing import Any, BinaryIO, Callable, ClassVar, Union
 
+if sys.platform == "win32":
+    __all__ = [
+        "BaseServer",
+        "TCPServer",
+        "UDPServer",
+        "ThreadingUDPServer",
+        "ThreadingTCPServer",
+        "BaseRequestHandler",
+        "StreamRequestHandler",
+        "DatagramRequestHandler",
+        "ThreadingMixIn",
+    ]
+else:
+    __all__ = [
+        "BaseServer",
+        "TCPServer",
+        "UDPServer",
+        "ThreadingUDPServer",
+        "ThreadingTCPServer",
+        "BaseRequestHandler",
+        "StreamRequestHandler",
+        "DatagramRequestHandler",
+        "ThreadingMixIn",
+        "ForkingUDPServer",
+        "ForkingTCPServer",
+        "ForkingMixIn",
+        "UnixStreamServer",
+        "UnixDatagramServer",
+        "ThreadingUnixStreamServer",
+        "ThreadingUnixDatagramServer",
+    ]
+
 _RequestType = Union[_socket, tuple[bytes, _socket]]
 _AddressType = Union[tuple[str, int], str]
 
