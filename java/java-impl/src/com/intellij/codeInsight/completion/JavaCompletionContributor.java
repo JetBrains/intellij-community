@@ -1126,6 +1126,15 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         context.setDummyIdentifier(dummyIdentifier);
       }
 
+      PsiElement element = file.findElementAt(context.getStartOffset());
+      if (file.getName().equals("module-info.java")) {
+        if (element instanceof PsiWhiteSpace &&
+            element.textContains('\n') &&
+            element.getTextRange().getStartOffset() == context.getStartOffset()) {
+          context.setReplacementOffset(context.getStartOffset());
+        }
+      }
+
       PsiLiteralExpression literal =
         PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiLiteralExpression.class, false);
       if (literal != null) {
@@ -1135,7 +1144,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         }
       }
 
-      PsiJavaCodeReferenceElement ref = getAnnotationNameIfInside(file.findElementAt(context.getStartOffset()));
+      PsiJavaCodeReferenceElement ref = getAnnotationNameIfInside(element);
       if (ref != null) {
         context.setReplacementOffset(ref.getTextRange().getEndOffset());
       }
