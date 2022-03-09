@@ -68,7 +68,7 @@ interface GroovyMacroTransformationSupport {
   /**
    * Allows to add references during the heavyweight resolve
    */
-  fun processResolve(macroCall: GrMethodCall, scope: PsiElement, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean = true
+  fun processResolve(macroCall: GrMethodCall, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean = true
 
   /**
    * Used to mimic a synthetic "variable declaration"

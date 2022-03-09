@@ -51,6 +51,8 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     if (processNonCode) {
       if (!ResolveUtil.processCategoryMembers(place, processor, initialState)) return false
+      val macroHandler = getMacroHandler(place)
+      if (macroHandler != null && !macroHandler.second.processResolve(macroHandler.first, processor, initialState, place)) return false
     }
     return true
   }
