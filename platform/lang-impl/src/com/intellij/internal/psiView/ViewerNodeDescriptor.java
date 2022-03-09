@@ -18,11 +18,13 @@ package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-public class ViewerNodeDescriptor extends NodeDescriptor {
+public class ViewerNodeDescriptor extends NodeDescriptor<Object> {
+  @NotNull
   private final Object myElement;
 
-  public ViewerNodeDescriptor(Project project, Object element, NodeDescriptor parentDescriptor) {
+  ViewerNodeDescriptor(@NotNull Project project, @NotNull Object element, NodeDescriptor<?> parentDescriptor) {
     super(project, parentDescriptor);
     myElement = element;
     myName = myElement.toString();
@@ -34,7 +36,7 @@ public class ViewerNodeDescriptor extends NodeDescriptor {
   }
 
   @Override
-  public Object getElement() {
+  public @NotNull Object getElement() {
     return myElement;
   }
 }
