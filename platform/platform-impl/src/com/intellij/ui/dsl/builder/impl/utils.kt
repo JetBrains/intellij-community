@@ -7,15 +7,18 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
-import kotlin.reflect.KMutableProperty0
 
 /**
  * Internal component properties for UI DSL
@@ -74,10 +77,15 @@ internal val JComponent.origin: JComponent
     }
   }
 
-internal fun getVisualPaddings(component: JComponent): Gaps {
+internal fun prepareVisualPaddings(component: JComponent): Gaps {
   val insets = component.insets
   val customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
-  return customVisualPaddings ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+
+  if (customVisualPaddings == null) {
+    return Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+  }
+  component.putClientProperty(GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS, false)
+  return customVisualPaddings
 }
 
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
