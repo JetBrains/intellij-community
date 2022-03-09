@@ -83,9 +83,6 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
     fun <T> Sequence<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
 
     @JvmStatic
-    fun <T> Iterable<Plow<T>>.flattenPlow(): Plow<T> = of { pr -> all { it.processWith(pr) } }
-
-    @JvmStatic
     fun <T> concat(vararg plows: Plow<T>): Plow<T> = of { pr -> plows.all { it.processWith(pr) } }
   }
 
