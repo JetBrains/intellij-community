@@ -7,12 +7,12 @@ import java.lang.invoke.MethodHandle
 
 internal class Message(
   @JvmField val topic: Topic<*>,
-  @JvmField val method: MethodHandle,
   // we don't bind args as part of MethodHandle creation, because object is not known yet - so, MethodHandle here is not ready to use
+  @JvmField val method: MethodHandle,
   @JvmField val methodName: String,
   // it allows us to cache MethodHandle per method and partially reuse it
-  @JvmField val args: Array<Any>?,
-  @JvmField val handlers: Array<Any>,
+  @JvmField val args: Array<Any?>?,
+  @JvmField val handlers: Array<Any?>,
   @JvmField val bus: MessageBusImpl,
 ) {
   @JvmField
@@ -23,11 +23,6 @@ internal class Message(
   @JvmField var currentHandlerIndex = 0
 
   override fun toString(): String {
-    return "Message(" +
-           "topic=" + topic +
-           ", method=" + methodName +
-           ", args=" + args.contentToString() +
-           ", handlers=" + handlers.contentToString() +
-           ')'
+    return "Message(topic=$topic, method=$methodName, args=${args.contentToString()}, handlers=${handlers.contentToString()})"
   }
 }

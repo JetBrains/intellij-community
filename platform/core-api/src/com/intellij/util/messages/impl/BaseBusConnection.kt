@@ -1,94 +1,91 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.messages.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.messages.impl
 
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.messages.Topic
+import com.intellij.util.messages.impl.MessageBusImpl.MessageHandlerHolder
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Predicate
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
+internal abstract class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHolder {
+  @JvmField
+  protected var bus: MessageBusImpl?
+  @JvmField
+  protected val subscriptions = AtomicReference(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
 
-abstract class BaseBusConnection implements MessageBusImpl.MessageHandlerHolder {
-  protected MessageBusImpl bus;
-  protected final AtomicReference</*(@NotNull Topic<L>, @NotNull L) pairs*/Object[]> subscriptions = new AtomicReference<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+  override val isDisposed: Boolean
+    get() = bus == null
 
-  BaseBusConnection(@NotNull MessageBusImpl bus) {
-    this.bus = bus;
+  init {
+    this.bus = bus
   }
 
-  public final <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) {
-    Object[] list;
-    Object[] newList;
+  fun <L : Any> subscribe(topic: Topic<L>, handler: L) {
+    var list: Array<Any>
+    var newList: Array<Any>
     do {
-      list = subscriptions.get();
-      if (list.length == 0) {
-        newList = new Object[]{topic, handler};
+      list = subscriptions.get()
+      if (list.isEmpty()) {
+        newList = arrayOf(topic, handler)
       }
       else {
-        int size = list.length;
-        newList = Arrays.copyOf(list, size + 2);
-        newList[size] = topic;
-        newList[size + 1] = handler;
+        val size = list.size
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+        newList = Arrays.copyOf(list, size + 2)
+        newList[size] = topic
+        newList[size + 1] = handler
       }
     }
-    while (!subscriptions.compareAndSet(list, newList));
-    bus.notifyOnSubscription(topic);
+    while (!subscriptions.compareAndSet(list, newList))
+    bus!!.notifyOnSubscription(topic)
   }
 
-  @Override
-  public final <L> void collectHandlers(@NotNull Topic<L> topic, @NotNull List<? super L> result) {
-    Object[] list = subscriptions.get();
-    for (int i = 0, n = list.length; i < n; i += 2) {
-      if (list[i] == topic) {
-        //noinspection unchecked
-        result.add((L)list[i + 1]);
+  override fun collectHandlers(topic: Topic<*>, result: MutableList<Any>) {
+    val list = subscriptions.get()
+    var i = 0
+    val n = list.size
+    while (i < n) {
+      if (list[i] === topic) {
+        result.add(list[i + 1])
       }
+      i += 2
     }
   }
 
-  @Override
-  public final void disconnectIfNeeded(@NotNull Predicate<? super Class<?>> predicate) {
+  override fun disconnectIfNeeded(predicate: Predicate<Class<*>>) {
     while (true) {
-      Object[] list = subscriptions.get();
-      List<Object> newList = null;
-      for (int i = 0; i < list.length; i += 2) {
-        if (predicate.test(list[i + 1].getClass())) {
+      val list = subscriptions.get()
+      var newList: MutableList<Any>? = null
+      var i = 0
+      while (i < list.size) {
+        if (predicate.test(list[i + 1].javaClass)) {
           if (newList == null) {
-            newList = new ArrayList<>(Arrays.asList(list).subList(0, i));
+            newList = list.asList().subList(0, i).toMutableList()
           }
         }
         else if (newList != null) {
-          newList.add(list[i]);
-          newList.add(list[i + 1]);
+          newList.add(list[i])
+          newList.add(list[i + 1])
         }
+        i += 2
       }
 
       if (newList == null) {
-        return;
+        return
       }
 
       if (newList.isEmpty()) {
-        disconnect();
-        return;
+        disconnect()
+        return
       }
-      else if (subscriptions.compareAndSet(list, newList.toArray())) {
-        break;
+      else if (subscriptions.compareAndSet(list, newList.toTypedArray())) {
+        break
       }
     }
   }
 
-  protected abstract void disconnect();
+  protected abstract fun disconnect()
 
-  @Override
-  public final boolean isDisposed() {
-    return bus == null;
-  }
-
-  @Override
-  public final String toString() {
-    return Arrays.toString(subscriptions.get());
-  }
+  override fun toString() = subscriptions.get().contentToString()
 }

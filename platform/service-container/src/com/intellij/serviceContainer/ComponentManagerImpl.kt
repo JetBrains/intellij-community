@@ -1145,6 +1145,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     isServicePreloadingCancelled = true
   }
 
+  @Deprecated("Deprecated in Java")
   @Suppress("DEPRECATION")
   final override fun getComponent(name: String): BaseComponent? {
     checkState()

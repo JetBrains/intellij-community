@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
 import org.assertj.core.api.Assertions
@@ -19,7 +20,7 @@ class CwmMessageBusTest : LightPlatformTestCase() {
 
   @Test
   fun testMessageSetsCallerClientIdForHandler() {
-    val bus = RootBus(MyMockMessageBusOwner())
+    val bus = MessageBusFactory.getInstance().createMessageBus(MyMockMessageBusOwner(), null)
     Disposer.register(testRootDisposable, bus)
 
     val eventsLog: MutableList<String> = ArrayList()

@@ -1,335 +1,353 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.messages.impl;
+package com.intellij.util.messages.impl
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.ListenerDescriptor;
-import com.intellij.util.messages.MessageBusOwner;
-import com.intellij.util.messages.Topic;
-import com.intellij.util.messages.Topic.BroadcastDirection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.messages.MessageBusOwner
+import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.BroadcastDirection
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import java.lang.reflect.InvocationHandler
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentMap
+import java.util.function.BiConsumer
+import java.util.function.Predicate
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.function.Predicate;
+private val EMPTY_MAP = HashMap<String, MutableList<ListenerDescriptor>>()
 
-class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
-  private final List<MessageBusImpl> childBuses = ContainerUtil.createLockFreeCopyOnWriteList();
-  private volatile @NotNull Map<String, List<ListenerDescriptor>> topicClassToListenerDescriptor = Collections.emptyMap();
+@Suppress("ReplaceGetOrSet")
+@VisibleForTesting
+@Internal
+open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
+  private val childBuses = ContainerUtil.createLockFreeCopyOnWriteList<MessageBusImpl>()
 
-  CompositeMessageBus(@NotNull MessageBusOwner owner, @NotNull CompositeMessageBus parentBus) {
-    super(owner, parentBus);
-  }
+  @Volatile
+  private var topicClassToListenerDescriptor: MutableMap<String, MutableList<ListenerDescriptor>> = EMPTY_MAP
+
+  constructor(owner: MessageBusOwner, parentBus: CompositeMessageBus) : super(owner, parentBus)
 
   // root message bus constructor
-  CompositeMessageBus(@NotNull MessageBusOwner owner) {
-    super(owner);
-  }
+  internal constructor(owner: MessageBusOwner) : super(owner)
 
   /**
    * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
    */
-  @Override
-  public final void setLazyListeners(@NotNull Map<String, List<ListenerDescriptor>> map) {
-    if (topicClassToListenerDescriptor == Collections.<String, List<ListenerDescriptor>>emptyMap()) {
-      topicClassToListenerDescriptor = map;
+  override fun setLazyListeners(map: ConcurrentMap<String, MutableList<ListenerDescriptor>>) {
+    val topicClassToListenerDescriptor = topicClassToListenerDescriptor
+    if (topicClassToListenerDescriptor === EMPTY_MAP) {
+      this.topicClassToListenerDescriptor = map
     }
     else {
-      topicClassToListenerDescriptor.putAll(map);
+      topicClassToListenerDescriptor.putAll(map)
       // adding project level listener for app level topic is not recommended, but supported
-      if (rootBus != this) {
-        rootBus.subscriberCache.clear();
+      if (rootBus !== this) {
+        rootBus.subscriberCache.clear()
       }
-      subscriberCache.clear();
+      subscriberCache.clear()
     }
   }
 
-  @Override
-  final boolean hasChildren() {
-    return !childBuses.isEmpty();
+  override fun hasChildren() = !childBuses.isEmpty()
+
+  fun addChild(bus: MessageBusImpl) {
+    childrenListChanged(this)
+    childBuses.add(bus)
   }
 
-  final void addChild(@NotNull MessageBusImpl bus) {
-    childrenListChanged(this);
-    childBuses.add(bus);
+  fun onChildBusDisposed(childBus: MessageBusImpl) {
+    val removed = childBuses.remove(childBus)
+    childrenListChanged(this)
+    LOG.assertTrue(removed)
   }
 
-  final void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
-    boolean removed = childBuses.remove(childBus);
-    childrenListChanged(this);
-    LOG.assertTrue(removed);
-  }
-
-  private static void childrenListChanged(MessageBusImpl bus) {
-    do {
-      bus.subscriberCache.keySet().removeIf(topic -> topic.getBroadcastDirection() == BroadcastDirection.TO_CHILDREN);
-    }
-    while ((bus = bus.parentBus) != null);
-  }
-
-  @Override
-  final @NotNull <L> MessagePublisher<L> createPublisher(@NotNull Topic<L> topic, @NotNull BroadcastDirection direction) {
-    if (direction == BroadcastDirection.TO_PARENT) {
-      return new ToParentMessagePublisher<>(topic, this);
-    }
-    else if (direction == BroadcastDirection.TO_DIRECT_CHILDREN) {
-      if (parentBus != null) {
-        throw new IllegalArgumentException("Broadcast direction TO_DIRECT_CHILDREN is allowed only for app level message bus. " +
-                                           "Please publish to app level message bus or change topic " + topic.getListenerClass() +
-                                           " broadcast direction to NONE or TO_PARENT");
-      }
-      return new ToDirectChildrenMessagePublisher<>(topic, this);
-    }
-    else {
-      return new MessagePublisher<>(topic, this);
-    }
-  }
-
-  private static final class ToDirectChildrenMessagePublisher<L> extends MessagePublisher<L>  implements InvocationHandler {
-    ToDirectChildrenMessagePublisher(@NotNull Topic<L> topic, @NotNull CompositeMessageBus bus) {
-      super(topic, bus);
-    }
-
-    @Override
-    boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
-      List<Throwable> exceptions = null;
-      boolean hasHandlers = false;
-
-      @Nullable Object @NotNull [] handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers);
-      if (handlers.length != 0) {
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null, bus);
-        hasHandlers = true;
-      }
-
-      for (MessageBusImpl childBus : ((CompositeMessageBus)bus).childBuses) {
-        // light project in tests is not disposed correctly
-        if (childBus.owner.isDisposed()) {
-          continue;
+  override fun <L> createPublisher(topic: Topic<L>, direction: BroadcastDirection): MessagePublisher<L> {
+    return when (direction) {
+      BroadcastDirection.TO_PARENT -> ToParentMessagePublisher(topic, this)
+      BroadcastDirection.TO_DIRECT_CHILDREN -> {
+        require(parentBus == null) {
+          "Broadcast direction TO_DIRECT_CHILDREN is allowed only for app level message bus. " +
+          "Please publish to app level message bus or change topic ${topic.listenerClass} broadcast direction to NONE or TO_PARENT"
         }
-
-        handlers = childBus.subscriberCache.computeIfAbsent(topic, topic1 -> {
-          List<Object> result = new ArrayList<>();
-          childBus.doComputeSubscribers(topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
-          return result.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : result.toArray();
-        });
-        if (handlers.length == 0) {
-          continue;
-        }
-
-        hasHandlers = true;
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, exceptions, childBus);
+        ToDirectChildrenMessagePublisher(topic = topic, bus = this, childBuses = childBuses)
       }
-
-      if (exceptions != null) {
-        EventDispatcher.throwExceptions(exceptions);
-      }
-      return hasHandlers;
+      else -> MessagePublisher(topic, this)
     }
   }
 
-  @Override
-  final @Nullable Object @NotNull [] computeSubscribers(@NotNull Topic<?> topic) {
+  override fun computeSubscribers(topic: Topic<*>): Array<Any?> {
     // light project
-    if (owner.isDisposed()) {
-      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    }
-    return super.computeSubscribers(topic);
+    return if (owner.isDisposed) ArrayUtilRt.EMPTY_OBJECT_ARRAY else super.computeSubscribers(topic)
   }
 
-  @Override
-  final void doComputeSubscribers(@NotNull Topic<?> topic, @NotNull List<Object> result, boolean subscribeLazyListeners) {
+  override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<Any>, subscribeLazyListeners: Boolean) {
     if (subscribeLazyListeners) {
-      subscribeLazyListeners(topic);
+      subscribeLazyListeners(topic)
     }
 
-    super.doComputeSubscribers(topic, result, subscribeLazyListeners);
+    super.doComputeSubscribers(topic, result, subscribeLazyListeners)
 
-    if (topic.getBroadcastDirection() == BroadcastDirection.TO_CHILDREN) {
-      for (MessageBusImpl childBus : childBuses) {
-        if (!childBus.isDisposed()) {
-          childBus.doComputeSubscribers(topic, result, !childBus.owner.isParentLazyListenersIgnored());
+    if (topic.broadcastDirection == BroadcastDirection.TO_CHILDREN) {
+      for (childBus in childBuses) {
+        if (!childBus.isDisposed) {
+          childBus.doComputeSubscribers(topic, result, !childBus.owner.isParentLazyListenersIgnored)
         }
       }
     }
   }
 
-  private <L> void subscribeLazyListeners(@NotNull Topic<L> topic) {
-    if (topic.getListenerClass() == Runnable.class) {
-      return;
+  private fun <L> subscribeLazyListeners(topic: Topic<L>) {
+    if (topic.listenerClass === Runnable::class.java || topicClassToListenerDescriptor === EMPTY_MAP) {
+      return
     }
 
-    List<ListenerDescriptor> listenerDescriptors = topicClassToListenerDescriptor.remove(topic.getListenerClass().getName());
-    if (listenerDescriptors == null) {
-      return;
-    }
+    val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return
 
     // use linked hash map for repeatable results
-    Map<PluginDescriptor, List<L>> listenerMap = new LinkedHashMap<>();
-    for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
+    val listenerMap = LinkedHashMap<PluginDescriptor, MutableList<Any>>()
+    for (listenerDescriptor in listenerDescriptors) {
       try {
-        //noinspection unchecked
-        listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor, __ -> new ArrayList<>())
-          .add((L)owner.createListener(listenerDescriptor));
+        listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor) { mutableListOf() }.add(owner.createListener(listenerDescriptor))
       }
-      catch (ExtensionNotApplicableException ignore) {
+      catch (ignore: ExtensionNotApplicableException) {
       }
-      catch (ProcessCanceledException e) {
-        throw e;
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-      catch (Throwable e) {
-        LOG.error("Cannot create listener", e);
+      catch (e: Throwable) {
+        LOG.error("Cannot create listener", e)
       }
     }
-
-    listenerMap.forEach((key, listeners) -> subscribers.add(new DescriptorBasedMessageBusConnection<>(key, topic, listeners)));
+    listenerMap.forEach(BiConsumer { key, listeners ->
+      subscribers.add(DescriptorBasedMessageBusConnection(key, topic, listeners))
+    })
   }
 
-  @Override
-  final void notifyOnSubscriptionToTopicToChildren(@NotNull Topic<?> topic) {
-    for (MessageBusImpl childBus : childBuses) {
-      childBus.subscriberCache.remove(topic);
-      childBus.notifyOnSubscriptionToTopicToChildren(topic);
+  override fun notifyOnSubscriptionToTopicToChildren(topic: Topic<*>) {
+    for (childBus in childBuses) {
+      childBus.subscriberCache.remove(topic)
+      childBus.notifyOnSubscriptionToTopicToChildren(topic)
     }
   }
 
-  @Override
-  final boolean notifyConnectionTerminated(Object @NotNull [] topicAndHandlerPairs) {
-    boolean isChildClearingNeeded = super.notifyConnectionTerminated(topicAndHandlerPairs);
+  override fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
+    val isChildClearingNeeded = super.notifyConnectionTerminated(topicAndHandlerPairs)
     if (!isChildClearingNeeded) {
-      return false;
+      return false
     }
 
-    childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
+    childBuses.forEach { it.clearSubscriberCache(topicAndHandlerPairs) }
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions
     // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
-    rootBus.messageQueue.get().queue.removeIf(message -> MessageBusConnectionImpl.nullizeHandlersFromMessage(message, topicAndHandlerPairs));
-    return false;
+    rootBus.queue.queue.removeIf { nullizeHandlersFromMessage(it, topicAndHandlerPairs) }
+    return false
   }
 
-  @Override
-  final void clearSubscriberCache(Object @NotNull [] topicAndHandlerPairs) {
-    super.clearSubscriberCache(topicAndHandlerPairs);
-    childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
+  override fun clearSubscriberCache(topicAndHandlerPairs: Array<Any>) {
+    super.clearSubscriberCache(topicAndHandlerPairs)
+
+    childBuses.forEach { it.clearSubscriberCache(topicAndHandlerPairs) }
   }
 
-  @Override
-  final void removeEmptyConnectionsRecursively() {
-    super.removeEmptyConnectionsRecursively();
+  override fun removeEmptyConnectionsRecursively() {
+    super.removeEmptyConnectionsRecursively()
 
-    childBuses.forEach(MessageBusImpl::removeEmptyConnectionsRecursively);
+    childBuses.forEach(MessageBusImpl::removeEmptyConnectionsRecursively)
   }
 
   /**
    * Clear publisher cache, including child buses.
    */
-  @Override
-  public final void clearPublisherCache() {
+  override fun clearPublisherCache() {
     // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing not worth the code complication
-    publisherCache.clear();
-    childBuses.forEach(childBus -> {
-      if (childBus instanceof CompositeMessageBus) {
-        ((CompositeMessageBus)childBus).clearPublisherCache();
+    publisherCache.clear()
+    childBuses.forEach { childBus ->
+      if (childBus is CompositeMessageBus) {
+        childBus.clearPublisherCache()
       }
       else {
-        childBus.publisherCache.clear();
+        childBus.publisherCache.clear()
       }
-    });
+    }
   }
 
-  @Override
-  public final void unsubscribeLazyListeners(@NotNull IdeaPluginDescriptor module, @NotNull List<ListenerDescriptor> listenerDescriptors) {
-    topicClassToListenerDescriptor.values().removeIf(descriptors -> {
-      if (descriptors.removeIf(descriptor -> descriptor.pluginDescriptor == module)) {
-        return descriptors.isEmpty();
+  override fun unsubscribeLazyListeners(module: IdeaPluginDescriptor, listenerDescriptors: List<ListenerDescriptor>) {
+    topicClassToListenerDescriptor.values.removeIf(Predicate { descriptors ->
+      if (descriptors.removeIf { it.pluginDescriptor === module }) {
+        return@Predicate descriptors.isEmpty()
       }
-      return false;
-    });
-
+      false
+    })
     if (listenerDescriptors.isEmpty() || subscribers.isEmpty()) {
-      return;
+      return
     }
 
-    Map<String, Set<String>> topicToDescriptors = new HashMap<>();
-    for (ListenerDescriptor descriptor : listenerDescriptors) {
-      topicToDescriptors.computeIfAbsent(descriptor.topicClassName, __ -> new HashSet<>()).add(descriptor.listenerClassName);
+    val topicToDescriptors = HashMap<String, MutableSet<String>>()
+    for (descriptor in listenerDescriptors) {
+      topicToDescriptors.computeIfAbsent(descriptor.topicClassName) { HashSet() }.add(descriptor.listenerClassName)
     }
 
-    boolean isChanged = false;
-    List<DescriptorBasedMessageBusConnection<?>> newSubscribers = null;
-    for (Iterator<MessageHandlerHolder> connectionIterator = subscribers.iterator(); connectionIterator.hasNext(); ) {
-      MessageHandlerHolder holder = connectionIterator.next();
-      if (!(holder instanceof DescriptorBasedMessageBusConnection)) {
-        continue;
+    var isChanged = false
+    var newSubscribers: MutableList<DescriptorBasedMessageBusConnection?>? = null
+    val connectionIterator = subscribers.iterator()
+    while (connectionIterator.hasNext()) {
+      val connection = connectionIterator.next() as? DescriptorBasedMessageBusConnection ?: continue
+      if (module !== connection.module) {
+        continue
       }
 
-      //noinspection unchecked
-      DescriptorBasedMessageBusConnection<Object> connection = (DescriptorBasedMessageBusConnection<Object>)holder;
-      if (module != connection.module) {
-        continue;
-      }
-
-      Set<String> listenerClassNames = topicToDescriptors.get(connection.topic.getListenerClass().getName());
-      if (listenerClassNames == null) {
-        continue;
-      }
-
-      List<Object> newHandlers = DescriptorBasedMessageBusConnection.computeNewHandlers(connection.handlers, listenerClassNames);
-      if (newHandlers == null) {
-        continue;
-      }
-
-      isChanged = true;
-      connectionIterator.remove();
+      val listenerClassNames = topicToDescriptors.get(connection.topic.listenerClass.name) ?: continue
+      val newHandlers = computeNewHandlers(connection.handlers, listenerClassNames) ?: continue
+      isChanged = true
+      connectionIterator.remove()
       if (!newHandlers.isEmpty()) {
         if (newSubscribers == null) {
-          newSubscribers = new ArrayList<>();
+          newSubscribers = mutableListOf()
         }
-        newSubscribers.add(new DescriptorBasedMessageBusConnection<>(module, connection.topic, newHandlers));
+        newSubscribers.add(DescriptorBasedMessageBusConnection(module, connection.topic, newHandlers))
       }
     }
 
     // todo it means that order of subscribers is not preserved
     // it is very minor requirement, but still, makes sense to comply it
-    if (newSubscribers != null) {
-      subscribers.addAll(newSubscribers);
-    }
+    newSubscribers?.let(subscribers::addAll)
     if (isChanged) {
       // we can check it more precisely, but for simplicity, just clear all
       // adding project level listener for app level topic is not recommended, but supported
-      if (rootBus != this) {
-        rootBus.subscriberCache.clear();
+      if (rootBus !== this) {
+        rootBus.subscriberCache.clear()
       }
-      subscriberCache.clear();
+      subscriberCache.clear()
     }
   }
 
-  @Override
-  public void disconnectPluginConnections(@NotNull Predicate<? super Class<?>> predicate) {
-    super.disconnectPluginConnections(predicate);
-    childBuses.forEach(bus -> bus.disconnectPluginConnections(predicate));
+  override fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
+    super.disconnectPluginConnections(predicate)
+
+    childBuses.forEach { it.disconnectPluginConnections(predicate) }
   }
 
-  @Override
   @TestOnly
-  public final void clearAllSubscriberCache() {
-    LOG.assertTrue(rootBus != this);
-    rootBus.subscriberCache.clear();
-    subscriberCache.clear();
-    childBuses.forEach(bus -> bus.subscriberCache.clear());
+  override fun clearAllSubscriberCache() {
+    LOG.assertTrue(rootBus !== this)
+
+    rootBus.subscriberCache.clear()
+    subscriberCache.clear()
+    childBuses.forEach { it.subscriberCache.clear() }
   }
 
-  @Override
-  protected final void disposeChildren() {
-    childBuses.forEach(Disposer::dispose);
+  override fun disposeChildren() {
+    childBuses.forEach(Disposer::dispose)
   }
+}
+
+private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: CompositeMessageBus, private val childBuses: List<MessageBusImpl>)
+  : MessagePublisher<L>(topic, bus), InvocationHandler {
+  override fun publish(method: Method, args: Array<Any?>?, jobQueue: MessageQueue?): Boolean {
+    var exceptions: MutableList<Throwable>? = null
+    var hasHandlers = false
+    var handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
+    if (handlers.isNotEmpty()) {
+      exceptions = executeOrAddToQueue(topic = topic,
+                                       method = method,
+                                       args = args,
+                                       handlers = handlers,
+                                       jobQueue = jobQueue,
+                                       messageDeliveryListener = bus.messageDeliveryListener,
+                                       prevExceptions = null,
+                                       bus = bus)
+      hasHandlers = true
+    }
+
+    for (childBus in childBuses) {
+      // light project in tests is not disposed correctly
+      if (childBus.owner.isDisposed) {
+        continue
+      }
+
+      handlers = childBus.subscriberCache.computeIfAbsent(topic) { topic1 ->
+        val result = mutableListOf<Any>()
+        childBus.doComputeSubscribers(topic1, result,  /* subscribeLazyListeners = */!childBus.owner.isParentLazyListenersIgnored)
+        if (result.isEmpty()) {
+          ArrayUtilRt.EMPTY_OBJECT_ARRAY
+        }
+        else {
+          result.toTypedArray()
+        }
+      }
+      if (handlers.isEmpty()) {
+        continue
+      }
+
+      hasHandlers = true
+      exceptions = executeOrAddToQueue(topic = topic,
+                                       method = method,
+                                       args = args,
+                                       handlers = handlers,
+                                       jobQueue = jobQueue,
+                                       messageDeliveryListener = bus.messageDeliveryListener,
+                                       prevExceptions = exceptions,
+                                       bus = childBus)
+    }
+    exceptions?.let(::throwExceptions)
+    return hasHandlers
+  }
+}
+
+private fun childrenListChanged(changedBus: MessageBusImpl) {
+  var bus = changedBus
+  while (true) {
+    bus.subscriberCache.keys.removeIf { it.broadcastDirection == BroadcastDirection.TO_CHILDREN }
+    bus = bus.parentBus ?: break
+  }
+}
+
+private fun computeNewHandlers(handlers: List<Any>, excludeClassNames: Set<String?>): List<Any>? {
+  var newHandlers: MutableList<Any>? = null
+  var i = 0
+  val size = handlers.size
+  while (i < size) {
+    val handler = handlers[i]
+    if (excludeClassNames.contains(handler::class.java.name)) {
+      if (newHandlers == null) {
+        newHandlers = if (i == 0) mutableListOf() else handlers.subList(0, i).toMutableList()
+      }
+    }
+    else {
+      newHandlers?.add(handler)
+    }
+    i++
+  }
+  return newHandlers
+}
+
+/**
+ * Returns true if no more handlers.
+ */
+private fun nullizeHandlersFromMessage(message: Message, topicAndHandlerPairs: Array<Any>): Boolean {
+  var nullElementCount = 0
+  for (messageIndex in message.handlers.indices) {
+    val handler = message.handlers[messageIndex]
+    if (handler == null) {
+      nullElementCount++
+    }
+
+    var i = 0
+    while (i < topicAndHandlerPairs.size) {
+      if (message.topic === topicAndHandlerPairs[i] && handler === topicAndHandlerPairs[i + 1]) {
+        message.handlers[messageIndex] = null
+        nullElementCount++
+      }
+      i += 2
+    }
+  }
+  return nullElementCount == message.handlers.size
 }

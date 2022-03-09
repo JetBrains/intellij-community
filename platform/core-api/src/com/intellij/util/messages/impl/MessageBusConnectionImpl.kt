@@ -1,98 +1,62 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.messages.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.messages.impl
 
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.MessageHandler;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.messages.MessageHandler
+import com.intellij.util.messages.Topic
 
-final class MessageBusConnectionImpl extends BaseBusConnection implements MessageBusConnection {
-  private MessageHandler defaultHandler;
+internal class MessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection(bus), MessageBusConnection {
+  private var defaultHandler: MessageHandler? = null
 
-  MessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
-    super(bus);
+  override fun <L : Any> subscribe(topic: Topic<L>) {
+    val defaultHandler = defaultHandler
+                         ?: throw IllegalStateException("Connection must have default handler installed prior " +
+                                                        "to any anonymous subscriptions. Target topic: $topic")
+    check(!topic.listenerClass.isInstance(defaultHandler)) {
+      "Can't subscribe to the topic '$topic'. " +
+      "Default handler has incompatible type - expected: '${topic.listenerClass}', actual: '${defaultHandler.javaClass}'"
+    }
+    @Suppress("UNCHECKED_CAST")
+    subscribe(topic, defaultHandler as L)
   }
 
-  @Override
-  public <L> void subscribe(@NotNull Topic<L> topic) throws IllegalStateException {
-    MessageHandler defaultHandler = this.defaultHandler;
-    if (defaultHandler == null) {
-      throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions. "
-                                      + "Target topic: " + topic);
-    }
-    if (topic.getListenerClass().isInstance(defaultHandler)) {
-      throw new IllegalStateException("Can't subscribe to the topic '" + topic + "'. Default handler has incompatible type - expected: '" +
-                                      topic.getListenerClass() + "', actual: '" + defaultHandler.getClass() + "'");
-    }
-
-    //noinspection unchecked
-    subscribe(topic, (L)defaultHandler);
+  override fun setDefaultHandler(handler: MessageHandler?) {
+    defaultHandler = handler
   }
 
-  @Override
-  public void setDefaultHandler(MessageHandler handler) {
-    defaultHandler = handler;
-  }
-
-  @Override
-  public void dispose() {
-    MessageBusImpl bus = this.bus;
-    if (bus == null) {
-      // already disposed
-      return;
-    }
-
-    this.bus = null;
-    defaultHandler = null;
+  override fun dispose() {
+    // already disposed
+    val bus = bus ?: return
+    this.bus = null
+    defaultHandler = null
     // reset as bus will not remove disposed connection from list immediately
-    bus.notifyConnectionTerminated(subscriptions.getAndSet(ArrayUtilRt.EMPTY_OBJECT_ARRAY));
+    bus.notifyConnectionTerminated(subscriptions.getAndSet(ArrayUtilRt.EMPTY_OBJECT_ARRAY))
   }
 
-  @Override
-  public void disconnect() {
-    Disposer.dispose(this);
+  override fun disconnect() {
+    Disposer.dispose(this)
   }
 
-  @Override
-  public void deliverImmediately() {
-    bus.deliverImmediately(this);
+  override fun deliverImmediately() {
+    bus!!.deliverImmediately(this)
   }
 
-  /**
-   * Returns true if no more handlers.
-   */
-  static boolean nullizeHandlersFromMessage(@NotNull Message message, @Nullable Object @NotNull [] topicAndHandlerPairs) {
-    int nullElementCount = 0;
-    for (int messageIndex = 0; messageIndex < message.handlers.length; messageIndex++) {
-      Object handler = message.handlers[messageIndex];
-      if (handler == null) {
-        nullElementCount++;
-      }
-
-      for (int i = 0; i < topicAndHandlerPairs.length; i +=2) {
-        if (message.topic == topicAndHandlerPairs[i] && handler == topicAndHandlerPairs[i + 1]) {
-          message.handlers[messageIndex] = null;
-          nullElementCount++;
-        }
-      }
-    }
-    return nullElementCount == message.handlers.length;
-  }
-
-  boolean isMyHandler(@NotNull Topic<?> topic, @NotNull Object handler) {
-    if (defaultHandler == handler) {
-      return true;
+  fun isMyHandler(topic: Topic<*>, handler: Any): Boolean {
+    if (defaultHandler === handler) {
+      return true
     }
 
-    Object[] topicAndHandlerPairs = subscriptions.get();
-    for (int i = 0, n = topicAndHandlerPairs.length; i < n; i += 2) {
-      if (topic == topicAndHandlerPairs[i] && handler == topicAndHandlerPairs[i + 1]) {
-        return true;
+    val topicAndHandlerPairs = subscriptions.get()
+    var i = 0
+    val n = topicAndHandlerPairs.size
+    while (i < n) {
+      if (topic === topicAndHandlerPairs[i] && handler === topicAndHandlerPairs[i + 1]) {
+        return true
       }
+      i += 2
     }
-    return false;
+    return false
   }
 }

@@ -225,7 +225,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun postingPerformanceWithLowListenerDensityInHierarchy() {
     // simulating a million fileWithNoDocumentChanged events on refresh in a thousand-module project
-    val childBus = CompositeMessageBus(this, bus)
+    val childBus = CompositeMessageBus(owner = this, parentBus = bus)
     childBus.connect().subscribe(TOPIC1, object : T1Listener {
       override fun t11() {}
       override fun t12() {}
@@ -330,18 +330,18 @@ class MessageBusTest : MessageBusOwner {
   fun scheduleEmptyConnectionRemoval() {
     // this counter serves as a proxy to number of iterations inside the compaction task loop in root bus:
     var compactionIterationCount = 0
-    object : MessageBusImpl(this, bus) {
-      public override fun removeEmptyConnectionsRecursively() {
+    object : MessageBusImpl(this@MessageBusTest, bus) {
+      override fun removeEmptyConnectionsRecursively() {
         compactionIterationCount++
       }
     }
 
-    // this child bus will block removal so that we can run asserts:
+    // this child bus will block removal so that we can run asserts
     val slowRemovalStarted = Semaphore(1)
     slowRemovalStarted.acquire()
     val slowRemovalCanFinish = CountDownLatch(1)
-    object : MessageBusImpl(this, bus) {
-      public override fun removeEmptyConnectionsRecursively() {
+    object : MessageBusImpl(this@MessageBusTest, bus) {
+      override fun removeEmptyConnectionsRecursively() {
         slowRemovalStarted.release() // signal that slow removal has started
         try {
           slowRemovalCanFinish.await() // block until the test allows us to finish
@@ -486,9 +486,9 @@ class MessageBusTest : MessageBusOwner {
     // add twice
     child.connect().subscribe(RUNNABLE_TOPIC, listener)
     child.connect().subscribe(RUNNABLE_TOPIC, listener)
-    bus.disconnectPluginConnections(object : Predicate<Class<*>?> {
+    bus.disconnectPluginConnections(object : Predicate<Class<*>> {
       var isRemoved = false
-      override fun test(aClass: Class<*>?): Boolean {
+      override fun test(aClass: Class<*>): Boolean {
         // remove first one
         if (isRemoved) {
           return false
