@@ -105,7 +105,6 @@ final class ContentComboLabel extends ContentLabel {
     if (!isPreferredSizeSet() && isToDrawCombo()) {
       if (hasActiveIcons()) size.width -= ICONS_GAP;
       myComboIconPoint.x = size.width;
-      myComboIconPoint.y = getHeight() / 2 - myComboIcon.getIconHeight() / 2 + 1;
       size.width += myComboIcon.getIconWidth();
     }
 
@@ -139,6 +138,7 @@ final class ContentComboLabel extends ContentLabel {
     super.paintChildren(g);
     if (isToDrawCombo()) {
       myComboIcon.setActive(myUi.window.isActive());
+      myComboIconPoint.y = getHeight() / 2 - myComboIcon.getIconHeight() / 2 + 1;
       myComboIcon.paintIcon(this, g, myComboIconPoint.x, myComboIconPoint.y);
       g.setColor(Gray._255.withAlpha(100));
     }
