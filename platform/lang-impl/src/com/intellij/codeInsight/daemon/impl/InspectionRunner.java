@@ -91,12 +91,12 @@ class InspectionRunner {
                                                      @NotNull BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterInsideProcessedCallback,
                                                      @NotNull Consumer<? super InspectionContext> afterOutsideProcessedCallback) {
-    if (!shouldRun()) {
+    if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myPsiFile, myRestrictRange, myPriorityRange,
-                                           file -> HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(file), new CommonProcessors.CollectProcessor<>(allDivided));
+                                           file -> shouldInspect(file), new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
     // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
     long finalPriorityRange = finalPriorityRange(myPriorityRange, allDivided);
@@ -408,7 +408,7 @@ class InspectionRunner {
              return true;
            };
 
-           if (HighlightingLevelManager.getInstance(injectedPsi.getProject()).shouldInspect(injectedPsi)) {
+           if (shouldInspect(injectedPsi)) {
              InspectionRunner injectedRunner =
                new InspectionRunner(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), false, myIsOnTheFly, myProgress,
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
@@ -468,9 +468,11 @@ class InspectionRunner {
     }
   }
 
-  private boolean shouldRun() {
-    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myPsiFile.getProject());
+  private static boolean shouldInspect(@NotNull PsiFile file) {
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(file.getProject());
     // for ESSENTIAL mode, it depends on the current phase: when we run regular LocalInspectionPass then don't, when we run Save All handler then run everything
-    return highlightingLevelManager.shouldInspect(myPsiFile) && !highlightingLevelManager.runEssentialHighlightingOnly(myPsiFile);
+    return highlightingLevelManager != null
+           && highlightingLevelManager.shouldInspect(file)
+           && !highlightingLevelManager.runEssentialHighlightingOnly(file);
   }
 }
