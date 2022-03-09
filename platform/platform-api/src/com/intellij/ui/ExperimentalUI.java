@@ -157,7 +157,7 @@ public final class ExperimentalUI {
     paths.put("modules/sourceRoot.svg", "/expui/nodes/sourceRoot.svg");
     paths.put("modules/resourcesRoot.svg", "/expui/nodes/resourcesRoot.svg");
     paths.put("modules/testRoot.svg", "/expui/nodes/testRoot.svg");
-    paths.put("toolwindows/notifications.svg", "/expui/general/notifications.svg");
+    paths.put("toolwindows/notifications.svg", "/expui/toolwindow/notifications.svg");
     paths.put("toolwindows/toolWindowAnt.svg", "/expui/toolwindow/ant.svg");
     paths.put("toolwindows/toolWindowBookmarks.svg", "/expui/toolwindow/bookmarks.svg");
     paths.put("toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
