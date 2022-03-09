@@ -65,7 +65,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    return document == null ? (int)virtualFile.getLength() : document.getTextLength();
+    return document == null ? Math.max(0, (int)virtualFile.getLength()) : document.getTextLength();
   }
 
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
