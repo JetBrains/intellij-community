@@ -1001,7 +1001,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     Map<Document, List<FileEditor>> result = new HashMap<>();
     MultiMap<Document, FileEditor> map =
-      ContainerUtil.groupBy(editors, fileEditor -> FileDocumentManager.getInstance().getDocument(fileEditor.getFile()));
+      ContainerUtil.groupBy(editors, fileEditor -> {
+        VirtualFile virtualFile = fileEditor.getFile();
+        return virtualFile == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
+      });
     for (Map.Entry<Document, Collection<FileEditor>> entry : map.entrySet()) {
       Document document = entry.getKey();
       List<FileEditor> fileEditors = new ArrayList<>(entry.getValue());
