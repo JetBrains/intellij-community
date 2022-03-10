@@ -208,9 +208,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           LOG.error("This thread is already running under this indicator, starting/stopping it here might be a data race");
         }
         else {
-          StringWriter dump = new StringWriter();
-          ThreadDumper.dumpCallStack(other, dump, other.getStackTrace());
-          LOG.error("Other thread is already running under this indicator, starting/stopping it here might be a data race. Its thread dump:\n" + dump);
+          StringWriter stackTrace = new StringWriter();
+          ThreadDumper.dumpCallStack(other, stackTrace, other.getStackTrace());
+          LOG.error("Other thread (" + other.getName() +") is already running under this indicator, starting/stopping it here might be a data race. Its stack trace:\n" + stackTrace);
         }
       }
     }
