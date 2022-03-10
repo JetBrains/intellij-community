@@ -53,11 +53,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
         if (mouseEvent.clickCount == 2 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
           mouseEvent.consume()
           when ((treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
-            is ExternalDiffSettings.ExternalToolGroup -> {
+            is ExternalToolGroup -> {
               if (isExpanded(treePath)) collapsePath(treePath)
               else expandPath(treePath)
             }
-            is ExternalDiffSettings.ExternalTool -> editData()
+            is ExternalTool -> editData()
             else -> {}
           }
         }
@@ -78,26 +78,26 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     component = decoratedTree
   }
 
-  fun getData(): MutableMap<ExternalDiffSettings.ExternalToolGroup, List<ExternalDiffSettings.ExternalTool>> {
-    val data = mutableMapOf<ExternalDiffSettings.ExternalToolGroup, List<ExternalDiffSettings.ExternalTool>>()
+  fun getData(): MutableMap<ExternalToolGroup, List<ExternalTool>> {
+    val data = mutableMapOf<ExternalToolGroup, List<ExternalTool>>()
 
     for (group in root.children()) {
       val groupNode = group as DefaultMutableTreeNode
 
-      val tools = mutableListOf<ExternalDiffSettings.ExternalTool>()
+      val tools = mutableListOf<ExternalTool>()
       for (child in group.children()) {
         val childNode = child as DefaultMutableTreeNode
-        val tool = childNode.userObject as ExternalDiffSettings.ExternalTool
+        val tool = childNode.userObject as ExternalTool
         tools.add(tool)
       }
 
-      data[groupNode.userObject as ExternalDiffSettings.ExternalToolGroup] = tools
+      data[groupNode.userObject as ExternalToolGroup] = tools
     }
 
     return data
   }
 
-  fun updateData(value: Map<ExternalDiffSettings.ExternalToolGroup, List<ExternalDiffSettings.ExternalTool>>) {
+  fun updateData(value: Map<ExternalToolGroup, List<ExternalTool>>) {
     root.removeAllChildren()
 
     value.toSortedMap().forEach { (group, tools) ->
@@ -123,10 +123,10 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     }
   }
 
-  private fun findGroupNode(externalToolGroup: ExternalDiffSettings.ExternalToolGroup): DefaultMutableTreeNode {
+  private fun findGroupNode(externalToolGroup: ExternalToolGroup): DefaultMutableTreeNode {
     for (child in root.children()) {
       val treeNode = child as DefaultMutableTreeNode
-      val valueNode = treeNode.userObject as ExternalDiffSettings.ExternalToolGroup
+      val valueNode = treeNode.userObject as ExternalToolGroup
       if (valueNode == externalToolGroup) return treeNode
     }
 
@@ -139,16 +139,16 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
   private fun removeData() {
     val treePath = tree.selectionPath ?: return
     val node = treePath.lastPathComponent as DefaultMutableTreeNode
-    if (node.userObject !is ExternalDiffSettings.ExternalTool) {
+    if (node.userObject !is ExternalTool) {
       Messages.showWarningDialog(DiffBundle.message("settings.external.tool.tree.remove.group.warning.message"),
                                  DiffBundle.message("settings.external.tool.tree.remove.group.warning.title"))
       return
     }
 
     val parentNode = treePath.parentPath.lastPathComponent as DefaultMutableTreeNode
-    val toolGroup = parentNode.userObject as ExternalDiffSettings.ExternalToolGroup
+    val toolGroup = parentNode.userObject as ExternalToolGroup
 
-    val externalTool = node.userObject as ExternalDiffSettings.ExternalTool
+    val externalTool = node.userObject as ExternalTool
     if (isConfigurationRegistered(externalTool, toolGroup)) {
       Messages.showWarningDialog(DiffBundle.message("settings.external.tool.tree.remove.warning.message"),
                                  DiffBundle.message("settings.external.tool.tree.remove.warning.title"))
@@ -165,16 +165,16 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
   private fun editData() {
     val treePath = tree.selectionPath ?: return
     val node = treePath.lastPathComponent as DefaultMutableTreeNode
-    if (node.userObject !is ExternalDiffSettings.ExternalTool) {
+    if (node.userObject !is ExternalTool) {
       return
     }
 
-    val currentTool = node.userObject as ExternalDiffSettings.ExternalTool
+    val currentTool = node.userObject as ExternalTool
     val dialog = AddToolDialog(currentTool)
     if (dialog.showAndGet()) {
       val editedTool = dialog.createExternalTool()
       val groupNode = findGroupNode(dialog.getToolGroup())
-      val toolGroup = groupNode.userObject as ExternalDiffSettings.ExternalToolGroup
+      val toolGroup = groupNode.userObject as ExternalToolGroup
 
       node.userObject = editedTool
       treeModel.nodeChanged(node)
@@ -203,8 +203,8 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       val renderer = textRenderer
       val text = when (val item = (value as DefaultMutableTreeNode).userObject) {
         null -> return
-        is ExternalDiffSettings.ExternalToolGroup -> item.groupName // NON-NLS
-        is ExternalDiffSettings.ExternalTool -> item.name // NON-NLS
+        is ExternalToolGroup -> item.groupName // NON-NLS
+        is ExternalTool -> item.name // NON-NLS
         else -> item.toString() // NON-NLS
       }
 
@@ -217,11 +217,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     private val isEditMode: Boolean = false,
   ) : DialogWrapper(null) {
     private val groupField = ComboBox(
-      arrayOf(ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL, ExternalDiffSettings.ExternalToolGroup.MERGE_TOOL)
+      arrayOf(ExternalToolGroup.DIFF_TOOL, ExternalToolGroup.MERGE_TOOL)
     ).apply {
-      renderer = object : ColoredListCellRenderer<ExternalDiffSettings.ExternalToolGroup>() {
-        override fun customizeCellRenderer(list: JList<out ExternalDiffSettings.ExternalToolGroup>,
-                                           value: ExternalDiffSettings.ExternalToolGroup,
+      renderer = object : ColoredListCellRenderer<ExternalToolGroup>() {
+        override fun customizeCellRenderer(list: JList<out ExternalToolGroup>,
+                                           value: ExternalToolGroup,
                                            index: Int,
                                            selected: Boolean,
                                            hasFocus: Boolean) {
@@ -272,10 +272,10 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     }
     private val argumentPatternDescription = DslLabel(DslLabelType.COMMENT).apply {
       maxLineLength = DEFAULT_COMMENT_WIDTH
-      text = createDescription(ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL)
+      text = createDescription(ExternalToolGroup.DIFF_TOOL)
     }
 
-    constructor(externalTool: ExternalDiffSettings.ExternalTool) : this(externalTool.name, true) {
+    constructor(externalTool: ExternalTool) : this(externalTool.name, true) {
       isAutocompleteToolName = false
 
       toolNameField.text = externalTool.name
@@ -321,16 +321,16 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
                   else DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN
 
                 argumentPatternDescription.text =
-                  if (isMergeEnabled) createDescription(ExternalDiffSettings.ExternalToolGroup.MERGE_TOOL)
-                  else createDescription(ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL)
+                  if (isMergeEnabled) createDescription(ExternalToolGroup.MERGE_TOOL)
+                  else createDescription(ExternalToolGroup.DIFF_TOOL)
 
                 listener(isMergeEnabled)
               }
             }
 
             override fun invoke(): Boolean {
-              val item = groupField.selectedItem as ExternalDiffSettings.ExternalToolGroup
-              return item == ExternalDiffSettings.ExternalToolGroup.MERGE_TOOL
+              val item = groupField.selectedItem as ExternalToolGroup
+              return item == ExternalToolGroup.MERGE_TOOL
             }
           })
       }
@@ -343,17 +343,15 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       }.topGap(TopGap.MEDIUM)
     }
 
-    fun createExternalTool(): ExternalDiffSettings.ExternalTool = ExternalDiffSettings.ExternalTool(
-      toolNameField.text,
-      programPathField.text,
-      argumentPatternField.text,
-      isMergeTrustExitCode.isEnabled && isMergeTrustExitCode.isSelected,
-      groupField.item
-    )
+    fun createExternalTool(): ExternalTool = ExternalTool(toolNameField.text,
+                                                          programPathField.text,
+                                                          argumentPatternField.text,
+                                                          isMergeTrustExitCode.isEnabled && isMergeTrustExitCode.isSelected,
+                                                          groupField.item)
 
-    fun getToolGroup(): ExternalDiffSettings.ExternalToolGroup = groupField.item
+    fun getToolGroup(): ExternalToolGroup = groupField.item
 
-    private fun toolFieldValidation(toolGroup: ExternalDiffSettings.ExternalToolGroup, toolName: String): ValidationInfo? {
+    private fun toolFieldValidation(toolGroup: ExternalToolGroup, toolName: String): ValidationInfo? {
       if (toolName.isEmpty()) {
         return ValidationInfo(DiffBundle.message("settings.external.tool.tree.validation.empty"))
       }
@@ -365,10 +363,10 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       return null
     }
 
-    private fun isToolAlreadyExist(toolGroup: ExternalDiffSettings.ExternalToolGroup, toolName: String): Boolean {
+    private fun isToolAlreadyExist(toolGroup: ExternalToolGroup, toolName: String): Boolean {
       val isNodeExist = TreeUtil.findNode(findGroupNode(toolGroup)) { node ->
         when (val externalTool = node.userObject) {
-          is ExternalDiffSettings.ExternalTool -> externalTool.name == toolName
+          is ExternalTool -> externalTool.name == toolName
           else -> false // skip root
         }
       }
@@ -376,11 +374,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       return isNodeExist != null
     }
 
-    private fun createDescription(toolGroup: ExternalDiffSettings.ExternalToolGroup): String {
+    private fun createDescription(toolGroup: ExternalToolGroup): String {
       val title = DiffBundle.message("settings.external.tools.parameters.description")
       val argumentPattern = when (toolGroup) {
-        ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL -> DiffBundle.message("settings.external.tools.parameters.diff")
-        ExternalDiffSettings.ExternalToolGroup.MERGE_TOOL -> DiffBundle.message("settings.external.tools.parameters.merge")
+        ExternalToolGroup.DIFF_TOOL -> DiffBundle.message("settings.external.tools.parameters.diff")
+        ExternalToolGroup.MERGE_TOOL -> DiffBundle.message("settings.external.tools.parameters.merge")
       }
 
       return "$title<br>$argumentPattern"
@@ -441,12 +439,12 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
   }
 
   private fun ListTableModel<ExternalDiffSettings.ExternalToolConfiguration>.updateEntities(
-    toolGroup: ExternalDiffSettings.ExternalToolGroup,
-    oldTool: ExternalDiffSettings.ExternalTool,
-    newTool: ExternalDiffSettings.ExternalTool
+    toolGroup: ExternalToolGroup,
+    oldTool: ExternalTool,
+    newTool: ExternalTool
   ) {
     items.forEach { configuration ->
-      if (toolGroup == ExternalDiffSettings.ExternalToolGroup.DIFF_TOOL) {
+      if (toolGroup == ExternalToolGroup.DIFF_TOOL) {
         if (configuration.diffToolName == oldTool.name) {
           configuration.diffToolName = newTool.name
         }
