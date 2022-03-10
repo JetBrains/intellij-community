@@ -11,6 +11,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -192,10 +193,12 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     /*
-     * Actually an WeakMap<Module, SoftMap<ModuleSourceInfo, SoftMap<FqName, Boolean>>>
+     * Actually an WeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>
      */
     private val cache = ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>()
     private val implicitPackagePrefixCache = ImplicitPackagePrefixCache(project)
+
+    private val useStrongMapForCaching = Registry.`is`("kotlin.cache.packages.strong.map", false)
 
     private val pendingVFileChanges: MutableSet<VFileEvent> = mutableSetOf()
     private val pendingKtFileChanges: MutableSet<KtFile> = mutableSetOf()
@@ -303,10 +306,10 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         checkPendingChanges()
 
         val perSourceInfoCache = cache.getOrPut(module) {
-            CollectionFactory.createConcurrentSoftMap()
+            if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
         }
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
-            CollectionFactory.createConcurrentSoftMap()
+            if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
         }
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
