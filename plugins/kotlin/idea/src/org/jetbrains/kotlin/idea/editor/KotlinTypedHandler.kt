@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -178,6 +179,10 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                     isGlobalPreviousDollarInString = true
                 }
             }
+
+            c == '(' -> {
+                if (autoIndentCase(editor, project, file, KtPropertyAccessor::class.java, forFirstElement = false)) return Result.STOP
+            }
         }
 
         return Result.CONTINUE
@@ -289,22 +294,33 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             document.insertString(leftElement.textOffset, "val ")
         }
 
-        private fun autoIndentCase(editor: Editor, project: Project, file: PsiFile, kclass: Class<*>): Boolean {
+        private fun autoIndentCase(
+            editor: Editor,
+            project: Project,
+            file: PsiFile,
+            klass: Class<*>,
+            forFirstElement: Boolean = true,
+        ): Boolean {
             val offset = editor.caretModel.offset
             PsiDocumentManager.getInstance(project).commitDocument(editor.document)
             val currElement = file.findElementAt(offset - 1)
             if (currElement != null) {
                 // Should be applied only if there's nothing but the whitespace in line before the element
                 val prevLeaf = PsiTreeUtil.prevLeaf(currElement)
-                if (!(prevLeaf is PsiWhiteSpace && prevLeaf.textContains('\n'))) {
+                if (forFirstElement && !(prevLeaf is PsiWhiteSpace && prevLeaf.textContains('\n'))) {
                     return false
                 }
 
                 val parent = currElement.parent
-                if (kclass.isInstance(parent)) {
+                if (klass.isInstance(parent)) {
                     val curElementLength = currElement.text.length
                     if (offset < curElementLength) return false
-                    CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
+                    if (forFirstElement) {
+                        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
+                    } else {
+                        PsiDocumentManager.getInstance(project).getDocument(file)?.adjustLineIndent(project, offset)
+                    }
+
                     return true
                 }
             }
