@@ -86,7 +86,7 @@ public class MacWinTabsHandler {
   }
 
   public void frameInit() {
-    if (!myFrameAllowed || !isTransparentTitleBar()) {
+    if (!myFrameAllowed) {
       return;
     }
 
@@ -291,9 +291,22 @@ public class MacWinTabsHandler {
       if (cPlatformWindow != null) {
         Class<?> windowClass = cPlatformWindow.getClass();
 
-        Method deliverMoveResize = ReflectionUtil
+        Method deliverMoveResize = ReflectionUtil.getDeclaredMethod(windowClass, "callDeliverMoveResizeEvent");
+        if (deliverMoveResize != null) {
+          Foundation.executeOnMainThread(true, false, () -> {
+            try {
+              deliverMoveResize.invoke(cPlatformWindow);
+            }
+            catch (Throwable e) {
+              Logger.getInstance(MacWinTabsHandler.class).error(e);
+            }
+          });
+          return;
+        }
+
+        Method javaDeliverMoveResize = ReflectionUtil
           .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
-        if (deliverMoveResize == null) {
+        if (javaDeliverMoveResize == null) {
           return;
         }
 
@@ -301,7 +314,7 @@ public class MacWinTabsHandler {
 
         Foundation.executeOnMainThread(true, false, () -> {
           try {
-            deliverMoveResize.invoke(cPlatformWindow, rect.x, rect.y, rect.width, rect.height, true);
+            javaDeliverMoveResize.invoke(cPlatformWindow, rect.x, rect.y, rect.width, rect.height, true);
           }
           catch (Throwable e) {
             Logger.getInstance(MacWinTabsHandler.class).error(e);
