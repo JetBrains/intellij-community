@@ -275,7 +275,9 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
 
       handlers = childBus.subscriberCache.computeIfAbsent(topic) { topic1 ->
         val result = mutableListOf<Any>()
-        childBus.doComputeSubscribers(topic1, result,  /* subscribeLazyListeners = */!childBus.owner.isParentLazyListenersIgnored)
+        childBus.doComputeSubscribers(topic = topic1,
+                                      result = result,
+                                      subscribeLazyListeners = !childBus.owner.isParentLazyListenersIgnored)
         if (result.isEmpty()) {
           ArrayUtilRt.EMPTY_OBJECT_ARRAY
         }

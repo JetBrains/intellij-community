@@ -416,14 +416,14 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevExceptions:
 
 internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
                                         @JvmField protected val bus: MessageBusImpl) : InvocationHandler {
-  override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
+  final override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
     if (method.declaringClass == Any::class.java) {
-      return EventDispatcher.handleObjectMethod(proxy, args, method.name)!!
+      return EventDispatcher.handleObjectMethod(proxy, args, method.name)
     }
 
     if (topic.isImmediateDelivery) {
       bus.checkNotDisposed()
-      publish(method, args, null)
+      publish(method = method, args = args, jobQueue = null)
       return NA
     }
 
@@ -432,7 +432,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
       pumpWaiting(queue)
     }
 
-    if (publish(method, args, queue)) {
+    if (publish(method = method, args = args, jobQueue = queue)) {
       // we must deliver messages now even if currently processing message queue, because if published as part of handler invocation,
       // handler code expects that message will be delivered immediately after publishing
       pumpWaiting(queue)
@@ -620,6 +620,7 @@ private fun invokeListener(methodHandle: MethodHandle,
                            messageDeliveryListener: MessageDeliveryListener?,
                            prevExceptions: MutableList<Throwable>?): MutableList<Throwable>? {
   try {
+    //println("${topic.displayName} ${topic.isImmediateDelivery}: $methodName(${args.contentToString()})")
     if (handler is MessageHandler) {
       handler.handle(methodHandle, *(args ?: ArrayUtilRt.EMPTY_OBJECT_ARRAY))
     }

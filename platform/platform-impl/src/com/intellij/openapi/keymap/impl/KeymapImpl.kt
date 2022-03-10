@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
-import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -622,7 +621,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   protected open fun convertShortcut(shortcut: Shortcut): Shortcut = shortcut
 
   private fun fireShortcutChanged(actionId: String) {
-    (KeymapManager.getInstance() as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
+    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).shortcutChanged(this, actionId)
   }
 
   override fun toString(): String = presentableName
