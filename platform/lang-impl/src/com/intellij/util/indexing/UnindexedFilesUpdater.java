@@ -40,7 +40,6 @@ import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.ModuleIndexableFilesIteratorImpl;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
@@ -164,21 +163,14 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private static @Nullable List<IndexableFilesIterator> mergeIterators(@Nullable List<IndexableFilesIterator> iterators,
                                                                        @Nullable List<IndexableFilesIterator> otherIterators) {
     if (iterators == null || otherIterators == null) return null;
-    List<IndexableFilesIterator> result = new ArrayList<>(iterators.size());
-    Collection<ModuleIndexableFilesIteratorImpl> rootIterators = new ArrayList<>();
-    Set<IndexableSetOrigin> origins = new HashSet<>();
+    Map<IndexableSetOrigin, IndexableFilesIterator> uniqueIterators = new LinkedHashMap<>();
     for (IndexableFilesIterator iterator : iterators) {
-      if (iterator instanceof ModuleIndexableFilesIteratorImpl) {
-        rootIterators.add((ModuleIndexableFilesIteratorImpl)iterator);
-      }
-      else {
-        if (origins.add(iterator.getOrigin())) {
-          result.add(iterator);
-        }
-      }
+      uniqueIterators.putIfAbsent(iterator.getOrigin(), iterator);
     }
-    result.addAll(rootIterators);
-    return result;
+    for (IndexableFilesIterator iterator : otherIterators) {
+      uniqueIterators.putIfAbsent(iterator.getOrigin(), iterator);
+    }
+    return new ArrayList<>(uniqueIterators.values());
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {
@@ -606,7 +598,10 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   @Override
   public String toString() {
-    return "UnindexedFilesUpdater[" + myProject.getName() + "]";
+    String partialInfo = myPredefinedIndexableFilesIterators != null
+                         ? (", " + myPredefinedIndexableFilesIterators.size() + " iterators")
+                         : "";
+    return "UnindexedFilesUpdater[" + myProject.getName() + partialInfo + "]";
   }
 
   /**
