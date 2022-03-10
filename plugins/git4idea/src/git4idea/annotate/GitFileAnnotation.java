@@ -102,10 +102,6 @@ public final class GitFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   public LineAnnotationAspect @NotNull [] getAspects() {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
