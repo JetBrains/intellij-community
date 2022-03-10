@@ -3,7 +3,9 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.CodeVisionState.Companion.READY_EMPTY
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.hints.Result.Companion.SUCCESS_EMPTY
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
@@ -51,7 +53,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
-      val project = editor.project ?: return@runReadAction CodeVisionState.ReadyEmpty
+      val project = editor.project ?: return@runReadAction READY_EMPTY
       val document = editor.document
       val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
       val language = file.language
@@ -64,7 +66,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                    ?: return@runReadAction CodeVisionState.ReadyEmpty
+                                    ?: return@runReadAction READY_EMPTY
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
@@ -154,7 +156,7 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
 
 private fun getAspect(file: PsiFile, editor: Editor): Result<LineAnnotationAspect?> {
   if (hasPreviewInfo(file)) return Result.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
-  val virtualFile = file.virtualFile ?: return Result.SuccessEmpty()
+  val virtualFile = file.virtualFile ?: return SUCCESS_EMPTY
   val annotationResult = getAnnotation(file.project, virtualFile, editor)
   if (annotationResult.isSuccess.not()) return Result.Failure()
 
@@ -166,8 +168,8 @@ private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAut
 private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): Result<FileAnnotation?> {
   editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return Result.Success(it) }
 
-  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return Result.SuccessEmpty()
-  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return Result.SuccessEmpty()
+  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return SUCCESS_EMPTY
+  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return SUCCESS_EMPTY
   val annotation = provider.getFromCache(file) ?: return Result.Failure()
 
   val annotationDisposable = Disposable {
@@ -211,8 +213,11 @@ private fun VcsCodeAuthorInfo.getText(): String {
   }
 }
 
-private sealed class Result<T>(val isSuccess: Boolean, val result: T?){
-  class SuccessEmpty<T> : Result<T>(true, null)
-  open class Success<T>(result: T) : Result<T>(true, result)
+private sealed class Result<out T>(val isSuccess: Boolean, val result: T?){
+
+  companion object{
+    val SUCCESS_EMPTY = Success(null)
+  }
+  class Success<T>(result: T) : Result<T>(true, result)
   class Failure<T> : Result<T>(false, null)
 }
