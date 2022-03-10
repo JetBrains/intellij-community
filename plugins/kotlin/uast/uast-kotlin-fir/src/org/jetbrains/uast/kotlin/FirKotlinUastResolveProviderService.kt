@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.analyseForUast
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
@@ -488,7 +489,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun evaluate(uExpression: UExpression): Any? {
         val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
         analyseForUast(ktExpression) {
-            return ktExpression.evaluate()?.takeUnless { it is KtConstantValue.KtErrorConstantValue }?.value
+            return ktExpression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
+                ?.takeUnless { it is KtConstantValue.KtErrorConstantValue }?.value
         }
     }
 }
