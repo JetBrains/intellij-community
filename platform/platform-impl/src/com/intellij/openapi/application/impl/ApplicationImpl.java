@@ -72,7 +72,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
   /**
-   * This boolean controls whether to use thread(s) other than EDT for acquiring IW lock (i.e. running write actions) or not.
+   * This boolean controls whether to use thread(s) other than EDT for acquiring IW lock (i.e., running write actions) or not.
    * If value is {@code false}, IW lock will be granted on EDT at all times, guaranteeing the same execution model as before
    * IW lock introduction.
    */
@@ -202,7 +202,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   /**
    * Executes a {@code runnable} in an "impatient" mode.
    * In this mode any attempt to call {@link #runReadAction(Runnable)}
-   * would fail (i.e. throw {@link ApplicationUtil.CannotRunReadActionException})
+   * would fail (i.e., throw {@link ApplicationUtil.CannotRunReadActionException})
    * if there is a pending write action.
    */
   @Override
@@ -394,8 +394,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
 
-  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<T> expiredCondition, @NotNull Job childJob) {
-    return (t) -> {
+  private static <T> @NotNull Condition<T> cancelIfExpired(@NotNull Condition<? super T> expiredCondition, @NotNull Job childJob) {
+    return t -> {
       boolean expired = expiredCondition.value(t);
       if (expired) {
         // Cancel to avoid a hanging child job which will prevent completion of the parent one.
@@ -584,7 +584,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   /**
    * There are two ways we can get an exit notification.
-   *  1. From user input i.e. ExitAction
+   *  1. From user input i.e., ExitAction
    *  2. From the native system.
    *  We should not process any quit notifications if we are handling another one
    *
@@ -847,6 +847,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return true;
   }
 
+  @ApiStatus.Internal
   public boolean isCurrentWriteOnEdt() {
     return EDT.isEdt(myLock.writeThread);
   }
@@ -1348,7 +1349,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   /**
-   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g. to allow for read-action parallelization).
+   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g., to allow for read-action parallelization).
    * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
    * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
    * callers should be ready for those.
@@ -1451,11 +1452,20 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public String toString() {
-    return "Application (containerState=" + getContainerStateName() + ") " +
-           (isUnitTestMode() ? " (Unit test)" : "") +
-           (isInternal() ? " (Internal)" : "") +
-           (isHeadlessEnvironment() ? " (Headless)" : "") +
-           (isCommandLine() ? " (Command line)" : "");
+    boolean writeActionPending = isWriteActionPending();
+    boolean writeActionInProgress = isWriteActionInProgress();
+    boolean writeAccessAllowed = isWriteAccessAllowed();
+    return "Application "
+           + (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState "+getContainerStateName() + ") ")
+           + (isUnitTestMode() ? " (unit test)" : "")
+           + (isInternal() ? " (internal)" : "")
+           + (isHeadlessEnvironment() ? " (headless)" : "")
+           + (isCommandLine() ? " (command line)" : "")
+           + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" + (writeActionPending ? " pending" : "") + (writeActionInProgress ? " inProgress" : "") + (writeAccessAllowed ? " allowed" : "") + ")" : "")
+           + (isReadAccessAllowed() ? "(RA allowed)" : "")
+           + (isInImpatientReader() ? "(impatient reader)" : "")
+           + (isExitInProgress() ? "(exit in progress)" : "")
+      ;
   }
 
   @Override
