@@ -140,6 +140,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
           writer.writeString(ProjectDependencyNode.class.getSimpleName());
           writeDependencyCommonFields(writer, node);
           writeString(writer, "projectName", node.getProjectName());
+          writeString(writer, "projectPath", node.getProjectPath());
           writeDependenciesField(writer, context, node);
         }
         writer.stepOut();
@@ -352,7 +353,8 @@ public final class ProjectDependenciesSerializationService implements Serializat
             DependencyNode node;
             if (ProjectDependencyNode.class.getSimpleName().equals(type)) {
               String projectName = assertNotNull(readString(reader, "projectName"));
-              node = new ProjectDependencyNodeImpl(id, projectName);
+              String projectPath = assertNotNull(readString(reader, "projectPath"));
+              node = new ProjectDependencyNodeImpl(id, projectName, projectPath);
             }
             else if (ArtifactDependencyNode.class.getSimpleName().equals(type)) {
               String group = assertNotNull(readString(reader, "group"));

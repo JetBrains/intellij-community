@@ -325,7 +325,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.moduleName = moduleName;
   }
 
-  @Nullable
+  @NotNull
   public String getIdeGrouping() {
     if (ideModuleGroup != null) {
       return join(ideModuleGroup, ".");
