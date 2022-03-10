@@ -355,6 +355,12 @@ open class CodeVisionHost(val project: Project) {
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
+        if (!inlaySettingsEditor && !lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
+          if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
+            everyProviderReadyToUpdate = false
+            return@forEach
+          }
+        }
         if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@forEach
         ProgressManager.checkCanceled()
         if (project.isDisposed) return@executeOnPooledThread
@@ -362,10 +368,6 @@ open class CodeVisionHost(val project: Project) {
           if (editor.lensContextOrThrow.hasProviderCodeVision(it.id)) {
             providerWhoWantToUpdate.add(it.id)
           }
-          return@forEach
-        }
-        if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
-          everyProviderReadyToUpdate = false
           return@forEach
         }
         providerWhoWantToUpdate.add(it.id)
