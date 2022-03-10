@@ -935,7 +935,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           @Nullable Runnable postRunnable,
                           boolean modal,
                           @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    String title = LangBundle.message("progress.title.inspect.code");
+    String title = LangBundle.message("progress.title.inspect.code", profile.getName());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Starting code cleanup");
     }

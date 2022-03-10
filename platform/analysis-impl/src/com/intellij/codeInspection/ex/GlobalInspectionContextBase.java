@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -206,8 +206,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), AnalysisBundle.message("inspection.progress.title"), true,
-                                                              createOption()) {
+    final InspectionProfileImpl profile = getCurrentProfile();
+    String title = profile.getSingleTool() == null
+                   ? AnalysisBundle.message("inspection.progress.profile.title", profile.getName())
+                   : AnalysisBundle.message("inspection.progress.single.inspection.title", profile.getName());
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, true, createOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         performInspectionsWithProgress(scope, false, false);
