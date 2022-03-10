@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
@@ -43,6 +44,11 @@ public final class DiffDrawUtil {
   public static final int LAYER_PRIORITY_STEP = 5; // DEFAULT_LAYER..LINE_MARKER_LAYER
   public static final int LAYER_PRIORITY_MAX = 3;
   public static final int LST_LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+
+  /**
+   * Marker for editors that use renderers with higher priority
+   */
+  public static final Key<Boolean> EDITOR_WITH_HIGH_PRIORITY_RENDERER = Key.create("DiffDrawUtil.EDITOR_WITH_HIGH_PRIORITY_RENDERER");
 
   private static final double CTRL_PROXIMITY_X = 0.3;
 
@@ -463,6 +469,10 @@ public final class DiffDrawUtil {
     return Collections.singletonList(marker);
   }
 
+  private static int getLayer(int layer, int layerPriority) {
+    return layer + layerPriority * LAYER_PRIORITY_STEP;
+  }
+
   public static final class LineHighlighterBuilder {
     @NotNull private final Editor editor;
     @NotNull private final TextDiffType type;
@@ -535,6 +545,9 @@ public final class DiffDrawUtil {
       return this;
     }
 
+    /**
+     * @see DiffDrawUtil#EDITOR_WITH_HIGH_PRIORITY_RENDERER
+     */
     @NotNull
     public LineHighlighterBuilder withLayerPriority(int layerPriority) {
       this.layerPriority = layerPriority;
@@ -575,7 +588,7 @@ public final class DiffDrawUtil {
       boolean dottedLine = editorMode.border == BorderType.DOTTED;
 
       RangeHighlighter highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, DEFAULT_LAYER + layerPriority * LAYER_PRIORITY_STEP,
+        .addRangeHighlighter(start, end, getLayer(DEFAULT_LAYER, layerPriority),
                              attributes, HighlighterTargetArea.LINES_IN_RANGE);
       highlighters.add(highlighter);
 
@@ -584,8 +597,9 @@ public final class DiffDrawUtil {
                                                                    alignedSides));
 
       if (isEmptyRange && !alignedSides) {
-        LineMarkerBuilder builder = isFirstLine ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP, layerPriority)
-                                                : new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM, layerPriority);
+        LineMarkerBuilder builder = isFirstLine
+                                    ? new LineMarkerBuilder(editor, 0, SeparatorPlacement.TOP, layerPriority)
+                                    : new LineMarkerBuilder(editor, startLine - 1, SeparatorPlacement.BOTTOM, layerPriority);
         builder.withDefaultRenderer(type, true, dottedLine, highlighter);
         highlighters.addAll(builder.done());
       }
@@ -623,6 +637,9 @@ public final class DiffDrawUtil {
       this.end = end;
     }
 
+    /**
+     * @see DiffDrawUtil#EDITOR_WITH_HIGH_PRIORITY_RENDERER
+     */
     @NotNull
     public InlineHighlighterBuilder withLayerPriority(int layerPriority) {
       this.layerPriority = layerPriority;
@@ -634,7 +651,7 @@ public final class DiffDrawUtil {
       TextAttributes attributes = getTextAttributes(type, editor, BackgroundType.DEFAULT);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, INLINE_LAYER + layerPriority * LAYER_PRIORITY_STEP,
+        .addRangeHighlighter(start, end, getLayer(INLINE_LAYER, layerPriority),
                              attributes, HighlighterTargetArea.EXACT_RANGE);
 
       if (start == end) installEmptyRangeRenderer(highlighter, type);
@@ -667,7 +684,7 @@ public final class DiffDrawUtil {
 
       offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
       highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(null, offset, offset, LINE_MARKER_LAYER + layerPriority * LAYER_PRIORITY_STEP,
+        .addRangeHighlighter(null, offset, offset, getLayer(LINE_MARKER_LAYER, layerPriority),
                              HighlighterTargetArea.LINES_IN_RANGE);
     }
 

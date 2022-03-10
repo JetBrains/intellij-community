@@ -123,6 +123,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
       myIndicator.cancel();
       myIndicator = null;
     }
+    myEditor.putUserData(DiffDrawUtil.EDITOR_WITH_HIGH_PRIORITY_RENDERER, null);
     myHighlighters.forEach(highlighter -> myEditor.getMarkupModel().removeHighlighter(highlighter));
     myHighlighters.clear();
     myCurrentLine = -1;
@@ -170,6 +171,8 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
     String contentAfter = details.lineContentAfter;
     List<InnerChange> changes = details.changes;
+
+    myEditor.putUserData(DiffDrawUtil.EDITOR_WITH_HIGH_PRIORITY_RENDERER, true);
 
     InnerChange onlyItem = ContainerUtil.getOnlyItem(changes);
     if (onlyItem != null && onlyItem.startOffset == 0 && onlyItem.endOffset == contentAfter.length()) {
