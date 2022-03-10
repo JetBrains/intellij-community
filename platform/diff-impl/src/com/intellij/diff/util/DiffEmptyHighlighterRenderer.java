@@ -21,16 +21,18 @@ public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {
 
   @Override
   public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
-    MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    CommonProcessors.FindProcessor<RangeHighlighterEx> processor = new CommonProcessors.FindProcessor<>() {
-      @Override
-      protected boolean accept(RangeHighlighterEx ex) {
-        return ex.getLayer() > highlighter.getLayer() &&
-               ex.getLineMarkerRenderer() instanceof DiffLineMarkerRenderer;
-      }
-    };
-    markupModel.processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), processor);
-    if (processor.isFound()) return; // range with higher layerPriority found
+    if (DiffUtil.isUserDataFlagSet(DiffDrawUtil.EDITOR_WITH_HIGH_PRIORITY_RENDERER, editor)) {
+      MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+      CommonProcessors.FindProcessor<RangeHighlighterEx> processor = new CommonProcessors.FindProcessor<>() {
+        @Override
+        protected boolean accept(RangeHighlighterEx ex) {
+          return ex.getLayer() > highlighter.getLayer() &&
+                 ex.getLineMarkerRenderer() instanceof DiffLineMarkerRenderer;
+        }
+      };
+      markupModel.processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), processor);
+      if (processor.isFound()) return; // range with higher layerPriority found
+    }
 
     g.setColor(myDiffType.getColor(editor));
     Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
