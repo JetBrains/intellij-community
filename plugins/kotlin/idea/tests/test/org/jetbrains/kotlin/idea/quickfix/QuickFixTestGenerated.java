@@ -8135,6 +8135,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/expressions/unnecessaryNonNullAssertion3.kt");
         }
 
+        @TestMetadata("unnecessaryNonNullAssertion4.kt")
+        public void testUnnecessaryNonNullAssertion4() throws Exception {
+            runTest("testData/quickfix/expressions/unnecessaryNonNullAssertion4.kt");
+        }
+
         @TestMetadata("unnecessarySafeCall1.kt")
         public void testUnnecessarySafeCall1() throws Exception {
             runTest("testData/quickfix/expressions/unnecessarySafeCall1.kt");

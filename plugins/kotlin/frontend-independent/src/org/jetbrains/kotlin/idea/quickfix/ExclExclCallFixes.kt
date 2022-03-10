@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -28,8 +27,8 @@ class RemoveExclExclCallFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val postfixExpression = element as? KtPostfixExpression ?: return
-        val expression = KtPsiFactory(project).createExpression(postfixExpression.baseExpression!!.text)
-        postfixExpression.replace(expression)
+        val baseExpression = postfixExpression.baseExpression ?: return
+        postfixExpression.replace(baseExpression)
     }
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
