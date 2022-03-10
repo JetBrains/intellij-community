@@ -184,7 +184,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
-    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!.baseDirectoryUrlString)
+    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
   }
 
   private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
