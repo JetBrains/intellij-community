@@ -29,6 +29,9 @@ private val rwLock: ReadWriteLock = if (
 ) ReentrantReadWriteLock()
 else EmptyReadWriteLock()
 
+/**
+ * We use VersionedEntityStorage here instead of the builder/snapshot because we need an actual data of the storage for double check
+ */
 internal fun CompositePackagingElementEntity.toCompositeElement(
   project: Project,
   storage: VersionedEntityStorage,
@@ -38,7 +41,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
 
   var existing = try {
     testCheck(1)
-    storage.current.elements.getDataByEntity(this)
+    storage.base.elements.getDataByEntity(this)
   }
   catch (e: Exception) {
     rwLock.readLock().unlock()
@@ -50,7 +53,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
     try {
       testCheck(2)
       // Double check
-      existing = storage.current.elements.getDataByEntity(this)
+      existing = storage.base.elements.getDataByEntity(this)
       if (existing == null) {
         val element = when (this) {
           is DirectoryPackagingElementEntity -> {
@@ -109,7 +112,7 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
 
   var existing = try {
     testCheck(3)
-    storage.current.elements.getDataByEntity(this)
+    storage.base.elements.getDataByEntity(this)
   }
   catch (e: Exception) {
     rwLock.readLock().unlock()
@@ -121,7 +124,7 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
     try {
       testCheck(4)
       // Double check
-      existing = storage.current.elements.getDataByEntity(this)
+      existing = storage.base.elements.getDataByEntity(this)
       if (existing == null) {
         val element = when (this) {
           is ModuleOutputPackagingElementEntity -> {
@@ -187,7 +190,7 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
           is DirectoryPackagingElementEntity -> this.toCompositeElement(project, storage, false)
           is ArtifactRootElementEntity -> this.toCompositeElement(project, storage, false)
           is LibraryFilesPackagingElementEntity -> {
-            val mapping = storage.current.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
+            val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
             val data = mapping.getDataByEntity(this)
             if (data != null) {
               return data
@@ -234,7 +237,7 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
 
 private fun CustomPackagingElementEntity.unpackCustomElement(storage: VersionedEntityStorage,
                                                              project: Project): PackagingElement<*> {
-  val mapping = storage.current.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
+  val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
   val data = mapping.getDataByEntity(this)
   if (data != null) {
     return data

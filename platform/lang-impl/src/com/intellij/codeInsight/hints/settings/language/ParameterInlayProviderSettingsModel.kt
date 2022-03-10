@@ -3,7 +3,9 @@ package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
 import com.intellij.lang.Language
@@ -34,6 +36,10 @@ class ParameterInlayProviderSettingsModel(
     return getCasePreview(language, provider, case)
   }
 
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return language
+  }
+
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     return provider.getProperty("inlay.parameters." + case.id)
   }
@@ -57,20 +63,25 @@ class ParameterInlayProviderSettingsModel(
     )
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) {
+  override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                backup.reset()
                                                try {
                                                  apply()
+                                                 val case = CASE_KEY.get(editor)
+                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, case != null && !case.value)
+                                                 provider.supportedOptions.forEach { it.set(true) }
                                                  pass.collectInformation(ProgressIndicatorBase())
                                                }
                                                finally {
                                                  backup.apply()
                                                }
                                              }, DaemonProgressIndicator())
-    ApplicationManager.getApplication().invokeLater { pass.applyInformationToEditor() }
+    return Runnable {
+      pass.doApplyInformationToEditor()
+    }
   }
 
   override val description: String?

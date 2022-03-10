@@ -22,6 +22,13 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.tasks.ArchiveKt
+import org.jetbrains.intellij.build.tasks.AsmKt
+import org.jetbrains.intellij.build.tasks.BrokenPluginsKt
+import org.jetbrains.intellij.build.tasks.JarBuilder
+import org.jetbrains.intellij.build.tasks.KeymapPluginKt
+import org.jetbrains.intellij.build.tasks.ReorderJarsKt
+import org.jetbrains.intellij.build.tasks.Source
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -276,8 +283,9 @@ final class DistributionJARsBuilder {
             buildHelper.createTask(spanBuilder("write patched app info")) {
               Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
               String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-              byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
-                                                                         context.applicationInfo?.getAppInfoXml()) as byte[]
+              byte[] result = AsmKt.injectAppInfo(
+                moduleOutDir.resolve(relativePath),
+                context.applicationInfo?.getAppInfoXml()) as byte[]
               moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
               return null
             },
@@ -288,10 +296,10 @@ final class DistributionJARsBuilder {
             scramble(context)
           }
 
-          context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
-            .invokeWithArguments(context.paths.distAllDir,
-                                 context.productProperties.productLayout.mainJarName,
-                                 antTargetFile)
+          context.bootClassPathJarNames = ReorderJarsKt.generateClasspath(
+            context.paths.distAllDir,
+            context.productProperties.productLayout.mainJarName,
+            antTargetFile)
           return result
         }
       }
@@ -375,8 +383,7 @@ final class DistributionJARsBuilder {
       new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
-          List sources = new ArrayList<>()
-          BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
+          List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
           ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
           buildHelper.copyDir(
@@ -394,7 +401,7 @@ final class DistributionJARsBuilder {
                   return true
                 }
 
-                sources.add(createZipSource.apply(file, new IntConsumer() {
+                sources.add(JarBuilder.createZipSource(file, new IntConsumer() {
                   @Override
                   void accept(int size) {
                     result.add(new ProjectLibraryEntry(antTargetFile, libraryData, file, size))
@@ -407,7 +414,8 @@ final class DistributionJARsBuilder {
 
           sources.sort(null)
           // path in class log - empty, do not reorder, doesn't matter
-          buildHelper.buildJars.accept(List.of(new Triple(antTargetFile, "", sources)), false)
+          List<Triple<Path, String, List<Source>>> list = List.of(new Triple(antTargetFile, "", sources))
+          JarBuilder.buildJars(list, false)
           return result
         }
       }
@@ -422,7 +430,7 @@ final class DistributionJARsBuilder {
 
     sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
 
-    BuildHelper.getInstance(context).packInternalUtilities.accept(
+    ArchiveKt.packInternalUtilities(
       context.paths.artifactDir.resolve("internalUtilities.zip"),
       sources
     )
@@ -442,7 +450,7 @@ final class DistributionJARsBuilder {
       new Runnable() {
         @Override
         void run() {
-          helper.brokenPluginsTask.invokeWithArguments(targetFile, buildString, context.options.isInDevelopmentMode)
+          BrokenPluginsKt.buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
           if (Files.exists(targetFile)) {
             context.addDistFile(Map.entry(targetFile, "bin"))
           }
@@ -510,9 +518,14 @@ final class DistributionJARsBuilder {
                                       systemProperties,
                                       List.of(),
                                       TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
+
+    if (!Files.isDirectory(targetDirectory)) {
+      messages.error("Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run.")
+    }
+
     List<Path> modules = Files.newDirectoryStream(targetDirectory).withCloseable { it.asList() }
     if (modules.isEmpty()) {
-      messages.error("Failed to build searchable options index: $targetDirectory is empty")
+      messages.error("Failed to build searchable options index: $targetDirectory is empty. See log above for error output from traverseUI run.")
     }
     else {
       span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), (long)modules.size())
@@ -556,6 +569,8 @@ final class DistributionJARsBuilder {
       Files.createDirectories(artifactDir)
       Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
       Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
+      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
+      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
     }
 
     if (productProperties.buildSourcesArchive) {
@@ -720,7 +735,13 @@ final class DistributionJARsBuilder {
                              .setAttribute("isUpdateFromSources", isUpdateFromSources), new Supplier<List<DistributionFileEntry>>() {
       @Override
       List<DistributionFileEntry> get() {
-        return ForkJoinTask.invokeAll(OsFamily.values().findResults { osFamily ->
+        List<Tuple2> platforms = isUpdateFromSources
+          ? List.of(new Tuple2(OsFamily.currentOs, JvmArchitecture.currentJvmArch))
+          : List.of(new Tuple2(OsFamily.MACOS, JvmArchitecture.x64),
+                    new Tuple2(OsFamily.MACOS, JvmArchitecture.aarch64),
+                    new Tuple2(OsFamily.WINDOWS, JvmArchitecture.x64),
+                    new Tuple2(OsFamily.LINUX, JvmArchitecture.x64))
+        return ForkJoinTask.invokeAll(platforms.findResults { OsFamily osFamily, JvmArchitecture arch ->
           if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
             return null
           }
@@ -737,10 +758,11 @@ final class DistributionJARsBuilder {
 
           Path outDir = isUpdateFromSources
             ? context.paths.distAllDir.resolve("plugins")
-            : getOsSpecificDistDirectory(osFamily, context).resolve("plugins")
+            : getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
 
           return buildHelper.createTask(spanBuilder("build bundled plugins")
                                           .setAttribute("os", osFamily.osName)
+                                          .setAttribute("arch", arch.name())
                                           .setAttribute("count", osSpecificPlugins.size())
                                           .setAttribute("outDir", outDir.toString()), new Supplier<List<DistributionFileEntry>>() {
             @Override
@@ -753,8 +775,8 @@ final class DistributionJARsBuilder {
     })
   }
 
-  static Path getOsSpecificDistDirectory(OsFamily osFamily, BuildContext buildContext) {
-    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}")
+  static Path getOsAndArchSpecificDistDirectory(OsFamily osFamily, JvmArchitecture arch, BuildContext buildContext) {
+    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name()}")
   }
 
   /**
@@ -800,7 +822,6 @@ final class DistributionJARsBuilder {
     }
   }
 
-  // compressPluginArchive also means that blockmap for plugin archive will be built
   @Nullable
   ForkJoinTask<List<DistributionFileEntry>> createBuildNonBundledPluginsTask(@NotNull Set<PluginLayout> pluginsToPublish,
                                                                              boolean compressPluginArchive,
@@ -903,8 +924,7 @@ final class DistributionJARsBuilder {
 
   private static ForkJoinTask<List<kotlin.Pair<Path, byte[]>>> buildKeymapPlugins(Path targetDir, BuildContext context) {
     Path keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
-    return (ForkJoinTask<List<kotlin.Pair<Path, byte[]>>>)BuildHelper.getInstance(context)
-      .buildKeymapPlugins.invokeWithArguments(context.buildNumber, targetDir, keymapDir)
+    return KeymapPluginKt.buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
   }
 
   private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin,

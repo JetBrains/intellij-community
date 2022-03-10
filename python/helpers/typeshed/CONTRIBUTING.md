@@ -36,6 +36,8 @@ need fixing.
 
 If you prefer to run the tests & formatting locally, it's
 possible too. Follow platform-specific instructions below.
+For more information about our available tests, see
+[tests/README.md](tests/README.md).
 
 Whichever platform you're using, you will need a
 virtual environment. If you're not familiar with what it is and how it works,
@@ -116,6 +118,8 @@ We accept stubs for third-party packages into typeshed as long as:
 * the package supports any Python version supported by typeshed; and
 * the package does not ship with its own stubs or type annotations.
 
+The fastest way to generate new stubs is to use `scripts/create_baseline_stubs.py` (see below).
+
 Stubs for third-party packages
 go into `stubs`. Each subdirectory there represents a PyPI distribution, and
 contains the following:
@@ -127,11 +131,6 @@ contains the following:
   Stubs outside `@python2` are always used with Python 3,
   and also with Python 2 if `python2 = true` is set in `METADATA.toml` (see below).
 * (Rarely) some docs specific to a given type stub package in `README` file.
-
-The fastest way to generate new stubs is to use [stubgen](https://mypy.readthedocs.io/en/stable/stubgen.html),
-a tool shipped with mypy. Please make sure to use the latest version.
-The generated stubs usually need some trimming of imports. You also need
-to run `black` and `isort` manually on the generated stubs (see below).
 
 When a third party stub is added or
 modified, an updated version of the corresponding distribution will be
@@ -177,6 +176,9 @@ supported:
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
+* `stubtest_apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
+  that need to be installed for stubtest to run successfully. These are
+  usually packages needed to pip install the implementation distribution.
 
 The format of all `METADATA.toml` files can be checked by running
 `python3 ./tests/check_consistent.py`.
@@ -204,6 +206,27 @@ are used to describe the signature of each function or method.
 See [PEP 484](http://www.python.org/dev/peps/pep-0484/) for the exact
 syntax of the stub files and [below](#stub-file-coding-style) for the
 coding style used in typeshed.
+
+### Auto-generating stub files
+
+Typeshed includes `scripts/create_baseline_stubs.py`.
+It generates stubs automatically using a tool called
+[stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html) that comes with mypy.
+
+To get started, fork typeshed, clone your fork, and then
+[create a virtualenv](#-or-create-a-local-development-environment).
+You can then install the library with `pip` into the virtualenv and run the script,
+replacing `libraryname` with the name of the library below:
+
+```
+(.venv3)$ pip install libraryname
+(.venv3)$ python3 scripts/create_baseline_stubs.py libraryname
+```
+
+When the script has finished running, it will print instructions telling you what to do next.
+
+If it has been a while since you set up the virtualenv, make sure you have
+the latest mypy (`pip install -r requirements-tests.txt`) before running the script.
 
 ### Supported type system features
 
@@ -337,15 +360,6 @@ class Foo:
 
 def bar(x: str, y, *, z=...): ...
 ```
-
-### Using stubgen
-
-Mypy includes a tool called [stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html)
-that auto-generates stubs for Python and C modules using static analysis,
-Sphinx docs, and runtime introspection.  It can be used to get a starting
-point for your stubs.  Note that this generator is currently unable to
-determine most argument and return types and omits them or uses ``Any`` in
-their place.  Fill out manually the types that you know.
 
 ## Stub file coding style
 
@@ -486,17 +500,6 @@ To format and check your stubs, run the following commands:
 (.venv3)$ isort stdlib stubs
 (.venv3)$ flake8
 ```
-
-
-## Running the tests
-
-The tests are automatically run on every PR and push to the repo.
-Therefore you don't need to run them locally, unless you want to run
-them before making a pull request or you want to debug some problem without
-creating several small commits.
-
-For more information about our available tests, see
-[tests/README.md](tests/README.md).
 
 
 ## Submitting Changes

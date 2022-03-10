@@ -72,6 +72,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -106,6 +107,17 @@ public abstract class PythonCommandLineState extends CommandLineState {
   //TODO: DOC ParametersListUtil
   public static final String GROUP_SCRIPT = "Script";
   public static final String MODULE_PARAMETER = "-m";
+
+  /**
+   * The port number to use for a server socket. '0' means the port will be automatically allocated.
+   */
+  private static final int SERVER_SOCKET_PORT = 0;
+
+  /**
+   * The length of the backlog to use for a server socket. '0' means the length of queue will be chosen by Java Platform.
+   */
+  private static final int SERVER_SOCKET_BACKLOG = 0;
+
   private final AbstractPythonRunConfiguration<?> myConfig;
 
   private Boolean myMultiprocessDebug = null;
@@ -122,8 +134,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      serverSocket = new ServerSocket(0);
+      serverSocket = new ServerSocket(SERVER_SOCKET_PORT, SERVER_SOCKET_BACKLOG, InetAddress.getLoopbackAddress());
     }
     catch (IOException e) {
       throw new ExecutionException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);

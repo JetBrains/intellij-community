@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -45,16 +45,17 @@ public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
-  public static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                                          @NotNull ProblemsHolder holder,
-                                                                          boolean isOnTheFly,
-                                                                          @NotNull LocalInspectionToolSession session,
-                                                                          @NotNull List<? extends PsiElement> elements) {
+  private static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
+                                                                           @NotNull ProblemsHolder holder,
+                                                                           boolean isOnTheFly,
+                                                                           @NotNull LocalInspectionToolSession session,
+                                                                           @NotNull List<? extends PsiElement> elements) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, isOnTheFly);
-      acceptElements(elements, visitor);
+      ProgressManager.getInstance().runProcess(() -> acceptElements(elements, visitor), new EmptyProgressIndicator());
+      tool.inspectionFinished(session, holder);
     }
     return visitor;
   }
@@ -75,7 +76,7 @@ public final class InspectionEngine {
     return visitor;
   }
 
-  public static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
+  private static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
@@ -278,8 +279,6 @@ public final class InspectionEngine {
         };
         LocalInspectionTool tool = toolWrapper.getTool();
         createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
-
-        tool.inspectionFinished(session, holder);
 
         if (holder.hasResults()) {
           List<ProblemDescriptor> descriptors = ContainerUtil.filter(holder.getResults(), descriptor -> {

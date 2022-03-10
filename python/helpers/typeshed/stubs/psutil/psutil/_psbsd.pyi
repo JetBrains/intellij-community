@@ -141,12 +141,14 @@ class Process:
     def status(self): ...
     def io_counters(self): ...
     def cwd(self): ...
+
     class nt_mmap_grouped(NamedTuple):
         path: Any
         rss: Any
         private: Any
         ref_count: Any
         shadow_count: Any
+
     class nt_mmap_ext(NamedTuple):
         addr: Any
         perms: Any

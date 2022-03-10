@@ -3,7 +3,6 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -12,7 +11,6 @@ import java.util.Arrays;
  * @deprecated use {@link java.util.ArrayDeque} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
 public final class Queue<T> {
   private Object[] myArray;
   private int myFirst;

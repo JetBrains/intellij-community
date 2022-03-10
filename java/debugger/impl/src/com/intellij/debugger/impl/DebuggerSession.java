@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -286,7 +286,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void stepOut(int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd =
-      JvmSteppingCommandProvider.EP_NAME.computeSafeIfAny(handler -> handler.getStepOutCommand(suspendContext, stepSize));
+      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+                                         handler -> handler.getStepOutCommand(suspendContext, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
     }
@@ -300,8 +301,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public void stepOver(boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
-    DebugProcessImpl.ResumeCommand cmd = JvmSteppingCommandProvider.EP_NAME.computeSafeIfAny(
-      handler -> handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize));
+    DebugProcessImpl.ResumeCommand cmd =
+      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+                                         handler -> handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize);
     }
@@ -319,8 +321,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    DebugProcessImpl.ResumeCommand cmd = JvmSteppingCommandProvider.EP_NAME.computeSafeIfAny(
-      handler -> handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize));
+    DebugProcessImpl.ResumeCommand cmd =
+      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+                                         handler -> handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
     }

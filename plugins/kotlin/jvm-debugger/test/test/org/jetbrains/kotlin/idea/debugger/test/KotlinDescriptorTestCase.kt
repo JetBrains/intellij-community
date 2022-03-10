@@ -113,7 +113,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     open fun fragmentCompilerBackend() = CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM
 
-    protected fun targetBackend(): TargetBackend =
+    protected open fun targetBackend(): TargetBackend =
         when (fragmentCompilerBackend()) {
             CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM ->
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else TargetBackend.JVM_WITH_OLD_EVALUATOR

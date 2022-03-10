@@ -3,73 +3,70 @@ package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSet
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.xmlb.annotations.XMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-@State(name = "LibraryUsageStatistics", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsageStatisticsStorageService.LibraryUsageStatisticsState>, Disposable {
-  private val lock = ReentrantReadWriteLock()
-  private var statistics = Object2IntOpenHashMap<LibraryUsage>()
-  private var visitedFiles: VirtualFileSet = VfsUtilCore.createCompactVirtualFileSet()
-
-  override fun getState(): LibraryUsageStatisticsState {
-    return lock.read {
-      val result = LibraryUsageStatisticsState()
-      result.statistics.putAll(statistics)
-      result
+@State(
+  name = "LibraryUsageStatisticsStorage",
+  storages = [Storage(StoragePathMacros.CACHE_FILE)],
+  reportStatistic = false,
+  reloadable = false,
+)
+class LibraryUsageStatisticsStorageService :
+  PersistentStateComponentWithModificationTracker<LibraryUsageStatisticsStorageService.MyState>,
+  Disposable {
+  override fun initializeComponent() {
+    if (dropOutdatedPaths()) {
+      tracker.incModificationCount()
     }
   }
 
-  override fun loadState(state: LibraryUsageStatisticsState) {
-    lock.write {
-      statistics = Object2IntOpenHashMap(state.statistics)
-      visitedFiles = VfsUtilCore.createCompactVirtualFileSet()
-    }
+  @Volatile
+  private var state = MyState()
+  private val tracker = SimpleModificationTracker()
+
+  override fun getState(): MyState = state
+
+  override fun getStateModificationCount(): Long = tracker.modificationCount
+
+  override fun loadState(state: MyState) {
+    this.state = state
   }
 
-  fun getStatisticsAndResetState(): Map<LibraryUsage, Int> {
-    lock.write {
-      val old = statistics
-      statistics = Object2IntOpenHashMap()
-      visitedFiles = VfsUtilCore.createCompactVirtualFileSet()
-      return old
-    }
-  }
-
-  fun isVisited(vFile: VirtualFile): Boolean = lock.read { vFile in visitedFiles }
-
-  fun visit(vFile: VirtualFile): Boolean = lock.write { visitedFiles.add(vFile) }
-
-  fun increaseUsage(vFile: VirtualFile, library: LibraryUsage) {
-    lock.write {
-      unsafeIncreaseUsage(library)
-      visitedFiles.add(vFile)
-    }
-  }
-
-  fun increaseUsages(vFile: VirtualFile, libraries: Collection<LibraryUsage>): Unit = lock.write {
-    libraries.forEach(::unsafeIncreaseUsage)
-    visitedFiles.add(vFile)
-  }
-
-  private fun unsafeIncreaseUsage(library: LibraryUsage) {
-    statistics.addTo(library, 1)
-  }
-
-  class LibraryUsageStatisticsState {
+  class MyState {
     @XMap
     @JvmField
-    val statistics = HashMap<LibraryUsage, Int>()
+    val timestamps: MutableMap<String, Long> = ConcurrentHashMap()
   }
+
+  fun isVisited(vFile: VirtualFile): Boolean {
+    val fileTime = state.timestamps[vFile.pathMd5Hash()] ?: return false
+    val currentTime = System.currentTimeMillis()
+    return !isDayPassed(lastTime = fileTime, currentTime = currentTime)
+  }
+
+  fun visit(vFile: VirtualFile) {
+    val hash = vFile.pathMd5Hash()
+    val currentTime = System.currentTimeMillis()
+    state.timestamps[hash] = currentTime
+    dropOutdatedPaths(currentTime)
+    tracker.incModificationCount()
+  }
+
+  /**
+   * @return **true** if any elements were removed
+   */
+  private fun dropOutdatedPaths(currentTime: Long = System.currentTimeMillis()): Boolean {
+    return state.timestamps.values.removeIf { isDayPassed(lastTime = it, currentTime = currentTime) }
+  }
+
+  private fun VirtualFile.pathMd5Hash(): String = DigestUtil.md5Hex(path.encodeToByteArray())
 
   override fun dispose() = Unit
 
@@ -78,13 +75,4 @@ class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsa
   }
 }
 
-data class LibraryUsage(
-  var name: String? = null,
-  var version: String? = null,
-  var fileTypeName: String? = null,
-) {
-  constructor(name: String, version: String, fileType: FileType) : this(name = name, version = version, fileTypeName = fileType.name)
-
-  override fun toString(): String = "$name-$version for $fileTypeName"
-}
-
+private fun isDayPassed(lastTime: Long, currentTime: Long): Boolean = TimeUnit.MILLISECONDS.toDays(currentTime - lastTime) >= 1

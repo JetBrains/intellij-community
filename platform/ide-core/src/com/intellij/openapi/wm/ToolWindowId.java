@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
-import org.jetbrains.annotations.ApiStatus;
-
 public interface ToolWindowId {
   String COMMANDER = "Commander";
   String MESSAGES_WINDOW = "Messages";
@@ -17,8 +15,7 @@ public interface ToolWindowId {
   /**
    * @deprecated Use {@link com.intellij.analysis.problemsView.toolWindow.ProblemsView}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String INSPECTION = "Inspection Results";
 
   String FIND = "Find";

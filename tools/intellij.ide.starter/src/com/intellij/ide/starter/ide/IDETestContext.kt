@@ -218,14 +218,8 @@ data class IDETestContext(
     path.toFile().deleteRecursively()
   }
 
-  // TODO: get rid of this method. It's confusing since we're already specifying, what profiler we want to use in [setProfiler]
-  fun runContext(withProfiling: Boolean = true): IDERunContext {
-    return IDERunContext(testContext = this).run {
-      when (withProfiling) {
-        true -> this.installProfiler()
-        false -> this
-      }
-    }
+  fun runContext(): IDERunContext {
+    return IDERunContext(testContext = this)
   }
 
   /**
@@ -341,10 +335,10 @@ data class IDETestContext(
     runTimeout: Duration = Duration.minutes(10),
     useStartupScript: Boolean = true,
     launchName: String = "",
-    withProfiling: Boolean = true,
-    expectedKill: Boolean = false
+    expectedKill: Boolean = false,
+    collectNativeThreads: Boolean = false
   ): IDEStartResult {
-    return runContext(withProfiling)
+    return runContext()
       .copy(
         commandLine = commandLine,
         commands = commands,
@@ -352,7 +346,8 @@ data class IDETestContext(
         runTimeout = runTimeout,
         useStartupScript = useStartupScript,
         launchName = launchName,
-        expectedKill = expectedKill
+        expectedKill = expectedKill,
+        collectNativeThreads = collectNativeThreads
       )
       .addVMOptionsPatch(patchVMOptions)
       .runIDE()
@@ -371,8 +366,7 @@ data class IDETestContext(
       },
       commands = testCase.commands.plus(commands),
       runTimeout = runTimeout,
-      launchName = "warmUp",
-      withProfiling = false
+      launchName = "warmUp"
     )
   }
 
@@ -559,10 +553,14 @@ data class IDETestContext(
   }
 
   fun updateGeneralSettings(): IDETestContext {
-    val patchedIdeGeneralXml = File(this::class.java.classLoader.getResource("ide.general.xml")!!.path)
+    val patchedIdeGeneralXml = this::class.java.classLoader.getResourceAsStream("ide.general.xml")
     val pathToGeneralXml = paths.configDir.toAbsolutePath().resolve("options/ide.general.xml")
+
     if (!pathToGeneralXml.exists()) {
-      patchedIdeGeneralXml.copyTo(pathToGeneralXml.toFile())
+      pathToGeneralXml.parent.createDirectories()
+      patchedIdeGeneralXml.use {
+        pathToGeneralXml.writeBytes(it.readAllBytes())
+      }
     }
     return this
   }

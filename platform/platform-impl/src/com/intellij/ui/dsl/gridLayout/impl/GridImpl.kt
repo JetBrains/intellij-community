@@ -338,7 +338,7 @@ internal class GridImpl : Grid {
       // Update visualPaddings
       val component = (cell as? ComponentCell)?.component
       val layout = component?.layout as? GridLayout
-      if (layout != null) {
+      if (layout != null && component.getClientProperty(GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS) != false) {
         val preferredSizeData = layout.getPreferredSizeData(component)
         cell.constraints.visualPaddings = preferredSizeData.outsideGaps
       }

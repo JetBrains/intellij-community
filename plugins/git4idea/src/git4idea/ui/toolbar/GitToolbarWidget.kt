@@ -5,8 +5,13 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
@@ -19,6 +24,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopup
+import icons.DvcsImplIcons
 import java.awt.event.InputEvent
 import java.util.concurrent.Executor
 import javax.swing.Icon
@@ -44,8 +50,8 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
 
   private var repository: GitRepository? = null
 
-  private val INCOMING_CHANGES_ICON = AllIcons.Actions.CheckOut
-  private val OUTGOING_CHANGES_ICON = AllIcons.Vcs.Push
+  private val INCOMING_CHANGES_ICON = DvcsImplIcons.Incoming
+  private val OUTGOING_CHANGES_ICON = DvcsImplIcons.Outgoing
 
   init {
     repository = guessCurrentRepo(project)
@@ -73,7 +79,7 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
     widget.project = project
     widget.repository = repository
     widget.text = repository?.currentBranchName?.let { cutText(it) } ?: GitBundle.message("git.toolbar.widget.no.repo")
-    widget.toolTipText = repository?.currentBranchName?.let { GitBundle.message("git.toolbar.widget.tooltip", it) }
+    widget.toolTipText = repository?.currentBranchName?.let { GitBundle.message("git.toolbar.widget.tooltip", it) } ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
     updateIcons()
   }
 
@@ -117,11 +123,21 @@ private class GitToolbarWidget : ToolbarComboWidget(), Disposable {
   }
 
   override fun doExpand(e: InputEvent) {
-    val proj = project
-    val repo = repository
-    if (proj != null && repo != null) {
-      val dataManager = DataManager.getInstance()
-      val listPopup = GitBranchPopup.getInstance(proj, repo, dataManager.getDataContext(this)).asListPopup()
+    project?.let { proj ->
+      val repo = repository
+
+      val listPopup: ListPopup
+      val dataContext = DataManager.getInstance().getDataContext(this)
+      if (repo != null) {
+        listPopup = GitBranchPopup.getInstance(proj, repo, dataContext).asListPopup()
+      }
+      else {
+        val group = ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
+        val place = ActionPlaces.getPopupPlace(ActionPlaces.VCS_TOOLBAR_WIDGET)
+        listPopup = JBPopupFactory.getInstance()
+          .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
+      }
+      listPopup.setRequestFocus(false)
       listPopup.showUnderneathOf(this)
     }
   }

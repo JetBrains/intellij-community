@@ -994,6 +994,19 @@ public final class ExpressionUtils {
       // Reference resolves to non-member: probably variable/parameter/etc.
       return null;
     }
+    return getEffectiveQualifier(ref, member);
+  }
+
+  /**
+   * Returns an effective qualifier for a reference that resolves to a member of a Java class. If qualifier is not
+   * specified, then tries to construct it e.g. creating a corresponding {@link PsiThisExpression}.
+   *
+   * @param ref    a reference expression to get an effective qualifier for
+   * @param member a member the reference is resolved to
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   * May return null if reference points to member of anonymous class referred from inner class
+   */
+  public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref, @NotNull PsiMember member) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
@@ -1014,7 +1027,8 @@ public final class ExpressionUtils {
           if (thisQualifier == null) {
             if (PsiUtil.isLocalClass(containingClass)) {
               thisQualifier = containingClass.getName();
-            } else {
+            }
+            else {
               // Cannot qualify anonymous class
               return null;
             }

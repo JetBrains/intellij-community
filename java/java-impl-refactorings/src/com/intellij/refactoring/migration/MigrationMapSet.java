@@ -209,7 +209,7 @@ public class MigrationMapSet {
       if (ORDER.equals(node.getName())) {
         String orderValue = node.getAttributeValue(VALUE);
         if (orderValue != null && !orderValue.isBlank()) {
-          map.setOrder(Integer.valueOf(orderValue));
+          map.setOrder(Integer.parseInt(orderValue));
         }
       }
 

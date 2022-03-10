@@ -1,25 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.AnActionLink;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
@@ -36,13 +33,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.event.KeyEvent;
 
 @ApiStatus.Experimental
-public class XDebuggerTextPopup<D> {
+public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
   public static final String ACTION_PLACE = "XDebuggerTextPopup";
+
+  private static final int MAX_POPUP_WIDTH = 650;
+  private static final int MAX_POPUP_HEIGHT = 400;
+  private static final int MIN_POPUP_WIDTH = 170;
+  private static final int MIN_POPUP_HEIGHT = 100;
+  private static final int MED_TEXT_VIEWER_SIZE = 300;
+  private static final int TOOLBAR_MARGIN = 30;
 
   protected final @Nullable XFullValueEvaluator myEvaluator;
   protected final @NotNull DebuggerTreeCreator<D> myTreeCreator;
@@ -52,13 +55,14 @@ public class XDebuggerTextPopup<D> {
   protected final @NotNull Point myPoint;
   protected final @Nullable Runnable myHideRunnable;
   protected final @NotNull TextViewer myTextViewer;
-  protected final @NotNull ActionToolbarImpl myToolbar;
 
   protected @Nullable JBPopup myPopup;
   protected boolean myTreePopupIsShown = false;
   protected @Nullable Tree myTree;
-  private boolean myTextViewerContentChanged = false;
+  private boolean mySetValueModeEnabled = false;
+  private String myCachedText = "";
 
+  @ApiStatus.Experimental
   public XDebuggerTextPopup(@Nullable XFullValueEvaluator evaluator,
                             @NotNull DebuggerTreeCreator<D> creator,
                             @NotNull D initialItem,
@@ -66,6 +70,7 @@ public class XDebuggerTextPopup<D> {
                             @NotNull Point point,
                             @NotNull Project project,
                             @Nullable Runnable hideRunnable) {
+    super();
     myEvaluator = evaluator;
     myTreeCreator = creator;
     myInitialItem = initialItem;
@@ -73,22 +78,33 @@ public class XDebuggerTextPopup<D> {
     myPoint = point;
     myProject = project;
     myHideRunnable = hideRunnable;
-    myToolbar = createToolbar();
     myTextViewer = DebuggerUIUtil.createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), myProject);
   }
 
-  private void makeTextViewerEditable() {
-    myTextViewer.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        myTextViewerContentChanged = event.getNewLength() + event.getOldLength() > 0;
-        myToolbar.updateActionsImmediately();
-      }
-    });
-    myTextViewer.setViewer(false);
+  private JBPopup createPopup(XFullValueEvaluator evaluator, Runnable afterEvaluation, Runnable hideTextPopupRunnable) {
+    ComponentPopupBuilder builder =
+      DebuggerUIUtil.createTextViewerPopupBuilder(myContent, myTextViewer, evaluator, myProject, afterEvaluation, hideTextPopupRunnable);
+
+    return builder.setCancelKeyEnabled(false)
+      .setRequestFocus(true)
+      .setKeyEventHandler(event -> {
+        if (mySetValueModeEnabled) {
+          return false;
+        }
+        if (AbstractPopup.isCloseRequest(event)) {
+          if (myPopup != null) {
+            myPopup.cancel();
+            return true;
+          }
+        }
+        return false;
+      }).createPopup();
   }
 
   public void show(@NotNull String initialText) {
+    myTextViewer.setPreferredSize(new Dimension(0, 0));
+    setContent(myTextViewer, getToolbarActions(), ACTION_PLACE, null);
+
     XFullValueEvaluator evaluator = myEvaluator != null ? myEvaluator : new ImmediateFullValueEvaluator(initialText);
 
     Runnable hideTextPopupRunnable = myHideRunnable == null ? null : () -> {
@@ -98,20 +114,64 @@ public class XDebuggerTextPopup<D> {
     };
 
     Runnable afterEvaluation = () -> {
-      makeTextViewerEditable();
+      resizePopup();
     };
 
-    myPopup = DebuggerUIUtil.createTextViewerPopup(myTextViewer, evaluator, afterEvaluation, myProject, hideTextPopupRunnable,
-                                                   myToolbar);
+    myPopup = createPopup(evaluator, afterEvaluation, hideTextPopupRunnable);
 
     myTree = myTreeCreator.createTree(myInitialItem);
     registerTreeDisposable(myPopup, myTree);
 
-    WindowMoveListener moveListener = new WindowMoveListener(myPopup.getContent());
-    myToolbar.addMouseListener(moveListener);
-    myToolbar.addMouseMotionListener(moveListener);
+    setAutoResizeUntilToolbarNotFull(() -> resizePopup(), myPopup);
 
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
+  }
+
+  private void updatePopupWidth(@NotNull Window popupWindow) {
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
+
+    String text = myTextViewer.getText();
+    FontMetrics fontMetrics = myTextViewer.getFontMetrics(EditorUtil.getEditorFont());
+    int width = fontMetrics.stringWidth(text) + TOOLBAR_MARGIN;
+
+    int toolbarWidth = myToolbar.getPreferredSize().width + TOOLBAR_MARGIN;
+
+    int newWidth = Math.max(toolbarWidth, width);
+
+    newWidth = Math.min(newWidth, getMaxPopupWidth(screenRectangle));
+    newWidth = Math.max(newWidth, getMinPopupWidth(screenRectangle));
+
+    updatePopupBounds(popupWindow, newWidth, popupWindow.getHeight());
+  }
+
+  private void updatePopupHeight(@NotNull Window popupWindow) {
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
+
+    int newHeight = myToolbar.getPreferredSize().height;
+    Editor editor = myTextViewer.getEditor();
+    if (editor != null) {
+      newHeight += editor.getContentComponent().getHeight();
+    }
+    else {
+      newHeight += getMediumTextViewerHeight();
+    }
+
+    newHeight = Math.min(newHeight, getMaxPopupHeight(screenRectangle));
+    newHeight = Math.max(newHeight, getMinPopupHeight(screenRectangle));
+
+    updatePopupBounds(popupWindow, popupWindow.getWidth(), newHeight);
+  }
+
+  private void resizePopup() {
+    if (myPopup == null || !myPopup.isVisible() || myPopup.isDisposed()) {
+      return;
+    }
+    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
+    if (popupWindow == null) {
+      return;
+    }
+    updatePopupWidth(popupWindow);
+    updatePopupHeight(popupWindow);
   }
 
   protected void hideTextPopup() {
@@ -120,43 +180,17 @@ public class XDebuggerTextPopup<D> {
     }
   }
 
-  protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
-    if (tree instanceof Disposable) {
-      Disposer.register(disposable, (Disposable)tree);
-    }
-  }
-
-  protected DefaultActionGroup getToolbarActions() {
+  protected @NotNull DefaultActionGroup getToolbarActions() {
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    toolbarActions.add(new ShowTreeAction());
+    toolbarActions.add(new ShowAsObject());
+    toolbarActions.add(new EnableSetValueMode());
     toolbarActions.add(new SetTextValueAction());
-    toolbarActions.addSeparator();
+    toolbarActions.add(new CancelSetValue());
     return toolbarActions;
   }
 
-  protected DefaultActionGroup wrapActions(DefaultActionGroup toolbarActions) {
-    DefaultActionGroup wrappedActions = new DefaultActionGroup();
-    for (AnAction action : toolbarActions.getChildren(null)) {
-      ActionWrapper actionLink = new ActionWrapper(action);
-      wrappedActions.add(actionLink);
-    }
-
-    return wrappedActions;
-  }
-
-  private ActionToolbarImpl createToolbar() {
-    DefaultActionGroup wrappedActions = wrapActions(getToolbarActions());
-
-    var toolbarImpl = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
-    toolbarImpl.setTargetComponent(null);
-    toolbarImpl.setBorder(BorderFactory.createEmptyBorder());
-    toolbarImpl.setBackground(UIUtil.getToolTipActionBackground());
-
-    return toolbarImpl;
-  }
-
   @Nullable
-  protected XValueNodeImpl getNode() {
+  private XValueNodeImpl getValueNode() {
     if (myTree instanceof XDebuggerTree) {
       XDebuggerTreeNode node = ((XDebuggerTree)myTree).getRoot();
       return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;
@@ -168,9 +202,65 @@ public class XDebuggerTextPopup<D> {
     new XDebuggerTreePopup<>(myTreeCreator, myEditor, myPoint, myProject, hideTreeRunnable).show(myInitialItem);
   }
 
-  private class ShowTreeAction extends AnAction {
-    private ShowTreeAction() {
-      super(ActionsBundle.message("action.Debugger.XDebuggerTextPopup.ShowTree.text"));
+  private void enableSetValueMode() {
+    myCachedText = myTextViewer.getText();
+    myTextViewer.setViewer(false);
+    myTextViewer.selectAll();
+    mySetValueModeEnabled = true;
+    myToolbar.updateActionsImmediately();
+  }
+
+  private void disableSetValueMode() {
+    myCachedText = "";
+    myTextViewer.setViewer(true);
+    myTextViewer.removeSelection();
+    mySetValueModeEnabled = false;
+    myToolbar.updateActionsImmediately();
+  }
+
+  @Override
+  protected boolean shouldBeVisible(AnAction action) {
+    boolean isSetValueModeAction = action instanceof XDebuggerTextPopup.SetTextValueAction ||
+                                   action instanceof XDebuggerTextPopup.CancelSetValue;
+    return isSetValueModeAction && mySetValueModeEnabled || !isSetValueModeAction && !mySetValueModeEnabled;
+  }
+
+  private static int getMaxPopupWidth(Rectangle screenRectangle) {
+    return Math.min(screenRectangle.width / 2, MAX_POPUP_WIDTH);
+  }
+
+  private static int getMaxPopupHeight(Rectangle screenRectangle) {
+    return Math.min(screenRectangle.height / 2, MAX_POPUP_HEIGHT);
+  }
+
+  private static int getMinPopupWidth(Rectangle screenRectangle) {
+    return Math.max(screenRectangle.width / 5, MIN_POPUP_WIDTH);
+  }
+
+  private static int getMinPopupHeight(Rectangle screenRectangle) {
+    return Math.max(screenRectangle.height / 7, MIN_POPUP_HEIGHT);
+  }
+
+  private static int getMediumTextViewerHeight() {
+    return MED_TEXT_VIEWER_SIZE;
+  }
+
+  private static boolean canSetTextValue(@NotNull XValueNodeImpl node) {
+    @NotNull XValue value = node.getValueContainer();
+    return value instanceof XValueTextProvider &&
+           ((XValueTextProvider)value).shouldShowTextValue() &&
+           value.getModifier() instanceof XStringValueModifier;
+  }
+
+  protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
+    if (tree instanceof Disposable) {
+      Disposer.register(disposable, (Disposable)tree);
+    }
+  }
+
+  private class ShowAsObject extends AnAction {
+    private ShowAsObject() {
+      super(ActionsBundle.message("action.Debugger.XDebuggerTextPopup.ShowAsObject.text"));
     }
 
     @Override
@@ -189,33 +279,24 @@ public class XDebuggerTextPopup<D> {
 
     private SetTextValueAction() {
       super(XDebuggerBundle.message("xdebugger.set.text.value.action.title"));
+      setShortcutSet(CommonShortcuts.CTRL_ENTER);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      @Nullable XValueNodeImpl node = getNode();
-
+      @Nullable XValueNodeImpl node = getValueNode();
       Presentation presentation = e.getPresentation();
-      presentation.setVisible(node != null && canSetTextValue(node));
-      presentation.setEnabled(myTextViewerContentChanged);
+      presentation.setEnabledAndVisible(node != null && canSetTextValue(node));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      @Nullable XValueNodeImpl node = getNode();
+      @Nullable XValueNodeImpl node = getValueNode();
 
       if (node != null && canSetTextValue(node)) {
         setTextValue(node, myTextViewer.getText());
-        myTextViewerContentChanged = false;
-        myToolbar.updateActionsImmediately();
+        disableSetValueMode();
       }
-    }
-
-    private boolean canSetTextValue(@NotNull XValueNodeImpl node) {
-      @NotNull XValue value = node.getValueContainer();
-      return value instanceof XValueTextProvider &&
-             ((XValueTextProvider)value).shouldShowTextValue() &&
-             value.getModifier() instanceof XStringValueModifier;
     }
 
     private void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
@@ -230,73 +311,36 @@ public class XDebuggerTextPopup<D> {
     }
   }
 
-  private static class ActionWrapper extends AnAction implements CustomComponentAction {
-
-    private final @NotNull AnAction myDelegate;
-
-    private ActionWrapper(@NotNull AnAction delegateAction) {
-      super(delegateAction.getTemplateText());
-      copyFrom(delegateAction);
-      myDelegate = delegateAction;
+  private class EnableSetValueMode extends AnAction {
+    private EnableSetValueMode() {
+      super(XDebuggerBundle.message("xdebugger.enable.set.action.title"));
+      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)));
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      myDelegate.update(e);
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return myDelegate.isDumbAware();
+      @Nullable XValueNodeImpl node = getValueNode();
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabledAndVisible(node != null && canSetTextValue(node));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myDelegate.actionPerformed(e);
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      if (myDelegate instanceof Separator) {
-        return DebuggerUIUtil.getSecretComponentForToolbar(); // this is necessary because the toolbar hide if all action panels are not visible
-      }
-
-      ActionLinkButton button = new ActionLinkButton(this, presentation, null);
-      JPanel actionPanel = DebuggerUIUtil.createCustomToolbarComponent(this, button);
-
-      presentation.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == Presentation.PROP_TEXT) {
-            button.setText((String)evt.getNewValue());
-            button.repaint();
-          }
-          if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
-            button.setEnabled((Boolean)evt.getNewValue());
-            button.repaint();
-          }
-          if (evt.getPropertyName() == Presentation.PROP_VISIBLE) {
-            actionPanel.setVisible((Boolean)evt.getNewValue());
-            actionPanel.repaint();
-          }
-        }
-      });
-
-      return actionPanel;
+      enableSetValueMode();
     }
   }
 
-  private static class ActionLinkButton extends AnActionLink {
-    ActionLinkButton(@NotNull AnAction action,
-                     @NotNull Presentation presentation,
-                     @Nullable DataProvider contextComponent) {
-      //noinspection ConstantConditions
-      super(presentation.getText(), action);
-      setAutoHideOnDisable(false);
-      setVisible(presentation.isVisible());
-      setEnabled(presentation.isEnabled());
-      setDataProvider(contextComponent);
-      setFont(UIUtil.getToolTipFont());
+  private class CancelSetValue extends AnAction {
+
+    private CancelSetValue() {
+      super(XDebuggerBundle.message("xdebugger.cancel.set.action.title"));
+      setShortcutSet(CommonShortcuts.ESCAPE);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myTextViewer.setText(myCachedText);
+      disableSetValueMode();
     }
   }
 }

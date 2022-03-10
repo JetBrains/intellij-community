@@ -3413,7 +3413,9 @@ public final class HighlightUtil {
                                                         @NotNull HighlightingFeature feature,
                                                         @NotNull QuickFixActionRegistrar registrar) {
     if (feature.isAvailable(element)) return;
-    registrar.register(getFixFactory().createIncreaseLanguageLevelFix(getApplicableLevel(element.getContainingFile(), feature)));
+    LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
+    registrar.register(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel));
+    registrar.register(getFixFactory().createUpgradeSdkFor(applicableLevel));
     registrar.register(getFixFactory().createShowModulePropertiesFix(element));
   }
 

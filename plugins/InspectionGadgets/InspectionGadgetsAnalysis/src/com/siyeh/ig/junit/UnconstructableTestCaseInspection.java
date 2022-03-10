@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,17 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unconstructable.test.case.problem.descriptor");
+    final ProblemType problemType = (ProblemType)infos[0];
+    switch (problemType) {
+      case CLASS_NOT_PUBLIC:
+        return InspectionGadgetsBundle.message("unconstructable.test.case.not.public.problem.descriptor");
+      case INCOMPATIBLE_CONSTRUCTOR:
+        return InspectionGadgetsBundle.message("unconstructable.test.case.incompatible.constructor.problem.descriptor");
+      case NO_PUBLIC_NOARG_CONSTRUCTOR:
+        return InspectionGadgetsBundle.message("unconstructable.test.case.no.constructor.problem.descriptor");
+      default:
+        throw new AssertionError();
+    }
   }
 
   @Override
@@ -43,68 +52,80 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
     return new UnconstructableTestCaseVisitor();
   }
 
-  private static class UnconstructableTestCaseVisitor
-    extends BaseInspectionVisitor {
+  private static class UnconstructableTestCaseVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType() ||
-          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType() || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
       if (TestUtils.isJUnit4TestClass(aClass, false)) {
-        final PsiMethod[] constructors = aClass.getConstructors();
-        if (constructors.length == 0) {
-          return;
+        if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+          registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
         }
-        if (constructors.length == 1) {
-          final PsiMethod constructor = constructors[0];
-          final PsiParameterList parameterList = constructor.getParameterList();
-          if (constructor.hasModifierProperty(PsiModifier.PUBLIC) && parameterList.isEmpty()) {
-            return;
-          }
-        }
-      }
-      else if (TestUtils.isJUnitTestClass(aClass)){
-        final PsiMethod[] constructors = aClass.getConstructors();
-        boolean hasStringConstructor = false;
-        boolean hasNoArgConstructor = false;
-        boolean hasConstructor = false;
-        for (final PsiMethod constructor : constructors) {
-          hasConstructor = true;
-          if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-            continue;
-          }
-          final PsiParameterList parameterList =
-            constructor.getParameterList();
-          final int parametersCount = parameterList.getParametersCount();
-          if (parametersCount == 0) {
-            hasNoArgConstructor = true;
-          }
-          if (parametersCount == 1) {
-            final PsiParameter[] parameters =
-              parameterList.getParameters();
-            final PsiType type = parameters[0].getType();
-            if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
-              hasStringConstructor = true;
+        else {
+          final PsiMethod[] constructors = aClass.getConstructors();
+          if (constructors.length != 0) {
+            boolean hasPublicNoArgConstructor = false;
+            boolean hasIncompatibleConstructor = false;
+            for (PsiMethod constructor : constructors) {
+              final PsiParameterList parameterList = constructor.getParameterList();
+              if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+                if (parameterList.isEmpty()) {
+                  hasPublicNoArgConstructor = true;
+                }
+                else {
+                  hasIncompatibleConstructor = true;
+                }
+              }
+            }
+            if (!hasPublicNoArgConstructor || hasIncompatibleConstructor) {
+              registerClassError(aClass, hasPublicNoArgConstructor
+                                         ? ProblemType.INCOMPATIBLE_CONSTRUCTOR
+                                         : ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
             }
           }
         }
-        if (!hasConstructor) {
-          return;
+      }
+      else if (TestUtils.isJUnitTestClass(aClass)) {
+        if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+          registerClassError(aClass, ProblemType.CLASS_NOT_PUBLIC);
         }
-        if (hasNoArgConstructor || hasStringConstructor) {
-          return;
+        else {
+          final PsiMethod[] constructors = aClass.getConstructors();
+          boolean hasStringConstructor = false;
+          boolean hasNoArgConstructor = false;
+          boolean hasConstructor = false;
+          for (PsiMethod constructor : constructors) {
+            hasConstructor = true;
+            if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+              continue;
+            }
+            final PsiParameterList parameterList = constructor.getParameterList();
+            final int parametersCount = parameterList.getParametersCount();
+            if (parametersCount == 0) {
+              hasNoArgConstructor = true;
+            }
+            if (parametersCount == 1) {
+              final PsiParameter[] parameters = parameterList.getParameters();
+              final PsiType type = parameters[0].getType();
+              if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
+                hasStringConstructor = true;
+              }
+            }
+          }
+          if (hasConstructor && !hasNoArgConstructor && !hasStringConstructor) {
+            registerClassError(aClass, ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
+          }
         }
       }
-      else {
-        return;
-      }
-      registerClassError(aClass);
     }
+  }
+
+  enum ProblemType {
+    CLASS_NOT_PUBLIC, INCOMPATIBLE_CONSTRUCTOR, NO_PUBLIC_NOARG_CONSTRUCTOR
   }
 }

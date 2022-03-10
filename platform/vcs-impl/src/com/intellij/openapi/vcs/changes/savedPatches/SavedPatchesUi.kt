@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
@@ -9,21 +10,26 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.ui.*
 import com.intellij.util.containers.orNull
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.CommitActionsPanel
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.FlowLayout
+import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTree
+import javax.swing.border.CompoundBorder
 
-class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesProvider<*>>,
-                     isVertical: Boolean, isEditorDiffPreview: Boolean,
-                     focusMainUi: (Component?) -> Unit, disposable: Disposable) :
+open class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesProvider<*>>,
+                          isVertical: Boolean, isEditorDiffPreview: Boolean,
+                          focusMainUi: (Component?) -> Unit, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
-  private val tree: SavedPatchesTree
+  protected val tree: SavedPatchesTree
   internal val changesBrowser: SavedPatchesChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
@@ -33,6 +39,8 @@ class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesP
     PopupHandler.installPopupMenu(tree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
     changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
+    CombinedSpeedSearch(changesBrowser.viewer, tree.speedSearch)
+
     val bottomToolbar = buildBottomToolbar()
 
     tree.addSelectionListener {
@@ -50,7 +58,7 @@ class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesP
     treeChangesSplitter.firstComponent = treePanel
     treeChangesSplitter.secondComponent = BorderLayoutPanel().apply {
       addToCenter(changesBrowser)
-      addToBottom(bottomToolbar.component.apply { border = IdeBorderFactory.createBorder(SideBorder.TOP) })
+      addToBottom(createBottomComponent(bottomToolbar))
     }
     providers.forEach { provider -> provider.subscribeToPatchesListChanges(this) {
       treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
@@ -65,6 +73,19 @@ class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesP
     add(treeDiffSplitter, BorderLayout.CENTER)
 
     Disposer.register(disposable, this)
+  }
+
+  private fun createBottomComponent(bottomToolbar: ActionToolbar): JComponent {
+    val bottomPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+      border = CompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                              JBUI.Borders.empty(7, 5))
+    }
+    bottomPanel.add(bottomToolbar.component)
+    bottomPanel.add(JLabel(AllIcons.General.ContextHelp).apply {
+      border = JBUI.Borders.empty(1)
+      toolTipText = VcsBundle.message("saved.patch.apply.pop.help.tooltip")
+    })
+    return bottomPanel
   }
 
   private fun buildBottomToolbar(): ActionToolbar {
@@ -128,5 +149,6 @@ class SavedPatchesUi(project: Project, private val providers: List<SavedPatchesP
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
     val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
+    val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<List<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorFileSwapper {
@@ -18,7 +17,6 @@ public abstract class EditorFileSwapper {
    * @deprecated Use {@link #getFileToSwapTo(Project, EditorComposite)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   @Nullable
   public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editorWithProviderComposite) {
     PluginException.reportDeprecatedUsage("EditorFileSwapper#getFileToSwapTo(Project, EditorWithProviderComposite)",

@@ -259,7 +259,7 @@ public class MavenServerCMDState extends CommandLineState {
       if (value == null) return null;
       Matcher matcher = MEMORY_PROPERTY_PATTERN.matcher(value);
       if (matcher.find()) {
-        return new MemoryProperty(matcher.group(1), Long.valueOf(matcher.group(2)), matcher.group(3));
+        return new MemoryProperty(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3));
       }
       LOG.warn(value + " not match " + MEMORY_PROPERTY_PATTERN);
       return null;

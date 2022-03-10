@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -55,17 +54,13 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
    * @param queryIntentionActions true if {@link IntentionManager} must be asked for all registered {@link IntentionAction} and {@link IntentionAction#isAvailable(Project, Editor, PsiFile)} must be called on each
    *                              Usually, this expensive process should be executed only once per highlighting session
    */
-  ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, boolean queryIntentionActions) {
-    super(project, editor.getDocument(), false);
+  ShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull Editor editor, boolean queryIntentionActions) {
+    super(psiFile.getProject(), editor.getDocument(), false);
     myQueryIntentionActions = queryIntentionActions;
     myPassIdToShowIntentionsFor = -1;
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     myEditor = editor;
-
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-
-    myFile = documentManager.getPsiFile(myEditor.getDocument());
+    myFile = psiFile;
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
 

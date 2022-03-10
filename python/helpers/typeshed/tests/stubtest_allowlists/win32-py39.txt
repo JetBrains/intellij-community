@@ -1,14 +1,7 @@
-_stat.IO_REPARSE_TAG_[A-Z_]+
-_winapi.[A-Z_]+_PRIORITY_CLASS
-_winapi.CREATE_[A-Z_]+
-_winapi.DETACHED_PROCESS
-_winapi.FILE_MAP_[A-Z_]+
-_winapi.FILE_TYPE_[A-Z]+
-_winapi.INVALID_HANDLE_VALUE
-_winapi.MEM_[A-Z_]+
-_winapi.PAGE_[A-Z_]+
-_winapi.SEC_[A-Z_]+
-_winapi.SYNCHRONIZE
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.Path.is_mount
+pathlib.WindowsPath.is_mount
 
 # Exists at runtime, but missing from stubs
 _winapi.CreateFileMapping

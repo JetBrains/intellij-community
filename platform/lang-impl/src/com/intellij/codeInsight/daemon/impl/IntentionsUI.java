@@ -15,7 +15,7 @@ public abstract class IntentionsUI {
     return project.getService(IntentionsUI.class);
   }
 
-  public IntentionsUI(Project project) {
+  public IntentionsUI(@NotNull Project project) {
     myProject = project;
   }
 

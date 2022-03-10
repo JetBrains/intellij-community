@@ -100,7 +100,8 @@ final class FindInProjectTask {
   private final @NotNull List<FindInProjectSearchEngine.@NotNull FindInProjectSearcher> mySearchers;
   private long mySearchStartedAt;
 
-  FindInProjectTask(@NotNull FindModel findModel, @NotNull Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially) {
+  FindInProjectTask(@NotNull FindModel findModel, @NotNull Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially,
+                    boolean tooManyUsagesStatus) {
     myFindModel = findModel;
     myProject = project;
     myFilesToScanInitially = filesToScanInitially;
@@ -118,7 +119,9 @@ final class FindInProjectTask {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     myProgress = progress != null ? progress : new EmptyProgressIndicator();
 
-    TooManyUsagesStatus.createFor(myProgress);
+    if (tooManyUsagesStatus) {
+      TooManyUsagesStatus.createFor(myProgress);
+    }
 
     mySearchers = ContainerUtil.mapNotNull(FindInProjectSearchEngine.EP_NAME.getExtensions(), se -> se.createSearcher(findModel, project));
   }
@@ -307,7 +310,7 @@ final class FindInProjectTask {
     }
     else if (customScope instanceof VirtualFileEnumeration) {
       // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
-      ContainerUtil.addAll(deque, ((VirtualFileEnumeration)customScope).asIterable());
+      ContainerUtil.addAll(deque, FileBasedIndexEx.toFileIterable(((VirtualFileEnumeration)customScope).asArray()));
     }
     else if (myDirectory != null) {
       deque.addAll(withSubdirs ? List.of(myDirectory) : List.of(myDirectory.getChildren()));

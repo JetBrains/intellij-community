@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
 
@@ -31,6 +32,11 @@ public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
       inlineCodeBlocksHighlightingMode,
       doSemanticHighlightingOfLinks,
       highlightingSaturationFactor);
+  }
+
+  @Override
+  protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
+    return element != null && element.getNode().getElementType() == mGDOC_ASTERISKS;
   }
 
   @Override

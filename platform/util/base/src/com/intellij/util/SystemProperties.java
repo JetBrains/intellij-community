@@ -38,6 +38,18 @@ public final class SystemProperties {
   }
 
   /**
+   * Returns a value of the given property as a long, or {@code defaultValue} if the property is not specified or malformed.
+   */
+  public static long getLongProperty(@NotNull String key, long defaultValue) {
+    String value = System.getProperty(key);
+    if (value != null) {
+      try { return Long.parseLong(value); }
+      catch (NumberFormatException ignored) { }
+    }
+    return defaultValue;
+  }
+
+  /**
    * Returns a value of the given property as a float, or {@code defaultValue} if the property is not specified or malformed.
    */
   public static float getFloatProperty(@NotNull String key, float defaultValue) {
@@ -67,14 +79,14 @@ public final class SystemProperties {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated please use {@link Boolean#getBoolean(String)} or {@link #getBooleanProperty(String, boolean)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean is(String key) {
     return getBooleanProperty(key, false);
   }
 
   /** @deprecated please use {@link System#lineSeparator()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static String getLineSeparator() {
     return System.lineSeparator();
   }

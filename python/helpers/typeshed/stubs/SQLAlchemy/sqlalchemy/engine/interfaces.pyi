@@ -1,13 +1,58 @@
-from typing import Any
+from abc import abstractmethod
+from collections.abc import Callable, Collection, Mapping
+from typing import Any, ClassVar, overload
 
-from ..sql.compiler import Compiled as Compiled, TypeCompiler as TypeCompiler
+from ..dbapi import DBAPIConnection, DBAPICursor
+from ..exc import StatementError
+from ..sql.compiler import Compiled as Compiled, IdentifierPreparer, TypeCompiler as TypeCompiler
+from ..sql.ddl import DDLElement
+from ..sql.elements import ClauseElement
+from ..sql.functions import FunctionElement
+from ..sql.schema import DefaultGenerator
+from .base import Connection, Engine
+from .cursor import CursorResult
+from .url import URL
 
 class Dialect:
+    # Sub-classes are required to have the following attributes:
+    name: str
+    driver: str
+    positional: bool
+    paramstyle: str
+    encoding: str
+    statement_compiler: Compiled
+    ddl_compiler: Compiled
+    server_version_info: tuple[Any, ...]
+    # Only available on supporting dialects:
+    # default_schema_name: str
+    execution_ctx_cls: ClassVar[type[ExecutionContext]]
+    execute_sequence_format: type[tuple[Any] | list[Any]]
+    preparer: IdentifierPreparer
+    supports_alter: bool
+    max_identifier_length: int
+    supports_sane_rowcount: bool
+    supports_sane_multi_rowcount: bool
+    preexecute_autoincrement_sequences: bool
+    implicit_returning: bool
+    colspecs: dict[Any, Any]
+    supports_default_values: bool
+    supports_sequences: bool
+    sequences_optional: bool
+    supports_native_enum: bool
+    supports_native_boolean: bool
+    dbapi_exception_translation_map: dict[Any, Any]
+
     supports_statement_cache: bool
-    def create_connect_args(self, url) -> None: ...
+    @abstractmethod
+    def create_connect_args(self, url: URL) -> None: ...
+    def initialize(self, connection) -> None: ...
+    def on_connect_url(self, url) -> Callable[[DBAPIConnection], object] | None: ...
+    def on_connect(self) -> Callable[[DBAPIConnection], object] | None: ...
+    # The following methods all raise NotImplementedError, but not all
+    # dialects implement all methods, which is why they can't be marked
+    # as abstract.
     @classmethod
     def type_descriptor(cls, typeobj) -> None: ...
-    def initialize(self, connection) -> None: ...
     def get_columns(self, connection, table_name, schema: Any | None = ..., **kw) -> None: ...
     def get_pk_constraint(self, connection, table_name, schema: Any | None = ..., **kw) -> None: ...
     def get_foreign_keys(self, connection, table_name, schema: Any | None = ..., **kw) -> None: ...
@@ -44,9 +89,7 @@ class Dialect:
     def do_execute(self, cursor, statement, parameters, context: Any | None = ...) -> None: ...
     def do_execute_no_params(self, cursor, statement, parameters, context: Any | None = ...) -> None: ...
     def is_disconnect(self, e, connection, cursor) -> None: ...
-    def connect(self, *cargs, **cparams) -> None: ...
-    def on_connect_url(self, url): ...
-    def on_connect(self) -> None: ...
+    def connect(self, *cargs, **cparams) -> DBAPIConnection: ...
     def reset_isolation_level(self, dbapi_conn) -> None: ...
     def set_isolation_level(self, dbapi_conn, level) -> None: ...
     def get_isolation_level(self, dbapi_conn) -> None: ...
@@ -60,8 +103,8 @@ class Dialect:
     def get_driver_connection(self, connection) -> None: ...
 
 class CreateEnginePlugin:
-    url: Any
-    def __init__(self, url, kwargs) -> None: ...
+    url: URL
+    def __init__(self, url: URL, kwargs) -> None: ...
     def update_url(self, url) -> None: ...
     def handle_dialect_kwargs(self, dialect_cls, dialect_args) -> None: ...
     def handle_pool_kwargs(self, pool_cls, pool_args) -> None: ...
@@ -79,22 +122,44 @@ class ExecutionContext:
     def get_rowcount(self) -> None: ...
 
 class Connectable:
-    def connect(self, **kwargs) -> None: ...
-    engine: Any
-    def execute(self, object_, *multiparams, **params) -> None: ...
-    def scalar(self, object_, *multiparams, **params) -> None: ...
+    @abstractmethod
+    def connect(self, **kwargs) -> Connection: ...
+    @property
+    def engine(self) -> Engine | None: ...
+    @abstractmethod
+    @overload
+    def execute(
+        self,
+        object_: ClauseElement | FunctionElement | DDLElement | DefaultGenerator | Compiled,
+        *multiparams: Mapping[str, Any],
+        **params: Any,
+    ) -> CursorResult: ...
+    @abstractmethod
+    @overload
+    def execute(self, object_: str, *multiparams: Any | tuple[Any, ...] | Mapping[str, Any], **params: Any) -> CursorResult: ...
+    @abstractmethod
+    @overload
+    def scalar(
+        self,
+        object_: ClauseElement | FunctionElement | DDLElement | DefaultGenerator | Compiled,
+        *multiparams: Mapping[str, Any],
+        **params: Any,
+    ) -> Any: ...
+    @abstractmethod
+    @overload
+    def scalar(self, object_: str, *multiparams: Any | tuple[Any, ...] | Mapping[str, Any], **params: Any) -> Any: ...
 
 class ExceptionContext:
-    connection: Any
-    engine: Any
-    cursor: Any
-    statement: Any
-    parameters: Any
-    original_exception: Any
-    sqlalchemy_exception: Any
-    chained_exception: Any
-    execution_context: Any
-    is_disconnect: Any
+    connection: Connection | None
+    engine: Engine | None
+    cursor: DBAPICursor | None
+    statement: str | None
+    parameters: Collection[Any] | None
+    original_exception: BaseException | None
+    sqlalchemy_exception: StatementError | None
+    chained_exception: BaseException | None
+    execution_context: ExecutionContext | None
+    is_disconnect: bool | None
     invalidate_pool_on_disconnect: bool
 
 class AdaptedConnection:

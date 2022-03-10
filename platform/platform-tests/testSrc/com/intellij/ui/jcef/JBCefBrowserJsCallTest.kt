@@ -123,7 +123,7 @@ class JBCefBrowserJsCallTest {
       JBCefBrowser.createBuilder()
         .setClient(jbCefClient)
         .setUrl("about:blank")
-        .createBrowser()
+        .build()
     }
 
     JBCefTestHelper.showAndWaitForLoad(browser, "DISPATCH")

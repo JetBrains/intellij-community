@@ -31,12 +31,14 @@ import git4idea.GitCommit
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
 import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
+import git4idea.GitStashUsageCollector
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT
 import git4idea.history.GitCommitRequirements.DiffRenameLimit.NoRenames
 import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
@@ -127,7 +129,7 @@ object GitStashOperations {
     val stashCommits = mutableListOf<GitCommit>()
     GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()) + parentHashes.map { it.asString() },
                                         GitCommitRequirements(true, // untracked changes commit has no parents
-                                                              diffInMergeCommits = DIFF_TO_PARENTS),
+                                                              diffInMergeCommits = FIRST_PARENT), // only changes to the branch head are needed
                                         Consumer { stashCommits.add(it) })
     if (stashCommits.isEmpty()) throw VcsException(GitBundle.message("stash.load.changes.error", root.name, hash.asString()))
     return Pair(stashCommits.first().getChanges(0), // returning changes to the branch head
@@ -177,7 +179,9 @@ object GitStashOperations {
         handler.addLineListener(untrackedFilesDetector)
         handler.addLineListener(localChangesDetector)
 
-        val result = Git.getInstance().runCommand { handler }
+        val activity = GitStashUsageCollector.logStashPop(project)
+        val result = Git.getInstance().runCommand(handler)
+        activity.finished()
 
         if (hash != null) refreshUnstashedChanges(project, hash, root)
         GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()
@@ -272,7 +276,7 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
 }
 
 @Deprecated("use the simpler overloading method which returns a list")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
   for (stash in loadStashStack(project, root)) {
     consumer.consume(stash)

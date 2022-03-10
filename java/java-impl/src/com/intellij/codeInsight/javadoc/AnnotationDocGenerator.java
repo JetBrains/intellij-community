@@ -1,18 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.help.impl.HelpManagerImpl;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -112,19 +120,20 @@ public final class AnnotationDocGenerator {
     AnnotationFormat format,
     boolean generateLink,
     boolean isForRenderedDoc,
-    boolean doSyntaxHighlighting
-  ) {
+    boolean doSyntaxHighlighting) {
     String qualifiedName = myAnnotation.getQualifiedName();
     PsiClassType type = myTargetClass != null && qualifiedName != null &&
                         JavaDocUtil.findReferenceTarget(myContext.getManager(), qualifiedName, myContext) != null
                         ? JavaPsiFacade.getElementFactory(myContext.getProject()).createType(myTargetClass, PsiSubstitutor.EMPTY)
                         : null;
 
-    boolean red = type == null && !myResolveNotPossible && !isInferred() && !isExternal();
+    boolean isInferred = isInferred();
+    boolean red = type == null && !myResolveNotPossible && !isInferred && !isExternal();
 
-    boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && (isInferred() || isExternal());
+    boolean isNonCodeAnnotation = isInferred || isExternal();
+    boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && isNonCodeAnnotation;
     if (highlightNonCodeAnnotations) buffer.append("<b>");
-    if (isInferred()) buffer.append("<i>");
+    if (isInferred) buffer.append("<i>");
     if (red) buffer.append("<font color=red>");
 
     boolean forceShortNames = format != AnnotationFormat.JavaDocComplete;
@@ -152,8 +161,25 @@ public final class AnnotationDocGenerator {
     if (red) buffer.append("</font>");
 
     generateAnnotationAttributes(buffer, generateLink, isForRenderedDoc, doSyntaxHighlighting);
-    if (isInferred()) buffer.append("</i>");
+    if (isInferred) buffer.append("</i>");
     if (highlightNonCodeAnnotations) buffer.append("</b>");
+    if (generateLink && isNonCodeAnnotation && !isForRenderedDoc && format != AnnotationFormat.ToolTip) {
+      if (isInferred && ApplicationManager.getApplication().isInternal()) {
+        HtmlChunk.tag("sup").child(HtmlChunk.tag("font").attr("size", 3)
+                                     .attr("color", ColorUtil.toHex(JBColor.GRAY))
+                                     .child(HtmlChunk.tag("i")
+                                              .addRaw(JavaBundle.message("javadoc.description.inferred.annotation.hint"))))
+          .appendTo(buffer);
+      }
+      HelpManager helpManager = HelpManager.getInstance();
+      if (helpManager instanceof HelpManagerImpl) {
+        String id = isInferred ? "inferred.annotations" : "external.annotations";
+        String helpUrl = ApplicationManager.getApplication().isUnitTestMode() ? id : ((HelpManagerImpl)helpManager).getHelpUrl(id);
+        if (helpUrl != null) {
+          HtmlChunk.link(helpUrl, DocumentationMarkup.EXTERNAL_LINK_ICON).appendTo(buffer);
+        }
+      }
+    }
   }
 
   private void generateAnnotationAttributes(

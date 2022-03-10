@@ -21,7 +21,7 @@ class HgCloneDialogComponent(project: Project, dialogStateListener: VcsCloneDial
                            dialogStateListener) {
   private val LOG = Logger.getInstance(HgCloneDialogComponent::class.java)
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
+  override fun doClone(listener: CheckoutProvider.Listener) {
     val validationInfo = CloneDvcsValidationUtils.createDestination(getDirectory())
     if (validationInfo != null) {
       LOG.error("Unable to create destination directory", validationInfo.message)

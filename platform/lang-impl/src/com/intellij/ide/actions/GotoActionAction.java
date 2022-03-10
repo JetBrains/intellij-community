@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
 
   /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void openOptionOrPerformAction(@NotNull Object element,
                                                String enteredText,
                                                @Nullable Project project,

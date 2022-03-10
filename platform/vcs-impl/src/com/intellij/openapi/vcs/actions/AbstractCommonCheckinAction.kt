@@ -87,7 +87,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
   }
 
   @Deprecated("getActionName() will be used instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = null
 
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>

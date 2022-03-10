@@ -83,8 +83,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * @deprecated See {@link #CodeStyleSettings()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public CodeStyleSettings(boolean loadExtensions) {
     this(loadExtensions, true);
   }
@@ -206,84 +205,73 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated
   public String FIELD_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_PREFIX} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String STATIC_FIELD_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_PREFIX} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String PARAMETER_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_PREFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_NAME_SUFFIX} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String FIELD_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_SUFFIX} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String STATIC_FIELD_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_SUFFIX} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String PARAMETER_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_SUFFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PREFER_LONGER_NAMES} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean PREFER_LONGER_NAMES = true;
 
 //----------------- 'final' modifier settings -------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_LOCALS} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean GENERATE_FINAL_LOCALS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_PARAMETERS} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#VISIBILITY} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String VISIBILITY = "public";
 
 //----------------- generate parentheses around method arguments ----------
   /** @deprecated Use RubyCodeStyleSettings.PARENTHESES_AROUND_METHOD_ARGUMENTS */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_EXTERNAL_ANNOTATIONS} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean USE_EXTERNAL_ANNOTATIONS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_OVERRIDE_ANNOTATION} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#REPEAT_SYNCHRONIZED} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean REPEAT_SYNCHRONIZED = true;
 
   private final List<String> myRepeatAnnotations = new ArrayList<>();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getRepeatAnnotations()} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<String> getRepeatAnnotations() {
     return myRepeatAnnotations;
   }
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setRepeatAnnotations(List)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setRepeatAnnotations(List<String> repeatAnnotations) {
     myRepeatAnnotations.clear();
     myRepeatAnnotations.addAll(repeatAnnotations);
@@ -293,50 +281,41 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LAYOUT_STATIC_IMPORTS_SEPARATELY} */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_FQ_CLASS_NAMES} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean USE_FQ_CLASS_NAMES;
 
   /** @deprecated use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_NAMES_IN_JAVADOC} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_SINGLE_CLASS_IMPORTS */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_INNER_CLASS_IMPORTS */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean INSERT_INNER_CLASS_IMPORTS;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PACKAGES_TO_USE_IMPORT_ON_DEMAND */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#IMPORT_LAYOUT_TABLE */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isLayoutStaticImportsSeparately()} */
@@ -441,13 +420,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 // region ORDER OF MEMBERS
 
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int STATIC_FIELDS_ORDER_WEIGHT = 1;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int FIELDS_ORDER_WEIGHT = 2;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int CONSTRUCTORS_ORDER_WEIGHT = 3;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int STATIC_METHODS_ORDER_WEIGHT = 4;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int METHODS_ORDER_WEIGHT = 5;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int INNER_CLASSES_ORDER_WEIGHT = 7;
+  @Deprecated(forRemoval = true) public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  @Deprecated(forRemoval = true) public int FIELDS_ORDER_WEIGHT = 2;
+  @Deprecated(forRemoval = true) public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  @Deprecated(forRemoval = true) public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  @Deprecated(forRemoval = true) public int METHODS_ORDER_WEIGHT = 5;
+  @Deprecated(forRemoval = true) public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  @Deprecated(forRemoval = true) public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 // endregion
 
@@ -477,22 +456,20 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * @deprecated  Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#ENABLE_JAVADOC_FORMATTING}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
   /**
    * @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#JD_LEADING_ASTERISKS_ARE_ENABLED}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
 
 
 // endregion
 
   /** @deprecated Use {@link com.intellij.application.options.JspCodeStyleSettings#JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
   //----------------------------------------------------------------------------------------

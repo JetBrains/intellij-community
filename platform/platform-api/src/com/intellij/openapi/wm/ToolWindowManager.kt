@@ -75,7 +75,7 @@ abstract class ToolWindowManager {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,

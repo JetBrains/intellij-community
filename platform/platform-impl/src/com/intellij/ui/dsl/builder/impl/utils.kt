@@ -15,12 +15,10 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.jvm.isAccessible
 
 /**
  * Internal component properties for UI DSL
@@ -64,7 +62,9 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JComboBox::class,
   JSlider::class,
   JSpinner::class,
+  JTable::class,
   JTextComponent::class,
+  JTree::class,
   SegmentedButtonComponent::class,
   SegmentedButtonToolbar::class
 )
@@ -77,10 +77,15 @@ internal val JComponent.origin: JComponent
     }
   }
 
-internal fun getVisualPaddings(component: JComponent): Gaps {
+internal fun prepareVisualPaddings(component: JComponent): Gaps {
   val insets = component.insets
   val customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
-  return customVisualPaddings ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+
+  if (customVisualPaddings == null) {
+    return Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+  }
+  component.putClientProperty(GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS, false)
+  return customVisualPaddings
 }
 
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
@@ -129,48 +134,4 @@ internal fun warn(message: String) {
   else {
     LOG.warn(message)
   }
-}
-
-@ApiStatus.Internal
-inline fun <reified T : Any> KMutableProperty0<T>.toBindingInternal(): PropertyBinding<T> {
-  return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
-}
-
-@ApiStatus.Internal
-fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
-  /*
-  // looks like this code is not needed. Should be removed together with propType paramater after dogfooding
-  if (prop is CallableReference) {
-    val name = prop.name
-    val receiver = (prop as CallableReference).boundReceiver
-    if (receiver != null) {
-      val baseName = name.removePrefix("is")
-      val nameCapitalized = StringUtil.capitalize(baseName)
-      val getterName = if (name.startsWith("is")) name else "get$nameCapitalized"
-      val setterName = "set$nameCapitalized"
-      val receiverClass = receiver::class.java
-
-      try {
-        val getter = receiverClass.getMethod(getterName)
-        val setter = receiverClass.getMethod(setterName, propType)
-        return PropertyBinding({ getter.invoke(receiver) as T }, { setter.invoke(receiver, it) })
-      }
-      catch (e: Exception) {
-        // ignore
-      }
-
-      try {
-        val field = receiverClass.getDeclaredField(name)
-        field.isAccessible = true
-        return PropertyBinding({ field.get(receiver) as T }, { field.set(receiver, it) })
-      }
-      catch (e: Exception) {
-        // ignore
-      }
-    }
-  }
-  */
-  prop.getter.isAccessible = true
-  prop.setter.isAccessible = true
-  return PropertyBinding(prop.getter, prop.setter)
 }

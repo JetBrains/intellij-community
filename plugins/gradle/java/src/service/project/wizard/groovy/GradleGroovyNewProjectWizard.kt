@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizar
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
 
 class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
@@ -57,10 +58,14 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
           is LocalDistributionInfo -> {
             it.withPlugin("groovy")
             it.withMavenCentral()
-            it.addImplementationDependency(it.call("fileTree", groovySdk.path) {
-              call("include", "*.jar")
-              call("include", "*/*.jar")
-            })
+            when (val groovySdkKind = GroovyHomeKind.fromString(groovySdk.path)) {
+              null -> it.addImplementationDependency(it.call("files", groovySdk.path))
+              else -> it.addImplementationDependency(it.call("fileTree", groovySdkKind.jarsPath) {
+                for (subdir in groovySdkKind.subPaths) {
+                  call("include", subdir)
+                }
+              })
+            }
           }
         }
         it.withJUnit()
@@ -89,7 +94,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
-      groovySdkProperty.afterChange { logGroovySdkSelected(context, it) }
     }
   }
 }

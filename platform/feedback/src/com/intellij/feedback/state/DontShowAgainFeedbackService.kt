@@ -1,20 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback.state
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
+import kotlinx.serialization.Serializable
 
-
-@State(name = "DontShowAgainFeedbackService", reloadable = true, storages = [Storage("DontShowAgainFeedbackService.xml")])
+@Service(Service.Level.APP)
+@State(name = "DontShowAgainFeedbackService", storages = [Storage("DontShowAgainFeedbackService.xml")])
 class DontShowAgainFeedbackService : PersistentStateComponent<DontShowAgainFeedbackState> {
-
   companion object {
     @JvmStatic
-    fun getInstance(): DontShowAgainFeedbackService {
-      return ApplicationManager.getApplication().getService(DontShowAgainFeedbackService::class.java)
-    }
+    fun getInstance(): DontShowAgainFeedbackService = service()
   }
 
   private var state: DontShowAgainFeedbackState = DontShowAgainFeedbackState()
@@ -27,3 +22,8 @@ class DontShowAgainFeedbackService : PersistentStateComponent<DontShowAgainFeedb
     this.state = state
   }
 }
+
+@Serializable
+data class DontShowAgainFeedbackState(
+  val dontShowAgainIdeVersions: MutableSet<String> = mutableSetOf()
+)

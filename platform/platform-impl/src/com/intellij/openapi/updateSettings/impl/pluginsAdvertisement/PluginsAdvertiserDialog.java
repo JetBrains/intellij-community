@@ -73,12 +73,18 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
   }
 
-  public void doInstallPlugins(boolean showDialog) {
+  /**
+   * @param showDialog if the dialog will be shown to a user or not
+   * @param modalityState modality state used by plugin installation process.
+   *                      {@code modalityState} will taken into account only if {@code showDialog} is <code>false</code>.
+   *                      If {@code null} is passed, {@code ModalityState.NON_MODAL} will be used
+   */
+  public void doInstallPlugins(boolean showDialog, @Nullable ModalityState modalityState) {
     if (showDialog) {
       showAndGet();
     }
     else {
-      doInstallPlugins(__ -> true, ModalityState.NON_MODAL);
+      doInstallPlugins(__ -> true, modalityState != null ? modalityState : ModalityState.NON_MODAL);
     }
   }
 

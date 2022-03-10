@@ -37,8 +37,10 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
     val categories = HashSet<String>()
     for (rule in allRules().values.flatten()) {
       processor.addGrammarOptions(rule.presentableName, hit = msg("grazie.settings.grammar.scope.rules.text"))
-      if (categories.add(rule.category)) {
-        processor.addGrammarOptions(rule.category, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      for (cat in rule.categories) {
+        if (categories.add(cat)) {
+          processor.addGrammarOptions(cat, hit = msg("grazie.settings.grammar.scope.rules.text"))
+        }
       }
     }
   }

@@ -39,7 +39,7 @@ class FeatureSuggesterStatistics : CounterUsagesCollector() {
     fun logSuggestionFound(suggesterId: String) = sendStatistics(suggestionFoundEvent, suggesterId)
 
     private fun sendStatistics(event: EventId1<String?>, suggesterId: String) {
-      if (Registry.get("feature.suggester.send.statistics").asBoolean()) {
+      if (Registry.`is`("feature.suggester.send.statistics", false)) {
         event.log(suggesterId)
       }
     }

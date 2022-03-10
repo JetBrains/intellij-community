@@ -114,8 +114,7 @@ public abstract class ProjectManager {
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract @Nullable Project createProject(@Nullable String name, @NotNull String path);
 
   public @Nullable Project findOpenProjectByHash(@Nullable String locationHash) {

@@ -29,7 +29,7 @@ public class MavenWorkspaceSettings {
   /**
    * @deprecated Do not use this public field
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MavenImportingSettings importingSettings = new MavenImportingSettings();
 
   public List<String> enabledProfiles = new ArrayList<>();

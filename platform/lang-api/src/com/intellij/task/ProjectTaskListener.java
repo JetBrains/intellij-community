@@ -2,7 +2,6 @@
 package com.intellij.task;
 
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProjectTaskListener {
@@ -26,7 +25,6 @@ public interface ProjectTaskListener {
    * @param executionResult provides aggregated information about the {@link ProjectTask} execution
    * @deprecated use {@link #finished(ProjectTaskManager.Result)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {}
 }

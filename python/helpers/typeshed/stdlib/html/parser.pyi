@@ -1,5 +1,5 @@
 from _markupbase import ParserBase
-from typing import Pattern, Tuple
+from typing import Pattern
 
 class HTMLParser(ParserBase):
     def __init__(self, *, convert_charrefs: bool = ...) -> None: ...
@@ -18,7 +18,7 @@ class HTMLParser(ParserBase):
     def handle_decl(self, decl: str) -> None: ...
     def handle_pi(self, data: str) -> None: ...
     def unknown_decl(self, data: str) -> None: ...
-    CDATA_CONTENT_ELEMENTS: Tuple[str, ...]
+    CDATA_CONTENT_ELEMENTS: tuple[str, ...]
     def check_for_whole_start_tag(self, i: int) -> int: ...  # undocumented
     def clear_cdata_mode(self) -> None: ...  # undocumented
     def goahead(self, end: bool) -> None: ...  # undocumented

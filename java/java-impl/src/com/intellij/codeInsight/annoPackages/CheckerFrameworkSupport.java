@@ -29,10 +29,19 @@ class CheckerFrameworkSupport implements AnnotationPackageSupport {
                                                                        @NotNull PsiElement context,
                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
+    if (context instanceof PsiTypeParameter) {
+      // DefaultQualifier is not applicable to type parameter declarations
+      return null;
+    }
     if (anno.hasQualifiedName(DEFAULT_QUALIFIER)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiClassObjectAccessExpression &&
           hasAppropriateTarget(types, anno.findAttributeValue("locations"))) {
+        PsiType type = PsiUtil.getTypeByPsiElement(context);
+        if (type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter) {
+          // DefaultQualifier is not applicable to type parameter uses
+          return null;
+        }
         PsiClass valueClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
         if (valueClass != null) {
           NullableNotNullManager instance = NullableNotNullManager.getInstance(value.getProject());

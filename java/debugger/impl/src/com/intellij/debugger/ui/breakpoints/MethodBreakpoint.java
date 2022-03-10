@@ -497,11 +497,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     try {
-      getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
+      getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
     } catch (Exception ignored) {
     }
     try {
-      getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
+      getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
     } catch (Exception ignored) {
     }
   }

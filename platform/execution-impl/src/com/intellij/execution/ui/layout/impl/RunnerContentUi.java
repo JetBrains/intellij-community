@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.ShadowAction;
@@ -39,7 +40,6 @@ import com.intellij.ui.components.TwoSideComponent;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
-import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -833,11 +833,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
             if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == event.getContent()) return;
           }
 
-          CustomContentLayoutOptions layoutOptions = event.getContent().getUserData(CustomContentLayoutOptions.KEY);
-          AnAction viewAction = layoutOptions != null && layoutOptions.getAvailableOptions().length > 0 ?
-                                new ViewLayoutModeActionGroup(RunnerContentUi.this, event.getContent()) :
-                                new RestoreViewAction(RunnerContentUi.this, event.getContent());
-          myViewActions.addAction(viewAction).setAsSecondary(true);
+          CustomContentLayoutSettings layoutOptionsCollection = event.getContent().getUserData(CustomContentLayoutSettings.KEY);
+          if (layoutOptionsCollection != null) {
+            for (AnAction action: layoutOptionsCollection.getActions(RunnerContentUi.this)) {
+              myViewActions.addAction(action).setAsSecondary(true);
+            }
+          }
+          else {
+            AnAction viewAction = new RestoreViewAction(RunnerContentUi.this, event.getContent());
+            myViewActions.addAction(viewAction).setAsSecondary(true);
+          }
 
           List<AnAction> toAdd = new ArrayList<>();
           for (AnAction anAction : myViewActions.getChildren(null)) {
@@ -1102,7 +1107,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myViewActions.getChildrenCount() > 0;
   }
 
-  private void updateTabsUI(final boolean validateNow) {
+  public void updateTabsUI(final boolean validateNow) {
     boolean hasToolbarContent = rebuildToolbar();
 
     Set<String> usedNames = new HashSet<>();
@@ -1364,9 +1369,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myLayoutSettings.resetToDefault();
     for (Content each : all) {
       myManager.addContent(each);
-      CustomContentLayoutOptions customLayoutOptions = each.getUserData(CustomContentLayoutOptions.KEY);
-      if (customLayoutOptions != null) {
-        customLayoutOptions.restore();
+      CustomContentLayoutSettings customLayoutOptionsCollection = each.getUserData(CustomContentLayoutSettings.KEY);
+      if (customLayoutOptionsCollection != null) {
+       customLayoutOptionsCollection.restore();
       }
     }
 
@@ -1415,7 +1420,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     if (myMinimizeActionEnabled) {
       if (specialActions.isEmpty()) {
+        var separateWatchesInVariables = ActionManager.getInstance().getAction("XDebugger.SwitchWatchesInVariables");
+        if (separateWatchesInVariables instanceof ToggleAction) {
+          myViewActions.addAction(new Separator()).setAsSecondary(true);
+          myViewActions.addAction(new ToggleSeparateWatches((ToggleAction)separateWatchesInVariables, true)).setAsSecondary(true);
+        }
         myViewActions.addAction(new Separator()).setAsSecondary(true);
+        myViewActions.addAction(ActionManager.getInstance().getAction("Runner.ToggleTabLabels")).setAsSecondary(true);
         myViewActions.addAction(ActionManager.getInstance().getAction("Runner.RestoreLayout")).setAsSecondary(true);
       }
     }
@@ -2010,6 +2021,29 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myContentUi.toggleContentPopup(e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY));
+    }
+  }
+
+  private static class ToggleSeparateWatches extends DumbAwareToggleAction {
+
+    private final @NotNull ToggleAction delegate;
+    private final boolean myInverted;
+
+    private ToggleSeparateWatches(@NotNull ToggleAction delegate, boolean inverted) {
+      super(ExecutionBundle.messagePointer("show.separate.watches.action.name"));
+      this.delegate = delegate;
+      myInverted = inverted;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      boolean isSelected = delegate.isSelected(e);
+      return myInverted ? !isSelected : isSelected;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      delegate.setSelected(e, myInverted ? !state : state);
     }
   }
 

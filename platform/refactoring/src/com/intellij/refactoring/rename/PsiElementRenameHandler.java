@@ -100,7 +100,7 @@ public class PsiElementRenameHandler implements RenameHandler {
         !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
       final String message = RefactoringBundle.message("dialog.message.selected.element.used.from.non.project.files");
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
-      if (MessageDialogBuilder.yesNo(RefactoringBundle.getCannotRefactorMessage(null), message, UIUtil.getWarningIcon()).ask(project)) {
+      if (!MessageDialogBuilder.yesNo(RefactoringBundle.getCannotRefactorMessage(null), message, UIUtil.getWarningIcon()).ask(project)) {
         return;
       }
     }

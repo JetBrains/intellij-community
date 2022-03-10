@@ -2,10 +2,12 @@
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.util.containers.isEmpty
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -27,5 +29,10 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
     val focusOwner = lastFocusOwner
     lastFocusOwner = null
     focusMainComponent(focusOwner)
+  }
+
+  override fun updateAvailability(event: AnActionEvent) {
+    event.presentation.isVisible = true
+    event.presentation.isEnabled = !changeViewProcessor.allChanges.isEmpty()
   }
 }

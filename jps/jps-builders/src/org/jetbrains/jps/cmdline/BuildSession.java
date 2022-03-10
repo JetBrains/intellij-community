@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.Executor;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD_PORTABLE_CACHES;
 
 /**
 * @author Eugene Zhuravlev
@@ -335,7 +336,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
-      if (myCacheLoadManager != null) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
+      if (myCacheLoadManager != null && !FORCE_DOWNLOAD_PORTABLE_CACHES) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
 
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 

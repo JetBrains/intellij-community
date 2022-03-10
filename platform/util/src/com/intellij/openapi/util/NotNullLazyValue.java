@@ -17,7 +17,7 @@ public abstract class NotNullLazyValue<T> implements Supplier<T> {
   private T myValue;
 
   /** @deprecated Use {@link NotNullLazyValue#lazy(Supplier)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected NotNullLazyValue() { }

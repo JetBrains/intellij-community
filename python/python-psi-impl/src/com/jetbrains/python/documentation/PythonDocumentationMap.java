@@ -172,7 +172,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
         Matcher matcher = Pattern.compile(regex).matcher(urlPattern);
         if (matcher.find()) {
-          String value = Boolean.valueOf(entry.getValue()) ? matcher.group(1) : "";
+          String value = Boolean.parseBoolean(entry.getValue()) ? matcher.group(1) : "";
 
           urlPattern = urlPattern.replaceAll(regex, value);
         }

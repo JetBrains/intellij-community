@@ -17,10 +17,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -147,7 +144,7 @@ public final class UITheme {
                                                @NotNull Function<? super String, String> iconsMapper)
     throws IllegalStateException {
     if (provider != null) {
-      theme.providerClassLoader = provider;
+      theme.setProviderClassLoader(provider);
     }
 
     initializeNamedColors(theme);
@@ -199,7 +196,6 @@ public final class UITheme {
 
       Object palette = theme.icons.get("ColorPalette");
       if (palette instanceof Map) {
-
         @SuppressWarnings("rawtypes")
         Map colors = (Map)palette;
         PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
@@ -405,8 +401,18 @@ public final class UITheme {
     return selectionColorPatcher;
   }
 
+  @ApiStatus.Internal
   public @NotNull ClassLoader getProviderClassLoader() {
+    if (providerClassLoader == null) {
+      throw new RuntimeException("The theme classloader has already been detached");
+    }
+
     return providerClassLoader;
+  }
+
+  @ApiStatus.Internal
+  public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
+    this.providerClassLoader = providerClassLoader;
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
@@ -508,7 +514,7 @@ public final class UITheme {
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {
-        Icon icon = ImageDataByPathLoader.findIconFromThemePath(value, classLoader);
+        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader, null);
         if (icon != null) {
           return icon;
         }
@@ -721,7 +727,7 @@ public final class UITheme {
     }
 
     @Nullable PaletteScope getScopeByPath(@Nullable String path) {
-      if (path != null && path.contains("/com/intellij/ide/ui/laf/icons/")) {
+      if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
         String file = path.substring(path.lastIndexOf('/') + 1);
         if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
         if (file.startsWith("check")) return checkBoxes;

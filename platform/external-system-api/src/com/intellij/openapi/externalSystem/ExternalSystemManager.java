@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,8 +106,7 @@ public interface ExternalSystemManager<
    * for your {@link com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration} instead
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   default Object createTestConsoleProperties(@NotNull Project project,
                                              @NotNull Executor executor,
                                              @NotNull RunConfiguration runConfiguration) {

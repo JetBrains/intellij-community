@@ -2,8 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.rest
 
 import com.google.gson.GsonBuilder
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.notification.impl.NotificationGroupManagerImpl
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -31,7 +31,6 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class PackageSearchRestService : RestService() {
-
     override fun getServiceName() = "packageSearch"
 
     override fun isMethodSupported(method: HttpMethod) = method === HttpMethod.GET || method === HttpMethod.POST
@@ -116,8 +115,8 @@ internal class PackageSearchRestService : RestService() {
     }
 
     @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name...
-    private fun notify(project: Project, @Nls pkg: String) =
-        NotificationGroupManagerImpl()
+    private fun notify(project: Project, @Nls pkg: String) {
+        NotificationGroupManager.getInstance()
             .getNotificationGroup(PluginEnvironment.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
@@ -126,10 +125,10 @@ internal class PackageSearchRestService : RestService() {
             )
             .setSubtitle(pkg)
             .notify(project)
+    }
 }
 
 internal class InstallPackageRequest {
-
     var project: String? = null
     @NlsSafe var `package`: String? = null
     @NonNls var query: String? = null

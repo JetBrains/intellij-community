@@ -1,21 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.MessageException;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
@@ -116,13 +114,11 @@ public class Messages {
   public static final String OK_BUTTON = "OK";
 
   /** @deprecated Use {@link #getYesButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
   public static final String YES_BUTTON = "&Yes";
 
   /** @deprecated Use {@link #getNoButton()} instead */
-  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated(forRemoval = true)
   public static final String NO_BUTTON = "&No";
 
   /** @deprecated Use {@link #getCancelButton()} instead */
@@ -164,11 +160,6 @@ public class Messages {
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
-  }
-
-  public static boolean isApplicationInUnitTestOrHeadless() {
-    final Application application = ApplicationManager.getApplication();
-    return application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
 
   public static @NotNull Runnable createMessageDialogRemover(@Nullable Project project) {
@@ -224,12 +215,16 @@ public class Messages {
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
 
+  /** @deprecated always false */
+  @Deprecated(forRemoval = true)
   public static boolean canShowMacSheetPanel() {
-    return MessageDialogBuilderKt.canShowMacSheetPanel();
+    return false;
   }
 
+  /** @deprecated always false */
+  @Deprecated(forRemoval = true)
   public static boolean isMacSheetEmulation() {
-    return SystemInfoRt.isMac && Registry.is("ide.mac.message.dialogs.as.sheets", true) && Registry.is("ide.mac.message.sheets.java.emulation", false);
+    return false;
   }
 
   /**
@@ -316,17 +311,6 @@ public class Messages {
                                        @DialogMessage String message,
                                        @NotNull @DialogTitle String title,
                                        @Nullable Icon icon) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showOkMessageDialog(title, message, getOkButton(), WindowManager.getInstance().suggestParentWindow(project));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(project, message, title, new String[]{getOkButton()}, 0, icon);
   }
 
@@ -334,17 +318,6 @@ public class Messages {
                                        @DialogMessage String message,
                                        @NotNull @DialogTitle String title,
                                        @Nullable Icon icon) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showOkMessageDialog(title, message, getOkButton(), SwingUtilities.getWindowAncestor(parent));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(parent, message, title, new String[]{getOkButton()}, 0, icon);
   }
 
@@ -357,17 +330,6 @@ public class Messages {
   public static void showMessageDialog(@DialogMessage String message,
                                        @NotNull @DialogTitle String title,
                                        @Nullable Icon icon) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showOkMessageDialog(title, message, getOkButton(), null);
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(message, title, new String[]{getOkButton()}, 0, icon);
   }
 
@@ -400,8 +362,7 @@ public class Messages {
   }
 
   /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static int showYesNoDialog(@Nullable Project project,
                                     @DialogMessage String message,
                                     @NotNull @DialogTitle String title,
@@ -634,17 +595,6 @@ public class Messages {
   public static void showErrorDialog(@Nullable Project project,
                                      @DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, getOkButton(), WindowManager.getInstance().suggestParentWindow(project));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(project, message, title, new String[]{getOkButton()}, 0, getErrorIcon());
   }
 
@@ -656,18 +606,6 @@ public class Messages {
   }
 
   public static void showErrorDialog(@NotNull Component component, @DialogMessage String message) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance()
-          .showErrorDialog(CommonBundle.getErrorTitle(), message, getOkButton(), SwingUtilities.getWindowAncestor(component));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(component, message, CommonBundle.getErrorTitle(), new String[]{getOkButton()}, 0, getErrorIcon());
   }
 
@@ -684,34 +622,12 @@ public class Messages {
   public static void showWarningDialog(@Nullable Project project,
                                        @DialogMessage String message,
                                        @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, getOkButton(), WindowManager.getInstance().suggestParentWindow(project));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(project, message, title, new String[]{getOkButton()}, 0, getWarningIcon());
   }
 
   public static void showWarningDialog(@NotNull Component component,
                                        @DialogMessage String message,
                                        @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, getOkButton(), SwingUtilities.getWindowAncestor(component));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(component, message, title, new String[]{getOkButton()}, 0, getWarningIcon());
   }
 
@@ -723,17 +639,6 @@ public class Messages {
    */
   public static void showWarningDialog(@DialogMessage String message,
                                        @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, getOkButton(), null);
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showDialog(message, title, new String[]{getOkButton()}, 0, getWarningIcon());
   }
 
@@ -1024,17 +929,6 @@ public class Messages {
   public static void showInfoMessage(Component component,
                                      @DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showOkMessageDialog(title, message, getOkButton(), SwingUtilities.getWindowAncestor(component));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showMessageDialog(component, message, title, getInformationIcon());
   }
 
@@ -1044,17 +938,6 @@ public class Messages {
   public static void showInfoMessage(@Nullable Project project,
                                      @DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showOkMessageDialog(title, message, getOkButton(), WindowManager.getInstance().suggestParentWindow(project));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showMessageDialog(project, message, title, getInformationIcon());
   }
 
@@ -1068,17 +951,6 @@ public class Messages {
    */
   public static void showInfoMessage(@DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showOkMessageDialog(title, message, getOkButton(), null);
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
     showMessageDialog(message, title, getInformationIcon());
   }
 

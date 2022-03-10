@@ -28,7 +28,7 @@ import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
 
-internal class CheckerRunner(val text: TextContent) {
+class CheckerRunner(val text: TextContent) {
   private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
@@ -192,10 +192,9 @@ internal class CheckerRunner(val text: TextContent) {
   }
 
   private fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
-    val contentRangesInFile = text.rangesInFile
     return problem.highlightRanges.asSequence()
       .map { text.textRangeToFile(it) }
-      .flatMap { range -> contentRangesInFile.asSequence().mapNotNull { it.intersection(range) } }
+      .flatMap { range -> text.intersection(range) }
       .filterNot { it.isEmpty }
       .toList()
   }

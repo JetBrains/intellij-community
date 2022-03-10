@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
+import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Point
@@ -92,8 +93,16 @@ private class OutputCollapsingGutterMouseListener : EditorMouseListener, EditorM
   }
 
   private fun isAtCollapseVerticalStripe(editor: EditorEx, point: Point): Boolean =
-    CollapsingComponent.collapseRectHorizontalLeft(editor).let {
-      point.x in it until it + CollapsingComponent.COLLAPSING_RECT_WIDTH
+    if ((editor as EditorImpl).isMirrored) {
+      val margin = editor.notebookAppearance.LINE_NUMBERS_MARGIN / 2
+      CollapsingComponent.collapseRectHorizontalLeft(editor).let {
+        point.x in it - margin until it + CollapsingComponent.COLLAPSING_RECT_WIDTH - margin
+      }
+    }
+    else {
+      CollapsingComponent.collapseRectHorizontalLeft(editor).let {
+        point.x in it until it + CollapsingComponent.COLLAPSING_RECT_WIDTH
+      }
     }
 
   private fun getCollapsingComponent(editor: EditorEx, point: Point): CollapsingComponent? {

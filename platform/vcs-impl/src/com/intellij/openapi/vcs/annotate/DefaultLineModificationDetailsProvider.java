@@ -178,9 +178,11 @@ public class DefaultLineModificationDetailsProvider implements FileAnnotation.Li
       if (innerFragment.getEndOffset2() < windowStart || innerFragment.getStartOffset2() > windowEnd) continue;
       int start = Math.max(0, innerFragment.getStartOffset2() - windowStart);
       int end = Math.min(lineLength, innerFragment.getEndOffset2() - windowStart);
-      InnerChangeType type = start == end ? InnerChangeType.DELETED
-                                          : innerFragment.getStartOffset1() != innerFragment.getEndOffset1() ? InnerChangeType.MODIFIED
-                                                                                                             : InnerChangeType.INSERTED;
+      boolean hasDeleted = innerFragment.getStartOffset1() != innerFragment.getEndOffset1();
+      boolean hasInserted = innerFragment.getStartOffset2() != innerFragment.getEndOffset2();
+      InnerChangeType type = hasInserted ? hasDeleted ? InnerChangeType.MODIFIED
+                                                      : InnerChangeType.INSERTED
+                                         : InnerChangeType.DELETED;
       changes.add(new InnerChange(start, end, type));
     }
 

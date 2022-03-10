@@ -6,6 +6,7 @@ import com.intellij.java.ift.lesson.basic.JavaContextActionsLesson
 import com.intellij.java.ift.lesson.basic.JavaSelectLesson
 import com.intellij.java.ift.lesson.basic.JavaSurroundAndUnwrapLesson
 import com.intellij.java.ift.lesson.completion.*
+import com.intellij.java.ift.lesson.essential.JavaOnboardingTourLesson
 import com.intellij.java.ift.lesson.navigation.*
 import com.intellij.java.ift.lesson.refactorings.JavaExtractMethodCocktailSortLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRefactoringMenuLesson
@@ -13,6 +14,7 @@ import com.intellij.java.ift.lesson.refactorings.JavaRenameLesson
 import com.intellij.java.ift.lesson.run.JavaDebugLesson
 import com.intellij.java.ift.lesson.run.JavaRunConfigurationLesson
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.ApplicationNamesInfo
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
@@ -28,7 +30,20 @@ import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
-  override fun modules() = stableModules() + CourseManager.instance.findCommonModules("Git")
+  override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
+
+  private val disableOnboardingLesson get() = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("IDEA Edu")
+
+  private fun onboardingTour() = if (!disableOnboardingLesson) listOf(
+    LearningModule(id = "Java.Onboarding",
+                   name = JavaLessonsBundle.message("java.onboarding.module.name"),
+                   description = JavaLessonsBundle.message("java.onboarding.module.description", LessonUtil.productName),
+                   primaryLanguage = langSupport,
+                   moduleType = LessonType.PROJECT) {
+      listOf(JavaOnboardingTourLesson())
+    }
+  )
+  else emptyList()
 
   private fun stableModules() = listOf(
     LearningModule(id = "Java.Essential",

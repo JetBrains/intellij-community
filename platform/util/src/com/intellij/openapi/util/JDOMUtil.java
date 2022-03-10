@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.xml.dom.StaxFactory;
 import com.intellij.xml.util.XmlStringUtil;
 import org.codehaus.stax2.XMLStreamReader2;
 import org.jdom.*;
@@ -107,7 +108,7 @@ public final class JDOMUtil {
    * @deprecated Use {@link Element#getChildren} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static Element @NotNull [] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[0]);
@@ -250,6 +251,7 @@ public final class JDOMUtil {
    * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
     return loadDocumentUsingStaX(reader);
   }
@@ -384,6 +386,7 @@ public final class JDOMUtil {
    * @deprecated Use {@link #write(Element, Path)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void write(@NotNull Element element, @NotNull File file) throws IOException {
     FileUtilRt.createParentDirs(file);
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {

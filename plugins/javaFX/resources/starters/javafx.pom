@@ -6,6 +6,8 @@
 
   <properties>
     <gradle.version>7.4</gradle.version>
+    <maven.version>3.8.4</maven.version>
+    <maven.wrapper.version>3.1.0</maven.wrapper.version>
     <junit.version>5.8.2</junit.version>
     <kotlin.version>1.6.10</kotlin.version>
 

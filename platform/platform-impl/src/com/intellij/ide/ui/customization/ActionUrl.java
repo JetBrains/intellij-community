@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 
-public class ActionUrl implements JDOMExternalizable {
+public final class ActionUrl implements JDOMExternalizable {
   public static final int ADDED = 1;
   public static final int DELETED = -1;
 
@@ -29,7 +30,6 @@ public class ActionUrl implements JDOMExternalizable {
   private int myActionType;
   private int myAbsolutePosition;
 
-
   public int myInitialPosition = -1;
 
   @NonNls private static final String IS_GROUP = "is_group";
@@ -40,14 +40,13 @@ public class ActionUrl implements JDOMExternalizable {
   @NonNls private static final String ACTION_TYPE = "action_type";
   @NonNls private static final String POSITION = "position";
 
-
   public ActionUrl() {
     myGroupPath = new ArrayList<>();
   }
 
   public ActionUrl(final ArrayList<String> groupPath,
                    final Object component,
-                   final int actionType,
+                   @MagicConstant(intValues = {ADDED, DELETED, MOVE}) int actionType,
                    final int position) {
     myGroupPath = groupPath;
     myComponent = component;
@@ -59,7 +58,7 @@ public class ActionUrl implements JDOMExternalizable {
     return myGroupPath;
   }
 
-  public String getParentGroup(){
+  public String getParentGroup() {
     return myGroupPath.get(myGroupPath.size() - 1);
   }
 
@@ -72,16 +71,16 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   @Nullable
-  public AnAction getComponentAction(){
-    if (myComponent instanceof Separator){
+  public AnAction getComponentAction() {
+    if (myComponent instanceof Separator) {
       return Separator.getInstance();
     }
-    if (myComponent instanceof String){
+    if (myComponent instanceof String) {
       return ActionManager.getInstance().getAction((String)myComponent);
     }
-    if (myComponent instanceof Group){
+    if (myComponent instanceof Group) {
       final String id = ((Group)myComponent).getId();
-      if (id == null || id.length() == 0){
+      if (id == null || id.length() == 0) {
         return ((Group)myComponent).constructActionGroup(true);
       }
       return ActionManager.getInstance().getAction(id);
@@ -89,11 +88,12 @@ public class ActionUrl implements JDOMExternalizable {
     return null;
   }
 
+  @MagicConstant(intValues = {ADDED, DELETED, MOVE})
   public int getActionType() {
     return myActionType;
   }
 
-  public void setActionType(final int actionType) {
+  public void setActionType(@MagicConstant(intValues = {ADDED, DELETED, MOVE}) int actionType) {
     myActionType = actionType;
   }
 
@@ -163,21 +163,14 @@ public class ActionUrl implements JDOMExternalizable {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public boolean isGroupContainsInPath(ActionGroup group){
-    for (String s : myGroupPath) {
-      if (s.equals(group.getTemplatePresentation().getText())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static void changePathInActionsTree(JTree tree, ActionUrl url){
-     if (url.myActionType == ADDED){
+  public static void changePathInActionsTree(JTree tree, ActionUrl url) {
+    if (url.myActionType == ADDED) {
       addPathToActionsTree(tree, url);
-    } else if (url.myActionType == DELETED) {
+    }
+    else if (url.myActionType == DELETED) {
       removePathFromActionsTree(tree, url);
-    } else if (url.myActionType == MOVE){
+    }
+    else if (url.myActionType == MOVE) {
       movePathInActionsTree(tree, url);
     }
   }
@@ -188,9 +181,10 @@ public class ActionUrl implements JDOMExternalizable {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
     final int absolutePosition = url.getAbsolutePosition();
     if (node.getChildCount() >= absolutePosition && absolutePosition >= 0) {
-      if (url.getComponent() instanceof Group){
+      if (url.getComponent() instanceof Group) {
         node.insert(ActionsTreeUtil.createNode((Group)url.getComponent()), absolutePosition);
-      } else {
+      }
+      else {
         node.insert(new DefaultMutableTreeNode(url.getComponent()), absolutePosition);
       }
     }
@@ -210,17 +204,17 @@ public class ActionUrl implements JDOMExternalizable {
     }
   }
 
-  private static void movePathInActionsTree(JTree tree, ActionUrl url){
+  private static void movePathInActionsTree(JTree tree, ActionUrl url) {
     final TreePath treePath = CustomizationUtil.getTreePath(tree, url);
-    if (treePath != null){
-      if (treePath.getLastPathComponent() != null){
+    if (treePath != null) {
+      if (treePath.getLastPathComponent() != null) {
         final DefaultMutableTreeNode parent = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
         final int absolutePosition = url.getAbsolutePosition();
         final int initialPosition = url.getInitialPosition();
         if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
           if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
             final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
-            if (child.getUserObject().equals(url.getComponent())){
+            if (child.getUserObject().equals(url.getComponent())) {
               parent.remove(child);
               parent.insert(child, absolutePosition);
             }
@@ -230,11 +224,11 @@ public class ActionUrl implements JDOMExternalizable {
     }
   }
 
-  public static ArrayList<String> getGroupPath(final TreePath treePath){
+  public static ArrayList<String> getGroupPath(final TreePath treePath) {
     final ArrayList<String> result = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
-      if (o instanceof Group){
+      if (o instanceof Group) {
         result.add(((Group)o).getName());
       }
     }
@@ -242,14 +236,17 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   @Override
-  public boolean equals(Object object){
-    if (!(object instanceof ActionUrl)){
+  public boolean equals(Object object) {
+    if (!(object instanceof ActionUrl)) {
       return false;
     }
     ActionUrl url = (ActionUrl)object;
     Object comp = myComponent instanceof Pair ? ((Pair<?, ?>)myComponent).first : myComponent;
     Object thatComp = url.myComponent instanceof Pair ? ((Pair<?, ?>)url.myComponent).first : url.myComponent;
-    return Comparing.equal(comp, thatComp) && myGroupPath.equals(url.myGroupPath) && myAbsolutePosition == url.getAbsolutePosition();
+    return Comparing.equal(comp, thatComp)
+           && myGroupPath.equals(url.myGroupPath)
+           && myAbsolutePosition == url.myAbsolutePosition
+           && myActionType == url.myActionType;
   }
 
   @Override
@@ -283,5 +280,17 @@ public class ActionUrl implements JDOMExternalizable {
     ActionUrl url = new ActionUrl(new ArrayList<>(getGroupPath()), getComponent(), getActionType(), getAbsolutePosition());
     url.setInitialPosition(getInitialPosition());
     return url;
+  }
+
+  public ActionUrl getInverted() {
+    ActionUrl copy = copy();
+    if (myActionType == ADDED || myActionType == DELETED) {
+      copy.setActionType(-myActionType);
+    }
+    else {
+      copy.setInitialPosition(myAbsolutePosition);
+      copy.setAbsolutePosition(myInitialPosition);
+    }
+    return copy;
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.ide.wizard.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -16,14 +17,12 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
-import java.io.File
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
   AbstractNewProjectWizardStep(parent), IntelliJNewProjectWizardData
@@ -35,6 +34,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   val addSampleCodeProperty = propertyGraph.property(false)
+    .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty
@@ -44,14 +44,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false
-
-  private fun suggestName(): String {
-    return File(FileUtil.toSystemDependentName(contentRoot)).name
-  }
-
-  private fun suggestLocation(): String {
-    return FileUtil.toCanonicalPath(File(FileUtil.toSystemDependentName(contentRoot)).parent)
-  }
 
   private fun suggestModuleName(): String {
     return parent.name
@@ -72,9 +64,6 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     contentRootProperty.dependsOn(parent.pathProperty, ::suggestContentRoot)
 
     moduleFileLocationProperty.dependsOn(contentRootProperty, ::suggestModuleFilePath)
-
-    parent.nameProperty.dependsOn(contentRootProperty, ::suggestName)
-    parent.pathProperty.dependsOn(contentRootProperty, ::suggestLocation)
   }
 
   override fun setupUI(builder: Panel) {

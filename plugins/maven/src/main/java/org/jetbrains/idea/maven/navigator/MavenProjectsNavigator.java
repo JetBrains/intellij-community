@@ -154,8 +154,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   @Override
   public void initializeComponent() {
-    if (!isNormalProject()) return;
-    doInit();
+    if (isNormalProject()) {
+      doInit();
+    }
   }
 
   @TestOnly
@@ -288,7 +289,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
-      // fire content removed events, so subscribers could cleanup caches
+      // fire content removed events, so subscribers could clean up caches
       contentManager.removeAllContents(true);
       Disposer.dispose(contentManager);
       if (!myProject.isDisposed()) {

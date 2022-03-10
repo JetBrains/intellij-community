@@ -19,6 +19,7 @@ asyncio.Future.__init__  # Usually initialized from c object
 asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
+asyncio.mixins  # Added in Python 3.10
 builtins.dict.get
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
@@ -123,8 +124,6 @@ _collections_abc.MappingView.__class_getitem__
 _imp.source_hash
 ast.Tuple.dims
 ast.main
-asyncio.BufferedProtocol.eof_received
-asyncio.protocols.BufferedProtocol.eof_received
 collections.AsyncIterable.__class_getitem__
 collections.Awaitable.__class_getitem__
 collections.Container.__class_getitem__
@@ -151,9 +150,6 @@ multiprocessing.managers.SharedMemoryServer.public
 multiprocessing.managers.SharedMemoryServer.release_segment
 multiprocessing.managers.SharedMemoryServer.shutdown
 multiprocessing.managers.SharedMemoryServer.track_segment
-pstats.FunctionProfile
-pstats.Stats.get_stats_profile
-pstats.StatsProfile
 pyexpat.XMLParserType.SkippedEntityHandler
 pyexpat.XMLParserType.intern
 stringprep.unicodedata  # re-exported from unicodedata

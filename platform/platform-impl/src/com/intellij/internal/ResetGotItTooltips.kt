@@ -11,7 +11,7 @@ import com.intellij.ui.GotItTooltip
 internal class ResetGotItTooltips : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     (PropertiesComponent.getInstance() as? BasePropertyService)?.removeIf {
-      it.startsWith(GotItTooltip.PROPERTY_PREFIX)
+      it.startsWith(GotItTooltip.PROPERTY_PREFIX) || it == "notification.suggestion.dont.show.gotit"
     }
   }
 }

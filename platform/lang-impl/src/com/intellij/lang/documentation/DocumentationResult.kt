@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation
 
 import com.intellij.util.AsyncSupplier
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import java.awt.Image
@@ -37,6 +38,19 @@ sealed interface DocumentationResult {
      * the URL will be appended to the bottom of the [html]
      */
     fun externalUrl(externalUrl: String?): Data
+
+    /**
+     * The [updates] flow is collected in [IO context][kotlinx.coroutines.Dispatchers.IO].
+     * [Updates][updates] continuously replace the browser content until the flow is fully collected.
+     * Clicking another link, closing the browser, resetting the browser, going back or forward cancels the flow collection.
+     * Scrolling position is preserved in the browser when the update is applied, i.e. [anchor] does not have any effect on updates.
+     */
+    fun updates(updates: Flow<DocumentationContent>): Data
+
+    /**
+     * Same as asynchronous overload, but blocking.
+     */
+    fun updates(updater: DocumentationContentUpdater): Data
   }
 
   companion object {

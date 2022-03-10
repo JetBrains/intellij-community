@@ -3,9 +3,14 @@ package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
+import com.intellij.codeInsight.codeVision.ui.model.ClickableRichTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProviderBase
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.problems.FileState
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.findState
@@ -13,18 +18,26 @@ import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.updat
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.ProblemCollector.Companion.collect
 import com.intellij.codeInsight.daemon.problems.ScopedMember
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
+import com.intellij.util.ObjectUtils
+import com.intellij.util.SmartList
+import java.awt.Color
+import java.awt.event.MouseEvent
 import java.util.function.Consumer
 
 class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
+    // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
+    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
     val prevState = FileStateUpdater.getState(psiFile)
     if (prevState == null) return emptyList()
     val project = editor.project ?: return emptyList()
@@ -46,20 +59,44 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     val fileState = FileState(snapshot, allChanges)
     updateState(psiFile, fileState)
 
-    val factory = PresentationFactory((editor as EditorImpl))
     val document = editor.document
+    val highlighters: MutableList<HighlightInfo> = SmartList()
+    val lenses: MutableList<Pair<TextRange, CodeVisionEntry>> = ArrayList()
 
-    //todo
+    val lenseColor = getCodeVisionColor()
+    problems.forEach { (psiMember: PsiMember?, memberProblems: Set<Problem?>?) ->
+      val namedElement = ObjectUtils.tryCast(
+        psiMember,
+        PsiNameIdentifierOwner::class.java) ?: return@forEach
+      val identifier = namedElement.nameIdentifier ?: return@forEach
+      val text = JavaBundle.message("project.problems.hint.text", memberProblems.size)
+      lenses.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(psiMember) to ClickableRichTextCodeVisionEntry(id, RichText(text).apply { this.setForeColor(lenseColor) }, longPresentation = text, onClick = ClickHandler(psiMember)))
+      highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember!!, identifier))
+    }
 
-    val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
+    ApplicationManager.getApplication()
+      .invokeLater({
+                     if (project.isDisposed || !psiFile.isValid) return@invokeLater
+                     val fileTextLength: Int = psiFile.textLength
+                     val colorsScheme = editor.colorsScheme
+                     UpdateHighlightersUtil.setHighlightersToEditor(project, document, 0, fileTextLength,
+                                                                    highlighters, colorsScheme, -1)
+                   },
+                   ModalityState.NON_MODAL
+      )
+
     return lenses
+  }
+
+  private fun getCodeVisionColor(): Color {
+    val globalScheme = EditorColorsManager.getInstance().globalScheme
+    return globalScheme.getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES).foregroundColor ?: globalScheme.defaultForeground
   }
 
 
   override val name: String
-    get() = "Related problems"
-  override val relativeOrderings: List<CodeVisionRelativeOrdering>
-    get() = emptyList()
+    get() = JavaBundle.message("title.related.problems.inlay.hints")
+  override val relativeOrderings: List<CodeVisionRelativeOrdering> = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast)
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
   override val id: String
@@ -107,5 +144,15 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       prevSibling = prevSibling.prevSibling
     }
     return false
+  }
+
+  private class ClickHandler(member: PsiMember) : (MouseEvent?, Editor) -> Unit {
+    private val pointer = SmartPointerManager.createPointer(member)
+
+    override fun invoke(event: MouseEvent?, editor: Editor) {
+      if (event == null) return
+      val member = pointer.element ?: return
+      ProjectProblemUtils.showProblems(editor, member)
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -10,6 +10,10 @@ import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.*;
+import com.intellij.ide.actions.FqnUtil;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -32,6 +36,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,14 +55,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -499,9 +504,129 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
+  private static Map<String, Object> collectContextAttributes(PsiJavaDocumentedElement commentOwner){
+    HashMap<String, Object> attributes = new HashMap<>();
+    if (commentOwner instanceof PsiMember){
+      PsiMember member = (PsiMember)commentOwner;
+      String name = member.getName();
+      if (name != null) {
+        attributes.put("ELEMENT_NAME", name);
+      }
+      PsiClass containingClass = member.getContainingClass();
+      String className = containingClass != null ? containingClass.getName() : null;
+      if (className != null) {
+        attributes.put("CONTAINING_CLASS", className);
+      }
+    }
+    if (commentOwner instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod) commentOwner;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      attributes.put("PARAMS", ContainerUtil.map(parameters, param -> param.getName()));
+      attributes.put("TYPE_PARAMS", ContainerUtil.map(method.getTypeParameters(), param -> param.getName()));
+      attributes.put("THROWS", ContainerUtil.map(method.getThrowsList().getReferenceElements(), reference -> reference.getText()));
+      PsiTypeElement returnElement = method.getReturnTypeElement();
+      if (returnElement != null) {
+        attributes.put("RETURN_TYPE", String.valueOf(returnElement.getText()));
+      }
+
+      PsiMethod[] superMethods = method.findSuperMethods();
+      if (superMethods.length > 0) {
+        PsiMethod superMethod = superMethods[0];
+        String qualifiedSuperMethod = FqnUtil.getQualifiedNameFromProviders(superMethod);
+        if (qualifiedSuperMethod != null) {
+          attributes.put("SUPER_METHOD", qualifiedSuperMethod);
+        }
+        Map<Integer, String> paramToParentDescription = collectParentParameterDescriptions(method, parameters);
+        if (! paramToParentDescription.isEmpty()) {
+          List<String> inheritedParams = IntStream
+            .range(0, parameters.length)
+            .mapToObj(i -> parameters[i].getName() + StringUtil.notNullize(paramToParentDescription.get(i)))
+            .collect(Collectors.toList());
+          attributes.put("PARAMS_INHERITED", inheritedParams);
+        }
+      }
+    }
+    if (commentOwner instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)commentOwner;
+      attributes.put("TYPE_PARAMS", ContainerUtil.map(psiClass.getTypeParameters(), param -> param.getName()));
+      if (psiClass.isInterface()){
+        attributes.put("INTERFACE", String.valueOf(true));
+      }
+      if (psiClass.isEnum()){
+        attributes.put("ENUM", String.valueOf(true));
+      }
+      if (psiClass.isRecord()){
+        attributes.put("RECORD", String.valueOf(true));
+        attributes.put("RECORD_COMPONENTS", ContainerUtil.map(psiClass.getRecordComponents(), param -> param.getName()));
+      }
+      String className = psiClass.getName();
+      if (className != null) {
+        attributes.put("CONTAINING_CLASS", psiClass.getName());
+      }
+    }
+    return attributes;
+  }
+
+  private static @Nullable String generateStubFromTemplate(@Nullable PsiJavaDocumentedElement commentOwner) {
+    if (commentOwner == null) return null;
+    FileTemplate template = findTemplateByElement(commentOwner);
+    if (template == null) return null;
+
+    Map<String, Object> attributes = collectContextAttributes(commentOwner);
+    Properties properties = FileTemplateManager.getInstance(commentOwner.getProject()).getDefaultProperties();
+    for (String property : properties.stringPropertyNames()) {
+      attributes.put(property, properties.getProperty(property));
+    }
+    try {
+      return template.getText(attributes);
+    }
+    catch (IOException e) {
+      LOG.trace(e);
+      return null;
+    }
+  }
+
+  private static @Nullable FileTemplate findTemplateByElement(PsiJavaDocumentedElement commentOwner) {
+    String templateName = findTemplateNameByElement(commentOwner);
+    if (templateName == null) return null;
+    try {
+      return FileTemplateManager.getInstance(commentOwner.getProject()).getCodeTemplate(templateName);
+    }
+    catch (IllegalStateException e) {
+      return null;
+    }
+  }
+
+  private static @Nullable @NonNls String findTemplateNameByElement(PsiJavaDocumentedElement commentOwner){
+    if (commentOwner instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)commentOwner;
+      if (method.isConstructor()) {
+        return JavaTemplateUtil.TEMPLATE_JAVADOC_CONSTRUCTOR;
+      }
+      else if (method.findSuperMethods().length > 0) {
+        return JavaTemplateUtil.TEMPLATE_JAVADOC_OVERRIDING_METHOD;
+      }
+      else {
+        return JavaTemplateUtil.TEMPLATE_JAVADOC_METHOD;
+      }
+    }
+    else if (commentOwner instanceof PsiField) {
+      return JavaTemplateUtil.TEMPLATE_JAVADOC_FIELD;
+    }
+    else if (commentOwner instanceof PsiClass) {
+      return JavaTemplateUtil.TEMPLATE_JAVADOC_CLASS;
+    }
+    return null;
+  }
+
   @Override
   public String generateDocumentationContentStub(PsiComment _comment) {
     final PsiJavaDocumentedElement commentOwner = ((PsiDocComment)_comment).getOwner();
+    if (Registry.is("java.javadoc.use.templates")) {
+      String javaDocStub = generateStubFromTemplate(commentOwner);
+      if (javaDocStub != null) return javaDocStub;
+    }
+
     final StringBuilder builder = new StringBuilder();
     final CodeDocumentationAwareCommenter commenter =
       (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE.forLanguage(_comment.getLanguage());
@@ -546,6 +671,21 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                                  PsiMethod psiMethod) {
     PsiParameterList parameterList = psiMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
+    final Map<Integer, String> index2Description = collectParentParameterDescriptions(psiMethod, parameters);
+
+    for (int i = 0; i < parameters.length; i++) {
+      builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
+      builder.append(parameters[i].getName());
+      String description = index2Description.get(i);
+      if (description != null) {
+        builder.append(description);
+      }
+      builder.append(LINE_SEPARATOR);
+    }
+  }
+
+  @NotNull
+  private static Map<Integer, String> collectParentParameterDescriptions(PsiMethod psiMethod, PsiParameter[] parameters) {
     final Map<Integer, String> index2Description = new HashMap<>();
 
     for (int i = 0; i < parameters.length; i++) {
@@ -563,19 +703,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
       }
       if (paramName != null) {
-        index2Description.put(i, param.getText().substring(endOffset));
+        String description = param.getText().substring(endOffset).replaceFirst("(\\s*\\*)?\\s*$", "");
+        index2Description.put(i, description);
       }
     }
-
-    for (int i = 0; i < parameters.length; i++) {
-      String description = index2Description.get(i);
-      builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
-      builder.append(parameters[i].getName());
-      if (description != null) {
-        builder.append(description.replaceFirst("(\\s*\\*)?\\s*$", ""));
-      }
-      builder.append(LINE_SEPARATOR);
-    }
+    return index2Description;
   }
 
   public static void createTypeParamsListComment(final StringBuilder buffer,
@@ -862,6 +994,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     int options = (replaceConstructorWithInit ? 0 : PsiFormatUtilBase.SHOW_NAME) | PsiFormatUtilBase.SHOW_PARAMETERS;
     int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
+    
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_15)) {
+      parameterOptions |= PsiFormatUtilBase.SHOW_RAW_TYPE;
+    }
 
     String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
     if (replaceConstructorWithInit) {

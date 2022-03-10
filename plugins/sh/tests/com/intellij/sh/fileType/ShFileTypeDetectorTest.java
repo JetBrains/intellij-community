@@ -13,11 +13,6 @@ import com.intellij.sh.ShFileType;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class ShFileTypeDetectorTest extends BasePlatformTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    new ShShebangFileTypeDetectorActivity().runActivity(myFixture.getProject());
-  }
 
   public void testShebangFileDetect1() {
     doTypingTest("#!/usr/bin/env <caret>\n", "zsh", ShFileType.class);

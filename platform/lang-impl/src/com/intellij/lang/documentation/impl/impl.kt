@@ -8,7 +8,6 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -22,6 +21,12 @@ internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
 @ApiStatus.Internal
 fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationResultData?> {
   return async(Dispatchers.Default) {
+    computeDocumentation(targetPointer)
+  }
+}
+
+internal suspend fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationResultData? {
+  return withContext(Dispatchers.Default) {
     val documentationResult: DocumentationResult? = readAction {
       targetPointer.dereference()?.computeDocumentation()
     }
@@ -161,9 +166,9 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 
 @TestOnly
 fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationResultData? {
-  return runBlockingCancellable {
-    withContext(Dispatchers.Default) {
-      computeDocumentationAsync(targetPointer).await()
+  return runBlocking {
+    withTimeout(1000 * 60) {
+      computeDocumentation(targetPointer)
     }
   }
 }

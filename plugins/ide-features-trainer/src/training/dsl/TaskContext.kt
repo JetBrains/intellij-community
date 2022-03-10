@@ -134,11 +134,32 @@ abstract class TaskContext : LearningDslBase {
 
   open fun addFutureStep(p: DoneStepContext.() -> Unit) = Unit
 
+  /* The step should be used only inside one task to preserve problems on restore */
   open fun addStep(step: CompletableFuture<Boolean>) = Unit
 
   /** [action] What should be done to pass the current task */
   open fun test(waitEditorToBeReady: Boolean = true, action: TaskTestContext.() -> Unit) = Unit
 
+  fun triggerAndFullHighlight(parameters: HighlightTriggerParametersContext.() -> Unit = {}): HighlightingTriggerMethods {
+    return triggerUI {
+      highlightBorder = true
+      highlightInside = true
+      parameters()
+    }
+  }
+
+  fun triggerAndBorderHighlight(parameters: HighlightTriggerParametersContext.() -> Unit = {}): HighlightingTriggerMethods {
+    return triggerUI {
+      highlightBorder = true
+      parameters()
+    }
+  }
+
+  open fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit = {}): HighlightingTriggerMethods {
+    return object : HighlightingTriggerMethods() {}
+  }
+
+  @Deprecated("Use triggerAndBorderHighlight().treeItem")
   fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                      usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                      checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
@@ -154,6 +175,7 @@ abstract class TaskContext : LearningDslBase {
   protected open fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                     checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) = Unit
 
+  @Deprecated("Use triggerAndBorderHighlight().componentPart")
   inline fun <reified T : Component> triggerByPartOfComponent(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                                               usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                                               noinline selector: ((candidates: Collection<T>) -> T?)? = null,
@@ -169,6 +191,7 @@ abstract class TaskContext : LearningDslBase {
                                                         selector: ((candidates: Collection<T>) -> T?)?,
                                                         rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
 
+  @Deprecated("Use triggerAndBorderHighlight().listItem")
   fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
                                     checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
@@ -182,6 +205,7 @@ abstract class TaskContext : LearningDslBase {
   protected open fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                         checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) = Unit
 
+  @Deprecated("Use triggerAndFullHighlight().component")
   inline fun <reified ComponentType : Component> triggerByUiComponentAndHighlight(
     highlightBorder: Boolean = true, highlightInside: Boolean = true,
     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,

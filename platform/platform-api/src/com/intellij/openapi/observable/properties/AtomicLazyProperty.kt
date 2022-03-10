@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Atomic implementation of lazy property.
  * @param initial will be called only when methods [get] and [updateAndGet] is called.
  */
+@ApiStatus.NonExtendable
 open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableClearableProperty<T>(), AtomicMutableProperty<T> {
 
   private val value = AtomicReference<Any?>(UNINITIALIZED_VALUE)
@@ -34,7 +35,7 @@ open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObserva
   }
 
   @Deprecated("Use set instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   override fun reset() {
     value.set(UNINITIALIZED_VALUE)
     fireResetEvent()

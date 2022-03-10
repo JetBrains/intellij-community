@@ -12,6 +12,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.JpsBootstrapJdk
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -66,7 +67,7 @@ final class CompilationContextImpl implements CompilationContext {
     BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
     AntBuilder ant = new AntBuilder()
-    def messages = BuildMessagesImpl.create(ant.project)
+    BuildMessagesImpl messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
     if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
@@ -77,12 +78,11 @@ final class CompilationContextImpl implements CompilationContext {
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
-    kotlinBinaries.setUpCompilerIfRequired(ant)
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
     projectHome = toCanonicalPath(projectHome)
-    def context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
+    CompilationContextImpl context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()
@@ -100,8 +100,8 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private static void defineJavaSdk(CompilationContext context) {
-    def homePath = context.bundledRuntime.getHomeForCurrentOsAndArch()
-    def jbrHome = toCanonicalPath(homePath.toString())
+    Path homePath = JpsBootstrapJdk.getJdkHome(context.paths.buildDependenciesCommunityRoot)
+    String jbrHome = toCanonicalPath(homePath.toString())
     def jbrVersionName = "11"
 
     JdkUtils.defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)

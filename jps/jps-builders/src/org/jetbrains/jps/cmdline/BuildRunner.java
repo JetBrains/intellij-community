@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,8 +106,9 @@ public final class BuildRunner {
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex, ignoredFileIndex);
+    return new ProjectDescriptor(
+      jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+    );
   }
 
   @NotNull
@@ -125,7 +125,6 @@ public final class BuildRunner {
    * constantSearch parameter is ignored
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void runBuild(ProjectDescriptor pd,
                        CanceledStatus cs,
                        @Nullable Callbacks.ConstantAffectionResolver constantSearch,

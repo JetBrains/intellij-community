@@ -12,14 +12,18 @@ import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.JpsBootstrapJdk;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -29,6 +33,7 @@ import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
 @SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
+  private static final String DEFAULT_BUILD_SCRIPT_XMX = "4g";
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE";
@@ -36,10 +41,11 @@ public class JpsBootstrapMain {
   private static final Option OPT_HELP = Option.builder("h").longOpt("help").build();
   private static final Option OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build();
   private static final Option OPT_SYSTEM_PROPERTY = Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").build();
-  private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: 4g").build();
+  private static final Option OPT_PROPERTIES_FILE = Option.builder().longOpt("properties-file").hasArg().desc("Pass system properties to the build script from specified properties file https://en.wikipedia.org/wiki/.properties").build();
+  private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: " + DEFAULT_BUILD_SCRIPT_XMX).build();
   private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").build();
   private static final List<Option> ALL_OPTIONS =
-    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
+    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
 
   private static Options createCliOptions() {
     Options opts = new Options();
@@ -57,13 +63,13 @@ public class JpsBootstrapMain {
       System.exit(0);
     }
     catch (Throwable t) {
-      error(ExceptionUtil.getThrowableText(t));
+      fatal(ExceptionUtil.getThrowableText(t));
       System.exit(1);
     }
   }
 
   private final Path projectHome;
-  private final Path communityHome;
+  private final BuildDependenciesCommunityRoot communityHome;
   private final String moduleNameToRun;
   private final String classNameToRun;
   private final String buildTargetXmx;
@@ -71,6 +77,7 @@ public class JpsBootstrapMain {
   private final Path javaArgsFileTarget;
   private final List<String> mainArgsToRun;
   private final Properties additionalSystemProperties;
+  private final Properties additionalSystemPropertiesFromPropertiesFile;
 
   public JpsBootstrapMain(String[] args) throws IOException {
     initLogging();
@@ -90,15 +97,21 @@ public class JpsBootstrapMain {
       showUsagesAndExit();
     }
 
-    moduleNameToRun = freeArgs.get(0);
-    classNameToRun = freeArgs.get(1);
-
-    if (!classNameToRun.endsWith("BuildTarget")) {
-      throw new IllegalStateException("Class name must end with 'BuildTarget': " + classNameToRun +
-        "\nThis is just a convention helping to find build targets in the monorepo");
-    }
+    projectHome = Path.of(freeArgs.get(0)).normalize();
+    moduleNameToRun = freeArgs.get(1);
+    classNameToRun = freeArgs.get(2);
+    mainArgsToRun = freeArgs.subList(3, freeArgs.size());
 
     additionalSystemProperties = cmdline.getOptionProperties("D");
+
+    additionalSystemPropertiesFromPropertiesFile = new Properties();
+    if (cmdline.hasOption(OPT_PROPERTIES_FILE)) {
+      Path propertiesFile = Path.of(cmdline.getOptionValue(OPT_PROPERTIES_FILE));
+      try (Reader reader = Files.newBufferedReader(propertiesFile)) {
+        info("Loading properties from " + propertiesFile);
+        additionalSystemPropertiesFromPropertiesFile.load(reader);
+      }
+    }
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
@@ -108,47 +121,32 @@ public class JpsBootstrapMain {
       throw new IllegalStateException("Please set " + COMMUNITY_HOME_ENV + " environment variable");
     }
 
-    communityHome = Path.of(communityHomeString);
-
-    Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
-    if (!Files.exists(communityCheckFile)) {
-      throw new IllegalStateException(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
-    }
-
-    Path riderHome = communityHome.getParent().getParent().resolve("Frontend");
-    Path riderCheckFile = riderHome.resolve("Rider.iml");
-
-    Path ultimateHome = communityHome.getParent();
-    Path ultimateCheckFile = ultimateHome.resolve("intellij.idea.ultimate.main.iml");
-
-    if (Files.exists(riderCheckFile)) {
-      projectHome = riderHome;
-    }
-    else if (Files.exists(ultimateCheckFile)) {
-      projectHome = ultimateHome;
-    }
-    else {
-      warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
-      projectHome = communityHome;
-    }
-
-    jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
+    communityHome = new BuildDependenciesCommunityRoot(Path.of(communityHomeString));
+    jpsBootstrapWorkDir = projectHome.resolve("build").resolve("jps-bootstrap-work");
 
     info("Working directory: " + jpsBootstrapWorkDir);
     Files.createDirectories(jpsBootstrapWorkDir);
 
-    mainArgsToRun = freeArgs.subList(2, freeArgs.size());
     javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
-    buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : "4g";
+    buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : DEFAULT_BUILD_SCRIPT_XMX;
   }
 
   private void main() throws Throwable {
-    Path jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+    Path jdkHome;
+    if (JpsBootstrapUtil.underTeamCity) {
+      jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+    }
+    else {
+      // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
+      jdkHome = Path.of(System.getProperty("java.home"));
+    }
 
-    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome);
+    Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
+
+    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
-    loadClasses(module, model);
+    loadClasses(module, model, kotlincHome);
 
     List<File> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
     verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
@@ -168,13 +166,11 @@ public class JpsBootstrapMain {
     if (underTeamCity) {
       systemProperties.putAll(getTeamCitySystemProperties());
     }
+    systemProperties.putAll(additionalSystemPropertiesFromPropertiesFile);
     systemProperties.putAll(additionalSystemProperties);
 
     systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true");
-
-    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
-    systemProperties.put("java.system.class.loader", "org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
 
     List<String> args = new ArrayList<>();
     args.add("-ea");
@@ -199,7 +195,7 @@ public class JpsBootstrapMain {
     info("java argfile:\n" + Files.readString(javaArgsFileTarget));
   }
 
-  private void loadClasses(JpsModule module, JpsModel model) throws Throwable {
+  private void loadClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
     String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
     boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 
@@ -225,9 +221,17 @@ public class JpsBootstrapMain {
 
     Set<JpsModule> modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module);
 
-    JpsBuild jpsBuild = new JpsBuild(communityHome, model, jpsBootstrapWorkDir);
+    JpsBuild jpsBuild = new JpsBuild(communityHome, model, jpsBootstrapWorkDir, kotlincHome);
+
+    // Some workarounds like 'kotlinx.kotlinx-serialization-compiler-plugin-for-compilation' library (used as Kotlin compiler plugin)
+    // require that the corresponding library was downloaded. It's unclear from modules structure which libraries exactly required
+    // so download them all
+    //
+    // In case of running from read-to-use classes we need all dependent libraries as well
+    // Instead of calculating what libraries are exacly required, download them all
+    jpsBuild.resolveProjectDependencies();
+
     if (manifestJsonUrl != null) {
-      jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
       ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome, modulesSubset);
     } else {
@@ -238,11 +242,12 @@ public class JpsBootstrapMain {
   private static String fileDebugInfo(File file) {
     try {
       if (file.exists()) {
-        if (file.isDirectory()) {
+        BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+        if (attributes.isDirectory()) {
           return file + " directory";
         }
         else {
-          long length = file.length();
+          long length = attributes.size();
           String sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()));
           return file + " file length " + length + " sha256 " + sha256;
         }

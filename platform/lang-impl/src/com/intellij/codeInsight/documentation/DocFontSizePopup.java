@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.options.FontSize;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FontSizePopup;
+import com.intellij.ui.FontSizePopupData;
 import com.intellij.ui.components.JBSlider;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +15,10 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+/**
+ * @deprecated Unused in v2 implementation.
+ */
+@Deprecated
 @ApiStatus.Internal
 public final class DocFontSizePopup {
 
@@ -24,7 +29,7 @@ public final class DocFontSizePopup {
   }
 
   public static void show(@NotNull Component parentComponent, @NotNull Consumer<? super @NotNull FontSize> changeCallback) {
-    FontSizePopup.FontSizePopupData popupData = FontSizePopup.show(
+    FontSizePopupData popupData = FontSizePopup.showFontSizePopup(
       parentComponent,
       DocumentationComponent.getQuickDocFontSize(),
       Arrays.asList(FontSize.values()),

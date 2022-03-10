@@ -11,7 +11,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
@@ -58,6 +57,16 @@ class ArtifactTest : ArtifactsTestCase() {
 
     val artifactObject = artifactManager.artifacts.single()
     TestCase.assertEquals(anotherName, artifactObject.name)
+  }
+
+  fun `test add artifact via model 2`() = runWriteAction {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    addArtifact("A")
+    addArtifact("A2")
+
+    val artifactsCount = artifactManager.artifacts.size
+    TestCase.assertEquals(2, artifactsCount)
   }
 
   fun `test add artifact mix bridge and model`() = runWriteAction {

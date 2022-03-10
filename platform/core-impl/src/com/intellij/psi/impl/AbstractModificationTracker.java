@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#OUT_OF_CODE_BLOCK_MODIFICATION_COUNT}
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@ApiStatus.ScheduledForRemoval
 public abstract class AbstractModificationTracker implements PsiTreeChangePreprocessor {
   private final PsiManagerImpl myPsiManager;
   private PsiModificationTrackerImpl myModificationTracker;

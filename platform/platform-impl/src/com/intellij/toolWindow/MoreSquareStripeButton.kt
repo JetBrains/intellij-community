@@ -29,7 +29,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
 
   override fun updateToolTipText() {
     HelpTooltip()
-      .setTitle(UIBundle.message("title.tool.window.square.more"))
+      .setTitle(UIBundle.message("tool.window.new.stripe.more.title"))
       .setLocation(HelpTooltip.Alignment.RIGHT)
       .setInitialDelay(0).setHideDelay(0)
       .installOn(this)

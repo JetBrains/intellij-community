@@ -7,7 +7,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,8 +73,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
   /**
    * @deprecated Use plain {@link JSeparator} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static Component createSeparator(@Nullable @NlsContexts.Separator String text) {
     TitledSeparator separator = new TitledSeparator(text);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi;
 
 import com.intellij.lang.documentation.DocumentationTarget;
@@ -24,6 +24,7 @@ public interface PsiDocumentationTargetFactory {
   /**
    * @return target to handle documentation actions which are invoked on the given {@code element},
    * or {@code null} if this factory is not aware of the given element
+   * @see com.intellij.lang.documentation.DocumentationProvider#generateDoc
    */
-  @Nullable DocumentationTarget documentationTarget(@NotNull PsiElement element);
+  @Nullable DocumentationTarget documentationTarget(@NotNull PsiElement element, @Nullable PsiElement originalElement);
 }

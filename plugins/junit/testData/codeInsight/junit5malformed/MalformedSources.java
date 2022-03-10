@@ -111,3 +111,14 @@ class ArgSources {
   @org.junit.jupiter.params.provider.ArgumentsSources({})
   void emptyArgs(String param) { }
 }
+
+class ExampleTest {
+  public enum TestEnum {
+    first,
+    second,
+    third,
+  }
+  @ParameterizedTest
+  @EnumSource(names = "first")
+  void runTest(TestEnum value) {}
+}

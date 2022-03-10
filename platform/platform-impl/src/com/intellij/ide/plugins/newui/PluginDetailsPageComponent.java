@@ -149,7 +149,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private void createPluginPanel() {
     myPanel = new OpaquePanel(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurable.MAIN_BG_COLOR);
-    myPanel.setBorder(new CustomLineBorder(new JBColor(0xC5C5C5, 0x515151), JBUI.insets(1, 0, 0, 0)) {
+    myPanel.setBorder(new CustomLineBorder(JBColor.border(), JBUI.insets(1, 0, 0, 0)) {
       @Override
       public Insets getBorderInsets(Component c) {
         return JBUI.insets(15, 20, 0, 0);
@@ -169,10 +169,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     JBLabel notificationLabel = new JBLabel();
     notificationLabel.setIcon(AllIcons.General.Warning);
     notificationLabel.setVerticalTextPosition(SwingConstants.TOP);
-    notificationLabel.setText(HtmlChunk
-                                .html()
-                                .addText(IdeBundle.message("plugins.configurable.not.allowed"))
-                                .toString());
+    notificationLabel.setText(HtmlChunk.html().addText(IdeBundle.message("plugins.configurable.not.allowed")).toString());
 
     myControlledByOrgNotification.addToCenter(notificationLabel);
     myControlledByOrgNotification.setVisible(false);
@@ -707,7 +704,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null &&
           !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode())) {
-        myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
+        String message;
+        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
+          message = IdeBundle.message("label.next.plugin.version.is.freemium");
+        } else {
+          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
+        }
+        myLicensePanel.setText(message, true, false);
         myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myLicensePanel.setVisible(true);
       }
@@ -716,7 +719,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     }
     else if (myMarketplace) {
-      myLicensePanel.setText(IdeBundle.message("label.use.the.trial.for.up.to.30.days.or"), false, false);
+      String message;
+      if (myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getTags().contains(Tags.Freemium.name())) {
+        message = IdeBundle.message("label.install.a.limited.functionality.for.free");
+      } else {
+        message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
+      }
+      myLicensePanel.setText(message, false, false);
       myLicensePanel.showBuyPlugin(() -> myPlugin);
       myLicensePanel.setVisible(true);
     }

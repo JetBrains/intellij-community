@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
@@ -37,20 +39,31 @@ import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.subject
+import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.stream.Stream
 
-class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
+class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesProvider<StashInfo>, Disposable {
   private val iconCache = LabelIconCache()
 
   private val stashTracker get() = project.service<GitStashTracker>()
   private val stashCache: GitStashCache get() = project.service()
 
   override val dataClass: Class<StashInfo> get() = StashInfo::class.java
-  override val dataKey: DataKey<List<StashInfo>> get() = STASH_INFO
-
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_APPLY_ACTION)
   override val popAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_POP_ACTION)
+
+  init {
+    Disposer.register(parent, this)
+    stashTracker.addListener(object : GitStashTrackerListener {
+      override fun stashesUpdated() {
+        stashCache.preloadStashes()
+      }
+    }, this)
+    stashCache.preloadStashes()
+  }
 
   override fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit) {
     stashTracker.addListener(object : GitStashTrackerListener {
@@ -98,6 +111,17 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
     insertSubtreeRoot(errorNode, parent)
   }
 
+  override fun getData(dataId: String, selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>): Any? {
+    if (STASH_INFO.`is`(dataId)) {
+      return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).toList()
+    }
+    return null
+  }
+
+  override fun dispose() {
+    stashCache.clear()
+  }
+
   private data class MyTag(@Nls private val text: String, private val hash: Hash) : ChangesBrowserNode.Tag {
     override fun toString(): String = text
   }
@@ -127,20 +151,31 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
   }
 
   inner class StashObject(override val data: StashInfo) : SavedPatchesProvider.PatchObject<StashInfo> {
+    override fun cachedChanges(): Collection<SavedPatchesProvider.ChangeObject>? {
+      return stashCache.getCachedData(data)?.toChangeObjects()
+    }
+
     override fun loadChanges(): CompletableFuture<SavedPatchesProvider.LoadingResult>? {
-      return stashCache.loadStashData(data)?.thenApply { stashData ->
+      val loadStashData = stashCache.loadStashData(data)
+      val processResults = loadStashData?.thenApply { stashData ->
         when (stashData) {
           is GitStashCache.StashData.Changes -> {
-            val stashChanges = stashData.changes.map { GitStashChange(it, null) }
-            val otherChanges = stashData.parentCommits.flatMap { parent ->
-              val tag: ChangesBrowserNode.Tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
-              parent.changes.map { GitStashChange(it, tag) }
-            }
-            SavedPatchesProvider.LoadingResult.Changes(stashChanges + otherChanges)
+            SavedPatchesProvider.LoadingResult.Changes(stashData.toChangeObjects())
           }
           is GitStashCache.StashData.Error -> SavedPatchesProvider.LoadingResult.Error(stashData.error)
         }
       }
+      processResults?.propagateCancellationTo(loadStashData)
+      return processResults
+    }
+
+    private fun GitStashCache.StashData.Changes.toChangeObjects(): List<GitStashChange> {
+      val stashChanges = changes.map { GitStashChange(it, null) }
+      val otherChanges = parentCommits.flatMap { parent ->
+        val tag: ChangesBrowserNode.Tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
+        parent.changes.map { GitStashChange(it, tag) }
+      }
+      return stashChanges + otherChanges
     }
 
     override fun getDiffPreviewTitle(changeName: String?): String {
@@ -187,5 +222,13 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
   companion object {
     private const val GIT_STASH_APPLY_ACTION = "Git.Stash.Apply"
     private const val GIT_STASH_POP_ACTION = "Git.Stash.Pop"
+
+    fun CompletableFuture<*>.propagateCancellationTo(future: CompletableFuture<*>) {
+      whenComplete { _, t ->
+        if (t is CancellationException || t is ProcessCanceledException) {
+          future.cancel(false)
+        }
+      }
+    }
   }
 }

@@ -16,16 +16,21 @@ import java.net.URI
 
 class GHMarkdownToHtmlConverter(private val project: Project?) {
   @NlsSafe
-  fun convertMarkdownToHtml(@NlsSafe markdownText: String,
-                            server: String? = null,
-                            suggestionInfo: GHSuggestionInfo? = null): String {
+  fun convertMarkdown(@NlsSafe markdownText: String): String {
+
     val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
-    val htmlSyntaxHighlighter =
-      if (suggestionInfo != null) GHSuggestionHtmlSyntaxHighlighter(project, suggestionInfo)
-      else CodeBlockHtmlSyntaxHighlighter(project)
+    val flavourDescriptor = GithubFlavourDescriptor(CodeBlockHtmlSyntaxHighlighter(project))
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
+  }
+
+  @NlsSafe
+  fun convertMarkdownWithSuggestedChange(@NlsSafe markdownText: String, suggestedChangeInfo: GHSuggestedChangeInfo): String {
+
+    val text = markdownText.replace("\r", "") // TODO: fix bug with CRLF line endings from markdown library
+    val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, suggestedChangeInfo)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server)
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
   }
 
   private class GithubFlavourDescriptor(
@@ -42,5 +47,5 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
 
 @NlsSafe
 internal fun String.convertToHtml(project: Project): String {
-  return GHMarkdownToHtmlConverter(project).convertMarkdownToHtml(this)
+  return GHMarkdownToHtmlConverter(project).convertMarkdown(this)
 }

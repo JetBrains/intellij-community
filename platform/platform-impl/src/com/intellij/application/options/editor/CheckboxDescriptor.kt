@@ -48,13 +48,13 @@ class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
   }
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
   return checkBox(ui.name, ui.binding.get, ui.binding.set, ui.comment)
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
   return radioButton(ui.name, ui.binding.get, ui.binding.set, ui.comment)
@@ -62,16 +62,16 @@ fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
 
 fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
   val result = checkBox(ui.name)
-    .bindSelected(ui.binding)
+    .bindSelected(ui.binding.get, ui.binding.set)
   ui.comment?.let { result.comment(it) }
   return result
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.radioButton(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBRadioButton> {
   val result = radioButton(ui.name)
-    .bindSelected(ui.binding)
+    .bindSelected(ui.binding.get, ui.binding.set)
   ui.comment?.let { result.comment(it) }
   return result
 }

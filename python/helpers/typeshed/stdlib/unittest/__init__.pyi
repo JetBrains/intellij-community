@@ -1,5 +1,4 @@
 import sys
-from unittest.async_case import *
 
 from .case import (
     FunctionTestCase as FunctionTestCase,
@@ -29,6 +28,8 @@ from .signals import (
 from .suite import BaseTestSuite as BaseTestSuite, TestSuite as TestSuite
 
 if sys.version_info >= (3, 8):
+    from unittest.async_case import *
+
     from .case import addModuleCleanup as addModuleCleanup
 
 def load_tests(loader: TestLoader, tests: TestSuite, pattern: str | None) -> TestSuite: ...

@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Type
+from typing import Any
 from typing_extensions import Literal
 
 from .abstract.attrDef import AttrDef as AttrDef
@@ -98,7 +98,7 @@ HASHED_SALTED_SHA384: Literal["SALTED_SHA384"]
 HASHED_SALTED_SHA512: Literal["SALTED_SHA512"]
 HASHED_SALTED_MD5: Literal["SALTED_MD5"]
 
-NUMERIC_TYPES: Tuple[Type[Any], ...]
-INTEGER_TYPES: Tuple[Type[Any], ...]
-STRING_TYPES: Tuple[Type[Any], ...]
-SEQUENCE_TYPES: Tuple[Type[Any], ...]
+NUMERIC_TYPES: tuple[type[Any], ...]
+INTEGER_TYPES: tuple[type[Any], ...]
+STRING_TYPES: tuple[type[Any], ...]
+SEQUENCE_TYPES: tuple[type[Any], ...]

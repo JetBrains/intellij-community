@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -14,8 +14,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.StyleSheet;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
 /**
@@ -37,28 +37,11 @@ public final class NotificationsUtil {
   private static final @NlsSafe String P_TAG = "<p/>";
   private static final @NlsSafe String BR_TAG = "<br>";
 
-  @NotNull
-  public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
-    String title = notification.getTitle();
-    String content = notification.getContent();
-    if (title.length() > TITLE_LIMIT || content.length() > CONTENT_LIMIT) {
-      LOG.info("Too large notification " + notification + " of " + notification.getClass() +
-               "\nListener=" + notification.getListener() +
-               "\nTitle=" + title +
-               "\nContent=" + content);
-      title = StringUtil.trimLog(title, TITLE_LIMIT);
-      content = StringUtil.trimLog(content, CONTENT_LIMIT);
-    }
-    return buildHtml(title, null, content, style, "#" + ColorUtil.toHex(getMessageType(notification).getTitleForeground()), null, null);
-  }
-
-  @NotNull
-  @Nls
-  public static String buildHtml(@NotNull final Notification notification,
-                                 @Nullable String style,
-                                 boolean isContent,
-                                 @Nullable Color color,
-                                 @Nullable String contentStyle) {
+  public static @NotNull @Nls String buildHtml(final @NotNull Notification notification,
+                                               @Nullable String style,
+                                               boolean isContent,
+                                               @Nullable Color color,
+                                               @Nullable String contentStyle) {
     String title = !isContent ? notification.getTitle() : "";
     String subtitle = !isContent ? notification.getSubtitle() : null;
     String content = isContent ? notification.getContent() : "";
@@ -79,15 +62,13 @@ public final class NotificationsUtil {
     return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
   }
 
-  @NotNull
-  @Nls
-  public static String buildHtml(@Nullable @Nls String title,
-                                 @Nullable @Nls String subtitle,
-                                 @Nullable @Nls String content,
-                                 @Nullable String style,
-                                 @Nullable String titleColor,
-                                 @Nullable String contentColor,
-                                 @Nullable String contentStyle) {
+  public static @NotNull @Nls String buildHtml(@Nullable @Nls String title,
+                                               @Nullable @Nls String subtitle,
+                                               @Nullable @Nls String content,
+                                               @Nullable String style,
+                                               @Nullable String titleColor,
+                                               @Nullable String contentColor,
+                                               @Nullable String contentStyle) {
     if (Notification.isEmpty(title) && !Notification.isEmpty(subtitle)) {
       title = subtitle;
       subtitle = null;
@@ -130,24 +111,21 @@ public final class NotificationsUtil {
            htmlBuilder.wrapWithHtmlBody().toString();
   }
 
-  @Nullable
-  public static String getFontStyle() {
+  public static @Nullable String getFontStyle() {
     String fontName = getFontName();
     return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
   }
 
-  @Nullable
-  public static Integer getFontSize() {
+  public static @Nullable Float getFontSize() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
-      return uiSettings.getFontSize();
+      return uiSettings.getFontSize2D();
     }
     Font font = StartupUiUtil.getLabelFont();
-    return font == null ? null : font.getSize();
+    return font == null ? null : font.getSize2D();
   }
 
-  @Nullable
-  public static String getFontName() {
+  public static @Nullable String getFontName() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       return uiSettings.getFontFace();
@@ -156,8 +134,7 @@ public final class NotificationsUtil {
     return font == null ? null : font.getName();
   }
 
-  @Nullable
-  public static HyperlinkListener wrapListener(@NotNull final Notification notification) {
+  public static @Nullable HyperlinkListener wrapListener(final @NotNull Notification notification) {
     final NotificationListener listener = notification.getListener();
     if (listener == null) return null;
 
@@ -175,9 +152,23 @@ public final class NotificationsUtil {
     };
   }
 
-  public static void setLinkForeground(@NotNull StyleSheet styleSheet) {
-    JBColor color = JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
-    styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(color) + "}");
+  public static void configureHtmlEditorKit(@NotNull JEditorPane editorPane, boolean notificationColor) {
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withWordWrapViewFactory().withFontResolver(new CSSFontResolver() {
+      @Override
+      public @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet) {
+        if ("a".equalsIgnoreCase(String.valueOf(attributeSet.getAttribute(AttributeSet.NameAttribute)))) {
+          return UIUtil.getLabelFont();
+        }
+        return defaultFont;
+      }
+    }).build();
+    String color = ColorUtil.toHtmlColor(notificationColor ? getLinkButtonForeground() : JBUI.CurrentTheme.Link.Foreground.ENABLED);
+    kit.getStyleSheet().addRule("a {color: " + color + "}");
+    editorPane.setEditorKit(kit);
+  }
+
+  public static @NotNull Color getLinkButtonForeground() {
+    return JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
   }
 
   public static @NotNull Color getMoreButtonForeground() {
@@ -188,8 +179,7 @@ public final class NotificationsUtil {
     return JBColor.namedColor("Notification.MoreButton.background", new JBColor(0xE3E3E3, 0x3A3C3D));
   }
 
-  @NotNull
-  public static Icon getIcon(@NotNull final Notification notification) {
+  public static @NotNull Icon getIcon(@NotNull Notification notification) {
     Icon icon = notification.getIcon();
     if (icon != null) {
       return icon;
@@ -206,8 +196,7 @@ public final class NotificationsUtil {
     }
   }
 
-  @NotNull
-  public static MessageType getMessageType(@NotNull Notification notification) {
+  public static @NotNull MessageType getMessageType(@NotNull Notification notification) {
     switch (notification.getType()) {
       case WARNING:
         return MessageType.WARNING;

@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class IdeaLogger extends JulLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
@@ -106,7 +107,7 @@ public final class IdeaLogger extends JulLogger {
     return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
   };
 
-  IdeaLogger(@NotNull java.util.logging.Logger logger) {
+  IdeaLogger(@NotNull Logger logger) {
     super(logger);
   }
 

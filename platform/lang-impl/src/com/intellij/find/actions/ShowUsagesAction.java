@@ -1178,14 +1178,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 
-    int width = Math.max(d.width, calcMaxWidth(table));
-    width = Math.max(Math.max(headerSize.width, width), toolbarSize.width);
-    width = Math.max(minWidth.get(), width);
+    var newWidth = 0;
+    if(calcMaxWidth(table) < minWidth.get()){
+      newWidth = calcMaxWidth(table);
+    } else {
+      int width = Math.max(d.width, calcMaxWidth(table));
+      width = Math.max(Math.max(headerSize.width, width), toolbarSize.width);
+      width = Math.max(minWidth.get(), width);
 
-    int delta = minWidth.get() == -1 ? 0 : width - minWidth.get();
-    int newWidth = Math.max(width, d.width + delta);
-
-    minWidth.set(newWidth);
+      int delta = minWidth.get() == -1 ? 0 : width - minWidth.get();
+      newWidth = Math.max(width, d.width + delta);
+      minWidth.set(newWidth);
+    }
 
     int minHeight = headerSize.height + toolbarSize.height;
 

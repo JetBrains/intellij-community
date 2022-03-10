@@ -1302,12 +1302,6 @@ public final class MavenProjectsTree {
     }
   }
 
-  void resolutionCompleted() {
-    for (Listener each : myListeners) {
-      each.resolutionCompleted();
-    }
-  }
-
   void firePluginsResolved(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.pluginsResolved(project);
@@ -1332,7 +1326,7 @@ public final class MavenProjectsTree {
 
     public void update(MavenProject project, MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));
+      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));//
     }
 
     public void deleted(MavenProject project) {
@@ -1348,7 +1342,6 @@ public final class MavenProjectsTree {
 
     public void fireUpdatedIfNecessary() {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
-        //MavenProjectsManager.getInstance(myProject).getSyncConsole().finishImport();
         return;
       }
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
@@ -1356,8 +1349,18 @@ public final class MavenProjectsTree {
                                          : new ArrayList<>(deletedProjects);
       List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
                                                               ? Collections.emptyList()
-                                                              : MavenUtil.mapToList(updatedProjectsWithChanges);
+                                                              : mapToListWithPairs();
       fireProjectsUpdated(updated, mavenProjects);
+    }
+
+    @NotNull
+    private List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
+      ArrayList<Pair<MavenProject, MavenProjectChanges>> result = new ArrayList<>(updatedProjectsWithChanges.size());
+      for (Map.Entry<MavenProject, MavenProjectChanges> entry : updatedProjectsWithChanges.entrySet()) {
+        entry.getKey().getProblems(); // need for fill problem cache
+        result.add(Pair.create(entry.getKey(), entry.getValue()));
+      }
+      return result;
     }
   }
 
@@ -1507,8 +1510,6 @@ public final class MavenProjectsTree {
 
     default void artifactsDownloaded(@NotNull MavenProject project) {
     }
-
-    default void resolutionCompleted() {}
   }
 
   @ApiStatus.Internal

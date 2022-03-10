@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -20,7 +20,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -40,14 +42,15 @@ import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
@@ -99,7 +102,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @NotNull
   @ApiStatus.Internal
-  public abstract <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId);
+  public abstract <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
 
   @ApiStatus.Internal
   public abstract void waitUntilIndicesAreInitialized();
@@ -117,33 +120,22 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   @NotNull
   public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
-    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
+    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(filter);
 
     final List<V> values = new SmartList<>();
     ValueProcessor<V> processor = (file, value) -> {
       values.add(value);
       return true;
     };
-    if (restrictToFile != null) {
+    if (restrictToFileIt != null) {
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+      if (restrictToFile == null) return Collections.emptyList();
       processValuesInOneFile(indexId, dataKey, restrictToFile, filter, processor);
     }
     else {
       processValuesInScope(indexId, dataKey, true, filter, null, processor);
     }
     return values;
-  }
-
-  private static @Nullable VirtualFile getTheOnlyFileInScope(@NotNull GlobalSearchScope filter) {
-    VirtualFileEnumeration files = VirtualFileEnumeration.extract(filter);
-    if (files == null) return null;
-    Iterator<VirtualFile> iterator = files.asIterable().iterator();
-    if (iterator.hasNext()) {
-      VirtualFile first = iterator.next();
-      if (!iterator.hasNext()) {
-        return first;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -167,7 +159,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @Nullable IdFilter idFilter) {
     try {
       waitUntilIndicesAreInitialized();
-      UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
+      UpdatableIndex<K, ?, FileContent, ?> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
@@ -229,18 +221,35 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
-    if (filter.getProject() instanceof LightEditCompatible) return Collections.emptyList();
-    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
-    if (restrictToFile != null) {
-      return !processValuesInOneFile(indexId, dataKey, restrictToFile, filter, (f, v) -> false) ?
-             Collections.singleton(restrictToFile) : Collections.emptyList();
+    return ContainerUtil.newHashSet(getContainingFilesIterator(indexId, dataKey, filter));
+  }
+
+  @Override
+  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope scope) {
+    Project project = scope.getProject();
+    if (project instanceof LightEditCompatible) return Collections.emptyIterator();
+    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
+    if (restrictToFileIt != null) {
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+      if (restrictToFile == null) return Collections.emptyIterator();
+      return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
+             Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
     }
-    Set<VirtualFile> files = new HashSet<>();
-    processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
-      files.add(file);
-      return true;
+
+    IdFilter filter = extractIdFilter(scope, project);
+    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+
+    IntSet fileIds = processExceptions(indexId, null, scope, index -> {
+      IntSet fileIdsInner = new IntOpenHashSet();
+      index.getData(dataKey).forEach((id, value) -> {
+        if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return  true;
+        fileIdsInner.add(id);
+        return true;
+      });
+      return fileIdsInner;
     });
-    return files;
+
+    return createLazyFileIterator(fileIds, scope);
   }
 
 
@@ -265,7 +274,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public <K, V> long getIndexModificationStamp(@NotNull ID<K, V> indexId, @NotNull Project project) {
     waitUntilIndicesAreInitialized();
-    UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+    UpdatableIndex<K, V, FileContent, ?> index = getIndex(indexId);
     ensureUpToDate(indexId, project, GlobalSearchScope.allScope(project));
     return index.getModificationStamp();
   }
@@ -274,10 +283,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private <K, V, R> R processExceptions(@NotNull final ID<K, V> indexId,
                                         @Nullable final VirtualFile restrictToFile,
                                         @NotNull final GlobalSearchScope filter,
-                                        @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent>, ? extends R, StorageException> computable) {
+                                        @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
     try {
       waitUntilIndicesAreInitialized();
-      UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+      UpdatableIndex<K, V, FileContent, ?> index = getIndex(indexId);
       Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
@@ -420,15 +429,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                                IdFilter filesSet) {
     IntSet set = null;
     if (filter instanceof GlobalSearchScope.FilesScope) {
-      set = new IntOpenHashSet();
       VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      if (hint != null) {
-        for (VirtualFile file : hint.asIterable()) {
-          if (file instanceof VirtualFileWithId) {
-            set.add(((VirtualFileWithId)file).getId());
-          }
-        }
-      }
+      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
     }
 
     //noinspection rawtypes
@@ -550,7 +552,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                    accessibleFileFilter.test(id) &&
                                    (restrictedIds == null || restrictedIds.contains(id));
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
         return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
@@ -572,7 +574,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
     IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                    accessibleFileFilter.test(id);
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
         return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);
@@ -748,15 +750,16 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @NotNull
-  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull Predicate<? super VirtualFile> condition) {
-    return filter instanceof ProjectSpecificInputFilter
-           ? new ProjectSpecificInputFilter() {
+  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
+    return new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
-        return ((ProjectSpecificInputFilter)filter).acceptInput(file) && condition.test(file.getFile());
+        boolean doesMainFilterAccept = filter instanceof ProjectSpecificInputFilter
+                                       ? ((ProjectSpecificInputFilter)filter).acceptInput(file)
+                                       : filter.acceptInput(file.getFile());
+        return doesMainFilterAccept && condition.test(file.getFile(), file.getProject());
       }
-    }
-           : file -> filter.acceptInput(file) && condition.test(file);
+    };
   }
 
   @ApiStatus.Internal
@@ -776,5 +779,50 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
     return (restrictedTo == null || Comparing.equal(file, restrictedTo)) &&
            (filter == null || restrictedTo != null || filter.accept(file));
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
+    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
+    return fileSet.stream().filter(scope::contains).iterator();
+  }
+
+  @ApiStatus.Internal
+  @SuppressWarnings("unchecked")
+  public static @Nullable Iterator<VirtualFile> extractSingleFileOrEmpty(@Nullable GlobalSearchScope scope) {
+    if (scope == null) return null;
+
+    VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
+    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? toFileIterable(enumeration.asArray()) :
+                                                scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
+                                                null;
+    if (scopeAsFileIterable == null) return null;
+
+    VirtualFile result = null;
+    boolean isFirst = true;
+    for (VirtualFile file : scopeAsFileIterable) {
+      if (!scope.contains(file)) continue;
+      if (!isFirst) return null;
+      result = file;
+      isFirst = false;
+    }
+
+    return isFirst ? ObjectIterators.emptyIterator() :
+           result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
+           null;
+  }
+
+  public static @NotNull Iterable<VirtualFile> toFileIterable(int @NotNull [] fileIds) {
+    Iterator<VirtualFile> iterator =
+      Arrays.stream(fileIds).mapToObj(id -> VirtualFileManager.getInstance().findFileById(id)).filter(Objects::nonNull).iterator();
+
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<VirtualFile> iterator() {
+        return iterator;
+      }
+    };
   }
 }

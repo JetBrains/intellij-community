@@ -81,15 +81,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public boolean unregisterExtensions(@NotNull String extensionPointName,
                                       @NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull List<ExtensionDescriptor> elements,
-                                      @NotNull List<Runnable> priorityListenerCallbacks,
-                                      @NotNull List<Runnable> listenerCallbacks) {
+                                      @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                      @NotNull List<? super Runnable> listenerCallbacks) {
     ExtensionPointImpl<?> point = getExtensionPointIfRegistered(extensionPointName);
     if (point == null) {
       return false;
     }
 
-    point.unregisterExtensions(componentManager, pluginDescriptor, elements, priorityListenerCallbacks, listenerCallbacks);
+    point.unregisterExtensions(componentManager, pluginDescriptor, priorityListenerCallbacks, listenerCallbacks);
     return true;
   }
 

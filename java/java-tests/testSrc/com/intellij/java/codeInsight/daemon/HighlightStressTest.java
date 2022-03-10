@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -22,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SkipSlowTestLocally
 public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
@@ -43,6 +46,10 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
   }
 
+  private static final Set<String> ignoredTools = Set.of(
+    "IncorrectFormatting"
+  );
+
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     if ("RandomEditingForUnused".equals(getTestName(false))) {
@@ -51,6 +58,9 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
     List<LocalInspectionTool> locals = new ArrayList<>();
     for (InspectionToolWrapper tool : all) {
+      if (ignoredTools.contains(tool.getShortName())) {
+        continue;
+      }
       if (tool instanceof LocalInspectionToolWrapper) {
         LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
         locals.add(e);

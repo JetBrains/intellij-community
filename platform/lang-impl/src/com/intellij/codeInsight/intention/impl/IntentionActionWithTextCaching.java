@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -42,19 +41,13 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
 
-  IntentionActionWithTextCaching(@NotNull IntentionAction action){
-    this(action, action.getText(), null, (__1, __2) -> {});
-  }
-
-  IntentionActionWithTextCaching(@NotNull HighlightInfo.IntentionActionDescriptor descriptor, @NotNull BiConsumer<? super IntentionActionWithTextCaching,? super IntentionAction> markInvoked) {
-    this(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), markInvoked);
-  }
-
-  private IntentionActionWithTextCaching(@NotNull IntentionAction action, @NlsContexts.PopupTitle String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+  IntentionActionWithTextCaching(@NotNull IntentionAction action,
+                                 @NlsContexts.PopupTitle String displayName,
+                                 @Nullable Icon icon,
+                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
-    //noinspection ConstantConditions
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
@@ -145,7 +138,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return getAction();
   }
 
-  public boolean isShowSubmenu() {
+  boolean isShowSubmenu() {
     IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)myAction).isShowSubmenu();

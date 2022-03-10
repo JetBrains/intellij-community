@@ -156,6 +156,7 @@ public interface IdeActions {
 
   String ACTION_FIND_USAGES = "FindUsages";
   String ACTION_FIND_IN_PATH = "FindInPath";
+  String ACTION_REPLACE_IN_PATH = "ReplaceInPath";
 
   String ACTION_TYPE_HIERARCHY = "TypeHierarchy";
   String ACTION_METHOD_HIERARCHY = "MethodHierarchy";
@@ -298,7 +299,7 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
 
   /** @deprecated please use {@link #GROUP_WELCOME_SCREEN_OPTIONS} (and the corresponding action group) instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
 
   String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";

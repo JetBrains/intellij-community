@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,8 @@ import java.util.Collection;
 
 public interface NotificationGroupManager {
   NotificationGroup getNotificationGroup(@NotNull String groupId);
+
+  boolean isGroupRegistered(@NotNull String groupId);
 
   @NotNull Collection<NotificationGroup> getRegisteredNotificationGroups();
 

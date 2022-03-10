@@ -703,8 +703,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   /**
    * @deprecated Use {@link DescriptionEditorPaneKt#readHTML(JEditorPane, String)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void readHTML(JEditorPane browser, String text) {
     DescriptionEditorPaneKt.readHTML(browser, text);
   }
@@ -712,8 +711,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   /**
    * @deprecated Use {@link DescriptionEditorPaneKt#toHTML(JEditorPane, String, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String toHTML(JEditorPane browser, @Nls String text, boolean miniFontSize) {
     return DescriptionEditorPaneKt.toHTML(browser, text, miniFontSize);
   }
@@ -1018,14 +1016,16 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void disposeUI() {
-    if (myInspectionProfilePanel == null) {
-      return;
-    }
     myAlarm.cancelAllRequests();
-    myProfileFilter.dispose();
-    for (ScopeToolState state : myProfile.getAllTools()) {
-      state.resetConfigPanel();
+    if (myProfileFilter != null) {
+      myProfileFilter.dispose();
     }
+    if (myInspectionProfilePanel != null) {
+      for (ScopeToolState state : myProfile.getAllTools()) {
+        state.resetConfigPanel();
+      }
+    }
+    myProfile.cleanup(myProjectProfileManager.getProject());
     Disposer.dispose(myDisposable);
     myDisposable = null;
   }

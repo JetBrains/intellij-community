@@ -144,8 +144,7 @@ public final class LibraryUtil {
   /**
    * @deprecated use {@link Library#getPresentableName()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName(@NotNull Library library) {
     return library.getPresentableName();

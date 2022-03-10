@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +179,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
         }
         else {
           TextRange range = var.getTextRange();
-          LOG.error("var: " + var.getName() + ", offset:" + (range != null ? range.getStartOffset() : -1));
+          LOG.error("var: " + var.getName() + ", offset:" + (range != null ? range.getStartOffset() : -1) + ", owner: " + PsiTreeUtil.getParentOfType(var, GrControlFlowOwner.class));
         }
         return false;
       }

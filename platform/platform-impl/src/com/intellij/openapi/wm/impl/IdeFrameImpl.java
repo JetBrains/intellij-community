@@ -185,8 +185,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
    * @deprecated Use {@link ProjectFrameHelper#getProject()} instead.
    */
   @Override
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   public Project getProject() {
     return myFrameHelper == null ? null : myFrameHelper.getProject();
   }
@@ -221,5 +220,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   public BalloonLayout getBalloonLayout() {
     return myFrameHelper == null ? null : myFrameHelper.getHelper().getBalloonLayout();
+  }
+
+  @Override
+  public void notifyProjectActivation() {
+    ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(this);
+    if (helper != null) helper.notifyProjectActivation();
   }
 }

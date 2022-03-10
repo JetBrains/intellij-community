@@ -18,19 +18,20 @@
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.jsp" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" />
     <orderEntry type="module-library">
       <library name="sa-jdwp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.20" />
+        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.21" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.20/sa-jdwp-1.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.21/sa-jdwp-1.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.20/sa-jdwp-1.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.21/sa-jdwp-1.21-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

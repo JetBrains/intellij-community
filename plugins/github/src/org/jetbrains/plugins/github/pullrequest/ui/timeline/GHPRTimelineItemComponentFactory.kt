@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFa
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
@@ -14,6 +14,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -76,6 +77,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
     catch (e: Exception) {
+      LOG.warn(e)
       return Item(AllIcons.General.Warning, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
@@ -98,15 +100,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
       val textPane = HtmlEditorPane(details.body.convertToHtml(project))
-      val panelHandle = GHEditableHtmlPaneHandle(project,
-                                                 textPane,
-                                                 { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
-                                                 { newText ->
-                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(),
-                                                                                     description = newText).successOnEdt {
-                                                     textPane.setBody(it.body)
-                                                   }
-                                                 })
+      val panelHandle = GHEditableHtmlPaneHandle(project, textPane, details::body) { newText ->
+        detailsDataProvider.updateDetails(EmptyProgressIndicator(), description = newText)
+          .successOnEdt { textPane.setBody(it.body.convertToHtml(project)) }
+      }
       contentPanel = panelHandle.panel
       actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
         add(GHTextActions.createEditButton(panelHandle))
@@ -127,13 +124,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
   private fun createComponent(comment: GHIssueComment): Item {
     val textPane = HtmlEditorPane(comment.body.convertToHtml(project))
-    val panelHandle = GHEditableHtmlPaneHandle(project,
-                                               textPane,
-                                               { commentsDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
-                                               { newText ->
-                                                 commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id,
-                                                                                    newText).successOnEdt { textPane.setBody(it) }
-                                               })
+    val panelHandle = GHEditableHtmlPaneHandle(project, textPane, comment::body) { newText ->
+      commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
+        .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
+    }
     val actionsPanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
       if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
@@ -152,16 +146,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
     val panelHandle: GHEditableHtmlPaneHandle?
     if (review.body.isNotEmpty()) {
-      val editorPane = HtmlEditorPane(review.body)
+      val textPane = HtmlEditorPane(review.body.convertToHtml(project))
       panelHandle =
-        GHEditableHtmlPaneHandle(project,
-                                 editorPane,
-                                 { reviewDataProvider.getReviewMarkdownBody(EmptyProgressIndicator(), review.id) },
-                                 { newText ->
-                                   reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText).successOnEdt {
-                                     editorPane.setBody(it)
-                                   }
-                                 })
+        GHEditableHtmlPaneHandle(project, textPane, review::body, { newText ->
+          reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
+            .successOnEdt { textPane.setBody(it.convertToHtml(project)) }
+        })
     }
     else {
       panelHandle = null
@@ -171,13 +161,17 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
     }
 
-    val contentPanel = NonOpaquePanel(VerticalLayout(JBUIScale.scale(12))).apply {
+    val contentPanel = NonOpaquePanel(VerticalLayout(12)).apply {
       border = JBUI.Borders.emptyTop(4)
-      if (panelHandle != null) add(panelHandle.panel, VerticalLayout.FILL_HORIZONTAL)
+      if (panelHandle != null) add(panelHandle.panel)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(project, it, reviewDataProvider, selectInToolWindowHelper, reviewDiffComponentFactory,
+        GHPRReviewThreadComponent.createWithDiff(project, it,
+                                                 reviewDataProvider,
+                                                 detailsDataProvider,
+                                                 selectInToolWindowHelper,
+                                                 reviewDiffComponentFactory,
                                                  avatarIconsProvider, currentUser)
-      }, VerticalLayout.FILL_HORIZONTAL)
+      })
     }
     val actionText = when (review.state) {
       APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
@@ -243,6 +237,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   companion object {
+    private val LOG = logger<GHPRTimelineItemComponentFactory>()
     private val NOT_DEFINED_SIZE = Dimension(-1, -1)
 
     fun getDefaultSize() = Dimension(GHUIUtil.getPRTimelineWidth(), -1)

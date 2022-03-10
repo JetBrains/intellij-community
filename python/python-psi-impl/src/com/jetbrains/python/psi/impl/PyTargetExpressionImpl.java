@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -265,7 +266,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final PyClass cls = withType.getPyClass();
     final PyFunction enter = cls.findMethodByName(isAsync ? PyNames.AENTER : PyNames.ENTER, true, context);
     if (enter != null) {
-      final PyType enterType = enter.getCallType(withExpression, Collections.emptyMap(), context);
+      final PyType enterType = getContextSensitiveType(enter, context, withExpression);
       if (enterType != null) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
@@ -446,7 +447,19 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                @Nullable PyExpression source) {
-    return function.getCallType(source, Collections.emptyMap(), context);
+    return function.getCallType(source, buildArgumentsToParametersMap(source, function, context), context);
+  }
+
+  @NotNull
+  private static Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
+                                                                                      @NotNull PyCallable callable,
+                                                                                      @NotNull TypeEvalContext context) {
+    if (receiver == null) return Collections.emptyMap();
+
+    final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
+    if (firstParameter == null || !firstParameter.isSelf()) return Collections.emptyMap();
+
+    return Map.of(receiver, firstParameter);
   }
 
   @Nullable

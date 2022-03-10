@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -66,5 +67,8 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
       @Override public @NotNull @NlsContexts.Label String getDescription() { return getName(); }
     };
     assertThrows(IllegalArgumentException.class, ()->manager.addFile(text, fakeType));
+    
+    // not VirtualFileWithId
+    assertThrows(IllegalArgumentException.class, ()->manager.addFile(new LightVirtualFile(), PlainTextFileType.INSTANCE));
   }
 }

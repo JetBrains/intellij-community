@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -37,7 +37,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 /**
  * @author Eugene Zhuravlev
  */
-public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndexBase<Key, Value> {
+public abstract class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
+  extends MapReduceIndexBase<Key, Value, FileCachedData> {
   private static final Logger LOG = Logger.getInstance(VfsAwareMapReduceIndex.class);
 
   @ApiStatus.Internal
@@ -187,6 +188,45 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndexBase<Key, 
   @NotNull
   public InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId, @NotNull Map<Key, Value> keysAndValues) throws IOException {
     return ((AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor()).createDiffBuilderByMap(inputId, keysAndValues);
+  }
+
+  public static class IndexerIdHolder {
+    private int indexerId;
+
+    int getIndexerId() {
+      return indexerId;
+    }
+
+    void setIndexerId(int indexerId) {
+      this.indexerId = indexerId;
+    }
+  }
+
+  @Override
+  public void writeData(@NotNull FileCachedData fileData,
+                        @NotNull IndexedFile file) {
+    if (mySubIndexerRetriever != null) {
+      try {
+        Integer indexerId = ProgressManager.getInstance().computeInNonCancelableSection(() -> mySubIndexerRetriever.getFileIndexerId(file));
+        fileData.setIndexerId(indexerId);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  @Override
+  public void setIndexedStateForFileOnCachedData(int fileId, @NotNull FileCachedData fileData) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+    if (mySubIndexerRetriever != null) {
+      try {
+        mySubIndexerRetriever.setFileIndexerId(fileId, fileData.getIndexerId());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override

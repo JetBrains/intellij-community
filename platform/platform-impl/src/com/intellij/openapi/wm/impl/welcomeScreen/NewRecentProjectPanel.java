@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ListActions;
@@ -41,18 +41,29 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable, boolean withSpeedSearch) {
     super(parentDisposable, withSpeedSearch);
     setBorder(JBUI.Borders.empty());
-    setBackground(WelcomeScreenUIManager.getProjectsBackground());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
-      scrollPane.setBackground(WelcomeScreenUIManager.getProjectsBackground());
       JBDimension size = JBUI.size(300, 460);
       scrollPane.setSize(size);
       scrollPane.setMinimumSize(size);
       scrollPane.setPreferredSize(size);
     }
+    setBackground(WelcomeScreenUIManager.getProjectsBackground());
+  }
+
+  @Override
+  public void setBackground(Color bg) {
+    super.setBackground(bg);
+    JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
+    if (scrollPane != null) {
+      scrollPane.setBackground(bg);
+    }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
-      panel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+      panel.setBackground(bg);
+    }
+    if (myList != null) {
+      myList.setBackground(bg);
     }
   }
 
@@ -75,7 +86,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
     final JBList<AnAction> list = super.createList(recentProjectActions, size);
 
-    list.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+    list.setBackground(getBackground());
     list.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -159,7 +170,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-        return isSelected ? WelcomeScreenUIManager.getProjectsSelectionBackground(hasFocus) : WelcomeScreenUIManager.getProjectsBackground();
+        return isSelected ? WelcomeScreenUIManager.getProjectsSelectionBackground(hasFocus) : NewRecentProjectPanel.this.getBackground();
       }
 
       @Override

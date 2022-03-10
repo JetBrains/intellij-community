@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,8 +64,7 @@ import java.util.Map;
   /**
    * @deprecated use {@linkplain #create(int)} for caching.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public EmptyIcon(int size) {
     this(size, size, false);
   }

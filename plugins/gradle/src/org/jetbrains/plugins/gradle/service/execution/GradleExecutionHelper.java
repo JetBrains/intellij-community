@@ -24,12 +24,12 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.internal.logging.LoggingConfigurationBuildOptions;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -51,6 +51,7 @@ import org.jetbrains.plugins.gradle.util.GradleProperties;
 import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.awt.geom.IllegalPathStateException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -58,9 +59,10 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
@@ -245,6 +247,11 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      try {
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
+      } catch (IllegalPathStateException ignore) {}
     }
   }
 
@@ -382,35 +389,12 @@ public class GradleExecutionHelper {
 
     setupLogging(settings, buildEnvironment);
 
-    List<String> filteredArgs = new ArrayList<>();
-    if (!settings.getArguments().isEmpty()) {
-      String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
-      LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
-
-      // filter nulls and empty strings
-      filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
-
-      if (forTestLauncher) {
-        List<String> tasksWithArgs = new ArrayList<>(tasks);
-        tasksWithArgs.addAll(filteredArgs);
-        filteredArgs = tasksWithArgs;
-        MultiMap<String, String> testTasksConfiguration = extractTestCommandOptions(tasksWithArgs);
-        if (operation instanceof TestLauncher) {
-          TestLauncher testLauncher = (TestLauncher)operation;
-          for (Map.Entry<String, Collection<String>> entry : testTasksConfiguration.entrySet()) {
-            // TODO we need better point of call to pass this info
-            testLauncher.withTaskAndTestClasses(entry.getKey(), entry.getValue());
-          }
-        }
-      }
-      else {
-        // TODO remove this replacement when --tests option will become available for tooling API
-        replaceTestCommandOptionWithInitScript(filteredArgs);
-      }
+    if (forTestLauncher) {
+      setupTestLauncherArguments(operation, settings, tasks);
     }
-    filteredArgs.add("-Didea.active=true");
-    filteredArgs.add("-Didea.version=" + getIdeaVersion());
-    operation.withArguments(ArrayUtilRt.toStringArray(filteredArgs));
+    else {
+      setupOperationArguments(operation, settings);
+    }
 
     setupEnvironment(operation, settings, gradleVersion, id, listener);
 
@@ -432,12 +416,14 @@ public class GradleExecutionHelper {
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     if (forTestLauncher) {
       operation.addProgressListener(gradleProgressListener,
+                                    OperationType.FILE_DOWNLOAD,
                                     OperationType.TASK,
                                     OperationType.TEST,
                                     OperationType.TEST_OUTPUT);
     } else {
       operation.addProgressListener(gradleProgressListener,
-                                    OperationType.TASK);
+                                    OperationType.TASK,
+                                    OperationType.FILE_DOWNLOAD);
     }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
@@ -445,6 +431,54 @@ public class GradleExecutionHelper {
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
     }
+  }
+
+  private static void setupTestLauncherArguments(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull List<String> tasks
+  ) {
+    var arguments = new ArrayList<String>();
+    if (!settings.getArguments().isEmpty()) {
+      arguments.addAll(tasks);
+      addSettingsArguments(arguments, settings);
+      var testTasksConfiguration = extractTestCommandOptions(arguments);
+      if (operation instanceof TestLauncher) {
+        for (var entry : testTasksConfiguration.entrySet()) {
+          // TODO we need better point of call to pass this info
+          ((TestLauncher)operation).withTaskAndTestClasses(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    addIdeaParameters(arguments);
+    operation.withArguments(arguments);
+  }
+
+  private static void setupOperationArguments(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings
+  ) {
+    var arguments = new ArrayList<String>();
+    addSettingsArguments(arguments, settings);
+    var testTaskPatterns = extractTestTaskPatterns(arguments);
+    var path = renderInitScript(testTaskPatterns);
+    if (path != null) {
+      ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
+    }
+    addIdeaParameters(arguments);
+    operation.withArguments(arguments);
+  }
+
+  private static void addSettingsArguments(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
+    LOG.info("Passing command-line args to Gradle Tooling API: " +
+             StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " "));
+
+    arguments.addAll(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
+  }
+
+  private static void addIdeaParameters(@NotNull ArrayList<String> arguments) {
+    arguments.add("-Didea.active=true");
+    arguments.add("-Didea.version=" + getIdeaVersion());
   }
 
   private static void setupLogging(@NotNull GradleExecutionSettings settings,
@@ -761,9 +795,12 @@ public class GradleExecutionHelper {
     return buildEnvironment;
   }
 
-  private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
-    Set<String> testIncludePatterns = new LinkedHashSet<>();
-    Iterator<String> it = args.iterator();
+  /**
+   * @return test include patterns: classes, methods, etc.
+   */
+  private static Set<String> extractTestTaskPatterns(@NotNull List<String> args) {
+    var testIncludePatterns = new LinkedHashSet<String>();
+    var it = args.iterator();
     while (it.hasNext()) {
       final String next = it.next();
       if (GradleConstants.TESTS_ARG_NAME.equals(next)) {
@@ -774,24 +811,7 @@ public class GradleExecutionHelper {
         }
       }
     }
-    if (!testIncludePatterns.isEmpty()) {
-      StringBuilder buf = new StringBuilder();
-      buf.append('[');
-      for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
-        String pattern = iterator.next();
-        String groovyPattern = toGroovyString(pattern);
-        buf.append('\'').append(groovyPattern).append('\'');
-        if (iterator.hasNext()) {
-          buf.append(',');
-        }
-      }
-      buf.append(']');
-
-      String path = renderInitScript(buf.toString());
-      if (path != null) {
-        ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
-      }
-    }
+    return testIncludePatterns;
   }
 
   /**
@@ -844,6 +864,13 @@ public class GradleExecutionHelper {
     return taskToTestsPatterns;
   }
 
+  private static String toGroovyList(@NotNull List<String> list) {
+    var rawList = list.stream()
+      .map(it -> toGroovyString(it))
+      .collect(Collectors.joining(","));
+    return "[" + rawList + "]";
+  }
+
   @NotNull
   public static String toGroovyString(@NotNull String string) {
     StringBuilder stringBuilder = new StringBuilder();
@@ -854,9 +881,6 @@ public class GradleExecutionHelper {
       else if (ch == '\'') {
         stringBuilder.append("\\'");
       }
-      else if (ch == '"') {
-        stringBuilder.append("\\\"");
-      }
       else if (ch == '$') {
         stringBuilder.append("\\$");
       }
@@ -864,18 +888,19 @@ public class GradleExecutionHelper {
         stringBuilder.append(ch);
       }
     }
-    return stringBuilder.toString();
+    return "'" + stringBuilder + "'";
   }
 
   @Nullable
-  public static String renderInitScript(@NotNull String testArgs) {
+  public static String renderInitScript(@NotNull Set<String> testTasksPatterns) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
     if (stream == null) {
       LOG.error("Can't find test filter init script template");
       return null;
     }
     try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(testArgs));
+      var testNameIncludes = Matcher.quoteReplacement(toGroovyList(new ArrayList<>(testTasksPatterns)));
+      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), testNameIncludes);
       File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
       return tempFile.getAbsolutePath();
     }

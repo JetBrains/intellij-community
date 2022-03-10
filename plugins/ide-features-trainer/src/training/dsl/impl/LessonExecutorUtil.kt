@@ -7,12 +7,11 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
-import training.dsl.LearningBalloonConfig
-import training.dsl.TaskContext
-import training.dsl.TaskRuntimeContext
+import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
 import training.ui.LessonMessagePane
@@ -125,6 +124,7 @@ internal object LessonExecutorUtil {
       .setDisposable(actionsRecorder)
       .createBalloon()
 
+    Disposer.register(balloon, messagesPane)
 
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
@@ -213,6 +213,11 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
 
   override fun addStep(step: CompletableFuture<Boolean>) {
     hasDetection = true
+  }
+
+  override fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit): HighlightingTriggerMethods {
+    hasDetection = true
+    return super.triggerUI(parameters)
   }
 
   @Suppress("OverridingDeprecatedMember")

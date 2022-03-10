@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
+import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.java.JavaBundle;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -367,7 +367,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
 
   static void reportMissingJavadoc(@NotNull PsiElement toHighlight, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     String message = JavaBundle.message("inspection.javadoc.problem.descriptor");
-    LocalQuickFix fix = isOnTheFly ? new JavaDocFixes.AddJavadocFix(toHighlight) : null;
+    LocalQuickFix fix = isOnTheFly ? IntentionWrapper.wrapToQuickFix(new AddJavadocIntention(), holder.getFile()) : null;
     problem(holder, toHighlight, message, fix);
   }
 

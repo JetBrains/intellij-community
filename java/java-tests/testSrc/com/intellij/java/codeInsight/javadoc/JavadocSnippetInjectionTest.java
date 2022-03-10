@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_18;
 
 public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestCase {
 
@@ -55,6 +55,6 @@ public class JavadocSnippetInjectionTest extends LightQuickFixParameterizedTestC
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_18;
   }
 }

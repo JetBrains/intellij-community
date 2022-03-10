@@ -1,6 +1,5 @@
 _msi.MSI[A-Z_]+
 _msi.PID_[A-Z_]+
-_stat.FILE_ATTRIBUTE_[A-Z_]+
 ctypes.GetLastError  # Is actually a pointer
 distutils.archive_util.getgrnam
 distutils.archive_util.getpwnam
@@ -56,6 +55,10 @@ curses.textpad
 # Modules that rely on termios
 pty
 tty
+
+# pathlib functions that rely on modules that don't exist on Windows
+pathlib.Path.owner
+pathlib.Path.group
 
 # Exists at runtime, but missing from stubs
 _msi.MSIError

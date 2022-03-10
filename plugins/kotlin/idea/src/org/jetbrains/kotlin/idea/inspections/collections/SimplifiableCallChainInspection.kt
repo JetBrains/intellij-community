@@ -47,7 +47,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         }
                     ) return@check false
                 }
-                if (conversion.replacement == "maxBy" || conversion.replacement == "minBy") {
+                if (conversion.replacement in listOf("maxBy", "minBy", "minByOrNull", "maxByOrNull")) {
                     val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
                 }

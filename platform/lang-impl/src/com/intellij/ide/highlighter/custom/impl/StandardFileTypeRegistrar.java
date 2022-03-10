@@ -23,26 +23,26 @@ import com.intellij.lang.Commenter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class StandardFileTypeRegistrar implements FileTypeRegistrar {
   @Override
   public void initFileType(@NotNull final FileType fileType) {
     if (fileType instanceof AbstractFileType) {
-      init(((AbstractFileType)fileType));
+      init((AbstractFileType)fileType);
     }
   }
 
-  private static void init(final AbstractFileType abstractFileType) {
+  private static void init(final @NotNull AbstractFileType abstractFileType) {
     SyntaxTable table = abstractFileType.getSyntaxTable();
 
-    if (!isEmpty(table.getStartComment()) && !isEmpty(table.getEndComment()) ||
-        !isEmpty(table.getLineComment())) {
+    if (!StringUtil.isEmpty(table.getStartComment()) && !StringUtil.isEmpty(table.getEndComment()) ||
+        !StringUtil.isEmpty(table.getLineComment())) {
       abstractFileType.setCommenter(new MyCommenter(abstractFileType));
     }
 
     TypedHandler.registerQuoteHandler(abstractFileType, new CustomFileTypeQuoteHandler());
-
   }
 
   private static class MyCommenter implements Commenter {
@@ -78,9 +78,4 @@ public class StandardFileTypeRegistrar implements FileTypeRegistrar {
       return null;
     }
   }
-
-  private static boolean isEmpty(String str) {
-    return str==null || str.length() == 0;
-  }
-
 }

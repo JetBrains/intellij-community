@@ -2,11 +2,12 @@
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionBundle
-import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 
 interface CodeVisionGroupSettingProvider {
   /**
@@ -17,14 +18,16 @@ interface CodeVisionGroupSettingProvider {
   /**
    * Name that is shown in settings
    */
+  @get:Nls
   val groupName: String
     get() = CodeVisionBundle.message("codeLens.${groupId}.name")
 
+  @get:Nls
   val description: String
     get() = CodeVisionBundle.message("codeLens.${groupId}.description")
 
   fun createModel(project: Project): CodeVisionGroupSettingModel {
-    val providers = CodeVisionHost.getInstance(project).providers.filter { it.groupId == groupId }
+    val providers = CodeVisionProviderFactory.createAllProviders(project).filter { it.groupId == groupId }
     val settings = CodeVisionSettings.instance()
     val isEnabled = settings.codeVisionEnabled && settings.isProviderEnabled(groupId)
     return createSettingsModel(isEnabled, providers)
@@ -52,7 +55,7 @@ interface CodeVisionGroupSettingProvider {
      */
     fun findSingleModels(project: Project): List<CodeVisionGroupSettingProvider> {
       val registeredGroupIds = EXTENSION_POINT_NAME.extensions.distinctBy { it.groupId }.map { it.groupId }
-      val providersWithoutGroup = CodeVisionHost.getInstance(project).providers.filter { registeredGroupIds.contains(it.groupId).not() }
+      val providersWithoutGroup = CodeVisionProviderFactory.createAllProviders(project).filter { registeredGroupIds.contains(it.groupId).not() }
       return providersWithoutGroup.map { CodeVisionUngroppedSettingProvider(it.groupId) }
     }
   }

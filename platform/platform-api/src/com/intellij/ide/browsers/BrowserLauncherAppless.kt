@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
@@ -11,6 +11,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.GraphicsUtil
 import java.awt.Desktop
 import java.awt.GraphicsEnvironment
 import java.io.File
@@ -63,6 +65,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   protected open fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
 
@@ -109,26 +112,38 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun openWithDefaultBrowser(url: String, project: Project?) {
+    if (desktopBrowse(project, url)) {
+      return
+    }
+    systemOpen(project, url)
+  }
+
+  private fun desktopBrowse(project: Project?, url: String): Boolean {
     if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
       val uri = VfsUtil.toUri(url)
       if (uri == null) {
         showError(IdeBundle.message("error.malformed.url", url), project = project)
-        return
+        return true
       }
-
-      try {
-        LOG.debug("Trying Desktop#browse")
-        Desktop.getDesktop().browse(uri)
-        return
-      }
-      catch (e: Exception) {
-        LOG.warn("[$url]", e)
-        if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
-          return  // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
-        }
-      }
+      return desktopBrowse(project, uri)
     }
+    return false
+  }
 
+  protected open fun desktopBrowse(project: Project?, uri: URI): Boolean {
+    try {
+      LOG.debug("Trying Desktop#browse")
+      Desktop.getDesktop().browse(uri)
+      return true
+    }
+    catch (e: Exception) {
+      LOG.warn("[$uri]", e)
+      // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
+      return SystemInfo.isMac && e.message!!.contains("Error code: -10814")
+    }
+  }
+
+  private fun systemOpen(project: Project?, url: String) {
     val command = defaultBrowserCommand
     if (command == null) {
       showError(IdeBundle.message("browser.default.not.supported"), project = project)
@@ -143,6 +158,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun signUrl(url: String): String = url
 
   override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     val effectiveBrowser = getEffectiveBrowser(browser)
     // if browser is not passed, UrlOpener should be not used for non-http(s) urls
     if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
@@ -159,6 +175,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
                                project: Project?,
                                openInNewWindow: Boolean,
                                additionalParameters: Array<String>): Boolean {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC)
     if (url != null && url.startsWith("jar:")) return false
 
     val byName = browserPath == null && browser != null
@@ -222,9 +239,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 }
 
-// AWT-replacing Projector is not affected by that bug, detect it by GE class name to avoid direct dependency on Projector
 private fun isAffectedByDesktopBug(): Boolean =
-  Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || "PGraphicsEnvironment" != GraphicsEnvironment.getLocalGraphicsEnvironment()?.javaClass?.simpleName)
+  Patches.SUN_BUG_ID_6486393 && (GraphicsEnvironment.isHeadless() || !GraphicsUtil.isProjectorEnvironment())
 
 private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
   !isAffectedByDesktopBug() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)

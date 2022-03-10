@@ -22,8 +22,8 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {
     if (type is PyClassLikeType) {
-      return type is PyNamedTupleType && type.fields.containsKey(name) ||
-             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { it.fields.containsKey(name) }
+      return type is PyNamedTupleType && ignoredUnresolvedNamedTupleMember(type, name) ||
+             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { ignoredUnresolvedNamedTupleMember(it, name) }
     }
 
     return false
@@ -41,5 +41,9 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
            function.getParameters(context).let { it.size == 3 && !it.any { p -> p.isKeywordContainer || p.isPositionalContainer } } ||
            function.name == DUNDER_POST_INIT &&
            function.containingClass?.let { parseStdDataclassParameters(it, context) != null } == true
+  }
+
+  private fun ignoredUnresolvedNamedTupleMember(type: PyNamedTupleType, name: String): Boolean {
+    return name == PyNames.SLOTS || type.fields.containsKey(name)
   }
 }

@@ -4,18 +4,16 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.psi.XmlPsiBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 /**
- * @deprecated use {@link com.intellij.xml.psi.XmlPsiBundle} instead. Some of the message keys needs to be updated.
- *             See @link {@link XmlErrorMessages#keyMappings}}
+ * @deprecated use {@link XmlPsiBundle} instead. Some message keys needs to be updated.
+ *             See {@link XmlErrorMessages#keyMappings}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@Deprecated(forRemoval = true)
 public class XmlErrorMessages {
   private static final Map<String, String> keyMappings = ContainerUtil.newHashMap(
     new Pair<>("tag.start.is.not.closed", "xml.parsing.tag.start.is.not.closed"),
@@ -28,9 +26,9 @@ public class XmlErrorMessages {
   );
 
   /**
-   * @deprecated use {@link com.intellij.xml.psi.XmlPsiBundle#message} instead
+   * @deprecated use {@link XmlPsiBundle#message} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nls String message(@NotNull String key, Object @NotNull ... params) {
     return XmlPsiBundle.message(keyMappings.getOrDefault(key, key), params);
   }

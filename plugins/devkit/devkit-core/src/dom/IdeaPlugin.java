@@ -195,7 +195,7 @@ public interface IdeaPlugin extends DomElement {
    * @deprecated not used anymore
    */
   @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   List<Helpset> getHelpsets();
 }

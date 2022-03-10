@@ -8,18 +8,23 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class RealFetchTest extends BasePlatformTestCase {
 
   @Override
@@ -32,13 +37,26 @@ public class RealFetchTest extends BasePlatformTestCase {
     final String url = "http://java.sun.com/dtd/preferences.dtd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
     myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    invokeFetchIntention(url);
     String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
     assertNotSame(url, location);
     assertTrue(location.endsWith("preferences.dtd")); // no ".xml" suffix added
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+  }
+
+  private void invokeFetchIntention(String url) {
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
+    assertNotNull(intention);
+    try {
+      intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    }
+    catch (Throwable e) {
+      Throwable cause = ExceptionUtil.getRootCause(e);
+      if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title"))) {
+        ExternalResourcesChecker.reportUnavailability(url, cause);
+      }
+      throw new RuntimeException(e);
+    }
   }
 
   public void testRelativePath() {
@@ -51,9 +69,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                               "        </qos_profile>\n" +
                               "    </qos_library>\n" +
                               "</dds>");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    invokeFetchIntention(url);
     myFixture.testHighlighting();
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
@@ -70,9 +86,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                               "  <domain_library name=\"xxx\"/>\n" +
                               "  <domain_participant_library name=\"ffff\"/>\n" +
                               "</dds>");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    invokeFetchIntention(url);
 
     myFixture.testHighlighting();
 
@@ -92,9 +106,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                               "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                               "           xsi:schemaLocation=\"http://checklists.nist.gov/xccdf/1.2 https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd\" id=\"xccdf_N_benchmark_S\">\n" +
                               "</Benchmark>");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    invokeFetchIntention(url.replace("<caret>", ""));
     myFixture.testHighlighting();
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
@@ -108,9 +120,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                                                     "  <root type=\"system\"><map/></root>\n" +
                                                     "</preferences>");
     myFixture.testHighlighting();
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    invokeFetchIntention(url);
     List<HighlightInfo> infos = myFixture.doHighlighting();
     assertEmpty(infos);
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));

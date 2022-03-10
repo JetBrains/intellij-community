@@ -5,11 +5,9 @@ package org.jetbrains.kotlin.ide.konan.gradle
 import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.kotlin.gradle.ModuleInfo
 import org.jetbrains.kotlin.gradle.checkProjectStructure
-import org.jetbrains.kotlin.idea.codeInsight.gradle.kotlinPluginVersionMatches
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.Assume
 import org.junit.Test
 
 class GradleNativeLibrariesPropagationTest16 : TestCaseWithFakeKotlinNative() {
@@ -19,8 +17,8 @@ class GradleNativeLibrariesPropagationTest16 : TestCaseWithFakeKotlinNative() {
 
     private val testedTargets = setOf("ios_arm64", "ios_x64", "watchos_arm32", "watchos_x86")
 
-    // Dependency propagation was introduced in 1.3.60 and disabled when HMPP was turn on by default.
-    @PluginTargetVersions(pluginVersion = "1.3.60 <=> 1.6.20")
+    // Dependency propagation was introduced in 1.3.60 and disabled when HMPP was turn on by default (1.6.20).
+    @PluginTargetVersions(pluginVersion = "1.3.60 <=> 1.6.10")
     @Test
     fun testCommonIOS() {
         configureProject()
@@ -64,7 +62,7 @@ class GradleNativeLibrariesPropagationTest16 : TestCaseWithFakeKotlinNative() {
 
     // Dependency propagation was introduced in 1.3.60.
     // Since 1.4.0, disabling propagation enables the commonizer.
-    @PluginTargetVersions(pluginVersion = "1.3.60 <=> 1.4.0")
+    @PluginTargetVersions(pluginVersion = "1.3.60 <=> 1.3.72")
     @Test
     fun testCommonIOSWithDisabledPropagation() {
         configureProject()

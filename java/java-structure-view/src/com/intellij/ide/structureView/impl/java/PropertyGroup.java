@@ -1,22 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +30,12 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
   private SmartPsiElementPointer<?> mySetterPointer;
   private boolean myIsStatic;
 
-  public static final Icon PROPERTY_READ_ICON = loadIcon("/nodes/propertyRead.png");
-  public static final Icon PROPERTY_READ_STATIC_ICON = loadIcon("/nodes/propertyReadStatic.png");
-  public static final Icon PROPERTY_WRITE_ICON = loadIcon("/nodes/propertyWrite.png");
-  public static final Icon PROPERTY_WRITE_STATIC_ICON = loadIcon("/nodes/propertyWriteStatic.png");
-  public static final Icon PROPERTY_READ_WRITE_ICON = loadIcon("/nodes/propertyReadWrite.png");
-  public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = loadIcon("/nodes/propertyReadWriteStatic.png");
+  public static final Icon PROPERTY_READ_ICON = AllIcons.Nodes.PropertyRead;
+  public static final Icon PROPERTY_READ_STATIC_ICON = AllIcons.Nodes.PropertyReadStatic;
+  public static final Icon PROPERTY_WRITE_ICON = AllIcons.Nodes.PropertyWrite;
+  public static final Icon PROPERTY_WRITE_STATIC_ICON = AllIcons.Nodes.PropertyWriteStatic;
+  public static final Icon PROPERTY_READ_WRITE_ICON = AllIcons.Nodes.PropertyReadWrite;
+  public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = AllIcons.Nodes.PropertyReadWriteStatic;
 
   private final Project myProject;
   private final Collection<TreeElement> myChildren = new ArrayList<>();
@@ -196,15 +193,6 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     if (group.getSetter() != null) setSetter(group.getSetter());
     if (group.getField() != null) setField(group.getField());
     myChildren.addAll(group.myChildren);
-  }
-
-  private static Icon loadIcon(@NonNls String resourceName) {
-    Icon icon = IconLoader.findIcon(resourceName, PropertyGroup.class, PropertyGroup.class.getClassLoader(), null, true);
-    Application application = ApplicationManager.getApplication();
-    if (icon == null && application != null && application.isUnitTestMode()) {
-      return new ImageIcon();
-    }
-    return icon;
   }
 
   @Override

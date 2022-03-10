@@ -3,10 +3,8 @@ package com.intellij.execution.target.local
 
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.IoTestUtil
 import org.junit.Assert
-import org.junit.Assume
-import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 class LocalTargetEnvironmentTest {
@@ -14,7 +12,7 @@ class LocalTargetEnvironmentTest {
 
   @Test
   fun `create general command line on Windows`() {
-    assumeWindows()
+    IoTestUtil.assumeWindows()
 
     val exePath = "C:\\Path\\To\\Some Executable.exe"
 
@@ -51,7 +49,7 @@ class LocalTargetEnvironmentTest {
 
   @Test
   fun `create general command line on UNIX`() {
-    assumeUnix()
+    IoTestUtil.assumeUnix()
 
     val exePath = "/path/to/some executable"
 
@@ -86,17 +84,4 @@ class LocalTargetEnvironmentTest {
       generalCommandLine.getCommandLineList(null)
     )
   }
-
-  @Throws(AssumptionViolatedException::class)
-  fun assumeWindows() {
-    Assume.assumeTrue("Need Windows, can't run on " + SystemInfo.OS_NAME,
-                      SystemInfo.isWindows)
-  }
-
-  @Throws(AssumptionViolatedException::class)
-  fun assumeUnix() {
-    Assume.assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME,
-                      SystemInfo.isUnix)
-  }
-
 }

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see Row.segmentedButton
  */
+@ApiStatus.NonExtendable
 @ApiStatus.Experimental
 interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -251,7 +251,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
     final UsageView usageView = showUsages(conflictUsages, presentation, manager);
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
-                                        RefactoringBundle.message("retry.command"), RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("rerun.safe.delete"));
+                                        RefactoringBundle.message("retry.command"), "", RefactoringBundle.message("rerun.safe.delete"));
     usageView.addPerformOperationAction(() -> {
       UsageInfo[] preprocessedUsages = usages;
       for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {

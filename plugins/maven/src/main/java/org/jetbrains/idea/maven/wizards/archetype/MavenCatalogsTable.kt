@@ -14,9 +14,12 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.annotations.Nls
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import javax.swing.*
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
 
 class MavenCatalogsTable(private val project: Project) : ListTableWithButtons<MavenCatalog>() {
 

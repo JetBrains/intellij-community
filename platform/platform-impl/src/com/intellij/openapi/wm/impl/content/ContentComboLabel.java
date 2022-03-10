@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.rd.GraphicsExKt;
+import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
@@ -27,17 +29,9 @@ import java.awt.event.MouseEvent;
 final class ContentComboLabel extends ContentLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
-  private final ComboIcon myComboIcon = new ComboIcon() {
-    @Override
-    public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getIconWidth() - ICONS_GAP, 0, getIconWidth(), getHeight());
-    }
+  private final ActiveIcon myComboIcon = new ActiveIcon(AllIcons.General.ArrowDown);
+  private final Point myComboIconPoint = new Point();
 
-    @Override
-    public boolean isActive() {
-      return myUi.window.isActive();
-    }
-  };
   private final ComboContentLayout myLayout;
 
   ContentComboLabel(@NotNull ComboContentLayout layout) {
@@ -110,6 +104,7 @@ final class ContentComboLabel extends ContentLabel {
     Dimension size = super.getPreferredSize();
     if (!isPreferredSizeSet() && isToDrawCombo()) {
       if (hasActiveIcons()) size.width -= ICONS_GAP;
+      myComboIconPoint.x = size.width;
       size.width += myComboIcon.getIconWidth();
     }
 
@@ -142,7 +137,9 @@ final class ContentComboLabel extends ContentLabel {
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
     if (isToDrawCombo()) {
-      myComboIcon.paintIcon(this, g);
+      myComboIcon.setActive(myUi.window.isActive());
+      myComboIconPoint.y = getHeight() / 2 - myComboIcon.getIconHeight() / 2 + 1;
+      myComboIcon.paintIcon(this, g, myComboIconPoint.x, myComboIconPoint.y);
       g.setColor(Gray._255.withAlpha(100));
     }
   }

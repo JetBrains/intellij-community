@@ -1990,4 +1990,17 @@ static String rootDir(Path archive) {
 }
 """, null
   }
+
+  void 'test flow typing with DGM'() {
+    doTest """
+def <T> Collection<T> aa(Closure<? extends Collection<? extends T>> cl) {
+
+}
+
+def foo() {
+    def xx = aa { [1] }
+    x<caret>x
+}
+""", "java.util.Collection<java.lang.Integer>"
+  }
 }

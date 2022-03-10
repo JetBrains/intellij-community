@@ -104,6 +104,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
 
     fun display(viewModel: ViewModel) {
         clearPanelContents()
+        displayUsagesIfAny(viewModel.packageModel)
         if (viewModel.packageModel.remoteInfo == null) {
             return
         }
@@ -125,7 +126,6 @@ internal class PackageDetailsInfoPanel : JPanel() {
         displayDocumentationIfAny(linkExtractor.documentation())
         displayReadmeIfAny(linkExtractor.readme())
         displayKotlinPlatformsIfAny(viewModel.packageModel.remoteInfo)
-        displayUsagesIfAny(viewModel.packageModel)
 
         updateAndRepaint()
         (parent as JComponent).updateAndRepaint()

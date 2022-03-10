@@ -669,6 +669,11 @@ public class MavenProject {
     }
   }
 
+  public @NotNull List<MavenProjectProblem> getCacheProblems() {
+    List<MavenProjectProblem> problemsCache = myState.myProblemsCache;
+    return problemsCache == null ? Collections.emptyList() : problemsCache;
+  }
+
   private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
     List<MavenProjectProblem> result = new ArrayList<>();
 
@@ -727,7 +732,9 @@ public class MavenProject {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
+          boolean resolved = MavenArtifactUtilKt.resolved(each);
+          each.setFileUnresolved(!resolved);
+          if (!resolved) result.add(each);
         }
         state.myUnresolvedDependenciesCache = result;
       }
@@ -1251,9 +1258,8 @@ public class MavenProject {
       boolean repositoryChanged = !Comparing.equal(myLocalRepository, other.myLocalRepository);
 
       result.dependencies = repositoryChanged || !Comparing.equal(myDependencies, other.myDependencies);
-
       result.plugins = repositoryChanged || !Comparing.equal(myPlugins, other.myPlugins);
-
+      result.properties = !Comparing.equal(myProperties, other.myProperties);
       return result;
     }
 

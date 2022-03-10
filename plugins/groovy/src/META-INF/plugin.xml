@@ -358,8 +358,6 @@
     <registryKey key="groovy.flat.dfa" defaultValue="true"
                  description="Merges all control flows graphs in method"/>
 
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector"/>
-
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
@@ -1290,8 +1288,8 @@
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
     <compilableFileTypesProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilableFileTypesProvider"/>
 
-    <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
-    <notificationGroup id="Grape" displayType="BALLOON"/>
+    <notificationGroup id="Groovy DSL errors" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.groovy.dsl"/>
+    <notificationGroup id="Grape" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.grape"/>
     <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
   </extensions>

@@ -271,7 +271,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.setPreferredSize(JBUI.size(400));
 
-    JLabel dndLabel = new JLabel(IdeBundle.message("chooser.tooltip.drag.drop"), SwingConstants.CENTER);
+    JLabel dndLabel = new JLabel(UIBundle.message("file.chooser.tooltip.drag.drop"), SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
     dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
     panel.add(dndLabel, BorderLayout.SOUTH);
@@ -591,15 +591,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       @Override
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
-          if (toFind == null || !toFind.exists()) return;
-
-          myUiUpdater.queue(new Update("treeFromPath.2") {
-            @Override
-            public void run() {
-              selectInTree(toFind.getFile(), text);
-            }
-          });
+          LookupFile toFind = myPathTextField.getFile();
+          if (toFind instanceof LocalFsFinder.VfsFile && toFind.exists()) {
+            myUiUpdater.queue(new Update("treeFromPath.2") {
+              @Override
+              public void run() {
+                selectInTree(((LocalFsFinder.VfsFile)toFind).getFile(), text);
+              }
+            });
+          }
         });
       }
     });

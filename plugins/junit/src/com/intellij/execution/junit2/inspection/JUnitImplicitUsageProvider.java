@@ -2,6 +2,7 @@
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -14,14 +15,22 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE;
 
 public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
   private static final String MOCK = "org.mockito.Mock";
+  private static final String KOTLIN_JVM_STATIC = "kotlin.jvm.JvmStatic";
+
   private static final List<String> INJECTED_FIELD_ANNOTATIONS = Arrays.asList(
     MOCK,
     "org.mockito.Spy",
@@ -33,14 +42,15 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    return element instanceof PsiParameter && isParameterUsedInParameterizedPresentation((PsiParameter)element) || isReferencedInsideEnumSourceAnnotation(element);
+    return element instanceof PsiParameter && isParameterUsedInParameterizedPresentation((PsiParameter)element) || isReferencedInsideEnumSourceAnnotation(element)
+           || isReferencedInsideMethodSourceAnnotation(element);
   }
 
   private static boolean isParameterUsedInParameterizedPresentation(PsiParameter parameter) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
-      PsiAnnotation annotation = method.getModifierList().findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
+      PsiAnnotation annotation = method.getModifierList().findAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
       if (annotation != null) {
         PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("name");
         if (attributeValue instanceof PsiExpression) {
@@ -62,6 +72,36 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
                                                                                         PsiModificationTracker.MODIFICATION_COUNT));
     }
     return false;
+  }
+
+  private static boolean isReferencedInsideMethodSourceAnnotation(@NotNull PsiElement element) {
+    if (element instanceof PsiMethod) {
+      PsiMethod psiMethod = (PsiMethod) element;
+      return CachedValuesManager.getCachedValue(psiMethod,
+                                         () -> CachedValueProvider.Result.create(isReferencedInsideMethodSourceAnnotation(psiMethod),
+                                                                                 PsiModificationTracker.MODIFICATION_COUNT));
+    }
+    return false;
+  }
+
+  private static boolean isReferencedInsideMethodSourceAnnotation(@NotNull PsiMethod psiMethod) {
+    String methodName = psiMethod.getName();
+    PsiClass psiClass = psiMethod.getContainingClass();
+    if (psiMethod.getAnnotation(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) != null) return false;
+    if (psiMethod.getParameterList().getParametersCount() != 0) return false;
+    if (!TestUtils.isInTestSourceContent(psiClass)) return false;
+
+    if (psiMethod.hasAnnotation(KOTLIN_JVM_STATIC)) {
+      PsiElement parent = psiClass.getParent();
+      if (parent instanceof PsiClass) psiClass = (PsiClass)parent;
+    }
+
+    return ContainerUtil.exists(psiClass.findMethodsByName(methodName, false),
+                                it -> psiMethod != it &&
+                                      MetaAnnotationUtil.isMetaAnnotated(it, Collections.singleton(
+                                        ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)) &&
+                                      MetaAnnotationUtil.isMetaAnnotated(it, Collections.singleton(
+                                        ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)));
   }
 
   private static boolean isEnumClassReferencedInEnumSourceAnnotation(PsiClass psiClass) {

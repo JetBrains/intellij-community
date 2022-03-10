@@ -19,8 +19,6 @@ _csv.Dialect.__init__  # C __init__ signature is inaccurate
 _socket.*
 _threading_local.local.__new__
 _weakref.ref.__call__
-abc.abstractclassmethod  # Deprecated, unsupported by mypy, hard to fix. #6552
-abc.abstractstaticmethod  # Deprecated, unsupported by mypy, hard to fix. #6552
 abc.ABCMeta.__new__  # pytype wants the parameter named cls and not mcls
 _weakref.CallableProxyType.__getattr__  # Should have all attributes of proxy
 _weakref.ProxyType.__getattr__  # Should have all attributes of proxy
@@ -105,11 +103,6 @@ importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but e
 importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
 importlib.machinery.ExtensionFileLoader.get_filename  # Wrapped with _check_name decorator which changes runtime signature
 inspect.Parameter.empty  # set as private marker _empty
-inspect.Parameter.KEYWORD_ONLY
-inspect.Parameter.POSITIONAL_ONLY
-inspect.Parameter.POSITIONAL_OR_KEYWORD
-inspect.Parameter.VAR_KEYWORD
-inspect.Parameter.VAR_POSITIONAL
 inspect.Signature.empty  # set as private marker _empty
 inspect.Signature.from_builtin  # Removed in 3.11, can add if someone needs this
 inspect.Signature.from_function  # Removed in 3.11, can add if someone needs this
@@ -174,6 +167,7 @@ poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
 pyexpat.expat_CAPI
 select.poll  # Depends on configuration
 selectors.DevpollSelector  # Depends on configuration
+socketserver.BaseServer.RequestHandlerClass  # is defined as a property, because we need `Self` type
 socketserver.BaseServer.fileno  # implemented in derived classes
 socketserver.BaseServer.get_request  # implemented in derived classes
 socketserver.BaseServer.server_bind  # implemented in derived classes
@@ -269,6 +263,9 @@ pydoc.Helper.symbols_  # Loop variable in class https://github.com/python/typesh
 pydoc.Helper.topic  # Loop variable in class https://github.com/python/typeshed/issues/6401#issuecomment-981178522
 # Dynamically specified by __getattr__, and thus don't exist on the class
 tempfile._TemporaryFileWrapper.[\w_]+
+# stubtest incorrectly highlights the type argument as not having a default value.
+types.FunctionType.__get__
+types.LambdaType.__get__
 # Various classes in typing aren't types at runtime. In addition, mypy thinks some special forms are tautologically defined.
 typing.[A-Z]\w+
 typing_extensions\..*
@@ -290,6 +287,11 @@ codecs.StreamReaderWriter.\w+
 codecs.StreamRecoder.\w+
 urllib.response.addbase.\w+
 
+# Dynamically created, has unnecessary *args
+turtle.ScrolledCanvas.find_all
+turtle.ScrolledCanvas.select_clear
+turtle.ScrolledCanvas.select_item
+
 # Unnecessary re-exports
 asyncore\.E[A-Z]+  # re-exported from errno
 asyncore.errorcode  # re-exported from errno
@@ -309,6 +311,24 @@ _typeshed.*  # Utility types for typeshed, doesn't exist at runtime
 # Builtins that type checkers pretends exist
 builtins.reveal_locals
 builtins.reveal_type
+
+# __all__-related weirdness (see #6523)
+email.base64mime
+email.charset
+email.encoders
+email.errors
+email.feedparser
+email.generator
+email.header
+email.iterators
+email.message
+email.mime
+email.parser
+email.quoprimime
+email.utils
+xml.dom
+xml.etree
+xml.sax
 
 # Platform differences that cannot be captured by the type system
 errno.[A-Z0-9]+
@@ -348,6 +368,28 @@ tkinter.Place.configure
 tkinter.Place.forget
 tkinter.Place.place_slaves
 tkinter.Place.slaves
+
+# Methods that come from __getattr__() at runtime
+tkinter.Tk.adderrorinfo
+tkinter.Tk.call
+tkinter.Tk.createcommand
+tkinter.Tk.createtimerhandler
+tkinter.Tk.dooneevent
+tkinter.Tk.evalfile
+tkinter.Tk.exprboolean
+tkinter.Tk.exprdouble
+tkinter.Tk.exprlong
+tkinter.Tk.exprstring
+tkinter.Tk.globalgetvar
+tkinter.Tk.globalsetvar
+tkinter.Tk.globalunsetvar
+tkinter.Tk.interpaddr
+tkinter.Tk.record
+tkinter.Tk.split
+tkinter.Tk.splitlist
+tkinter.Tk.unsetvar
+tkinter.Tk.wantobjects
+tkinter.Tk.willdispatch
 
 # Undocumented and have a comment in the source code saying "State variables (don't mess with these)"
 wsgiref.handlers.BaseHandler.bytes_sent
@@ -391,6 +433,16 @@ email.contentmanager.get_text_content
 email.contentmanager.set_bytes_content
 email.contentmanager.set_message_content
 email.contentmanager.set_text_content
+email.iterators.walk
+pipes.Template.makepipeline
+pipes.Template.open_r
+pipes.Template.open_w
+sunau.Au_read.initfp
+sunau.Au_write.initfp
+turtle.ScrolledCanvas.adjustScrolls
+turtle.ScrolledCanvas.onResize
+wave.Wave_read.initfp
+wave.Wave_write.initfp
 
 # Side effects from module initialization
 _compat_pickle.excname
@@ -582,7 +634,7 @@ distutils.unixccompiler.UnixCCompiler.xcode_stub_lib_extension
 distutils.unixccompiler.UnixCCompiler.xcode_stub_lib_format
 distutils.util.grok_environment_error
 
-# Missing from pkgutil.ImpLoader (deprecated since 3.3, can add if someone needs it)
+# Missing from pkgutil.ImpImporter/ImpLoader (both deprecated since 3.3, can add if someone needs it)
 pkgutil.ImpImporter.find_module
 pkgutil.ImpImporter.iter_modules
 pkgutil.ImpLoader.code
@@ -620,22 +672,6 @@ ctypes.ARRAY
 ctypes.SetPointerType
 ctypes.c_voidp
 ctypes.util.test
-email.base64mime
-email.charset
-email.encoders
-email.errors
-email.feedparser
-email.generator
-email.header
-email.iterators
-email.iterators.walk
-email.message
-email.message.Message.raw_items
-email.message.Message.set_raw
-email.mime
-email.parser
-email.quoprimime
-email.utils
 importlib.abc.Finder.find_module
 lib2to3.pgen2.grammar.Grammar.loads
 logging.config.BaseConfigurator
@@ -671,13 +707,8 @@ multiprocessing.pool.Pool.Process
 multiprocessing.pool.ThreadPool.Process
 multiprocessing.reducer
 multiprocessing.synchronize.Semaphore.get_value
-pipes.Template.makepipeline
-pipes.Template.open_r
-pipes.Template.open_w
 rlcompleter.Completer.attr_matches
 rlcompleter.Completer.global_matches
-sunau.Au_read.initfp
-sunau.Au_write.initfp
 tkinter.Misc.config
 tkinter.font.Font.counter
 tkinter.simpledialog.Dialog.apply
@@ -701,10 +732,4 @@ tkinter.tix.ScrolledText
 tkinter.tix.ScrolledWindow
 tkinter.tix.Shell
 tracemalloc.BaseFilter
-turtle.ScrolledCanvas\..+
 turtle.TNavigator.speed
-wave.Wave_read.initfp
-wave.Wave_write.initfp
-xml.dom
-xml.etree
-xml.sax

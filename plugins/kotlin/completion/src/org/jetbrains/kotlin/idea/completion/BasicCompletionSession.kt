@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHan
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
+import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -408,28 +409,37 @@ class BasicCompletionSession(
                     else
                         prefixMatcher
 
-                    addClassesFromIndex(classKindFilter, prefixMatcher)
+                    addClassesFromIndex(
+                        kindFilter = classKindFilter,
+                        prefixMatcher = prefixMatcher,
+                        completionParameters = parameters,
+                        indicesHelper = indicesHelper(true),
+                        classifierDescriptorCollector = {
+                            collector.addElement(basicLookupElementFactory.createLookupElement(it), notImported = true)
+                        },
+                        javaClassCollector = {
+                            collector.addElement(basicLookupElementFactory.createLookupElementForJavaClass(it), notImported = true)
+                        }
+                    )
                 }
             } else if (callTypeAndReceiver is CallTypeAndReceiver.DOT) {
                 val qualifier = bindingContext[BindingContext.QUALIFIER, callTypeAndReceiver.receiver]
                 if (qualifier != null) return
                 val receiver = callTypeAndReceiver.receiver as? KtSimpleNameExpression ?: return
-                val helper = indicesHelper(false)
                 val descriptors = mutableListOf<ClassifierDescriptorWithTypeParameters>()
                 val fullTextPrefixMatcher = object : PrefixMatcher(receiver.getReferencedName()) {
                     override fun prefixMatches(name: String): Boolean = name == prefix
                     override fun cloneWithPrefix(prefix: String): PrefixMatcher = throw UnsupportedOperationException("Not implemented")
                 }
 
-                AllClassesCompletion(
-                    parameters = parameters.withPosition(receiver, receiver.startOffset),
-                    kotlinIndicesHelper = helper,
-                    prefixMatcher = fullTextPrefixMatcher,
-                    resolutionFacade = resolutionFacade,
+                addClassesFromIndex(
                     kindFilter = { true },
-                    includeTypeAliases = true,
-                    includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
-                ).collect({ descriptors += it }, { descriptors.addIfNotNull(it.resolveToDescriptor(resolutionFacade)) })
+                    prefixMatcher = fullTextPrefixMatcher,
+                    completionParameters = parameters.withPosition(receiver, receiver.startOffset),
+                    indicesHelper = indicesHelper(false),
+                    classifierDescriptorCollector = { descriptors += it },
+                    javaClassCollector = { descriptors.addIfNotNull(it.resolveToDescriptor(resolutionFacade)) },
+                )
 
                 val foundDescriptors = HashSet<DeclarationDescriptor>()
                 val classifiers = descriptors.asSequence().filter {
@@ -457,9 +467,16 @@ class BasicCompletionSession(
                     )
 
                     val rvCollector = ReferenceVariantsCollector(
-                        rvHelper, indicesHelper(true), prefixMatcher,
-                        nameExpression, callTypeAndReceiver, resolutionFacade, newContext,
-                        importableFqNameClassifier, configuration
+                        referenceVariantsHelper = rvHelper,
+                        indicesHelper = indicesHelper(true),
+                        prefixMatcher = prefixMatcher,
+                        nameExpression = nameExpression,
+                        callTypeAndReceiver = callTypeAndReceiver,
+                        resolutionFacade = resolutionFacade,
+                        bindingContext = newContext,
+                        importableFqNameClassifier = importableFqNameClassifier,
+                        configuration = configuration,
+                        allowExpectedDeclarations = allowExpectedDeclarations,
                     )
 
                     val receiverTypes = detectReceiverTypes(newContext, nameExpression, callTypeAndReceiver)
@@ -785,24 +802,23 @@ class BasicCompletionSession(
         }
     }
 
-    private fun addClassesFromIndex(kindFilter: (ClassKind) -> Boolean, prefixMatcher: PrefixMatcher) {
-        val classifierDescriptorCollector = { descriptor: ClassifierDescriptorWithTypeParameters ->
-            collector.addElement(basicLookupElementFactory.createLookupElement(descriptor), notImported = true)
-        }
-
-        val javaClassCollector = { javaClass: PsiClass ->
-            collector.addElement(basicLookupElementFactory.createLookupElementForJavaClass(javaClass), notImported = true)
-        }
-
+    private fun addClassesFromIndex(
+        kindFilter: (ClassKind) -> Boolean,
+        prefixMatcher: PrefixMatcher,
+        completionParameters: CompletionParameters,
+        indicesHelper: KotlinIndicesHelper,
+        classifierDescriptorCollector: (ClassifierDescriptorWithTypeParameters) -> Unit,
+        javaClassCollector: (PsiClass) -> Unit,
+    ) {
         AllClassesCompletion(
-            parameters = parameters,
-            kotlinIndicesHelper = indicesHelper(true),
+            parameters = completionParameters,
+            kotlinIndicesHelper = indicesHelper,
             prefixMatcher = prefixMatcher,
             resolutionFacade = resolutionFacade,
             kindFilter = kindFilter,
             includeTypeAliases = true,
             includeJavaClassesNotToBeUsed = configuration.javaClassesNotToBeUsed,
-        ).collect(classifierDescriptorCollector, javaClassCollector)
+        ).collect({ processWithShadowedFilter(it, classifierDescriptorCollector) }, javaClassCollector)
     }
 
     private fun addReferenceVariantElements(lookupElementFactory: LookupElementFactory, descriptorKindFilter: DescriptorKindFilter) {

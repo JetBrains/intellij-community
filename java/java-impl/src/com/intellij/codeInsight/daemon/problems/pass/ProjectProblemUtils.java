@@ -69,7 +69,7 @@ public final class ProjectProblemUtils {
     return new MenuOnClickPresentation(problemsPresentation, project, () -> ProjectProblemHintProvider.getPopupActions());
   }
 
-  private static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
+  public static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
     JavaCodeVisionUsageCollector.RELATED_PROBLEMS_CLICKED_EVENT_ID.log(member.getProject());
     Map<PsiMember, Set<Problem>> problems = getReportedProblems(editor);
     Set<Problem> relatedProblems = problems.get(member);

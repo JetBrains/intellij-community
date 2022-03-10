@@ -34,7 +34,7 @@ public class CachedModuleDataFinder {
   /**
    * @deprecated use {@link #getInstance(Project)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CachedModuleDataFinder() {
     myProject = null;
   }

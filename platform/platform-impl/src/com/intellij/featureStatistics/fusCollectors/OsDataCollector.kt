@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -39,7 +39,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ)
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
-  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
+  @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi", "ScheduledForRemovalWithVersion")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
   private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
@@ -59,7 +59,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
         metrics += LINUX.metric(distro, release, isUnderWsl)
       }
       SystemInfo.isWin10OrNewer -> {
-        // -1 is unknown
+        // `-1` is unknown
         metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)
       }
     }

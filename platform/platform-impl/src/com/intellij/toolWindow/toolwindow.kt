@@ -72,13 +72,7 @@ fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescr
   }
 
   try {
-    return IconLoader.findIcon(
-      bean.icon ?: return null,
-      factory.javaClass,
-      pluginDescriptor.classLoader,
-      null,
-      true,
-    )
+    return IconLoader.findIcon(bean.icon ?: return null, pluginDescriptor.classLoader)
   }
   catch (e: Exception) {
     logger<ToolWindowManagerImpl>().error(e)
@@ -101,7 +95,7 @@ data class ToolWindowDescriptor(
   var contentUiType: ToolWindowContentUiType = ToolWindowContentUiType.TABBED,
 
   val isActiveOnStart: Boolean = false,
-  val isVisible: Boolean = false,
+  var isVisible: Boolean = false,
   val isShowStripeButton: Boolean = true,
 
   var weight: Float = 0.33f,

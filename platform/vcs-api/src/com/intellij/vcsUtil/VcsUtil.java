@@ -77,9 +77,7 @@ public class VcsUtil {
   }
 
   /**
-   * @param project Project component
-   * @param file    File to check
-   * @return true if the given file resides under the root associated with any
+   * @return true if the given file resides under the root associated with any vcs
    */
   public static boolean isFileUnderVcs(Project project, @NotNull @NonNls String file) {
     return getVcsFor(project, getFilePath(file)) != null;
@@ -140,7 +138,8 @@ public class VcsUtil {
   }
 
   @Nullable
-  private static <T> T computeValue(@NotNull Project project, @NotNull java.util.function.Function<? super ProjectLevelVcsManager, ? extends T> provider) {
+  private static <T> T computeValue(@NotNull Project project,
+                                    @NotNull java.util.function.Function<? super ProjectLevelVcsManager, ? extends T> provider) {
     return ReadAction.compute(() -> {
       //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
       //  a future task after the component has been disposed.
@@ -226,8 +225,7 @@ public class VcsUtil {
   /**
    * @deprecated use {@link #getFilePath(String, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull FilePath getFilePathForDeletedFile(@NotNull @NonNls String path, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
   }
@@ -254,8 +252,7 @@ public class VcsUtil {
   /**
    * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void showStatusMessage(@NotNull Project project, @Nullable @Nls String message) {
     SwingUtilities.invokeLater(() -> {
       if (project.isOpen()) {
@@ -265,11 +262,11 @@ public class VcsUtil {
   }
 
   /**
-   * @param change "Change" description.
    * @return Return true if the "Change" object is created for "Rename" operation:
-   *         in this case name of files for "before" and "after" revisions must not
-   *         coincide.
+   * in this case name of files for "before" and "after" revisions must not coincide.
+   * @deprecated See {@link Change#getType()}
    */
+  @Deprecated
   public static boolean isRenameChange(Change change) {
     boolean isRenamed = false;
     ContentRevision before = change.getBeforeRevision();
@@ -283,19 +280,21 @@ public class VcsUtil {
   }
 
   /**
-   * @param change "Change" description.
    * @return Return true if the "Change" object is created for "New" operation:
-   *         "before" revision is obviously NULL, while "after" revision is not.
+   * "before" revision is NULL, while "after" revision is NOT NULL.
+   * @deprecated See {@link Change#getType()}
    */
+  @Deprecated
   public static boolean isChangeForNew(Change change) {
     return change.getBeforeRevision() == null && change.getAfterRevision() != null;
   }
 
   /**
-   * @param change "Change" description.
    * @return Return true if the "Change" object is created for "Delete" operation:
-   *         "before" revision is NOT NULL, while "after" revision is NULL.
+   * "before" revision is NOT NULL, while "after" revision is NULL.
+   * @deprecated See {@link Change#getType()}
    */
+  @Deprecated
   public static boolean isChangeForDeleted(Change change) {
     return change.getBeforeRevision() != null && change.getAfterRevision() == null;
   }
@@ -323,9 +322,8 @@ public class VcsUtil {
   }
 
   /**
-   * @param e ActionEvent object
    * @return {@code VirtualFile} available in the current context.
-   *         Returns not {@code null} if and only if exactly one file is available.
+   * Returns not {@code null} if and only if exactly one file is available.
    */
   @Nullable
   public static VirtualFile getOneVirtualFile(@NotNull AnActionEvent e) {
@@ -334,9 +332,7 @@ public class VcsUtil {
   }
 
   /**
-   * @param e ActionEvent object
    * @return {@code VirtualFile}s available in the current context.
-   *         Returns empty array if there are no available files.
    */
   public static VirtualFile @NotNull [] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -347,8 +343,7 @@ public class VcsUtil {
    * @deprecated Use {@link ProgressManager#runProcessWithProgressSynchronously(ThrowableComputable, String, boolean, Project)}
    * and other run methods from the ProgressManager.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean runVcsProcessWithProgress(@NotNull VcsRunnable runnable,
                                                   @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                   boolean canBeCanceled,
@@ -453,15 +448,6 @@ public class VcsUtil {
            : revision.asString();
   }
 
-  public static VirtualFile[] paths2VFiles(@NonNls String[] paths) {
-    VirtualFile[] files = new VirtualFile[paths.length];
-    for (int i = 0; i < paths.length; i++) {
-      files[i] = getVirtualFile(paths[i]);
-    }
-
-    return files;
-  }
-
   private static final @NonNls String ANNO_ASPECT = "show.vcs.annotation.aspect.";
 
   public static boolean isAspectAvailableByDefault(@Nullable @NonNls String id) {
@@ -475,18 +461,6 @@ public class VcsUtil {
 
   public static void setAspectAvailability(@Nullable @NonNls String aspectID, boolean showByDefault) {
     PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspectID, String.valueOf(showByDefault));
-  }
-
-  public static boolean isPathRemote(@NonNls String path) {
-    final int idx = path.indexOf("://");
-    if (idx == -1) {
-      final int idx2 = path.indexOf(":\\\\");
-      if (idx2 == -1) {
-        return false;
-      }
-      return idx2 > 0;
-    }
-    return idx > 0;
   }
 
   @Nls
@@ -538,10 +512,17 @@ public class VcsUtil {
       }
       else if (FileUtil.pathsEqual(mapping.getDirectory(), newMapping.getDirectory())) {
         if (!StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
-          LOG.warn("Substituting existing mapping [" + mapping.getDirectory() + "] -> [" + mapping.getVcs() + "] with [" + mapping.getVcs() + "]");
+          if (mapping.getVcs().equals(newMapping.getVcs())) {
+            LOG.debug(String.format("Substituting existing mapping with identical [%s] -> [%s]",
+                                    mapping.getDirectory(), mapping.getVcs()));
+          }
+          else {
+            LOG.warn(String.format("Substituting existing mapping [%s] -> [%s] with [%s]",
+                                   mapping.getDirectory(), mapping.getVcs(), newMapping.getVcs()));
+          }
         }
         else {
-          LOG.debug("Removing [" + mapping.getDirectory() + "] -> <None> mapping");
+          LOG.debug(String.format("Removing [%s] -> <None> mapping", mapping.getDirectory()));
         }
         iterator.remove();
       }

@@ -26,9 +26,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("annoationsOnEnumEntry.java")
-        public void testAnnoationsOnEnumEntry() throws Exception {
-            runTest("testData/newJ2k/annotations/annoationsOnEnumEntry.java");
+        @TestMetadata("annotationsOnEnumEntry.java")
+        public void testAnnotationsOnEnumEntry() throws Exception {
+            runTest("testData/newJ2k/annotations/annotationsOnEnumEntry.java");
         }
 
         @TestMetadata("annotationArrayArgument.java")
@@ -79,6 +79,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("annotationsOnAnnotationMethod.java")
         public void testAnnotationsOnAnnotationMethod() throws Exception {
             runTest("testData/newJ2k/annotations/annotationsOnAnnotationMethod.java");
+        }
+
+        @TestMetadata("forLoopParameter.java")
+        public void testForLoopParameter() throws Exception {
+            runTest("testData/newJ2k/annotations/forLoopParameter.java");
         }
 
         @TestMetadata("java9Deprecated.java")
@@ -2708,6 +2713,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/inConstructorCall.java");
         }
 
+        @TestMetadata("ktij-15871.java")
+        public void testKtij_15871() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ktij-15871.java");
+        }
+
         @TestMetadata("ktij-16665.java")
         public void testKtij_16665() throws Exception {
             runTest("testData/newJ2k/implicitCasts/ktij-16665.java");
@@ -4425,6 +4435,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("NotIs.java")
         public void testNotIs() throws Exception {
             runTest("testData/newJ2k/postProcessing/NotIs.java");
+        }
+
+        @TestMetadata("OptimizeImports.java")
+        public void testOptimizeImports() throws Exception {
+            runTest("testData/newJ2k/postProcessing/OptimizeImports.java");
         }
 
         @TestMetadata("RedundantTypeCast.java")

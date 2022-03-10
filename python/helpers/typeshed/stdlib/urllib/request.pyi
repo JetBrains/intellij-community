@@ -4,7 +4,7 @@ from _typeshed import StrOrBytesPath
 from email.message import Message
 from http.client import HTTPMessage, HTTPResponse, _HTTPConnectionProtocol
 from http.cookiejar import CookieJar
-from typing import IO, Any, Callable, ClassVar, Mapping, NoReturn, Pattern, Sequence, Tuple, TypeVar, overload
+from typing import IO, Any, Callable, ClassVar, Mapping, MutableMapping, NoReturn, Pattern, Sequence, TypeVar, overload
 from urllib.error import HTTPError
 from urllib.response import addclosehook, addinfourl
 
@@ -52,7 +52,7 @@ class Request:
     origin_req_host: str
     selector: str
     data: bytes | None
-    headers: dict[str, str]
+    headers: MutableMapping[str, str]
     unredirected_hdrs: dict[str, str]
     unverifiable: bool
     method: str | None
@@ -61,7 +61,7 @@ class Request:
         self,
         url: str,
         data: bytes | None = ...,
-        headers: dict[str, str] = ...,
+        headers: MutableMapping[str, str] = ...,
         origin_req_host: str | None = ...,
         unverifiable: bool = ...,
         method: str | None = ...,
@@ -196,9 +196,9 @@ class HTTPSHandler(AbstractHTTPHandler):
     def https_request(self, request: Request) -> Request: ...  # undocumented
 
 class FileHandler(BaseHandler):
-    names: ClassVar[Tuple[str, ...] | None]  # undocumented
+    names: ClassVar[tuple[str, ...] | None]  # undocumented
     def file_open(self, req: Request) -> addinfourl: ...
-    def get_names(self) -> Tuple[str, ...]: ...  # undocumented
+    def get_names(self) -> tuple[str, ...]: ...  # undocumented
     def open_local_file(self, req: Request) -> addinfourl: ...  # undocumented
 
 class DataHandler(BaseHandler):

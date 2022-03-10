@@ -50,7 +50,7 @@ public abstract class IdeaTestFixtureFactory {
   @Deprecated
   public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
     String message = "Use createLightFixtureBuilder(LightProjectDescriptor, String) instead";
-    Logger.getInstance(IdeaTestFixtureFactory.class).error(new RuntimeException(message));
+    Logger.getInstance(IdeaTestFixtureFactory.class).warn(new RuntimeException(message));
     return createLightFixtureBuilder(projectDescriptor, message);
   }
 

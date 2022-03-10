@@ -1,10 +1,12 @@
 from _typeshed import SupportsWrite
 from reprlib import Repr
 from types import MethodType, ModuleType, TracebackType
-from typing import IO, Any, AnyStr, Callable, Container, Mapping, MutableMapping, NoReturn, Optional, Tuple, Type
+from typing import IO, Any, AnyStr, Callable, Container, Mapping, MutableMapping, NoReturn, TypeVar
 
 # the return type of sys.exc_info(), used by ErrorDuringImport.__init__
-_Exc_Info = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]]
+_Exc_Info = tuple[type[BaseException] | None, BaseException | None, TracebackType | None]
+
+_T = TypeVar("_T")
 
 __author__: str
 __date__: str
@@ -28,7 +30,7 @@ def synopsis(filename: str, cache: MutableMapping[str, tuple[int, str]] = ...) -
 
 class ErrorDuringImport(Exception):
     filename: str
-    exc: Type[BaseException] | None
+    exc: type[BaseException] | None
     value: BaseException | None
     tb: TracebackType | None
     def __init__(self, filename: str, exc_info: _Exc_Info) -> None: ...
@@ -81,7 +83,7 @@ class HTMLDoc(Doc):
     ) -> str: ...
     def bigsection(self, title: str, *args: Any) -> str: ...
     def preformat(self, text: str) -> str: ...
-    def multicolumn(self, list: list[Any], format: Callable[[Any], str], cols: int = ...) -> str: ...
+    def multicolumn(self, list: list[_T], format: Callable[[_T], str], cols: int = ...) -> str: ...
     def grey(self, text: str) -> str: ...
     def namelink(self, name: str, *dicts: MutableMapping[str, str]) -> str: ...
     def classlink(self, object: object, modname: str) -> str: ...
@@ -96,7 +98,7 @@ class HTMLDoc(Doc):
         methods: Mapping[str, str] = ...,
     ) -> str: ...
     def formattree(
-        self, tree: list[tuple[type, Tuple[type, ...]] | list[Any]], modname: str, parent: type | None = ...
+        self, tree: list[tuple[type, tuple[type, ...]] | list[Any]], modname: str, parent: type | None = ...
     ) -> str: ...
     def docmodule(self, object: object, name: str | None = ..., mod: str | None = ..., *ignored: Any) -> str: ...
     def docclass(
@@ -143,7 +145,7 @@ class TextDoc(Doc):
     def indent(self, text: str, prefix: str = ...) -> str: ...
     def section(self, title: str, contents: str) -> str: ...
     def formattree(
-        self, tree: list[tuple[type, Tuple[type, ...]] | list[Any]], modname: str, parent: type | None = ..., prefix: str = ...
+        self, tree: list[tuple[type, tuple[type, ...]] | list[Any]], modname: str, parent: type | None = ..., prefix: str = ...
     ) -> str: ...
     def docmodule(self, object: object, name: str | None = ..., mod: Any | None = ...) -> str: ...  # type: ignore[override]
     def docclass(self, object: object, name: str | None = ..., mod: str | None = ..., *ignored: Any) -> str: ...
@@ -187,7 +189,7 @@ _list = list  # "list" conflicts with method name
 class Helper:
     keywords: dict[str, str | tuple[str, str]]
     symbols: dict[str, str]
-    topics: dict[str, str | Tuple[str, ...]]
+    topics: dict[str, str | tuple[str, ...]]
     def __init__(self, input: IO[str] | None = ..., output: IO[str] | None = ...) -> None: ...
     input: IO[str]
     output: IO[str]
@@ -206,21 +208,12 @@ class Helper:
 
 help: Helper
 
-# See Python issue #11182: "remove the unused and undocumented pydoc.Scanner class"
-# class Scanner:
-#     roots = ...  # type: Any
-#     state = ...  # type: Any
-#     children = ...  # type: Any
-#     descendp = ...  # type: Any
-#     def __init__(self, roots, children, descendp) -> None: ...
-#     def next(self): ...
-
 class ModuleScanner:
     quit: bool
     def run(
         self,
         callback: Callable[[str | None, str, str], None],
-        key: Any | None = ...,
+        key: str | None = ...,
         completer: Callable[[], None] | None = ...,
         onerror: Callable[[str], None] | None = ...,
     ) -> None: ...

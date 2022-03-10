@@ -1,6 +1,6 @@
 import http.client
 from collections.abc import Generator
-from typing import Any, Dict, TypeVar
+from typing import Any, TypeVar
 
 from .error import *
 
@@ -175,7 +175,7 @@ class Http:
         connection_type: Any | None = ...,
     ): ...
 
-class Response(Dict[str, Any]):
+class Response(dict[str, Any]):
     fromcache: bool
     version: int
     status: int

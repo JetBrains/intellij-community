@@ -91,8 +91,7 @@ private val cdSeparateMainMenu
   get() = CheckboxDescriptor(message("checkbox.main.menu.separate.toolbar"), settings::separateMainMenu, groupName = uiOptionGroupName)
 
 private val cdUseTransparentMode
-  get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"),
-                             PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
+  get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
 private val cdOverrideLaFFont get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
 private val cdUseContrastToolbars
   get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
@@ -163,7 +162,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .bind(
             { it.fontName },
             { it, value -> it.fontName = value },
-            PropertyBinding({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+            MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
                             { settings.fontFace = it })
           )
           .shouldUpdateLaF()
@@ -182,17 +181,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("title.accessibility")) {
         row {
           val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
-          checkBox(message("checkbox.support.screen.readers"))
-            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
-            .comment(if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS) else null)
-            .enabled(!isOverridden)
-
-          comment(message("support.screen.readers.comment"))
-
           val mask = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.CTRL_MASK
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask + InputEvent.SHIFT_MASK))
-          rowComment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
+          checkBox(message("checkbox.support.screen.readers"))
+            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
+            .comment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
+            .enabled(!isOverridden)
+
+          comment(if (isOverridden) message("overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
+                  else message("support.screen.readers.comment"))
         }
 
         row {
@@ -201,7 +199,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
         if (supportedValues.isNotEmpty()) {
-          val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
+          val colorBlindnessProperty = MutableProperty({ settings.colorBlindness }, { settings.colorBlindness = it })
           val onApply = {
             // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
             ApplicationManager.getApplication().invokeLater(Runnable {
@@ -216,19 +214,19 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .comment(UIBundle.message("color.blindness.checkbox.comment"))
                 .bind({ if (it.isSelected) supportedValues.first() else null },
                       { it, value -> it.isSelected = value != null },
-                      modelBinding)
+                      colorBlindnessProperty)
                 .onApply(onApply)
             }
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
-                .applyToComponent { isSelected = modelBinding.get() != null }
+                .applyToComponent { isSelected = colorBlindnessProperty.get() != null }
               comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .bind({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                       { it, value -> it.selectedItem = value ?: supportedValues.first() },
-                      modelBinding)
+                      colorBlindnessProperty)
                 .onApply(onApply)
                 .accessibleName(UIBundle.message("color.blindness.checkbox.text"))
             }
@@ -329,7 +327,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 AntialiasingType.values()
             comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
               .label(message("label.text.antialiasing.scope.ide"))
-              .bindItem(settings::ideAAType)
+              .bindItem(settings::ideAAType.toNullableProperty())
               .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.ide"))
               .onApply {
@@ -348,7 +346,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 AntialiasingType.values()
             comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
               .label(message("label.text.antialiasing.scope.editor"))
-              .bindItem(settings::editorAAType)
+              .bindItem(settings::editorAAType.toNullableProperty())
               .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.editor"))
           }
@@ -401,26 +399,37 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
 }
 
-internal fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
+private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
+  return fontSizeComboBox(MutableProperty({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
+}
+
+private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
-  val modelBinding: PropertyBinding<String?> = PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) })
   return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
       renderer = SimpleListCellRenderer.create("") { it.toString() }
-      selectedItem = modelBinding.get()
+      selectedItem = prop.get()
     }
     .bind(
       { component -> component.editor.item as String? },
       { component, value -> component.setSelectedItem(value) },
-      modelBinding
+      prop
     )
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {
   if (text != null && text.isNotBlank()) {
     val value = text.toIntOrNull()
+    if (value != null && value > 0) return value
+  }
+  return defaultValue
+}
+
+private fun getFloatValue(text: String?, defaultValue: Float): Float {
+  if (text != null && text.isNotBlank()) {
+    val value = text.toFloatOrNull()
     if (value != null && value > 0) return value
   }
   return defaultValue

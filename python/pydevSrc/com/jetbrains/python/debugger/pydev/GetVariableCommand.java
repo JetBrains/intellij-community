@@ -29,13 +29,14 @@ public class GetVariableCommand extends GetFrameCommand {
     PyDebugValue p = var;
 
     while (p != null) {
-      if (sb.length() > 0 ) {
+      if (sb.length() > 0) {
         sb.insert(0, '\t');
       }
       if (p.getId() != null) {
         sb.insert(0, BY_ID).insert(0, '\t').insert(0, p.getId());
         break;
-      } else {
+      }
+      else {
         final String tempName = p.getTempName();
         if (tempName != null) {
           sb.insert(0, tempName.replaceAll("\t", TAB_CHAR));

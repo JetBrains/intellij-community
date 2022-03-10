@@ -45,7 +45,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
       showWarningIfRunConfigurationsHidden()
 
       task {
-        triggerByUiComponentAndHighlight<JButton> { ui ->
+        triggerAndFullHighlight().component { ui: JButton ->
           ui.text == demoConfigurationName
         }
       }
@@ -54,7 +54,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         .dropMnemonic()
       task {
         text(LessonsBundle.message("run.configuration.temporary.to.permanent"))
-        triggerByListItemAndHighlight { item ->
+        triggerAndBorderHighlight().listItem { item ->
           item.toString() == saveConfigurationItemName
         }
         test {
@@ -83,7 +83,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         text(LessonsBundle.message("run.configuration.edit.configuration",
                                    strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic()),
                                    action(it)))
-        triggerByUiComponentAndHighlight<JBCheckBox>(highlightInside = false) { ui ->
+        triggerAndBorderHighlight().component { ui: JBCheckBox ->
           ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
         }
         test {

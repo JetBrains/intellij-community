@@ -86,6 +86,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -127,12 +128,12 @@ public class MavenUtil {
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
   protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
 
-
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
+
   public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
@@ -213,9 +214,9 @@ public class MavenUtil {
 
   @TestOnly
   public static List<Runnable> getUncompletedRunnables() {
-    List<Runnable> result = new ArrayList<>();
+    List<Runnable> result;
     synchronized (runnables) {
-      result.addAll(runnables);
+      result = new ArrayList<>(runnables);
     }
     return result;
   }
@@ -281,22 +282,21 @@ public class MavenUtil {
   }
 
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
-
-    if (project.isDisposed()) return;
+    if (project.isDisposed()) {
+      return;
+    }
 
     if (isNoBackgroundMode()) {
       startTestRunnable(runnable);
       runAndFinishTestRunnable(runnable);
-      return;
     }
-
-    if (!project.isInitialized()) {
+    else if (project.isInitialized()) {
+      runDumbAware(project, runnable);
+    }
+    else {
       startTestRunnable(runnable);
       StartupManager.getInstance(project).runAfterOpened(() -> runAndFinishTestRunnable(runnable));
-      return;
     }
-
-    runDumbAware(project, runnable);
   }
 
   public static boolean isNoBackgroundMode() {
@@ -937,13 +937,18 @@ public class MavenUtil {
       return null;
     }
     String[] artifactPath = id.getGroupId().split("\\.");
-    for (String path : artifactPath) {
-      localRepository = localRepository.resolve(path);
+    try {
+      for (String path : artifactPath) {
+        localRepository = localRepository.resolve(path);
+      }
+      return localRepository
+        .resolve(id.getArtifactId())
+        .resolve(id.getVersion())
+        .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
     }
-    return localRepository
-      .resolve(id.getArtifactId())
-      .resolve(id.getVersion())
-      .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
+    catch (InvalidPathException e) {
+      return null;
+    }
   }
 
   @Nullable
@@ -1573,13 +1578,15 @@ public class MavenUtil {
   public static Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+    MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
+    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
     try {
-      MavenEmbedderWrapper mavenEmbedderWrapper = projectsManager.getEmbeddersManager()
-        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
-      Set<MavenRemoteRepository> resolvedRepositories = mavenEmbedderWrapper.resolveRepositories(repositories);
+      Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
       return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
     } catch (Exception e) {
       MavenLog.LOG.warn("resolve remote repo error", e);
+    } finally {
+      embeddersManager.release(embedderWrapper);
     }
     return repositories;
   }

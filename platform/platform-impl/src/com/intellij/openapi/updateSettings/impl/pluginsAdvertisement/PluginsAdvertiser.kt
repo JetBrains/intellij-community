@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -33,7 +34,7 @@ var isIgnoreIdeSuggestion: Boolean
   set(value) = propertiesComponent.setValue(IGNORE_ULTIMATE_EDITION, value)
 
 @JvmField
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use `notificationGroup` property")
 val NOTIFICATION_GROUP = notificationGroup
 
@@ -56,22 +57,23 @@ fun installAndEnablePlugins(
 fun installAndEnable(
   pluginIds: Set<PluginId>,
   onSuccess: Runnable,
-) = installAndEnable(null, pluginIds, true, false, onSuccess)
+) = installAndEnable(null, pluginIds, true, false, null, onSuccess)
 
+@JvmOverloads
 fun installAndEnable(
   project: Project?,
   pluginIds: Set<PluginId>,
   showDialog: Boolean = false,
+  selectAlInDialog: Boolean = false,
+  modalityState: ModalityState? = null,
   onSuccess: Runnable,
-) = installAndEnable(project, pluginIds, showDialog, false, onSuccess)
+) {
+  require(!showDialog || modalityState == null) {
+    "`modalityState` can be not null only if plugin installation won't show the dialog"
+  }
+  ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess))
+}
 
-fun installAndEnable(
-  project: Project?,
-  pluginIds: Set<PluginId>,
-  showDialog: Boolean = false,
-  selectAlInDialog: Boolean,
-  onSuccess: Runnable,
-) = ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, onSuccess))
 
 internal fun getBundledPluginToInstall(plugins: Collection<PluginData>): List<String> {
   return if (isIdeaUltimate()) {

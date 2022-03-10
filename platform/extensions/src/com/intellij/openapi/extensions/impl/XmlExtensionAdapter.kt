@@ -4,7 +4,7 @@ package com.intellij.openapi.extensions.impl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializer
 import java.util.*
 
@@ -28,8 +28,7 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
 
   override fun <T : Any> createInstance(componentManager: ComponentManager): T? {
     @Suppress("UNCHECKED_CAST")
-    val instance = extensionInstance as T?
-    return if (instance == null) doCreateInstance(componentManager) else instance.takeIf { it !== NOT_APPLICABLE }
+    return (extensionInstance as T?)?.takeIf { it !== NOT_APPLICABLE } ?: doCreateInstance(componentManager)
   }
 
   @Synchronized

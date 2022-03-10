@@ -113,7 +113,7 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
-    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP) {
+    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP && value.type != ValueType.NULL) {
       setObjectPresentation(value as ObjectValue, icon, node)
       return
     }

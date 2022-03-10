@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
+@Suppress("DEPRECATION")
 @VisibleForTesting
 class PsiElementDocumentationTarget private constructor(
   val targetElement: PsiElement,
@@ -32,7 +33,15 @@ class PsiElementDocumentationTarget private constructor(
     project: Project,
     targetElement: PsiElement,
   ) : this(
-    project, targetElement, sourceElement = null, anchor = null
+    project, targetElement, sourceElement = null
+  )
+
+  internal constructor(
+    project: Project,
+    targetElement: PsiElement,
+    sourceElement: PsiElement?,
+  ) : this(
+    project, targetElement, sourceElement, anchor = null
   )
 
   internal constructor(

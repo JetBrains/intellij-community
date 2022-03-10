@@ -4,7 +4,6 @@ package com.intellij.util;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +44,7 @@ public final class ResourceUtil {
   /**
    * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static URL getResource(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
@@ -141,8 +139,7 @@ public final class ResourceUtil {
   /**
    * @deprecated Use {@link #loadText(InputStream)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull String loadText(@NotNull URL url) throws IOException {
     return loadText(URLUtil.openStream(url));
   }

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enab
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
@@ -23,6 +24,7 @@ import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
@@ -41,6 +43,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
 import org.assertj.swing.timing.Timeout
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
@@ -57,8 +60,7 @@ import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import javax.swing.JList
-import javax.swing.KeyStroke
+import javax.swing.*
 
 object LessonUtil {
   val productName: String get() {
@@ -175,6 +177,26 @@ object LessonUtil {
   fun TaskRuntimeContext.sampleRestoreNotification(@Nls message: String, sample: LessonSample) =
     TaskContext.RestoreNotification(message) { setSample(sample) }
 
+  fun TaskRuntimeContext.checkEditorModification(sample: LessonSample,
+                                                 modificationPositionId: Int,
+                                                 needChange: String): Boolean {
+    val startOfChange = sample.getPosition(modificationPositionId).startOffset
+    val sampleText = sample.text
+    val prefix = sampleText.substring(0, startOfChange)
+    val suffix = sampleText.substring(startOfChange, sampleText.length)
+    val current = editor.document.text
+
+    if (!current.startsWith(prefix)) return false
+    if (!current.endsWith(suffix)) return false
+
+    val indexOfSuffix = current.indexOf(suffix)
+    if (indexOfSuffix < startOfChange) return false
+
+    val change = current.substring(startOfChange, indexOfSuffix)
+
+    return change.replace(" ", "") == needChange
+  }
+
   fun findItem(ui: JList<*>, checkList: (item: Any) -> Boolean): Int? {
     for (i in 0 until ui.model.size) {
       val elementAt = ui.model.getElementAt(i)
@@ -233,7 +255,7 @@ object LessonUtil {
 
   ) {
     task {
-      triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
         val range = xRange(ui.width)
@@ -300,6 +322,38 @@ object LessonUtil {
     return true
   }
 
+  fun TaskRuntimeContext.adjustSearchEverywherePosition(popupWindow: JWindow, leftBorderText: String): Boolean {
+    val indexOf = 4 + (editor.document.charsSequence.indexOf(leftBorderText).takeIf { it > 0 } ?: return false)
+    val endOfEditorText = editor.offsetToXY(indexOf)
+
+    val locationOnScreen = editor.contentComponent.locationOnScreen
+
+    val leftBorder = Point(locationOnScreen.x + endOfEditorText.x, locationOnScreen.y + endOfEditorText.y)
+    val screenRectangle = ScreenUtil.getScreenRectangle(leftBorder)
+
+
+    val learningToolWindow = learningToolWindow(project) ?: return false
+    if (learningToolWindow.anchor != ToolWindowAnchor.LEFT) return false
+
+    val popupBounds = popupWindow.bounds
+
+    if (popupBounds.x > leftBorder.x) return false // ok, no intersection
+
+    val rightScreenBorder = screenRectangle.x + screenRectangle.width
+    if (leftBorder.x + popupBounds.width > rightScreenBorder) {
+      val mainWindow = UIUtil.getParentOfType(IdeFrameImpl::class.java, editor.contentComponent) ?: return false
+      val offsetFromBorder = leftBorder.x - mainWindow.x
+      val needToShiftWindowX = rightScreenBorder - offsetFromBorder - popupBounds.width
+      if (needToShiftWindowX < screenRectangle.x) return false // cannot shift the window back
+      mainWindow.location = Point(needToShiftWindowX, mainWindow.location.y)
+      popupWindow.location = Point(needToShiftWindowX + offsetFromBorder, popupBounds.y)
+    }
+    else {
+      popupWindow.location = Point(leftBorder.x, popupBounds.y)
+    }
+    return true
+  }
+
   inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
     if (start is T && predicate(start)) return start
     var ui: Container? = start.parent
@@ -338,12 +392,32 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
+fun LessonContext.highlightRunToolbar() {
+  task {
+    val stopAction = getActionById("Stop")
+    triggerAndFullHighlight { usePulsation = true }.componentPart { ui: ActionToolbarImpl ->
+      ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
+        val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
+        val stop = ui.components.find { it is ActionButton && it.action == stopAction }
+        if (configurations != null && stop != null) {
+          val x = configurations.x
+          val y = configurations.y
+          val width = stop.x + stop.width - x
+          val height = stop.y + stop.height - y
+          Rectangle(x, y, width, height)
+        }
+        else null
+      }
+    }
+  }
+}
+
 fun LessonContext.highlightDebugActionsToolbar() {
   task {
-    before {
-      LearningUiHighlightingManager.clearHighlights()
-    }
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", clearPreviousHighlights = false)
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume")
+  }
+
+  task {
     if (!Registry.`is`("debugger.new.tool.window.layout")) {
       highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
     }
@@ -352,7 +426,10 @@ fun LessonContext.highlightDebugActionsToolbar() {
 
 private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
-  triggerByUiComponentAndHighlight(usePulsation = true, clearPreviousHighlights = clearPreviousHighlights) { ui: ActionToolbarImpl ->
+  triggerAndFullHighlight {
+    usePulsation = true
+    this.clearPreviousHighlights = clearPreviousHighlights
+  }.component { ui: ActionToolbarImpl ->
     if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
     }
@@ -503,34 +580,38 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
   }
 }
 
-fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true): CompletableFuture<Boolean> {
-  val feature: CompletableFuture<Boolean> = CompletableFuture()
+fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true) {
   val needToFindButton = getActionById(actionId)
-  prepareRuntimeTask {
-    if (clearHighlights) {
-      LearningUiHighlightingManager.clearHighlights()
-    }
-    invokeInBackground {
-      val result = try {
-        LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
-          ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
+
+  task {
+    val feature: CompletableFuture<Boolean> = CompletableFuture()
+    transparentRestore = true
+    before {
+      if (clearHighlights) {
+        LearningUiHighlightingManager.clearHighlights()
+      }
+      invokeInBackground {
+        val result = try {
+          LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
+            ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
+          }
+        }
+        catch (e: Throwable) {
+          // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+          feature.complete(false)
+          throw IllegalStateException("Cannot find button for $actionId", e)
+        }
+        taskInvokeLater {
+          feature.complete(result.isNotEmpty())
+          for (button in result) {
+            val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
+            LearningUiHighlightingManager.highlightComponent(button, options)
+          }
         }
       }
-      catch (e: Throwable) {
-        // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
-        feature.complete(false)
-        throw IllegalStateException("Cannot find button for $actionId", e)
-      }
-      taskInvokeLater {
-        feature.complete(result.isNotEmpty())
-        for (button in result) {
-          val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
-          LearningUiHighlightingManager.highlightComponent(button, options)
-        }
-      }
     }
+    addStep(feature)
   }
-  return feature
 }
 
 inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi(
@@ -574,9 +655,21 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
 
 fun TaskContext.triggerOnQuickDocumentationPopup() {
   if (isDocumentationV2Enabled()) {
-    triggerByUiComponentAndHighlight(false, false) { _: DocumentationEditorPane -> true }
+    triggerUI().component { _: DocumentationEditorPane -> true }
   }
   else {
-    triggerByUiComponentAndHighlight(false, false) { _: DocumentationComponent -> true }
+    triggerUI().component { _: DocumentationComponent -> true }
   }
+}
+
+fun TaskContext.showBalloonOnHighlightingComponent(@Language("HTML") @Nls message: String,
+                                                   position: Balloon.Position = Balloon.Position.below,
+                                                   chooser: (List<JComponent>) -> JComponent? = { it.firstOrNull() }) {
+  val highlightingComponent = chooser(LearningUiHighlightingManager.highlightingComponents.filterIsInstance<JComponent>())
+  val useBalloon = LearningBalloonConfig(
+    side = position,
+    width = 0,
+    highlightingComponent = highlightingComponent,
+    duplicateMessage = false)
+  text(message, useBalloon)
 }

@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -133,6 +130,13 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   @Override
   public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
     return myAttrGetter.apply(file);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull FileAttributes getArchiveRootAttributes(@NotNull VirtualFile file) {
+    // Hack for handler initialization to have a caching e.g. JarFileSystemImpl.getHandler
+    getHandler(file);
+    return ArchiveHandler.DIRECTORY_ATTRIBUTES;
   }
 
   private final Function<VirtualFile, String[]> myChildrenGetter =

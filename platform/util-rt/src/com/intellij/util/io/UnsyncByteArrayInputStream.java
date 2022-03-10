@@ -21,9 +21,9 @@ import java.io.InputStream;
 
 @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
 public class UnsyncByteArrayInputStream extends InputStream {
-  protected byte[] myBuffer;
+  protected final byte[] myBuffer;
   private int myPosition;
-  private int myCount;
+  private final int myCount;
   private int myMarkedPosition;
 
   public UnsyncByteArrayInputStream(@NotNull byte[] buf) {
@@ -31,10 +31,6 @@ public class UnsyncByteArrayInputStream extends InputStream {
   }
 
   public UnsyncByteArrayInputStream(@NotNull byte[] buf, int offset, int length) {
-    init(buf, offset, length);
-  }
-
-  public void init(@NotNull byte[] buf, int offset, int length) {
     myBuffer = buf;
     myPosition = offset;
     myCount = length;
@@ -94,5 +90,10 @@ public class UnsyncByteArrayInputStream extends InputStream {
   @Override
   public void reset() {
     myPosition = myMarkedPosition;
+  }
+
+  @Override
+  public String toString() {
+    return getClass() + " (" + available() + " bytes available out of " + myCount + ")";
   }
 }

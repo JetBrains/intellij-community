@@ -124,7 +124,7 @@ internal class GitVcsPanel(private val project: Project) :
         .bind<List<String>>(
           { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
           { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
-          PropertyBinding(
+          MutableProperty(
             { sharedSettings.forcePushProhibitedPatterns },
             { sharedSettings.forcePushProhibitedPatterns = it })
         )

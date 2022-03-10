@@ -22,13 +22,12 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.version
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
@@ -150,10 +149,8 @@ private fun <T : BinaryVersion> getLibraryRootsWithAbiIncompatibleVersion(
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
 
-fun hasKotlinJsKjsmFile(project: Project, scope: GlobalSearchScope): Boolean {
-    return project.runReadActionInSmartMode {
-        KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)
-    }
+fun hasKotlinJsKjsmFile(scope: GlobalSearchScope): Boolean = runReadAction {
+    KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)
 }
 
 fun getStdlibArtifactId(sdk: Sdk?, version: String): String {

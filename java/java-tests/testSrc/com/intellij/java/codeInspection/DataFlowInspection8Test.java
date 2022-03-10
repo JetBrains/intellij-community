@@ -206,6 +206,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
     doTest();
   }
+  public void testStreamFindFirstExpectNotNull() { doTest(); }
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
@@ -354,9 +355,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
   public void testArrayIntersectionType() { doTest(); }
   public void testFunctionType() { doTest(); }
+  public void testIteratorHasNextModifiesPrivateField() { doTest(); }
   public void testJsr305TypeUseNoLocal() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testConstructorMethodReferenceNullability() { doTest(); }
 }

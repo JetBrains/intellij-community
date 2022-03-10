@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.AFTER_PROPERTY_CHANGE
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
@@ -61,6 +62,7 @@ fun Row.groovySdkComboBox(context: WizardContext, property: ObservableMutablePro
   })
   return cell(comboBox)
     .applyToComponent { bindSelectedDistribution(property) }
+    .validationRequestor(AFTER_PROPERTY_CHANGE(property))
     .validationOnInput { validateGroovySdk(property.get()) }
     .validationOnApply { validateGroovySdkWithDialog(property.get()) }
     .columns(COLUMNS_MEDIUM)
@@ -140,17 +142,4 @@ fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkL
 class FrameworkLibraryDistributionInfo(val version: FrameworkLibraryVersion) : AbstractDistributionInfo() {
   override val name: String = version.versionString
   override val description: String? = null
-}
-
-fun logGroovySdkSelected(context: WizardContext, distribution: DistributionInfo?) {
-  val (distributionType, version) = when (distribution) {
-    is FrameworkLibraryDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.MAVEN to distribution.version.versionString
-    is LocalDistributionInfo -> GroovyNewProjectWizardUsageCollector.DistributionType.LOCAL to GroovyConfigUtils.getInstance().getSDKVersionOrNull(
-      distribution.path)
-    else -> return
-  }
-  if (version == null) {
-    return
-  }
-  GroovyNewProjectWizardUsageCollector.logGroovyLibrarySelected(context, distributionType, version)
 }

@@ -12,9 +12,10 @@ import java.nio.file.Path
 import java.util.function.BiPredicate
 
 /**
- * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
- * distribution of your product.
+ * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
+ * Refer to e.g. {@link PyCharmCommunityInstallersBuildTarget}
  */
+@SuppressWarnings('GroovyDocCheck')
 @CompileStatic
 abstract class ProductProperties {
   /**

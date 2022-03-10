@@ -14,16 +14,13 @@ open class GHPullRequestReviewCommentWithPendingReview(id: String,
                                                        body: String,
                                                        createdAt: Date,
                                                        state: GHPullRequestReviewCommentState,
-                                                       path: String,
                                                        commit: GHCommitHash?,
-                                                       position: Int?,
                                                        originalCommit: GHCommitHash?,
-                                                       originalPosition: Int,
                                                        replyTo: GHNode?,
                                                        diffHunk: String,
                                                        @JsonProperty("pullRequestReview") val pullRequestReview: GHPullRequestPendingReview,
                                                        viewerCanDelete: Boolean,
                                                        viewerCanUpdate: Boolean)
-  : GHPullRequestReviewComment(id, databaseId, url, author, body, createdAt, state, path, commit, position, originalCommit,
-                               originalPosition, replyTo, diffHunk, pullRequestReview, viewerCanDelete, viewerCanUpdate) {
+  : GHPullRequestReviewComment(id, databaseId, url, author, body, createdAt, state, commit, originalCommit,
+                               replyTo, diffHunk, pullRequestReview, viewerCanDelete, viewerCanUpdate) {
 }

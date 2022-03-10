@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
@@ -28,7 +27,6 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -50,7 +49,7 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   private final Map<StubIndexKey<?, ?>, CachedValue<Map<KeyAndFileId<?>, StubIdList>>> myCachedStubIds = FactoryMap.createMap(k -> {
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> index = getStubUpdatingIndex();
+    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getStubUpdatingIndex();
     ModificationTracker tracker = index::getModificationStamp;
     return new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(new ConcurrentHashMap<>(), tracker));
   }, ConcurrentHashMap::new);
@@ -76,7 +75,7 @@ public abstract class StubIndexEx extends StubIndex {
                    " new  = " + Arrays.toString(newKeys.toArray()) +
                    " updated_id = " + System.identityHashCode(newKeys));
         }
-        final UpdatableIndex<K, Void, FileContent> index = getIndex(stubIndexKey);
+        final UpdatableIndex<K, Void, FileContent, ?> index = getIndex(stubIndexKey);
         if (index == null) return;
         index.updateWithMap(new AbstractUpdateData<>(fileId) {
           @Override
@@ -135,16 +134,16 @@ public abstract class StubIndexEx extends StubIndex {
         throw new AssertionError("raw index data access is not available for StubIndex");
       }
     }
-
-    PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) ->
-      myStubProcessingHelper.processStubsInFile(project, file, list, processor, scope, requiredClass);
+    Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
+    PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
+      project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
 
     if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : GlobalSearchScope.everythingScope(project),
                                                      file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
       return false;
     }
 
-    Iterator<VirtualFile> singleFileInScope = extractSingleFile(scope);
+    Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
     Iterator<VirtualFile> fileStream;
     boolean shouldHaveKeys;
 
@@ -225,7 +224,7 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  protected abstract <Key> UpdatableIndex<Key, Void, FileContent> getIndex(@NotNull StubIndexKey<Key, ?> indexKey);
+  protected abstract <Key> UpdatableIndex<Key, Void, FileContent, ?> getIndex(@NotNull StubIndexKey<Key, ?> indexKey);
 
   // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
   // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost
@@ -266,7 +265,7 @@ public abstract class StubIndexEx extends StubIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
-    final UpdatableIndex<K, Void, FileContent> index = getIndex(indexKey); // wait for initialization to finish
+    final UpdatableIndex<K, Void, FileContent, ?> index = getIndex(indexKey); // wait for initialization to finish
     FileBasedIndexEx fileBasedIndexEx = (FileBasedIndexEx)FileBasedIndex.getInstance();
     if (index == null ||
         !fileBasedIndexEx.ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope, null)) {
@@ -328,8 +327,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                                          @NotNull Project project,
                                                                          @NotNull GlobalSearchScope scope) {
     IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
-    return fileSet.stream().filter(scope::contains).iterator();
+    return FileBasedIndexEx.createLazyFileIterator(result, scope);
   }
 
   @Override
@@ -348,14 +346,14 @@ public abstract class StubIndexEx extends StubIndex {
                                                   final @Nullable GlobalSearchScope scope) {
     final FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
-    final UpdatableIndex<Key, Void, FileContent> index = getIndex(indexKey);   // wait for initialization to finish
+    final UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return null;
 
     IdFilter finalIdFilter = idFilter != null
                              ? idFilter
                              : ((FileBasedIndexEx)FileBasedIndex.getInstance()).extractIdFilter(scope, project);
 
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
+    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
 
     try {
       IntSet result = new IntLinkedOpenHashSet(); // workaround duplicates keys
@@ -461,26 +459,8 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @ApiStatus.Internal
-  static UpdatableIndex<Integer, SerializedStubTree, FileContent> getStubUpdatingIndex() {
+  static UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> getStubUpdatingIndex() {
     return ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
-  }
-
-  @SuppressWarnings("unchecked")
-  private static @Nullable Iterator<VirtualFile> extractSingleFile(@Nullable GlobalSearchScope scope) {
-    if (!(scope instanceof Iterable)) {
-      return null;
-    }
-    Iterable<VirtualFile> scopeAsFileIterable = (Iterable<VirtualFile>)scope;
-    Iterator<VirtualFile> result = null;
-    for (VirtualFile file : scopeAsFileIterable) {
-      if (result == null) {
-        result = file != null ? ObjectIterators.singleton(file) : ObjectIterators.emptyIterator();
-      }
-      else {
-        return null;
-      }
-    }
-    return result;
   }
 
   private static final class KeyAndFileId<K> {

@@ -3,7 +3,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 /** @deprecated override {@link ApplicationStarter} instead */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@Deprecated(forRemoval = true)
 public abstract class ApplicationStarterEx implements ApplicationStarter {
   @NotNull
   @Override
@@ -25,8 +23,7 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
   /**
    * @deprecated use async version {@link #processExternalCommandLineAsync}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void processExternalCommandLine(String @NotNull [] args, @Nullable String currentDirectory) {
     throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLine()`");
   }

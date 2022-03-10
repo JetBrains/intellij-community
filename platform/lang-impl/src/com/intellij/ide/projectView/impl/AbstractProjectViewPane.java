@@ -100,8 +100,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   /**
    * @deprecated use {@link #EP} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = new ExtensionPointName<>("com.intellij.projectViewPane");
 
   protected final @NotNull Project myProject;
@@ -189,8 +188,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected final void fireTreeChangeListener() {
   }
 
@@ -298,6 +296,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     else if (element instanceof PsiElement) {
       AsyncProjectViewSupport support = getAsyncSupport();
       if (support != null) support.updateByElement((PsiElement)element, updateStructure);
+    }
+    else if (element instanceof TreePath) {
+      AsyncProjectViewSupport support = getAsyncSupport();
+      if (support != null) support.update((TreePath)element, updateStructure);
     }
   }
 
@@ -1163,9 +1165,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    * @deprecated temporary API
    */
   @TestOnly
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public Promise<TreePath> promisePathToElement(@NotNull Object element) {
     AbstractTreeBuilder builder = getTreeBuilder();
     if (builder != null) {

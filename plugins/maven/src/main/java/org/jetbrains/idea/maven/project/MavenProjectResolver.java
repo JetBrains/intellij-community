@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.notification.Notification;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
@@ -29,7 +28,6 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
@@ -62,10 +60,10 @@ public class MavenProjectResolver {
                       @NotNull MavenConsole console,
                       @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MultiMap<File, MavenProject> projectMultiMap = groupByBasedir(mavenProjects);
+    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(mavenProjects);
 
-    for (Map.Entry<File, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
-      String baseDir = entry.getKey().getPath();
+    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
+      String baseDir = entry.getKey().toString();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir, baseDir);
       try {
         Properties userProperties = new Properties();
@@ -75,7 +73,9 @@ public class MavenProjectResolver {
             mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
           }
         }
-        embedder.customizeForResolve(myTree.getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots(), userProperties);
+        boolean updateSnapshots = MavenProjectsManager.getInstance(project).getForceUpdateSnapshots();
+        updateSnapshots = updateSnapshots ? updateSnapshots : generalSettings.isAlwaysUpdateSnapshots();
+        embedder.customizeForResolve(myTree.getWorkspaceMap(), console, process, updateSnapshots, userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
       catch (Throwable t) {
@@ -94,7 +94,6 @@ public class MavenProjectResolver {
 
       MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
-    if (myTree != null) myTree.resolutionCompleted();
   }
 
 
@@ -133,11 +132,10 @@ public class MavenProjectResolver {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project)
       .resolveProject(generalSettings, embedder, files, explicitProfiles, myTree.getProjectLocator());
 
-    MavenResolveResultProcessor.ResolveProblem problem = MavenResolveResultProcessor.getProblem(results);
-    if (!problem.isEmpty()) {
-      MavenResolveResultProcessor.notifySyncForProblem(project, problem);
-    }
-    context.putUserData(UNRESOLVED_ARTIFACTS, problem.unresolvedArtifacts);
+    MavenResolveResultProblemProcessor.MavenResolveProblemHolder problems = MavenResolveResultProblemProcessor.getProblems(results);
+    MavenResolveResultProblemProcessor.notifySyncForProblem(project, problems);
+
+    context.putUserData(UNRESOLVED_ARTIFACTS, problems.unresolvedArtifacts);
 
     for (MavenProjectReaderResult result : results) {
       MavenProject mavenProjectCandidate = null;
@@ -156,6 +154,7 @@ public class MavenProjectResolver {
 
       MavenProjectChanges changes = mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
+      mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
         for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
@@ -165,22 +164,21 @@ public class MavenProjectResolver {
     }
   }
 
-  public Map<MavenPlugin, @Nullable Path> resolvePlugins(@NotNull Project project,
-                                                         @NotNull MavenProject mavenProject,
-                                                         @NotNull NativeMavenProjectHolder nativeMavenProject,
-                                                         @NotNull MavenEmbeddersManager embeddersManager,
-                                                         @NotNull MavenConsole console,
-                                                         @NotNull MavenProgressIndicator process,
-                                                         boolean reportUnresolvedToSyncConsole) throws MavenProcessCanceledException {
+  public Set<MavenPlugin> resolvePlugins(@NotNull MavenProject mavenProject,
+                                         @NotNull NativeMavenProjectHolder nativeMavenProject,
+                                         @NotNull MavenEmbeddersManager embeddersManager,
+                                         @NotNull MavenConsole console,
+                                         @NotNull MavenProgressIndicator process,
+                                         boolean reportUnresolvedToSyncConsole,
+                                         boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(mavenProject, MavenEmbeddersManager.FOR_PLUGINS_RESOLVE);
-    embedder.customizeForResolve(console, process);
+    embedder.customizeForResolve(console, process, forceUpdateSnapshots);
     embedder.clearCachesFor(mavenProject.getMavenId());
 
     Set<Path> filesToRefresh = new HashSet<>();
-    Map<MavenPlugin, @Nullable Path> unresolvedPlugins = new HashMap<>();
+    Set<MavenPlugin> unresolvedPlugins = new HashSet<>();
     try {
       process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
-
 
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
@@ -195,10 +193,10 @@ public class MavenProjectResolver {
           }
         }
         if (artifacts.isEmpty() && myProject != null) {
-          unresolvedPlugins.put(each, MavenUtil.getRepositoryParentFile(project, each.getMavenId()));
+          unresolvedPlugins.add(each);
         }
       }
-      if(reportUnresolvedToSyncConsole) {
+      if (reportUnresolvedToSyncConsole) {
         reportUnresolvedPlugins(unresolvedPlugins);
       }
 
@@ -215,14 +213,12 @@ public class MavenProjectResolver {
     return unresolvedPlugins;
   }
 
-  private void reportUnresolvedPlugins(Map<MavenPlugin, @Nullable Path> unresolvedPlugins) {
+  private void reportUnresolvedPlugins(Set<MavenPlugin> unresolvedPlugins) {
     if (!unresolvedPlugins.isEmpty()) {
-      Collection<@Nullable Path> files = unresolvedPlugins.values();
-      CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
-      for (MavenPlugin mavenPlugin : unresolvedPlugins.keySet()) {
+      for (MavenPlugin mavenPlugin : unresolvedPlugins) {
         MavenProjectsManager.getInstance(myProject)
           .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN)
-          .showBuildIssue(mavenPlugin.getMavenId().getKey(), fix);
+          .showArtifactBuildIssue(mavenPlugin.getMavenId().getKey(), null);
       }
     }
   }
@@ -263,10 +259,10 @@ public class MavenProjectResolver {
                                                                            @NotNull MavenConsole console,
                                                                            @NotNull MavenProgressIndicator process)
     throws MavenProcessCanceledException {
-    MultiMap<File, MavenProject> projectMultiMap = groupByBasedir(projects);
+    MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(projects);
     MavenArtifactDownloader.DownloadResult result = new MavenArtifactDownloader.DownloadResult();
-    for (Map.Entry<File, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
-      String baseDir = entry.getKey().getPath();
+    for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
+      String baseDir = entry.getKey().toString();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir, baseDir);
       try {
         embedder.customizeForResolve(console, process);
@@ -290,8 +286,8 @@ public class MavenProjectResolver {
   }
 
   @NotNull
-  private MultiMap<File, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
-    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()).toFile());
+  private MultiMap<Path, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects) {
+    return ContainerUtil.groupBy(projects, p -> MavenUtil.getBaseDir(myTree.findRootProject(p).getDirectoryFile()));
   }
 
   public void executeWithEmbedder(@NotNull MavenProject mavenProject,

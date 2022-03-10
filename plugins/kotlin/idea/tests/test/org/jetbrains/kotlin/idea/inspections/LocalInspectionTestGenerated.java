@@ -2162,9 +2162,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirst3.kt");
                 }
 
+                @TestMetadata("notApplicableSortedByFirstOrNull.kt")
+                public void testNotApplicableSortedByFirstOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirstOrNull.kt");
+                }
+
                 @TestMetadata("notApplicableSortedByLast.kt")
                 public void testNotApplicableSortedByLast() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLast.kt");
+                }
+
+                @TestMetadata("notApplicableSortedByLastOrNull.kt")
+                public void testNotApplicableSortedByLastOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLastOrNull.kt");
                 }
 
                 @TestMetadata("onMapImplementationClass.kt")
@@ -7944,6 +7954,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("javaGetter2.kt")
         public void testJavaGetter2() throws Exception {
             runTest("testData/inspectionsLocal/redundantCompanionReference/javaGetter2.kt");
+        }
+
+        @TestMetadata("javaGetter3.kt")
+        public void testJavaGetter3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/javaGetter3.kt");
         }
 
         @TestMetadata("javaSetter.kt")
@@ -15845,6 +15860,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunction9.kt")
         public void testUsedEnumFunction9() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
+        }
+
+        @TestMetadata("valueClassParameter.kt")
+        public void testValueClassParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/valueClassParameter.kt");
         }
 
         @TestMetadata("withJvmNameUsedFromKotlin.kt")

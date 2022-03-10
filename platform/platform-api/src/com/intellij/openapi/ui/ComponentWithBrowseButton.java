@@ -25,7 +25,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -225,8 +224,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @see #setButtonVisible
    * @see #setButtonEnabled
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public FixedSizeButton getButton() {
     return myBrowseButton;
   }
@@ -309,8 +307,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   /**
    * @deprecated use {@link #addActionListener(ActionListener)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
     addActionListener(actionListener);
   }

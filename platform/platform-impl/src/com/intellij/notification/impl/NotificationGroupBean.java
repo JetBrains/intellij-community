@@ -6,7 +6,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 /**
  * @author Alexander Lobas
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class NotificationGroupBean {
   @Attribute("parentId")
   public String parentId;

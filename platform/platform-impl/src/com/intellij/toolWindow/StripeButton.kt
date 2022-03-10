@@ -177,7 +177,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
           super.mouseReleased(e)
         }
       })
-      dragPane!!.add(dragButtonImage, JLayeredPane.POPUP_LAYER)
+      dragPane!!.add(dragButtonImage, JLayeredPane.POPUP_LAYER as Any)
       dragButtonImage.size = dragButtonImage.preferredSize
       isVisible = false
       toolWindow.toolWindowManager.toolWindowPane!!.buttonManager.startDrag()

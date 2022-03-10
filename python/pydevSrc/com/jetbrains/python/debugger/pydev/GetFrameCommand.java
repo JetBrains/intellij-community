@@ -58,5 +58,4 @@ public class GetFrameCommand extends AbstractFrameCommand {
   public XValueChildrenList getVariables() {
     return myFrameVariables;
   }
-
 }

@@ -90,6 +90,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
     buttons.remove(button)
     remove(button.getComponent())
     revalidate()
+    repaint()
   }
 
   @JvmField

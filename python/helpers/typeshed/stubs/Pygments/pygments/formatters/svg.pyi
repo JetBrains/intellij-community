@@ -1,8 +1,10 @@
-from typing import Any
+from typing import Any, TypeVar
 
 from pygments.formatter import Formatter
 
-class SvgFormatter(Formatter):
+_T = TypeVar("_T", str, bytes)
+
+class SvgFormatter(Formatter[_T]):
     name: str
     aliases: Any
     filenames: Any
@@ -17,5 +19,4 @@ class SvgFormatter(Formatter):
     linenostart: Any
     linenostep: Any
     linenowidth: Any
-    def __init__(self, **options) -> None: ...
     def format_unencoded(self, tokensource, outfile) -> None: ...

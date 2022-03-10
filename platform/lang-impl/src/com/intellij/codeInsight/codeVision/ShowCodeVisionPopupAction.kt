@@ -12,6 +12,6 @@ class ShowCodeVisionPopupAction : AnAction(CodeVisionBundle.message("ShowCodeVis
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.getData(PlatformDataKeys.EDITOR) ?: return
     val caretOffset = editor.caretModel.offset
-    editor.lensContext.invokeMoreMenu(caretOffset)
+    editor.lensContext?.invokeMoreMenu(caretOffset)
   }
 }

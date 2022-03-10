@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.Gray;
 import com.intellij.ui.IconManager;
@@ -61,7 +62,7 @@ public final class IconLoader {
 
   private static volatile boolean STRICT_GLOBAL;
 
-  static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<>() {
+  private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<>() {
     @Override
     protected Boolean initialValue() {
       return false;
@@ -108,9 +109,6 @@ public final class IconLoader {
     }
 
     Icon cachedIcon = icon;
-    if (cachedIcon instanceof RetrievableIcon) {
-      cachedIcon = ((RetrievableIcon)icon).retrieveIcon();
-    }
     if (cachedIcon instanceof CachedImageIcon) {
       Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, (int)size, (int)size);
       if (version != null) return version;
@@ -182,9 +180,9 @@ public final class IconLoader {
   }
 
   /**
-   * @deprecated Use {@link #getIcon(String, Class)}
+   * @deprecated Use {@link #getIcon(String, ClassLoader)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Icon getIcon(@NonNls @NotNull String path) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     assert callerClass != null : path;
@@ -231,21 +229,26 @@ public final class IconLoader {
   }
 
   /**
-   * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String)}
+   * @deprecated Use {@link #findIcon(String, ClassLoader)}.
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable Icon findIcon(@NonNls @NotNull String path) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    if (callerClass == null) {
-      return null;
-    }
-    return findIcon(path, callerClass);
+    return callerClass == null ? null : findIcon(path, callerClass.getClassLoader());
   }
 
   public static @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
     Icon icon = findIcon(path, aClass, aClass.getClassLoader(), null, true);
     if (icon == null) {
       throw new IllegalStateException("Icon cannot be found in '" + path + "', class='" + aClass.getName() + "'");
+    }
+    return icon;
+  }
+
+  public static @NotNull Icon getIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+    Icon icon = findIcon(path, classLoader);
+    if (icon == null) {
+      throw new IllegalStateException("Icon cannot be found in '" + path + "', classLoader='" + classLoader + "'");
     }
     return icon;
   }
@@ -336,16 +339,21 @@ public final class IconLoader {
     isActivated = false;
   }
 
+  /**
+   * @deprecated Use {@link #findIcon(String, ClassLoader)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   public static @Nullable Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
     return findIcon(key + ".png", aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
   }
 
   /**
    * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
    */
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    return findIcon(path, aClass, aClass.getClassLoader(), null, false);
+    return ImageDataByPathLoader.findIcon(path, aClass.getClassLoader(), iconCache);
   }
 
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean deferUrlResolve, boolean strict) {
@@ -376,12 +384,15 @@ public final class IconLoader {
   }
 
   @SuppressWarnings("DuplicatedCode")
-  @ApiStatus.Internal
-  public static @Nullable Icon findIcon(@NotNull String originalPath,
-                                        @Nullable Class<?> clazz,
-                                        @NotNull ClassLoader classLoader,
-                                        @Nullable HandleNotFound handleNotFound,
-                                        boolean deferUrlResolve) {
+  private static @Nullable Icon findIcon(@NotNull String originalPath,
+                                         @Nullable Class<?> aClass,
+                                         @NotNull ClassLoader classLoader,
+                                         @Nullable HandleNotFound handleNotFound,
+                                         boolean deferUrlResolve) {
+    if (!deferUrlResolve) {
+      return ImageDataByPathLoader.findIcon(originalPath, classLoader, iconCache);
+    }
+
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = patchPath(originalPath, classLoader);
     String path = patchedPath == null ? originalPath : patchedPath.first;
@@ -400,16 +411,11 @@ public final class IconLoader {
         cachedIcon = iconCache.computeIfAbsent(key, k -> {
           ClassLoader classLoader1 = k.getSecond();
           ImageDataLoader resolver;
-          if (deferUrlResolve) {
-            resolver = new ImageDataByUrlLoader(path, clazz, classLoader1, handleNotFound, /* useCacheOnLoad = */ true);
+          HandleNotFound effectiveHandleNotFound = handleNotFound;
+          if (effectiveHandleNotFound == null) {
+            effectiveHandleNotFound = STRICT_LOCAL.get() ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE;
           }
-          else {
-            URL url = doResolve(path, classLoader1, null, HandleNotFound.IGNORE);
-            if (url == null) {
-              return null;
-            }
-            resolver = new ResolvedImageDataResolver(url, classLoader1);
-          }
+          resolver = new ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound, /* useCacheOnLoad = */ true);
           return new CachedImageIcon(originalPath, resolver, null, null);
         });
       }
@@ -435,7 +441,15 @@ public final class IconLoader {
   }
 
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    return findIcon(path, null, classLoader, HandleNotFound.IGNORE, false);
+    return ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
+  }
+
+  public static @Nullable Icon findResolvedIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+    Icon icon = ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
+    if (icon instanceof CachedImageIcon && ((CachedImageIcon)icon).getRealIcon() == CachedImageIcon.EMPTY_ICON) {
+      return null;
+    }
+    return icon;
   }
 
   public static @Nullable Image toImage(@NotNull Icon icon) {
@@ -597,7 +611,7 @@ public final class IconLoader {
     graphics.setColor(Gray.TRANSPARENT);
     graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
     graphics.scale(scale, scale);
-    icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
+    icon.paintIcon(LabelHolder.fakeComponent, graphics, 0, 0);
 
     graphics.dispose();
 
@@ -686,8 +700,7 @@ public final class IconLoader {
   public static void detachClassLoader(@NotNull ClassLoader classLoader) {
     iconCache.entrySet().removeIf(entry -> {
       CachedImageIcon icon = entry.getValue();
-      icon.detachClassLoader(classLoader);
-      return entry.getKey().second == classLoader;
+      return icon.detachClassLoader(classLoader) || entry.getKey().second == classLoader;
     });
 
     iconToDisabledIcon.keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
@@ -696,7 +709,7 @@ public final class IconLoader {
   @ApiStatus.Internal
   public static class CachedImageIcon extends ScaleContextSupport implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     @SuppressWarnings("UndesirableClassUsage")
-    private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+    public static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
       @Override
       public @NonNls String toString() {
         return "Empty icon " + super.toString();
@@ -954,7 +967,8 @@ public final class IconLoader {
       return resolver == null ? null : resolver.getURL();
     }
 
-    private @Nullable Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
+    @Nullable
+    public Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
       ImageDataLoader resolver = this.resolver;
@@ -1048,6 +1062,7 @@ public final class IconLoader {
     }
   }
 
+  @ApiStatus.Internal
   enum HandleNotFound {
     THROW_EXCEPTION {
       @Override
@@ -1064,64 +1079,6 @@ public final class IconLoader {
     IGNORE;
 
     void handle(@NotNull String msg) throws RuntimeException {}
-  }
-
-  private static final class ResolvedImageDataResolver implements ImageDataLoader {
-    private final URL url;
-    private final ClassLoader classLoader;
-
-    ResolvedImageDataResolver(@NotNull URL url, @Nullable ClassLoader classLoader) {
-      this.classLoader = classLoader;
-      this.url = url;
-    }
-
-    @Override
-    public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
-      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING | ImageLoader.USE_CACHE;
-      if (isDark) {
-        flags |= ImageLoader.USE_DARK;
-      }
-
-      String path = url.toString();
-      return ImageLoader.loadImage(path, filters, null, null, flags, scaleContext, !path.endsWith(".svg"));
-    }
-
-    @Override
-    public @NotNull URL getURL() {
-      return this.url;
-    }
-
-    @Override
-    public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-      Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
-      if (patchedPath == null) {
-        return null;
-      }
-
-      ClassLoader classLoader = patchedPath.second == null ? null : patchedPath.second;
-      String path = patchedPath.first;
-      // This use case for temp themes only. Here we want immediately replace existing icon to a local one
-      if (path != null && path.startsWith("file:/")) {
-        try {
-          ImageDataByUrlLoader resolver = new ImageDataByUrlLoader(new URL(path), path, classLoader, true);
-          resolver.resolve();
-          return resolver;
-        }
-        catch (MalformedURLException ignore) {
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
-      return classLoader == this.classLoader;
-    }
-
-    @Override
-    public String toString() {
-      return "ResolvedImageDataResolver{url=" + url + '}';
-    }
   }
 
   static @Nullable URL doResolve(@Nullable String path,
@@ -1275,17 +1232,20 @@ public final class IconLoader {
     if (icon instanceof ScaleContextSupport) {
       return (ScaleContextSupport)icon;
     }
-    if (icon instanceof RetrievableIcon) {
+    else if (icon instanceof RetrievableIcon) {
       return getScaleContextSupport(((RetrievableIcon)icon).retrieveIcon());
     }
-    if (icon instanceof CompositeIcon) {
+    else if (icon instanceof CompositeIcon) {
       CompositeIcon compositeIcon = (CompositeIcon)icon;
-      if (compositeIcon.getIconCount() == 0) return null;
+      if (compositeIcon.getIconCount() == 0) {
+        return null;
+      }
       Icon innerIcon = compositeIcon.getIcon(0);
-      if (innerIcon == null) return null;
-      return getScaleContextSupport(innerIcon);
+      return innerIcon == null ? null : getScaleContextSupport(innerIcon);
     }
-    return null;
+    else {
+      return null;
+    }
   }
 
   private static final class LabelHolder {
@@ -1293,7 +1253,7 @@ public final class IconLoader {
      * To get disabled icon with paint it into the image. Some icons require
      * not null component to paint.
      */
-    private static final JComponent ourFakeComponent = new JComponent() {
+    private static final JComponent fakeComponent = new JComponent() {
     };
   }
 }

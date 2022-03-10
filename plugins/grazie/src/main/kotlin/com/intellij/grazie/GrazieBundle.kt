@@ -15,13 +15,14 @@ object GrazieBundle {
   private val pluginBundle by lazy { DynamicBundle.INSTANCE.getResourceBundle(PLUGIN_BUNDLE_NAME, javaClass.classLoader) }
 
   @Nls
-  fun message(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): String {
+  @JvmStatic
+  fun message(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: Any): String {
     val bundle = if (!GraziePlugin.isBundled && pluginBundle.containsKey(key)) pluginBundle else defaultBundle
     return AbstractBundle.message(bundle, key, *params)
   }
 
   @JvmStatic
-  fun messagePointer(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): Supplier<String> = Supplier {
+  fun messagePointer(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: Any): Supplier<String> = Supplier {
     message(key, *params)
   }
 }

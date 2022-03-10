@@ -10,7 +10,6 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class LineMarkersPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
@@ -25,15 +24,13 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactory,
     Document document = editor.getDocument();
     Project project = file.getProject();
     if (restrictRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
+
     return new LineMarkersPass(project, file, document, expandRangeToCoverWholeLines(document, visibleRange), expandRangeToCoverWholeLines(document, restrictRange));
   }
 
-  @Nullable
-  private static TextRange expandRangeToCoverWholeLines(@NotNull Document document, TextRange textRange) {
-    if (textRange == null) {
-      return null;
-    }
+  @NotNull
+  private static TextRange expandRangeToCoverWholeLines(@NotNull Document document, @NotNull TextRange textRange) {
     return MarkupModelImpl.roundToLineBoundaries(document, textRange.getStartOffset(), textRange.getEndOffset());
   }
 }

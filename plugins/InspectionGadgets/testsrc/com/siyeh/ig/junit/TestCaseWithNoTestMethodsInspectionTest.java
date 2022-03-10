@@ -30,8 +30,8 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightJavaInspection
       "}",
       "package junit.framework;\n" +
       "public interface Test {\n" +
-      "    public abstract int countTestCases();\n" +
-      "    public abstract void run(TestResult result);\n" +
+      "    int countTestCases();\n" +
+      "    void run(TestResult result);\n" +
       "}",
       "package org.junit; public @interface Ignore {}",
       "package org.junit.jupiter.api;" +

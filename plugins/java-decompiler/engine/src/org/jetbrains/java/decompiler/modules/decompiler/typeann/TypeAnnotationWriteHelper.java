@@ -49,6 +49,10 @@ public class TypeAnnotationWriteHelper {
     annotation.writeTo(sb);
   }
 
+  public int arrayPathCount() {
+    return (int) paths.stream().filter(entry -> entry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId()).count();
+  }
+
   public static List<TypeAnnotationWriteHelper> create(List<TypeAnnotation> typeAnnotations) {
     return typeAnnotations.stream()
       .map(TypeAnnotationWriteHelper::new)

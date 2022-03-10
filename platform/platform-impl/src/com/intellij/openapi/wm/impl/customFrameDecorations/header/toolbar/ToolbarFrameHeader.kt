@@ -14,10 +14,12 @@ import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
@@ -27,6 +29,7 @@ import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
+import com.jetbrains.CustomWindowDecoration.*
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import javax.swing.*
@@ -36,7 +39,7 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
+internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
   private var myToolbar : MainToolbar? = null
@@ -54,7 +57,9 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
-    add(buttonPanes.getView(), gb.next().anchor(EAST))
+    val buttonsView = buttonPanes.getView()
+    if (SystemInfo.isWindows) buttonsView.border = JBUI.Borders.emptyLeft(8)
+    add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
   }
@@ -78,6 +83,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
 
+  override fun getComponent(): JComponent = this
+
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
     when (mode) {
@@ -86,23 +93,23 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     }
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
     val result = super.getHitTestSpots().toMutableList()
 
     when (mode) {
       ShowMode.MENU -> {
-        result.add(getElementRect(myMenuBar) { rect ->
+        result.add(Pair(getElementRect(myMenuBar) { rect ->
           val state = frame.extendedState
           if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
             val topGap = (rect.height / 3).toFloat().roundToInt()
             rect.y += topGap
             rect.height -= topGap
           }
-        })
+        }, MENU_BAR))
       }
       ShowMode.TOOLBAR -> {
-        result.add(getElementRect(myMenuButton))
-        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(getElementRect(it)) }
+        result.add(Pair(getElementRect(myMenuButton), MENU_BAR))
+        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(Pair(getElementRect(it), MENU_BAR)) }
       }
     }
 
@@ -179,6 +186,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
+          .apply { setShowSubmenuOnHover(true) }
           .showUnderneathOf(button)
       }
     }

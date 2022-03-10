@@ -259,6 +259,36 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
+  public void testJunitMethodSource() {doTest();}
+
+  public void testNoPropertiesUsage() {
+    doTest();
+  }
+
+  public void testChildGetterUsage() {
+    doTest();
+  }
+
+  public void testParentGetterUsage() {
+    doTest();
+  }
+
+  public void testChildSetterUsage() {
+    doTest();
+  }
+
+  public void testParentSetterUsage() {
+    doTest();
+  }
+
+  public void testChildGetterSetterUsage() {
+    doTest();
+  }
+
+  public void testParentGetterSetterUsage() {
+    doTest();
+  }
+
   private void doTest5() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());
   }

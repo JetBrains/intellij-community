@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifyMethodCallFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceGetClassWithClassLiteralFix;
@@ -19,11 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -449,13 +452,15 @@ public final class HighlightFixUtil {
             PsiExpression rExpression = assignment.getRExpression();
             if (rExpression != null) {
               PsiType type = rExpression.getType();
-              if (type instanceof PsiPrimitiveType && variable.getInitializer() != null) {
+              if (type instanceof PsiPrimitiveType && !PsiType.VOID.equals(type) && variable.getInitializer() != null) {
                 type = ((PsiPrimitiveType)type).getBoxedType(variable);
               }
               if (type != null) {
                 type = GenericsUtil.getVariableTypeByExpressionType(type);
-                IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
-                QuickFixAction.registerQuickFixAction(info, fix);
+                if (PsiTypesUtil.isDenotableType(type, variable) && !PsiType.VOID.equals(type)) {
+                  IntentionAction fix = QUICK_FIX_FACTORY.createSetVariableTypeFix(variable, type);
+                  QuickFixAction.registerQuickFixAction(info, fix);
+                }
                 return false;
               }
             }
@@ -464,5 +469,26 @@ public final class HighlightFixUtil {
       }
       return true;
     });
+  }
+
+  public static void registerQualifyMethodCallFix(CandidateInfo @NotNull [] methodCandidates,
+                                                  @NotNull PsiMethodCallExpression methodCall,
+                                                  @NotNull PsiExpressionList exprList,
+                                                  @Nullable HighlightInfo highlightInfo) {
+    for (CandidateInfo methodCandidate : methodCandidates) {
+      PsiMethod method = (PsiMethod)methodCandidate.getElement();
+      if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
+        final PsiClass parentClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        final PsiMethod parentMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
+        if ((parentClass != null && !parentClass.hasModifierProperty(PsiModifier.STATIC) &&
+             parentMethod != null && !parentMethod.hasModifierProperty(PsiModifier.STATIC)) ||
+            method.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
+          if (qualifier == null) continue;
+          IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
+          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(methodCall), fix);
+        }
+      }
+    }
   }
 }

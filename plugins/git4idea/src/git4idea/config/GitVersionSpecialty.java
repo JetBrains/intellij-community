@@ -293,6 +293,16 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 32, 0, 0));
     }
+  },
+
+  /**
+   * Option "--diff-merges=first-parent" is supported since git version 2.31.0.
+   */
+  DIFF_MERGES_SUPPORTS_FIRST_PARENT {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 31, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

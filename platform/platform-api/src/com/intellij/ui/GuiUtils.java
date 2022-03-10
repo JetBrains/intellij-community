@@ -16,7 +16,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
@@ -211,8 +210,7 @@ public final class GuiUtils {
    * @deprecated Use {@link Application#invokeAndWait}
    */
   @SuppressWarnings("RedundantThrows")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
     ApplicationManager.getApplication().invokeAndWait(runnable);
   }
@@ -220,8 +218,7 @@ public final class GuiUtils {
   /**
    * @deprecated Use ModalityUiUtil instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -235,8 +232,7 @@ public final class GuiUtils {
   /**
    * @deprecated Use ModalityUiUtil instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {

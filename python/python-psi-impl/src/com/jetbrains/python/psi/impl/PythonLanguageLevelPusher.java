@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -158,7 +157,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
   @Override
   public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull String value) throws IOException {
     final LanguageLevel level = LanguageLevel.fromPythonVersion(value);
-    final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
+    final DataInputStream iStream = PERSISTENCE.readFileAttribute(fileOrDir);
 
     LanguageLevel oldLanguageLevel = null;
     if (iStream != null) {
@@ -172,7 +171,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       }
     }
 
-    try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
+    try (DataOutputStream oStream = PERSISTENCE.writeFileAttribute(fileOrDir)) {
       DataInputOutputUtil.writeINT(oStream, level.ordinal());
     }
 

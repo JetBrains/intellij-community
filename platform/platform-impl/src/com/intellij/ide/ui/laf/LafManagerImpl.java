@@ -248,6 +248,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private void addThemeAndDynamicPluginListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UiThemeEpListener(), this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+
+      private final List<UIThemeBasedLookAndFeelInfo> myLafInfosToUnload = new ArrayList<>();
+
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         isUpdatingPlugin = isUpdate;
@@ -257,6 +260,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         else {
           themeIdBeforePluginUpdate = null;
         }
+
+        for (UIManager.LookAndFeelInfo lafInfo : lafList.getValue()) {
+          if (lafInfo instanceof UIThemeBasedLookAndFeelInfo) {
+            UIThemeBasedLookAndFeelInfo themeBasedLafInfo = (UIThemeBasedLookAndFeelInfo)lafInfo;
+            if (themeBasedLafInfo.getTheme().getProviderClassLoader() == pluginDescriptor.getPluginClassLoader()) {
+              myLafInfosToUnload.add(themeBasedLafInfo);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        for (UIThemeBasedLookAndFeelInfo lafInfo : myLafInfosToUnload) {
+          lafInfo.uninstallTheme();
+        }
+        myLafInfosToUnload.clear();
       }
 
       @Override
@@ -986,8 +1006,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
-      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize()));
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize2D()));
+      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize2D()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);

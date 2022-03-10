@@ -3,6 +3,8 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.validation.DialogValidation
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
@@ -10,6 +12,7 @@ import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 
 @ApiStatus.Internal
@@ -21,6 +24,7 @@ enum class LabelPosition {
   TOP
 }
 
+@ApiStatus.NonExtendable
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
@@ -37,6 +41,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Component that occupies the cell
    */
   val component: T
+
+  /**
+   * Comment assigned to the cell
+   */
+  val comment: JEditorPane?
 
   fun focused(): Cell<T>
 
@@ -55,11 +64,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun bold(): Cell<T>
 
-  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Cell<T>
-
   /**
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
@@ -77,11 +81,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method
@@ -112,11 +111,14 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun accessibleDescription(@Nls description: String): Cell<T>
 
   /**
-   * Binds component value that is provided by [componentGet] and [componentSet] methods to specified [binding] property.
+   * Binds component value that is provided by [componentGet] and [componentSet] methods to specified [prop] property.
    * The property is applied only when [DialogPanel.apply] is invoked. Methods [DialogPanel.isModified] and [DialogPanel.reset]
    * are also supported automatically for bound properties.
    * This method is rarely used directly, see [Cell] extension methods named like "bindXXX" for specific components
    */
+  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): Cell<T>
+
+  @Deprecated("Use overloaded method")
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
   /**
@@ -124,7 +126,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * @deprecated use [validationRequestor] instead
    */
   @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun graphProperty(property: GraphProperty<*>): Cell<T> =
     validationRequestor(property::afterPropagation)
 
@@ -135,19 +137,78 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Cell<T>
 
   /**
-   * Adds [component] validation
+   * Registers custom [validationRequestor] for current [component].
+   * It allows showing validation waring/error on custom [component] event. For example on text change.
    */
-  fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+  fun validationRequestor(validationRequestor: DialogValidationRequestor): Cell<T>
+
+  /**
+   * Registers custom [validationRequestor] for current [component].
+   * It allows showing validation waring/error on custom [component] event. For example on text change.
+   */
+  fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): Cell<T>
+
+  /**
+   * Registers custom component data [validation].
+   * [validation] will be called on [validationRequestor] events and
+   * when [DialogPanel.apply] event is happens.
+   */
+  fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Registers custom component data [validations].
+   * [validations] will be called on [validationRequestor] events and
+   * when [DialogPanel.apply] event is happens.
+   */
+  fun validation(vararg validations: DialogValidation): Cell<T>
+
+  /**
+   * Registers custom component data [validations].
+   * [validations] will be called on [validationRequestor] events and
+   * when [DialogPanel.apply] event is happens.
+   */
+  fun validation(vararg validations: DialogValidation.WithParameter<T>): Cell<T>
+
+  /**
+   * Registers custom component data [validation].
+   * [validation] will be called on [validationRequestor] events.
+   */
+  fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Registers custom component data [validations].
+   * [validations] will be called on [validationRequestor] events.
+   */
+  fun validationOnInput(vararg validations: DialogValidation): Cell<T>
+
+  /**
+   * Registers custom component data [validations].
+   * [validations] will be called on [validationRequestor] events.
+   */
+  fun validationOnInput(vararg validations: DialogValidation.WithParameter<T>): Cell<T>
+
+  /**
+   * Registers custom component data [validation].
+   * [validation] will be called when [DialogPanel.apply] event is happens.
+   */
+  fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Registers custom component data [validations].
+   * [validations] will be called when [DialogPanel.apply] event is happens.
+   */
+  fun validationOnApply(vararg validations: DialogValidation): Cell<T>
+
+  /**
+   * Registers custom component data [validations].
+   * [validations] will be called when [DialogPanel.apply] event is happens.
+   */
+  fun validationOnApply(vararg validations: DialogValidation.WithParameter<T>): Cell<T>
 
   /**
    * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
    */
   fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
-
-  /**
-   * Adds [component] validation
-   */
-  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   /**
    * Registers [callback] that will be called for [component] from [DialogPanel.apply] method

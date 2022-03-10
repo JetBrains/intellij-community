@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.PsiFile;
@@ -95,7 +96,8 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
         return null;
       }
     }
-    return createPass(file, VisibleHighlightingPassFactory.calculateVisibleRange(editor), editor.getDocument());
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
+    return createPass(file, visibleRange, editor.getDocument());
   }
 
   @NotNull

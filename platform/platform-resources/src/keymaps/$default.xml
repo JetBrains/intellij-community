@@ -24,9 +24,6 @@
   <action id="SplitChooser.SplitCenter">
     <keyboard-shortcut first-keystroke="SPACE"/>
   </action>
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="control P"/>
-  </action>
   <action id="ShowSettings">
     <keyboard-shortcut first-keystroke="control alt S"/>
   </action>
@@ -279,8 +276,8 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control shift A"/>
   </action>
-  <action id="SETextAction">
-    <keyboard-shortcut first-keystroke="control shift alt F"/>
+  <action id="TextSearchAction">
+    <keyboard-shortcut first-keystroke="control shift alt E"/>
   </action>
   <action id="RunInspection">
     <keyboard-shortcut first-keystroke="control shift alt I"/>
@@ -1068,6 +1065,7 @@
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
+
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>
@@ -1083,6 +1081,15 @@
   <action id="FileChooser.NewFolder">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
     <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="FileChooser.TogglePathBar">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="FileChooserList.Root">
+    <keyboard-shortcut first-keystroke="control BACK_SLASH"/>
+  </action>
+  <action id="FileChooserList.LevelUp">
+    <keyboard-shortcut first-keystroke="BACK_SPACE"/>
   </action>
 
   <action id="PopupHector">

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.projectWizard
 
@@ -23,7 +23,7 @@ class WizardStatsService : CounterUsagesCollector() {
     companion object {
 
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.new.project", 8)
+        private val GROUP = EventLogGroup("kotlin.ide.new.project", 10)
 
         // Whitelisted values for the events fields
         private val allowedProjectTemplates = listOf( // Modules
@@ -54,6 +54,7 @@ class WizardStatsService : CounterUsagesCollector() {
             "none",
             // AppCode KMM
             "multiplatformMobileApplicationUsingAppleGradlePlugin",
+            "multiplatformMobileApplicationUsingHybridProject",
         )
         private val allowedModuleTemplates = listOf(
             "composeAndroid",

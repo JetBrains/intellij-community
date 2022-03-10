@@ -3,10 +3,9 @@
 
 package com.intellij.openapi.application
 
-import com.intellij.openapi.progress.withJob
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asContextElement
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -94,44 +93,13 @@ suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
 /**
- * Suspends until dumb mode is over and runs [action] in Smart Mode on EDT
+ * The code [without][ModalityState.any] context modality state must only perform pure UI operations,
+ * it must not access any PSI, VFS, project model, or indexes.
  */
-suspend fun <T> smartAction(project: Project, action: (ctx: CoroutineContext) -> T): T {
-  return suspendCancellableCoroutine { continuation ->
-    DumbService.getInstance(project).runWhenSmart(SmartRunnable({ ctx -> withJob(ctx.job) { action(ctx) } }, continuation))
-  }
-}
-
-private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuation: CancellableContinuation<T>) : Runnable {
-
-  @Volatile
-  private var myAction: ((ctx: CoroutineContext) -> T)? = action
-
-  @Volatile
-  private var myContinuation: CancellableContinuation<T>? = continuation
-
-  init {
-    continuation.invokeOnCancellation {
-      myAction = null
-      myContinuation = null // it's not possible to unschedule the runnable, so we make it do nothing instead
-    }
-  }
-
-  override fun run() {
-    val continuation = myContinuation ?: return
-    val action = myAction ?: return
-    continuation.resumeWith(kotlin.runCatching { action.invoke(continuation.context) })
-  }
-}
-
 fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
- * Please don't use unless you know what you are doing.
- * The code in this context can only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes.
- *
- * @return a special coroutine dispatcher that's equivalent to using no modality state at all in `invokeLater`.
+ * @return UI dispatcher which dispatches within the [context modality state][asContextElement].
  */
 @Suppress("unused") // unused receiver
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()

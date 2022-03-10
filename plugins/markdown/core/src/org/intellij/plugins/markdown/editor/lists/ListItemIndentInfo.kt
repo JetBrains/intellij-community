@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentInnerSpacesLength
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 
@@ -12,8 +13,6 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
  * then it represents a list item, otherwise it represents a paragraph.
  */
 internal data class ListItemIndentInfo(val indent: Int, val markerLength: Int) {
-  val indentStr = " ".repeat(indent)
-
   fun subItemIndent() = indent + markerLength
 
   fun subItem(markerLength: Int) = ListItemIndentInfo(subItemIndent(), markerLength)
@@ -26,16 +25,21 @@ internal data class ListItemIndentInfo(val indent: Int, val markerLength: Int) {
    * The returned replacement turns all tabs in the indent of the [line] into spaces.
    */
   fun changeLineIndent(line: Int, newIndent: Int, document: Document, file: PsiFile? = null): Replacement? {
-    val newIndentInfo = with(indent = newIndent)
     val oldIndentRange = document.getLineIndentRange(line)
 
-    val realIndent = document.getLineIndentSpaces(line, file)?.length
+    val fullIndentStr = document.getLineIndentSpaces(line, file)
+    val realIndent = document.getLineIndentInnerSpacesLength(line, file)
     val lineIsBlank = oldIndentRange.endOffset == document.getLineEndOffset(line)
-    if (realIndent == null || realIndent < indent || lineIsBlank) {
+    if (realIndent == null || fullIndentStr == null || realIndent < indent || lineIsBlank) {
       return null
     }
 
-    val newFullIndent = newIndentInfo.indentStr + " ".repeat(realIndent - indent) // with tabs replaced by spaces
+    val newFullIndent = when {
+      newIndent == indent -> fullIndentStr
+      newIndent > indent -> fullIndentStr + " ".repeat(newIndent - indent)
+      else -> fullIndentStr.dropLast(indent - newIndent)
+    }
+
     return Replacement(oldIndentRange, newFullIndent)
   }
 }

@@ -40,12 +40,11 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +80,7 @@ public final class EditorWindow {
    * @deprecated Use file opening methods taking {@link FileEditorOpenOptions} instead
    * and pass the index through {@link FileEditorOpenOptions#withIndex(int)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   // Metadata to support editor tab drag&drop process: initial index
   public static final Key<Integer> DRAG_START_INDEX_KEY = KeyWithDefaultValue.create("drag start editor index", -1);
@@ -483,7 +482,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #getSelectedComposite}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable EditorWithProviderComposite getSelectedEditor() {
     return (EditorWithProviderComposite)getSelectedComposite(false);
   }
@@ -496,7 +494,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #getSelectedComposite}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     return (EditorWithProviderComposite)getSelectedComposite(ignorePopup);
   }
@@ -519,7 +516,6 @@ public final class EditorWindow {
    * @deprecated {@link #getAllComposites()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public EditorWithProviderComposite @NotNull [] getEditors() {
     return ContainerUtil.filterIsInstance(getAllComposites(), EditorWithProviderComposite.class)
       .toArray(new EditorWithProviderComposite[0]);
@@ -533,7 +529,6 @@ public final class EditorWindow {
    * @deprecated {@link #setSelectedComposite(EditorComposite, boolean)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public void setSelectedEditor(@NotNull EditorComposite composite, boolean focusEditor) {
     setSelectedComposite(composite, focusEditor);
   }
@@ -552,7 +547,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #setComposite(EditorComposite, boolean)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public void setEditor(@NotNull EditorWithProviderComposite editor, boolean focusEditor) {
     setComposite(editor, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
@@ -561,7 +555,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #setComposite(EditorComposite, FileEditorOpenOptions)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public void setEditor(@NotNull EditorWithProviderComposite editor, @NotNull FileEditorOpenOptions options) {
     setComposite(editor, options);
   }
@@ -1114,12 +1107,11 @@ public final class EditorWindow {
     if (index == -1) return;
     ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file))
       .expireWhen(this::isDisposed)
-      .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
         int index1 = findFileEditorIndex(file);
         if (index1 != -1) setTitleAt(index1, title);
       })
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(NonUrgentExecutor.getInstance());
     setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips() ? getManager().getFileTooltipText(file) : null);
   }
 
@@ -1224,7 +1216,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #getComposite(VirtualFile)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable EditorWithProviderComposite findFileComposite(@NotNull VirtualFile file) {
     return (EditorWithProviderComposite)getComposite(file);
   }

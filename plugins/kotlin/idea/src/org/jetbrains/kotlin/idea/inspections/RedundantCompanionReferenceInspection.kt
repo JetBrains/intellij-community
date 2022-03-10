@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeAsSequence
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
@@ -105,7 +106,7 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
 
                 val type = descriptor.type
                 val javaGetter = findMemberFunction(Name.identifier(JvmAbi.getterName(name.asString())))
-                    ?.takeIf { f -> f is JavaMethodDescriptor || f.overriddenDescriptors.any { it is JavaMethodDescriptor } }
+                    ?.takeIf { f -> f is JavaMethodDescriptor || f.overriddenTreeAsSequence(true).any { it is JavaMethodDescriptor } }
                 if (javaGetter?.valueParameters?.isEmpty() == true && javaGetter.returnType?.makeNotNullable() == type) return true
 
                 val variable = expression.getResolutionScope().findVariable(name, NoLookupLocation.FROM_IDE)

@@ -6,6 +6,9 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * @see CodeVisionProviderFactory
@@ -16,6 +19,7 @@ import com.intellij.openapi.util.TextRange
  * and group them in settings window, then @see [com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider]
  * Also @see [PlatformCodeVisionIds]
  */
+@ApiStatus.Experimental
 interface CodeVisionProvider<T> {
   companion object {
     val EP_NAME = "com.intellij.codeInsight.codeVisionProvider"
@@ -35,16 +39,21 @@ interface CodeVisionProvider<T> {
   fun shouldRecomputeForEditor(editor: Editor, uiData: T) = true
 
   /**
-   * Should return text ranges and applicable hints for them, invoked on background thread
+   * Should return text ranges and applicable hints for them, invoked on background thread.
+   *
+   * Note that this method is not executed under read action.
    */
-  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>>
+  @Deprecated("Use computeForEditor2 instead", ReplaceWith("computeForEditor2"))
+  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
-  /**
+  fun computeForEditor2(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
+
+    /**
    * Handle click on a lens at given range
    * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
    */
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
-    if (entry is CodeVisionPredefinedActionEntry) entry.onClick()
+    if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)
   }
 
   /**
@@ -53,8 +62,18 @@ interface CodeVisionProvider<T> {
   fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String) = Unit
 
   /**
+   * Calls on background BEFORE editor opening
+   * Returns ranges where placeholders should be when editor opens
+   */
+  @Deprecated("use getPlaceholderCollector")
+  fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
+
+  fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
+
+  /**
    * User-visible name
    */
+  @get:Nls
   val name: String
 
   /**

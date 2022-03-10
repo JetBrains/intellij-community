@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -115,7 +116,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         }
       }
       final PsiLocalVariable variable = (PsiLocalVariable)firstElement;
-      registerModifierError(PsiModifier.FINAL, variable, variable);
+      registerModifierError(PsiModifier.FINAL, variable, ProblemHighlightType.LIKE_UNUSED_SYMBOL, variable);
     }
 
     @Override
@@ -136,7 +137,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         return;
       }
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        registerModifierError(PsiModifier.FINAL, parameter, parameter);
+        registerModifierError(PsiModifier.FINAL, parameter, ProblemHighlightType.LIKE_UNUSED_SYMBOL, parameter);
       }
       else if (!onlyWarnOnAbstractMethods) {
         check(parameter);
@@ -155,7 +156,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
           if (element instanceof PsiResourceVariable) {
             final PsiResourceVariable variable = (PsiResourceVariable)element;
             if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-              registerModifierError(PsiModifier.FINAL, variable, variable);
+              registerModifierError(PsiModifier.FINAL, variable, ProblemHighlightType.LIKE_UNUSED_SYMBOL, variable);
             }
           }
         }
@@ -171,7 +172,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
           continue;
         }
         if (parameter.getType() instanceof PsiDisjunctionType || !isNecessaryFinal(parameter, parameter.getDeclarationScope())) {
-          registerModifierError(PsiModifier.FINAL, parameter, parameter);
+          registerModifierError(PsiModifier.FINAL, parameter, ProblemHighlightType.LIKE_UNUSED_SYMBOL, parameter);
         }
       }
     }
@@ -196,7 +197,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
 
     private void check(PsiParameter parameter) {
       if (!isNecessaryFinal(parameter, parameter.getDeclarationScope())) {
-        registerModifierError(PsiModifier.FINAL, parameter, parameter);
+        registerModifierError(PsiModifier.FINAL, parameter, ProblemHighlightType.LIKE_UNUSED_SYMBOL, parameter);
       }
     }
   }

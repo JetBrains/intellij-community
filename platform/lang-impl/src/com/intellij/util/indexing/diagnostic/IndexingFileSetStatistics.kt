@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -39,6 +39,9 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   val slowIndexedFiles = LimitedPriorityQueue<SlowIndexedFile>(SLOW_FILES_LIMIT, compareBy { it.processingTime })
 
+  var allValuesAppliedSeparately = true
+  var allSeparateApplicationTimeInAllThreads: TimeNano = 0 //is 0 when !allValuesAppliedSeparately
+
   data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
 
   data class StatsPerIndexer(
@@ -60,7 +63,9 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     fileStatistics: FileIndexingStatistics,
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
-    fileSize: BytesNumber
+    fileSize: BytesNumber,
+    valuesAppliedSeparately: Boolean,
+    separateApplicationTime: TimeNano
   ) {
     numberOfIndexedFiles++
     if (fileStatistics.wasFullyIndexedByExtensions) {
@@ -96,6 +101,8 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
       slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, indexingTime, contentLoadingTime))
     }
+    allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
+    allSeparateApplicationTimeInAllThreads += separateApplicationTime
   }
 
   fun addTooLargeForIndexingFile(file: VirtualFile) {

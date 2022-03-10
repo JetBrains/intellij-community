@@ -87,7 +87,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("actions/inlayRenameInCommentsActive.svg", -23569655, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("actions/inlayRenameInNoCodeFiles.svg", -1377142413, 0);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("actions/inlayRenameInNoCodeFilesActive.svg", -256406409, 2);
-    /** 12x12 */ public static final @NotNull Icon InlineDropFrame = load("actions/inlineDropFrame.svg", 464068832, 2);
+    /** 12x12 */ public static final @NotNull Icon InlineDropFrame = load("actions/inlineDropFrame.svg", 74286525, 2);
     /** 12x12 */ public static final @NotNull Icon InlineDropFrameSelected = load("actions/inlineDropFrameSelected.svg", -1147095696, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("actions/inSelection.svg", -497925107, 2);
     /** 16x16 */ public static final @NotNull Icon Install = load("actions/install.svg", 44445574, 2);
@@ -185,7 +185,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Show = load("actions/show.svg", 1300662213, 2);
     /** 16x16 */ public static final @NotNull Icon ShowAsTree = load("actions/showAsTree.svg", -1574590264, 2);
     /** 16x16 */ public static final @NotNull Icon ShowCode = load("actions/showCode.svg", -1165716144, 2);
-    /** 16x16 */ public static final @NotNull Icon ShowHiddens = load("actions/showHiddens.svg", -126304131, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("actions/showImportStatements.svg", -1715399838, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("actions/showReadAccess.svg", 44349734, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("actions/showWriteAccess.svg", 264206780, 2);
@@ -203,6 +202,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("actions/synchronizeScrolling.svg", -519401023, 2);
     /** 16x16 */ public static final @NotNull Icon SyncPanels = load("actions/syncPanels.svg", 1101642732, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleSoftWrap = load("actions/toggleSoftWrap.svg", -639118463, 2);
+    /** 16x16 */ public static final @NotNull Icon ToggleVisibility = load("actions/toggleVisibility.svg", 621859739, 2);
     /** 16x16 */ public static final @NotNull Icon TraceInto = load("actions/traceInto.svg", 838472230, 2);
     /** 16x16 */ public static final @NotNull Icon TraceOver = load("actions/traceOver.svg", 278186465, 2);
     /** 16x16 */ public static final @NotNull Icon Undo = load("actions/undo.svg", 1472205522, 2);
@@ -214,10 +214,15 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("actions/wordsHovered.svg", -1250126923, 0);
     /** 16x16 */ public static final @NotNull Icon WordsSelected = load("actions/wordsSelected.svg", -1338392888, 0);
 
-    /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+    /** @deprecated use {@link #ToggleVisibility} */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon ShowHiddens = ToggleVisibility;
+
+    /** @deprecated to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
     public static final @NotNull Icon ShowViewer = load("actions/showViewer.png", 0, 0);
   }
 
@@ -1152,6 +1157,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Shelve = load("vcs/Shelve.svg", 634465552, 2);
     /** 16x16 */ public static final @NotNull Icon ShelveSilent = load("vcs/shelveSilent.svg", 1105000973, 2);
     /** 16x16 */ public static final @NotNull Icon ShowUnversionedFiles = load("vcs/ShowUnversionedFiles.svg", -385504903, 2);
+    /** 16x16 */ public static final @NotNull Icon Stash = load("vcs/Stash.svg", 645718691, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("vcs/Unshelve.svg", -1985830986, 2);
     /** 16x16 */ public static final @NotNull Icon UnshelveSilent = load("vcs/unshelveSilent.svg", -1912718864, 2);
 
@@ -1181,10 +1187,10 @@ public class AllIcons {
       /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/project/removeDisabled.svg", -1565572817, 2);
     }
 
-    /** @deprecated to be removed in IDEA 2021.1 */
+    /** @deprecated to be removed */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @ScheduledForRemoval
     public static final @NotNull Icon CreateNewProject = load("welcome/createNewProject.svg", 0, 0);
   }
 

@@ -11,16 +11,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -37,8 +38,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private final @Nullable ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
   private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = new ArrayList<>();
@@ -54,8 +54,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                               @NotNull final ServerSocket serverSocket,
                               final int timeoutInMillis,
@@ -115,8 +114,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private static void sendDebuggerPort(@NotNull Socket socket, @NotNull ServerSocket serverSocket, @NotNull IPyDebugProcess processHandler)
     throws IOException {
     int port = processHandler.handleDebugPort(serverSocket.getLocalPort());
@@ -130,16 +128,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      serverSocket = new ServerSocket(0);
+      serverSocket = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e); //NON-NLS
+      throw new ExecutionException(PydevBundle.message("pydev.error.message.failed.to.find.free.socket.port"), e);
     }
     return serverSocket;
   }
@@ -147,8 +144,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private boolean useDispatcher() {
     return myDebugServerSocket != null;
   }
@@ -472,6 +468,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     allDebuggers().forEach(d -> d.removeBreakpoint(typeId, file, line));
+  }
+
+  @Override
+  public void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers) {
+    allDebuggers().forEach(d -> d.setUserTypeRenderers(renderers));
   }
 
   @Override

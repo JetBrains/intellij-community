@@ -160,6 +160,7 @@ Includes the following features:</p>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
+    <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
@@ -268,7 +269,7 @@ Includes the following features:</p>
                  defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.mermaid.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.13.6-4.js"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.14.0-5.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
@@ -300,13 +301,13 @@ Includes the following features:</p>
                  description="Enables Markdown tables editing support"/>
 
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
-                 defaultValue="false"
-                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview). Any opened Markdown editors should be manually reopened."/>
-    <registryKey key="markdown.experimental.boundary.precise.scroll.multiplier"
-                 defaultValue="8"
-                 description="A multiplier used in translation of awt scroll event to the browser one"/>
+                 defaultValue="true"
+                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
+                              Any opened Markdown editors should be manually reopened.
+                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
+    <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
   </extensions>
 
   <applicationListeners>

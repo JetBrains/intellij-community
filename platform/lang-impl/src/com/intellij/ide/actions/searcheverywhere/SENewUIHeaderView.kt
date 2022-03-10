@@ -1,0 +1,53 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions.searcheverywhere
+
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import java.awt.Insets
+import java.util.function.Function
+import javax.swing.JComponent
+import javax.swing.JPanel
+
+internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String?, String?>,
+                                 toolbar: JComponent) {
+
+  lateinit var tabbedPane: JBTabbedPane
+
+  @JvmField
+  val panel: DialogPanel
+
+  init {
+    panel = panel {
+      row {
+        tabbedPane = tabbedPaneHeader()
+          .verticalAlign(VerticalAlign.BOTTOM)
+          .customize(Gaps.EMPTY)
+          .applyToComponent {
+            font = JBFont.regular()
+            background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
+            isFocusable = false
+          }
+          .component
+        cell(toolbar)
+          .resizableColumn()
+          .horizontalAlign(HorizontalAlign.RIGHT)
+      }
+    }
+
+    val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
+    panel.border = JBUI.Borders.compound(
+      JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+      JBUI.Borders.empty(Insets(0, headerInsets.left, 0, headerInsets.right)))
+
+    for (tab in tabs) {
+      val shortcut = shortcutSupplier.apply(tab.id)
+      tabbedPane.addTab(tab.name, null, JPanel(), shortcut)
+    }
+  }
+}

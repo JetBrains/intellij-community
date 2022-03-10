@@ -16,7 +16,9 @@ internal class MarkdownLafListener: LafManagerListener {
     CodeFenceGeneratingProvider.notifyLaFChanged()
     processOpenedProjects { project ->
       val settings = MarkdownSettings.getInstance(project)
-      project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC).settingsChanged(settings)
+      val publisher = project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
+      publisher.beforeSettingsChanged(settings)
+      publisher.settingsChanged(settings)
     }
   }
 }

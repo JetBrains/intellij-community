@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
@@ -105,7 +103,7 @@ public final class JavaCompletionSorting {
     if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
       afterStats.add(new PreferNonGeneric());
     }
-    Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
+    afterStats.add(new PreferSimple());
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
@@ -476,49 +474,6 @@ public final class JavaCompletionSorting {
     maybeExpected,
     normal,
     unexpected,
-  }
-
-  private static class PreferAccessible extends LookupElementWeigher {
-    private final PsiElement myPosition;
-
-    PreferAccessible(PsiElement position) {
-      super("accessible");
-      myPosition = position;
-    }
-
-    private enum MyEnum {
-      NORMAL,
-      DISCOURAGED,
-      DEPRECATED,
-      INACCESSIBLE,
-    }
-
-    @NotNull
-    @Override
-    public MyEnum weigh(@NotNull LookupElement element) {
-      final Object object = element.getObject();
-      if (object instanceof PsiDocCommentOwner) {
-        final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
-        if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
-        if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return MyEnum.DEPRECATED;
-        if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
-          return MyEnum.DISCOURAGED;
-        }
-        if (member instanceof PsiClass) {
-          PsiFile file = member.getContainingFile();
-          if (file instanceof PsiJavaFile) {
-            String packageName = ((PsiJavaFile)file).getPackageName();
-            if (packageName.startsWith("com.sun.") || packageName.startsWith("sun.") || packageName.startsWith("org.omg.")) {
-              return MyEnum.DISCOURAGED;
-            }
-          }
-          if ("java.awt.List".equals(((PsiClass)member).getQualifiedName())) {
-            return MyEnum.DISCOURAGED;
-          }
-        }
-      }
-      return MyEnum.NORMAL;
-    }
   }
 
   private static class PreferNonGeneric extends LookupElementWeigher {

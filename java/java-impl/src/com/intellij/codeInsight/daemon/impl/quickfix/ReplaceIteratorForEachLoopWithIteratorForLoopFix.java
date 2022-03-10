@@ -17,25 +17,33 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Pavel.Dolgov
  */
-public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements IntentionAction {
+public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements IntentionAction {
   private final PsiForeachStatement myStatement;
 
   public ReplaceIteratorForEachLoopWithIteratorForLoopFix(@NotNull PsiForeachStatement statement) {
     myStatement = statement;
+  }
+
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ReplaceIteratorForEachLoopWithIteratorForLoopFix(PsiTreeUtil.findSameElementInCopy(myStatement, target));
   }
 
   @Nls

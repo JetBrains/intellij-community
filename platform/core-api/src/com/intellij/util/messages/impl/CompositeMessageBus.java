@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -59,6 +59,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   final void addChild(@NotNull MessageBusImpl bus) {
+    childrenListChanged(this);
     childBuses.add(bus);
   }
 
@@ -66,12 +67,15 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     boolean removed = childBuses.remove(childBus);
     rootBus.waitingBuses.get().remove(childBus);
 
-    MessageBusImpl parentBus = this;
-    do {
-      parentBus.subscriberCache.clear();
-    }
-    while ((parentBus = parentBus.parentBus) != null);
+    childrenListChanged(this);
     LOG.assertTrue(removed);
+  }
+
+  private static void childrenListChanged(MessageBusImpl bus) {
+    do {
+      bus.subscriberCache.keySet().removeIf(topic -> topic.getBroadcastDirection() == BroadcastDirection.TO_CHILDREN);
+    }
+    while ((bus = bus.parentBus) != null);
   }
 
   @Override
@@ -79,7 +83,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     if (direction == BroadcastDirection.TO_PARENT) {
       return new ToParentMessagePublisher<>(topic, this);
     }
-    if (direction == BroadcastDirection.TO_DIRECT_CHILDREN) {
+    else if (direction == BroadcastDirection.TO_DIRECT_CHILDREN) {
       if (parentBus != null) {
         throw new IllegalArgumentException("Broadcast direction TO_DIRECT_CHILDREN is allowed only for app level message bus. " +
                                            "Please publish to app level message bus or change topic " + topic.getListenerClass() +
@@ -87,7 +91,9 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       }
       return new ToDirectChildrenMessagePublisher<>(topic, this);
     }
-    return new MessagePublisher<>(topic, this);
+    else {
+      return new MessagePublisher<>(topic, this);
+    }
   }
 
   private static final class ToDirectChildrenMessagePublisher<L> extends MessagePublisher<L>  implements InvocationHandler {
@@ -100,7 +106,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 
-      @Nullable Object @NotNull [] handlers = bus.subscriberCache.computeIfAbsent(topic, topic1 -> bus.computeSubscribers(topic1));
+      @Nullable Object @NotNull [] handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers);
       if (handlers.length != 0) {
         exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null);
         hasHandlers = true;

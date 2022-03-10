@@ -75,8 +75,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
   /**
    * @deprecated use other CTORs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myProject = project;

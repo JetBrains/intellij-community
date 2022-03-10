@@ -5,35 +5,32 @@ import com.intellij.lang.Language
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter.Companion.colorHtmlChunk
 import com.intellij.openapi.diff.DiffColors
-import com.intellij.openapi.diff.impl.patch.PatchHunk
-import com.intellij.openapi.diff.impl.patch.PatchLine
-import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
 class GHSuggestionHtmlSyntaxHighlighter(
   private val project: Project?,
-  private val suggestionInfo: GHSuggestionInfo
+  private val suggestedChangeInfo: GHSuggestedChangeInfo,
 ) : HtmlSyntaxHighlighter {
   override fun color(language: String?, rawContent: String): HtmlChunk {
-    val name = PathUtil.getFileName(suggestionInfo.filePath)
-    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name) as LanguageFileType
+    val name = PathUtil.getFileName(suggestedChangeInfo.filePath)
+    val fileType = (FileTypeRegistry.getInstance().getFileTypeByFileName(name) as? LanguageFileType) ?: PlainTextFileType.INSTANCE
     val fileLanguage = fileType.language
 
-    val originalDiffHunk = cutOriginalHunk(suggestionInfo.diffHunk, suggestionInfo.startLine - 1, suggestionInfo.endLine - 1)
+    val changedContent = suggestedChangeInfo.cutChangedContent().joinToString("\n") { it }
 
     return HtmlBuilder()
-      .append(createColoredChunk(project, fileLanguage, trimStartWithMinIndent(originalDiffHunk), DiffColors.DIFF_CONFLICT))
+      .append(createColoredChunk(project, fileLanguage, trimStartWithMinIndent(changedContent), DiffColors.DIFF_DELETED))
       .append(createColoredChunk(project, fileLanguage, trimStartWithMinIndent(rawContent), DiffColors.DIFF_INSERTED))
       .toFragment()
   }
@@ -45,26 +42,21 @@ class GHSuggestionHtmlSyntaxHighlighter(
     val colorsScheme = EditorColorsUtil.getGlobalOrDefaultColorScheme()
     val backgroundColor = colorsScheme.getAttributes(textAttributesKey).backgroundColor
 
+    val styles = """
+      background-color: ${ColorUtil.toHtmlColor(backgroundColor)}; 
+      margin: 0;
+      padding: $PADDING $PADDING;
+    """.trimIndent()
+
     return HtmlChunk
       .tag("pre")
-      .style("background-color: ${ColorUtil.toHtmlColor(backgroundColor)}; margin: 0; padding: $PADDING $PADDING;")
+      .style(styles)
       .child(colorHtmlChunk(project, language, rawContent))
   }
 
   companion object {
-    private val PADDING = JBUIScale.scale(2)
-
-    @VisibleForTesting
-    fun cutOriginalHunk(diffHunk: String, startLine: Int, endLine: Int): String {
-      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk("", diffHunk))
-      patchReader.readTextPatches()
-      val patchHunk: PatchHunk = patchReader.textPatches[0].hunks.lastOrNull() ?: return ""
-
-      return patchHunk.lines
-        .slice(startLine..endLine)
-        .filter { it.type == PatchLine.Type.ADD }
-        .joinToString("\n") { it.text }
-    }
+    private val PADDING
+      get() = JBUI.scale(2)
 
     @VisibleForTesting
     fun trimStartWithMinIndent(text: String): String {

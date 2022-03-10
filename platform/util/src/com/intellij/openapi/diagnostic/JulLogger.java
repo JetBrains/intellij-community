@@ -44,6 +44,16 @@ public class JulLogger extends Logger {
   }
 
   @Override
+  public void trace(String message) {
+    myLogger.log(java.util.logging.Level.FINER, message);
+  }
+
+  @Override
+  public void trace(@Nullable Throwable t) {
+    myLogger.log(java.util.logging.Level.FINER, "", t);
+  }
+
+  @Override
   public void info(String message) {
     myLogger.log(java.util.logging.Level.INFO, message);
   }

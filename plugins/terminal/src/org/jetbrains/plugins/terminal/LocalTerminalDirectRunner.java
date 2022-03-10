@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
+import com.intellij.execution.wsl.WslPath;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -13,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -38,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -120,7 +124,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
 
-  private Map<String, String> getTerminalEnvironment() {
+  private Map<String, String> getTerminalEnvironment(@Nullable String workingDir) {
     Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
@@ -141,11 +145,27 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
     }
 
-    PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
-    for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
-      envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
+    if (TrustedProjects.isTrusted(myProject)) {
+      PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
+      for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
+        envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
+      }
+      if (workingDir != null && WslPath.isWslUncPath(workingDir)) {
+        setupWslEnv(envData.getEnvs(), envs);
+      }
     }
     return envs;
+  }
+
+  private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {
+    String wslEnv = userEnvs.keySet().stream().map(name -> name + "/u").collect(Collectors.joining(":"));
+    if (wslEnv.isEmpty()) return;
+    String prevValue = userEnvs.get(WslConstants.WSLENV);
+    if (prevValue == null) {
+      prevValue = System.getenv(WslConstants.WSLENV);
+    }
+    String newWslEnv = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + wslEnv : wslEnv;
+    resultEnvs.put(WslConstants.WSLENV, newWslEnv);
   }
 
   @Override
@@ -156,7 +176,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options,
                                            @Nullable JBTerminalWidget widget) throws ExecutionException {
-    Map<String, String> envs = getTerminalEnvironment();
+    String workingDir = getWorkingDirectory(options.getWorkingDirectory());
+    Map<String, String> envs = getTerminalEnvironment(workingDir);
 
     String[] command = ArrayUtil.toStringArray(getInitialCommand(envs));
 
@@ -173,7 +194,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
     }
 
-    String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
       if (LOG.isTraceEnabled()) {

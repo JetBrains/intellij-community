@@ -92,7 +92,6 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       moduleNameProperty.afterChange { logModuleNameChanged() }
       contentRootProperty.afterChange { logContentRootChanged() }
       moduleFileLocationProperty.afterChange { logModuleFileLocationChanged() }
-      groovySdkProperty.afterChange { logGroovySdkSelected(context, it) }
     }
 
     private fun openSampleCodeInEditorLater(project: Project, contentEntryPath: String) {

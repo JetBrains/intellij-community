@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
@@ -55,7 +56,7 @@ import java.util.*
 import javax.swing.*
 import kotlin.math.abs
 
-class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
+internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private val id: String,
                               private val canCloseContent: Boolean,
                               private val dumbAware: Boolean,
@@ -453,6 +454,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     stripeTitle = value
+    contentUi?.update()
 
     if (windowInfoDuringInit == null) {
       EDT.assertIsEdt()
@@ -509,7 +511,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun ensureContentInitialized() {
     createContentIfNeeded()
   }
@@ -579,10 +581,7 @@ class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     return group
   }
 
-  override fun getEmptyText(): StatusText? {
-    val component = contentManager.value.component
-    return (component as? ComponentWithEmptyText)?.emptyText
-  }
+  override fun getEmptyText(): StatusText = (contentManager.value.component as ComponentWithEmptyText).emptyText
 
   fun setEmptyStateBackground(color: Color) {
     decorator?.background = color
@@ -802,7 +801,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
 
 private fun setBackgroundRecursively(component: Component, bg: Color) {
   UIUtil.forEachComponentInHierarchy(component, Consumer { c: Component ->
-    if (c !is ActionButton) {
+    if (c !is ActionButton && c !is Divider) {
       c.background = bg
     }
   })

@@ -5,7 +5,6 @@ import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
-import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.*
@@ -72,7 +71,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   }
 
   inner class TestBuilder(val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
-    val viewer: MyThreesideViewer = mergeViewer.viewer
+    val viewer: MergeThreesideViewer = mergeViewer.viewer
     val changes: List<TextMergeChange> = viewer.allChanges
     val editor: EditorEx = viewer.editor
     val document: Document = editor.document
@@ -377,13 +376,13 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   private data class ViewerState constructor(private val content: CharSequence,
                                              private val changes: List<ViewerState.ChangeState>) {
     companion object {
-      fun recordState(viewer: MyThreesideViewer): ViewerState {
+      fun recordState(viewer: MergeThreesideViewer): ViewerState {
         val content = viewer.editor.document.immutableCharSequence
         val changes = viewer.allChanges.map { recordChangeState(viewer, it) }
         return ViewerState(content, changes)
       }
 
-      private fun recordChangeState(viewer: MyThreesideViewer, change: TextMergeChange): ChangeState {
+      private fun recordChangeState(viewer: MergeThreesideViewer, change: TextMergeChange): ChangeState {
         val document = viewer.editor.document
         val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 

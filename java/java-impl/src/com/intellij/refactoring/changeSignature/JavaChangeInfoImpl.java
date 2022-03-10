@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,38 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final Set<PsiMethod> propagateExceptionsMethods;
 
   private boolean myCheckUnusedParameter;
+  
+  public static JavaChangeInfo generateChangeInfo(PsiMethod method,
+                                                  boolean generateDelegate,
+                                                  @Nullable // null means unchanged
+                                                  @PsiModifier.ModifierConstant String newVisibility,
+                                                  String newName,
+                                                  CanonicalTypes.Type newType,
+                                                  ParameterInfoImpl @NotNull [] parameterInfo,
+                                                  ThrownExceptionInfo[] thrownExceptions,
+                                                  Set<PsiMethod> propagateParametersMethods,
+                                                  Set<PsiMethod> propagateExceptionsMethods) {
+    LOG.assertTrue(method.isValid());
+
+    if (propagateParametersMethods == null) {
+      propagateParametersMethods = new HashSet<>();
+    }
+
+    if (propagateExceptionsMethods == null) {
+      propagateExceptionsMethods = new HashSet<>();
+    }
+
+    if (newVisibility == null) {
+      newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
+    }
+
+    final JavaChangeInfoImpl javaChangeInfo =
+      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                             propagateParametersMethods, propagateExceptionsMethods);
+    javaChangeInfo.setCheckUnusedParameter();
+    return javaChangeInfo;
+  }
+  
 
   /**
    * @param newExceptions null if not changed

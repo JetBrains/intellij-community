@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.properties
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
 import com.intellij.openapi.util.RecursionManager
@@ -54,10 +55,26 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
 
   /**
    * Registers callback on propagation process.
+   * @param listener is callback which will be called when properties changes are finished.
    * @see PropertyGraph
    */
   fun afterPropagation(listener: () -> Unit) {
     propagation.afterOperation(listener)
+  }
+
+  /**
+   * Registers callback on propagation process.
+   * @param parentDisposable is used to arly unsubscribe from property graph propagation events.
+   * @param listener is callback which will be called when properties changes are finished.
+   * @see PropertyGraph
+   */
+  fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
+    if (parentDisposable == null) {
+      propagation.afterOperation(listener)
+    }
+    else {
+      propagation.afterOperation(listener, parentDisposable)
+    }
   }
 
   private fun getOrRegisterNode(property: ObservableProperty<*>): PropertyNode {

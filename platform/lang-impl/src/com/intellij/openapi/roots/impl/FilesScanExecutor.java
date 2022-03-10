@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.util.ExceptionUtil;
@@ -26,6 +26,7 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
@@ -34,6 +35,7 @@ import com.intellij.util.indexing.roots.kind.SdkOrigin;
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public final class FilesScanExecutor {
+  private static final Logger LOG = Logger.getInstance(FilesScanExecutor.class);
   private static final int THREAD_COUNT = Math.max(UnindexedFilesUpdater.getNumberOfScanningThreads() - 1, 1);
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Scanning", THREAD_COUNT);
 
@@ -154,8 +157,9 @@ public final class FilesScanExecutor {
            origin instanceof SdkOrigin;
   }
 
-  public static boolean processFilesInScope(@NotNull GlobalSearchScope scope,
-                                            boolean includingBinary,
+  public static boolean processFilesInScope(boolean includingBinary,
+                                            @NotNull GlobalSearchScope scope,
+                                            @Nullable IdFilter idFilter,
                                             @NotNull Processor<? super VirtualFile> processor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = scope.getProject();
@@ -166,12 +170,24 @@ public final class FilesScanExecutor {
     ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();
     ModelBranchImpl.processModifiedFilesInScope(scope, deque::add);
     if (scope instanceof VirtualFileEnumeration) {
-      ContainerUtil.addAll(deque, ((VirtualFileEnumeration)scope).asIterable());
+      ContainerUtil.addAll(deque, FileBasedIndexEx.toFileIterable(((VirtualFileEnumeration)scope).asArray()));
     }
     else {
       deque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(project));
     }
+    AtomicInteger skippedCount = new AtomicInteger();
+    AtomicInteger processedCount = new AtomicInteger();
     ConcurrentBitSet visitedFiles = ConcurrentBitSet.create();
+    VirtualFileFilter fileFilter = file -> {
+      int fileId = FileBasedIndex.getFileId(file);
+      if (visitedFiles.set(fileId)) return false;
+      boolean result = (idFilter == null || idFilter.containsFileId(fileId)) &&
+                       !fileIndex.isExcluded(file) &&
+                       scope.contains(file) &&
+                       (includingBinary || file.isDirectory() || !file.getFileType().isBinary());
+      if (!result) skippedCount.incrementAndGet();
+      return result;
+    };
     Processor<Object> consumer = obj -> {
       ProgressManager.checkCanceled();
       if (obj instanceof IndexableFilesIterator) {
@@ -181,21 +197,12 @@ public final class FilesScanExecutor {
           if (file.isDirectory()) return true;
           deque.add(file);
           return true;
-        }, VirtualFileFilter.ALL);
+        }, fileFilter);
       }
       else if (obj instanceof VirtualFile) {
         VirtualFile file = (VirtualFile)obj;
-        if (file instanceof VirtualFileWithId && visitedFiles.set(((VirtualFileWithId)file).getId())) {
-          return true;
-        }
-        if (!file.isValid() ||
-            fileIndex.isExcluded(file) ||
-            ((VirtualFile)obj).isDirectory() ||
-            !scope.contains(file) ||
-            !includingBinary && file.getFileType().isBinary()) {
-          return true;
-        }
-
+        processedCount.incrementAndGet();
+        if (!file.isValid()) return true;
         return processor.process(file);
       }
       else {
@@ -203,6 +210,12 @@ public final class FilesScanExecutor {
       }
       return true;
     };
-    return processDequeueOnAllThreadsInReadAction(deque, consumer);
+    long start = System.nanoTime();
+    boolean result = processDequeueOnAllThreadsInReadAction(deque, consumer);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(processedCount.get() + " files processed (" + skippedCount.get() + " skipped)" +
+               " in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    }
+    return result;
   }
 }

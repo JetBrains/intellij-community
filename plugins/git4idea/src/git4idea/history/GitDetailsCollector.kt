@@ -54,7 +54,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
         val parents = firstRecord.parentsHashes
 
         if (parents.isEmpty() || parents.size == records.size) {
-          commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
+          commitConsumer.consume(createCommit(records, factory, requirements))
         }
         else {
           LOG.warn("Not enough records for commit ${firstRecord.hash} " +
@@ -68,8 +68,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     }
     else {
       val consumer = Consumer<R> { record ->
-        commitConsumer.consume(createCommit(mutableListOf(record), factory,
-                                            requirements.diffRenameLimit))
+        commitConsumer.consume(createCommit(mutableListOf(record), factory, requirements))
       }
 
       readRecordsFromHandler(handler, consumer, *commandParameters)
@@ -96,8 +95,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>
 
-  protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory,
-                                      renameLimit: GitCommitRequirements.DiffRenameLimit): C
+  protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory, requirements: GitCommitRequirements): C
 
   companion object {
     private val LOG = Logger.getInstance(GitDetailsCollector::class.java)
@@ -110,15 +108,15 @@ internal class GitFullDetailsCollector(project: Project, root: VirtualFile,
 
   internal constructor(project: Project, root: VirtualFile) : this(project, root, DefaultGitLogFullRecordBuilder())
 
-  override fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory,
-                            renameLimit: GitCommitRequirements.DiffRenameLimit): GitCommit {
+  override fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory, requirements: GitCommitRequirements): GitCommit {
     val record = records.last()
     val parents = record.parentsHashes.map { factory.createHash(it) }
 
     return GitCommit(project, HashImpl.build(record.hash), parents, record.commitTime, root, record.subject,
                      factory.createUser(record.authorName, record.authorEmail), record.fullMessage,
                      factory.createUser(record.committerName, record.committerEmail), record.authorTimeStamp,
-                     records.map { it.statusInfos }
+                     records.map { it.statusInfos },
+                     requirements
     )
   }
 

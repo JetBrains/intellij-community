@@ -28,7 +28,7 @@ import java.util.Set;
 
 public final class FilenameIndex {
   /** @deprecated Use {@link FilenameIndex} methods instead **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 

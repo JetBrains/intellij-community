@@ -112,7 +112,7 @@ public final class PluginManagerMain {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (allowInstallWithoutRestart) {
                   for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-                    PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
+                    result[0] &= PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
                   }
                 }
                 if (onSuccess != null) {
@@ -250,7 +250,7 @@ public final class PluginManagerMain {
   }
 
   /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
     @Override
     default boolean isDisabled(@NotNull PluginId pluginId) {

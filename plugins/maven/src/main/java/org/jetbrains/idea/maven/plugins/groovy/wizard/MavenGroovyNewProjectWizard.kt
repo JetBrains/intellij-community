@@ -79,7 +79,6 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
-      groovySdkProperty.afterChange { logGroovySdkSelected(context, it) }
     }
 
     private fun Row.mavenGroovySdkComboBox(property: ObservableMutableProperty<DistributionInfo?>) {

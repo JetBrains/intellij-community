@@ -11,7 +11,7 @@ class Typo {
    * All typos have categories that can be found in the Grazie plugin UI tree in settings/preferences.
    */
   @Deprecated("Use RuleGroup instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @ApiStatus.ScheduledForRemoval
   enum class Category {
     /** General categories  */
 

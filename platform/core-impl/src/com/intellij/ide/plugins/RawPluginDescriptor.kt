@@ -4,7 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlElement
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 

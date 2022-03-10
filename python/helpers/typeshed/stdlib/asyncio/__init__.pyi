@@ -1,5 +1,4 @@
 import sys
-from typing import Type
 
 from .base_events import BaseEventLoop as BaseEventLoop
 from .coroutines import iscoroutine as iscoroutine, iscoroutinefunction as iscoroutinefunction
@@ -108,7 +107,7 @@ if sys.version_info >= (3, 7):
         current_task as current_task,
     )
 
-DefaultEventLoopPolicy: Type[AbstractEventLoopPolicy]
+DefaultEventLoopPolicy: type[AbstractEventLoopPolicy]
 
 if sys.platform == "win32":
     from .windows_events import *

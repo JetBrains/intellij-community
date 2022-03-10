@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionConfidenceEP;
@@ -86,20 +86,21 @@ final class LanguageResolvingUtil {
       return false;
     }
     return
-    StreamSupport.stream(allLanguages.spliterator(), false)
-      .filter(aClass -> PsiSearchScopeUtil.isInScope(projectProductionScope, aClass))
-      .map(language -> getDefinition(language, libraryDefinitions))
-      .filter(Objects::nonNull)
-      .allMatch(processor::process);
+      StreamSupport.stream(allLanguages.spliterator(), false)
+        .filter(aClass -> PsiSearchScopeUtil.isInScope(projectProductionScope, aClass))
+        .map(language -> getDefinition(language, libraryDefinitions))
+        .filter(Objects::nonNull)
+        .allMatch(processor::process);
   }
 
   private static List<LanguageDefinition> collectLanguageDefinitions(ConvertContext context) {
     Project project = context.getProject();
-    GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
-    GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
-    GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
     Collection<PsiClass> allLanguages =
       CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+
+        GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
+        GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
+        GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
 
         // force finding inside IDEA project first
         PsiClass languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), projectProductionScope);
@@ -116,6 +117,10 @@ final class LanguageResolvingUtil {
     if (allLanguages.isEmpty()) {
       return new SmartList<>();
     }
+
+    GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
+    GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
+    GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
 
     List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allScope);
 

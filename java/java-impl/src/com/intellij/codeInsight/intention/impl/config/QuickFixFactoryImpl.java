@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
@@ -375,6 +376,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level) {
     return new IncreaseLanguageLevelFix(level);
+  }
+
+  @Override
+  public IntentionAction createUpgradeSdkFor(@NotNull LanguageLevel level) {
+    return new UpgradeSdkFix(level);
   }
 
   @NotNull
@@ -1146,5 +1152,26 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createReceiverParameterNameFix(@NotNull PsiReceiverParameter parameter, @NotNull String newName) {
     return new ReceiverParameterNameFix(parameter, newName);
+  }
+
+  @Override
+  public @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
+                                                                               @IntentionName String message) {
+    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
+  }
+
+  private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {
+    private final @IntentionName String myMessage;
+
+    private RemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression, @IntentionName String message) {
+      super(lambdaExpression);
+      myMessage = message;
+    }
+
+    @Nls
+    @Override
+    public @NotNull String getText() {
+      return myMessage;
+    }
   }
 }

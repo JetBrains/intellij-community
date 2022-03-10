@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -34,7 +35,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,9 +58,18 @@ import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
+  private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
+
+  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons.class) :
+                                         AllIcons.Actions.Close;
+
+  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
+                                         AllIcons.Actions.CloseHovered;
 
   private static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
     @Override
@@ -79,9 +88,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     public void paintBackground(Graphics g, JComponent component, int state) {
       if (((MyActionButton)component).isRolloverState()) {
         super.paintBackground(g, component, state);
-        return;
       }
-      if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
+      else if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
         Rectangle rect = new Rectangle(component.getSize());
         JBInsets.removeFrom(rect, component.getInsets());
         paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
@@ -104,8 +112,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   /**
    * @deprecated infoMode is not used. Use the other constructor.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, @SuppressWarnings("unused") boolean infoMode) {
     this (textArea, searchMode);
   }
@@ -193,9 +200,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     myScrollPane.getHorizontalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, Boolean.TRUE);
     myScrollPane.setOpaque(false);
 
-    myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false);
-    myClearButton = new MyActionButton(new ClearAction(), false);
-    myNewLineButton = new MyActionButton(new NewLineAction(), false);
+    myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false, true);
+    myClearButton = new MyActionButton(new ClearAction(), false, false);
+    myNewLineButton = new MyActionButton(new NewLineAction(), false, true);
 
     updateLayout();
   }
@@ -204,7 +211,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public void updateUI() {
     super.updateUI();
     updateFont();
-    setBackground(UIUtil.getTextFieldBackground());
+    setBackground(BACKGROUND_COLOR);
   }
 
   private void updateFont() {
@@ -232,7 +239,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.searchFieldInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
+    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.SearchField.borderInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
 
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
@@ -279,7 +286,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         if (action instanceof TooltipDescriptionProvider) {
           action.getTemplatePresentation().setDescription(FindBundle.message("find.embedded.buttons.description"));
         }
-        ActionButton button = new MyActionButton(action, true);
+        ActionButton button = new MyActionButton(action, true, true);
         addedButtons.add(button);
         buttonsGrid.add(button);
       }
@@ -348,7 +355,6 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
    * @deprecated use this wrapper component with JBTextArea and its getEmptyText() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
@@ -376,8 +382,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(AllIcons.Actions.Close);
-      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
+      super(CLOSE_ICON);
+      getTemplatePresentation().setHoveredIcon(CLOSE_HOVERED_ICON);
     }
 
     @Override
@@ -401,11 +407,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   }
 
   private static final class MyActionButton extends ActionButton {
-
-    private MyActionButton(@NotNull AnAction action, boolean focusable) {
+    private MyActionButton(@NotNull AnAction action, boolean focusable, boolean fieldInplaceLook) {
       super(action, action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-
-      setLook(focusable ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
+      setLook(fieldInplaceLook ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
       setFocusable(focusable);
       updateIcon();
     }

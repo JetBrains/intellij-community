@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
@@ -225,23 +225,23 @@ public final class ProgressIndicatorUtils {
                 public void run() {
                   if (future.isCancelled()) return;
 
-                    Disposer.dispose(listenerDisposable); // remove listener early to prevent firing it during continuation execution
-                    try {
-                      if (!progressIndicator.isCanceled()) {
-                        continuation.getAction().run();
-                      }
-                    }
-                    finally {
-                      future.complete(null);
+                  Disposer.dispose(listenerDisposable); // remove listener early to prevent firing it during continuation execution
+                  try {
+                    if (!progressIndicator.isCanceled()) {
+                      continuation.getAction().run();
                     }
                   }
+                  finally {
+                    future.complete(null);
+                  }
+                }
 
-                  @Override
-                  public String toString() {
-                    return "continuation of " + readTask;
-                  }
-                }, continuation.getModalityState());
-              }
+                @Override
+                public String toString() {
+                  return "continuation of " + readTask;
+                }
+              }, continuation.getModalityState());
+            }
 
           }
 

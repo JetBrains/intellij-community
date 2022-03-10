@@ -43,7 +43,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
 
   /**
-   * @deprecated use {@link PyInspectionVisitor#PyInspectionVisitor(com.intellij.codeInspection.ProblemsHolder, com.jetbrains.python.psi.types.TypeEvalContext)} instead
+   * @deprecated use {@link PyInspectionVisitor#PyInspectionVisitor(ProblemsHolder, TypeEvalContext)} instead
    */
   @Deprecated
   public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {

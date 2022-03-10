@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -777,6 +778,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @deprecated use {@link #sort(Comparator)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public final @NotNull JBIterable<E> sorted(@NotNull Comparator<? super E> comparator) {
     return sort(comparator);
   }

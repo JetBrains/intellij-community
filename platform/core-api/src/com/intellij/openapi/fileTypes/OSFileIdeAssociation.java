@@ -38,7 +38,7 @@ public interface OSFileIdeAssociation {
 
   /** @deprecated please implement {@link #getExtensionMode()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings("IdentifierGrammar")
   default ExtensionMode getExtensionsMode() {
     return getExtensionMode();

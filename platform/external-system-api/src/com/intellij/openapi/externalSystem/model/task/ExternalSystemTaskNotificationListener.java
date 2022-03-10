@@ -1,7 +1,6 @@
 package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -29,8 +28,7 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   void onStart(@NotNull ExternalSystemTaskId id);
 
   /**

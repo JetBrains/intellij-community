@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   /**
    * @deprecated Use {@link LineStatusMarkerPopupRenderer#LineStatusMarkerPopupRenderer(LineStatusTrackerI)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
     this((LineStatusTrackerI<?>)tracker);
   }
@@ -169,13 +167,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     CharSequence vcsContent = getVcsContent(range);
     CharSequence currentContent = getCurrentContent(range);
-    int currentStartOffset = getCurrentTextRange(range).getStartOffset();
 
     List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
     if (wordDiff == null) return;
 
-    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);
+    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.getLine1(), range.getLine2(), wordDiff, disposable);
     LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff);
   }
 

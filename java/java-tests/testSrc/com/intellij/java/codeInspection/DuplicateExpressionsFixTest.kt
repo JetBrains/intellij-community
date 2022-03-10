@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
 import com.intellij.java.JavaBundle
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
@@ -34,6 +35,18 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     doTest(introduce("s.substring(s.length() - 9)"))
   }
   fun testVariableNotInScopeCantReplaceOthers() = doNegativeTest(replace("substr", "s.substring(s.length() - 9)"))
+  fun testIntroducePathVariableTwoPathOf() {
+    UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
+    doTest(introduce("Path.of(fileName)"))
+  }
+  fun testIntroducePathVariableTwoPathsGet() {
+    UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
+    doTest(introduce("Paths.get(fileName)"))
+  }
+  fun testIntroducePathVariablePathOfPathsGet() {
+    UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
+    doTest(introduce("Paths.get(fileName)"))
+  }
 
   private fun doTest(message: String, threshold: Int = 50) =
     withThreshold(threshold) {
@@ -58,6 +71,10 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     finally {
       inspection.complexityThreshold = oldThreshold
     }
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_11
   }
 
   private fun introduce(expr: String) =

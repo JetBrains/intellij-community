@@ -29,7 +29,7 @@ import javax.swing.border.Border
 import kotlin.math.max
 
 @Deprecated("Use Row.segmentedButton")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfiguration: SpacingConfiguration) :
   ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
 

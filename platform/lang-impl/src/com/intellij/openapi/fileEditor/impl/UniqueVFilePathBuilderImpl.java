@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -11,11 +12,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -28,7 +28,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +61,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     ourShortNameBuilderCacheKey = Key.create("project's.short.file.name.builder");
   private static final Key<CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>>>
     ourShortNameOpenedBuilderCacheKey = Key.create("project's.short.file.name.opened.builder");
-  private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<>(null, null, -1);
+  private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<>(null, null);
 
   @NotNull
   private static String getName(@NotNull VirtualFile file) {
@@ -128,7 +128,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   @NotNull
   private static ModificationTracker getFilenameIndexModificationTracker(@NotNull Project project) {
     if (Registry.is("indexing.filename.over.vfs")) {
-      return () -> ManagingFS.getInstance().getModificationCount();
+      return () -> FSRecords.getNamesIndexModCount();
     }
     return () -> disableIndexUpToDateCheckInEdt(() -> FileBasedIndex.getInstance().getIndexModificationStamp(FilenameIndex.NAME, project));
   }
@@ -142,7 +142,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     VirtualFile[] openFiles = FileEditorManager.getInstance(project).getOpenFiles();
     List<VirtualFile> recentFiles = EditorHistoryManager.getInstance(project).getFileList();
 
-    MultiMap<String, VirtualFile> multiMap = MultiMap.createSet();
+    final MultiMap<String, VirtualFile> multiMap = MultiMap.createSet();
     if (useIndex) {
       Set<String> names = JBIterable.of(requiredFile).append(openFiles).append(recentFiles).map(o -> getName(o)).toSet();
       ThrowableComputable<Boolean, RuntimeException> query = () -> FilenameIndex.processFilesByNames(
@@ -174,7 +174,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       }
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
-      UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<>(path, File.separator, 25);
+      UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<>(path, File.separator);
       for (VirtualFile virtualFile : files) {
         String presentablePath = virtualFile instanceof VirtualFilePathWrapper ?
                                  ((VirtualFilePathWrapper)virtualFile).getPresentablePath() : virtualFile.getPath();
@@ -187,7 +187,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   private static <T,E extends Throwable> T disableIndexUpToDateCheckInEdt(@NotNull ThrowableComputable<T, E> computable) throws E {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return ApplicationManager.getApplication().isDispatchThread()
-           ? FileBasedIndexImpl.disableUpToDateCheckIn(computable)
+           ? FileBasedIndexEx.disableUpToDateCheckIn(computable)
            : computable.compute();
   }
 }

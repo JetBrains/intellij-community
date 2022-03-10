@@ -5,6 +5,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons.Actions.Execute
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.pythonSdk
 import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeyValue
@@ -27,7 +28,7 @@ object PoetryScriptsLineMarkerContributor : RunLineMarkerContributor() {
     val value = keyValue.value as? TomlLiteral ?: return null
     if (value.textLength < 3) return null
     val action = ActionManager.getInstance().getAction(PoetryRunScript.actionID)
-    action.templatePresentation.text = "Run '${keyValue.key.text}'"
+    action.templatePresentation.text = PyBundle.message("python.sdk.poetry.action.run.script.text", keyValue.key.text)
     return Info(Execute, { parameter -> "Run '${((parameter as? TomlKey)?.text ?: "script")}'" }, action)
   }
 }

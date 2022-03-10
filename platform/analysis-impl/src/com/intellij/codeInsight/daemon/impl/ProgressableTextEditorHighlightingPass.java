@@ -22,7 +22,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -67,6 +66,15 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
         throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
       }
     }
+    if (editor != null) {
+      if (editor.getProject() != null && editor.getProject() != project) {
+        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") " +
+                                           "belongs to an alien project '" + editor.getProject() + "' but expected: '" + project + "'");
+      }
+      if (editor.getDocument() != document) {
+        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") has document " +editor.getDocument()+" but expected: "+document);
+      }
+    }
   }
 
   @Override
@@ -83,8 +91,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
     if (myFile != null) {
-      DaemonProgressIndicator daemonProgressIndicator = (DaemonProgressIndicator)ProgressWrapper.unwrapAll(progress);
-      myHighlightingSession = HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, daemonProgressIndicator, getColorsScheme());
+      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(myFile);
     }
     try {
       collectInformationWithProgress(progress);

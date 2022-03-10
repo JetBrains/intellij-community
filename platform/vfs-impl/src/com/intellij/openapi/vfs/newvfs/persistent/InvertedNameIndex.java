@@ -20,7 +20,7 @@ final class InvertedNameIndex {
 
   private static final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
   private static final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
-  private static int ourModCount = -1;
+  private static long ourModCount = -1;
 
   private static final ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
 
@@ -109,12 +109,12 @@ final class InvertedNameIndex {
       return null;
     });
     if (FSRecords.LOG.isDebugEnabled()) {
-      FSRecords.LOG.debug("ReverseFilenameIndex rebuilt in " + TimeoutUtil.getDurationMillis(start) + " ms",
+      FSRecords.LOG.debug(InvertedNameIndex.class.getName()+ " rebuilt in " + TimeoutUtil.getDurationMillis(start) + " ms",
                           EDT.isCurrentThreadEdt() ? new Throwable("### EDT ###") : null);
     }
   }
 
-  private static int getModCount() {
-    return FSRecords.getLocalModCount();
+  private static long getModCount() {
+    return FSRecords.getNamesIndexModCount();
   }
 }

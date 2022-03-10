@@ -1,16 +1,16 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
 BIT2MODE: Any
 
 class BmpImageFile(ImageFile):
-    format_description: str
-    format: str
+    format_description: ClassVar[str]
+    format: ClassVar[Literal["BMP", "DIB", "CUR"]]
     COMPRESSIONS: Any
 
 class DibImageFile(BmpImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["DIB"]]
 
 SAVE: Any

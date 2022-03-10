@@ -63,7 +63,7 @@ class CopyClassDialog extends RefactoringDialog implements DumbAware {
     myDestinationCB.setData(myProject, defaultTargetDirectory, s -> setErrorText(s, myDestinationCB), myTfPackage.getChildComponent());
     myNameField.setText(UsageViewUtil.getShortName(aClass));
     myNameField.selectAll();
-    getRefactorAction().putValue(Action.NAME, CommonBundle.getOkButtonText());
+    setRefactorButtonText(CommonBundle.getOkButtonText());
   }
 
   @Override

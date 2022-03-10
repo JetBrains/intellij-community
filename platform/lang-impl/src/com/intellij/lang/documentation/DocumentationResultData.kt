@@ -2,6 +2,8 @@
 package com.intellij.lang.documentation
 
 import com.intellij.lang.documentation.DocumentationResult.Data
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Image
 
@@ -10,6 +12,7 @@ data class DocumentationResultData internal constructor(
   internal val content: DocumentationContentData,
   internal val links: LinkData = LinkData(),
   val anchor: String? = null,
+  internal val updates: Flow<DocumentationContentData> = emptyFlow(),
 ) : Data {
 
   val html: String get() = content.html
@@ -32,5 +35,14 @@ data class DocumentationResultData internal constructor(
 
   override fun externalUrl(externalUrl: String?): Data {
     return copy(links = links.copy(externalUrl = externalUrl))
+  }
+
+  override fun updates(updates: Flow<DocumentationContent>): Data {
+    @Suppress("UNCHECKED_CAST")
+    return copy(updates = updates as Flow<DocumentationContentData>)
+  }
+
+  override fun updates(updater: DocumentationContentUpdater): Data {
+    return updates(updater.asFlow())
   }
 }

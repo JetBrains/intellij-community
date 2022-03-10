@@ -39,6 +39,7 @@ private fun PsiMethod.isMethodWithDeclarationInOtherClass(): Boolean {
 
 internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement, T>, classes: Set<PsiClass>): Set<T> {
     val overridden = HashSet<T>()
+
     for (aClass in classes) {
         aClass.forEachDeclaredMemberOverride { superMember, overridingMember ->
             ProgressManager.checkCanceled()
@@ -53,6 +54,7 @@ internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement,
                     }
                     overridden.add(declaration)
                 }
+                false
             }
 
             mappingToJava.isNotEmpty()

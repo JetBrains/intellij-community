@@ -5,14 +5,19 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
-import com.jetbrains.rd.util.reactive.adviseOnce
+import com.jetbrains.rd.util.reactive.adviseUntil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -26,40 +31,82 @@ class CodeVisionPass(
   rootElement: PsiElement,
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
-  private val providerIdToLenses: MutableMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp> = ConcurrentHashMap()
-  private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
-
-  override fun doCollectInformation(progress: ProgressIndicator) {
-    val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
-    val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
-      val results = provider.computeForEditor(editor)
-      providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results, modificationTracker.modificationCount)
-      true
-    })
-  }
-
-  override fun doApplyInformationToEditor() {
-    val cacheService = DaemonBoundCodeVisionCacheService.getInstance(myProject)
-    for ((providerId, results) in providerIdToLenses) {
-      cacheService.storeVisionDataForEditor(myEditor, providerId, results)
+  companion object {
+    @JvmStatic
+    @Internal
+    fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>) : CodeVisionData {
+      val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
+      collect(EmptyProgressIndicator(), editor, file, providerIdToLenses, providers)
+      return CodeVisionData(providerIdToLenses)
     }
-    val lensPopupActive = ProjectCodeVisionModel.getInstance(editor.project!!).lensPopupActive
-    if (lensPopupActive.value.not()) {
-      updateProviders()
+
+    private fun collect(progress: ProgressIndicator,
+                        editor: Editor,
+                        file: PsiFile,
+                        providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>,
+                        providers: List<DaemonBoundCodeVisionProvider>) {
+      val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
+        val results = provider.computeForEditor(editor, file)
+        providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
+                                                                                                modificationTracker.modificationCount)
+        true
+      })
     }
-    else {
-      lensPopupActive.adviseOnce(myProject.createLifetime()) {
-        if (currentIndicator == null || currentIndicator.isCanceled) return@adviseOnce
-        updateProviders()
+
+    private fun updateProviders(project: Project,
+                                editor: Editor,
+                                providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
+      val codeVisionHost = CodeVisionHost.getInstance(project)
+      for (providerId in providerIdToLenses.keys) {
+        codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
+      }
+    }
+
+    internal fun saveToCache(project: Project,
+                            editor: Editor,
+                            providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
+      val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
+      for ((providerId, results) in providerIdToLenses) {
+        cacheService.storeVisionDataForEditor(editor, providerId, results)
       }
     }
   }
 
-  private fun updateProviders() {
-    val codeVisionHost = CodeVisionHost.getInstance(myProject)
-    for (providerId in providerIdToLenses.keys) {
-      codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerId))
+  private val providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp> = ConcurrentHashMap()
+  private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
+
+  override fun doCollectInformation(progress: ProgressIndicator) {
+    collect(progress, editor, myFile, providerIdToLenses, DaemonBoundCodeVisionProvider.extensionPoint.extensionList)
+  }
+
+  override fun doApplyInformationToEditor() {
+    saveToCache(myProject, editor, providerIdToLenses)
+    val lensPopupActive = ProjectCodeVisionModel.getInstance(editor.project!!).lensPopupActive
+    if (lensPopupActive.value.not()) {
+      updateProviders(myProject, editor, providerIdToLenses)
+    }
+    else {
+      lensPopupActive.adviseUntil(myProject.createLifetime()) {
+        if (it) return@adviseUntil false
+        if (currentIndicator == null || currentIndicator.isCanceled) return@adviseUntil true
+        updateProviders(myProject, editor, providerIdToLenses)
+        true
+      }
+    }
+  }
+
+  class CodeVisionData internal constructor(
+    private val providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>
+  ) {
+    fun applyTo(editor: Editor, project: Project) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      saveToCache(project, editor, providerIdToLenses)
+      updateProviders(project, editor, providerIdToLenses)
+    }
+
+    override fun toString(): String {
+      return providerIdToLenses.toString()
     }
   }
 }

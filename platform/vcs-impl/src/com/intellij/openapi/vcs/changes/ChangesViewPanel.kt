@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -89,6 +90,10 @@ class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
   private class MyChangesListView(project: Project) : ChangesListView(project, false) {
     init {
       putClientProperty(LOG_COMMIT_SESSION_EVENTS, true)
+    }
+
+    override fun installGroupingSupport(): ChangesGroupingSupport {
+      return ChangesGroupingSupport(myProject, this, true)
     }
 
     override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {

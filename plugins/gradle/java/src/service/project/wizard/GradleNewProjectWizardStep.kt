@@ -70,10 +70,6 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   override fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
-    if (artifactId.isEmpty()) {
-      return error(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.missing.error",
-        if (context.isCreatingNewProject) 1 else 0))
-    }
     if (artifactId != parentStep.name) {
       return error(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.name.and.artifact.id.is.different.error",
         if (context.isCreatingNewProject) 1 else 0))

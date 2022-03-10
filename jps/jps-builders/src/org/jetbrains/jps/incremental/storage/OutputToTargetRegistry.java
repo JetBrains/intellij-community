@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -54,7 +55,7 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     final IntSet set = new IntOpenHashSet();
     set.add(buildTargetId);
     for (String outputPath : outputPaths) {
-      appendData(FileUtil.pathHashCode(relativePath(outputPath)), set);
+      appendData(pathHashCode(outputPath), set);
     }
   }
 
@@ -67,7 +68,7 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
       return;
     }
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(relativePath(outputPath));
+      final int key = pathHashCode(outputPath);
       synchronized (myDataLock) {
         final IntSet state = getState(key);
         if (state != null) {
@@ -92,7 +93,7 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     }
     final Collection<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(relativePath(outputPath));
+      final int key = pathHashCode(outputPath);
       synchronized (myDataLock) {
         final IntSet associatedTargets = getState(key);
         if (associatedTargets == null || associatedTargets.size() != 1) {
@@ -106,8 +107,12 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     return result;
   }
 
-  @NotNull
-  private String relativePath(@NotNull String path) {
-    return myRelativizer.toRelative(path);
+  private int pathHashCode(@NotNull String path) {
+    String relativePath = myRelativizer.toRelative(path);
+    // On case-insensitive OS hash calculated from path converted to lower case
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return StringUtil.isEmpty(relativePath) ? 0 : FileUtil.toCanonicalPath(relativePath).hashCode();
+    }
+    return FileUtil.pathHashCode(relativePath);
   }
 }

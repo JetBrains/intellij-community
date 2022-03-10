@@ -208,6 +208,9 @@
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.search.SearchEverywhereTabsCustomization"
+                        serviceImplementation="com.intellij.ide.ui.search.DefaultSearchEverywhereTabsCustomization"/>
+
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
@@ -962,7 +965,6 @@
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
     <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features" />
-    <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
 
     <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
@@ -1228,7 +1230,7 @@
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="Cached value profiling" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Plugins Suggestion" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.plugins.suggestion"
-                       notificationIds="advertiser.plugins;advertiser.no.plugins;kotlin.native.debug;kotlin.js"/>
+                       notificationIds="advertiser.plugins;advertiser.no.plugins;kotlin.native.debug;kotlin.js;tasks.youtrack"/>
     <notificationGroup id="File Watcher Messages" displayType="STICKY_BALLOON" bundle="messages.IdeCoreBundle" key="notification.group.file.watcher"/>
     <notificationGroup id="Low Memory" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.low.memory"/>
     <notificationGroup id="Plugin Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.plugin.error"/>
@@ -1295,7 +1297,7 @@
     <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
-    <advancedSetting id="se.enable.text.search" default="false" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="se.enable.text.search" default="false" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
@@ -1336,8 +1338,8 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
     <registryKey key="new.project.wizard.modal.plugin.install" description="Enables modal lanungage plugins installing"
                  defaultValue="false"/>
-    <searchEverywhereContributor implementation="com.intellij.find.impl.SETextContributor$Companion$Factory"/>
-    <startupActivity implementation="com.intellij.find.impl.SETextContributor$Companion$SETextActivity"/>
+    <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
+    <startupActivity implementation="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"/>
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

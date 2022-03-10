@@ -103,7 +103,7 @@ public abstract class StubIndex {
   /**
    * @deprecated use {@link StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
                                                     @NotNull Project project,

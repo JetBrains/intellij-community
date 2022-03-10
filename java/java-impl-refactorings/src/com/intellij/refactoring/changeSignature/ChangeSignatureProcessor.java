@@ -13,7 +13,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -24,7 +23,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Jeka
@@ -70,44 +72,13 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
-    this(project, generateChangeInfo(method, generateDelegate, newVisibility, newName, newType, parameterInfo, thrownExceptions,
-                                     propagateParametersMethods, propagateExceptionsMethods));
+    this(project, JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, newVisibility, newName, newType, parameterInfo, thrownExceptions,
+                                                        propagateParametersMethods, propagateExceptionsMethods));
   }
 
   public ChangeSignatureProcessor(Project project, final JavaChangeInfo changeInfo) {
     super(project, changeInfo);
     LOG.assertTrue(myChangeInfo.getMethod().isValid());
-  }
-
-  private static JavaChangeInfo generateChangeInfo(PsiMethod method,
-                                                   boolean generateDelegate,
-                                                   @Nullable // null means unchanged
-                                                   @PsiModifier.ModifierConstant String newVisibility,
-                                                   String newName,
-                                                   CanonicalTypes.Type newType,
-                                                   ParameterInfoImpl @NotNull [] parameterInfo,
-                                                   ThrownExceptionInfo[] thrownExceptions,
-                                                   Set<PsiMethod> propagateParametersMethods,
-                                                   Set<PsiMethod> propagateExceptionsMethods) {
-    LOG.assertTrue(method.isValid());
-
-    if (propagateParametersMethods == null) {
-      propagateParametersMethods = new HashSet<>();
-    }
-
-    if (propagateExceptionsMethods == null) {
-      propagateExceptionsMethods = new HashSet<>();
-    }
-
-    if (newVisibility == null) {
-      newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-    }
-
-    final JavaChangeInfoImpl javaChangeInfo =
-      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
-                             propagateParametersMethods, propagateExceptionsMethods);
-    javaChangeInfo.setCheckUnusedParameter();
-    return javaChangeInfo;
   }
 
   @Override

@@ -63,7 +63,7 @@ class ProcessServiceImpl : ProcessService {
    * @deprecated use {@link #sendWinProcessCtrlC(Process)}
    */
   @Deprecated(message = "pid is not enough to emulate CTRL+C on Windows, we need a real process with stdin")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   override fun sendWinProcessCtrlC(pid: Int): Boolean {
     Logger.getInstance(ProcessServiceImpl::class.java).warn("Deprecated method will be removed")
     return createWinProcess(pid).sendCtrlC()

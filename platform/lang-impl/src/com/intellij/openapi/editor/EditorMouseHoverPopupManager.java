@@ -92,6 +92,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       public void caretPositionChanged(@NotNull CaretEvent event) {
         Editor editor = event.getEditor();
         if (editor == SoftReference.dereference(myCurrentEditor)) {
+          //noinspection deprecation
           DocumentationManager.getInstance(Objects.requireNonNull(editor.getProject())).setAllowContentUpdateFromContext(true);
         }
       }
@@ -534,6 +535,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
       }
     }
 
+    /**
+     * @deprecated Unused in v2 implementation.
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
     private @Nullable DocumentationPsiHoverInfo documentationPsiHoverInfo(@NotNull Editor editor) {
       @Nls String quickDocMessage = null;
       DocumentationProvider provider = null;
@@ -578,6 +584,10 @@ public class EditorMouseHoverPopupManager implements Disposable {
       }
     }
 
+    /**
+     * @deprecated Unused in v2 implementation.
+     */
+    @Deprecated
     @Nullable
     protected PsiElement findTargetElement(@NotNull Editor editor, PsiElement element, DocumentationManager documentationManager) {
       return ReadAction.nonBlocking(() -> {
@@ -605,6 +615,10 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return ApplicationManager.getApplication().getService(EditorMouseHoverPopupManager.class);
   }
 
+  /**
+   * @deprecated Returns `null` in v2 implementation.
+   */
+  @Deprecated
   @Nullable
   public DocumentationComponent getDocumentationComponent() {
     AbstractPopup hint = getCurrentHint();

@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class ShowAutoImportPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
@@ -15,8 +14,9 @@ final class ShowAutoImportPassFactory implements TextEditorHighlightingPassFacto
   }
 
   @Override
-  @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return DaemonListeners.canChangeFileSilently(file) ? new ShowAutoImportPass(file.getProject(), file, editor) : null;
+    boolean canChangeFileSilently = ((HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file)).canChangeFileSilently();
+
+    return canChangeFileSilently ? new ShowAutoImportPass(file, editor) : null;
   }
 }

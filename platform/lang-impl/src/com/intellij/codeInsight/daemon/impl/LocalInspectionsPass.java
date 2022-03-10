@@ -207,7 +207,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile file = psiElement.getContainingFile();
     Document thisDocument = Objects.requireNonNull(documentManager.getDocument(file));
 
-    HighlightSeverity severity = myProfileWrapper.getErrorLevel(tool.getDisplayKey(), file).getSeverity();
+    HighlightDisplayKey displayKey = tool.getDisplayKey();
+    if (displayKey == null) {
+      LOG.error("getDisplayKey() is null for " + tool + " (" + tool.getTool() + " ; " + tool.getTool().getClass() + ")");
+      return;
+    }
+    HighlightSeverity severity = myProfileWrapper.getErrorLevel(displayKey, file).getSeverity();
     
     ArrayList<HighlightInfo> newInfos = new ArrayList<>(2);
     createHighlightsForDescriptor(newInfos, emptyActionRegistered, file, thisDocument, tool, severity, descriptor, psiElement);

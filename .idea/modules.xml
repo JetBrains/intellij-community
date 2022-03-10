@@ -494,6 +494,15 @@
       <module fileurl="file://$PROJECT_DIR$/android/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/android/wizard-model/intellij.android.wizard.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/intellij.ant.iml" filepath="$PROJECT_DIR$/plugins/ant/intellij.ant.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/github-color-scheme/intellij.color.scheme.github.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/github-color-scheme/intellij.color.scheme.github.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/monokai-color-scheme/intellij.color.scheme.monokai.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/monokai-color-scheme/intellij.color.scheme.monokai.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/rails-casts-color-scheme/intellij.color.scheme.rails_casts.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/rails-casts-color-scheme/intellij.color.scheme.rails_casts.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/twilight-color-scheme/intellij.color.scheme.twilight.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/twilight-color-scheme/intellij.color.scheme.twilight.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/vibrant-ink-color-scheme/intellij.color.scheme.vibrant_ink.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/vibrant-ink-color-scheme/intellij.color.scheme.vibrant_ink.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/warm-neon-color-scheme/intellij.color.scheme.warmNeon.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/warm-neon-color-scheme/intellij.color.scheme.warmNeon.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.tests.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.tests.iml" />
@@ -517,6 +526,13 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" filepath="$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/emojipicker/intellij.emojipicker.iml" filepath="$PROJECT_DIR$/plugins/emojipicker/intellij.emojipicker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/core/intellij.evaluationPlugin.core.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/core/intellij.evaluationPlugin.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/languages/intellij.evaluationPlugin.languages.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/languages/intellij.evaluationPlugin.languages.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/languages/java/intellij.evaluationPlugin.languages.java.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/languages/java/intellij.evaluationPlugin.languages.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/languages/kotlin/intellij.evaluationPlugin.languages.kotlin.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/languages/kotlin/intellij.evaluationPlugin.languages.kotlin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/languages/python/intellij.evaluationPlugin.languages.python.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/languages/python/intellij.evaluationPlugin.languages.python.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.tests.iml" filepath="$PROJECT_DIR$/plugins/evaluation-plugin/intellij.evaluationPlugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.iml" filepath="$PROJECT_DIR$/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.tests.iml" filepath="$PROJECT_DIR$/plugins/dependency-updater/intellij.externalSystem.dependencyUpdater.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.iml" />
@@ -554,6 +570,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/intellij.idea.community.build.iml" filepath="$PROJECT_DIR$/build/intellij.idea.community.build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/build/deps/intellij.idea.community.build.dependencies.iml" filepath="$PROJECT_DIR$/build/deps/intellij.idea.community.build.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/tasks/intellij.idea.community.build.tasks.iml" filepath="$PROJECT_DIR$/build/tasks/intellij.idea.community.build.tasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/tests/intellij.idea.community.build.tests.iml" filepath="$PROJECT_DIR$/build/tests/intellij.idea.community.build.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij.idea.community.main.iml" filepath="$PROJECT_DIR$/intellij.idea.community.main.iml" />
@@ -646,6 +663,18 @@
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-java-tests/intellij.jvm.analysis.java.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-java-tests/intellij.jvm.analysis.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" filepath="$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/emacs-keymap/intellij.keymap.emacs.iml" filepath="$PROJECT_DIR$/plugins/keymaps/emacs-keymap/intellij.keymap.emacs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" filepath="$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" filepath="$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/resharper-keymap/intellij.keymap.resharper.iml" filepath="$PROJECT_DIR$/plugins/keymaps/resharper-keymap/intellij.keymap.resharper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/sublime-keymap/intellij.keymap.sublime.iml" filepath="$PROJECT_DIR$/plugins/keymaps/sublime-keymap/intellij.keymap.sublime.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-assist-keymap/intellij.keymap.visualAssist.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-assist-keymap/intellij.keymap.visualAssist.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio-keymap/intellij.keymap.visualStudio.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio-keymap/intellij.keymap.visualStudio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio2022-keymap/intellij.keymap.visualStudio2022.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio2022-keymap/intellij.keymap.visualStudio2022.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio-for-mac-keymap/intellij.keymap.visualStudioForMac.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio-for-mac-keymap/intellij.keymap.visualStudioForMac.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/vscode-keymap/intellij.keymap.vscode.iml" filepath="$PROJECT_DIR$/plugins/keymaps/vscode-keymap/intellij.keymap.vscode.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/xcode-keymap/intellij.keymap.xcode.iml" filepath="$PROJECT_DIR$/plugins/keymaps/xcode-keymap/intellij.keymap.xcode.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" filepath="$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />

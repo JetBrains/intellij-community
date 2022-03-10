@@ -50,7 +50,7 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
   if (handleExternal(project, targetPointer, url)) {
     return true
   }
-  return BrowserUtil.browseAbsolute(url)
+  return browseAbsolute(project, url)
 }
 
 private fun handleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {
@@ -70,6 +70,14 @@ private fun doHandleExternal(project: Project, targetPointer: Pointer<out Docume
     if (p.handleExternalLink(PsiManager.getInstance(project), url, element)) {
       return true
     }
+  }
+  return false
+}
+
+fun browseAbsolute(project: Project, url: String): Boolean {
+  if (BrowserUtil.isAbsoluteURL(url)) {
+    BrowserUtil.browse(url, project)
+    return true
   }
   return false
 }

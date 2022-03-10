@@ -13,6 +13,7 @@ import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  public @NotNull List<TextRange> getContentRanges() {
+  public @NotNull List<@NotNull TextRange> getContentRanges() {
     final PsiSnippetDocTagValue valueElement = getValueElement();
     if (valueElement == null) return Collections.emptyList();
 
@@ -108,12 +109,11 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  private static @NotNull List<TextRange> getRanges(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines) {
+  private static @NotNull List<@NotNull TextRange> getRanges(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines) {
     final int firstLine = getFirstNonEmptyLine(lines);
     final int lastLine = getLastNonEmptyLine(lines);
 
-    int indent = getIndent(lines, firstLine, lastLine);
-    if (indent == Integer.MAX_VALUE) indent = 0;
+    int totalMinIndent = getIndent(lines, firstLine, lastLine);
 
     int startOffset = getStartOffsetOfFirstNonEmptyLine(snippetBodyTextRangeRelativeToSnippet, lines, firstLine);
 
@@ -121,20 +121,44 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
     for (int i = firstLine; i < Math.min(lastLine, lines.length); i++) {
       final String line = lines[i];
       final int size = line.length() + 1;
-      ranges.add(TextRange.create(size - indent).shiftRight(startOffset + indent));
+      final int indentSize = getIndentSize(line, totalMinIndent);
+
+      ranges.add(TextRange.create(size - indentSize).shiftRight(startOffset + indentSize));
       startOffset += size;
     }
 
+    final String line = lines[lastLine];
+    final int indentSize = getIndentSize(line, totalMinIndent);
+
     final int endOffset = snippetBodyTextRangeRelativeToSnippet.getEndOffset();
-    final int lastLineStartOffset = Math.min(endOffset, startOffset + indent);
-    final int lastLineEndOffset = startOffset + lines[lastLine].length();
+    final int lastLineStartOffset = Math.min(endOffset, startOffset + indentSize);
+    final int lastLineEndOffset = startOffset + line.length();
+
     ranges.add(TextRange.create(lastLineStartOffset, Math.min(endOffset, lastLineEndOffset)));
     return ranges;
   }
 
+  /**
+   * Usually leading asterisks of a javadoc are aligned so the common indent for lines in snippet body is obvious,
+   * but nevertheless javadoc can have multiple leading asterisks, and they don't have to be aligned.
+   * This method either returns the passed indent or, if the passed indent is too short, which will result in leaving some leading
+   * asterisks after stripping the indent from the line, the indent that goes after the last leading asterisk.
+   * @param line a line to calculate the indent size for
+   * @param indent an indent that is minimal across all the lines in the snippet body
+   * @return the indent that is either the passed indent, or a new indent that goes after the last leading asterisk.
+   */
   @Contract(pure = true)
-  @Range(from = 0, to = Integer.MAX_VALUE)
-  private static int getStartOffsetOfFirstNonEmptyLine(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines, int firstLine) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndentSize(@NotNull final String line, int indent) {
+    final int ownLineIndent = CharArrayUtil.shiftForward(line, 0, " *");
+
+    final String maxPossibleIndent = line.substring(0, ownLineIndent);
+    final int lastAsteriskInIndent = maxPossibleIndent.lastIndexOf('*', ownLineIndent);
+
+    return lastAsteriskInIndent >= indent ? lastAsteriskInIndent + 1 : indent;
+  }
+
+  @Contract(pure = true)
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getStartOffsetOfFirstNonEmptyLine(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines, int firstLine) {
     int start = snippetBodyTextRangeRelativeToSnippet.getStartOffset();
     for (int i = 0; i < Math.min(firstLine, lines.length); i++) {
       start += lines[i].length() + 1;
@@ -143,8 +167,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  @Range(from = 0, to = Integer.MAX_VALUE)
-  private static int getIndent(String@NotNull [] lines, int firstLine, int lastLine) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndent(String@NotNull [] lines, int firstLine, int lastLine) {
     int minIndent = Integer.MAX_VALUE;
     for (int i = firstLine; i <= lastLine && i < lines.length; i++) {
       String line = lines[i];
@@ -157,12 +180,12 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
       }
       if (minIndent > indentLength) minIndent = indentLength;
     }
+    if (minIndent == Integer.MAX_VALUE) minIndent = 0;
     return minIndent;
   }
 
   @Contract(pure = true)
-  @Range(from = 0, to = Integer.MAX_VALUE)
-  private static int getLastNonEmptyLine(String@NotNull[] lines) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getLastNonEmptyLine(String@NotNull[] lines) {
     int lastLine = lines.length - 1;
     while (lastLine > 0 && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[lastLine])) {
       lastLine --;
@@ -171,8 +194,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  @Range(from = 0, to = Integer.MAX_VALUE)
-  private static int getFirstNonEmptyLine(String@NotNull[] lines) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getFirstNonEmptyLine(String@NotNull[] lines) {
     int firstLine = 0;
     while (firstLine < lines.length && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[firstLine])) {
       firstLine ++;
@@ -187,8 +209,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  @Range(from = 0, to = Integer.MAX_VALUE)
-  private static int calculateIndent(@NotNull String content) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int calculateIndent(@NotNull String content) {
     if (content.isEmpty()) return 0;
     final String noIndent = content.replaceAll("^\\s*\\*\\s*", "");
     return content.length() - noIndent.length();

@@ -14,7 +14,6 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -32,7 +31,6 @@ import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class KotlinExprTypePredicate(
     private val search: String,
@@ -42,7 +40,6 @@ class KotlinExprTypePredicate(
     private val baseName: String,
     private val regex: Boolean
 ) : MatchPredicate() {
-
     override fun match(matchedNode: PsiElement, start: Int, end: Int, context: MatchContext): Boolean {
         val searchedTypeNames = if (regex) listOf() else search.split('|')
         if (matchedNode is KtExpression && matchedNode.isNull() && searchedTypeNames.contains("null")) return true
@@ -55,11 +52,9 @@ class KotlinExprTypePredicate(
                 if (e is ControlFlowException) throw e
                 null
             }
-
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
             node is KtSimpleNameStringTemplateEntry -> node.expression?.resolveType()
-            else -> throw KotlinExceptionWithAttachments(KotlinBundle.message("error.type.filter.node"))
-                .withAttachment("node_class.txt", node::class)
+            else -> null
         } ?: return false
 
         val project = node.project

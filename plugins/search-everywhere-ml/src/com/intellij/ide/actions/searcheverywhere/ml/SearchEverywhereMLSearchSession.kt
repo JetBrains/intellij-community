@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
@@ -73,6 +74,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
+      if (project != null) {
+        val statisticianService = SearchEverywhereStatisticianService.getInstance(project)
+        selectedItems.forEach { statisticianService.increaseUseCount(it) }
+      }
+
       val orderByMl = orderedByMl(state.tabId)
       logger.onItemSelected(
         project, sessionId, state.searchIndex,

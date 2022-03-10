@@ -2185,7 +2185,7 @@ public class UsageViewImpl implements UsageViewEx {
     public void run() {
       if (myCheckReadOnlyStatus && !checkReadonlyUsages()) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      if (myCannotMakeString != null && myChangesDetected) {
+      if (myCannotMakeString != null && !myCannotMakeString.isEmpty() && myChangesDetected) {
         String title = UsageViewBundle.message("changes.detected.error.title");
         if (canPerformReRun()) {
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
@@ -2308,5 +2308,10 @@ public class UsageViewImpl implements UsageViewEx {
 
   private interface ExclusionHandlerEx<Node> extends ExclusionHandler<Node> {
     void excludeNodeSilently(@NotNull Node node);
+  }
+
+  @Nullable
+  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+    return UsageViewUtil.getShowUsagesWithSettingsShortcut();
   }
 }

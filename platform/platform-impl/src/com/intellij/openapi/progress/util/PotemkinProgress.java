@@ -63,7 +63,8 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
 
     //noinspection SpellCheckingInspection
-    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit");
+    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
+           event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent"); // see JBR-4208
   }
 
   @NotNull

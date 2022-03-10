@@ -13,7 +13,7 @@ enum class DslComponentProperty {
   /**
    * A mark that component is a label of a row, see [Panel.row]
    *
-   * Value: true
+   * Value: [Boolean]
    */
   ROW_LABEL,
 
@@ -46,6 +46,7 @@ fun interface HyperlinkEventAction {
     /**
      * Opens URL in a browser
      */
+    @JvmField
     val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e -> BrowserUtil.browse(e.url) }
   }
 

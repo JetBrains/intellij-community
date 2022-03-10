@@ -43,23 +43,14 @@ import java.util.zip.GZIPOutputStream
 class CompilationPartsUtil {
 
   static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
+    upload(zipsLocation, context.messages, pack(context, zipsLocation))
+  }
+
+  @SuppressWarnings('GrUnnecessaryPublicModifier')
+  public static List<PackAndUploadContext> pack(CompilationContext context, String zipsLocation) {
     BuildMessages messages = context.messages
 
     messages.progress("Packing classes and uploading them to the server")
-
-    String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
-    if (StringUtil.isEmptyOrSpaces(serverUrl)) {
-      messages.error("Compile Parts archive server url is not defined. \n" +
-                     "Please set 'intellij.compile.archive.url' system property.")
-      return
-    }
-    String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
-    String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
-    if (StringUtil.isEmptyOrSpaces(branch)) {
-      messages.error("Unable to determine current git branch, assuming 'master'. \n" +
-                     "Please set '$intellijCompileArtifactsBranchProperty' system property")
-      return
-    }
 
     //region Prepare executor
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
@@ -75,7 +66,6 @@ class CompilationPartsUtil {
     }
     FileUtil.ensureExists(new File(zipsLocation))
 
-    Map<String, String> hashes = new ConcurrentHashMap<String, String>(2048)
     List<PackAndUploadContext> contexts = new ArrayList<PackAndUploadContext>(2048)
 
     File root = context.getProjectOutputDirectory().getAbsoluteFile()
@@ -109,7 +99,7 @@ class CompilationPartsUtil {
             def childMessages = messages.forkForParallelTask(ctx.name)
             executor.submit {
               withForkedMessages(childMessages) { BuildMessages msgs ->
-                pack(msgs, context, ctx)
+                packItem(msgs, context, ctx)
               }
             }
           }
@@ -122,9 +112,35 @@ class CompilationPartsUtil {
         messages.onAllForksFinished()
       }
     }
+    contexts
+  }
+
+  private static void upload(String zipsLocation,BuildMessages messages, List<PackAndUploadContext> contexts) {
+    String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
+    if (StringUtil.isEmptyOrSpaces(serverUrl)) {
+      messages.error("Compile Parts archive server url is not defined. \n" +
+                     "Please set 'intellij.compile.archive.url' system property.")
+      return
+    }
+
+    Map<String, String> hashes = new ConcurrentHashMap<String, String>(2048)
+
+    String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
+    String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
+    if (StringUtil.isEmptyOrSpaces(branch)) {
+      messages.error("Unable to determine current git branch, assuming 'master'. \n" +
+                     "Please set '$intellijCompileArtifactsBranchProperty' system property")
+      return
+    }
+
+    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
+    messages.info("Will use up to $executorThreadsCount threads for uploading")
+
+    def executor = new NamedThreadPoolExecutor('Compile Parts Pack', executorThreadsCount)
+    executor.prestartAllCoreThreads()
 
     // TODO: Remove hardcoded constant
-    String uploadPrefix = "intellij-compile/v1/$branch".toString()
+    String uploadPrefix = "intellij-compile/v2".toString()
 
     messages.block("Compute archives checksums") {
       runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
@@ -246,7 +262,7 @@ class CompilationPartsUtil {
     }
     String persistentCache = System.getProperty('agent.persistent.cache')
     String cache = persistentCache ?: classesOutput.parentFile.getAbsolutePath()
-    File tempDownloadsStorage = new File(cache, "idea-compile-parts-${metadata.branch}")
+    File tempDownloadsStorage = new File(cache, "idea-compile-parts-v2")
 
     Set<String> upToDate = ContainerUtil.newConcurrentSet()
 
@@ -531,7 +547,7 @@ class CompilationPartsUtil {
     }
   }
 
-  private static void pack(BuildMessages messages, CompilationContext compilationContext, PackAndUploadContext ctx) {
+  private static void packItem(BuildMessages messages, CompilationContext compilationContext, PackAndUploadContext ctx) {
     messages.block("Packing $ctx.name") {
       def destination = new File(ctx.archive).toPath()
       if (Files.exists(destination)) {
@@ -579,7 +595,8 @@ class CompilationPartsUtil {
     }
   }
 
-  private static class PackAndUploadContext {
+  @SuppressWarnings('GrUnnecessaryPublicModifier')
+  public static class PackAndUploadContext {
     final File output
     final String archive
     final String name

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -330,14 +330,14 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   @NotNull
   @Override
-  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                                            @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
+                                                                                               @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
     throws StorageException, IOException {
     ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes();
     checkNameStorage();
     mySerializationManager.initialize();
 
-    MapReduceIndexBase<Integer, SerializedStubTree> index = StubUpdatableIndexFactory.getInstance().createIndex(extension, new VfsAwareIndexStorageLayout<>() {
+    MapReduceIndexBase<Integer, SerializedStubTree, ?> index = StubUpdatableIndexFactory.getInstance().createIndex(extension, new VfsAwareIndexStorageLayout<>() {
       @Override
       public void clearIndexData() {
         layout.clearIndexData();

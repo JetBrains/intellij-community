@@ -197,7 +197,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         float splitterProportion = previewSplitter.getProportion();
         if (enabled) {
             if (splitterProportion == 1) {
-                previewSplitter.setProportion(Float.valueOf(PropertiesComponent.getInstance(project).getValue(ToggleTagsPanelAction.TAGS_PANEL_PROPORTION, "0.5f")));
+                previewSplitter.setProportion(Float.parseFloat(PropertiesComponent.getInstance(project).getValue(ToggleTagsPanelAction.TAGS_PANEL_PROPORTION, "0.5f")));
             }
             if (tagsPanel == null) {
                 tagsPanel = createTagPreviewPanel();

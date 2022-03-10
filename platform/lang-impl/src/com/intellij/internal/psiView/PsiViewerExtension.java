@@ -15,11 +15,14 @@ public interface PsiViewerExtension {
   ExtensionPointName<PsiViewerExtension> EP_NAME = ExtensionPointName.create("com.intellij.psiViewerExtension");
 
   @Nls(capitalization = Nls.Capitalization.Title)
+  @NotNull
   String getName();
 
+  @NotNull
   Icon getIcon();
 
-  PsiElement createElement(Project project, String text);
+  @NotNull
+  PsiElement createElement(@NotNull Project project, @NotNull String text);
 
   @NotNull
   FileType getDefaultFileType();

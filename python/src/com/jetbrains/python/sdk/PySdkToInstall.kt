@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
@@ -78,11 +79,11 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.9.7/python-3.9.7-amd64.exe",
-    28895456,
-    "cc3eabc1f9d6c703d1d2a4e7c041bc1d",
+    "https://www.python.org/ftp/python/3.9.10/python-3.9.10-amd64.exe",
+    28909456,
+    "747ac35ae667f4ec1ee3b001e9b7dbc6",
     hashFunction,
-    "python-3.9.7-amd64.exe"
+    "python-3.9.10-amd64.exe"
   )
 }
 
@@ -94,19 +95,22 @@ private fun getPy310ToInstallOnWindows(): PySdkToInstallOnWindows {
   return PySdkToInstallOnWindows(
     name,
     version,
-    "https://www.python.org/ftp/python/3.10.0/python-3.10.0-amd64.exe",
-    28315928,
-    "c3917c08a7fe85db7203da6dcaa99a70",
+    "https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe",
+    28239176,
+    "2b4fd1ed6e736f0e65572da64c17e020",
     hashFunction,
-    "python-3.10.0-amd64.exe"
+    "python-3.10.2-amd64.exe"
   )
 }
 
 abstract class PySdkToInstall internal constructor(name: String, version: String)
   : ProjectJdkImpl(name, PythonSdkType.getInstance(), null, version) {
 
+  /**
+   * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].
+   */
   @CalledInAny
-  abstract fun renderInList(renderer: PySdkListCellRenderer)
+  abstract fun renderInList(renderer: SimpleColoredComponent)
 
   @CalledInAny
   @NlsContexts.DialogMessage
@@ -124,7 +128,7 @@ private class PySdkToInstallOnWindows(name: String,
                                       private val hashFunction: HashFunction,
                                       private val targetFileName: String) : PySdkToInstall(name, version) {
 
-  override fun renderInList(renderer: PySdkListCellRenderer) {
+  override fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     renderer.append(" $url", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)  // NON-NLS
     renderer.icon = AllIcons.Actions.Download
@@ -343,7 +347,7 @@ private class PySdkToInstallOnWindows(name: String,
 
 private class PySdkToInstallViaXCodeSelect : PySdkToInstall("Python", "") {
 
-  override fun renderInList(renderer: PySdkListCellRenderer) {
+  override fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     renderer.append(" ")
     renderer.append(PyBundle.message("python.cldt.installing.suggestion"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)

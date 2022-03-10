@@ -67,13 +67,18 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     logger.info("Dispatching UI settings change.")
-    hideClassicMainToolbarAndNavbarIfVisible()
+    hideClassicMainToolbarIfVisible()
   }
 
-  private fun hideClassicMainToolbarAndNavbarIfVisible() {
+  private fun hideClassicMainToolbarIfVisible() {
     if (isVisible) {
       logger.info("Hiding Main Toolbar (Classic) because the new toolbar is visible.")
       UISettings.getInstance().showMainToolbar = false
+    }
+  }
+  private fun hideClassicMainToolbarAndNavbarIfVisible() {
+    if (isVisible) {
+      hideClassicMainToolbarIfVisible()
       logger.info("Hiding NavBar because the new toolbar is visible.")
       UISettings.getInstance().showNavigationBar = false
     }

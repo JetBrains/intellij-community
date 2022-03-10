@@ -458,7 +458,7 @@ public final class JUnitUtil {
         if (AnnotationUtil.isAnnotated(psiMethod, INSTANCE_5_CONFIGS, 0)) {
           return true;
         }
-        if (TestUtils.testInstancePerClass(containingClass) && AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS, 0)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, STATIC_5_CONFIGS, 0) && TestUtils.testInstancePerClass(containingClass)) {
           return true;
         }
       }

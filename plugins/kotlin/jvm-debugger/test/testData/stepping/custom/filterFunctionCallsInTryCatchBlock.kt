@@ -12,15 +12,15 @@ fun baz(i: Int): Int {
     return i
 }
 
-fun inlineFoo(i: Int, j: Int): Int {
+inline fun inlineFoo(i: Int, j: Int): Int {
     return i + j
 }
 
-fun inlineBar(i: Int): Int {
+inline fun inlineBar(i: Int): Int {
     return i
 }
 
-fun inlineBaz(i: Int): Int {
+inline fun inlineBaz(i: Int): Int {
     return i
 }
 

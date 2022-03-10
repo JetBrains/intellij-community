@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup
 
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.util.NlsSafe
@@ -56,9 +57,13 @@ enum class AnalyzingType {
   EMPTY     // Analyzing in progress but no information is available
 }
 /**
- * Severity status item containing text (not necessarily a number) possible icon and details text for popup
+ * Status item to be displayed in the top-right corner of the editor,
+ * containing a text (not necessarily a number), possible icon and details text for popup
  */
 data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val detailsText: String? = null)
+
+/** The data necessary for creating severity-based [StatusItem]s */
+data class SeverityStatusItem constructor(val severity: HighlightSeverity, val icon: Icon, val problemCount: Int, val countMessage: String)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and

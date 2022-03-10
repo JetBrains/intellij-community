@@ -51,6 +51,19 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
                     val parentKey = parent.header.key ?: break
                     // add table header segments to process all the previous siblings to handle nested array tables cases
                     parentKey.segments.mapTo(tableHeaderSegments) { it.name }
+
+                    // TODO: Workaround, should be fixed in TOML grammar
+                    // if it is a request from inspections, it walks only properties,
+                    // so we don't have path calculation from key or value
+                    if (element is TomlKeyValue) {
+                        val currentKey = current.key
+
+                        for (segment in currentKey.segments.asReversed()) {
+                            if (segment != element || forceLastTransition) {
+                                position.addPrecedingStep(segment.name)
+                            }
+                        }
+                    }
                 }
                 current is TomlValue && parent is TomlArray -> {
                     if (current != element || forceLastTransition) {

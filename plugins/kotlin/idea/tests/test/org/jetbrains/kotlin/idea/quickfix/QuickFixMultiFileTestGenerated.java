@@ -2293,6 +2293,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             runTest("testData/quickfix/wrapWithSafeLetCall/javaNullabilityMismatchArgument2.test");
         }
 
+        @TestMetadata("javaNullabilityMismatchDoNotWrapNull.test")
+        public void testJavaNullabilityMismatchDoNotWrapNull() throws Exception {
+            runTest("testData/quickfix/wrapWithSafeLetCall/javaNullabilityMismatchDoNotWrapNull.test");
+        }
+
         @TestMetadata("javaReceiverNullabilityInvoke.test")
         public void testJavaReceiverNullabilityInvoke() throws Exception {
             runTest("testData/quickfix/wrapWithSafeLetCall/javaReceiverNullabilityInvoke.test");

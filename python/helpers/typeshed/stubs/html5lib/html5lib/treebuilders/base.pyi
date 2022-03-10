@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 Marker: Any
 listElementsMap: Any
@@ -18,7 +18,7 @@ class Node:
     def cloneNode(self) -> None: ...
     def hasContent(self) -> None: ...
 
-class ActiveFormattingElements(List[Any]):
+class ActiveFormattingElements(list[Any]):
     def append(self, node) -> None: ...
     def nodesEqual(self, node1, node2): ...
 

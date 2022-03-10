@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.model.ModelBranch
+import com.intellij.model.ModelBranchUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.Key
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 
 class IDEKotlinBinaryClassCache {
     class KotlinBinaryClassHeaderData(
@@ -22,7 +25,10 @@ class IDEKotlinBinaryClassCache {
         val metadataVersion: JvmMetadataVersion,
         val partNamesIfMultifileFacade: List<String>,
         val packageName: String?
-    )
+    ) {
+        val packageNameWithFallback: FqName
+            get() = packageName?.let(::FqName) ?: classId.packageFqName
+    }
 
     data class KotlinBinaryData(val isKotlinBinary: Boolean, val timestamp: Long, val headerData: KotlinBinaryClassHeaderData?)
 
@@ -53,6 +59,7 @@ class IDEKotlinBinaryClassCache {
         file: VirtualFile,
         fileContent: ByteArray?
     ): KotlinJvmBinaryClass? {
+        if (ModelBranch.getFileBranch(file) != null) return null
         val classFileContent = try {
           KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, fileContent)
         } catch (e: Exception) {

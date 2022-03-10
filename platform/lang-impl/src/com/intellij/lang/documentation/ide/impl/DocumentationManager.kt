@@ -6,7 +6,6 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.actions.documentationTargets
@@ -144,11 +143,11 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (getPopup() != null) {
       return
     }
-    val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
+    val browser = DocumentationBrowser.createBrowser(project, request)
     val popup = createDocumentationPopup(project, browser, popupContext)
     setPopup(popup)
 
-    showPopupLater(popup, browseJob, popupContext)
+    showPopupLater(popup, browser, popupContext)
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
@@ -255,7 +254,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
         resolveLink(targetSupplier, url)
       }
       if (result !is InternalResolveLinkResult.Value) {
-        BrowserUtil.browseAbsolute(url)
+        browseAbsolute(project, url)
       }
       else {
         showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))

@@ -49,7 +49,7 @@ public class EditorConfigEncodingTest extends EditorConfigFileSettingsTestCase {
     VirtualFile file = WriteAction.computeAndWait(() -> {
       return targetDir.createChildData(this, "test.txt");
     });
-    EditorConfigEncodingCache.getInstance().cacheEncoding(getProject(), file);
+    EditorConfigEncodingCache.getInstance().computeAndCacheEncoding(getProject(), file);
     return file;
   }
 

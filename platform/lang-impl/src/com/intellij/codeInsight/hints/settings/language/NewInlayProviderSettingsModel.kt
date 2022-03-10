@@ -2,11 +2,11 @@
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.ResourceUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.xmlb.SerializationFilter
 
 class NewInlayProviderSettingsModel<T : Any>(
@@ -42,13 +41,29 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) {
+  override fun collectData(editor: Editor, file: PsiFile) : Runnable {
     providerWithSettings.provider.preparePreview(editor, file, providerWithSettings.settings)
-    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.let { collectorWrapperFor ->
-      ReadAction.nonBlocking {
-        collectorWrapperFor.collectTraversingAndApplyOnEdt(editor, file, isEnabled)
-      }.inSmartMode(file.project)
-        .submit(AppExecutorUtil.getAppExecutorService())
+    val collectorWrapper = providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language) ?: return Runnable {}
+    val case = CASE_KEY.get(editor)
+    val enabled = case?.value ?: isEnabled
+    val backup = cases.map { it.value }
+    val hintsBuffer: HintsBuffer
+    try {
+      cases.forEach { it.value = false }
+      case?.let { it.value = true }
+      hintsBuffer = collectorWrapper.collectTraversing(editor, file, enabled)
+      if (!enabled) {
+        val builder = strikeOutBuilder(editor)
+        addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
+        addStrikeout(hintsBuffer.blockAboveHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
+        addStrikeout(hintsBuffer.blockBelowHints, builder) { root, constraints -> BlockConstrainedPresentation(root, constraints) }
+      }
+    }
+    finally {
+      cases.forEachIndexed { index, c -> c.value = backup[index] }
+    }
+    return Runnable {
+      collectorWrapper.applyToEditor(file, editor, hintsBuffer)
     }
   }
 
@@ -60,6 +75,10 @@ class NewInlayProviderSettingsModel<T : Any>(
 
   override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     return getCasePreview(providerWithSettings.language, providerWithSettings.provider, case)
+  }
+
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return providerWithSettings.language
   }
 
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {

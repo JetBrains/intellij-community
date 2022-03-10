@@ -38,7 +38,9 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
 
   fun deleteProfile(profile: InspectionProfileImpl) = deleteProfile(profile.name)
 
-  protected open fun schemeRemoved(scheme: InspectionProfileImpl) {}
+  protected open fun schemeRemoved(scheme: InspectionProfileImpl) {
+    scheme.cleanup(null)
+  }
 
   abstract fun fireProfileChanged(profile: InspectionProfileImpl)
 }

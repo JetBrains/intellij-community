@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ActionGroupUtil {
 
   /** @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent)} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean unused) {
     return getActiveActions(actionGroup, e).isEmpty();
   }

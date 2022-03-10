@@ -17,7 +17,7 @@ import java.util.*;
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  * @deprecated Use collection methods instead
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public final class ContainerUtilRt {
   /**
@@ -26,7 +26,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<K, V>();
   }
@@ -45,7 +45,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Object[])} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
@@ -60,7 +60,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static <T> HashSet<T> newHashSet() {
     return new HashSet<T>();
   }
@@ -69,7 +69,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Object[])}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
@@ -80,6 +80,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Iterable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
@@ -93,7 +94,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newLinkedHashSet(Object[])}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
@@ -178,7 +179,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#emptyList()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> emptyList() {
@@ -193,7 +194,7 @@ public final class ContainerUtilRt {
   @Deprecated
   @NotNull
   @Contract(pure=true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return emptyList();
     List<V> list = new ArrayList<V>(collection.size());

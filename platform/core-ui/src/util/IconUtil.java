@@ -308,10 +308,9 @@ public final class IconUtil {
   /**
    * @deprecated This icon is not used by platform anymore.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull Icon getAnalyzeIcon() {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class);
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class.getClassLoader());
   }
 
   public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
@@ -321,7 +320,7 @@ public final class IconUtil {
   }
 
   private static @NotNull @NonNls String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
+    return "toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
   /**
@@ -671,6 +670,9 @@ public final class IconUtil {
       Icon version = IconLoader.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
       if (version != null) return version;
     }
+    if (icon instanceof ScalableIcon) {
+      return ((ScalableIcon)icon).scale(scale);
+    }
     return scale(icon, null, scale);
   }
 
@@ -810,8 +812,7 @@ public final class IconUtil {
   /**
    * @deprecated Use {@link #createImageIcon(Image)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull JBImageIcon createImageIcon(final @NotNull BufferedImage img) {
     return createImageIcon((Image)img);
   }

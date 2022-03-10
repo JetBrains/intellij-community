@@ -78,9 +78,9 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager" preload="true"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
@@ -184,6 +184,8 @@
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
+
+    <dom.gotoSuper implementation="org.jetbrains.idea.maven.dom.navigation.MavenGotoSuperHandler"/>
 
     <completion.contributor language="any"
                             implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor"
@@ -307,10 +309,6 @@
 
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
-
-    <registryKey key="maven.import.tree.structure" defaultValue="false"
-                 description="Enable experimental implementation of Maven import module tree structure with split main and test modules. See IDEA-85478 for details."/>
-
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -615,7 +613,7 @@
             icon="AllIcons.Nodes.Folder"/>
     <action id="Maven.ShowIgnored"
             class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-            icon="AllIcons.Actions.ShowHiddens"/>
+            icon="AllIcons.Actions.ToggleVisibility"/>
     <action id="Maven.ShowBasicPhasesOnly"
             class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
             icon="AllIcons.General.Filter"/>
@@ -623,6 +621,12 @@
             class="org.jetbrains.idea.maven.navigator.actions.AlwaysShowArtifactIdAction"/>
     <action id="Maven.ShowVersions"
             class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"/>
+
+    <action id="Maven.DependencyAnalyzer" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerAction"/>
+    <action id="Maven.DependencyAnalyzer.GoTo" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
@@ -670,12 +674,16 @@
       <reference id="Maven.CollapseAll"/>
       <separator/>
       <reference id="Maven.ShowSettingsGroup"/>
+      <separator/>
+      <reference id="Maven.DependencyAnalyzer"/>
     </group>
 
     <group id="Maven.DependencyMenu">
       <reference id="Maven.DownloadSelectedSources"/>
       <reference id="Maven.DownloadSelectedDocs"/>
       <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
+      <separator/>
+      <reference id="Maven.DependencyAnalyzer"/>
     </group>
 
     <group id="Maven.BaseProjectMenu">
@@ -691,6 +699,8 @@
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
       <reference id="Maven.ShowEffectivePom"/>
+      <separator/>
+      <reference id="Maven.DependencyAnalyzer"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
@@ -741,15 +751,6 @@
               icon="AllIcons.General.Remove"
               class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction"/>
     </group>
-
-    <action id="Maven.DependencyAnalyzer" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerAction">
-      <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
-      <add-to-group group-id="Maven.NavigatorActionsToolbar" anchor="after" relative-to-action="Maven.ToggleSkipTests"/>
-    </action>
-    <action id="Maven.DependencyAnalyzer.GoTo" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerGoToAction">
-      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
-      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
-    </action>
   </actions>
 
   <projectListeners>

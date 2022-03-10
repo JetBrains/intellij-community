@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,8 +64,7 @@ public interface RunnerAndConfigurationSettings {
    * @deprecated There are different ways of storing run configuration in a file,
    * use {@link #storeInLocalWorkspace()}, {@link #storeInDotIdeaFolder()} or {@link #storeInArbitraryFileInProject(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void setShared(boolean value) {
     if (value) {
       storeInDotIdeaFolder();
@@ -252,8 +250,7 @@ public interface RunnerAndConfigurationSettings {
   /**
    * @deprecated Use {@link RunConfiguration#isAllowRunningInParallel()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default boolean isSingleton() {
     return !getConfiguration().isAllowRunningInParallel();
   }

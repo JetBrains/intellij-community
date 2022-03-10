@@ -77,7 +77,7 @@ final class BundledRuntime {
     Path targetDir = Path.of(context.paths.communityHome, "build", "download", "${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     def jbrDir = targetDir.resolve("jbr")
 
-    Path archive = findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
+    Path archive = findArchiveImpl(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
       new BuildDependenciesCommunityRoot(context.paths.communityHomeDir),
@@ -101,7 +101,7 @@ final class BundledRuntime {
   }
 
   void extractTo(String prefix, OsFamily os, Path destinationDir, JvmArchitecture arch) {
-    Path archive = findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
+    Path archive = findArchiveImpl(prefix, os, arch)
     if (archive != null) {
       doExtract(archive, destinationDir, os)
     }
@@ -129,13 +129,13 @@ final class BundledRuntime {
   }
 
   Path findArchive(String prefix, OsFamily os, JvmArchitecture arch) {
-    return findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
+    return findArchiveImpl(prefix, os, arch)
   }
 
-  private static Path findArchiveImpl(String prefix, OsFamily os, String jreBuild, JvmArchitecture arch, BuildOptions options, BuildPaths paths) {
-    String archiveName = archiveName(prefix, jreBuild, options.bundledRuntimeVersion, arch, os)
+  private Path findArchiveImpl(String prefix, OsFamily os, JvmArchitecture arch) {
+    String archiveName = archiveName(prefix, arch, os)
     URI url = new URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
-    return BuildDependenciesDownloader.downloadFileToCacheLocation(new BuildDependenciesCommunityRoot(paths.communityHomeDir), url)
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(new BuildDependenciesCommunityRoot(context.paths.communityHomeDir), url)
   }
 
   private static void unTar(Path archive, Path destination) {
@@ -233,9 +233,12 @@ final class BundledRuntime {
    * Update this method together with:
    *  `build/dependencies/setupJdk.gradle`
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
+   *  `UploadingAndSigning#getMissingJbrs(java.lang.String)`
   */
   @SuppressWarnings('SpellCheckingInspection')
-  private static String archiveName(String prefix, String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
+  private String archiveName(String prefix, JvmArchitecture arch, OsFamily os) {
+    int version = context.options.bundledRuntimeVersion
+    String jreBuild = build
     String update, build
     String[] split = jreBuild.split('b')
     if (split.length > 2) {
@@ -253,7 +256,18 @@ final class BundledRuntime {
     }
 
     String archSuffix = getArchSuffix(arch)
-    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${build}.tar.gz"
+  }
+
+  private String runtimeBuildPrefix() {
+    if (!context.options.runtimeDebug) {
+      return ''
+    }
+    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
+      context.messages.error("Either test or development mode is required to use fastdebug runtime build")
+    }
+    context.messages.info("Fastdebug runtime build is requested")
+    return 'fastdebug-'
   }
 
   private static String getArchSuffix(JvmArchitecture arch) {

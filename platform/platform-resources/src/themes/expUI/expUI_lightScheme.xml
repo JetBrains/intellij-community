@@ -8,6 +8,7 @@
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="7fc784" />
+    <option name="ANNOTATIONS_COLOR" value="5a5d6b" />
     <option name="ANNOTATIONS_LAST_COMMIT_COLOR" value="0" />
     <option name="CARET_ROW_COLOR" value="f5f8fe" />
     <option name="DELETED_LINES_COLOR" value="767a8a" />
@@ -17,10 +18,13 @@
     <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="7fc784" />
     <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="767a8a" />
     <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="88adf7" />
+    <option name="INDENT_GUIDE" value="ebecf0" />
     <option name="LINE_NUMBERS_COLOR" value="aeb3c2" />
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="767a8a" />
     <option name="LOOKUP_COLOR" value="ffffff" />
+    <option name="MATCHED_BRACES_INDENT_GUIDE_COLOR" value="62b3b3" />
     <option name="MODIFIED_LINES_COLOR" value="88adf7" />
+    <option name="SELECTED_INDENT_GUIDE" value="aeb3c2" />
     <option name="SELECTION_BACKGROUND" value="a6d2ff" />
     <option name="SELECTION_FOREGROUND" value="" />
     <option name="TEARLINE_COLOR" value="d4d4d4" />
@@ -30,7 +34,6 @@
     <option name="VCS_ANNOTATIONS_COLOR_4" value="edf2fa" />
     <option name="VCS_ANNOTATIONS_COLOR_5" value="f7f8fa" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="f7e2cb" />
-    <option name="ANNOTATIONS_COLOR" value="5a5d6b" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
@@ -185,8 +188,8 @@
     </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="6dcc" />
-        <option name="EFFECT_COLOR" value="6dcc" />
+        <option name="FOREGROUND" value="8552c6" />
+        <option name="EFFECT_COLOR" value="8552c6" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
@@ -362,8 +365,8 @@
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="0" />
-        <option name="BACKGROUND" value="ffe959" />
-        <option name="ERROR_STRIPE_COLOR" value="99661f" />
+        <option name="BACKGROUND" value="fcd47e" />
+        <option name="ERROR_STRIPE_COLOR" value="c47233" />
       </value>
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
@@ -380,8 +383,8 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="f5eac1" />
-        <option name="ERROR_STRIPE_COLOR" value="ebc700" />
+        <option name="BACKGROUND" value="fcf4d4" />
+        <option name="ERROR_STRIPE_COLOR" value="f2bf57" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>

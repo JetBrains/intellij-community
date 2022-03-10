@@ -7,7 +7,6 @@ import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
@@ -41,7 +40,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   /** @deprecated use {@code com.intellij.fileType} extension point instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions);
 
   /**
@@ -55,7 +53,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   /** @deprecated obsolete - file type associations aren't limited to mere extensions list (see {@link #getAssociations}) */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract String @NotNull [] getAssociatedExtensions(@NotNull FileType type);
 
   public abstract @NotNull List<FileNameMatcher> getAssociations(@NotNull FileType type);

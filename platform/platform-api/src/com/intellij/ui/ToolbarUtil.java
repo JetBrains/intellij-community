@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
@@ -18,6 +19,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class ToolbarUtil {
@@ -25,7 +27,7 @@ public final class ToolbarUtil {
                                        @NotNull JRootPane rootPane,
                                        Consumer<? super Runnable> onDispose) {
     if (SystemInfoRt.isMac) {
-      if (ExperimentalUI.isNewUI() || ExperimentalUI.isNewToolbar()) {
+      if (ExperimentalUI.isNewToolbar()) {
         setCustomTitleForToolbar(window, rootPane, onDispose);
       }
       else if (isMacTransparentTitleBarAppearance()) {
@@ -38,12 +40,18 @@ public final class ToolbarUtil {
     return EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.mac.transparentTitleBarAppearance");
   }
 
+  public static void removeSystemTitleBar(@NotNull JRootPane rootPane) {
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewToolbar()) return;
+
+    rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
+    rootPane.putClientProperty("apple.awt.fullWindowContent", true);
+    rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
+  }
+
   public static void setCustomTitleForToolbar(@NotNull Window window,
                                               @NotNull JRootPane rootPane,
                                               Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || (!ExperimentalUI.isNewUI() && !ExperimentalUI.isNewToolbar())) {
-      return;
-    }
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewToolbar()) return;
 
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {
@@ -107,19 +115,36 @@ public final class ToolbarUtil {
   public static void setTransparentTitleBar(@NotNull Window window,
                                             @NotNull JRootPane rootPane,
                                             Consumer<? super Runnable> onDispose) {
+    setTransparentTitleBar(window, rootPane, null, onDispose);
+  }
+
+  public static void setTransparentTitleBar(@NotNull Window window,
+                                            @NotNull JRootPane rootPane,
+                                            @Nullable Supplier<? extends FullScreeSupport> handlerProvider,
+                                            Consumer<? super Runnable> onDispose) {
     if (!SystemInfoRt.isMac || !isMacTransparentTitleBarAppearance()) {
       return;
     }
 
+    FullScreeSupport handler = handlerProvider == null ? null : handlerProvider.get();
+    if (handler != null) {
+      handler.addListener(window);
+    }
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {
       @Override
       public Insets getBorderInsets(Component c) {
+        if (handler != null && handler.isFullScreen()) {
+          return JBInsets.emptyInsets();
+        }
         return topWindowInset;
       }
 
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        if (handler != null && handler.isFullScreen()) {
+          return;
+        }
         Graphics2D graphics = (Graphics2D)g.create();
         try {
           Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
@@ -145,6 +170,15 @@ public final class ToolbarUtil {
         }
       }
     };
+    if (handler != null) {
+      Consumer<? super Runnable> onDisposeOld = onDispose;
+      onDispose = runnable -> {
+        onDisposeOld.accept((Runnable)() -> {
+          runnable.run();
+          handler.removeListener(window);
+        });
+      };
+    }
     doSetCustomTitleBar(window, rootPane, onDispose, customBorder);
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -76,6 +77,13 @@ public final class DfaCallArguments {
       return;
     }
     if (myMutation.isPure()) {
+      if (myQualifier instanceof DfaVariableValue) {
+        DfaVariableValue qualifier = (DfaVariableValue)myQualifier;
+        // We assume that even pure call may modify private fields (e.g., to cache something)
+        state.flushVariables(v -> v.getQualifier() == qualifier &&
+                                  v.getPsiVariable() instanceof PsiMember &&
+                                  ((PsiMember)v.getPsiVariable()).hasModifierProperty(PsiModifier.PRIVATE));
+      }
       return;
     }
     if (myMutation == MutationSignature.UNKNOWN || myArguments == null) {

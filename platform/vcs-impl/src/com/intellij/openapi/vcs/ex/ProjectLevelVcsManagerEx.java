@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.project.Project;
@@ -56,12 +56,4 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract void fireDirectoryMappingsChanged();
 
   public abstract String haveDefaultMapping();
-
-  /**
-   * Whether vcs mappings were already processed after opening the project.
-   * ie: if true, one can assume that {@link #hasActiveVcss()} and {@link #hasAnyMappings()} match if the mappings are correct.
-   * <p>
-   * See {@link #VCS_ACTIVATED} listener that will be notified when this value changes.
-   */
-  public abstract boolean areVcsesActivated();
 }

@@ -35,7 +35,7 @@ import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
-  override val existedFile = "git/sphinx_cat.yml"
+  override val sampleFilePath = "git/sphinx_cat.yml"
   override val branchName = "feature"
   private val textToFind = "sphinx"
 
@@ -71,7 +71,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       var selectionCleared = false
-      triggerByFoundPathAndHighlight(highlightInside = true) { tree, path ->
+      triggerAndFullHighlight().treeItem { tree, path ->
         (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE").also {
           if (!selectionCleared) {
             tree.clearSelection()
@@ -87,7 +87,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       text(GitLessonsBundle.message("git.project.history.apply.branch.filter", choice))
       text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
            LearningBalloonConfig(Balloon.Position.above, 250))
-      triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
+      triggerUI().component { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
@@ -100,7 +100,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      triggerByUiComponentAndHighlight { _: UserFilterPopupComponent -> true }
+      triggerAndFullHighlight().component { _: UserFilterPopupComponent -> true }
     }
 
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
@@ -108,7 +108,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       text(GitLessonsBundle.message("git.project.history.apply.user.filter"))
       text(GitLessonsBundle.message("git.project.history.click.filter.tooltip"),
            LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.toString().contains(meFilterText)
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
@@ -122,7 +122,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.select.me", strong(meFilterText)))
-      triggerByUiComponentAndHighlight(false, false) { ui: UserFilterPopupComponent ->
+      triggerUI().component { ui: UserFilterPopupComponent ->
         ui.currentText?.contains(meFilterText) == true
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
@@ -135,12 +135,12 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.apply.message.filter", code(textToFind), LessonUtil.rawEnter()))
-      triggerByUiComponentAndHighlight { ui: SearchTextField ->
+      triggerAndFullHighlight().component { ui: SearchTextField ->
         (UIUtil.getParentOfType(MainFrame::class.java, ui) != null).also {
           if (it) IdeFocusManager.getInstance(project).requestFocus(ui, true)
         }
       }
-      triggerByUiComponentAndHighlight(false, false) l@{ ui: VcsLogGraphTable ->
+      triggerUI().component l@{ ui: VcsLogGraphTable ->
         val model = ui.model as? GraphTableModel ?: return@l false
         model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
       }
@@ -155,7 +155,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.select.commit"))
       highlightSubsequentCommitsInGitLog(0)
-      triggerByUiComponentAndHighlight(false, false) { ui: VcsLogGraphTable ->
+      triggerUI().component { ui: VcsLogGraphTable ->
         ui.selectedRow == 0
       }
       restoreState {
@@ -174,7 +174,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
       proceedLink()
-      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: CommitDetailsListPanel -> true }
+      triggerAndBorderHighlight { usePulsation = true }.component { _: CommitDetailsListPanel -> true }
       showWarningIfGitWindowClosed()
     }
 
@@ -183,14 +183,14 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         LearningUiHighlightingManager.clearHighlights()
       }
       text(GitLessonsBundle.message("git.project.history.click.changed.file"))
-      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
+      triggerAndFullHighlight().treeItem { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(".yml")
       }
-      triggerByUiComponentAndHighlight(false, false) { _: SimpleDiffPanel -> true }
+      triggerUI().component { _: SimpleDiffPanel -> true }
       showWarningIfGitWindowClosed()
       test {
         ideFrame {
-          val treeNodeText = existedFile
+          val treeNodeText = sampleFilePath
           val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString().contains(treeNodeText) }
           val row = invokeAndWaitIfNeeded {
             val tree = fixture.target()

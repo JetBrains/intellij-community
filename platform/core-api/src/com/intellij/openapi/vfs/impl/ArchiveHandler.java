@@ -281,7 +281,7 @@ public abstract class ArchiveHandler {
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
     return split(entryName);
   }

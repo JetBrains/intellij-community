@@ -432,10 +432,13 @@ public class OldReferencesResolver {
 
       if (refMember != null && refMember.isValid()) {
         PsiClass containingClass = refMember.getContainingClass();
-        if (refMember.hasModifierProperty(PsiModifier.STATIC)) {
+        if (containingClass != null && refMember.hasModifierProperty(PsiModifier.STATIC)) {
           PsiElement refElement = newExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)) {
-            newExpr.setQualifier(factory.createReferenceExpressionFromText("" + containingClass.getQualifiedName()));
+            String qualifiedName = containingClass.getQualifiedName();
+            if (qualifiedName != null) {
+              newExpr.setQualifier(factory.createReferenceExpressionFromText(qualifiedName));
+            }
           }
         }
       }

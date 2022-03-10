@@ -16,19 +16,19 @@ fun Any.baz(): Any {
     return this
 }
 
-fun Any.inlineFoo(): Any {
+inline fun Any.inlineFoo(): Any {
     return this
 }
 
-fun Any.inlineFoo(i: Int, j: Int): Any {
+inline fun Any.inlineFoo(i: Int, j: Int): Any {
     return this
 }
 
-fun Any.inlineBar(): Any {
+inline fun Any.inlineBar(): Any {
     return this
 }
 
-fun Any.inlineBaz(): Any {
+inline fun Any.inlineBaz(): Any {
     return this
 }
 

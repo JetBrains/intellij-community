@@ -9,13 +9,13 @@ internal class A // this is a primary constructor
     constructor(s: String) : this(s.length) {} // end of secondary constructor 2 body
 }
 
-internal class B     // this constructor will disappear
+internal class B    // this constructor will disappear
 // end of constructor body
     (private val x: Int) {
     fun foo() {}
 }
 
-internal class CtorComment     /*
+internal class CtorComment    /*
      * The magic of comments
      */
 // single line magic comments

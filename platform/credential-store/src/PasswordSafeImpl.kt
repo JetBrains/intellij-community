@@ -161,7 +161,7 @@ class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
 
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @get:Deprecated("Do not use it")
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @get:ApiStatus.ScheduledForRemoval
   // public - backward compatibility
   val memoryProvider: PasswordStorage
     get() = memoryHelperProvider.value as PasswordStorage

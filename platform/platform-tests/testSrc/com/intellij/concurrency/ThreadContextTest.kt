@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
 import com.intellij.testFramework.ApplicationExtension
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.coroutines.CoroutineContext
@@ -64,20 +63,6 @@ class ThreadContextTest {
         assertSame(currentThreadContext(), innerElement2)
       }
       assertSame(currentThreadContext(), outerElement1)
-    }
-  }
-
-  @Test
-  fun `resetThreadContext in coroutine`() {
-    val outerElement = TestElement("outer")
-    withThreadContext(outerElement).use {
-      runBlocking {
-        assertSame(outerElement, currentThreadContext())
-        resetThreadContext().use {
-          assertSame(coroutineContext, currentThreadContext())
-        }
-        assertSame(outerElement, currentThreadContext())
-      }
     }
   }
 }

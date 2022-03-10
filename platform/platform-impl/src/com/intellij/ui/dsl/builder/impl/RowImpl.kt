@@ -26,11 +26,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.SegmentedButton
-import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.builder.components.DslLabelType
-import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.builder.components.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
@@ -188,7 +184,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
-    val result = PanelImpl(dialogPanelConfig, this)
+    val result = PanelImpl(dialogPanelConfig, parent.spacingConfiguration, this)
     result.init()
     cells.add(result)
     return result
@@ -225,19 +221,19 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun actionButton(action: AnAction, actionPlace: String): Cell<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    val component = ActionButton(action, action.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     return cell(component)
   }
 
   override fun actionsButton(vararg actions: AnAction, actionPlace: String, icon: Icon): Cell<ActionButton> {
     val actionGroup = PopupActionGroup(arrayOf(*actions))
     actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(actionGroup, actionGroup.templatePresentation, actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
+    return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
-    val toolbar = SegmentedButtonToolbar(actionGroup, dialogPanelConfig.spacing)
+    val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
   }
@@ -247,6 +243,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     result.items(items)
     cells.add(result)
     return result
+  }
+
+  override fun tabbedPaneHeader(items: Collection<String>): Cell<JBTabbedPane> {
+    val tabbedPaneHeader = TabbedPaneHeader()
+    for (item in items) {
+      tabbedPaneHeader.add(item, JPanel())
+    }
+    return cell(tabbedPaneHeader)
   }
 
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
@@ -423,7 +427,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   fun getIndent(): Int {
-    return panelContext.indentCount * dialogPanelConfig.spacing.horizontalIndent
+    return panelContext.indentCount * parent.spacingConfiguration.horizontalIndent
   }
 
   private fun doVisible(isVisible: Boolean) {

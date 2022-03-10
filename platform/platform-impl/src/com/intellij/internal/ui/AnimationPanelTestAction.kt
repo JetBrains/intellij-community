@@ -490,7 +490,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
             label.text = value.toString().split("_").joinToString(" ") {
               it.toLowerCase().capitalize()
             }
-          }).bindItem(options::type)
+          }).bindItem(options::type.toNullableProperty())
         }
         row {
           link("Change color") {
@@ -499,7 +499,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         }
         row {
           checkBox("Enable high precision timer").bindSelected(
-            PropertyBinding(JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable)
+            JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable
           )
         }.visible(SystemInfoRt.isWindows)
         row {

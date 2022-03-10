@@ -186,7 +186,7 @@ public abstract class GotoActionBase extends AnAction {
   /**
    * @deprecated use other overloaded methods
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,

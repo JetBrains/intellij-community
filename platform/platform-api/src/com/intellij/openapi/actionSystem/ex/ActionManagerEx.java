@@ -33,15 +33,13 @@ public abstract class ActionManagerEx extends ActionManager {
 
 
   /** @deprecated use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public final void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     fireBeforeActionPerformed(action, event);
   }
 
   /** @deprecated use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED);
   }

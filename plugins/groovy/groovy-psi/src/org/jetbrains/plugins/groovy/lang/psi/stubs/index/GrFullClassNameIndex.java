@@ -8,7 +8,6 @@ import com.intellij.psi.stubs.CharSequenceHashStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 import java.util.Collection;
@@ -19,25 +18,23 @@ import java.util.Collection;
 public class GrFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
   public static final StubIndexKey<CharSequence, PsiClass> KEY = StubIndexKey.createIndexKey("gr.class.fqn");
 
-  private static final GrFullClassNameIndex ourInstance = new GrFullClassNameIndex();
-
-  public static GrFullClassNameIndex getInstance() {
-    return ourInstance;
-  }
-
   @Override
-  @NotNull
-  public StubIndexKey<CharSequence, PsiClass> getKey() {
+  public @NotNull StubIndexKey<CharSequence, PsiClass> getKey() {
     return KEY;
   }
 
   @Override
-  public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull final GlobalSearchScope scope) {
-    return StubIndex.getElements(getKey(), name, project, new GrSourceFilterScope(scope), PsiClass.class);
+  public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return StubIndex.getElements(getKey(), name, project, scope, PsiClass.class);
   }
 
   @Override
   public int getVersion() {
     return super.getVersion() + GrStubUtils.GR_STUB_VERSION;
+  }
+
+  @Override
+  public boolean doesKeyMatchPsi(@NotNull CharSequence key, @NotNull PsiClass aClass) {
+    return key.equals(aClass.getQualifiedName());
   }
 }

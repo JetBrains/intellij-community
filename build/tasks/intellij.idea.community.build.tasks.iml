@@ -15,7 +15,8 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952.jar" />
+              <option value="kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
           <option name="errors">
@@ -58,5 +59,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" name="jsch-agent-proxy" level="project" />
     <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
+    <orderEntry type="library" name="commons-io" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="library" name="JUnit4" level="project" />
   </component>
 </module>

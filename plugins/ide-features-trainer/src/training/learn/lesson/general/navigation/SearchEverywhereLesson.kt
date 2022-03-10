@@ -25,7 +25,7 @@ import java.awt.event.KeyEvent
 import javax.swing.JList
 
 abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name")) {
-  abstract override val existedFile: String?
+  abstract override val sampleFilePath: String?
 
   abstract val resultFileName: String
 
@@ -37,7 +37,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   override val lessonContent: LessonContext.() -> Unit = {
     task("SearchEverywhere") {
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+      triggerAndBorderHighlight().component { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
       }
       text(LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it),
@@ -61,7 +61,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     task {
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         if (item is PsiNameIdentifierOwner)
           item.name == requiredClassName
         else item.isToStringContains(requiredClassName)
@@ -104,8 +104,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
                                  strong(ProjectScope.getProjectFilesScopeName()), strong(it)))
-      triggerByUiComponentAndHighlight { _: ActionButtonWithText -> true }
-      triggerByUiComponentAndHighlight(false, false) { button: ActionButtonWithText ->
+      triggerAndFullHighlight().component { _: ActionButtonWithText -> true }
+      triggerUI().component { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
       }
       showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {

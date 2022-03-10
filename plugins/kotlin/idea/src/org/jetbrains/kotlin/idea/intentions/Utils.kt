@@ -425,3 +425,15 @@ fun KtReturnExpression.setLabel(label: String, psiFactory: KtPsiFactory = KtPsiF
     }
     replace(newLabeledReturn)
 }
+
+private val rangeTypes = setOf(
+    "kotlin.ranges.IntRange",
+    "kotlin.ranges.CharRange",
+    "kotlin.ranges.LongRange",
+    "kotlin.ranges.UIntRange",
+    "kotlin.ranges.ULongRange"
+)
+
+fun ClassDescriptor.isRange(): Boolean {
+    return rangeTypes.any { this.fqNameUnsafe.asString() == it }
+}

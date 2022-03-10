@@ -6,7 +6,6 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
-import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
@@ -15,16 +14,12 @@ import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import kotlin.reflect.KMutableProperty0
 
-fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
-  return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
-}
-
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: GraphProperty<Boolean>) = bindSelected(property)
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: GraphProperty<ThreeStateCheckBox.State>) = bindState(property)
 
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: ObservableMutableProperty<Boolean>): Cell<T> {
@@ -38,11 +33,11 @@ fun <T : ThreeStateCheckBox> Cell<T>.bindState(property: ObservableMutableProper
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(prop: KMutableProperty0<Boolean>): Cell<T> {
-  return bindSelected(prop.toBindingInternal())
+  return bindSelected(prop.toMutableProperty())
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): Cell<T> {
-  return bindSelected(PropertyBinding(getter, setter))
+  return bindSelected(MutableProperty(getter, setter))
 }
 
 fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): Cell<T> {
@@ -52,3 +47,7 @@ fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEv
 
 val Cell<AbstractButton>.selected
   get() = component.selected
+
+private fun <T : AbstractButton> Cell<T>.bindSelected(prop: MutableProperty<Boolean>): Cell<T> {
+  return bind(AbstractButton::isSelected, AbstractButton::setSelected, prop)
+}

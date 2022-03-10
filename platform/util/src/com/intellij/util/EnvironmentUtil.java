@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -11,19 +10,18 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -250,6 +248,8 @@ public final class EnvironmentUtil {
         reader = SHELL_ENV_COMMAND + "' '" + ENV_ZERO_ARGUMENT;
       }
 
+      Path envDataFile = Files.createTempFile("ij-shell-env-data.", ".tmp");
+
       StringBuilder readerCmd = new StringBuilder();
       if (file != null) {
         if (!Files.exists(file)) {
@@ -258,7 +258,7 @@ public final class EnvironmentUtil {
         readerCmd.append(SHELL_SOURCE_COMMAND).append(" \"").append(file).append("\" && ");
       }
 
-      readerCmd.append("'").append(reader).append("'");
+      readerCmd.append("'").append(reader).append("' > '").append(envDataFile.toAbsolutePath()).append("'");
 
       List<String> command = getShellProcessCommand();
       int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
@@ -272,19 +272,20 @@ public final class EnvironmentUtil {
       }
 
       LOG.info("loading shell env: " + String.join(" ", command));
-      return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment).getValue();
+      return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envDataFile).getValue();
     }
 
     /**
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code, produces no output or the file used to store the output can't be
      *   read.
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                              @Nullable Path workingDir) throws IOException {
-      return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap());
+                                                                                                   @Nullable Path workingDir,
+                                                                                                   @NotNull Path envDataFile) throws IOException {
+      return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap(), envDataFile);
     }
 
     /**
@@ -294,19 +295,20 @@ public final class EnvironmentUtil {
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code, produces no output or the file used to store the output can't be
      *   read.
-     * @see #runProcessAndReadOutputAndEnvs(List, Path)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                                    @Nullable Path workingDir,
-                                                                                                   @Nullable Map<String, String> scriptEnvironment)
+                                                                                                   @Nullable Map<String, String> scriptEnvironment,
+                                                                                                   @NotNull Path envDataFile)
       throws IOException {
       return runProcessAndReadOutputAndEnvs(command, workingDir, (it) -> {
         if (scriptEnvironment != null) {
           // we might need the default environment for a process to launch correctly
           it.putAll(scriptEnvironment);
         }
-      });
+      }, envDataFile);
     }
 
     /**
@@ -316,13 +318,14 @@ public final class EnvironmentUtil {
      * @return Debugging output of the script, and the map of environment variables.
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code or produces no output
-     * @see #runProcessAndReadOutputAndEnvs(List, Path)
-     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
      */
     protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                              @Nullable Path workingDir,
-                                                                                              @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor) throws IOException {
-      final ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(false);
+                                                                                                   @Nullable Path workingDir,
+                                                                                                   @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor,
+                                                                                                   @NotNull Path envDataFile) throws IOException {
+      final ProcessBuilder builder = new ProcessBuilder(command);
 
       /*
        * Add, remove or change the environment variables.
@@ -334,28 +337,44 @@ public final class EnvironmentUtil {
       }
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
-      final Process process = builder.start();
-      final StreamGobbler stdoutGobbler = new StreamGobbler(process.getInputStream(), Charset.defaultCharset());
-      final StreamGobbler stderrGobbler = new StreamGobbler(process.getErrorStream(), Charset.defaultCharset());
-      final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
-      try {
-        stdoutGobbler.waitFor();
-      }
-      catch (InterruptedException ie) {
-        LOG.warn("Output reader for Environment reader process is interrupted", ie);
-      }
 
-      final String output = stdoutGobbler.getText().trim();
-      final String stderr = stderrGobbler.getText().trim();
-      if (exitCode != 0 || output.isEmpty()) {
-        EnvironmentReaderException ex = new EnvironmentReaderException("command " + command +
-                                                                       "\n\texit code: " + exitCode +
-                                                                       "\n\tOS: " + SystemInfoRt.OS_NAME,
-                                                                       output, stderr);
-        LOG.error(ex);
-        throw ex;
+      Path logFile = null;
+      try {
+        logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
+        final Process process = builder
+          .redirectErrorStream(true)
+          .redirectOutput(ProcessBuilder.Redirect.to(logFile.toFile()))
+          .start();
+        final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
+
+        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
+        final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
+        if (exitCode != 0 || envData.isEmpty()) {
+          EnvironmentReaderException ex =  new EnvironmentReaderException("command " + command +
+                                               "\n\texit code: " + exitCode +
+                                               "\n\tOS: " + SystemInfoRt.OS_NAME,
+                                               envData, log);
+          LOG.error(ex);
+          throw ex;
+        }
+        return new AbstractMap.SimpleImmutableEntry<>(log, parseEnv(envData));
       }
-      return new AbstractMap.SimpleImmutableEntry<>(stderr, parseEnv(output));
+      finally {
+        deleteTempFile(envDataFile);
+        deleteTempFile(logFile);
+      }
+    }
+
+    private static void deleteTempFile(@Nullable Path file) {
+      try {
+        if (file != null) {
+          Files.delete(file);
+        }
+      }
+      catch (NoSuchFileException ignore) { }
+      catch (IOException e) {
+        LOG.warn("Cannot delete temporary file", e);
+      }
     }
 
     protected @NotNull List<String> getShellProcessCommand() {
@@ -557,42 +576,6 @@ public final class EnvironmentUtil {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static final class StreamGobbler extends BaseOutputReader {
-    private static final Options OPTIONS = new Options() {
-      @Override
-      public SleepingPolicy policy() {
-        return SleepingPolicy.BLOCKING;
-      }
-
-      @Override
-      public boolean splitToLines() {
-        return false;
-      }
-    };
-
-    private final StringBuffer myBuffer;
-
-    StreamGobbler(@NotNull InputStream stream, @NotNull Charset charset) {
-      super(stream, charset, OPTIONS);
-      myBuffer = new StringBuffer();
-      startWithoutChangingThreadName();
-    }
-
-    @Override
-    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return ProcessIOExecutorService.INSTANCE.submit(runnable);
-    }
-
-    @Override
-    protected void onTextAvailable(@NotNull String text) {
-      myBuffer.append(text);
-    }
-
-    public @NotNull String getText() {
-      return myBuffer.toString();
     }
   }
 

@@ -68,6 +68,10 @@ class LookupUi {
   private Boolean myPositionedAbove = null;
 
   LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list) {
+    this(lookup, advertiser, list, true);
+  }
+
+  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list, boolean showBottomPanel) {
     myLookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
@@ -103,7 +107,9 @@ class LookupUi {
     myBottomPanel.add(myMenuButton);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
-    layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
+    if (showBottomPanel) {
+      layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
+    }
 
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

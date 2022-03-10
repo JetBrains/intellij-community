@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -24,7 +23,6 @@ import java.io.File;
  * {@link PathManager#getBundledRuntimePath()}, and {@link JdkVersionDetector}.
  */
 @Deprecated(forRemoval = true)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @SuppressWarnings("ALL")
 public final class JdkBundle {
   private static final String BUNDLED_JDK_DIR_NAME = "jbr";

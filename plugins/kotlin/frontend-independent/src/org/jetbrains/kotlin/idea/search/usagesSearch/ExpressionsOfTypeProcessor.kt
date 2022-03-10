@@ -36,9 +36,11 @@ import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.*
 
 //TODO: check if smart search is too expensive
@@ -236,7 +238,9 @@ class ExpressionsOfTypeProcessor(
                         return@searchReferences false
                     }
 
-                    error(getFallbackDiagnosticsMessage(reference, debugInfo))
+                    throw KotlinExceptionWithAttachments("Unsupported reference")
+                        .withPsiAttachment("reference.txt", element)
+                        .withAttachment("diagnostic_message.txt", getFallbackDiagnosticsMessage(reference, debugInfo))
                 }
 
                 // we must use plain search inside our class (and inheritors) because implicit 'this' can happen anywhere
@@ -493,6 +497,11 @@ class ExpressionsOfTypeProcessor(
                 debugInfo?.apply { append(", elementParent: $elementParent") }
                 when (elementParent) {
                     is KtUserType -> { // usage in type
+                        val userTypeParent = elementParent.parent
+                        if (userTypeParent is KtUserType && userTypeParent.qualifier == elementParent) {
+                            return true // type qualifier
+                        }
+
                         return processClassUsageInUserType(elementParent)
                     }
 
@@ -511,8 +520,11 @@ class ExpressionsOfTypeProcessor(
                     }
 
                     is KtQualifiedExpression -> {
-                        // <class name>.memberName or some.<class name>.memberName
-                        if (element == elementParent.receiverExpression || elementParent.parent is KtQualifiedExpression) {
+                        // <class name>.memberName or some.<class name>.memberName or some.<class name>::class
+                        if (element == elementParent.receiverExpression ||
+                            elementParent.parent is KtQualifiedExpression ||
+                            elementParent.parent is KtClassLiteralExpression
+                        ) {
                             return true // companion object member or static member access - ignore it
                         }
                     }

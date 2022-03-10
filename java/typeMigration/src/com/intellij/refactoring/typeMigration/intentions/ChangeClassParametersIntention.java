@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -9,8 +7,6 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -20,9 +16,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
-import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandlerBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -124,7 +117,6 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                                                                                           classType.getPresentableText()));
                   return;
                 }
-                var provider = JavaSpecialRefactoringProvider.getInstance();
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
                 var supportProvider = CommonJavaRefactoringUtil.getRefactoringSupport();

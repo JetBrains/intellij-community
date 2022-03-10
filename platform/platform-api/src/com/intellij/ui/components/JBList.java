@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
-  @Nullable private AsyncProcessIcon myBusyIcon;
+  private @Nullable AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
   public JBList() {
@@ -55,13 +54,11 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     init();
   }
 
-  @NotNull
-  public static <T> DefaultListModel<T> createDefaultListModel(T @NotNull ... items) {
+  public static @NotNull <T> DefaultListModel<T> createDefaultListModel(T @NotNull ... items) {
     return createDefaultListModel(Arrays.asList(items));
   }
 
-  @NotNull
-  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull Iterable<? extends T> items) {
+  public static @NotNull <T> DefaultListModel<T> createDefaultListModel(@NotNull Iterable<? extends T> items) {
     DefaultListModel<T> model = new DefaultListModel<>();
     for (T item : items) {
       model.add(model.getSize(), item);
@@ -113,8 +110,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   public void repaint(long tm, int x, int y, int width, int height) {
     if (width > 0 && height > 0) {
       ListUI ui = getUI();
-      // do not paint a line background if layout orientation is not vertical
-      if (ui instanceof WideSelectionListUI && JList.VERTICAL == getLayoutOrientation()) {
+      // do not paint a line background if the layout orientation is not vertical
+      if (ui instanceof WideSelectionListUI && getLayoutOrientation() == JList.VERTICAL) {
         x = 0;
         width = getWidth();
       }
@@ -150,13 +147,13 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       }
     }
 
+    //noinspection DuplicatedCode
     if (myBusyIcon != null) {
       if (myBusy) {
         myBusyIcon.resume();
       }
       else {
         myBusyIcon.suspend();
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           if (myBusyIcon != null) {
             repaint();
@@ -227,7 +224,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     for (int index : getSelectedIndices()) {
       E value = getModel().getElementAt(index);
       String text = itemToText(index, value);
-      ContainerUtil.addIfNotNull(selected, text);
+      if (text != null) selected.add(text);
     }
 
     if (selected.size() > 0) {
@@ -236,10 +233,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
-  @Nullable
-  private String itemToText(int index, E value) {
-    ListCellRenderer renderer = getCellRenderer();
-    //noinspection unchecked
+  private @Nullable String itemToText(int index, E value) {
+    ListCellRenderer<? super E> renderer = getCellRenderer();
     Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
     SimpleColoredComponent coloredComponent = null;
     if (c instanceof JComponent) {
@@ -255,13 +250,12 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   }
 
   public int getItemsCount() {
-    ListModel model = getModel();
+    ListModel<?> model = getModel();
     return model == null ? 0 : model.getSize();
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
@@ -270,13 +264,11 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   }
 
   @Override
-  @NotNull
-  public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
+  public @NotNull ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
   }
 
-  @NotNull
-  protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+  protected @NotNull ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
     return ExpandableItemsHandlerFactory.install(this);
   }
 
@@ -295,7 +287,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
   }
 
-  public void installCellRenderer(@NotNull final NotNullFunction<? super E, ? extends JComponent> fun) {
+  public void installCellRenderer(final @NotNull NotNullFunction<? super E, ? extends JComponent> fun) {
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 
@@ -334,17 +326,13 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
     @Override
     public Accessible getAccessibleChild(int i) {
-      if (i < 0 || i >= getModel().getSize()) {
-        return null;
-      } else {
-        return new AccessibleJBListChild(JBList.this, i);
-      }
+      return i < 0 || i >= getModel().getSize() ? null : new AccessibleJBListChild(JBList.this, i);
     }
 
     @Override
     public AccessibleRole getAccessibleRole() {
-      // In some cases, this method is called from the Access Bridge thread
-      // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
+      // In some cases, this method is called from the 'Access Bridge' thread instead of the AWT.
+      // See https://code.google.com/p/android/issues/detail?id=193072
       return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
     }
 
@@ -355,8 +343,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
       @Override
       public AccessibleRole getAccessibleRole() {
-        // In some cases, this method is called from the Access Bridge thread
-        // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
+        // In some cases, this method is called from the 'Access Bridge' thread instead of the AWT.
+        // See https://code.google.com/p/android/issues/detail?id=193072
         return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
     }

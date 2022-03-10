@@ -9,9 +9,9 @@ class Foo {
       try {
           basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
       } catch (IOException e) {
-          throw new RuntimeException(e);
+          throw new UncheckedIOException(e);
       }
-      while (basicFileAttributes.isDirectory()) {
+      if (basicFileAttributes.isDirectory()) {
       System.out.println(basicFileAttributes.isRegularFile());
     }
     return basicFileAttributes.lastModifiedTime().toMillis();

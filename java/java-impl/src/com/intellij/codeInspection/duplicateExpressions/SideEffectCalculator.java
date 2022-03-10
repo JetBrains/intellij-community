@@ -113,7 +113,8 @@ final class SideEffectCalculator {
       return true;
     }
     PsiElement resolved = ref.resolve();
-    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter || resolved instanceof PsiClass) {
+    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter || 
+        resolved instanceof PsiClass || resolved instanceof PsiPackage) {
       return false;
     }
     if (resolved instanceof PsiField) {
@@ -187,6 +188,12 @@ final class SideEffectCalculator {
     if (JAVA_UTIL_COLLECTIONS.equals(className)) {
       String name = method.getName();
       return !name.equals("min") && !name.equals("max") && !name.startsWith("unmodifiable");
+    }
+    if ("java.nio.file.Path".equals(className)) {
+      return !"of".equals(method.getName());
+    }
+    if ("java.nio.file.Paths".equals(className)) {
+      return !"get".equals(method.getName());
     }
     return true;
   }

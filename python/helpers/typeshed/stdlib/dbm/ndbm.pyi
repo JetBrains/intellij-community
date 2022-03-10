@@ -1,6 +1,6 @@
 from _typeshed import Self
 from types import TracebackType
-from typing import Type, TypeVar, Union, overload
+from typing import TypeVar, Union, overload
 
 _T = TypeVar("_T")
 _KeyType = Union[str, bytes]
@@ -20,7 +20,7 @@ class _dbm:
     def __del__(self) -> None: ...
     def __enter__(self: Self) -> Self: ...
     def __exit__(
-        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None: ...
     @overload
     def get(self, k: _KeyType) -> bytes | None: ...

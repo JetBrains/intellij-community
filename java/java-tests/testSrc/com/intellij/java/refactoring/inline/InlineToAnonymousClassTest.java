@@ -255,7 +255,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(true, false);
   }
 
-  public void testSealed() {
+  public void testSealedNoMembers() {
     setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);
     doTest(false, false);
   }
@@ -442,7 +442,8 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
     PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertTrue(new InlineToAnonymousClassHandler().canInlineElement(element));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
                                                                                           false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
@@ -493,9 +494,9 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
     PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(classToInline);
-    assertTrue(superType != null);
+    assertNotNull(superType);
     assertEquals(canBeInvokedOnReference, InlineToAnonymousClassHandler.canBeInvokedOnReference(callToInline, superType));
   }
 

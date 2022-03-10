@@ -7,11 +7,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -34,16 +36,14 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.Joining;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -332,13 +332,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final List<PsiMethod> affectedMethods = new ArrayList<>();
     for (PsiMethod targetMethod : methods) {
       affectedMethods.add(targetMethod);
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var processor = provider.getChangeSignatureProcessor(project, targetMethod,
-                                                           false, null,
-                                                           myName,
-                                                           returnType,
-                                                           ParameterInfoImpl.fromMethod(targetMethod),
-                                                           null);
+      var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(targetMethod,
+                                                                         false, null,
+                                                                         myName,
+                                                                         returnType,
+                                                                         ParameterInfoImpl.fromMethod(targetMethod),
+                                                                         null, null, null, null);
       processor.run();
     }
 
@@ -444,5 +443,34 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiType type = myReturnTypePointer.getType();
+    if (type == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiMethod method = (PsiMethod)getStartElement();
+    if (method.getContainingFile() == file.getOriginalFile()) {
+      PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, file);
+      PsiTypeElement typeElement = methodCopy.getReturnTypeElement();
+      if (typeElement != null) {
+        typeElement.replace(PsiElementFactory.getInstance(project).createTypeElement(type));
+        return IntentionPreviewInfo.DIFF;
+      }
+    }
+    PsiModifierList modifiers = method.getModifierList();
+    String modifiersText = StreamEx.of(PsiModifier.MODIFIERS).filter(modifiers::hasExplicitModifier).map(mod -> mod + " ").joining();
+    PsiType oldType = method.getReturnType();
+    String oldTypeText = oldType == null ? "" : oldType.getPresentableText() + " ";
+    String newTypeText = type.getPresentableText() + " ";
+    String parameters = StreamEx.of(method.getParameterList().getParameters())
+      .map(param -> param.getType().getPresentableText() + " " + param.getName())
+      .collect(Joining.with(", ").maxChars(50).cutAfterDelimiter());
+    String name = method.getName();
+    String origText = modifiersText + oldTypeText + name + "(" + parameters + ")";
+    String newText = modifiersText + newTypeText + name + "(" + parameters + ")";
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, origText, newText);
   }
 }

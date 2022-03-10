@@ -559,7 +559,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     }
 
     @NotNull
-    private String getSelectedJvmVersion() {
+    public String getSelectedJvmVersion() {
         return getJvmVersionOrDefault((String) jvmVersionComboBox.getSelectedItem());
     }
 

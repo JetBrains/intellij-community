@@ -15,8 +15,6 @@ import java.util.*
 import javax.swing.*
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
-import kotlin.math.max
-import kotlin.math.min
 
 private const val pulsationSize = 20
 
@@ -40,14 +38,9 @@ object LearningUiHighlightingManager {
                          options: HighlightingOptions = HighlightingOptions(),
                          index: () -> Int?) {
     highlightPartOfComponent(list, options) l@{
-      val i = index() ?: return@l null
-      val itemRect = list.getCellBounds(i, i)
-      val listRect = list.visibleRect
-      // return null if item rect is not intersecting with list visible rect
-      if (itemRect.y >= listRect.y + listRect.height || itemRect.y + itemRect.height <= listRect.y) return@l null
-      val adjustedY = max(itemRect.y, listRect.y)
-      val adjustedHeight = min(itemRect.height, min(itemRect.y + itemRect.height - listRect.y, listRect.y + listRect.height - itemRect.y))
-      Rectangle(itemRect.x, adjustedY, itemRect.width, adjustedHeight)
+      index()?.let {
+        if (it in 0 until list.model.size) list.getCellBounds(it, it) else null
+      }
     }
   }
 
@@ -55,13 +48,7 @@ object LearningUiHighlightingManager {
                          options: HighlightingOptions = HighlightingOptions(),
                          path: () -> TreePath?) {
     highlightPartOfComponent(tree, options) {
-      path()?.let {
-        val treeRect = tree.visibleRect
-        val pathRect = tree.getPathBounds(it) ?: return@let null
-        val offset = pathRect.x - treeRect.x
-        val width = min(treeRect.width - offset, pathRect.width)
-        Rectangle(pathRect.x, pathRect.y, width, pathRect.height)
-      }
+      path()?.let { tree.getPathBounds(it) }
     }
   }
 
@@ -69,7 +56,11 @@ object LearningUiHighlightingManager {
                                                options: HighlightingOptions = HighlightingOptions(),
                                                rectangle: (T) -> Rectangle?) {
     highlightComponent(component, options.clearPreviousHighlights) {
-      RepaintHighlighting(component, options) { rectangle(component) }
+      RepaintHighlighting(component, options) l@{
+        val rect = rectangle(component) ?: return@l null
+        if (component !is JComponent) return@l rect
+        component.visibleRect.intersection(rect).takeIf { !it.isEmpty }
+      }
     }
   }
 
@@ -121,7 +112,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
   fun initTimer() {
     val timer = TimerUtil.createNamedTimer("IFT item", 50)
     timer.addActionListener {
-      if (!original.isShowing) {
+      if (!original.isShowing || original.bounds.isEmpty) {
         LearningUiHighlightingManager.removeIt(this)
       }
       if (this.removed) {

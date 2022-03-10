@@ -2,10 +2,12 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,12 +17,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOError;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -81,12 +83,29 @@ public class LocalFsFinder implements Finder {
       if (myBaseDir != null) return myBaseDir.resolve(path).toAbsolutePath().toString();
     }
     catch (InvalidPathException ignored) { }
+    catch (IOError e) {
+      Logger.getInstance(LocalFsFinder.class).info("path=" + path + "; base=" + myBaseDir, e);
+    }
     return path;
   }
 
   @Override
   public String getSeparator() {
     return File.separator;
+  }
+
+  @Override
+  public @NotNull List<String> split(@NotNull String path) {
+    try {
+      Path pathObj = Path.of(normalize(path));
+      List<String> result = new ArrayList<>(pathObj.getNameCount() + 1);
+      result.add(pathObj.getRoot().toString());
+      for (Path part : pathObj) result.add(part.toString());
+      return result;
+    }
+    catch (InvalidPathException e) {
+      return Finder.super.split(path);
+    }
   }
 
   public LocalFsFinder withBaseDir(@Nullable Path baseDir) {
@@ -109,8 +128,13 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public boolean isAccepted(LookupFile file) {
-      VirtualFile vFile = ((VfsFile)file).getFile();
-      return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
+      if (file instanceof VfsFile) {
+        VirtualFile vFile = ((VfsFile)file).getFile();
+        return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
+      }
+      else {
+        return false;
+      }
     }
   }
 
@@ -133,7 +157,6 @@ public class LocalFsFinder implements Finder {
 
     /** @deprecated please use {@link #VfsFile(VirtualFile)} instead */
     @Deprecated(forRemoval = true)
-    @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
     public VfsFile(@SuppressWarnings("unused") LocalFsFinder finder, VirtualFile file) {
       this(file);
     }
@@ -207,6 +230,8 @@ public class LocalFsFinder implements Finder {
   public static final class IoFile extends LookupFileWithMacro {
     private final Path myFile;
 
+    /** @deprecated please use {@link #IoFile(Path)} instead */
+    @Deprecated
     public IoFile(@NotNull File file) {
       this(file.toPath());
     }
@@ -263,8 +288,9 @@ public class LocalFsFinder implements Finder {
     }
 
     @Override
-    public @Nullable Icon getIcon() {
-      return null;
+    public Icon getIcon() {
+      return Files.isDirectory(myFile) ? PlatformIcons.FOLDER_ICON
+                                       : FileTypeRegistry.getInstance().getFileTypeByFileName(myFile.toString()).getIcon();
     }
 
     @Override

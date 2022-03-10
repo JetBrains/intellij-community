@@ -31,7 +31,7 @@ public final class FileTypeAssocTable<T> {
   private FileTypeAssocTable(@NotNull Map<? extends CharSequence, ? extends T> extensionMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
-                             @NotNull Map<String, ? extends T> hashBangMap,
+                             @NotNull Map<? extends String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = createCharSequenceConcurrentMap(extensionMappings);
     myExactFileNameMappings = new ConcurrentHashMap<>(exactFileNameMappings);
@@ -307,5 +307,26 @@ public final class FileTypeAssocTable<T> {
     myExtensionMappings.clear();
     myExactFileNameMappings.clear();
     myExactFileNameAnyCaseMappings.clear();
+  }
+
+  void removeAssociationsForFile(@NotNull CharSequence fileName, @NotNull T association) {
+    T t = myExactFileNameMappings.get(fileName);
+    if (association.equals(t)) {
+      myExactFileNameMappings.remove(fileName);
+    }
+
+    t = myExactFileNameAnyCaseMappings.get(fileName);
+    if (association.equals(t)) {
+      myExactFileNameAnyCaseMappings.remove(fileName);
+    }
+
+    myMatchingMappings.removeIf(pair -> association.equals(pair.second)
+                                        && pair.getFirst().acceptsCharSequence(fileName));
+
+    CharSequence extension = FileUtilRt.getExtension(fileName);
+    t = myExtensionMappings.get(extension);
+    if (association.equals(t)) {
+      myExtensionMappings.remove(extension);
+    }
   }
 }

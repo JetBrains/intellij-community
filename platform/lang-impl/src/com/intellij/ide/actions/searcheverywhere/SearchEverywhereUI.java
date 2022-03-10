@@ -4,7 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.find.impl.SETextRightActionAction;
+import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -16,7 +16,6 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -70,6 +69,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +106,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 100;
+
+  private static final Icon SHOW_IN_FIND_TOOL_WINDOW_ICON =
+    ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
+                             : AllIcons.General.Pin_tab;
 
   private final SEResultsListFactory myListFactory;
   private SearchListModel myListModel;
@@ -230,13 +234,18 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     String advertisementText = getWarning(contributors);
     if (advertisementText != null) {
       myHintHelper.setWarning(advertisementText);
+      updateRightActions(contributors);
       return;
     }
 
     advertisementText = getAdvertisement(contributors);
     myHintHelper.setHint(advertisementText);
 
-    List<AnAction> actions = updateRightActions(contributors);
+    updateRightActions(contributors);
+  }
+
+  private void updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+    List<AnAction> actions = getRightActions(contributors);
     myHintHelper.removeRightExtensions();
     if (!actions.isEmpty()) {
       myHintHelper.setRightExtensions(actions);
@@ -244,9 +253,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private List<AnAction> updateRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
+  private List<AnAction> getRightActions(@NotNull List<SearchEverywhereContributor<?>> contributors) {
     for (SearchEverywhereContributor<?> contributor : contributors) {
-      if (getSelectedTabID() != contributor.getSearchProviderId() || !(contributor instanceof SearchFieldActionsContributor)) continue;
+      if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) || !(contributor instanceof SearchFieldActionsContributor)) continue;
 
       return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
@@ -377,8 +386,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Override
   @NotNull
-  protected JPanel createSettingsPanel() {
-    return myHeader.getToolbarPanel();
+  protected JComponent createHeader() {
+    return myHeader.getComponent();
   }
 
   @NotNull
@@ -428,7 +437,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       @Override
       public int getIconGap() {
-        return JBUIScale.scale(10);
+        return JBUIScale.scale(ExperimentalUI.isNewUI() ? 6 : 10);
       }
     };
     res.addExtension(leftExt);
@@ -441,12 +450,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   protected void installScrollingActions() {
     ScrollingUtil.installMoveUpAction(myResultsList, getSearchField());
     ScrollingUtil.installMoveDownAction(myResultsList, getSearchField());
-  }
-
-  @Override
-  @NotNull
-  protected JPanel createTopLeftPanel() {
-    return myHeader.getTabsPanel();
   }
 
   private static final long REBUILD_LIST_DELAY = 100;
@@ -484,14 +487,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       contributors = DumbService.getInstance(myProject).filterByDumbAwareness(contributorsMap.keySet());
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     myHeader.getSelectedTab().getText(),
+                                                     myHeader.getSelectedTab().getName(),
                                                      ApplicationNamesInfo.getInstance().getFullProductName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     myHeader.getSelectedTab().getText(),
+                                                     myHeader.getSelectedTab().getName(),
                                                      ApplicationNamesInfo.getInstance().getFullProductName()));
       }
     }
@@ -798,6 +801,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {
+    stopSearching();
     if (indexes.length == 1 && myListModel.isMoreElement(indexes[0])) {
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(indexes[0]);
       showMoreElements(contributor);
@@ -943,7 +947,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     ShowInFindToolWindowAction() {
       super(IdeBundle.messagePointer("show.in.find.window.button.name"),
-            IdeBundle.messagePointer("show.in.find.window.button.description"), AllIcons.General.Pin_tab);
+            IdeBundle.messagePointer("show.in.find.window.button.description"), SHOW_IN_FIND_TOOL_WINDOW_ICON);
     }
 
     @Override
@@ -1051,6 +1055,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
+      usages.addAll(StreamEx.of(foundElements).select(UsageInfo2UsageAdapter.class).toList());
+
       ReadAction.run(() -> foundElements.stream()
         .map(o -> toPsi(o))
         .filter(Objects::nonNull)
@@ -1082,7 +1088,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       SETab selectedTab = myHeader != null ? myHeader.getSelectedTab() : null;
       boolean enabled = selectedTab == null || selectedTab.getContributors().stream().anyMatch(c -> c.showInFindResults());
       e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
+      if (!ExperimentalUI.isNewUI()) {
+        e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, SHOW_IN_FIND_TOOL_WINDOW_ICON));
+      }
     }
   }
 
@@ -1357,6 +1365,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       myTextField = field;
       myHintTextIcon.setFont(myTextField.getFont());
       myHintTextIcon.setFontTransform(FontInfo.getFontRenderContext(myTextField).getTransform());
+      // Try aligning hint by baseline with the text field
+      myHintTextIcon.setInsets(JBUIScale.scale(3), 0, 0, 0);
 
       myWarnIcon.setIcon(AllIcons.General.Warning, 0);
       myWarnIcon.setIcon(myHintTextIcon, 1);
@@ -1423,9 +1433,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         @Override
         public Icon getIcon(boolean hovered) {
           Presentation presentation = action.getTemplatePresentation();
-          if (!(action instanceof SETextRightActionAction)) return presentation.getIcon();
+          if (!(action instanceof TextSearchRightActionAction)) return presentation.getIcon();
 
-          if (((SETextRightActionAction)action).isSelected()) {
+          if (((TextSearchRightActionAction)action).isSelected()) {
             return presentation.getSelectedIcon();
           }
           else if (hovered) {

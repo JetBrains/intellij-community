@@ -24,7 +24,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Consumer
 
 open class PluginAdvertiserService {
 
@@ -148,17 +147,17 @@ open class PluginAdvertiserService {
       val action = if (disabledPlugins.isNotEmpty()) {
         val disabledDescriptors = disabledPlugins.values
         val title = if (disabledPlugins.size == 1)
-          IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledDescriptors.single().name)
+          IdeBundle.message("plugins.advertiser.action.enable.plugin")
         else
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
 
         NotificationAction.createSimpleExpiring(title) {
-          FUSEventSource.NOTIFICATION.logEnablePlugins(
-            disabledDescriptors.map { it.pluginId.idString },
-            project,
-          )
-
           ApplicationManager.getApplication().invokeLater {
+            FUSEventSource.NOTIFICATION.logEnablePlugins(
+              disabledDescriptors.map { it.pluginId.idString },
+              project,
+            )
+
             PluginBooleanOptionDescriptor.togglePluginState(disabledDescriptors, true)
           }
         }
@@ -204,10 +203,10 @@ open class PluginAdvertiserService {
 
     ProgressManager.checkCanceled()
 
-    notificationManager.notify("", notificationMessage, project, Consumer {
+    notificationManager.notify("", notificationMessage, project) {
       it.setSuggestionType(true)
         .addActions(notificationActions as Collection<AnAction>)
-    })
+    }
   }
 
   private fun createIgnoreUnknownFeaturesAction(project: Project,
@@ -218,7 +217,8 @@ open class PluginAdvertiserService {
     val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
               disabledPlugins.map { it.pluginId }
 
-    val message = IdeBundle.message("plugins.advertiser.action.ignore.unknown.features", ids.size)
+    val message = IdeBundle.message(
+      if (ids.size > 1) "plugins.advertiser.action.ignore.unknown.features" else "plugins.advertiser.action.ignore.unknown.feature")
 
     return NotificationAction.createSimpleExpiring(message) {
       FUSEventSource.NOTIFICATION.logIgnoreUnknownFeatures(project)
@@ -246,6 +246,8 @@ open class PluginAdvertiserService {
     val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
               disabledPlugins.map { it.pluginId }
 
+    val pluginNames = plugins.joinToString { it.pluginName } + disabledPlugins.joinToString { it.name }
+
     val addressedFeatures = collectFeaturesByName(ids, features)
 
     val pluginsNumber = ids.size
@@ -261,7 +263,8 @@ open class PluginAdvertiserService {
           pluginsNumber,
           feature.key,
           feature.value.joinToString(),
-          repoPluginsNumber
+          repoPluginsNumber,
+          pluginNames
         )
       }
       else {
@@ -269,14 +272,16 @@ open class PluginAdvertiserService {
           IdeBundle.message(
             "plugins.advertiser.missing.feature.dependency",
             pluginsNumber,
-            feature.value.joinToString()
+            feature.value.joinToString(),
+            pluginNames
           )
         }
         else {
           IdeBundle.message(
             "plugins.advertiser.missing.features.dependency",
             pluginsNumber,
-            feature.value.joinToString()
+            feature.value.joinToString(),
+            pluginNames
           )
         }
       }
@@ -286,7 +291,8 @@ open class PluginAdvertiserService {
         IdeBundle.message(
           "plugins.advertiser.missing.features.dependency",
           pluginsNumber,
-          entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") }
+          entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
+          pluginNames
         )
       }
       else {
@@ -294,7 +300,8 @@ open class PluginAdvertiserService {
           "plugins.advertiser.missing.features",
           pluginsNumber,
           entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
-          repoPluginsNumber
+          repoPluginsNumber,
+          pluginNames
         )
       }
     }

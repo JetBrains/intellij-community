@@ -75,7 +75,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
         val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, newComponent, it.spacing)
         it.constraints = it.constraints.copy(
           gaps = gaps,
-          visualPaddings = getVisualPaddings(newComponent.origin)
+          visualPaddings = prepareVisualPaddings(newComponent.origin)
         )
         it.panel.add(newComponent, it.constraints)
         if (newComponent is DialogPanel) {

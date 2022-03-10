@@ -17,19 +17,19 @@ class A {
         return this
     }
 
-    fun inlineFoo(): A {
+    inline fun inlineFoo(): A {
         return this
     }
 
-    private fun inlineFoo(i: Int, j: Int): A {
+    private inline fun inlineFoo(i: Int, j: Int): A {
         return this
     }
 
-    fun inlineBar(): A {
+    inline fun inlineBar(): A {
         return this
     }
 
-    private fun inlineBaz(): A {
+    private inline fun inlineBaz(): A {
         return this
     }
 

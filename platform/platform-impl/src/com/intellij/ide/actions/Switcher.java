@@ -29,6 +29,7 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,8 +84,7 @@ public final class Switcher extends BaseSwitcherAction {
   /**
    * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
     Project project = e.getProject();
@@ -193,13 +193,25 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       setBorder(JBUI.Borders.empty());
-      setBackground(JBColor.background());
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT);
 
       JPanel header = new JPanel(new HorizontalLayout(5));
-      header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
-      header.setBorder(JBUI.Borders.empty(4, 8));
-      header.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(title)));
+      JLabel titleLabel = RelativeFont.BOLD.install(new JLabel(title));
+      header.add(HorizontalLayout.LEFT, titleLabel);
+
+      if (ExperimentalUI.isNewUI()) {
+        setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        titleLabel.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
+        header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
+        header.setBorder(
+          JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                PopupUtil.getComplexPopupHorizontalHeaderBorder()));
+      }
+      else {
+        setBackground(JBColor.background());
+        header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
+        header.setBorder(JBUI.Borders.empty(4, 8));
+      }
 
       if (cbShowOnlyEditedFiles != null) {
         cbShowOnlyEditedFiles.setOpaque(false);
@@ -244,6 +256,7 @@ public final class Switcher extends BaseSwitcherAction {
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
+      PopupUtil.applyNewUIBackground(toolWindows);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
       myClickListener.installOn(toolWindows);
@@ -291,6 +304,7 @@ public final class Switcher extends BaseSwitcherAction {
       files.setCellRenderer(renderer);
       files.setBorder(JBUI.Borders.empty(5, 0));
       files.addKeyListener(onKeyRelease);
+      PopupUtil.applyNewUIBackground(files);
       ScrollingUtil.installActions(files);
       ListHoverListener.DEFAULT.addTo(files);
       myClickListener.installOn(files);

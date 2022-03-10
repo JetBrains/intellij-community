@@ -42,7 +42,7 @@ class FileAttributeServiceImpl : FileAttributeService {
 
         val data = CachedAttributeData(value, timeStamp = file.timeStamp)
 
-        attribute.writeAttribute(file).use {
+        attribute.writeFileAttribute(file).use {
             DataInputOutputUtil.writeTIME(it, data.timeStamp)
             writeValueFun(it, value)
         }
@@ -55,8 +55,7 @@ class FileAttributeServiceImpl : FileAttributeService {
         if (file !is VirtualFileWithId) return null
         if (!file.isValid) return null
 
-        val stream = attribute.readAttribute(file) ?: return null
-        return stream.use {
+        return attribute.readFileAttribute(file)?.use {
             val timeStamp = DataInputOutputUtil.readTIME(it)
             val value = readValueFun(it)
 

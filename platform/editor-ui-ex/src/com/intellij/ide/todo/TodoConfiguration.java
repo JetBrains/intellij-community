@@ -149,7 +149,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   @Override
   public void loadState(@NotNull Element element) {
     String multiLineText = element.getChildText(ELEMENT_MULTILINE);
-    myMultiLine = multiLineText == null || Boolean.valueOf(multiLineText);
+    myMultiLine = multiLineText == null || Boolean.parseBoolean(multiLineText);
 
     List<TodoPattern> patternsList = new SmartList<>();
     for (Element child : element.getChildren(ELEMENT_PATTERN)) {

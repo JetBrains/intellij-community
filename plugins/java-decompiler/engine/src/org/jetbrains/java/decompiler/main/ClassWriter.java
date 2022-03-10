@@ -100,6 +100,9 @@ public class ClassWriter {
         MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
         MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
 
+        List<TypeAnnotation> parameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(TypeAnnotation.listFrom(mt));
+        boolean explicitlyTyped = !parameterTypeAnnotations.isEmpty();
+
         if (!lambdaToAnonymous) {
           buffer.append('(');
 
@@ -111,6 +114,13 @@ public class ClassWriter {
             if (i >= start_index) {
               if (!firstParameter) {
                 buffer.append(", ");
+              }
+
+              if (explicitlyTyped) {
+                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
+                VarType type = md_content.params[i];
+                buffer.append(ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations)));
+                buffer.append(' ');
               }
 
               String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
@@ -748,7 +758,7 @@ public class ClassWriter {
 
             Type paramType;
             if (descriptor != null) paramType = descriptor.parameterTypes.get(paramCount); else paramType = md.params[i];
-            appendParameterAnnotations(buffer, mt, paramType.getArrayDim(), paramCount);
+            appendParameterAnnotations(buffer, mt, paramType, paramCount);
 
             VarVersionPair pair = new VarVersionPair(index, 0);
             if (methodWrapper.varproc.isParameterFinal(pair) ||
@@ -1185,14 +1195,14 @@ public class ClassWriter {
     }
   }
 
-  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int arrayDim, int param) {
+  private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, Type type, int param) {
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
           for (AnnotationExprent annotation : annotations.get(param)) {
-            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, arrayDim, param)) continue;
+            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, type, param)) continue;
             String text = annotation.toJava(-1, BytecodeMappingTracer.DUMMY).toString();
             buffer.append(text).append(' ');
           }

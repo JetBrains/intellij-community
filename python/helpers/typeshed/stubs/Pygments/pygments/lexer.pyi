@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Tuple
+from typing import Any
 
 from pygments.token import _TokenType
 from pygments.util import Future
@@ -40,7 +40,7 @@ class _inherit: ...
 
 inherit: Any
 
-class combined(Tuple[Any]):
+class combined(tuple[Any, ...]):
     def __new__(cls, *args): ...
     def __init__(self, *args) -> None: ...
 

@@ -401,6 +401,11 @@ To create an EditorConfig file in a directory, right-click this directory and se
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
     <notificationGroup id="editorconfig" displayType="BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.error"/>
     <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.disabled"/>
+    <localInspection implementationClass="org.editorconfig.configmanagement.EditorConfigEncodingInspection"
+                     bundle="messages.EditorConfigBundle"
+                     key="inspection.file.encoding.mismatch.name"
+                     enabledByDefault="true"
+                     groupKey="editorconfig.inspection.group"/>
   </extensions>
 
 

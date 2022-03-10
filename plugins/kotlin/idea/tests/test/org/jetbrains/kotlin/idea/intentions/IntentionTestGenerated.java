@@ -683,6 +683,31 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addBraces/addBracesWithBraces.kt");
         }
 
+        @TestMetadata("commentInDoWhileCondition.kt")
+        public void testCommentInDoWhileCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInDoWhileCondition.kt");
+        }
+
+        @TestMetadata("commentInForCondition.kt")
+        public void testCommentInForCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInForCondition.kt");
+        }
+
+        @TestMetadata("commentInIfCondition.kt")
+        public void testCommentInIfCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInIfCondition.kt");
+        }
+
+        @TestMetadata("commentInWhenEntryCondition.kt")
+        public void testCommentInWhenEntryCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInWhenEntryCondition.kt");
+        }
+
+        @TestMetadata("commentInWhileCondition.kt")
+        public void testCommentInWhileCondition() throws Exception {
+            runTest("testData/intentions/addBraces/commentInWhileCondition.kt");
+        }
+
         @TestMetadata("doWhileWithComment.kt")
         public void testDoWhileWithComment() throws Exception {
             runTest("testData/intentions/addBraces/doWhileWithComment.kt");
@@ -1173,6 +1198,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("LocalClass.kt")
             public void testLocalClass() throws Exception {
                 runTest("testData/intentions/addFullQualifier/userTypes/LocalClass.kt");
+            }
+
+            @TestMetadata("NullableType.kt")
+            public void testNullableType() throws Exception {
+                runTest("testData/intentions/addFullQualifier/userTypes/NullableType.kt");
             }
 
             @TestMetadata("SimpleClass.kt")
@@ -9393,6 +9423,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertTryFinallyToUseCall/notClose.kt");
         }
 
+        @TestMetadata("notCloseableClose.kt")
+        public void testNotCloseableClose() throws Exception {
+            runTest("testData/intentions/convertTryFinallyToUseCall/notCloseableClose.kt");
+        }
+
+        @TestMetadata("notCloseableClose2.kt")
+        public void testNotCloseableClose2() throws Exception {
+            runTest("testData/intentions/convertTryFinallyToUseCall/notCloseableClose2.kt");
+        }
+
         @TestMetadata("notOnlyClose.kt")
         public void testNotOnlyClose() throws Exception {
             runTest("testData/intentions/convertTryFinallyToUseCall/notOnlyClose.kt");
@@ -16579,6 +16619,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/primitiveArray.kt");
         }
 
+        @TestMetadata("rangeCount.kt")
+        public void testRangeCount() throws Exception {
+            runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/rangeCount.kt");
+        }
+
         @TestMetadata("set.kt")
         public void testSet() throws Exception {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/set.kt");
@@ -16632,6 +16677,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/gteq.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/implicitReceiver.kt");
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/list.kt");
@@ -16660,6 +16710,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("lteq.kt")
         public void testLteq() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/lteq.kt");
+        }
+
+        @TestMetadata("rangeCount.kt")
+        public void testRangeCount() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/rangeCount.kt");
         }
 
         @TestMetadata("set.kt")

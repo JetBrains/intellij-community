@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -15,6 +15,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.tasks.JarBuilder
+import org.jetbrains.intellij.build.tasks.Source
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -27,11 +29,9 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
-import java.lang.invoke.MethodHandle
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.function.IntConsumer
 import java.util.function.Predicate
@@ -44,11 +44,9 @@ final class JarPackager {
   private final Map<Path, JarDescriptor> jarDescriptors = new LinkedHashMap<>()
   private final BuildContext context
   private final Collection<DistributionFileEntry> projectStructureMapping = new ConcurrentLinkedQueue<DistributionFileEntry>()
-  private final BuildHelper buildHelper
 
   private JarPackager(BuildContext context) {
     this.context = context
-    this.buildHelper = BuildHelper.getInstance(context)
   }
 
   static void pack(Map<String, List<String>> actualModuleJars, Path outputDir, BuildContext context) {
@@ -201,7 +199,7 @@ final class JarPackager {
                                                            sourceList)
     }
 
-    List<Triple<Path, String, List<?>>> entries = new ArrayList<>(packager.jarDescriptors.size())
+    List<Triple<Path, String, List<Source>>> entries = new ArrayList<>(packager.jarDescriptors.size())
 
     boolean isReorderingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
     for (JarDescriptor descriptor : packager.jarDescriptors.values()) {
@@ -219,7 +217,7 @@ final class JarPackager {
       }
       entries.add(new Triple(descriptor.jarFile, pathInClassLog, descriptor.sources))
     }
-    packager.buildHelper.buildJars.accept(entries, dryRun)
+    JarBuilder.buildJars(entries, dryRun)
 
     for (JarDescriptor item : packager.jarDescriptors.values()) {
       for (String moduleName : item.includedModules) {
@@ -274,12 +272,11 @@ final class JarPackager {
                                                            BaseLayout layout,
                                                            Map<String, Integer> moduleNameToSize,
                                                            List sourceList) {
-    MethodHandle addModuleSources = buildHelper.addModuleSources
     Path searchableOptionsDir = getSearchableOptionsDir(context)
 
     Span.current().addEvent("include module outputs", Attributes.of(AttributeKey.stringArrayKey("modules"), List.copyOf(modules)))
     for (String moduleName in modules) {
-      addModuleSources.invokeWithArguments(moduleName,
+      JarBuilder.addModuleSources(moduleName,
                                            moduleNameToSize,
                                            context.getModuleOutputDir(context.findRequiredModule(moduleName)),
                                            moduleOutputPatcher.getPatchedDir(moduleName),
@@ -289,7 +286,6 @@ final class JarPackager {
                                            sourceList)
     }
 
-    BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
     for (String libraryName in layout.projectLibrariesToUnpack.get(jarPath)) {
       JpsLibrary library = context.project.libraryCollection.findLibrary(libraryName)
       if (library == null) {
@@ -298,7 +294,7 @@ final class JarPackager {
 
       for (File ioFile : library.getFiles(JpsOrderRootType.COMPILED)) {
         Path file = ioFile.toPath()
-        sourceList.add(createZipSource.apply(file, new IntConsumer() {
+        sourceList.add(JarBuilder.createZipSource(file, new IntConsumer() {
           @Override
           void accept(int size) {
             ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", PackMode.MERGED, "explicitUnpack")
@@ -329,7 +325,6 @@ final class JarPackager {
                                                     Map<Path, JpsLibrary> copiedFiles,
                                                     Map<String, List> extraLibSources) {
     Map<JpsLibrary, List<Path>> toMerge = new LinkedHashMap<JpsLibrary, List<Path>>()
-    Predicate<String> isLibraryMergeable = buildHelper.isLibraryMergeable
 
     Iterator<ProjectLibraryData> projectLibIterator = layout.includedProjectLibraries.isEmpty()
       ? Collections.<ProjectLibraryData> emptyIterator()
@@ -355,7 +350,7 @@ final class JarPackager {
 
       PackMode packMode = libraryData.packMode
       if (packMode == PackMode.MERGED && !EXTRA_MERGE_RULES.values().any { it.test(libName) } &&
-          !isLibraryMergeable.test(libName)) {
+          !JarBuilder.isLibraryMergeable(libName)) {
         packMode = PackMode.STANDALONE_MERGED
       }
 
@@ -457,7 +452,6 @@ final class JarPackager {
         }
       }
       if (!files.isEmpty()) {
-        BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
         List sources = extraLibSources.computeIfAbsent(targetFilename, new Function<String, List>() {
           @Override
           List apply(String s) {
@@ -466,8 +460,8 @@ final class JarPackager {
         })
 
         Path targetFile = outputDir.resolve(targetFilename)
-        for (Path file : files) {
-          sources.add(createZipSource.apply(file, new IntConsumer() {
+        files.each { Path file ->
+          sources.add(JarBuilder.createZipSource(file, new IntConsumer() {
             @Override
             void accept(int size) {
               projectStructureMapping.add(new ModuleLibraryFileEntry(targetFile, moduleName, file, size))
@@ -519,11 +513,10 @@ final class JarPackager {
   private void filesToSourceWithMapping(List to, List<Path> files, JpsLibrary library, Path targetFile) {
     JpsElementReference<? extends JpsCompositeElement> parentReference = library.createReference().getParentReference()
     boolean isModuleLibrary = parentReference instanceof JpsModuleReference
-    BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
     for (Path file : files) {
       IntConsumer consumer = createLibSizeConsumer(file, isModuleLibrary, projectStructureMapping, targetFile,
                                                    library, isModuleLibrary ? (JpsModuleReference)parentReference : null)
-      to.add(createZipSource.apply(file, consumer))
+      to.add(JarBuilder.createZipSource(file, consumer))
     }
   }
 

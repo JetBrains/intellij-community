@@ -2,7 +2,6 @@
 package com.intellij.remote;
 
 import com.intellij.util.PathMappingSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +32,7 @@ public interface RemoteSdkProperties extends RemoteSdkPropertiesPaths {
    *
    * @deprecated
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
+  @Deprecated(forRemoval = true)
   boolean isInitialized();
 
   @Deprecated

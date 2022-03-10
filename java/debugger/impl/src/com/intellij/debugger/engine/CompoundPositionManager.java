@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -62,12 +63,12 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
     T produce(PositionManager positionManager) throws NoDataException;
   }
 
-  private <T> T iterate(Producer<? extends T> processor, T defaultValue, SourcePosition position) {
-    return iterate(processor, defaultValue, position, true);
+  private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable SourcePosition position) {
+    FileType fileType = position != null ? position.getFile().getFileType() : null;
+    return iterate(processor, defaultValue, fileType, true);
   }
 
-  private <T> T iterate(Producer<? extends T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
-    FileType fileType = position != null ? position.getFile().getFileType() : null;
+  private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable FileType fileType, boolean ignorePCE) {
     for (PositionManager positionManager : myPositionManagers) {
       if (fileType != null) {
         Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
@@ -100,6 +101,9 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
       }
       if (checkCacheEntry(res, location)) return res;
 
+      String sourceName = DebuggerUtilsEx.getSourceName(location, e -> null);
+      FileType fileType = sourceName != null ? FileTypeManager.getInstance().getFileTypeByFileName(sourceName) : null;
+
       return iterate(positionManager -> {
         SourcePosition res1 = positionManager.getSourcePosition(location);
         try {
@@ -108,7 +112,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
         catch (IllegalArgumentException ignored) { // Invalid method id
         }
         return res1;
-      }, null, null, false);
+      }, null, fileType, false);
     }).executeSynchronously();
   }
 

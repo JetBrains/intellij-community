@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
@@ -28,6 +29,8 @@ object MarkdownCodeFenceUtils {
   fun inCodeFence(node: ASTNode) = node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.CODE_FENCE) }
 
   /**
+   * Consider using [MarkdownCodeFence.obtainFenceContent] since it caches its result.
+   *
    * Get content of code fence as list of [PsiElement]
    *
    * @param withWhitespaces defines if whitespaces (including blockquote chars `>`) should be
@@ -38,7 +41,8 @@ object MarkdownCodeFenceUtils {
   @JvmStatic
   @Deprecated("Use getContent(MarkdownCodeFence) instead.")
   fun getContent(host: MarkdownCodeFenceImpl, withWhitespaces: Boolean): List<PsiElement>? {
-    var elements: List<PsiElement> = host.children.filter {
+    val children = host.firstChild?.siblings(forward = true, withSelf = true) ?: return null
+    var elements = children.filter {
       (it !is OuterLanguageElement
        && (it.node.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT
            || (MarkdownPsiUtil.WhiteSpaces.isNewLine(it))
@@ -46,8 +50,7 @@ object MarkdownCodeFenceUtils {
            || (withWhitespaces && MarkdownTokenTypeSets.WHITE_SPACES.contains(it.elementType))
           )
       )
-    }
-
+    }.toList()
     //drop new line right after code fence lang definition
     if (elements.isNotEmpty() && MarkdownPsiUtil.WhiteSpaces.isNewLine(elements.first())) {
       elements = elements.drop(1)
@@ -56,10 +59,12 @@ object MarkdownCodeFenceUtils {
     if (elements.isNotEmpty() && MarkdownPsiUtil.WhiteSpaces.isNewLine(elements.last())) {
       elements = elements.dropLast(1)
     }
-
     return elements.takeIf { it.isNotEmpty() }
   }
 
+  /**
+   * Consider using [MarkdownCodeFence.obtainFenceContent], since it caches its result.
+   */
   @JvmStatic
   fun getContent(host: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
     @Suppress("DEPRECATION")

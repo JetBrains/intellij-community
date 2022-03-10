@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -17,37 +18,34 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.debug;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
 public class JpsBuild {
   public static final String CLASSES_FROM_JPS_BUILD_ENV_NAME = "JPS_BOOTSTRAP_CLASSES_FROM_JPS_BUILD";
-  private static final String KOTLIN_IDE_MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies";
 
   private final JpsModel myModel;
   private final Set<String> myModuleNames;
   private final File myDataStorageRoot;
   private final Path myJpsLogDir;
 
-  public JpsBuild(Path communityRoot, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
+  public JpsBuild(BuildDependenciesCommunityRoot communityRoot, JpsModel model, Path jpsBootstrapWorkDir, Path kotlincHome) throws Exception {
     myModel = model;
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
 
-    Path kotlinc = downloadAndExtractKotlinCompiler(communityRoot);
-    System.setProperty("jps.kotlin.home", kotlinc.toString());
+    System.setProperty("jps.kotlin.home", kotlincHome.toString());
 
     // Set IDEA home path to something or JPS can't instantiate ClasspathBoostrap.java for Groovy JPS
     // which calls PathManager.getLibPath() (it should not)
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.toString());
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.getCommunityRoot().toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
@@ -125,26 +123,6 @@ public class JpsBuild {
     messageHandler.assertNoErrors();
   }
 
-  private Path downloadAndExtractKotlinCompiler(Path communityRoot) throws Exception {
-    // We already have kotlin JPS in the classpath, fetch version from it
-    String kotlincVersion;
-    try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("META-INF/compiler.version")) {
-      kotlincVersion = new String(Objects.requireNonNull(inputStream).readAllBytes(), StandardCharsets.UTF_8);
-    }
-
-    info("Kotlin compiler version is " + kotlincVersion);
-
-    URI kotlincUrl = BuildDependenciesDownloader.getUriForMavenArtifact(
-      KOTLIN_IDE_MAVEN_REPOSITORY_URL,
-      "org.jetbrains.kotlin", "kotlin-dist-for-ide", kotlincVersion, "jar");
-    Path kotlincDist = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, kotlincUrl);
-    Path kotlinc = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, kotlincDist);
-
-    debug("Kotlin compiler is at " + kotlinc);
-
-    return kotlinc;
-  }
-
   private class JpsMessageHandler implements MessageHandler {
     private final AtomicReference<String> myFirstError = new AtomicReference<>();
 
@@ -155,19 +133,14 @@ public class JpsBuild {
 
       switch (kind) {
         case PROGRESS:
+        case WARNING:
+          // Warnings mean little for bootstrapping
           verbose(text);
           break;
-        case WARNING:
-          warn(text);
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
-          if (text.contains("Groovyc:WARNING") || text.contains("Kotlin:WARNING") || text.contains("java:WARNING")) {
-            warn(text);
-          }
-          else {
-            error(text);
-            myFirstError.compareAndSet(null, text);
-          }
+          error(text);
+          myFirstError.compareAndSet(null, text);
           break;
         default:
           if (!msg.getMessageText().isBlank()) {

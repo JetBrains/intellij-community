@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.callable
@@ -30,6 +30,7 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.coroutineContext
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
@@ -119,7 +120,7 @@ class CancellationPropagationTest {
   @Test
   fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
     launch {
-      resetThreadContext().use {
+      resetThreadContext(coroutineContext).use {
         ApplicationManager.getApplication().withModality {
           val runnable = Runnable {
             fail()
@@ -135,7 +136,7 @@ class CancellationPropagationTest {
 
   @Test
   fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking {
-    resetThreadContext().use {
+    resetThreadContext(coroutineContext).use {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {
         val runnable = Runnable {
@@ -186,7 +187,7 @@ class CancellationPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-    resetThreadContext().use {
+    resetThreadContext(coroutineContext).use {
       suspendCancellableCoroutine<Unit> { continuation ->
         val parentJob = checkNotNull(Cancellation.currentJob())
         submit { // switch to another thread

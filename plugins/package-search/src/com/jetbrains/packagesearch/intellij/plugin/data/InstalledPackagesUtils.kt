@@ -12,15 +12,10 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -136,7 +131,13 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     }
 
     val sha256 = sha256Deferred.await()
-    if (cache?.sha256 == sha256 && cache.fileHashCode == fileHashCode && cache.cacheVersion == PluginEnvironment.cachesVersion) {
+    if (
+        cache?.sha256 == sha256
+        && cache.fileHashCode == fileHashCode
+        && cache.cacheVersion == PluginEnvironment.Caches.version
+        // if dependencies are empty it could be because build APIs have previously failed
+        && (cache.dependencies.isNotEmpty() || cache.parsingAttempts >= PluginEnvironment.Caches.maxAttempts)
+    ) {
         return@coroutineScope cache.dependencies
     }
 
@@ -153,9 +154,10 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(
             value = InstalledDependenciesCache(
-                cacheVersion = PluginEnvironment.cachesVersion,
+                cacheVersion = PluginEnvironment.Caches.version,
                 fileHashCode = fileHashCode,
                 sha256 = sha256,
+                parsingAttempts = cache?.parsingAttempts?.let { it + 1 } ?: 1,
                 projectName = name,
                 dependencies = dependencies
             )
@@ -174,6 +176,7 @@ internal data class InstalledDependenciesCache(
     val cacheVersion: Int,
     val fileHashCode: Int,
     val sha256: String,
+    val parsingAttempts: Int = 0,
     val projectName: String,
     val dependencies: List<@Serializable(with = UnifiedDependencySerializer::class) UnifiedDependency>
 )
@@ -237,24 +240,4 @@ internal object UnifiedDependencySerializer : KSerializer<UnifiedDependency> {
         encodeSerializableElement(descriptor, 0, UnifiedCoordinatesSerializer, value.coordinates)
         value.scope?.let { encodeStringElement(descriptor, 1, it) }
     }
-}
-
-internal suspend fun generateOperationData(
-    moduleModels: List<ModuleModel>,
-    stable: PackagesToUpgrade,
-    repos: KnownRepositories.All,
-    onlyStable: Boolean,
-    project: Project
-) = moduleModels.associate { module ->
-    module.projectModule.nativeModule to (stable.upgradesByModule[module.projectModule.nativeModule]?.parallelMap { packageUpgradeInfo ->
-        val targetModule = TargetModules.from(module)
-        val operations = computeActionsAsync(
-            project, packageUpgradeInfo.packageModel, targetModule, repos.filterOnlyThoseUsedIn(targetModule), onlyStable
-        )
-        PackageSearchProjectService.AvailableUpdatesMap.OperationData(
-            packageUpgradeInfo,
-            operations,
-            operations.primaryOperations.await()
-        )
-    } ?: emptyList())
 }

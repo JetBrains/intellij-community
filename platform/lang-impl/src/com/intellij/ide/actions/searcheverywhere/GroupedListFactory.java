@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
@@ -59,8 +60,8 @@ class GroupedListFactory extends SEResultsListFactory {
         AppUIUtil.targetToDevice(component, list);
         component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
 
-        if (ExperimentalUI.isNewUI()) {
-          component.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : JBUI.CurrentTheme.Popup.BACKGROUND);
+        if (!isSelected && component.getBackground() == UIUtil.getListBackground()) {
+          PopupUtil.applyNewUIBackground(component);
         }
 
         if (!header.getSelectedTab().isSingleContributor() && groupedModel.isGroupFirstItem(index)) {

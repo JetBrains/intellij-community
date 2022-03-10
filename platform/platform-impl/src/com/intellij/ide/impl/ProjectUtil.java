@@ -35,6 +35,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
@@ -73,8 +74,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   private ProjectUtil() { }
 
   /** @deprecated Use {@link #updateLastProjectLocation(Path)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
     updateLastProjectLocation(Path.of(projectFilePath));
   }
@@ -473,7 +473,7 @@ public final class ProjectUtil extends ProjectUtilCore {
     return path.contains("://") || path.contains("\\\\");
   }
 
-  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
+  public static @Nullable Project findProject(@NotNull Path file) {
     Project[] openProjects = getOpenProjects();
     if (openProjects.length == 0) {
       return null;
@@ -481,11 +481,18 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     for (Project project : openProjects) {
       if (isSameProject(file, project)) {
-        focusProjectWindow(project, false);
         return project;
       }
     }
     return null;
+  }
+
+  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
+    var project = findProject(file);
+    if (project != null) {
+      focusProjectWindow(project, false);
+    }
+    return project;
   }
 
   /**
@@ -761,15 +768,25 @@ public final class ProjectUtil extends ProjectUtilCore {
 
   public static @Nullable Path getProjectFile(@NotNull String name) {
     Path projectDir = getProjectPath(name);
-    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)) ? projectDir : null;
+    return isProjectFile(projectDir) ? projectDir : null;
+  }
+
+  private static boolean isProjectFile(@NotNull Path projectDir) {
+    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER));
   }
 
   public static @Nullable Project openOrCreateProject(@NotNull String name) {
     return openOrCreateProject(name, null);
   }
 
-  public static @Nullable Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback  projectCreatedCallback) {
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> openOrCreateProjectInner(name, projectCreatedCallback));
+  public static @Nullable Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    return openOrCreateProject(name, getProjectPath(name), projectCreatedCallback);
+  }
+
+  public static @Nullable Project openOrCreateProject(@NotNull String name, @NotNull Path file, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+      return openOrCreateProjectInner(name, file, projectCreatedCallback);
+    });
   }
 
   public interface ProjectCreatedCallback {
@@ -788,7 +805,13 @@ public final class ProjectUtil extends ProjectUtilCore {
   }
 
   private static @Nullable Project openOrCreateProjectInner(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
-    Path existingFile = getProjectFile(name);
+    Path file = getProjectPath(name);
+    return openOrCreateProjectInner(name, file, projectCreatedCallback);
+  }
+
+  @Nullable
+  private static Project openOrCreateProjectInner(@NotNull String name, @NotNull Path file, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    Path existingFile = isProjectFile(file) ? file : null;
     if (existingFile != null) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       for (Project p : openProjects) {
@@ -800,7 +823,6 @@ public final class ProjectUtil extends ProjectUtilCore {
       return ProjectManagerEx.getInstanceEx().openProject(existingFile, new OpenProjectTask().withRunConfigurators());
     }
 
-    Path file = getProjectPath(name);
     boolean created;
     try {
       created = (!Files.exists(file) && Files.createDirectories(file) != null) || Files.isDirectory(file);
@@ -818,7 +840,7 @@ public final class ProjectUtil extends ProjectUtilCore {
           projectCreatedCallback.projectCreated(project);
         }
         saveAndDisposeProject(project);
-        projectFile = getProjectFile(name);
+        projectFile = file;
       }
     }
     if (projectFile == null) return null;
@@ -832,5 +854,21 @@ public final class ProjectUtil extends ProjectUtilCore {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       WriteAction.run(() -> Disposer.dispose(project));
     });
+  }
+
+  public static @Nullable Project getProjectForWindow(@Nullable Window window) {
+    if (window != null) {
+      while (window.getOwner() != null) {
+        window = window.getOwner();
+      }
+      if (window instanceof IdeFrame) {
+        return ((IdeFrame)window).getProject();
+      }
+    }
+    return null;
+  }
+
+  public static @Nullable Project getProjectForComponent(@Nullable Component component) {
+    return getProjectForWindow(ComponentUtil.getWindow(component));
   }
 }

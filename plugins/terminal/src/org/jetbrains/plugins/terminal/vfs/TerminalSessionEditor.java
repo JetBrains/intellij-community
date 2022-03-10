@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -14,12 +15,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.TerminalTitle;
+import com.intellij.terminal.TerminalTitleListener;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 
 public final class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
   private static final Logger LOG = Logger.getInstance(TerminalSessionEditor.class);
@@ -40,6 +44,19 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
       }, myProject.getDisposed());
     };
     myFile.getTerminalWidget().addListener(myListener);
+
+    terminalFile.getTerminalWidget().getTerminalTitle().addTitleListener(new TerminalTitleListener() {
+      @Override
+      public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
+        try {
+          terminalFile.rename(null, terminalTitle.buildTitle());
+        }
+        catch (IOException exception) {
+          throw new RuntimeException("Cannot rename");
+        }
+        FileEditorManager.getInstance(project).updateFilePresentation(terminalFile);
+      }
+    }, this);
   }
 
   @Override

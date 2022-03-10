@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -42,7 +42,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -349,16 +349,14 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (parent instanceof PsiMethod && hasConflicts) {
       PsiMethod method = (PsiMethod)parent;
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
-      var provider = JavaSpecialRefactoringProvider.getInstance();
-      var csp = provider.getChangeSignatureProcessor(project,
-                                                                 method,
-                                                                 false,
-                                                                 modifier.toPsiModifier(),
-                                                                 method.getName(),
-                                                                 method.getReturnType(),
-                                                                 ParameterInfoImpl.fromMethod(method),
-                                                                 JavaThrownExceptionInfo.extractExceptions(method)
-                                                                 );
+      var csp = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
+                                                                   method,
+                                                                   false,
+                                                                   modifier.toPsiModifier(),
+                                                                   method.getName(),
+                                                                   method.getReturnType(),
+                                                                   ParameterInfoImpl.fromMethod(method),
+                                                                   JavaThrownExceptionInfo.extractExceptions(method),null, null, null);
       csp.run();
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -17,7 +17,7 @@ final class ProductIconsImpl implements ProductIcons {
   private final NotNullLazyValue<Icon> myProductIcon = NotNullLazyValue.createValue(() -> {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     @SuppressWarnings("deprecation") String fallback = appInfo.getSmallIconUrl();
-    return IconLoader.getIcon(requireNonNullElse(appInfo.getSmallApplicationSvgIconUrl(), fallback), ProductIconsImpl.class);
+    return IconLoader.getIcon(requireNonNullElse(appInfo.getSmallApplicationSvgIconUrl(), fallback), ProductIconsImpl.class.getClassLoader());
   });
   private final NotNullLazyValue<Icon> myProjectIcon = NotNullLazyValue.createValue(
     () -> PlatformUtils.isJetBrainsProduct()

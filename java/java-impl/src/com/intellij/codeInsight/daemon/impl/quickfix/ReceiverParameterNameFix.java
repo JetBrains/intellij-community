@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,7 @@ public class ReceiverParameterNameFix extends LocalQuickFixAndIntentionActionOnP
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("fix.receiver.parameter.name.text", myNewName);
+    return CommonQuickFixBundle.message("fix.replace.with.x", myNewName);
   }
 
   @NotNull

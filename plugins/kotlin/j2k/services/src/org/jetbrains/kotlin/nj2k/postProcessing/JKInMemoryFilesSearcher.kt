@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing
 
@@ -12,9 +12,10 @@ internal abstract class JKInMemoryFilesSearcher {
     abstract fun search(element: KtElement, scope: PsiElement? = null): Iterable<PsiReference>
 
     companion object {
-        fun create(files: List<PsiElement>) = when {
-            files.size == 1 -> JKSingleFileInMemoryFilesSearcher(files.single())
-            else -> JKMultipleFilesInMemoryFilesSearcher(files)
+        fun create(files: List<PsiElement>) = if (files.size == 1) {
+            JKSingleFileInMemoryFilesSearcher(files.single())
+        } else {
+            JKMultipleFilesInMemoryFilesSearcher(files)
         }
     }
 }

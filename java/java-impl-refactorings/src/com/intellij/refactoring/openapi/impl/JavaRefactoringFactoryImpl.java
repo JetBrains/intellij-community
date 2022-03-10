@@ -1,16 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.openapi.impl;
 
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.*;
+import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -148,5 +159,39 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                             boolean cookObjects,
                                             boolean cookToWildcards) {
     return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive, cookObjects, cookToWildcards);
+  }
+
+  @Override
+  public ChangeClassSignatureRefactoringImpl createChangeClassSignatureProcessor(Project project,
+                                                                           PsiClass aClass,
+                                                                           TypeParameterInfo[] newSignature) {
+    return new ChangeClassSignatureRefactoringImpl(project, aClass, newSignature);
+  }
+
+  @Override
+  public ChangeSignatureRefactoring createChangeSignatureProcessor(PsiMethod method,
+                                                                   boolean generateDelegate,
+                                                                   @Nullable String newVisibility,
+                                                                   String newName,
+                                                                   PsiType newReturnType,
+                                                                   ParameterInfo @NotNull [] parameterInfo,
+                                                                   ThrownExceptionInfo[] thrownExceptions,
+                                                                   Set<PsiMethod> propagateParametersMethods,
+                                                                   Set<PsiMethod> propagateExceptionsMethods,
+                                                                   Consumer<? super List<ParameterInfo>> callback) {
+    JavaChangeInfo changeInfo = JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, newVisibility,
+                                                                      newName, newReturnType != null ? CanonicalTypes.createTypeWrapper(newReturnType) : null,
+                                                                      (ParameterInfoImpl[])parameterInfo,
+                                                                      thrownExceptions, propagateParametersMethods, propagateExceptionsMethods);
+    return new ChangeSignatureRefactoringImpl(new ChangeSignatureProcessor(myProject, changeInfo) {
+      @Override
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
+        CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
+        super.performRefactoring(usages);
+        if (callback  != null) {
+          callback.consume(Arrays.asList(parameterInfo));
+        }
+      }
+    });
   }
 }

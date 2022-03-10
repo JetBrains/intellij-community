@@ -81,7 +81,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeepDeleteParameterOtherTypeInBinaryExpression() throws Exception {
     doSingleFileTest();
   }
-  
+
   public void testDeepDeleteFieldAndAssignedParameter() throws Exception {
     doSingleFileTest();
   }
@@ -133,7 +133,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeleteMethodWithPropertyUsage() {
     doTest("Foo");
   }
-  
+
   public void testDeleteClassWithPropertyUsage() {
     doTest("Foo");
   }
@@ -267,7 +267,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testInterfaceAsTypeParameterBound() throws Exception {
-    doSingleFileTest();   
+    doSingleFileTest();
   }
 
   public void testNestedTypeParameterBounds() throws Exception {
@@ -340,7 +340,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testTypeParameterWithinMethodHierarchy() throws Exception {
     doSingleFileTest();
   }
-  
+
   public void testTypeParameterNoMethodHierarchy() throws Exception {
     doSingleFileTest();
   }

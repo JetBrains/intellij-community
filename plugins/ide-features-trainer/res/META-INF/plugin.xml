@@ -77,7 +77,7 @@
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
-    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false" icon="training.FeaturesTrainerIcons.Img.FeatureTrainer"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"/>
   </extensions>
 
   <actions>
@@ -187,12 +187,12 @@
       implementationClass="training.featuresSuggester.statistics.FeatureSuggesterStatistics"/>
     <statistics.validation.customValidationRule
       implementation="training.featuresSuggester.statistics.FeatureSuggesterIdRuleValidator"/>
-    <registryKey defaultValue="true" description="Enable actions processing by IDE Feature Suggester plugin"
-                 key="feature.suggester.enabled"/>
     <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
                  key="feature.suggester.send.statistics"/>
     <registryKey defaultValue="false" description="Show suggestion even if corresponding action has been used recently"
                  key="feature.suggester.force.show.suggestions"/>
+    <registryKey defaultValue="true" description="Should suggesters be enabled in settings by default or not"
+                 key="feature.suggester.enable.suggesters" restartRequired="true"/>
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"/>
   </extensions>
 

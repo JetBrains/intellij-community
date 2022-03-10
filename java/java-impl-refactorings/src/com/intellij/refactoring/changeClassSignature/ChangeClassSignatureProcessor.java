@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.history.LocalHistory;
@@ -187,8 +187,8 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     final boolean[] toRemove = new boolean[original.length];
     Arrays.fill(toRemove, true);
     for (final TypeParameterInfo info : myNewSignature) {
-      if (info instanceof TypeParameterInfo.Existing) {
-        toRemove[((TypeParameterInfo.Existing)info).getParameterIndex()] = false;
+      if (info instanceof Existing) {
+        toRemove[((Existing)info).getParameterIndex()] = false;
       }
     }
     return toRemove;
@@ -206,11 +206,11 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     if (oldValues.length != original.length) return;
     List<PsiTypeElement> newValues = new ArrayList<>();
     for (final TypeParameterInfo info : myNewSignature) {
-      if (info instanceof TypeParameterInfo.Existing) {
-        newValues.add(oldValues[((TypeParameterInfo.Existing)info).getParameterIndex()]);
+      if (info instanceof Existing) {
+        newValues.add(oldValues[((Existing)info).getParameterIndex()]);
       }
       else {
-        PsiType type = ((TypeParameterInfo.New)info).getDefaultValue().getType(myClass.getLBrace(), PsiManager.getInstance(myProject));
+        PsiType type = ((New)info).getDefaultValue().getType(myClass.getLBrace(), PsiManager.getInstance(myProject));
         PsiTypeElement newValue = factory.createTypeElement(usageSubstitutor.substitute(type));
         newValues.add(newValue);
       }

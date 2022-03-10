@@ -128,11 +128,12 @@ final class InferenceCache {
     Map<Pair<Instruction, Integer>, Collection<Pair<Instruction, Integer>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, Integer>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptorId));
+    Map<PsiElement, Collection<ReadWriteVariableInstruction>> scopeCache = new HashMap<>();
 
     while (!queue.isEmpty()) {
       Pair<Instruction, Integer> pair = queue.removeFirst();
       if (!interesting.containsKey(pair)) {
-        Set<Pair<Instruction, Integer>> dependencies = findDependencies(definitionMaps, pair.first, pair.second);
+        Set<Pair<Instruction, Integer>> dependencies = findDependencies(definitionMaps, pair.first, pair.second, scopeCache);
         interesting.put(pair, dependencies);
         dependencies.forEach(queue::addLast);
       }
@@ -154,8 +155,9 @@ final class InferenceCache {
 
   @NotNull
   private Set<Pair<Instruction, Integer>> findDependencies(@NotNull List<DefinitionMap> definitionMaps,
-                                                                      @NotNull Instruction instruction,
-                                                                      int descriptorId) {
+                                                           @NotNull Instruction instruction,
+                                                           int descriptorId,
+                                                           Map<PsiElement, Collection<ReadWriteVariableInstruction>> scopeCache) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
     IntSet definitions = definitionMap.getDefinitions(descriptorId);
 
@@ -168,7 +170,7 @@ final class InferenceCache {
       if (write != instruction) {
         pairs.add(Pair.create(write, descriptorId));
       }
-      for (ReadWriteVariableInstruction dependency : findReadDependencies(write, it -> myFromByElements.getOrDefault(it, emptyList()))) {
+      for (ReadWriteVariableInstruction dependency : findReadDependencies(write, it -> myFromByElements.getOrDefault(it, emptyList()), scopeCache)) {
         pairs.add(Pair.create(dependency, dependency.getDescriptor()));
       }
     }

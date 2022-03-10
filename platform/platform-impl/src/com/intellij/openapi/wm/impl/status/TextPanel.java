@@ -15,7 +15,6 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +26,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends NonOpaquePanel implements Accessible {
+  public static final String PROPERTY_TEXT = "TextPanel.text";
+
   @Nullable @Nls private String myText;
 
   private Integer myPrefHeight;
@@ -60,8 +61,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   /**
    * @deprecated no effect
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void resetColor() {
   }
 
@@ -142,7 +142,9 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
       oldAccessibleName = accessibleContext.getAccessibleName();
     }
 
+    String oldText = myText;
     myText = text;
+    firePropertyChange(PROPERTY_TEXT, oldText, text);
 
     if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
       accessibleContext.firePropertyChange(
@@ -207,8 +209,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     /**
      * @deprecated arrows are not painted anymore
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     protected boolean shouldPaintArrows() {
       return false;
     }

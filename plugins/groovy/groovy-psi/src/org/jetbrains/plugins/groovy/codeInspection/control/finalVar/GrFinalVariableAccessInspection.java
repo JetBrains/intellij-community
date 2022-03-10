@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -71,6 +72,9 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       @Override
       public void visitField(@NotNull GrField field) {
         super.visitField(field);
+        if (field instanceof LightElement) {
+          return;
+        }
 
         final GrExpression initializer = field.getInitializerGroovy();
         if (initializer != null) {

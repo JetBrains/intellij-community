@@ -420,7 +420,15 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         if (project.isDisposed) {
           return@runUnderDisposeAwareIndicator
         }
-        runStartupActivity(activity)
+        try {
+          runStartupActivity(activity)
+        }
+        catch (e: Throwable) {
+          if (e is ControlFlowException) {
+            throw e
+          }
+          LOG.error(e)
+        }
       }
     }
   }

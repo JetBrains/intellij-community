@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
+import training.featuresSuggester.settings.FeatureSuggesterSettings
+import training.featuresSuggester.suggesters.FeatureSuggester
 
 abstract class FeatureSuggesterTest : BasePlatformTestCase() {
   protected abstract val testingCodeFileName: String
@@ -16,7 +18,9 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.configureByFile(testingCodeFileName)
-    forceShowSuggestions = true
+    SuggestingUtils.forceShowSuggestions = true
+    val settings = FeatureSuggesterSettings.instance()
+    FeatureSuggester.suggesters.forEach { settings.setEnabled(it.id, true) }
     expectedSuggestion = NoSuggestion
     disposable = Disposer.newDisposable()
     FeatureSuggesterTestUtils.subscribeToSuggestions(myFixture.project, disposable) { suggestion -> expectedSuggestion = suggestion }

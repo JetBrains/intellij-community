@@ -15,10 +15,12 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -59,7 +61,7 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
-import com.intellij.ui.dsl.builder.SpacingConfiguration;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
@@ -167,7 +169,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private AnAction myRegexAction;
   private AnAction myResetFiltersAction;
   private boolean mySuggestRegexHintForEmptyResults = true;
-  private JBSplitter myPreviewSplitter;
+  private OnePixelSplitter myPreviewSplitter;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;
@@ -626,7 +628,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     Pair<FindPopupScopeUI.ScopeType, JComponent>[] scopeComponents = myScopeUI.getComponents();
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
-    myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
 
     List<AnAction> scopeActions = new ArrayList<>(scopeComponents.length);
     for (Pair<FindPopupScopeUI.ScopeType, JComponent> scopeComponent : scopeComponents) {
@@ -634,7 +635,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       scopeActions.add(new MySelectScopeToggleAction(scopeType));
       myScopeDetailsPanel.add(scopeType.name, scopeComponent.second);
     }
-    myScopeSelectionToolbar = createToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
+    myScopeSelectionToolbar = createScopeToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
     myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
@@ -766,9 +767,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         return size;
       }
     };
-    scrollPane.setBorder(JBUI.Borders.empty());
     myPreviewSplitter.setFirstComponent(scrollPane);
-    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 4 4, fillx, hidemode 3, gap 0"));
+    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 0 0 0 0, fillx, hidemode 3, gap 0"));
     bottomPanel.add(myNewTabCheckbox = new JBCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView()));
     myNewTabCheckbox.addActionListener(new ActionListener() {
       @Override
@@ -796,22 +796,19 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     previewPanel.add(myUsagePreviewTitle, BorderLayout.NORTH);
     previewPanel.add(myCodePreviewComponent, BorderLayout.CENTER);
     myPreviewSplitter.setSecondComponent(previewPanel);
-    JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
-    scopesPanel.add(myScopeSelectionToolbar.getComponent());
-    scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
+    JPanel scopesPanel = new JPanel();
+    new RowBuilder(scopesPanel)
+      .gap(26)
+      .add(myScopeSelectionToolbar.getComponent())
+      .addResizable(myScopeDetailsPanel);
     setLayout(new MigLayout("flowx, ins 0, gap 0, fillx, hidemode 3"));
 
     myIsPinned.set(UISettings.getInstance().getPinFindInPath());
 
-    JBInsets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
     if (ExperimentalUI.isNewUI()) {
       Color background = JBUI.CurrentTheme.Popup.BACKGROUND;
-      Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
-      int verticalGap = SpacingConfiguration.createIntelliJSpacingConfiguration().getVerticalComponentGap();
-      headerInsets.top -= verticalGap;
-      headerInsets.bottom -= verticalGap;
-      header.panel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-                                                   JBUI.Borders.empty(headerInsets)));
+      header.panel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                                   PopupUtil.getComplexPopupHorizontalHeaderBorder()));
       header.panel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       header.cbFileFilter.setOpaque(false);
       setBackground(background);
@@ -823,12 +820,18 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
-      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(12, 8, 5, 0));
+      myUsagePreviewTitle.setBorder(JBUI.Borders.empty(10, 20, 6, 0));
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
-      scopesPanel.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(4, 4)));
+      scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
-      myPreviewSplitter.setBorder(JBUI.Borders.empty(0, textFieldBorderInsets.getUnscaled().left, 0, textFieldBorderInsets.getUnscaled().right));
+
+      Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+      //noinspection UseDPIAwareInsets
+      myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
+      //noinspection UseDPIAwareInsets
+      scrollPane.setBorder(JBUI.Borders.empty(new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right)));
+      bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
       mySearchTextArea.setBorder(JBUI.Borders.compound(
@@ -839,14 +842,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
       myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
+      scrollPane.setBorder(JBUI.Borders.empty());
+      bottomPanel.setBorder(JBUI.Borders.empty(5));
     }
     add(header.panel, "growx, pushx, wrap");
 
     add(mySearchTextArea, "pushx, growx, wrap");
     add(myReplaceTextArea, "pushx, growx, wrap");
     add(scopesPanel, "pushx, growx, ax left, wrap");
-    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap" +
-                           (ExperimentalUI.isNewUI() ? ", gap " + textFieldBorderInsets.left + " " + textFieldBorderInsets.right + " 0 0" : ""));
+    add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
     add(bottomPanel, "pushx, growx, dock south");
 
     List<Component> focusOrder = new ArrayList<>();
@@ -1638,6 +1642,42 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setBorder(JBUI.Borders.empty(3));
+    return toolbar;
+  }
+
+  @NotNull
+  private static ActionToolbarImpl createScopeToolbar(AnAction @NotNull ... actions) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true) {
+      @Override
+      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                          ActionButtonLook look,
+                                                          @NotNull String place,
+                                                          @NotNull Presentation presentation,
+                                                          @NotNull Dimension minimumSize) {
+        if (!ExperimentalUI.isNewUI()) {
+          return super.createToolbarButton(action, look, place, presentation, minimumSize);
+        }
+
+        ActionButtonWithText result = new ActionButtonWithText(action, presentation, place, minimumSize){
+          @Override
+          protected Insets getMargins() {
+            return new JBInsets(4, 2, 4, 2);
+          }
+        };
+
+        result.setLook(look);
+        result.setBorder(JBUI.Borders.emptyRight(4));
+        result.setFont(JBFont.medium());
+
+        return result;
+      }
+    };
+
+    toolbar.setForceMinimumSize(true);
+    toolbar.setTargetComponent(toolbar);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+
     return toolbar;
   }
 

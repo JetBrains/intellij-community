@@ -8,8 +8,8 @@ class Foo {
   boolean printDirectory() {
     try {
       return file.isDirec<caret>tory() && file.isFile();
-      throw new IOException("");
-    } catch (IOException e) {
+    } catch (Exception e) {
     }
+    return false;
   }
 }

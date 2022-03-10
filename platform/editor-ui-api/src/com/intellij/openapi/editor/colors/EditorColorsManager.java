@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,6 @@ public abstract class EditorColorsManager {
    */
   @SuppressWarnings("MethodMayBeStatic")
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void addEditorColorsListener(@NotNull EditorColorsListener listener) {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, listener);
   }

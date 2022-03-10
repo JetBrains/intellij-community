@@ -40,6 +40,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -136,8 +137,19 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.isEmpty() && window.isToHideOnEmptyContent()) {
-          window.getToolWindowManager().hideToolWindow(window.getId(), false, true, true, null);
+        if (contentManager.isEmpty()) {
+          boolean removeFromStripe;
+          if (window.isToHideOnEmptyContent()) {
+            removeFromStripe = true;
+          }
+          else if (window.canCloseContents() && StatusText.getDefaultEmptyText().equals(window.getEmptyText().getText())) {
+            removeFromStripe = false;
+          }
+          else {
+            return;
+          }
+          window.getToolWindowManager()
+            .hideToolWindow(window.getId(), /* hideSide = */ false, /* moveFocus = */ true, removeFromStripe, /* source = */ null);
         }
       }
 
@@ -400,9 +412,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         if (e.isPopupTrigger() || UIUtil.isCloseClick(e)) return;
-        PointerInfo info = MouseInfo.getPointerInfo();
         if (!isToolWindowDrag(e)) {
-          myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+          myLastPoint.set(e.getLocationOnScreen());
           myPressPoint.set(myLastPoint.get());
           myDragTracker.set(LocationOnDragTracker.startDrag(e));
           if (allowResize && ui.isResizeable()) {
@@ -415,7 +426,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          if (ui.tabsLayout.myDoubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
+          if (ui.tabsLayout.doubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
             ToolWindowManagerEx manager = ui.window.getToolWindowManager();
             manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
           }
@@ -472,13 +483,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
         //"Dock" modes,
         // for "Undock" mode processing see com.intellij.toolWindow.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
-        PointerInfo info = MouseInfo.getPointerInfo();
-        if (info == null) return;
-        Point newMouseLocation = info.getLocation();
+        Point newMouseLocation = e.getLocationOnScreen();
 
         Window window = SwingUtilities.windowForComponent(c);
         if (!(window instanceof IdeFrame)) {
-          myDragTracker.get().updateLocationOnDrag(window);
+          myDragTracker.get().updateLocationOnDrag(window, newMouseLocation);
         }
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();

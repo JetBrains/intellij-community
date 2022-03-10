@@ -58,6 +58,12 @@
     <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
 
     <preloadingActivity implementation="com.intellij.grazie.jlanguage.LangTool$Preloader"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/GrazieDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/GrazieDarcula.xml"/>
+
+    <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
+    <daemon.statusItemMerger implementation="com.intellij.grazie.ide.TextSeverityMerger"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

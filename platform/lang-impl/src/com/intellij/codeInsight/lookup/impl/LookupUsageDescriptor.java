@@ -33,8 +33,7 @@ public interface LookupUsageDescriptor {
   /**
    * @deprecated use {@link LookupUsageDescriptor#getAdditionalUsageData(LookupResultDescriptor)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   default void fillUsageData(@NotNull Lookup lookup, @NotNull FeatureUsageData usageData) {
     LookupResultDescriptor lookupResultDescriptor = new LookupResultDescriptor() {
       @Override

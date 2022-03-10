@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -116,6 +116,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return component.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) == null;
   }
 
+  @ApiStatus.Internal
+  public ComboPopup getPopup() {
+    return popup;
+  }
+
   @Override
   protected ComboPopup createPopup() {
     return hasSwingPopup(comboBox) ? new CustomComboPopup(comboBox) : new DarculaJBPopupComboPopup<>(comboBox);
@@ -199,8 +204,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected Color getArrowButtonFillColor(Color defaultColor) {
     return JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
@@ -290,8 +294,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   /**
    * @deprecated Use {@link DarculaUIUtil#isTableCellEditor(Component)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected static boolean isTableCellEditor(JComponent c) {
     return DarculaUIUtil.isTableCellEditor(c);
   }

@@ -847,9 +847,49 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/addExclExclCall/operationBinary.kt");
             }
 
+            @TestMetadata("operationDecrement.kt")
+            public void testOperationDecrement() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationDecrement.kt");
+            }
+
+            @TestMetadata("operationDivAssign.kt")
+            public void testOperationDivAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationDivAssign.kt");
+            }
+
             @TestMetadata("operationIn.kt")
             public void testOperationIn() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/operationIn.kt");
+            }
+
+            @TestMetadata("operationIncrement.kt")
+            public void testOperationIncrement() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationIncrement.kt");
+            }
+
+            @TestMetadata("operationMinusAssign.kt")
+            public void testOperationMinusAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationMinusAssign.kt");
+            }
+
+            @TestMetadata("operationPlusAssign.kt")
+            public void testOperationPlusAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationPlusAssign.kt");
+            }
+
+            @TestMetadata("operationPlusAssignOnMutableMap.kt")
+            public void testOperationPlusAssignOnMutableMap() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationPlusAssignOnMutableMap.kt");
+            }
+
+            @TestMetadata("operationRemAssign.kt")
+            public void testOperationRemAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationRemAssign.kt");
+            }
+
+            @TestMetadata("operationTimesAssign.kt")
+            public void testOperationTimesAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationTimesAssign.kt");
             }
 
             @TestMetadata("operationUnary.kt")
@@ -9276,6 +9316,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("noStackOverflowOnStarProjection.kt")
+        public void testNoStackOverflowOnStarProjection() throws Exception {
+            runTest("testData/quickfix/makeUpperBoundNonNullable/noStackOverflowOnStarProjection.kt");
+        }
+
         @TestMetadata("typeMismatchAny1.kt")
         public void testTypeMismatchAny1() throws Exception {
             runTest("testData/quickfix/makeUpperBoundNonNullable/typeMismatchAny1.kt");
@@ -10535,6 +10580,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("addFunctionTwoTraits.kt")
             public void testAddFunctionTwoTraits() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionTwoTraits.kt");
+            }
+
+            @TestMetadata("addFunctionWithoutDefaultValue.kt")
+            public void testAddFunctionWithoutDefaultValue() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addFunctionWithoutDefaultValue.kt");
             }
 
             @TestMetadata("addParameter.kt")
@@ -11953,6 +12003,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/containsBinaryOperator.kt");
         }
 
+        @TestMetadata("divAssignOnMutableMap.kt")
+        public void testDivAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/divAssignOnMutableMap.kt");
+        }
+
         @TestMetadata("hasElvis.kt")
         public void testHasElvis() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
@@ -11963,9 +12018,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/list.kt");
         }
 
+        @TestMetadata("minusAssignOnMutableMap.kt")
+        public void testMinusAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/minusAssignOnMutableMap.kt");
+        }
+
         @TestMetadata("notContainsBinaryOperator.kt")
         public void testNotContainsBinaryOperator() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/notContainsBinaryOperator.kt");
+        }
+
+        @TestMetadata("plusAssignOnMutableMap.kt")
+        public void testPlusAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/plusAssignOnMutableMap.kt");
+        }
+
+        @TestMetadata("plusAssignOnMutableMapWithNullableValueType.kt")
+        public void testPlusAssignOnMutableMapWithNullableValueType() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/plusAssignOnMutableMapWithNullableValueType.kt");
+        }
+
+        @TestMetadata("remAssignOnMutableMap.kt")
+        public void testRemAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/remAssignOnMutableMap.kt");
+        }
+
+        @TestMetadata("timesAssignOnMutableMap.kt")
+        public void testTimesAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/timesAssignOnMutableMap.kt");
         }
     }
 
@@ -14303,29 +14383,200 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/typeMismatch/numberConversion")
-        public static class NumberConversion extends AbstractQuickFixTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class NumberConversion extends AbstractQuickFixTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/fromChar")
+            public static class FromChar extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("byte.kt")
+                public void testByte() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/byte.kt");
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/double.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/float.kt");
+                }
+
+                @TestMetadata("int.kt")
+                public void testInt() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/int.kt");
+                }
+
+                @TestMetadata("intFromCharLiteral.kt")
+                public void testIntFromCharLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/intFromCharLiteral.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/long.kt");
+                }
+
+                @TestMetadata("longFromCharLiteral.kt")
+                public void testLongFromCharLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/longFromCharLiteral.kt");
+                }
+
+                @TestMetadata("short.kt")
+                public void testShort() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/short.kt");
+                }
+
+                @TestMetadata("shortWithVer1_4.kt")
+                public void testShortWithVer1_4() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/fromChar/shortWithVer1_4.kt");
+                }
             }
 
-            @TestMetadata("convertBinaryExpression.kt")
-            public void testConvertBinaryExpression() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertBinaryExpression.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toByte")
+            public static class ToByte extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/double.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/float.kt");
+                }
+
+                @TestMetadata("floatWithVer1_2.kt")
+                public void testFloatWithVer1_2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/floatWithVer1_2.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toByte/long.kt");
+                }
             }
 
-            @TestMetadata("convertExpression.kt")
-            public void testConvertExpression() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertExpression.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toChar")
+            public static class ToChar extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("byte.kt")
+                public void testByte() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/byte.kt");
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/double.kt");
+                }
+
+                @TestMetadata("doubleLiteral.kt")
+                public void testDoubleLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/doubleLiteral.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/float.kt");
+                }
+
+                @TestMetadata("floatLiteral.kt")
+                public void testFloatLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/floatLiteral.kt");
+                }
+
+                @TestMetadata("int.kt")
+                public void testInt() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/int.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/long.kt");
+                }
+
+                @TestMetadata("longLiteral.kt")
+                public void testLongLiteral() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/longLiteral.kt");
+                }
+
+                @TestMetadata("short.kt")
+                public void testShort() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/short.kt");
+                }
+
+                @TestMetadata("shortWithVer1_4.kt")
+                public void testShortWithVer1_4() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toChar/shortWithVer1_4.kt");
+                }
             }
 
-            @TestMetadata("convertToSigned.kt")
-            public void testConvertToSigned() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertToSigned.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion/toShort")
+            public static class ToShort extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("double.kt")
+                public void testDouble() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/double.kt");
+                }
+
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/float.kt");
+                }
+
+                @TestMetadata("floatWithVer1_2.kt")
+                public void testFloatWithVer1_2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/floatWithVer1_2.kt");
+                }
+
+                @TestMetadata("long.kt")
+                public void testLong() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/toShort/long.kt");
+                }
             }
 
-            @TestMetadata("convertToUnsigned.kt")
-            public void testConvertToUnsigned() throws Exception {
-                runTest("testData/quickfix/typeMismatch/numberConversion/convertToUnsigned.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/typeMismatch/numberConversion")
+            public static class Uncategorized extends AbstractQuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("convertBinaryExpression.kt")
+                public void testConvertBinaryExpression() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertBinaryExpression.kt");
+                }
+
+                @TestMetadata("convertExpression.kt")
+                public void testConvertExpression() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertExpression.kt");
+                }
+
+                @TestMetadata("convertToSigned.kt")
+                public void testConvertToSigned() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertToSigned.kt");
+                }
+
+                @TestMetadata("convertToUnsigned.kt")
+                public void testConvertToUnsigned() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/numberConversion/convertToUnsigned.kt");
+                }
             }
         }
 

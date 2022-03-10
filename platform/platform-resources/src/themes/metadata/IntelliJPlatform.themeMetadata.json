@@ -244,8 +244,16 @@
       "key": "Editor.shortcutForeground"
     },
     {
-      "key": "Editor.searchFieldInsets",
+      "key": "Editor.SearchField.borderInsets",
       "description": "Additional insets around editor search/replace fields in Experimental UI"
+    },
+    {
+      "key": "Editor.SearchField.background",
+      "description": "Editor inplace search/replace fields background color"
+    },
+    {
+      "key": "Editor.Toolbar.borderColor",
+      "description": "Editor header component border"
     },
     {
       "key": "EditorTabs.background",
@@ -625,6 +633,15 @@
       "key": "Notification.MoreButton.innerBorderColor"
     },
     {
+      "key": "Notification.Button.foreground"
+    },
+    {
+      "key": "Notification.Button.background"
+    },
+    {
+      "key": "Notification.Button.borderColor"
+    },
+    {
       "key": "Notification.ToolWindow.errorBackground",
       "description": "Tool window balloon. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
@@ -748,9 +765,6 @@
     },
     {
       "key": "Plugins.SearchField.background"
-    },
-    {
-      "key": "Plugins.SearchField.borderColor"
     },
     {
       "key": "Plugins.SectionHeader.background",
@@ -921,6 +935,11 @@
       "description": "Section header text"
     },
     {
+      "key": "SearchEverywhere.List.settingsBackground",
+      "description": "Background of settings in search everywhere results",
+      "since": "2022.2"
+    },
+    {
       "key": "SearchEverywhere.SearchField.background"
     },
     {
@@ -1009,6 +1028,11 @@
       "key": "List.hoverInactiveBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
+    },
+    {
+      "key": "TabbedPane.tabSelectionArc",
+      "since": "2022.2",
+      "description": "Selection border corners radius of TabbedPane underline"
     },
     {
       "key": "Tree.hoverBackground",
@@ -1131,6 +1155,11 @@
       "key": "ToolTip.infoForeground",
       "description": "\"Inspection Info\" text in inspection error tooltips",
       "since": "2019.2"
+    },
+    {
+      "key": "ToolTip.linkForeground",
+      "description": "Link text in foreground color in tooltips",
+      "since": "2022.2"
     },
     {
       "key": "ToolTip.shortcutForeground",

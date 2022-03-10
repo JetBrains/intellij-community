@@ -10,7 +10,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +45,7 @@ public abstract class CompilerManager {
    *
    * @deprecated use {@link CompileTask} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addCompiler(@NotNull Compiler compiler);
 
   /**
@@ -55,8 +53,7 @@ public abstract class CompilerManager {
    *
    * @deprecated use {@link CompileTask} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
@@ -82,8 +79,7 @@ public abstract class CompilerManager {
    * @param type the type for which the Compile action is disabled.
    * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
@@ -108,8 +104,7 @@ public abstract class CompilerManager {
    * Registers a compiler task  that will be executed after the compilation.
    * @deprecated Use {@code compiler.task} extension point instead (see {@link CompileTask} for details).
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**

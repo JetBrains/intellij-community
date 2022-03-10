@@ -39,7 +39,7 @@ internal class LibraryUsageStatisticsProvider(
 
     val fileType = psiFile.fileType
     val importProcessor = LibraryUsageImportProcessor.EP_NAME.findFirstSafe { it.isApplicable(fileType) } ?: return
-    val libraryNames = mutableSetOf<String>()
+    val processedLibraryNames = mutableSetOf<String>()
     val usages = mutableListOf<LibraryUsage>()
 
     // we should process simple element imports first, because they can be unambiguously resolved
@@ -48,12 +48,12 @@ internal class LibraryUsageStatisticsProvider(
       ProgressManager.checkCanceled()
 
       val qualifier = importProcessor.importQualifier(import) ?: continue
-      val libraryName = libraryDescriptorFinder.findSuitableLibrary(qualifier)?.takeUnless { it in libraryNames } ?: continue
+      val libraryName = libraryDescriptorFinder.findSuitableLibrary(qualifier)?.takeUnless { it in processedLibraryNames } ?: continue
 
       val libraryElement = importProcessor.resolve(import) ?: continue
       val libraryVersion = findJarVersion(libraryElement) ?: continue
 
-      libraryNames += libraryName
+      processedLibraryNames += libraryName
       usages += LibraryUsage(
         name = libraryName,
         version = libraryVersion,
@@ -61,7 +61,11 @@ internal class LibraryUsageStatisticsProvider(
       )
     }
 
-    storageService.increaseUsages(vFile, usages)
+    for (libraryUsage in usages) {
+      LibraryUsageCollector.log(project, libraryUsage)
+    }
+
+    storageService.visit(vFile)
   }
 
   companion object {

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Dimension
 import java.util.function.Supplier
 
-@ScheduledForRemoval(inVersion = "2022.2")
+@ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
   val actionGroup = DefaultActionGroup(options.map { ButtonSelectorAction(it, property, renderer(it)) })
@@ -47,7 +48,7 @@ fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, 
   return result
 }
 
-@ScheduledForRemoval(inVersion = "2022.2")
+@ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
                                                         private val property: GraphProperty<T>,
@@ -86,12 +87,13 @@ private class ButtonSelector(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + config.spacing.segmentedButtonHorizontalGap * 2,
-                     preferredSize.height + config.spacing.segmentedButtonVerticalGap * 2)
+    val spacing = IntelliJSpacingConfiguration()
+    return Dimension(preferredSize.width + spacing.segmentedButtonHorizontalGap * 2,
+                     preferredSize.height + spacing.segmentedButtonVerticalGap * 2)
   }
 }
 
-@ScheduledForRemoval(inVersion = "2022.2")
+@ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class ButtonSelectorToolbar internal constructor(
   place: String,

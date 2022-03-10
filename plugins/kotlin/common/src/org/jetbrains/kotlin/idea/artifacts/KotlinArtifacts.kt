@@ -73,7 +73,7 @@ private object KotlinArtifactsFromSources : KotlinArtifacts(run {
         "org.jetbrains.kotlin",
         "kotlin-dist-for-ide"
     )
-    lazyUnpackJar(jar, File(PathManager.getHomePath(), "out").resolve("kotlinc-dist"), "kotlinc")
+    lazyUnpackJar(jar, File(PathManager.getSystemPath()).resolve("kotlinc-dist-for-ide-from-sources"), "kotlinc")
 })
 
 internal fun lazyUnpackJar(jar: File, holderDir: File, dirName: String): File {

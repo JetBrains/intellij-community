@@ -16,6 +16,7 @@ class MultipleSelectionHtmlLesson
   : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
 
   override val languageId: String = "HTML"
+  override val sampleFilePath: String = "Learning.html"
 
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">

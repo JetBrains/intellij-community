@@ -6,14 +6,13 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
-import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
 abstract class AbstractMavenCatalogDialog(private val project: Project) : DialogWrapper(project, true) {
@@ -34,13 +33,6 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
     return null
   }
 
-  private fun ValidationInfoBuilder.validateName(): ValidationInfo? {
-    if (name.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.error.empty"))
-    }
-    return null
-  }
-
   override fun createCenterPanel() = panel {
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
@@ -49,15 +41,13 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
         .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
-        .validationOnInput { validateCatalogLocation(location) }
-        .validationOnApply { validateCatalogLocation(location) }
+        .textValidation(CHECK_NON_EMPTY, CHECK_MAVEN_CATALOG)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
         .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .validationOnInput { validateName() }
-        .validationOnApply { validateName() }
+        .textValidation(CHECK_NON_EMPTY)
     }
     onApply { onApply() }
   }

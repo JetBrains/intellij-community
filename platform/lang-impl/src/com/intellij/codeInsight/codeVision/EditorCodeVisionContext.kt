@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
+import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -20,10 +22,10 @@ val editorLensContextKey = Key<EditorCodeVisionContext>("EditorCodeLensContext")
 val codeVisionEntryOnHighlighterKey = Key.create<CodeVisionEntry>("CodeLensEntryOnHighlighter")
 val codeVisionEntryMouseEventKey = Key.create<MouseEvent>("CodeVisionEntryMouseEventKey")
 
-val Editor.lensContext: EditorCodeVisionContext
+val Editor.lensContext: EditorCodeVisionContext?
   get() = getOrCreateCodeVisionContext(this)
 val Editor.lensContextOrThrow: EditorCodeVisionContext
-  get() = lensContext
+  get() = lensContext ?: error("No EditorCodeVisionContext were provided")
 val RangeMarker.codeVisionEntryOrThrow: CodeVisionEntry
   get() = getUserData(codeVisionEntryOnHighlighterKey) ?: error("No CodeLensEntry for highlighter $this")
 
@@ -65,7 +67,8 @@ open class EditorCodeVisionContext(
     application.assertIsDispatchThread()
     logger.trace("Have new frontend lenses ${lenses.size}")
     frontendResults.forEach { it.dispose() }
-    frontendResults = lenses.map { (range, entry) ->
+    frontendResults = lenses.mapNotNull { (range, entry) ->
+      if(!range.isValidFor(editor.document)) return@mapNotNull null
       editor.document.createRangeMarker(range).apply {
         putUserData(codeVisionEntryOnHighlighterKey, entry)
       }
@@ -123,6 +126,9 @@ open class EditorCodeVisionContext(
 
   protected open fun getValidResult() = frontendResults.asSequence().filter { it.isValid }
 
+  protected fun TextRange.isValidFor(document: Document): Boolean {
+    return this.startOffset >= 0 && this.endOffset <= document.textLength
+  }
 
   fun invokeMoreMenu(caretOffset: Int) {
     val selectedLens = submittedGroupings.binarySearchBy(caretOffset) { it.first.startOffset }.let { if (it < 0) -(it + 1) - 1 else it }
@@ -134,10 +140,14 @@ open class EditorCodeVisionContext(
   fun hasProviderCodeVision(id: String): Boolean {
     return frontendResults.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
   }
+
+  open fun hasOnlyPlaceholders(): Boolean{
+    return frontendResults.all { it.getUserData(codeVisionEntryOnHighlighterKey) is PlaceholderCodeVisionEntry }
+  }
 }
 
 
-private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext {
+private fun getOrCreateCodeVisionContext(editor: Editor): EditorCodeVisionContext? {
   val context = editor.getUserData(editorLensContextKey)
   if (context != null) return context
 

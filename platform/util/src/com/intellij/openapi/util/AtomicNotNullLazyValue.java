@@ -11,7 +11,7 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   private volatile T myValue;
 
   /** @deprecated Use {@link NotNullLazyValue#atomicLazy(Supplier)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   protected AtomicNotNullLazyValue() { }
 

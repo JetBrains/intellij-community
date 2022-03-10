@@ -49,6 +49,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
 
   override fun loadState(state: MyState) {
     keyToString.clear()
+    keyToStringList.clear()
     keyToString.putAll(state.keyToString)
     keyToStringList.putAll(state.keyToStringList)
   }
@@ -111,8 +112,9 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
-    if (values.isNullOrEmpty()) {
-      unsetValue(name)
+    if (values == null) {
+      keyToStringList.remove(name)
+      tracker.incModificationCount()
     }
     else {
       keyToStringList.put(name, java.util.List.of(*values))
@@ -123,10 +125,12 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   override fun getList(name: String) = keyToStringList.get(name)
 
   override fun setList(name: String, values: MutableCollection<String>?) {
-    if (values.isNullOrEmpty()) {
-      unsetValue(name)
+    if (values == null) {
+      keyToStringList.remove(name)
+      tracker.incModificationCount()
     }
     else {
+      // for possible backward compatibility to existing usages, allow to store empty collections
       keyToStringList.put(name, java.util.List.copyOf(values))
       tracker.incModificationCount()
     }

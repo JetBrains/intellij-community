@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
@@ -19,26 +17,28 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
 import org.jetbrains.kotlin.idea.search.projectScope
-import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.findFirstPsiJavaModule
+import org.jetbrains.kotlin.idea.util.isDev
+import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -128,11 +128,9 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    val disposable = KotlinPluginDisposable.getInstance(project)
-
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-    val anyKotlinFileInProject = disposable.nonBlockingReadAction {
+    val anyKotlinFileInProject = project.syncNonBlockingReadAction {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
@@ -143,7 +141,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            val kotlinFiles = disposable.nonBlockingReadAction {
+            val kotlinFiles = project.syncNonBlockingReadAction {
                 FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
             }
 
@@ -154,7 +152,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
             }
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
-            disposable.nonBlockingReadAction {
+            project.syncNonBlockingReadAction {
                 modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
                     if (module.isDisposed) return@filterTo false
 
@@ -164,13 +162,6 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
         }
     return modules
 }
-
-private fun <T> Disposable.nonBlockingReadAction(task: () -> T): T =
-    ReadAction.nonBlocking<T> {
-        task()
-    }
-        .expireWith(this)
-        .executeSynchronously()
 
 /**
  * Returns a list of modules which contain sources in Kotlin, grouped by base module.
@@ -309,25 +300,29 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
-    return module.project.runReadActionInSmartMode {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
-                hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
-                hasKotlinCommonRuntimeInScope(scope)
+    return module.project.syncNonBlockingReadAction {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
+                    hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
+                    hasKotlinCommonRuntimeInScope(scope)
+        })
     }
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
-    return runReadAction {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+    return module.project.syncNonBlockingReadAction {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+        })
     }
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
-    return module.project.runReadActionInSmartMode {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind))
+    return module.project.syncNonBlockingReadAction {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind))
     }
 }
 

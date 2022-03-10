@@ -92,6 +92,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.platform.tracing.ide",
     "intellij.toml",
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
+    "intellij.keymap.eclipse",
+    "intellij.keymap.visualStudio",
+    "intellij.keymap.netbeans",
   )
 
   private static final Map<String, String> BASE_CLASS_VERSIONS = [

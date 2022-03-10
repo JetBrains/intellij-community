@@ -15,5 +15,6 @@ class UrlParameterKeys {
     const val sshId = "ssh"
     const val buildNumber = "buildNumber"
     const val productCode = "productCode"
+    const val remoteId = "remoteId"
   }
 }

@@ -75,7 +75,7 @@ public abstract class AnnotationsChangeTracker {
   /**
    * @deprecated Use {@link AnnotationsChangeTracker#methodAnnotationsChanged(NamingContext, ProtoMethodEntity, Difference.Specifier, Difference.Specifier)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated // Make sure that Kotlin JPS plugin (located in kotlin repo) doesn't use this API before removing the API
   @NotNull
   public Set<Recompile> methodAnnotationsChanged(
@@ -113,7 +113,7 @@ public abstract class AnnotationsChangeTracker {
   /**
    * @deprecated Use {@link AnnotationsChangeTracker#fieldAnnotationsChanged(NamingContext, ProtoFieldEntity, Difference.Specifier)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated // Make sure that Kotlin JPS plugin (located in kotlin repo) doesn't use this API before removing the API
   public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     return RECOMPILE_NONE;

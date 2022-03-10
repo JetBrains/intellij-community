@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +27,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     UExpression element = getUastElement();
     LOG.assertTrue(element != null);
     PsiElement sourceElement = element.getSourcePsi();
@@ -127,7 +127,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
     assert element != null;
     UElement pDeclaration = UastUtils.getParentOfType(element, true, UMethod.class, UClass.class, ULambdaExpression.class, UField.class);
     if (pDeclaration != null) {
-      RefElement pDeclarationRef = getRefManager().getReference(pDeclaration.getSourcePsi());
+      RefElement pDeclarationRef = getRefManager().getReference(KotlinPropertiesDetector.getPropertyElement(pDeclaration));
       if (pDeclarationRef != null) {
         ((WritableRefEntity)pDeclarationRef).add(this);
       }

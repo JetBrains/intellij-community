@@ -30,7 +30,6 @@ public final class FileTextFieldUtil {
   public static void processCompletion(FileTextFieldImpl.CompletionResult result,
                                        @NotNull Finder finder,
                                        @NotNull FileLookup.LookupFilter filter,
-                                       @NotNull String fileSpitRegExp,
                                        @NotNull Map<String, String> macroMap) {
     result.myToComplete = new ArrayList<>();
     result.mySiblings = new ArrayList<>();
@@ -43,8 +42,7 @@ public final class FileTextFieldUtil {
 
     String typedText = finder.normalize(typed);
 
-
-    result.current = getClosestParent(typed, finder, fileSpitRegExp);
+    result.current = getClosestParent(typed, finder);
     result.myClosestParent = result.current;
 
     if (result.current != null) {
@@ -156,7 +154,7 @@ public final class FileTextFieldUtil {
     return NameUtil.buildMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private static @Nullable FileLookup.LookupFile getClosestParent(String typed, Finder finder, String fileSpitRegExp) {
+  private static @Nullable FileLookup.LookupFile getClosestParent(String typed, Finder finder) {
     if (typed == null) return null;
     FileLookup.LookupFile lastFound = finder.find(typed);
     if (lastFound == null) return null;
@@ -166,12 +164,12 @@ public final class FileTextFieldUtil {
       return lastFound;
     }
 
-    String[] splits = finder.normalize(typed).split(fileSpitRegExp);
+    List<String> splits = finder.split(typed);
     StringBuilder fullPath = new StringBuilder();
-    for (int i = 0; i < splits.length; i++) {
-      String each = splits[i];
+    for (int i = 0; i < splits.size(); i++) {
+      String each = splits.get(i);
       fullPath.append(each);
-      if (i < splits.length - 1) {
+      if (i < splits.size() - 1) {
         fullPath.append(finder.getSeparator());
       }
       FileLookup.LookupFile file = finder.find(fullPath.toString());

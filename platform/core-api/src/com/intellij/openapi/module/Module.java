@@ -89,6 +89,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   default void clearOption(@NotNull String key) {
     setOption(key, null);
   }
@@ -169,6 +170,23 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
+
+  /**
+   * @return scope including only production sources.
+   */
+  @NotNull
+  default GlobalSearchScope getModuleProductionSourceScope() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  /**
+   * @return scope including only test sources.
+   */
+  @NotNull
+  default GlobalSearchScope getModuleTestSourceScope() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
 
   /**
    * This method isn't supposed to be used from plugins. If you really need to determine the type of a module, use

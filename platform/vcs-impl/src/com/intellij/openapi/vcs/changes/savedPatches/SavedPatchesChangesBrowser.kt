@@ -48,7 +48,6 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
   fun <S> selectPatchObject(patchObject: SavedPatchesProvider.PatchObject<S>?) {
     if (patchObject == currentPatchObject) return
     currentPatchObject = patchObject
-    currentChangesFuture?.cancel(false)
     currentChangesFuture = null
 
     if (patchObject == null) {
@@ -174,6 +173,9 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
         .userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
         .map { it.filePath.virtualFile }
         .filter { it != null })
+    }
+    else if (SavedPatchesUi.SAVED_PATCH_SELECTED_CHANGES.`is`(dataId)) {
+      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).toList()
     }
     return super.getData(dataId)
   }

@@ -27,6 +27,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -254,8 +255,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
 
   private void fillList(final @Nullable HighlightSeverity severity) {
     DefaultListModel<SeverityBasedTextAttributes> model = new DefaultListModel<>();
-    final List<SeverityBasedTextAttributes> infoTypes =
-      new ArrayList<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    List<SeverityBasedTextAttributes> infoTypes = new ArrayList<>(getApplicableSeverities());
     SeverityBasedTextAttributes preselection = null;
     for (SeverityBasedTextAttributes type : infoTypes) {
       model.addElement(type);
@@ -270,6 +270,9 @@ public final class SeverityEditorDialog extends DialogWrapper {
     myOptionsList.setSelectedValue(preselection, true);
   }
 
+  private Collection<SeverityBasedTextAttributes> getApplicableSeverities() {
+    return ContainerUtil.filter(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar), t -> t.getType().isApplicableToInspections());
+  }
 
   private void apply(SeverityBasedTextAttributes info) {
     if (info == null) {
@@ -307,8 +310,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     apply(myOptionsList.getSelectedValue());
-    final Collection<SeverityBasedTextAttributes> infoTypes =
-      new HashSet<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    Collection<SeverityBasedTextAttributes> infoTypes = new HashSet<>(getApplicableSeverities());
     final ListModel listModel = myOptionsList.getModel();
     final List<HighlightSeverity> order = new ArrayList<>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {

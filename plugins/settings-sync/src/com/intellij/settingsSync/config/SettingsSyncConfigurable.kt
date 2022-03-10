@@ -1,21 +1,32 @@
 package com.intellij.settingsSync.config
 
+import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
-import com.intellij.settingsSync.SettingsSyncEnabledStateListener
-import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Nls
+import javax.swing.JButton
 import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
 
-internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")) {
+internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")), SettingsSyncEnabler.Listener {
 
   private lateinit var configPanel: DialogPanel
+  private lateinit var enableButton: CellBuilder<JButton>
+
+  private val syncEnabler = SettingsSyncEnabler()
+
+  init {
+    syncEnabler.addListener(this)
+  }
 
   inner class LoggedInPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) =
@@ -39,6 +50,29 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
     override fun invoke() = SettingsSyncSettings.getInstance().syncEnabled
 
+  }
+
+  inner class SyncEnablerRunning : ComponentPredicate() {
+    private var isRunning = false
+
+    override fun addListener(listener: (Boolean) -> Unit) {
+      syncEnabler.addListener(object : SettingsSyncEnabler.Listener {
+        override fun serverRequestStarted() {
+          updateRunning(listener, true)
+        }
+
+        override fun serverRequestFinished() {
+          updateRunning(listener, false)
+        }
+      })
+    }
+
+    private fun updateRunning(listener: (Boolean) -> Unit, isRunning: Boolean) {
+      this.isRunning = isRunning
+      listener(invoke())
+    }
+
+    override fun invoke(): Boolean = isRunning
   }
 
   override fun createPanel(): DialogPanel {
@@ -66,9 +100,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           button(message("config.button.login")) {
             SettingsSyncAuthService.getInstance().login()
           }.visibleIf(LoggedInPredicate().not())
-          button(message("config.button.enable")) {
-            enableSync()
-          }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
+          enableButton = button(message("config.button.enable")) {
+            syncEnabler.checkServerState()
+          }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not())).enableIf(SyncEnablerRunning().not())
           button(message("config.button.disable")) {LoggedInPredicate().and(EnabledPredicate())
             disableSync()
           }.visibleIf(isSyncEnabled)
@@ -85,10 +119,43 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     return configPanel
   }
 
-  private fun enableSync() {
-    val dialog = EnableSettingsSyncDialog(configPanel, false)
-    if (dialog.showAndGet()) {
+  override fun serverStateCheckFinished(state: ServerState) {
+    when (state) {
+      ServerState.FileNotExists, ServerState.UpdateNeeded -> showEnableSyncDialog(false)
+      ServerState.UpToDate -> showEnableSyncDialog(true)
+      is ServerState.Error -> {
+        if (state != SettingsSyncEnabler.State.CANCELLED) {
+          showError(enableButton.component, message("notification.title.update.error"), state.message)
+        }
+      }
+    }
+  }
+
+  override fun updateFromServerFinished(result: UpdateResult) {
+    when (result) {
+      is UpdateResult.Success -> {
+        SettingsSyncSettings.getInstance().syncEnabled = true
+      }
+      UpdateResult.NoFileOnServer -> {
+        showError(enableButton.component, message("notification.title.update.error"), message("notification.title.update.no.such.file"))
+      }
+      is UpdateResult.Error -> {
+        showError(enableButton.component, message("notification.title.update.error"), result.message)
+      }
+    }
+  }
+
+  private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
+    EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)?.let {
       reset()
+      when (it) {
+        EnableSettingsSyncDialog.Result.ENABLE_SYNC -> SettingsSyncSettings.getInstance().syncEnabled = true
+        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
+        EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
+          syncEnabler.pushSettingsToServer()
+          SettingsSyncSettings.getInstance().syncEnabled = true
+        }
+      }
     }
   }
 
@@ -110,16 +177,26 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       1,
       Messages.getInformationIcon()
     ) { index: Int, checkbox: JCheckBox ->
-      when {
-        index == 0 -> RESULT_CANCEL
-        checkbox.isSelected -> RESULT_REMOVE_DATA_AND_DISABLE
-        else -> RESULT_DISABLE
+      if (index == 1) {
+        if (checkbox.isSelected) RESULT_REMOVE_DATA_AND_DISABLE else RESULT_DISABLE
+      }
+      else {
+        RESULT_CANCEL
       }
     }
 
     if (result != RESULT_CANCEL) {
       SettingsSyncSettings.getInstance().syncEnabled = false
     }
+  }
+
+  private fun showError(component: JComponent, message: @Nls String, details: @Nls String) {
+    val builder = JBPopupFactory.getInstance().createBalloonBuilder(JLabel(details))
+    val balloon = builder.setTitle(message)
+      .setFillColor(HintUtil.getErrorColor())
+      .setDisposable(disposable!!)
+      .createBalloon()
+    balloon.showInCenterOf(component)
   }
 
 }

@@ -148,7 +148,7 @@ public class PsiLiteralExpressionImpl
    * @deprecated use {@link PsiLiteralUtil#getStringLiteralContent(PsiLiteralExpression)} instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   @Nullable
   public String getInnerText() {
     return PsiLiteralUtil.getStringLiteralContent(this);

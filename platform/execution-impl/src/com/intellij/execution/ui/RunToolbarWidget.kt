@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
@@ -263,7 +264,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true,
       ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-    )
+    ).apply { setShowSubmenuOnHover(true) }
   }
 
   private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
@@ -327,7 +328,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware, Upd
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconManager.getInstance().getIcon("expui/run/widget/stop.svg", AllIcons::class.java)
+    e.presentation.icon = IconLoader.getIcon("expui/run/widget/stop.svg", AllIcons::class.java.classLoader)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
@@ -839,16 +840,19 @@ private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
   private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
     if (latest != null) {
       val (env, reason) = latest
-      val history = RunConfigurationStartHistory.getInstance(env.project)
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
         if (reason == RunState.SCHEDULED) {
-          history.register(conf, env.executor.id, reason)
+          RunConfigurationStartHistory.getInstance(env.project).register(conf, env.executor.id, reason)
         }
-        if (reason.isRunningState() && ExperimentalUI.isNewUI()) {
-          RunManager.getInstance(env.project).selectedConfiguration = conf
+        val runManager = RunManager.getInstance(env.project)
+        if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
+          runManager.selectedConfiguration = conf
         }
-      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.runnerAndConfigurationSettings}"))
-      ActivityTracker.getInstance().inc()
+        ActivityTracker.getInstance().inc()
+      } ?: logger<RunToolbarWidget>().warn(
+        "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
+        "It won't be saved in the run history."
+      )
     }
   }
 

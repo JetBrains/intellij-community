@@ -7,10 +7,7 @@ import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
-import training.dsl.LessonContext
-import training.dsl.LessonSample
-import training.dsl.checkToolWindowState
-import training.dsl.dropMnemonic
+import training.dsl.*
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import java.awt.Rectangle
 
@@ -20,11 +17,7 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
 
   override fun LessonContext.runTask() {
     task {
-      triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
-        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-        val y = editor.visualLineToY(0)
-        return@l Rectangle(25, y, ui.width - 40, editor.lineHeight * 2)
-      }
+      highlightRunGutters(0)
     }
 
     task("RunClass") {
@@ -38,5 +31,16 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
     }
   }
 
-  override val fileName: String = "${JavaRunLessonsUtils.demoClassName}.java"
+  override val sampleFilePath: String = "src/${JavaRunLessonsUtils.demoClassName}.java"
+}
+
+internal fun TaskContext.highlightRunGutters(startLineIndex: Int, highlightInside: Boolean = false, usePulsation: Boolean = false) {
+  triggerAndBorderHighlight {
+    this.highlightInside = highlightInside
+    this.usePulsation = usePulsation
+  }.componentPart l@{ ui: EditorGutterComponentEx ->
+    if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+    val y = editor.visualLineToY(startLineIndex)
+    return@l Rectangle(25, y, ui.width - 40, editor.lineHeight * 2)
+  }
 }

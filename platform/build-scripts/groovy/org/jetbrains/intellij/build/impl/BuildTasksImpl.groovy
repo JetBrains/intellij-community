@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
@@ -9,6 +10,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
+import groovy.transform.Immutable
 import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -153,7 +155,7 @@ final class BuildTasksImpl extends BuildTasks {
           }
         }
       }
-      def libraryRootUrls = includedLibraries.collectMany {
+      List<String> libraryRootUrls = includedLibraries.collectMany {
         it.getRootUrls(JpsOrderRootType.SOURCES) as Collection<String>
       }
       buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
@@ -325,9 +327,10 @@ idea.fatal.error.notification=disabled
 
   @NotNull
   private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
-                                                               @NotNull Map<OsFamily, Path> result,
+                                                               @NotNull JvmArchitecture arch,
+                                                               @NotNull Map<Pair<OsFamily, JvmArchitecture>, Path> result,
                                                                @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    return BuildTaskRunnable.task(os.osId, new Consumer<BuildContext>() {
+    return BuildTaskRunnable.task("${os.osId} ${arch.name()}", new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext context) {
         if (!context.shouldBuildDistributionForOS(os.osId)) {
@@ -339,12 +342,12 @@ idea.fatal.error.notification=disabled
           return
         }
 
-        context.messages.block("build ${os.osName} distribution", new Supplier<Void>() {
+        context.messages.block("build ${os.osName} ${arch.name()} distribution", new Supplier<Void>() {
           @Override
           Void get() {
-            Path osSpecificDistDirectory = DistributionJARsBuilder.getOsSpecificDistDirectory(builder.targetOs, context)
-            builder.buildArtifacts(osSpecificDistDirectory)
-            result.put(os, osSpecificDistDirectory)
+            Path osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
+            builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
+            result.put(new Pair(os, arch), osAndArchSpecificDistDirectory)
             return null
           }
         })
@@ -435,8 +438,6 @@ idea.fatal.error.notification=disabled
   private void doBuildDistributions(BuildContext context) {
     checkProductProperties()
     copyDependenciesFile(context)
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
     logFreeDiskSpace("before compilation")
 
@@ -488,35 +489,7 @@ idea.fatal.error.notification=disabled
 
     if (context.shouldBuildDistributions()) {
       layoutShared(context)
-
-      Path propertiesFile = patchIdeaPropertiesFile()
-      Map<OsFamily, Path> distDirs = Collections.synchronizedMap(new HashMap<OsFamily, Path>(3))
-      runInParallel(List.of(
-        createDistributionForOsTask(OsFamily.MACOS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.macDistributionCustomizer?.with {
-              new MacDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.WINDOWS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.windowsDistributionCustomizer?.with {
-              new WindowsDistributionBuilder(customContext, it, propertiesFile, customContext.applicationInfo.getAppInfoXml())
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.LINUX, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.linuxDistributionCustomizer?.with {
-              new LinuxDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        })
-      ).findAll { it != null }, context)
+      def distDirs = buildOsSpecificDistributions(context)
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (context.buildNumber == null) {
           context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
@@ -550,7 +523,7 @@ idea.fatal.error.notification=disabled
       }
 
       if (context.productProperties.buildCrossPlatformDistribution) {
-        if (distDirs.size() == 3) {
+        if (distDirs.size() == SUPPORTED_DISTRIBUTIONS.size()) {
           context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP, new Runnable() {
             @Override
             void run() {
@@ -559,11 +532,67 @@ idea.fatal.error.notification=disabled
           })
         }
         else {
-          Span.current().addEvent("skip building cross-platform distribution because some OS-specific distributions were skipped")
+          Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
         }
       }
     }
     logFreeDiskSpace("after building distributions")
+  }
+
+  private static List<SupportedDistribution> SUPPORTED_DISTRIBUTIONS = [
+    new SupportedDistribution(os: OsFamily.MACOS, arch: JvmArchitecture.x64),
+    new SupportedDistribution(os: OsFamily.MACOS, arch: JvmArchitecture.aarch64),
+    new SupportedDistribution(os: OsFamily.WINDOWS, arch: JvmArchitecture.x64),
+    new SupportedDistribution(os: OsFamily.LINUX, arch: JvmArchitecture.x64),
+  ]
+
+  @Immutable
+  private static final class SupportedDistribution {
+    final OsFamily os
+    final JvmArchitecture arch
+  }
+
+  private Map<Pair<OsFamily, JvmArchitecture>, Path> buildOsSpecificDistributions(BuildContext context) {
+    Path propertiesFile = patchIdeaPropertiesFile()
+    Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs = Collections.synchronizedMap(new HashMap<Pair<OsFamily, JvmArchitecture>, Path>(SUPPORTED_DISTRIBUTIONS.size()))
+    buildContext.executeStep("Building OS-specific distributions", BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP) {
+      List<BuildTaskRunnable> createDistTasks = List.of(
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+          @Override
+          OsSpecificDistributionBuilder apply(BuildContext customContext) {
+            return customContext.macDistributionCustomizer?.with {
+              new MacDistributionBuilder(customContext, it, propertiesFile)
+            }
+          }
+        }),
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+          @Override
+          OsSpecificDistributionBuilder apply(BuildContext customContext) {
+            return customContext.macDistributionCustomizer?.with {
+              new MacDistributionBuilder(customContext, it, propertiesFile)
+            }
+          }
+        }),
+        createDistributionForOsTask(OsFamily.WINDOWS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+          @Override
+          OsSpecificDistributionBuilder apply(BuildContext customContext) {
+            return customContext.windowsDistributionCustomizer?.with {
+              new WindowsDistributionBuilder(customContext, it, propertiesFile, customContext.applicationInfo.getAppInfoXml())
+            }
+          }
+        }),
+        createDistributionForOsTask(OsFamily.LINUX, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
+          @Override
+          OsSpecificDistributionBuilder apply(BuildContext customContext) {
+            return customContext.linuxDistributionCustomizer?.with {
+              new LinuxDistributionBuilder(customContext, it, propertiesFile)
+            }
+          }
+        })
+      )
+      runInParallel(createDistTasks.findAll { it != null }, context)
+    }
+    return distDirs
   }
 
   @Override
@@ -946,8 +975,6 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
 
     BuildContext context = buildContext
-    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(context)
     ProjectStructureMapping projectStructureMapping = distributionJARsBuilder.buildJARs(context)
@@ -960,6 +987,7 @@ idea.fatal.error.notification=disabled
     if (context.productProperties.buildSourcesArchive) {
       DistributionJARsBuilder.buildSourcesArchive(projectStructureMapping, context)
     }
+    buildOsSpecificDistributions(buildContext)
   }
 
   @Override

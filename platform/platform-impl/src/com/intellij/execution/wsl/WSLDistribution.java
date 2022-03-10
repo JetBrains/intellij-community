@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -91,8 +92,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @deprecated please don't use it, to be will be removed after we collect statistics and make sure versions before 1903 aren't used.
    * Check statistics and remove in the next version
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
@@ -211,8 +211,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @Nullable String remoteWorkingDir,
@@ -477,11 +476,26 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
-    if (windowsPath != null) {
-      return windowsPath;
+    if (containsDriveLetter(wslPath)) {
+      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      if (windowsPath != null) {
+        return windowsPath;
+      }
     }
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+  }
+
+  private static boolean containsDriveLetter(@NotNull String linuxPath) {
+    int slashInd = linuxPath.indexOf('/');
+    while (slashInd >= 0) {
+      int nextSlashInd = linuxPath.indexOf('/', slashInd + 1);
+      if ((nextSlashInd == slashInd + 2 || (nextSlashInd == -1 && slashInd + 2 == linuxPath.length())) &&
+          OSAgnosticPathUtil.isDriveLetter(linuxPath.charAt(slashInd + 1))) {
+        return true;
+      }
+      slashInd = nextSlashInd;
+    }
+    return false;
   }
 
   @Override
@@ -563,8 +577,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull File getUNCRoot() {
     return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }

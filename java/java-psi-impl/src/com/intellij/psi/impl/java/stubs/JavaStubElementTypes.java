@@ -148,6 +148,6 @@ public interface JavaStubElementTypes {
   /**
    * @deprecated use {@link JavaParserDefinition#JAVA_FILE}
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated @ApiStatus.ScheduledForRemoval
   IStubFileElementType<?> JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

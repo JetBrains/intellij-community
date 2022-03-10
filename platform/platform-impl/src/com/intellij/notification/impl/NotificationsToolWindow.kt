@@ -65,6 +65,7 @@ import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
+import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
 import kotlin.streams.toList
 
@@ -178,6 +179,14 @@ internal class NotificationContent(val project: Project,
     searchField.textEditor.border = null
     searchField.border = JBUI.Borders.customLineBottom(JBColor.border())
     searchField.isVisible = false
+
+    if (ExperimentalUI.isNewUI()) {
+      searchController.background = JBUI.CurrentTheme.ToolWindow.background()
+      searchField.textEditor.background = searchController.background
+    }
+    else {
+      searchController.background = UIUtil.getTextFieldBackground()
+    }
 
     searchController.searchField = searchField
 
@@ -381,6 +390,7 @@ private class SearchController(private val mainContent: NotificationContent,
                                private val suggestions: NotificationGroupComponent,
                                private val timeline: NotificationGroupComponent) {
   lateinit var searchField: SearchTextField
+  lateinit var background: Color
 
   fun startSearch() {
     mainContent.clearEmptyState()
@@ -394,7 +404,7 @@ private class SearchController(private val mainContent: NotificationContent,
     val query = searchField.text
 
     if (query.isEmpty()) {
-      searchField.textEditor.background = UIUtil.getTextFieldBackground()
+      searchField.textEditor.background = background
       clearSearch()
       return
     }
@@ -407,7 +417,7 @@ private class SearchController(private val mainContent: NotificationContent,
     }
     suggestions.iterateComponents(function)
     timeline.iterateComponents(function)
-    searchField.textEditor.background = if (result) UIUtil.getTextFieldBackground() else LightColors.RED
+    searchField.textEditor.background = if (result) background else LightColors.RED
     mainContent.fullRepaint()
   }
 
@@ -575,9 +585,10 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     if (mySuggestionType) {
       component.setDoNotAskHandler { forProject ->
-        component.myNotificationWrapper.notification!!.setDoNotAsFor(if (forProject) myProject else null)
-        myRemoveCallback.accept(component.myNotificationWrapper.notification!!)
-        component.myNotificationWrapper.notification!!.hideBalloon()
+        component.myNotificationWrapper.notification!!
+          .setDoNotAskFor(if (forProject) myProject else null)
+          .also { myRemoveCallback.accept(it) }
+          .hideBalloon()
       }
 
       component.setRemoveCallback(myRemoveCallback)
@@ -752,7 +763,6 @@ private class NotificationComponent(val project: Project,
   }
 
   val myNotificationWrapper = NotificationWrapper(notification)
-  private val myBgComponents = ArrayList<Component>()
   private var myIsNew = false
   private var myHoverState = false
   private val myMoreButton: Component?
@@ -761,6 +771,10 @@ private class NotificationComponent(val project: Project,
   private lateinit var myDoNotAskHandler: (Boolean) -> Unit
   private lateinit var myRemoveCallback: Consumer<Notification>
   private var myLafUpdater: Runnable? = null
+
+  private var myMorePopup: JBPopup? = null
+  var myMoreAwtPopup: JPopupMenu? = null
+  var myDropDownPopup: JPopupMenu? = null
 
   init {
     isOpaque = true
@@ -818,7 +832,13 @@ private class NotificationComponent(val project: Project,
             singleSelectionHandler.add(newEditor, true)
           }
         }
-      }.setCopyable(true)
+      }
+
+      try {
+        title.setCopyable(true)
+      }
+      catch (_: Exception) {
+      }
 
       NotificationsManagerImpl.setTextAccessibleName(title, titleContent)
 
@@ -862,27 +882,28 @@ private class NotificationComponent(val project: Project,
 
     val actions = notification.actions
     val actionsSize = actions.size
+    val helpAction = notification.contextHelpAction
 
-    if (actionsSize > 0) {
+    if (actionsSize > 0 || helpAction != null) {
       val layout = HorizontalLayout(JBUIScale.scale(16))
       val actionPanel = JPanel(if (!notification.isSuggestionType && actions.size > 1) DropDownActionLayout(layout) else layout)
       actionPanel.isOpaque = false
 
       if (notification.isSuggestionType) {
-        if (actionsSize == 1) {
+        if (actionsSize > 0) {
           val button = JButton(actions[0].templateText)
           button.isOpaque = false
           button.addActionListener {
             runAction(actions[0], it.source)
           }
           actionPanel.add(button)
-        }
-        else if (actionsSize > 1) {
-          val buttonActions = Array(actionsSize - 1) { i -> createAction(actions[i + 1]) }
-          val optionButton = NotificationOptionButton(createAction(actions[0]), buttonActions)
-          optionButton.background = BG_COLOR
-          actionPanel.add(optionButton)
-          myBgComponents.add(optionButton)
+
+          if (actionsSize == 2) {
+            actionPanel.add(createAction(actions[1]))
+          }
+          else if (actionsSize > 2) {
+            actionPanel.add(MoreAction(this, actions))
+          }
         }
       }
       else {
@@ -891,14 +912,18 @@ private class NotificationComponent(val project: Project,
         }
 
         for (action in actions) {
-          @Suppress("DialogTitleCapitalization")
-          actionPanel.add(
-            LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action))
+          actionPanel.add(createAction(action))
         }
 
         if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
           actionPanel.add(MyDropDownAction(this))
         }
+      }
+      if (helpAction != null) {
+        val presentation = helpAction.templatePresentation
+        val helpLabel = ContextHelpLabel.create(StringUtil.defaultIfEmpty(presentation.text, ""), presentation.description)
+        helpLabel.foreground = UIUtil.getLabelDisabledForeground()
+        actionPanel.add(helpLabel)
       }
       centerPanel.add(actionPanel)
     }
@@ -951,8 +976,10 @@ private class NotificationComponent(val project: Project,
         override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
           myMorePopupVisible = true
           val popup = super.createAndShowActionGroupPopup(actionGroup, event)
+          myMorePopup = popup
           popup.addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
+              myMorePopup = null
               ApplicationManager.getApplication().invokeLater {
                 myMorePopupVisible = false
                 isVisible = myHoverState
@@ -1015,11 +1042,10 @@ private class NotificationComponent(val project: Project,
     }
   }
 
-  private fun createAction(action: AnAction): Action {
-    return object : AbstractAction(action.templateText) {
-      override fun actionPerformed(e: ActionEvent) {
-        runAction(action, e.source)
-      }
+  private fun createAction(action: AnAction): JComponent {
+    return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
+                                        { link, _action -> runAction(_action, link) }, action) {
+      override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
   }
 
@@ -1041,6 +1067,7 @@ private class NotificationComponent(val project: Project,
   }
 
   fun expire() {
+    closePopups()
     myNotificationWrapper.notification = null
     setNew(false)
 
@@ -1055,9 +1082,16 @@ private class NotificationComponent(val project: Project,
   }
 
   fun removeFromParent() {
+    closePopups()
     for (component in UIUtil.findComponentsOfType(this, JTextComponent::class.java)) {
       singleSelectionHandler.remove(component)
     }
+  }
+
+  private fun closePopups() {
+    myMorePopup?.cancel()
+    myMoreAwtPopup?.isVisible = false
+    myDropDownPopup?.isVisible = false
   }
 
   private fun createTextComponent(text: @Nls String): JEditorPane {
@@ -1068,9 +1102,7 @@ private class NotificationComponent(val project: Project,
     component.isOpaque = false
     component.border = null
 
-    val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
-    NotificationsUtil.setLinkForeground(kit.styleSheet)
-    component.editorKit = kit
+    NotificationsUtil.configureHtmlEditorKit(component, false)
 
     if (myNotificationWrapper.notification!!.listener != null) {
       component.addHyperlinkListener { e ->
@@ -1095,9 +1127,7 @@ private class NotificationComponent(val project: Project,
     }
 
     myLafUpdater = Runnable {
-      val newKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
-      NotificationsUtil.setLinkForeground(newKit.styleSheet)
-      component.editorKit = newKit
+      NotificationsUtil.configureHtmlEditorKit(component, false)
       component.text = text
       component.revalidate()
       component.repaint()
@@ -1163,9 +1193,6 @@ private class NotificationComponent(val project: Project,
 
   private fun setColor(color: Color) {
     myRoundColor = color
-    for (component in myBgComponents) {
-      component.background = color
-    }
     repaint()
   }
 
@@ -1211,7 +1238,35 @@ private class NotificationComponent(val project: Project,
   }
 }
 
-private class MyDropDownAction(notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
+private class MoreAction(val notificationComponent: NotificationComponent, actions: List<AnAction>) :
+  NotificationsManagerImpl.DropDownAction(null, null) {
+  val group = DefaultActionGroup()
+
+  init {
+    val size = actions.size
+    for (i in 1..size - 1) {
+      group.add(actions[i])
+    }
+
+    setListener(LinkListener { link, _ ->
+      val popup = NotificationsManagerImpl.showPopup(link, group)
+      notificationComponent.myMoreAwtPopup = popup
+      popup?.addPopupMenuListener(object: PopupMenuListenerAdapter() {
+        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+          notificationComponent.myMoreAwtPopup = null
+        }
+      })
+    }, null)
+
+    text = IdeBundle.message("notifications.action.more")
+
+    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
+  }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
+}
+
+private class MyDropDownAction(val notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
   var collapseActionsDirection: Notification.CollapseActionsDirection = notificationComponent.myNotificationWrapper.notification!!.collapseDirection
 
   init {
@@ -1221,23 +1276,17 @@ private class MyDropDownAction(notificationComponent: NotificationComponent) : N
 
       for (action in layout.actions) {
         if (!action.isVisible) {
-          val notificationAction = action.linkData
-          val popupAction = object : DumbAwareAction() {
-            override fun update(e: AnActionEvent) {
-              notificationAction.update(e)
-            }
-
-            override fun actionPerformed(e: AnActionEvent) {
-              notificationComponent.setNew(false)
-              notificationAction.actionPerformed(e)
-            }
-          }
-          popupAction.copyFrom(notificationAction)
-          group.add(popupAction)
+          group.add(action.linkData)
         }
       }
 
-      NotificationsManagerImpl.showPopup(link, group)
+      val popup = NotificationsManagerImpl.showPopup(link, group)
+      notificationComponent.myDropDownPopup = popup
+      popup?.addPopupMenuListener(object: PopupMenuListenerAdapter() {
+        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+          notificationComponent.myDropDownPopup = null
+        }
+      })
     }, null)
 
     text = notificationComponent.myNotificationWrapper.notification!!.dropDownText
@@ -1245,6 +1294,8 @@ private class MyDropDownAction(notificationComponent: NotificationComponent) : N
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class NotificationWrapper(notification: Notification) {
@@ -1276,7 +1327,7 @@ private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(
     if (component is MyDropDownAction) {
       myDropDownAction = component
     }
-    else {
+    else if (component is LinkLabel<*>) {
       @Suppress("UNCHECKED_CAST")
       actions.add(component as LinkLabel<AnAction>)
     }
@@ -1386,6 +1437,8 @@ internal class ApplicationNotificationModel {
   }
 
   fun addNotification(project: Project?, notification: Notification) {
+    val runnables = ArrayList<Runnable>()
+
     synchronized(myLock) {
       if (project == null) {
         if (myProjectToModel.isEmpty()) {
@@ -1393,7 +1446,7 @@ internal class ApplicationNotificationModel {
         }
         else {
           for ((_project, model) in myProjectToModel.entries) {
-            model.addNotification(_project, notification, myNotifications)
+            model.addNotification(_project, notification, myNotifications, runnables)
           }
         }
       }
@@ -1406,8 +1459,12 @@ internal class ApplicationNotificationModel {
           }
           ProjectNotificationModel()
         }
-        model.addNotification(project, notification, myNotifications)
+        model.addNotification(project, notification, myNotifications, runnables)
       }
+    }
+
+    for (runnable in runnables) {
+      runnable.run()
     }
   }
 
@@ -1435,23 +1492,34 @@ internal class ApplicationNotificationModel {
   }
 
   fun expire(notification: Notification) {
+    val runnables = ArrayList<Runnable>()
+
     synchronized(myLock) {
       myNotifications.remove(notification)
       for (model in myProjectToModel.values) {
-        model.expire(notification)
+        model.expire(notification, runnables)
       }
+    }
+
+    for (runnable in runnables) {
+      runnable.run()
     }
   }
 
   fun expireAll() {
     val notifications = ArrayList<Notification>()
+    val runnables = ArrayList<Runnable>()
 
     synchronized(myLock) {
       notifications.addAll(myNotifications)
       myNotifications.clear()
       for (model in myProjectToModel.values) {
-        model.expireAll(notifications)
+        model.expireAll(notifications, runnables)
       }
+    }
+
+    for (runnable in runnables) {
+      runnable.run()
     }
 
     for (notification in notifications) {
@@ -1470,21 +1538,27 @@ private class ProjectNotificationModel {
     myContent = content
   }
 
-  fun addNotification(project: Project, notification: Notification, appNotifications: List<Notification>) {
+  fun addNotification(project: Project,
+                      notification: Notification,
+                      appNotifications: List<Notification>,
+                      runnables: MutableList<Runnable>) {
     if (myContent == null) {
       myNotifications.add(notification)
 
-      EventLog.getLogModel(project).setStatusMessage(notification)
+      val notifications = ArrayList(appNotifications)
+      notifications.addAll(myNotifications)
 
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-      if (toolWindow != null) {
-        val notifications = ArrayList(appNotifications)
-        notifications.addAll(myNotifications)
-        UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
-      }
+      runnables.add(Runnable {
+        EventLog.getLogModel(project).setStatusMessage(notification)
+
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+        if (toolWindow != null) {
+          UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
+        }
+      })
     }
     else {
-      UIUtil.invokeLaterIfNeeded { myContent!!.add(notification) }
+      runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.add(notification) } })
     }
   }
 
@@ -1504,18 +1578,18 @@ private class ProjectNotificationModel {
     return myContent!!.getNotifications()
   }
 
-  fun expire(notification: Notification) {
+  fun expire(notification: Notification, runnables: MutableList<Runnable>) {
     myNotifications.remove(notification)
     if (myContent != null) {
-      UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) }
+      runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) } })
     }
   }
 
-  fun expireAll(notifications: MutableList<Notification>) {
+  fun expireAll(notifications: MutableList<Notification>, runnables: MutableList<Runnable>) {
     notifications.addAll(myNotifications)
     myNotifications.clear()
     if (myContent != null) {
-      UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) }
+      runnables.add(Runnable { UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) } })
     }
   }
 }

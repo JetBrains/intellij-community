@@ -29,7 +29,6 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
-import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
@@ -332,6 +331,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var fontSize: Int
+    get() = (notRoamableOptions.state.fontSize + 0.5).toInt()
+    set(value) {
+      notRoamableOptions.state.fontSize = value.toFloat()
+    }
+
+  var fontSize2D: Float
     get() = notRoamableOptions.state.fontSize
     set(value) {
       notRoamableOptions.state.fontSize = value
@@ -567,11 +572,17 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
      * @return the default scaled font size
      */
     @JvmStatic
-    val defFontSize: Int
+    val defFontSize: Float
       get() = UISettingsState.defFontSize
 
+    @Deprecated("Use {@link #restoreFontSize(Float, Float?)} instead")
     @JvmStatic
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+      return restoreFontSize(readSize.toFloat(), readScale).toInt();
+    }
+
+    @JvmStatic
+    fun restoreFontSize(readSize: Float, readScale: Float?): Float {
       var size = readSize
       if (readScale == null || readScale <= 0) {
         if (JBUIScale.SCALE_VERBOSE) LOG.info("Reset font to default")
@@ -581,7 +592,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
         }
       }
       else if (readScale != defFontScale) {
-        size = ((readSize / readScale) * defFontScale).roundToInt()
+        size = (readSize / readScale) * defFontScale
       }
       if (JBUIScale.SCALE_VERBOSE) LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
@@ -596,7 +607,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
-  @ScheduledForRemoval(inVersion = "2021.3")
+  @ScheduledForRemoval
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
   }
@@ -689,7 +700,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   private fun migrateOldFontSettings(): Boolean {
     var migrated = false
     if (state.fontSize != 0) {
-      fontSize = restoreFontSize(state.fontSize, state.fontScale)
+      fontSize2D = restoreFontSize(state.fontSize.toFloat(), state.fontScale)
       state.fontSize = 0
       migrated = true
     }

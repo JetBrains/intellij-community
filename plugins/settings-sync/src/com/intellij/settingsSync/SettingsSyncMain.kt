@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.configurationStore.getExportableComponentsMap
 import com.intellij.configurationStore.getExportableItemsFromLocalStorage
 import com.intellij.openapi.Disposable
@@ -98,20 +99,19 @@ internal class SettingsSyncMain : Disposable {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable) {
         getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
       }
-      val ideUpdater = SettingsSyncIdeUpdater(componentStore, appConfigPath)
+      val ideUpdater = SettingsSyncIdeCommunicator(application, componentStore, appConfigPath)
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
       val bridge = SettingsSyncBridge(application, parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker)
 
-      val streamProvider = SettingsSyncStreamProvider(application, appConfigPath)
-      componentStore.storageManager.addStreamProvider(streamProvider, true)
+      componentStore.storageManager.addStreamProvider(ideUpdater, true)
 
-      return SettingsSyncControls(streamProvider, updateChecker, bridge, remoteCommunicator)
+      return SettingsSyncControls(ideUpdater, updateChecker, bridge, remoteCommunicator)
     }
 
     private val LOG = logger<SettingsSyncMain>()
   }
 
-  internal class SettingsSyncControls(val streamProvider: SettingsSyncStreamProvider,
+  internal class SettingsSyncControls(val streamProvider: StreamProvider,
                                       val updateChecker: SettingsSyncUpdateChecker,
                                       val bridge: SettingsSyncBridge,
                                       val remoteCommunicator: SettingsSyncRemoteCommunicator)

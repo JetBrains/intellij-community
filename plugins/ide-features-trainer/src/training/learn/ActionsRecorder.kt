@@ -134,7 +134,6 @@ internal class ActionsRecorder(private val project: Project,
   override fun dispose() {
     removeListeners()
     disposed = true
-    Disposer.dispose(this)
   }
 
   fun futureActionOnStart(actionId: String, check: () -> Boolean): CompletableFuture<Boolean> {

@@ -3,7 +3,6 @@ package com.intellij.openapi.ui
 
 import com.intellij.application.options.RegistryManager
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -32,6 +31,7 @@ import com.intellij.ui.*
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
+import java.util.function.Supplier
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
@@ -102,7 +103,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane) { runnable ->
+      val handlerProvider = Supplier { FullScreeSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
+      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handlerProvider) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
     }
@@ -323,7 +325,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     override fun addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JdkEx.setHasCustomDecoration(this)
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
       }
       super.addNotify()
     }
@@ -337,6 +339,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
 
     override fun getProject() = parent.project
+
+    override fun notifyProjectActivation() = parent.notifyProjectActivation()
 
     override fun setFrameTitle(title: String) {
       frameTitle = title
@@ -414,6 +418,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
 
     override fun getProject(): Project? = parent.project
+
+    override fun notifyProjectActivation() = parent.notifyProjectActivation()
 
     init {
       glassPane = IdeGlassPaneImpl(getRootPane())

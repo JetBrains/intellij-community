@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 
 interface StatisticsEventLogger {
   @Deprecated("Use StatisticsEventLogger.logAsync()", ReplaceWith("logAsync(group, eventId, isState)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
     logAsync(group, eventId, isState)
   }
 
   @Deprecated("Use StatisticsEventLogger.logAsync", ReplaceWith("logAsync(group, eventId, data, isState)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
     logAsync(group, eventId, data, isState)
   }
@@ -153,7 +153,7 @@ object EmptyEventLogFilesProvider: EventLogFilesProvider {
   override fun getLogFilesExceptActive(): List<File> = emptyList()
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use StatisticsEventLogProviderUtil.getEventLogProvider(String)",
             ReplaceWith("StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)"))
 fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {

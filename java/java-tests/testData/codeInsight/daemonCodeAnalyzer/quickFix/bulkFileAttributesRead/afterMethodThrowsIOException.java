@@ -6,7 +6,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 class Foo {
   long isNewFile(File file) throws IOException {
       BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-      while (basicFileAttributes.isDirectory()) {
+      if (basicFileAttributes.isDirectory()) {
       System.out.println(basicFileAttributes.isRegularFile());
     }
     return basicFileAttributes.lastModifiedTime().toMillis();

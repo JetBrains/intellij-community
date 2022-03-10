@@ -16,9 +16,9 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
     boolean serialized = Registry.is("editor.injected.highlighting.serialization.allowed") &&
       ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    int[] ghl = {Pass.UPDATE_ALL};
-    registrar.registerTextEditorHighlightingPass(this, serialized ? ghl : null,
-                                                 serialized ? null : ghl, false, -1);
+    int[] runAfterCompletionOf = serialized ? new int[]{Pass.UPDATE_ALL} : null;
+    int[] runAfterStartingOf = serialized ? null : new int[]{Pass.UPDATE_ALL};
+    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, -1);
   }
 
   @NotNull
@@ -26,7 +26,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
     return new InjectedGeneralHighlightingPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor,
                                                new DefaultHighlightInfoProcessor());
   }

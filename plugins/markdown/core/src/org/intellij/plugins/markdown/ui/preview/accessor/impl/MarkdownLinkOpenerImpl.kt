@@ -2,9 +2,6 @@ package org.intellij.plugins.markdown.ui.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.OpenFileAction
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -33,6 +30,7 @@ import com.intellij.util.io.isLocalHost
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.util.MarkdownDisposable
@@ -88,14 +86,11 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       BrowserUtil.browse(uri)
     } catch (exception: Throwable) {
       logger.warn("Failed to browse external link!", exception)
-      Notifications.Bus.notify(
-        Notification(
-          "Markdown",
-          MarkdownBundle.message("markdown.browse.external.link.failed.notification.title"),
-          MarkdownBundle.message("markdown.browse.external.link.failed.notification.content", uri),
-          NotificationType.WARNING
-        ),
-        project
+      MarkdownNotifications.showWarning(
+        project,
+        id = "markdown.links.external.open.failed",
+        title = MarkdownBundle.message("markdown.browse.external.link.failed.notification.title"),
+        message = MarkdownBundle.message("markdown.browse.external.link.failed.notification.content", uri),
       )
     }
   }

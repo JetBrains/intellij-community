@@ -35,11 +35,9 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(checkDefaultLocations: Boolean,
-              forceEmbeddedJava: Boolean,
-              registeredJdks: Boolean,
+  constructor(registeredJdks: Boolean,
               wslJdks: Boolean,
-              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider) {
+              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(systemInfoProvider) {
     if (registeredJdks) {
       /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
       val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()

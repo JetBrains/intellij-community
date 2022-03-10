@@ -383,7 +383,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
         return;
       }
       if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-        final var multiplier = Registry.intValue("markdown.experimental.boundary.precise.scroll.multiplier", 1);
+        final var multiplier = Registry.intValue("ide.browser.jcef.osr.wheelRotation.factor", 1);
         final var amount = event.getScrollAmount() * event.getWheelRotation() * multiplier;
         actualPanel.scrollBy(0, amount);
       }

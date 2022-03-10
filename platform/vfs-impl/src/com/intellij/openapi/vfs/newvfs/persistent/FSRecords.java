@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -63,15 +64,19 @@ public final class FSRecords {
   private static volatile PersistentFSRecordAccessor ourRecordAccessor;
   private static volatile int ourCurrentVersion;
 
+  private static final AtomicLong ourNamesIndexModCount = new AtomicLong();
+
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
     int mask = (prevMask << bits) | value;
     if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
+
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
+
   private static int calculateVersion() {
     return nextMask(59,  // acceptable range is [0..255]
                     8,
@@ -112,11 +117,6 @@ public final class FSRecords {
 
       return nameId;
     });
-  }
-
-  @Contract("_->fail")
-  static void requestVfsRebuild(@NotNull Throwable e) {
-    handleError(e);
   }
 
   @NotNull
@@ -170,8 +170,13 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> ourRecordAccessor.createRecord());
   }
 
+  public static long getNamesIndexModCount() {
+    return ourNamesIndexModCount.get();
+  }
+
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
+      ourNamesIndexModCount.incrementAndGet();
       incModCount(id);
       markAsDeletedRecursively(id);
     });
@@ -182,6 +187,9 @@ public final class FSRecords {
       markAsDeletedRecursively(subRecord);
     }
 
+    if (PersistentFS.isDirectory(getFlags(id))) {
+      ourTreeAccessor.deleteDirectoryRecord(id);
+    }
     ourRecordAccessor.addToFreeRecordsList(id);
   }
 
@@ -226,7 +234,7 @@ public final class FSRecords {
     writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId));
   }
 
-  static int @NotNull [] listIds(int fileId) {
+  public static int @NotNull [] listIds(int fileId) {
     return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId));
   }
 
@@ -322,7 +330,7 @@ public final class FSRecords {
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
-  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -613,6 +621,7 @@ public final class FSRecords {
    */
   static int setName(int fileId, @NotNull String name) {
     return writeAndHandleErrors(() -> {
+      ourNamesIndexModCount.incrementAndGet();
       incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
@@ -759,10 +768,6 @@ public final class FSRecords {
   @NotNull
   public static AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
     return ourAttributeAccessor.writeAttribute(fileId, att);
-  }
-
-  public static @NotNull PersistentFSPaths getPersistentFSPaths() {
-    return new PersistentFSPaths(getCachesDir());
   }
 
   static synchronized void dispose() {

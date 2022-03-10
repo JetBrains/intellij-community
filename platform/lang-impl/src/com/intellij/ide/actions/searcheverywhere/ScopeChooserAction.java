@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
@@ -82,6 +83,9 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
         ActionUtil.performDumbAwareWithCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
       }
     });
+    if (ExperimentalUI.isNewUI()) {
+      component.setBorder(JBUI.Borders.emptyRight(8));
+    }
     return component;
   }
 

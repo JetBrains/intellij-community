@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,11 +12,10 @@ import java.util.List;
  * @deprecated Please use {@link EditorComposite} directly
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
 public class EditorWithProviderComposite extends EditorComposite {
   protected EditorWithProviderComposite(@NotNull VirtualFile file,
-                                        @NotNull List<FileEditorWithProvider> editorWithProviders,
+                                        @NotNull List<FileEditorWithProvider> editorsWithProviders,
                                         @NotNull FileEditorManagerEx fileEditorManager) {
-    super(file, editorWithProviders, fileEditorManager);
+    super(file, editorsWithProviders, fileEditorManager);
   }
 }

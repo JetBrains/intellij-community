@@ -26,7 +26,6 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Test
 
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
@@ -80,8 +79,6 @@ class TestingTasksImpl extends TestingTasks {
     else {
       compilationTasks.compileAllModulesAndTests()
     }
-
-    setupTestingDependencies()
 
     String remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
     if (remoteDebugJvmOptions != null) {
@@ -581,7 +578,7 @@ class TestingTasksImpl extends TestingTasks {
                 def noTests = true 
                 UrlClassLoader loader = UrlClassLoader.build().files(files).get()
                 Class<?> aClazz = Class.forName(qName, false, loader)
-                Class<?> testAnnotation = Class.forName(Test.class.getName(), false, loader)
+                Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
                 for (Method m : aClazz.getDeclaredMethods()) {
                   if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
                     def exitCode =
@@ -825,15 +822,6 @@ class TestingTasksImpl extends TestingTasks {
 
   protected static boolean isUnderTeamCity() {
     System.getenv("TEAMCITY_VERSION") != null
-  }
-
-  static boolean dependenciesInstalled
-  void setupTestingDependencies() {
-    if (!dependenciesInstalled) {
-      dependenciesInstalled = true
-      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
-      BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
-    }
   }
 
   static boolean taskDefined

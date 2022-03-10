@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
@@ -19,8 +20,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -44,6 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
 public final class IndexUpdateRunner {
+  private static final Logger LOG = Logger.getInstance(IndexUpdateRunner.class);
 
   private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = 20 * FileUtilRt.MEGABYTE;
 
@@ -54,6 +55,9 @@ public final class IndexUpdateRunner {
   private final ExecutorService myIndexingExecutor;
 
   private final int myNumberOfIndexingThreads;
+
+  private final AtomicInteger myIndexingAttemptCount = new AtomicInteger();
+  private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
 
   /**
    * Memory optimization to prevent OutOfMemory on loading file contents.
@@ -262,20 +266,30 @@ public final class IndexUpdateRunner {
     try {
       indexingJob.setLocationBeingIndexed(file);
       if (!file.isDirectory()) {
-        FileIndexingStatistics fileIndexingStatistics = ReadAction
-          .nonBlocking(() -> myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent))
+        FileIndexesValuesApplier applier = ReadAction
+          .nonBlocking(() -> {
+            myIndexingAttemptCount.incrementAndGet();
+            return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent);
+          })
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
+        myIndexingSuccessfulCount.incrementAndGet();
+        if (LOG.isTraceEnabled() && myIndexingSuccessfulCount.longValue() % 10_000 == 0) {
+          LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
+        }
+        applier.apply(file);
         long processingTime = System.nanoTime() - startTime;
         IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (statistics) {
           statistics.addFileStatistics(file,
-                                       fileIndexingStatistics,
+                                       applier.stats,
                                        processingTime,
                                        contentLoadingTime,
-                                       loadingResult.fileLength
+                                       loadingResult.fileLength,
+                                       applier.isWriteValuesSeparately,
+                                       applier.getSeparateApplicationTimeNanos()
           );
         }
       }
@@ -293,6 +307,8 @@ public final class IndexUpdateRunner {
     }
     finally {
       signalThatFileIsUnloaded(loadingResult.fileLength);
+      IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
+      IndexingFlag.unlockFile(file);
     }
   }
 

@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -27,7 +29,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
-import java.nio.file.Path
 
 @IntellijInternalApi
 @ApiStatus.Internal
@@ -70,15 +71,17 @@ class MavenImportFlow {
 
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    val pomFiles = ArrayList(MavenProjectsManager.getInstance(context.project).projectsFiles)
+    val rootFiles = MavenProjectsManager.getInstance(context.project).projectsTree?.rootProjectsFiles
+    val pomFiles = HashSet<VirtualFile>()
+    rootFiles?.let { pomFiles.addAll(it.filterNotNull()) }
 
     val newPomFiles = when (context.paths) {
       is FilesList -> context.paths.poms
       is RootPath -> searchForMavenFiles(context.paths.path, context.indicator)
     }
-    pomFiles.addAll(newPomFiles)
+    pomFiles.addAll(newPomFiles.filterNotNull())
 
-    projectsTree.addManagedFilesWithProfiles(pomFiles, context.profiles)
+    projectsTree.addManagedFilesWithProfiles(pomFiles.toList(), context.profiles)
     val toResolve = HashSet<MavenProject>()
     val errorsSet = HashSet<MavenProject>()
     val d = Disposer.newDisposable("MavenImportFlow:readMavenFiles:treeListener")
@@ -115,7 +118,7 @@ class MavenImportFlow {
       projectsTree.ignoredFilesPatterns = curr
     }
 
-    projectsTree.update(pomFiles, true, context.generalSettings, context.indicator)
+    projectsTree.updateAll(true, context.generalSettings, context.indicator)
     Disposer.dispose(d)
     return MavenReadContext(context.project, projectsTree, toResolve, errorsSet, context)
   }
@@ -177,11 +180,13 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    val unresolvedPlugins = HashMap<MavenPlugin, Path?>()
+    val unresolvedPlugins = HashSet<MavenPlugin>()
     context.nativeProjectHolder.forEach {
-      unresolvedPlugins.putAll(resolver.resolvePlugins(context.project, it.first, it.second, embeddersManager, consoleToBeRemoved,
-                                                       context.initialContext.indicator, false))
+      unresolvedPlugins.addAll(resolver.resolvePlugins(it.first, it.second, embeddersManager, consoleToBeRemoved,
+                                                       context.initialContext.indicator, false,
+                                                       projectManager.forceUpdateSnapshots))
     }
+    projectManager.forceUpdateSnapshots = false;
     return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
   }
 
@@ -264,7 +269,7 @@ class MavenImportFlow {
   fun configureMavenProject(context: MavenImportedContext) {
     val projectsManager = MavenProjectsManager.getInstance(context.project)
     val projects = context.readContext.projectsTree.projects
-    val moduleMap = projects.map { it to projectsManager.findModule(it) }.toMap();
+    val moduleMap = ReadAction.compute<Map<MavenProject, Module?>, Throwable> { projects.map { it to projectsManager.findModule(it) }.toMap(); }
     MavenProjectImporterBase.configureMavenProjects(context.readContext.projectsTree.projects, moduleMap, context.project,
                                                     context.readContext.indicator)
 

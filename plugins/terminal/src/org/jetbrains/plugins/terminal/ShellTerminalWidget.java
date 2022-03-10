@@ -11,6 +11,7 @@ import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.TextStyle;
@@ -136,6 +137,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
+  public String getSessionName() {
+    ProcessTtyConnector connector = getProcessTtyConnector();
+    if (connector instanceof PtyProcessTtyConnector) {
+      // use name from settings for local terminal
+      return TerminalOptionsProvider.getInstance().getTabName();
+    }
+    return super.getSessionName();
+  }
+
+  @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
 
@@ -232,6 +243,11 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
     getTerminalPanel().repaint();
     return highlighting;
+  }
+
+  @Override
+  public @Nullable ProcessTtyConnector getProcessTtyConnector() {
+    return getProcessTtyConnector(getTtyConnector());
   }
 
   public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {

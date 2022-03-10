@@ -1,0 +1,2 @@
+pyaudio.PaMacCoreStreamInfo
+pyaudio.paMacCoreStreamInfo

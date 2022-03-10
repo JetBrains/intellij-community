@@ -42,7 +42,7 @@ public class JBCefJSQueryPoolSlotReuseTest {
     var client = JBCefApp.getInstance().createClient();
     client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 1);
 
-    var browser = new JBCefBrowserBuilder().setUrl("about:blank").setClient(client).createBrowser();
+    var browser = new JBCefBrowserBuilder().setUrl("about:blank").setClient(client).build();
     showAndWaitForLoad(browser, JBCefJSQueryPoolSlotReuseTest.class.getSimpleName());
 
     /*

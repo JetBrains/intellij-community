@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntBinaryOperator;
 
 public final class PersistentFSRecordsStorage {
@@ -35,25 +33,23 @@ public final class PersistentFSRecordsStorage {
   static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
-  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
-
   private <V, E extends Throwable> V read(ThrowableComputable<V, E> action) throws E {
-    myLock.readLock().lock();
+    myFile.getStorageLockContext().lockRead();
     try {
       return action.compute();
     }
     finally {
-      myLock.readLock().unlock();
+      myFile.getStorageLockContext().unlockRead();
     }
   }
 
   private <V, E extends Throwable> V write(ThrowableComputable<V, E> action) throws E {
-    myLock.writeLock().lock();
+    myFile.getStorageLockContext().lockWrite();
     try {
       return action.compute();
     }
     finally {
-      myLock.writeLock().unlock();
+      myFile.getStorageLockContext().unlockWrite();
     }
   }
 

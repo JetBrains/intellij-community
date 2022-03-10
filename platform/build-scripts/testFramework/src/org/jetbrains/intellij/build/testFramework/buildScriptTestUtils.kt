@@ -37,7 +37,10 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
   val options = BuildOptions()
   options.isSkipDependencySetup = skipDependencySetup
   options.isIsTestBuild = true
-  options.buildStepsToSkip.add(BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION())
+  options.buildStepsToSkip.addAll(listOf(
+    BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION(),
+    BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
+  ))
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
   options.isUseCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false

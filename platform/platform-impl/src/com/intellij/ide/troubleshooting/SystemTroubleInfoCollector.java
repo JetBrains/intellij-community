@@ -3,8 +3,11 @@ package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
+import com.sun.management.OperatingSystemMXBean;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.management.ManagementFactory;
 
 public class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @NotNull
@@ -25,6 +28,9 @@ public class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += "Free memory: " + runtime.freeMemory() / mb + "Mb \n";
     output += "Total memory: " + runtime.totalMemory() / mb + "Mb \n";
     output += "Maximum available memory: " + runtime.maxMemory() / mb + "Mb \n";
+    OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    output += "Physical memory: " + bean.getTotalPhysicalMemorySize() / mb + "Mb \n";
+
     return output;
   }
 }

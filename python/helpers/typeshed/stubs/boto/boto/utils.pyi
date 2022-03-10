@@ -3,7 +3,7 @@ import logging.handlers
 import subprocess
 import sys
 import time
-from typing import IO, Any, Callable, ContextManager, Dict, Iterable, Mapping, Sequence, Type, TypeVar
+from typing import IO, Any, Callable, ContextManager, Iterable, Mapping, Sequence, TypeVar
 
 import boto.connection
 
@@ -37,7 +37,7 @@ else:
 _Provider = Any  # TODO replace this with boto.provider.Provider once stubs exist
 _LockType = Any  # TODO replace this with _thread.LockType once stubs exist
 
-JSONDecodeError: Type[ValueError]
+JSONDecodeError: type[ValueError]
 qsa_of_interest: list[str]
 
 def unquote_v(nv: str) -> str | tuple[str, str]: ...
@@ -50,7 +50,7 @@ def merge_meta(
 def get_aws_metadata(headers: Mapping[str, str], provider: _Provider | None = ...) -> Mapping[str, str]: ...
 def retry_url(url: str, retry_on_404: bool = ..., num_retries: int = ..., timeout: int | None = ...) -> str: ...
 
-class LazyLoadMetadata(Dict[_KT, _VT]):
+class LazyLoadMetadata(dict[_KT, _VT]):
     def __init__(self, url: str, num_retries: int, timeout: int | None = ...) -> None: ...
 
 def get_instance_metadata(
@@ -71,7 +71,7 @@ LOCALE_LOCK: _LockType
 def setlocale(name: str | tuple[str, str]) -> ContextManager[str]: ...
 def get_ts(ts: time.struct_time | None = ...) -> str: ...
 def parse_ts(ts: str) -> datetime.datetime: ...
-def find_class(module_name: str, class_name: str | None = ...) -> Type[Any] | None: ...
+def find_class(module_name: str, class_name: str | None = ...) -> type[Any] | None: ...
 def update_dme(username: str, password: str, dme_id: str, ip_address: str) -> str: ...
 def fetch_file(
     uri: str, file: IO[str] | None = ..., username: str | None = ..., password: str | None = ...
@@ -101,7 +101,7 @@ class AuthSMTPHandler(logging.handlers.SMTPHandler):
         self, mailhost: str, username: str, password: str, fromaddr: str, toaddrs: Sequence[str], subject: str
     ) -> None: ...
 
-class LRUCache(Dict[_KT, _VT]):
+class LRUCache(dict[_KT, _VT]):
     class _Item:
         previous: LRUCache._Item | None
         next: LRUCache._Item | None
@@ -122,7 +122,7 @@ class Password:
     str: _str | None
     def __init__(self, str: _str | None = ..., hashfunc: Callable[[bytes], _HashType] | None = ...) -> None: ...
     def set(self, value: bytes | _str) -> None: ...
-    def __eq__(self, other: Any) -> bool: ...
+    def __eq__(self, other: _str | bytes | None) -> bool: ...  # type: ignore[override]
     def __len__(self) -> int: ...
 
 def notify(
