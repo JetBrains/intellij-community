@@ -3,4 +3,6 @@ package org.jetbrains.kotlin.idea.project.test.base.metrics
 
 object DefaultMetrics {
     val valueMetric = Metric("value")
+    val gcTime = Metric("gc")
+    val jitTime = Metric("jit")
 }
