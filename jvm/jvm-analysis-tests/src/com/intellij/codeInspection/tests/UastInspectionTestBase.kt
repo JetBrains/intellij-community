@@ -45,12 +45,12 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     lang: ULanguage,
     before: String,
     after: String,
-    hint: String = InspectionsBundle.message(
+    vararg hints: String = arrayOf(InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    )
+    ))
   ) {
     configureByText("UnderTest${lang.ext}", before)
-    runQuickFix(hint)
+    hints.forEach { runQuickFix(it) }
     checkResult(after)
   }
 
