@@ -6,6 +6,8 @@ import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.ThreesideMergeRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.diff.tools.external.ExternalDiffToolUtil
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -37,14 +39,11 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-internal class ExternalToolsTreePanel(
-  private val tableModel: ListTableModel<ExternalDiffSettings.ExternalToolConfiguration>
-) : BorderLayoutPanel() {
-  private val root = CheckedTreeNode()
-  private val treeModel = DefaultTreeModel(root)
+internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
+  private val treeModel = models.treeModel
+  private val root = treeModel.root as CheckedTreeNode
   private val tree = CheckboxTree(ExternalToolsTreeCellRenderer(), root).apply {
     visibleRowCount = 8
     model = treeModel
@@ -146,8 +145,11 @@ internal class ExternalToolsTreePanel(
       return
     }
 
+    val parentNode = treePath.parentPath.lastPathComponent as DefaultMutableTreeNode
+    val toolGroup = parentNode.userObject as ExternalDiffSettings.ExternalToolGroup
+
     val externalTool = node.userObject as ExternalDiffSettings.ExternalTool
-    if (ExternalDiffSettings.isConfigurationRegistered(externalTool)) {
+    if (isConfigurationRegistered(externalTool, toolGroup)) {
       Messages.showWarningDialog(DiffBundle.message("settings.external.tool.tree.remove.warning.message"),
                                  DiffBundle.message("settings.external.tool.tree.remove.warning.title"))
       return
@@ -177,7 +179,16 @@ internal class ExternalToolsTreePanel(
       node.userObject = editedTool
       treeModel.nodeChanged(node)
 
-      tableModel.updateEntities(toolGroup, currentTool, editedTool)
+      models.tableModel.updateEntities(toolGroup, currentTool, editedTool)
+    }
+  }
+
+  private fun isConfigurationRegistered(externalTool: ExternalTool, externalToolGroup: ExternalToolGroup): Boolean {
+    val configurations = models.tableModel.items
+
+    return when (externalToolGroup) {
+      ExternalToolGroup.DIFF_TOOL -> configurations.any { it.diffToolName == externalTool.name }
+      ExternalToolGroup.MERGE_TOOL -> configurations.any { it.mergeToolName == externalTool.name }
     }
   }
 

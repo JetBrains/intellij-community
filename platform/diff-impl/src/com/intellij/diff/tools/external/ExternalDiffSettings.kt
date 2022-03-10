@@ -129,20 +129,6 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
       return instance.defaultToolConfiguration.mergeToolName != ExternalToolConfiguration.BUILTIN_TOOL
     }
 
-    @JvmStatic
-    fun isConfigurationRegistered(externalTool: ExternalTool): Boolean {
-      return instance.defaultToolConfiguration.diffToolName == externalTool.name ||
-             instance.defaultToolConfiguration.mergeToolName == externalTool.name ||
-             instance.externalToolsConfiguration.any { it.diffToolName == externalTool.name || it.mergeToolName == externalTool.name }
-    }
-
-    @JvmStatic
-    fun collectExternalToolNames(externalToolGroup: ExternalToolGroup): List<String> {
-      return mutableListOf(ExternalToolConfiguration.BUILTIN_TOOL).apply {
-        instance.externalTools[externalToolGroup]?.map { it.name }?.let { addAll(it) }
-      }
-    }
-
     private fun findTool(tools: List<ExternalTool>, toolName: String): ExternalTool? = tools.find { it.name == toolName }
 
     private fun findToolConfiguration(fileType: FileType): ExternalToolConfiguration? = instance.externalToolsConfiguration.find {
