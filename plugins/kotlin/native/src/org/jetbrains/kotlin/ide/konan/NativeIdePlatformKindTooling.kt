@@ -46,7 +46,12 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun getLibraryDescription(project: Project): CustomLibraryDescription? = null
     override fun getLibraryVersionProvider(project: Project): (Library) -> String? = { null }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
+    override fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean?
+    ): Icon? {
+        if (includeSlowProviders == false) return null
         val descriptor = descriptorProvider() ?: return null
         if (!descriptor.isKotlinTestDeclaration()) return null
 

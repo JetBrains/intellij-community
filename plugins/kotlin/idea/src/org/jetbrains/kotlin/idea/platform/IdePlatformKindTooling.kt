@@ -29,7 +29,11 @@ abstract class IdePlatformKindTooling {
     abstract fun getLibraryDescription(project: Project): CustomLibraryDescription?
     abstract fun getLibraryVersionProvider(project: Project): (Library) -> String?
 
-    abstract fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon?
+    abstract fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean? = null
+    ): Icon?
 
     abstract fun acceptsAsEntryPoint(function: KtFunction): Boolean
 

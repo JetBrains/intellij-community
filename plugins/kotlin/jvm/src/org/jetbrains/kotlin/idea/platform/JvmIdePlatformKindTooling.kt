@@ -45,12 +45,23 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         return JavaRuntimeDetectionUtil::getJavaRuntimeVersion
     }
 
-    private fun calculateUrls(declaration: KtNamedDeclaration): List<String>? {
+    private fun calculateUrls(declaration: KtNamedDeclaration, includeSlowProviders: Boolean? = null): List<String>? {
         for (lightTestFramework in LightTestFramework.EXTENSION_NAME.extensionList) {
-            when (lightTestFramework.detectFramework(declaration)) {
+            val relevantProvider = includeSlowProviders == null || includeSlowProviders == lightTestFramework.slowProvider
+            // in case of slowProvider it is necessary to check if fast provider is applicable, if so - nothing could be found for slow one
+            val detectFramework = if (relevantProvider || includeSlowProviders == true) {
+                lightTestFramework.detectFramework(declaration)
+            } else {
+                continue
+            }
+            when (detectFramework) {
                 is UnsureLightTestFrameworkResult -> continue
                 is NoLightTestFrameworkResult -> return null
-                is ResolvedLightTestFrameworkResult -> Unit
+                is ResolvedLightTestFrameworkResult ->
+                    if (!relevantProvider) {
+                        // fast provider is found in case of lookup among slow ones
+                        return null
+                    }
             }
 
             val qualifiedName = lightTestFramework.qualifiedName(declaration) ?: return null
@@ -66,8 +77,12 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         return null
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? =
-        calculateUrls(declaration)?.let { getTestStateIcon(it, declaration) }
+    override fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean?
+    ): Icon? =
+        calculateUrls(declaration, includeSlowProviders)?.let { getTestStateIcon(it, declaration) }
             ?: getGenericTestIcon(declaration, descriptorProvider) { emptyList() }
 
     override fun acceptsAsEntryPoint(function: KtFunction) = true

@@ -13,6 +13,8 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
 
     override val name: String = "JUnit3"
 
+    override val slowProvider: Boolean = false
+
     override fun detectFramework(namedDeclaration: KtNamedDeclaration): LightTestFrameworkResult {
         if (!hasClass(JUnitUtil.TEST_CASE_CLASS, namedDeclaration) ||
             // @Test is from junit4

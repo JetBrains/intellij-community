@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import javax.swing.Icon
 
+internal typealias DeclarationPlatform = Pair<KtNamedDeclaration, TargetPlatform>
+
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
         fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
@@ -63,29 +65,45 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     }
 
     override fun getInfo(element: PsiElement): Info? {
-        val declaration = element.getStrictParentOfType<KtNamedDeclaration>() ?: return null
-        if (declaration.nameIdentifier != element) return null
+        val (declaration: KtNamedDeclaration, targetPlatform: TargetPlatform) = calculateDeclarationPlatform(element) ?: return null
+
+        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration, {
+            declaration.resolveToDescriptorIfAny()
+        }, false) ?: return null
+        
+        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(getOrder(declaration)))
+    }
+
+    override fun getSlowInfo(element: PsiElement): Info? {
+        val (declaration: KtNamedDeclaration, targetPlatform: TargetPlatform) = calculateDeclarationPlatform(element) ?: return null
+
+        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration, {
+            declaration.resolveToDescriptorIfAny()
+        }, true) ?: return null
+
+        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(getOrder(declaration)))
+    }
+
+    private fun calculateDeclarationPlatform(element: PsiElement): DeclarationPlatform? {
+        val declaration = element.getStrictParentOfType<KtNamedDeclaration>()?.takeIf { it.nameIdentifier == element } ?: return null
 
         val targetPlatform = declaration.module?.platform ?: return null
 
         if (declaration is KtNamedFunction) {
-            if (declaration.containingClassOrObject == null) return null
-            if (targetPlatform.isMultiPlatform() && declaration.containingClass() == null) return null
-        }
-        else {
-            if (declaration !is KtClassOrObject) return null
-            if (targetPlatform.isMultiPlatform() && declaration !is KtClass) return null
+            if (declaration.containingClassOrObject == null ||
+                targetPlatform.isMultiPlatform() && declaration.containingClass() == null
+            ) return null
+        } else {
+            if (declaration !is KtClassOrObject ||
+                targetPlatform.isMultiPlatform() && declaration !is KtClass
+            ) return null
         }
 
         if (!targetPlatform.providesRunnableTests()) return null
 
         if (!declaration.isUnderKotlinSourceRootTypes()) return null
 
-        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration) {
-            declaration.resolveToDescriptorIfAny()
-        } ?: return null
-        
-        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(getOrder(declaration)))
+        return DeclarationPlatform(declaration, targetPlatform)
     }
 
     private fun getOrder(declaration: KtNamedDeclaration): Int {
