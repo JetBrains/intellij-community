@@ -6398,6 +6398,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/varargFunction2.kt");
             }
 
+            @TestMetadata("variableInvocation.kt")
+            public void testVariableInvocation() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/variableInvocation.kt");
+            }
+
+            @TestMetadata("variableInvocationWithReceiver.kt")
+            public void testVariableInvocationWithReceiver() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/variableInvocationWithReceiver.kt");
+            }
+
+            @TestMetadata("variableInvocationWithThisReceiver.kt")
+            public void testVariableInvocationWithThisReceiver() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/variableInvocationWithThisReceiver.kt");
+            }
+
             @TestMetadata("wrongNamedOrder.kt")
             public void testWrongNamedOrder() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/wrongNamedOrder.kt");
