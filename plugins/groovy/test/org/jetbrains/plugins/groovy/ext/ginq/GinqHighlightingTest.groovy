@@ -689,4 +689,22 @@ from n in [1, 2, 5, 5]
 """
   }
 
+  void test_rn() {
+    testGinqHighlighting """
+from n in [1, 2, 3] 
+select _rn, n
+"""
+  }
+
+  void testSwitch() {
+    testGinqHighlighting """
+from n in [1, 2, 3, 4]
+select switch (n) {
+    case 1 -> 'a'
+    case 2 -> 'b'
+    default -> 'c'
+}
+"""
+  }
+
 }

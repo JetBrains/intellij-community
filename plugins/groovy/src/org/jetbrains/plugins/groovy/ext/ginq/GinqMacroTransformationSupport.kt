@@ -193,8 +193,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   private fun resolveToCustomMember(place: PsiElement, name: String, tree: GinqExpression): GrLightVariable? {
+    val facade = JavaPsiFacade.getInstance(place.project)
     if (name == "_g") {
-      val facade = JavaPsiFacade.getInstance(place.project)
       val containerClass = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, place.resolveScope) ?: return null
       val clazz = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, place.resolveScope)
       val dataSourceTypes = tree.getDataSourceFragments().mapNotNull {
@@ -204,6 +204,10 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val type = clazz?.let { GrSyntheticNamedRecordClass(emptyList(), dataSourceTypes, it).type() } ?: return null
       val resultType = facade.elementFactory.createType(containerClass, type)
       return GrLightVariable(place.manager, "_g", resultType, containerClass)
+    }
+    if (name == "_rn") {
+      val containerClass = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, place.resolveScope) ?: return null
+      return GrLightVariable(place.manager, "_rn", CommonClassNames.JAVA_LANG_LONG, containerClass)
     }
     return null
   }

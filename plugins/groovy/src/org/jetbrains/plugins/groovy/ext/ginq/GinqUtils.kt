@@ -134,12 +134,8 @@ fun resolveInOverClause(place: PsiElement, name: String): PsiMethod? {
   } else if (PsiTreeUtil.isAncestor(qualifier, place, false)) {
     return resolveInOverQualifier(place, name)
   } else {
-    return resolveAsPagination(place, name)
+    return null
   }
-}
-
-fun resolveAsPagination(place: PsiElement, name: String): PsiMethod? {
-  return null
 }
 
 private data class Signature(val returnType: String, val parameters: List<Pair<String, String>>)
