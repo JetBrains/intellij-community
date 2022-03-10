@@ -96,7 +96,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @Override
   public final void applyInformationToEditor() {
-    if (!isValid()) return; // Document has changed.
+    if (!isValid()) {
+      return; // Document has changed.
+    }
     if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
       Document document = getDocument();
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);

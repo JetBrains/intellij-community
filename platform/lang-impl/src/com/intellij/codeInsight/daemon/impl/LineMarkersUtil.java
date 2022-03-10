@@ -83,10 +83,9 @@ public final class LineMarkersUtil {
     }
   }
 
-  @NotNull
-  private static RangeHighlighter createOrReuseLineMarker(@NotNull LineMarkerInfo<?> info,
-                                                          @NotNull MarkupModelEx markupModel,
-                                                          @Nullable HighlightersRecycler toReuse) {
+  private static void createOrReuseLineMarker(@NotNull LineMarkerInfo<?> info,
+                                              @NotNull MarkupModelEx markupModel,
+                                              @Nullable HighlightersRecycler toReuse) {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
 
     RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
@@ -133,7 +132,6 @@ public final class LineMarkersUtil {
       }
     }
     info.highlighter = highlighter;
-    return highlighter;
   }
 
   static void addLineMarkerToEditorIncrementally(@NotNull Project project,

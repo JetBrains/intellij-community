@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public final class FileSeparatorProvider {
+final class FileSeparatorProvider {
   @NotNull
-  static List<LineMarkerInfo<?>> getFileSeparators(PsiFile file, final Document document) {
+  static List<LineMarkerInfo<?>> getFileSeparators(@NotNull PsiFile file, @NotNull Document document) {
     final List<LineMarkerInfo<?>> result = new ArrayList<>();
     for (LineMarkerInfo<?> lineMarkerInfo : LineMarkersPass.queryLineMarkers(file, document)) {
       if (lineMarkerInfo.separatorColor != null) {
@@ -27,7 +27,7 @@ public final class FileSeparatorProvider {
     return result;
   }
 
-  public static int getDisplayLine(@NotNull LineMarkerInfo<?> lineMarkerInfo, @NotNull Document document) {
+  static int getDisplayLine(@NotNull LineMarkerInfo<?> lineMarkerInfo, @NotNull Document document) {
     int offset = lineMarkerInfo.separatorPlacement == SeparatorPlacement.TOP ? lineMarkerInfo.startOffset : lineMarkerInfo.endOffset;
     return document.getLineNumber(MathUtil.clamp(offset, 0, document.getTextLength())) +
            (lineMarkerInfo.separatorPlacement == SeparatorPlacement.TOP ? 0 : 1);

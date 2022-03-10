@@ -50,8 +50,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties
     .getIntProperty("max.open.global.inspection.xml.files", 50);
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolResultExporter> myPresentationMap = new ConcurrentHashMap<>();
-  protected volatile Path myOutputDir;
-  protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
+  private volatile Path myOutputDir;
+  private GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
   private Map<Path, Long> myProfile;
   protected InspectionProblemConsumer myProblemConsumer;
@@ -65,15 +65,15 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
-  public void performInspectionsWithProgressAndExportResults(final @NotNull AnalysisScope scope,
-                                                             final boolean runGlobalToolsOnly,
-                                                             final boolean isOfflineInspections,
+  public void performInspectionsWithProgressAndExportResults(@NotNull AnalysisScope scope,
+                                                             boolean runGlobalToolsOnly,
+                                                             boolean isOfflineInspections,
                                                              @NotNull Path outputDir,
-                                                             final @NotNull List<? super Path> inspectionsResults) {
+                                                             @NotNull List<? super Path> inspectionsResults) {
     cleanupTools();
     setCurrentScope(scope);
 
-    final Runnable action = () -> {
+    Runnable action = () -> {
       myOutputDir = outputDir;
       try {
         try {
@@ -90,10 +90,10 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     action.run();
   }
 
-  protected void exportResults(@NotNull List<? super Path> inspectionsResults,
-                               @NotNull List<? extends Tools> inspections,
-                               @NotNull Path outputDir,
-                               @Nullable XMLOutputFactory xmlOutputFactory) {
+  private void exportResults(@NotNull List<? super Path> inspectionsResults,
+                             @NotNull List<? extends Tools> inspections,
+                             @NotNull Path outputDir,
+                             @Nullable XMLOutputFactory xmlOutputFactory) {
     if (xmlOutputFactory == null) {
       xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
     }
@@ -121,7 +121,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
       getRefManager().iterate(new RefVisitor() {
         @Override
-        public void visitElement(final @NotNull RefEntity refEntity) {
+        public void visitElement(@NotNull RefEntity refEntity) {
           int i = 0;
           for (Tools tools : inspections) {
             for (ScopeToolState state : tools.getTools()) {
@@ -178,11 +178,11 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     }
   }
 
-  public void exportResultsSmart(@NotNull List<? super Path> inspectionsResults, @NotNull Path outputDir) {
-    final List<Tools> globalToolsWithProblems = new ArrayList<>();
-    final List<Tools> toolsWithResultsToAggregate = new ArrayList<>();
+  private void exportResultsSmart(@NotNull List<? super Path> inspectionsResults, @NotNull Path outputDir) {
+    List<Tools> globalToolsWithProblems = new ArrayList<>();
+    List<Tools> toolsWithResultsToAggregate = new ArrayList<>();
     for (Map.Entry<String, Tools> entry : getTools().entrySet()) {
-      final Tools sameTools = entry.getValue();
+      Tools sameTools = entry.getValue();
       boolean hasProblems = false;
       String toolName = entry.getKey();
       if (sameTools != null) {
@@ -221,7 +221,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       // close "problem" tag for local inspections (see DefaultInspectionToolResultExporter.addProblemElement())
       if (hasProblems) {
         try {
-          final Path file = InspectionsResultUtil.getInspectionResultPath(outputDir, sameTools.getShortName());
+          Path file = InspectionsResultUtil.getInspectionResultPath(outputDir, sameTools.getShortName());
           inspectionsResults.add(file);
           Files.write(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
         }
@@ -324,11 +324,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     }
   }
 
-  public InspectionProblemConsumer getProblemConsumer() {
-    return myProblemConsumer;
-  }
-
-  public void setProblemConsumer(InspectionProblemConsumer problemConsumer) {
+  public void setProblemConsumer(@NotNull InspectionProblemConsumer problemConsumer) {
     myProblemConsumer = problemConsumer;
   }
 }
