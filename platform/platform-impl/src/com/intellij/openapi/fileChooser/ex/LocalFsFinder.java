@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -8,6 +11,7 @@ import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +33,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class LocalFsFinder implements Finder {
   private final boolean myUseVfs;
@@ -70,7 +75,11 @@ public class LocalFsFinder implements Finder {
         return new IoFile(file);
       }
     }
-    catch (InvalidPathException ignored) { }
+    catch (InvalidPathException ignored) {
+      if (isIncompleteUnc(toFind) && WSLUtil.isSystemCompatible()) {
+        return toFind.equals("\\\\") ? WslTopFile.TOP : WslTopFile.INCOMPLETE;
+      }
+    }
 
     return null;
   }
@@ -79,8 +88,10 @@ public class LocalFsFinder implements Finder {
   public String normalize(@NotNull String path) {
     try {
       Path file = Path.of(FileUtil.expandUserHome(path));
-      if (file.isAbsolute()) return file.toString();
-      if (myBaseDir != null) return myBaseDir.resolve(path).toAbsolutePath().toString();
+      if (!file.isAbsolute() && myBaseDir != null) {
+        file = myBaseDir.resolve(path).toAbsolutePath();
+      }
+      return trimUncRoot(file.toString());
     }
     catch (InvalidPathException ignored) { }
     catch (IOError e) {
@@ -99,13 +110,25 @@ public class LocalFsFinder implements Finder {
     try {
       Path pathObj = Path.of(normalize(path));
       List<String> result = new ArrayList<>(pathObj.getNameCount() + 1);
-      result.add(pathObj.getRoot().toString());
+      result.add(trimUncRoot(pathObj.getRoot().toString()));
       for (Path part : pathObj) result.add(part.toString());
       return result;
     }
     catch (InvalidPathException e) {
-      return Finder.super.split(path);
+      return isIncompleteUnc(path) ? List.of(trimUncRoot(path)) : Finder.super.split(path);
     }
+  }
+
+  private static boolean isIncompleteUnc(String path) {
+    if (path.startsWith("\\\\")) {
+      int p = path.indexOf('\\', 2);
+      return p < 0 || p == path.length() - 1;
+    }
+    return false;
+  }
+
+  private static String trimUncRoot(String path) {
+    return path.startsWith("\\\\") ? StringUtil.trimTrailing(path, '\\') : path;
   }
 
   public LocalFsFinder withBaseDir(@Nullable Path baseDir) {
@@ -246,7 +269,7 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public String getName() {
-      return NioFiles.getFileName(myFile);
+      return trimUncRoot(NioFiles.getFileName(myFile));
     }
 
     @Override
@@ -257,12 +280,20 @@ public class LocalFsFinder implements Finder {
     @Override
     public LookupFile getParent() {
       Path parent = myFile.getParent();
-      return parent != null ? new IoFile(parent) : null;
+      if (parent != null) {
+        return new IoFile(parent);
+      }
+      else if (myFile.toString().startsWith("\\\\")) {
+        return WslTopFile.TOP;
+      }
+      else {
+        return null;
+      }
     }
 
     @Override
     public String getAbsolutePath() {
-      return myFile.toAbsolutePath().toString();
+      return trimUncRoot(myFile.toAbsolutePath().toString());
     }
 
     @Override
@@ -301,6 +332,66 @@ public class LocalFsFinder implements Finder {
     @Override
     public int hashCode() {
       return myFile.hashCode();
+    }
+  }
+
+  private static final class WslTopFile extends LookupFileWithMacro {
+    private static final WslTopFile TOP = new WslTopFile(true);
+    private static final WslTopFile INCOMPLETE = new WslTopFile(false);
+
+    private final boolean myExists;
+
+    private WslTopFile(boolean exists) {
+      myExists = exists;
+    }
+
+    @Override
+    public String getName() {
+      return "";
+    }
+
+    @Override
+    public String getAbsolutePath() {
+      return "";
+    }
+
+    @Override
+    public boolean isDirectory() {
+      return true;
+    }
+
+    @Override
+    public List<LookupFile> getChildren(LookupFilter filter) {
+      try {
+        List<WSLDistribution> vms = WslDistributionManager.getInstance().getInstalledDistributionsFuture().get(200, TimeUnit.MILLISECONDS);
+        List<LookupFile> result = new ArrayList<>(vms.size());
+        for (WSLDistribution vm : vms) {
+          IoFile file = new IoFile(vm.getUNCRootPath());
+          if (filter.isAccepted(file)) {
+            result.add(file);
+          }
+        }
+        result.sort((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), false));
+        return result;
+      }
+      catch (Exception ignore) {
+        return List.of();
+      }
+    }
+
+    @Override
+    public @Nullable LookupFile getParent() {
+      return null;
+    }
+
+    @Override
+    public boolean exists() {
+      return myExists;
+    }
+
+    @Override
+    public Icon getIcon() {
+      return PlatformIcons.FOLDER_ICON;
     }
   }
 }
