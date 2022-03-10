@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -73,6 +74,14 @@ public abstract class EdtInvocationManager {
       if (i % 10000 == 0) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
+        // todo temporary hack to diagnose hanging builds
+        try {
+          System.err.println(ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null)
+                             + "\n" + ThreadDumper.dumpThreadsToString());
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
