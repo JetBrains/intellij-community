@@ -44,7 +44,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private final Set<VcsKey> myVcsKeySet = new HashSet<>();
   private final Object myLock = new Object();
 
-  private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap = MultiMap.createSet();
+  private final List<FileAnnotation> myFileAnnotations = new ArrayList<>();
 
   public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project) {
     myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, this);
@@ -112,12 +112,12 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void processUnderFile(@NotNull VirtualFile file) {
     final MultiMap<VirtualFile, FileAnnotation> annotations = new MultiMap<>();
     synchronized (myLock) {
-      for (VirtualFile virtualFile : myFileAnnotationMap.keySet()) {
-        if (VfsUtilCore.isAncestor(file, virtualFile, true)) {
-          final Collection<FileAnnotation> values = myFileAnnotationMap.get(virtualFile);
-          for (FileAnnotation value : values) {
-            annotations.putValue(virtualFile, value);
-          }
+      for (FileAnnotation fileAnnotation : myFileAnnotations) {
+        VirtualFile virtualFile = fileAnnotation.getFile();
+        if (virtualFile != null &&
+            virtualFile.isInLocalFileSystem() &&
+            VfsUtilCore.isAncestor(file, virtualFile, true)) {
+          annotations.putValue(virtualFile, fileAnnotation);
         }
       }
     }
@@ -146,7 +146,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void processFile(@Nullable VcsRevisionNumber number, @NotNull VirtualFile vf) {
     final Collection<FileAnnotation> annotations;
     synchronized (myLock) {
-      annotations = new ArrayList<>(myFileAnnotationMap.get(vf));
+      annotations = ContainerUtil.filter(myFileAnnotations, it -> vf.equals(it.getFile()));
     }
     if (!annotations.isEmpty()) {
       if (number == null) {
@@ -172,7 +172,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void closeForVcs(@NotNull Set<VcsKey> refresh) {
     if (refresh.isEmpty()) return;
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> refresh.contains(it.getVcsKey()));
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotations, it -> refresh.contains(it.getVcsKey()));
       invalidateAnnotations(copy, false);
     }
   }
@@ -195,31 +195,24 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     });
   }
 
-  // annotations for already committed revisions should not register with this method - they are not subject to refresh
   @Override
-  public void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
+  public void registerAnnotation(@NotNull FileAnnotation annotation) {
     synchronized (myLock) {
-      myFileAnnotationMap.putValue(file, annotation);
+      myFileAnnotations.add(annotation);
     }
   }
 
   @Override
-  public void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
+  public void unregisterAnnotation(@NotNull FileAnnotation annotation) {
     synchronized (myLock) {
-      final Collection<FileAnnotation> annotations = myFileAnnotationMap.get(file);
-      if (!annotations.isEmpty()) {
-        annotations.remove(annotation);
-      }
-      if (annotations.isEmpty()) {
-        myFileAnnotationMap.remove(file);
-      }
+      myFileAnnotations.remove(annotation);
     }
   }
 
   @Override
   public void reloadAnnotations() {
     synchronized (myLock) {
-      List<FileAnnotation> copy = new ArrayList<>(myFileAnnotationMap.values());
+      List<FileAnnotation> copy = new ArrayList<>(myFileAnnotations);
       invalidateAnnotations(copy, true);
     }
   }
@@ -227,7 +220,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   @Override
   public void reloadAnnotationsForVcs(@NotNull VcsKey key) {
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> key.equals(it.getVcsKey()));
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotations, it -> key.equals(it.getVcsKey()));
       invalidateAnnotations(copy, true);
     }
   }

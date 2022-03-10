@@ -128,7 +128,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   val annotation = provider.getFromCache(file) ?: return null
 
   val annotationDisposable = Disposable {
-    unregisterAnnotation(file, annotation)
+    unregisterAnnotation(annotation)
     annotation.dispose()
   }
   annotation.setCloser {
@@ -140,14 +140,14 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   annotation.setReloader { annotation.close() }
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
-  registerAnnotation(file, annotation)
+  registerAnnotation(annotation)
   disposeWithEditor(editor, annotationDisposable)
 
   return annotation
 }
 
-private fun registerAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(file, annotation)
+private fun registerAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(annotation)
 
-private fun unregisterAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(file, annotation)
+private fun unregisterAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(annotation)

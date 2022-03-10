@@ -99,7 +99,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
     val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
     if (vcs.annotationProvider !is CacheableAnnotationProvider) return null
-    return object: BypassBasedPlaceholderCollector {
+    return object : BypassBasedPlaceholderCollector {
       override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
         val ranges = ArrayList<TextRange>()
         if (visionLanguageContext.isAccepted(element)) {
@@ -179,7 +179,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   val annotation = provider.getFromCache(file) ?: return Result.Failure()
 
   val annotationDisposable = Disposable {
-    unregisterAnnotation(file, annotation)
+    unregisterAnnotation(annotation)
     annotation.dispose()
   }
   annotation.setCloser {
@@ -191,7 +191,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   annotation.setReloader { annotation.close() }
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
-  registerAnnotation(file, annotation)
+  registerAnnotation(annotation)
   ApplicationManager.getApplication().invokeLater {
     EditorUtil.disposeWithEditor(editor, annotationDisposable)
   }
@@ -199,11 +199,11 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   return Result.Success(annotation)
 }
 
-private fun registerAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(file, annotation)
+private fun registerAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(annotation)
 
-private fun unregisterAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(file, annotation)
+private fun unregisterAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(annotation)
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 
@@ -219,11 +219,12 @@ private fun VcsCodeAuthorInfo.getText(): String {
   }
 }
 
-private sealed class Result<out T>(val isSuccess: Boolean, val result: T?){
+private sealed class Result<out T>(val isSuccess: Boolean, val result: T?) {
 
-  companion object{
+  companion object {
     val SUCCESS_EMPTY = Success(null)
   }
+
   class Success<T>(result: T) : Result<T>(true, result)
   class Failure<T> : Result<T>(false, null)
 }

@@ -24,10 +24,25 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
  */
 public interface VcsAnnotationLocalChangesListener {
-  // annotations for already committed revisions should not register with this method - they are not subject to refresh
-  void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation);
+  void registerAnnotation(@NotNull FileAnnotation annotation);
 
-  void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation);
+  void unregisterAnnotation(@NotNull FileAnnotation annotation);
+
+  /**
+   * @deprecated Use {@link #registerAnnotation(FileAnnotation)}
+   */
+  @Deprecated
+  default void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
+    registerAnnotation(annotation);
+  }
+
+  /**
+   * @deprecated Use {@link #unregisterAnnotation(FileAnnotation)}
+   */
+  @Deprecated
+  default void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
+    unregisterAnnotation(annotation);
+  }
 
   void reloadAnnotations();
 
