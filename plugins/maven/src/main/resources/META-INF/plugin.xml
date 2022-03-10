@@ -677,9 +677,9 @@
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
-      <reference id="Maven.ShowSettingsGroup"/>
-      <separator/>
       <reference id="Maven.DependencyAnalyzer"/>
+      <separator/>
+      <reference id="Maven.ShowSettingsGroup"/>
     </group>
 
     <group id="Maven.DependencyMenu">
