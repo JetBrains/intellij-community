@@ -503,7 +503,7 @@
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
     <registryKey key="git.detect.wsl.executables" defaultValue="true"
                  description="Search for available executables in WSL on Windows"/>
-    <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
+    <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
                  description="Show toolwindow tab with stashes and shelves together"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speedup worktree cleanup."/>
@@ -536,6 +536,7 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider"/>
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="git4idea.GitBranchesUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="git4idea.GitStashUsageCollector"/>
     <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <gitRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializerImpl"/>
@@ -570,7 +571,6 @@
 
     <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
 
-    <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>

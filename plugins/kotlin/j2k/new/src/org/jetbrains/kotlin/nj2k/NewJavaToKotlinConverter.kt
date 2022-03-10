@@ -223,7 +223,7 @@ class NewJ2kWithProgressProcessor(
 
     override fun updateState(fileIndex: Int?, phase: Int, description: String) {
         if (fileIndex == null)
-            updateState(phase, 1, 1, fileIndex, description)
+            updateState(phase, 1, 1, null, description)
         else
             updateState(phase, 0, 1, fileIndex, description)
     }

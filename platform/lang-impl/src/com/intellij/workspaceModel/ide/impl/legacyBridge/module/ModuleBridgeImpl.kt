@@ -81,12 +81,8 @@ internal class ModuleBridgeImpl(
   override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: List<Runnable>?) {
-    registerComponents(corePlugin = modules.find { it.pluginId == PluginManagerCore.CORE_ID },
-                       modules = modules,
-                       precomputedExtensionModel = precomputedExtensionModel,
-                       app = app,
-                       listenerCallbacks = listenerCallbacks)
+                                  listenerCallbacks: MutableList<in Runnable>?) {
+    registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app, listenerCallbacks)
   }
 
   override fun callCreateComponents() {
@@ -97,11 +93,8 @@ internal class ModuleBridgeImpl(
                                   modules: Sequence<IdeaPluginDescriptorImpl>,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
-                                  listenerCallbacks: List<Runnable>?) {
-    super.registerComponents(modules = modules,
-                             app = app,
-                             precomputedExtensionModel = precomputedExtensionModel,
-                             listenerCallbacks = listenerCallbacks)
+                                  listenerCallbacks: MutableList<in Runnable>?) {
+    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
     if (corePlugin == null) {
       return
     }

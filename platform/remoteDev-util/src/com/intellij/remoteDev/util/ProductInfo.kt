@@ -14,7 +14,7 @@ data class ProductInfo(
   val buildNumber: String,
   val productCode: String,
   val version: String,
-  val versionSuffix: String,
+  val versionSuffix: String?,
 ) {
   companion object {
     private val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()

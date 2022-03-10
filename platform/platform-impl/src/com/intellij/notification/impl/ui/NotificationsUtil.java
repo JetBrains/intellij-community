@@ -24,7 +24,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 
 /**
@@ -153,7 +152,7 @@ public final class NotificationsUtil {
     };
   }
 
-  public static void configureHtmlEditorKit(@NotNull JEditorPane editorPane) {
+  public static void configureHtmlEditorKit(@NotNull JEditorPane editorPane, boolean notificationColor) {
     HTMLEditorKit kit = new HTMLEditorKitBuilder().withWordWrapViewFactory().withFontResolver(new CSSFontResolver() {
       @Override
       public @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet) {
@@ -163,13 +162,13 @@ public final class NotificationsUtil {
         return defaultFont;
       }
     }).build();
-    setLinkForeground(kit.getStyleSheet());
+    String color = ColorUtil.toHtmlColor(notificationColor ? getLinkButtonForeground() : JBUI.CurrentTheme.Link.Foreground.ENABLED);
+    kit.getStyleSheet().addRule("a {color: " + color + "}");
     editorPane.setEditorKit(kit);
   }
 
-  public static void setLinkForeground(@NotNull StyleSheet styleSheet) {
-    JBColor color = JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
-    styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(color) + "}");
+  public static @NotNull Color getLinkButtonForeground() {
+    return JBColor.namedColor("Notification.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
   }
 
   public static @NotNull Color getMoreButtonForeground() {

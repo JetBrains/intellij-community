@@ -24,6 +24,7 @@ import java.io.Closeable
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.concurrent.thread
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
@@ -48,7 +49,8 @@ data class IDERunContext(
   val closeHandlers: List<IDERunCloseContext.() -> Unit> = listOf(),
   val verboseOutput: Boolean = false,
   val launchName: String = "",
-  val expectedKill: Boolean = false
+  val expectedKill: Boolean = false,
+  val collectNativeThreads: Boolean = false
 ) {
   val contextName: String
     get() = if (launchName.isNotEmpty()) {
@@ -93,6 +95,7 @@ data class IDERunContext(
 
   // TODO: refactor this
   private fun prepareToRunIDE(): IDEStartResult {
+    deleteSavedAppStateOnMac()
     val paths = testContext.paths
     val logsDir = paths.logsDir.createDirectories()
     val jvmCrashLogDirectory = logsDir.resolve("jvm-crash").createDirectories()
@@ -205,6 +208,12 @@ data class IDERunContext(
           onBeforeKilled = { process, pid ->
             if (!expectedKill) {
               val javaProcessId by lazy { getJavaProcessId(jdkHome, startConfig.workDir, pid, process) }
+              if (collectNativeThreads) {
+                val fileToStoreNativeThreads = logsDir.resolve("native-thread-dumps.txt")
+                startProfileNativeThreads(javaProcessId.toString())
+                Thread.sleep(Duration.seconds(15).inWholeMilliseconds)
+                stopProfileNativeThreads(javaProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
+              }
               val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}" + ".txt")
               catchAll { collectJavaThreadDump(jdkHome, startConfig.workDir, javaProcessId, dumpFile) }
             }
@@ -295,5 +304,20 @@ data class IDERunContext(
   fun runIDE(): IDEStartResult {
     return installProfiler()
       .prepareToRunIDE()
+  }
+
+  private fun deleteSavedAppStateOnMac() {
+    if (SystemInfo.isMac) {
+      val filesToBeDeleted = listOf(
+        "com.jetbrains.${testContext.testCase.ideInfo.installerProductName}-EAP.savedState",
+        "com.jetbrains.${testContext.testCase.ideInfo.installerProductName}.savedState"
+      )
+      val home = System.getProperty("user.home")
+      val savedAppStateDir = Paths.get(home).resolve("Library").resolve("Saved Application State")
+      savedAppStateDir.toFile()
+        .walkTopDown().maxDepth(1)
+        .filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
+        .forEach { it.deleteRecursively() }
+    }
   }
 }

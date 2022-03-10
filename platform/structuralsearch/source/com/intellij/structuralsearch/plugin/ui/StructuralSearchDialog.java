@@ -147,6 +147,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       myAlarm.addRequest(runnable, 100);
     }
   };
+  private boolean myChangedConfiguration;
 
   // ui management
   private final Alarm myAlarm;
@@ -278,6 +279,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Override
   public void documentChanged(@NotNull final DocumentEvent event) {
     initValidation();
+    if (!myChangedConfiguration) {
+      myExistingTemplatesComponent.templateChanged();
+    }
   }
 
   private void initializeFilterPanel(@Nullable CompiledPattern compiledPattern) {
@@ -400,15 +404,16 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final JPanel centerPanel = new JPanel(centerPanelLayout);
     centerPanel.add(searchPanel, centerConstraint.newLine().fillXY().growXY().get());
     centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
-    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(12, DEFAULT_HGAP, 4, 12).get());
+    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(8, DEFAULT_HGAP, 8, DEFAULT_HGAP).get());
 
     myExistingTemplatesComponent = new ExistingTemplatesComponent(getProject());
     myExistingTemplatesComponent.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
-    myExistingTemplatesComponent.setConfigurationProducer(() -> {
-      return myConfiguration;
-    });
+    myExistingTemplatesComponent.setConfigurationProducer(() -> myConfiguration);
+    myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
+    myExistingTemplatesComponent.setExportRunnable(() -> exportToClipboard());
+    myExistingTemplatesComponent.setImportRunnable(() -> importFromClipboard());
     myMainSplitter = new OnePixelSplitter(false, 0.2f);
     myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
     myMainSplitter.setSecondComponent(centerPanel);
@@ -462,14 +467,14 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
       initValidation();
     });
+    myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
+      myExistingTemplatesComponent.selectFileType(info.getText());
+    });
 
     // Other actions
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
     mySwitchAction = new SwitchAction();
-    templateActionGroup.addAll(
-      new CopyConfigurationAction(),
-      new PasteConfigurationAction(),
-      Separator.getInstance(),
+    templateActionGroup.add(
       mySwitchAction
     );
 
@@ -1069,7 +1074,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     if (searchEditor != null) {
       searchEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
-    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
+    setEditorContent(false, matchOptions.getSearchPattern());
 
     if (myReplace) {
       final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
@@ -1079,12 +1084,18 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (configuration instanceof ReplaceConfiguration) {
         final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
 
-        UIUtil.setContent(myReplaceCriteriaEdit, replaceOptions.getReplacement());
+        setEditorContent(true, replaceOptions.getReplacement());
       }
       else {
-        UIUtil.setContent(myReplaceCriteriaEdit, matchOptions.getSearchPattern());
+        setEditorContent(true, matchOptions.getSearchPattern());
       }
     }
+  }
+
+  private void setEditorContent(boolean replace, String text) {
+    myChangedConfiguration = true;
+    UIUtil.setContent(replace ? myReplaceCriteriaEdit : mySearchCriteriaEdit, text);
+    myChangedConfiguration = false;
   }
 
   private void saveConfiguration() {
@@ -1201,6 +1212,17 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myExistingTemplatesComponent.updateColors();
   }
 
+  private void exportToClipboard() {
+    CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
+  }
+
+  private void importFromClipboard() {
+    final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    if (!loadConfiguration(contents)) {
+      reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
+    }
+  }
+
   private static class ErrorBorder implements Border {
     private final Border myErrorBorder;
 
@@ -1266,38 +1288,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                       ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
-    }
-  }
-
-  private class CopyConfigurationAction extends AnAction implements DumbAware {
-
-    CopyConfigurationAction() {
-      super(SSRBundle.messagePointer("export.template.action"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
-    }
-  }
-
-  private class PasteConfigurationAction extends AnAction implements DumbAware {
-
-    PasteConfigurationAction() {
-      super(SSRBundle.messagePointer("import.template.action"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-      if (!loadConfiguration(contents)) {
-        reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
-      }
     }
   }
 

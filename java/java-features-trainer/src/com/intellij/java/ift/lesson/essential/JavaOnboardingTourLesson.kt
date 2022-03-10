@@ -204,6 +204,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun LessonContext.debugTasks() {
+    clearBreakpoints()
+
     var logicalPosition = LogicalPosition(0, 0)
     prepareRuntimeTask {
       logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
@@ -218,10 +220,13 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.2"))
     }
 
-    highlightButtonByIdTask("Debug")
+    highlightButtonById("Debug")
 
     actionTask("Debug") {
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.start.debugging"))
+      restoreState {
+        lineWithBreakpoints() != setOf(logicalPosition.line)
+      }
       restoreIfModified(sample)
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
@@ -238,7 +243,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       restoreIfModified(sample)
     }
 
-    highlightButtonByIdTask("Stop")
+    highlightButtonById("Stop")
     actionTask("Stop") {
       showBalloonOnHighlightingComponent(
         JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }

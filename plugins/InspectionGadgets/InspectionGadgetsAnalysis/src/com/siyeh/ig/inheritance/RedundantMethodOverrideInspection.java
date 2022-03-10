@@ -15,6 +15,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +125,15 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
             return true;
           }
           return checkLibraryMethods && element1.getNavigationElement().equals(element2.getNavigationElement());
+        }
+
+        @Override
+        protected PsiClass getQualifierTarget(PsiReferenceExpression ref) {
+          PsiClass target = super.getQualifierTarget(ref);
+          if (target == method.getContainingClass() && target == ClassUtils.getContainingClass(ref)) {
+            return finalSuperMethod.getContainingClass();
+          }
+          return target;
         }
 
         @Override

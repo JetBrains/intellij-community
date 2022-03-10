@@ -223,9 +223,10 @@ public final class PopupUtil {
    * Creates insets with specified top/bottom insets and left/right insets from complex popup text filed
    */
   public static Insets createComplexPopupTextFieldInsets(int top, int bottom) {
-    Insets borderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled();
-    Insets inputInsets = JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets().getUnscaled();
-    return JBUI.insets(top, borderInsets.left + inputInsets.left, bottom, borderInsets.right + inputInsets.right);
+    Insets borderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+    Insets inputInsets = JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets();
+    //noinspection UseDPIAwareInsets
+    return new Insets(JBUI.scale(top), borderInsets.left + inputInsets.left, JBUI.scale(bottom), borderInsets.right + inputInsets.right);
   }
 
   public static void applyNewUIBackground(@Nullable Component component) {
@@ -235,12 +236,14 @@ public final class PopupUtil {
   }
 
   public static Border getComplexPopupHorizontalHeaderBorder() {
-    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
-    return JBUI.Borders.empty(0, headerInsets.left, 0, headerInsets.right);
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
+    //noinspection UseDPIAwareInsets
+    return JBUI.Borders.empty(new Insets(0, headerInsets.left, 0, headerInsets.right));
   }
 
   public static Border getComplexPopupVerticalHeaderBorder() {
-    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().getUnscaled();
-    return JBUI.Borders.empty(headerInsets.top, 0, headerInsets.bottom, 0);
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
+    //noinspection UseDPIAwareInsets
+    return JBUI.Borders.empty(new Insets(headerInsets.top, 0, headerInsets.bottom, 0));
   }
 }

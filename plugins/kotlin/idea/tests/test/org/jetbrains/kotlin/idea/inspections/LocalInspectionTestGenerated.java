@@ -16086,6 +16086,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
         }
 
+        @TestMetadata("valueClassParameter.kt")
+        public void testValueClassParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/valueClassParameter.kt");
+        }
+
         @TestMetadata("withJvmNameUsedFromKotlin.kt")
         public void testWithJvmNameUsedFromKotlin() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/withJvmNameUsedFromKotlin.kt");

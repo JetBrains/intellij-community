@@ -31,6 +31,7 @@ import git4idea.GitCommit
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
 import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
+import git4idea.GitStashUsageCollector
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
@@ -178,7 +179,9 @@ object GitStashOperations {
         handler.addLineListener(untrackedFilesDetector)
         handler.addLineListener(localChangesDetector)
 
-        val result = Git.getInstance().runCommand { handler }
+        val activity = GitStashUsageCollector.logStashPop(project)
+        val result = Git.getInstance().runCommand(handler)
+        activity.finished()
 
         if (hash != null) refreshUnstashedChanges(project, hash, root)
         GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()

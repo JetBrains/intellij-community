@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
@@ -34,6 +35,8 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
+
+val CASE_KEY = Key.create<ImmediateConfigurable.Case>("inlay.case.key")
 
 class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
@@ -189,7 +192,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         item.component.border = JBUI.Borders.empty()
         rightPanel.add(item.component)
         if (treeNode.isLeaf) {
-          addPreview(item.getCasePreview(null) ?: item.previewText, item)
+          addPreview(item.getCasePreview(null) ?: item.previewText, item, null)
         }
       }
       is ImmediateConfigurable.Case -> {
@@ -197,7 +200,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val model = parent.userObject as InlayProviderSettingsModel
         addDescription(model.getCaseDescription(item))
         val preview = model.getCasePreview(item)
-        addPreview(preview, model)
+        addPreview(preview, model, item)
       }
     }
     if (treeNode != null) {
@@ -207,10 +210,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     rightPanel.repaint()
   }
 
-  private fun addPreview(previewText: String?, model: InlayProviderSettingsModel) {
+  private fun addPreview(previewText: String?, model: InlayProviderSettingsModel, case: ImmediateConfigurable.Case?) {
     if (previewText != null) {
       val editorTextField = createEditor(model.getCasePreviewLanguage(null) ?: model.language, project) { editor ->
         currentEditor = editor
+        CASE_KEY.set(editor, case)
         updateHints(editor, model)
       }
       editorTextField.text = previewText
@@ -228,17 +232,21 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   }
 
   private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
-    val fileType = model.language.associatedFileType ?: PlainTextFileType.INSTANCE
-    ReadAction.nonBlocking(Callable {
-      model.createFile(project, fileType, editor.document)
-    })
-      .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
-        ApplicationManager.getApplication().runWriteAction {
-          model.collectAndApply(editor, psiFile)
+    val fileType = model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
+    ApplicationManager.getApplication().invokeLater {
+      ReadAction.nonBlocking(Callable {
+        val file = model.createFile(project, fileType, editor.document)
+        val continuation = model.collectData(editor, file)
+        continuation
+      })
+        .finishOnUiThread(ModalityState.current()) { continuation ->
+          ApplicationManager.getApplication().runWriteAction {
+            continuation.run()
+          }
         }
-      }
-      .inSmartMode(project)
-      .submit(AppExecutorUtil.getAppExecutorService())
+        .inSmartMode(project)
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
   }
 
   private fun addDescription(@Nls s: String?) {

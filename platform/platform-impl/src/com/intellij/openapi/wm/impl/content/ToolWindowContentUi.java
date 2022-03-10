@@ -412,9 +412,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         if (e.isPopupTrigger() || UIUtil.isCloseClick(e)) return;
-        PointerInfo info = MouseInfo.getPointerInfo();
         if (!isToolWindowDrag(e)) {
-          myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+          myLastPoint.set(e.getLocationOnScreen());
           myPressPoint.set(myLastPoint.get());
           myDragTracker.set(LocationOnDragTracker.startDrag(e));
           if (allowResize && ui.isResizeable()) {
@@ -484,13 +483,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
         //"Dock" modes,
         // for "Undock" mode processing see com.intellij.toolWindow.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
-        PointerInfo info = MouseInfo.getPointerInfo();
-        if (info == null) return;
-        Point newMouseLocation = info.getLocation();
+        Point newMouseLocation = e.getLocationOnScreen();
 
         Window window = SwingUtilities.windowForComponent(c);
         if (!(window instanceof IdeFrame)) {
-          myDragTracker.get().updateLocationOnDrag(window);
+          myDragTracker.get().updateLocationOnDrag(window, newMouseLocation);
         }
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();

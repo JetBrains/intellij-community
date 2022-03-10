@@ -17,7 +17,13 @@ interface FsRootDataLoader {
   val name: String
 
   @Throws(IOException::class)
+  fun ensureLoaded(storage: Path)
+
+  @Throws(IOException::class)
   fun deleteRootRecord(storage: Path, rootId: Int)
+
+  @Throws(IOException::class)
+  fun deleteDirectoryRecord(storage: Path, id: Int)
 
   @Throws(IOException::class)
   fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) {

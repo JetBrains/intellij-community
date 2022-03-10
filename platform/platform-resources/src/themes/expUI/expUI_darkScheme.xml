@@ -11,6 +11,7 @@
     <option name="ANNOTATIONS_COLOR" value="8d9199" />
     <option name="ANNOTATIONS_LAST_COMMIT_COLOR" value="ced0d6" />
     <option name="CARET_ROW_COLOR" value="2b2d30" />
+    <option name="CONSOLE_BACKGROUND_KEY" value="1e1f22" />
     <option name="DELETED_LINES_COLOR" value="868a91" />
     <option name="DOCUMENTATION_COLOR" value="2b2d30" />
     <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="549159" />
@@ -32,9 +33,9 @@
   <attributes>
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
-        <option name="FONT_TYPE" value="1" />
         <option name="FOREGROUND" value="ced9d2" />
         <option name="BACKGROUND" value="326146" />
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="TEXT">
@@ -48,6 +49,13 @@
         <option name="BACKGROUND" value="3d3322" />
         <option name="ERROR_STRIPE_COLOR" value="be9117" />
         <option name="EFFECT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="a571e6" />
+        <option name="EFFECT_COLOR" value="a571e6" />
+        <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
   </attributes>

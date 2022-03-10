@@ -26,7 +26,11 @@ public final class WSLUtilTest extends WslTestBase {
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\", wsl.getWindowsPath("/mnt/"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\", wsl.getWindowsPath("/"));
     assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
+    assertEquals("C:", wsl.getWindowsPath("/mnt/C"));
 
     assertEquals("C:\\temp\\foo", wsl.getWindowsPath("/mnt/c/temp/foo"));
     assertEquals("C:\\temp\\KeepCase", wsl.getWindowsPath("/mnt/c/temp/KeepCase"));

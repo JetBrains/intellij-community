@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -337,7 +337,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
-    initInspectionTools(element.getProject());
+    initInspectionTools();
     for (Tools toolList : myTools.values()) {
       final InspectionToolWrapper tool = toolList.getInspectionTool(element);
       if (id.equals(tool.getID())) return tool;
@@ -346,7 +346,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
-    initInspectionTools(element.getProject());
+    initInspectionTools();
     List<InspectionToolWrapper<?, ?>> result = null;
     for (Tools toolList : myTools.values()) {
       final InspectionToolWrapper tool = toolList.getInspectionTool(element);
@@ -399,7 +399,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @Override
   public @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(@Nullable PsiElement element) {
-    initInspectionTools(element == null ? null : element.getProject());
+    initInspectionTools();
     List<InspectionToolWrapper<?, ?>> result = new ArrayList<>(myTools.size());
     for (Tools toolList : myTools.values()) {
       result.add(toolList.getInspectionTool(element));
@@ -409,7 +409,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @Override
   public @NotNull List<Tools> getAllEnabledInspectionTools(Project project) {
-    initInspectionTools(project);
+    initInspectionTools();
     List<Tools> result = new ArrayList<>();
     for (final ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
@@ -455,7 +455,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     if (myBaseProfile != null) {
-      myBaseProfile.initInspectionTools(myBaseProfile.getProfileManager() instanceof ProjectInspectionProfileManager ? project : null);
+      myBaseProfile.initInspectionTools();
     }
 
     List<InspectionToolWrapper<?, ?>> tools;
@@ -688,7 +688,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @Override
   public boolean isExecutable(@Nullable Project project) {
-    initInspectionTools(project);
+    initInspectionTools();
     for (Tools tools : myTools.values()) {
       if (tools.isEnabled()) return true;
     }
@@ -721,7 +721,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return;
     }
 
-    initInspectionTools(project);
+    initInspectionTools();
 
     for (Element scopeElement : scopes.getChildren(SCOPE)) {
       final String profile = scopeElement.getAttributeValue(PROFILE);
@@ -779,7 +779,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public @NotNull List<ScopeToolState> getDefaultStates(@Nullable Project project) {
-    initInspectionTools(project);
+    initInspectionTools();
     List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {
       result.add(tools.getDefaultState());
@@ -869,12 +869,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @Override
   public @Nullable ToolsImpl getToolsOrNull(@NotNull String name, @Nullable Project project) {
-    initInspectionTools(project);
+    initInspectionTools();
     return myTools.get(name);
   }
 
   public Collection<ToolsImpl> getTools(@Nullable Project project) {
-    initInspectionTools(project);
+    initInspectionTools();
     return myTools.values();
   }
 

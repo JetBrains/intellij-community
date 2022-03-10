@@ -170,6 +170,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
+  public boolean canStoreSettings() {
+    return !(getStore() instanceof NonPersistentModuleStore);
+  }
+
+  @Override
   @NotNull
   public Path getModuleNioFile() {
     if (!isPersistent()) {
@@ -336,6 +341,18 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleProductionSourceScope() {
+    return myModuleScopeProvider.getModuleProductionSourceScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleTestSourceScope() {
+    return myModuleScopeProvider.getModuleTestSourceScope();
   }
 
   @Override

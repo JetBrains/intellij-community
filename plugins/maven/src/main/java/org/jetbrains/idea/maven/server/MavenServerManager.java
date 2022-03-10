@@ -209,11 +209,7 @@ public final class MavenServerManager implements Disposable {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        synchronized (myMultimoduleDirToConnectorMap) {
-          connector.shutdown(false);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> connector.shutdown(true));
     });
   }
 
@@ -260,16 +256,20 @@ public final class MavenServerManager implements Disposable {
 
   @Override
   public void dispose() {
+    shutdown(true);
   }
 
 
-  public synchronized void shutdown(boolean wait) {
+  public void shutdown(boolean wait) {
     Collection<MavenServerConnector> values;
     synchronized (myMultimoduleDirToConnectorMap) {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
     values.forEach(c -> c.shutdown(wait));
+    if (wait) {
+      assert myMultimoduleDirToConnectorMap.isEmpty();
+    }
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {

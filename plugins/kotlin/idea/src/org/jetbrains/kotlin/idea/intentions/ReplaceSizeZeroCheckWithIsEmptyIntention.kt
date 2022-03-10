@@ -20,10 +20,6 @@ class ReplaceSizeZeroCheckWithIsEmptyInspection : IntentionBasedInspection<KtBin
 class ReplaceSizeZeroCheckWithIsEmptyIntention : ReplaceSizeCheckIntention(
     KotlinBundle.lazyMessage("replace.size.zero.check.with.isempty")
 ) {
-    override fun getGenerateMethodSymbol() = "isEmpty()"
-
-    override fun getTargetExpression(element: KtBinaryExpression) = getCheckedExpression(element)
-
     companion object {
         fun getCheckedExpression(element: KtBinaryExpression): KtExpression? = when (element.operationToken) {
             KtTokens.EQEQ -> when {
@@ -38,4 +34,8 @@ class ReplaceSizeZeroCheckWithIsEmptyIntention : ReplaceSizeCheckIntention(
             else -> null
         }
     }
+
+    override fun getTargetExpression(element: KtBinaryExpression) = getCheckedExpression(element)
+
+    override fun getReplacement(expression: KtExpression, isCountCall: Boolean) = Replacement(expression, "isEmpty()")
 }

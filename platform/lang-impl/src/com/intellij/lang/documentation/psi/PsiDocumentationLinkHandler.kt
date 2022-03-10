@@ -7,6 +7,7 @@ import com.intellij.lang.documentation.*
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 
+@Suppress("DEPRECATION")
 internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
 
   override fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {

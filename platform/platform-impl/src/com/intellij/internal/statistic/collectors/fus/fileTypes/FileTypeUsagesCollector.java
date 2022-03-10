@@ -63,12 +63,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     projectFileIndex.iterateContent(
       file -> {
         FileType type = file.getFileType();
-        if (filesByTypeCount.containsKey(type)) {
-          filesByTypeCount.put(type, filesByTypeCount.get(type) + 1);
-        }
-        else {
-          filesByTypeCount.put(type, 1);
-        }
+        filesByTypeCount.put(type, filesByTypeCount.getOrDefault(type, 0) + 1);
         return true;
       },
       //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types

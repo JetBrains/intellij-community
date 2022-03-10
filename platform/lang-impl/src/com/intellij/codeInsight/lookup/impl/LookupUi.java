@@ -68,6 +68,10 @@ class LookupUi {
   private Boolean myPositionedAbove = null;
 
   LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list) {
+    this(lookup, advertiser, list, true);
+  }
+
+  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list, boolean showBottomPanel) {
     myLookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
@@ -103,7 +107,7 @@ class LookupUi {
     myBottomPanel.add(myMenuButton);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
-    if (CodeInsightSettings.getInstance().SHOW_BOTTOM_PANEL_IN_LOOKUP_UI) {
+    if (showBottomPanel) {
       layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
     }
 

@@ -3,6 +3,7 @@ package com.intellij.toolWindow
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.Queryable
@@ -23,14 +24,12 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.ui.plaf.beg.BegResources.m
 import com.intellij.util.MathUtil
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
@@ -48,7 +47,7 @@ import javax.swing.border.Border
 
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
-  val toolWindow: ToolWindowImpl,
+  internal @JvmField val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
@@ -383,6 +382,17 @@ class InternalDecoratorImpl internal constructor(
     return divider!!
   }
 
+  override fun doLayout() {
+    super.doLayout()
+    initDivider().bounds = when (toolWindow.anchor) {
+      ToolWindowAnchor.TOP -> Rectangle(0, height - 1, width, 0)
+      ToolWindowAnchor.LEFT -> Rectangle(width - 1, 0, 0, height)
+      ToolWindowAnchor.BOTTOM -> Rectangle(0, 0, width, 0)
+      ToolWindowAnchor.RIGHT -> Rectangle(0, 0, 0, height)
+      else -> Rectangle(0, 0, 0, 0)
+    }
+  }
+
   fun applyWindowInfo(info: WindowInfo) {
     if (info.type == ToolWindowType.SLIDING) {
       val anchor = info.anchor
@@ -398,7 +408,7 @@ class InternalDecoratorImpl internal constructor(
     }
     else if (divider != null) {
       // docked and floating windows don't have divider
-      divider!!.parent.remove(divider)
+      divider!!.parent?.remove(divider)
       divider = null
     }
 
@@ -638,14 +648,30 @@ class InternalDecoratorImpl internal constructor(
                                                           private val decorator: InternalDecoratorImpl) : MouseAdapter() {
     private var isDragging = false
     private fun isInDragZone(e: MouseEvent): Boolean {
-      val point = Point(e.point)
-      SwingUtilities.convertPointToScreen(point, e.component)
-      if ((if (decorator.toolWindow.windowInfo.anchor.isHorizontal) point.y else point.x) == 0) {
-        return false
+      if (!divider.isShowing
+          || (divider.width == 0 && divider.height == 0)
+          || e.id == MouseEvent.MOUSE_DRAGGED) return false
+
+      val point = SwingUtilities.convertPoint(e.component, e.point, divider)
+      val isTopBottom = decorator.toolWindow.windowInfo.anchor.isHorizontal
+      val activeArea = Rectangle(divider.size)
+
+      var resizeArea = ToolWindowPane.headerResizeArea
+      val target = SwingUtilities.getDeepestComponentAt(e.component, e.point.x, e.point.y)
+      if (target is JScrollBar || target is ActionButton) {
+        resizeArea /= 3
       }
-      SwingUtilities.convertPointFromScreen(point, divider)
-      return Math.abs(
-        if (decorator.toolWindow.windowInfo.anchor.isHorizontal) point.y else point.x) <= ToolWindowPane.headerResizeArea
+
+      if (isTopBottom) {
+        activeArea.y -= resizeArea
+        activeArea.height += 2 * resizeArea
+      }
+      else {
+        activeArea.x -= resizeArea
+        activeArea.width += 2 * resizeArea
+      }
+
+      return activeArea.contains(point)
     }
 
     private fun updateCursor(event: MouseEvent, isInDragZone: Boolean) {

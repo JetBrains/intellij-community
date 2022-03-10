@@ -186,13 +186,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 is PackageViewDescriptor -> scope.findPackage(name)
                 else -> null
             }?.let { conflict ->
-                if (imports.any {
-                        !it.isAllUnder && it.importPath?.fqName == conflict.importableFqName && it.importPath?.importedName == name
-                    } ||
-                    // local class
-                    conflict.safeAs<ClassDescriptor>()?.containingDeclaration is SimpleFunctionDescriptor ||
-                    // nested class
-                    conflict.safeAs<ClassifierDescriptor>()?.classId?.isNestedClass == true) {
+                if (conflict.explicitlyImported(name, imports) || conflict.comesFromLocalScopes()) {
                     return ImportDescriptorResult.FAIL
                 }
             }
@@ -436,6 +430,19 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             addImport(project, file, fqName, allUnder)
         }
     }
+
+    private fun DeclarationDescriptor.explicitlyImported(
+        name: Name,
+        imports: List<KtImportDirective>
+    ) = imports.any {
+        !it.isAllUnder && it.importPath?.fqName == importableFqName && it.importPath?.importedName == name
+    }
+
+    private fun DeclarationDescriptor.comesFromLocalScopes(): Boolean =
+        // local class
+        DescriptorUtils.isLocal(this) ||
+        // nested class
+        this.safeAs<ClassifierDescriptor>()?.classId?.isNestedClass == true
 
     companion object {
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {

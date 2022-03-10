@@ -8,11 +8,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,18 +25,18 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   private boolean myShowTreeNodes = true;
 
   private final Project myProject;
-  private PsiElement myRootPsiElement = null;
-  private final Object myRootElement = new Object();
+  private PsiElement myRootPsiElement;
+  private final Object myRootElement = ObjectUtils.sentinel("Psi Viewer Root");
 
-  public ViewerTreeStructure(Project project) {
+  ViewerTreeStructure(@NotNull Project project) {
     myProject = project;
   }
 
-  public void setRootPsiElement(PsiElement rootPsiElement) {
+  void setRootPsiElement(PsiElement rootPsiElement) {
     myRootPsiElement = rootPsiElement;
   }
 
-  public PsiElement getRootPsiElement() {
+  PsiElement getRootPsiElement() {
     return myRootPsiElement;
   }
 
@@ -45,7 +47,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object @NotNull [] getChildElements(@NotNull final Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     if (myRootElement == element) {
       if (myRootPsiElement == null) {
         return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
@@ -56,12 +58,9 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
       List<PsiFile> files = ((PsiFile)myRootPsiElement).getViewProvider().getAllFiles();
       return PsiUtilCore.toPsiFileArray(files);
     }
-    final Object[][] children = new Object[1][];
-    children[0] = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    ApplicationManager.getApplication().runReadAction(() -> {
-      final Object[] result;
+    return ApplicationManager.getApplication().runReadAction((Computable<Object[]>)() -> {
       if (myShowTreeNodes) {
-        final ArrayList<Object> list = new ArrayList<>();
+        ArrayList<Object> list = new ArrayList<>();
         ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                              element instanceof ASTNode? (ASTNode)element : null;
         if (element instanceof Inject) {
@@ -72,37 +71,31 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           ASTNode child = root.getFirstChildNode();
           while (child != null) {
             if (myShowWhiteSpaces || child.getElementType() != TokenType.WHITE_SPACE) {
-              final PsiElement childElement = child.getPsi();
+              PsiElement childElement = child.getPsi();
               list.add(childElement == null ? child : childElement);
             }
             child = child.getTreeNext();
           }
-          final PsiElement psi = root.getPsi();
+          PsiElement psi = root.getPsi();
           if (psi instanceof PsiLanguageInjectionHost) {
             InjectedLanguageManager.getInstance(myProject).enumerate(psi, (injectedPsi, places) -> list.add(new Inject(psi, injectedPsi)));
           }
         }
-        result = ArrayUtil.toObjectArray(list);
+        return ArrayUtil.toObjectArray(list);
       }
-      else {
-        final PsiElement[] elementChildren = ((PsiElement)element).getChildren();
-        if (!myShowWhiteSpaces) {
-          final List<PsiElement> childrenList = new ArrayList<>(elementChildren.length);
-          for (PsiElement psiElement : elementChildren) {
-            if (psiElement instanceof PsiWhiteSpace) {
-              continue;
-            }
-            childrenList.add(psiElement);
+      PsiElement[] elementChildren = ((PsiElement)element).getChildren();
+      if (!myShowWhiteSpaces) {
+        List<PsiElement> childrenList = new ArrayList<>(elementChildren.length);
+        for (PsiElement psiElement : elementChildren) {
+          if (psiElement instanceof PsiWhiteSpace) {
+            continue;
           }
-          result = PsiUtilCore.toPsiElementArray(childrenList);
+          childrenList.add(psiElement);
         }
-        else {
-          result = elementChildren;
-        }
+        return PsiUtilCore.toPsiElementArray(childrenList);
       }
-      children[0] = result;
+      return elementChildren;
     });
-    return children[0];
   }
 
   @Override
@@ -113,12 +106,19 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     if (element == myRootPsiElement) {
       return myRootElement;
     }
-    if (element instanceof PsiFile &&
-        InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)) != null) {
-      return new Inject(InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)),
-                        (PsiElement)element);
+    if (element instanceof PsiFile) {
+      PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost((PsiFile)element);
+      if (host != null) {
+        return new Inject(host, (PsiElement)element);
+      }
     }
-    return element instanceof Inject ? ((Inject)element).getParent() : ((PsiElement)element).getContext();
+    if (element instanceof Inject) {
+      return ((Inject)element).getParent();
+    }
+    if (element instanceof PsiElement) {
+      return ((PsiElement)element).getContext();
+    }
+    return null;
   }
 
   @Override
@@ -132,9 +132,9 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
-      return new NodeDescriptor(myProject, null) {
+      return new NodeDescriptor<>(myProject, null) {
         @Override
         public boolean update() {
           return false;
@@ -148,36 +148,30 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return new ViewerNodeDescriptor(myProject, element, parentDescriptor);
   }
 
-  public boolean isShowWhiteSpaces() {
-    return myShowWhiteSpaces;
-  }
-
-  public void setShowWhiteSpaces(boolean showWhiteSpaces) {
+  void setShowWhiteSpaces(boolean showWhiteSpaces) {
     myShowWhiteSpaces = showWhiteSpaces;
   }
 
-  public boolean isShowTreeNodes() {
-    return myShowTreeNodes;
-  }
-
-  public void setShowTreeNodes(final boolean showTreeNodes) {
+  void setShowTreeNodes(boolean showTreeNodes) {
     myShowTreeNodes = showTreeNodes;
   }
 
   static class Inject {
+    @NotNull
     private final PsiElement myParent;
+    @NotNull
     private final PsiElement myPsi;
 
-    Inject(PsiElement parent, PsiElement psi) {
+    Inject(@NotNull PsiElement parent, @NotNull PsiElement psi) {
       myParent = parent;
       myPsi = psi;
     }
 
-    public PsiElement getParent() {
+    public @NotNull PsiElement getParent() {
       return myParent;
     }
 
-    public PsiElement getPsi() {
+    public @NotNull PsiElement getPsi() {
       return myPsi;
     }
 

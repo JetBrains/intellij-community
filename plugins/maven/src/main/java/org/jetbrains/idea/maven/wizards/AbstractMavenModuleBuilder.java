@@ -87,7 +87,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   private void setMavenModuleFilePath(@NotNull Project project, @NotNull String moduleName) {
     if (myParentProject == null) return;
-    if (!MavenProjectImporter.isImportToTreeStructureEnabled()) return;
+    if (!MavenProjectImporter.isImportToTreeStructureEnabled(project)) return;
     String parentModuleName = MavenProjectImportContextProvider.getModuleName(myParentProject, project);
     if (StringUtil.isNotEmpty(parentModuleName)) {
       String moduleFilePath = project.getBasePath() + File.separator + parentModuleName + "." + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;

@@ -1,0 +1,5 @@
+void m(boolean b) {
+    if (!b) {
+
+    }
+}

@@ -1,17 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 9)
+    val GROUP = EventLogGroup("vcs", 12)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -39,6 +41,11 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     @JvmField
     val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
+    private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
+    private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
+    private val CLM_REFRESH = GROUP.registerIdeActivity(activityName = "clm.refresh",
+                                                        startEventAdditionalFields = arrayOf(VCS_FIELD, IS_FULL_REFRESH_FIELD))
+
     @JvmStatic
     fun logRefreshActionPerformed(project: Project,
                                   changesBefore: Collection<Change>,
@@ -53,6 +60,14 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
                                WAS_UPDATING_BEFORE.with(wasUpdatingBefore),
                                CHANGES_DELTA.with(changesDelta),
                                UNVERSIONED_DELTA.with(unversionedDelta))
+    }
+
+    @JvmStatic
+    fun logClmRefresh(project: Project, vcs: AbstractVcs, everythingDirty: Boolean): StructuredIdeActivity {
+      return CLM_REFRESH.started(project) {
+        listOf(VCS_FIELD.with(vcs.name),
+               IS_FULL_REFRESH_FIELD.with(everythingDirty))
+      }
     }
 
     private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {

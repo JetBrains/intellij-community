@@ -40,11 +40,7 @@ public final class LocationOnDragTracker {
   /**
    * Updates the location of the dragged component on drag progress.
    */
-  public void updateLocationOnDrag(@NotNull Component draggedComp) {
-    PointerInfo mouseInfo = MouseInfo.getPointerInfo();
-    if (mouseInfo == null) return;
-
-    Point mouseLocation = mouseInfo.getLocation();
+  public void updateLocationOnDrag(@NotNull Component draggedComp, @NotNull Point mouseLocation) {
     Point offsetXY = myOffsetXY.getLocation();
 
     if (!myMonitorBounds.contains(mouseLocation)) {

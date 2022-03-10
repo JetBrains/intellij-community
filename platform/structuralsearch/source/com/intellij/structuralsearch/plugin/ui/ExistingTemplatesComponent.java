@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
+import java.util.Enumeration;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -44,8 +45,14 @@ public final class ExistingTemplatesComponent {
   private final JComponent panel;
   private final JComponent myToolbar;
   private Supplier<? extends Configuration> myConfigurationProducer;
+  private Supplier<? extends EditorTextField> mySearchEditorProducer;
+  private Runnable myExportRunnable;
+  private Runnable myImportRunnable;
+  private final DefaultMutableTreeNode myNewTemplateNode;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
+  private boolean myTemplateChanged = false;
+  private boolean myNewTemplateAutoselect = false;
 
   ExistingTemplatesComponent(Project project) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
@@ -53,6 +60,9 @@ public final class ExistingTemplatesComponent {
     patternTree = createTree(patternTreeModel);
 
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
+
+    // 'New Template' node
+    root.add(myNewTemplateNode = new NewTemplateNode());
 
     // 'Recent' node
     root.add(myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")));
@@ -101,8 +111,38 @@ public final class ExistingTemplatesComponent {
     final DumbAwareAction removeAction = new DumbAwareAction(SSRBundle.messagePointer("remove.template"),
                                                              AllIcons.General.Remove) {
       @Override
+      public void update(@NotNull AnActionEvent e) {
+        final DefaultMutableTreeNode selectedNode = getSelectedNode();
+        e.getPresentation().setEnabled(selectedNode != null && selectedNode.isNodeAncestor(myUserTemplatesNode));
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeTemplate(project);
+      }
+    };
+
+    final DumbAwareAction exportAction = new DumbAwareAction(SSRBundle.messagePointer("export.template.action"), AllIcons.ToolbarDecorator.Export) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (mySearchEditorProducer != null) {
+          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchEditorProducer.get().getText()));
+        }
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myExportRunnable != null) {
+          myExportRunnable.run();
+        }
+      }
+    };
+    final DumbAwareAction importAction = new DumbAwareAction(SSRBundle.messagePointer("import.template.action"), AllIcons.ToolbarDecorator.Import) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myImportRunnable != null) {
+          myImportRunnable.run();
+        }
       }
     };
 
@@ -111,6 +151,9 @@ public final class ExistingTemplatesComponent {
     actionGroup.add(Separator.getInstance());
     actionGroup.addAll(actionManager.createExpandAllAction(treeExpander, patternTree),
                        actionManager.createCollapseAllAction(treeExpander, patternTree));
+    actionGroup.add(Separator.getInstance());
+    actionGroup.add(exportAction);
+    actionGroup.add(importAction);
 
     final var optionsToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ExistingTemplatesComponent", actionGroup, true);
     optionsToolbar.setTargetComponent(patternTree);
@@ -182,6 +225,31 @@ public final class ExistingTemplatesComponent {
     ConfigurationManager.getInstance(project).removeConfiguration(configuration);
   }
 
+  public void selectFileType(String name) {
+    final var root = (DefaultMutableTreeNode) patternTreeModel.getRoot();
+    final Enumeration<TreeNode> children = root.children();
+    while (children.hasMoreElements()) {
+      final var node = (DefaultMutableTreeNode) children.nextElement();
+      for (String lang : node.toString().split("/")) {
+        if (lang.equals(name)) {
+          TreeUtil.selectInTree(node, false, patternTree, true);
+          return;
+        }
+      }
+    }
+  }
+
+  public void templateChanged() {
+    if (!myTemplateChanged) {
+      myTemplateChanged = true;
+      if (!myNewTemplateNode.equals(getSelectedNode())) {
+        myNewTemplateAutoselect = true;
+        TreeUtil.selectInTree(myNewTemplateNode, false, patternTree, true);
+        myNewTemplateAutoselect = false;
+      }
+    }
+  }
+
   @NotNull
   private static DefaultMutableTreeNode getOrCreateCategoryNode(@NotNull DefaultMutableTreeNode root, String[] path) {
     DefaultMutableTreeNode result = root;
@@ -211,16 +279,12 @@ public final class ExistingTemplatesComponent {
     TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
-  public Configuration getSelectedConfiguration() {
+  public DefaultMutableTreeNode getSelectedNode() {
     final Object selection = patternTree.getLastSelectedPathComponent();
     if (!(selection instanceof DefaultMutableTreeNode)) {
       return null;
     }
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-    if (!(node.getUserObject() instanceof Configuration)) {
-      return null;
-    }
-    return (Configuration)node.getUserObject();
+    return (DefaultMutableTreeNode)selection;
   }
 
   private static Tree createTree(TreeModel treeModel) {
@@ -268,6 +332,8 @@ public final class ExistingTemplatesComponent {
     return panel;
   }
 
+  private static class NewTemplateNode extends DefaultMutableTreeNode {}
+
   private static class ExistingTemplatesTreeCellRenderer extends ColoredTreeCellRenderer {
 
     private final TreeSpeedSearch mySpeedSearch;
@@ -286,14 +352,18 @@ public final class ExistingTemplatesComponent {
                                       boolean hasFocus) {
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       final Object userObject = treeNode.getUserObject();
-      if (userObject == null) return;
+      if (userObject == null && !(treeNode instanceof NewTemplateNode)) return;
 
       final Color background = UIUtil.getTreeBackground(selected, hasFocus);
       final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;
-      if (userObject instanceof Configuration) {
+      if (treeNode instanceof NewTemplateNode) {
+        text = SSRBundle.message("new.template.node");
+        style = SimpleTextAttributes.STYLE_BOLD;
+      }
+      else if (userObject instanceof Configuration) {
         text = ((Configuration)userObject).getName();
         style = SimpleTextAttributes.STYLE_PLAIN;
       }
@@ -308,8 +378,13 @@ public final class ExistingTemplatesComponent {
   public void onConfigurationSelected(Consumer<Configuration> consumer) {
     patternTree.addTreeSelectionListener(event -> {
       final var selection = patternTree.getLastSelectedPathComponent();
-      if (!(selection instanceof DefaultMutableTreeNode)) {
+      if (!(selection instanceof DefaultMutableTreeNode) || myNewTemplateAutoselect) {
         return;
+      }
+
+      if (myTemplateChanged) {
+        myNewTemplateNode.setUserObject(myConfigurationProducer.get());
+        myTemplateChanged = false;
       }
 
       final var configuration = ((DefaultMutableTreeNode)selection).getUserObject();
@@ -321,6 +396,18 @@ public final class ExistingTemplatesComponent {
 
   public void setConfigurationProducer(Supplier<? extends Configuration> configurationProducer) {
     myConfigurationProducer = configurationProducer;
+  }
+
+  public void setSearchEditorProducer(Supplier<? extends EditorTextField> editorProducer) {
+    mySearchEditorProducer = editorProducer;
+  }
+
+  public void setExportRunnable(Runnable exportRunnable) {
+    myExportRunnable = exportRunnable;
+  }
+
+  public void setImportRunnable(Runnable importRunnable) {
+    myImportRunnable = importRunnable;
   }
 
   public void updateColors() {

@@ -183,6 +183,12 @@ final class PersistentFSTreeAccessor {
     }
   }
 
+  void deleteDirectoryRecord(int id) throws IOException {
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.deleteDirectoryRecord(getRootsStoragePath(), id);
+    }
+  }
+
   void deleteRootRecord(int fileId) throws IOException {
     myFSConnection.markDirty();
 
@@ -220,6 +226,10 @@ final class PersistentFSTreeAccessor {
   }
 
   void ensureLoaded() throws IOException {
+    if (myFsRootDataLoader != null) {
+      myFsRootDataLoader.ensureLoaded(getRootsStoragePath());
+    }
+
     myFSConnection.getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
   }
 

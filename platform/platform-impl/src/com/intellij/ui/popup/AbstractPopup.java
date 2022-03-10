@@ -8,6 +8,7 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -1284,6 +1285,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (ExperimentalUI.isNewUI()) {
       mySpeedSearchPatternField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       textField.setOpaque(false);
+      textField.putClientProperty("TextFieldWithoutMargins", true);
+      textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true);
+      textField.putClientProperty("TextField.NoMinHeightBounds", true);
       JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
       mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,

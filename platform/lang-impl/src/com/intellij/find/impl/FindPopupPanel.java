@@ -826,9 +826,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
 
-      Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled();
-      myPreviewSplitter.setBlindZone(() -> JBUI.insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
-      scrollPane.setBorder(JBUI.Borders.empty(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
+      Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+      //noinspection UseDPIAwareInsets
+      myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
+      //noinspection UseDPIAwareInsets
+      scrollPane.setBorder(JBUI.Borders.empty(new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right)));
       bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));

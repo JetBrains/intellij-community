@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A storage for storing data in {@link SegmentArrayWithData}.
@@ -12,19 +13,22 @@ public interface DataStorage {
 
   void remove(int startIndex, int endIndex, int mySegmentCount);
 
-  void replace(DataStorage storage, int startOffset, int len);
+  void replace(@NotNull DataStorage storage, int startOffset, int len);
 
-  void insert(DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount);
+  void insert(@NotNull DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount);
 
   int getData(int index);
 
-  int packData(IElementType tokenType, int state, boolean isRestartableState);
+  int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState);
 
   int unpackStateFromData(int data);
 
+  @NotNull
   IElementType unpackTokenFromData(int data);
 
+  @NotNull
   DataStorage copy();
 
+  @NotNull
   DataStorage createStorage();
 }

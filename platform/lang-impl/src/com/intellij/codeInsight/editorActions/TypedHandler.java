@@ -64,8 +64,6 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
   private static final KeyedExtensionCollector<QuoteHandler, String> quoteHandlers = new KeyedExtensionCollector<>(QuoteHandlerEP.EP_NAME);
 
-  private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<>();
-
   public TypedHandler(TypedActionHandler originalHandler){
     super(originalHandler);
   }
@@ -86,12 +84,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return quoteHandler;
   }
 
-  public static QuoteHandler getLanguageQuoteHandler(Language baseLanguage) {
-    for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
-      if (entry.getKey().isInstance(baseLanguage)) {
-        return entry.getValue();
-      }
-    }
+  private static QuoteHandler getLanguageQuoteHandler(Language baseLanguage) {
     return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
   }
 
@@ -106,11 +99,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return fileType;
   }
 
-  public static void registerBaseLanguageQuoteHandler(@NotNull Class<? extends Language> languageClass, @NotNull QuoteHandler quoteHandler) {
-    ourBaseLanguageQuoteHandlers.put(languageClass, quoteHandler);
-  }
-
-  public static QuoteHandler getQuoteHandlerForType(@NotNull FileType fileType) {
+  private static QuoteHandler getQuoteHandlerForType(@NotNull FileType fileType) {
     return ContainerUtil.getFirstItem(quoteHandlers.forKey(fileType.getName()));
   }
 
@@ -277,7 +266,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   public static void autoPopupCompletion(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {
-    if (charTyped == '.' || isAutoPopup(editor, file, charTyped)) {
+    boolean allowSlashes = Boolean.TRUE.equals(editor.getUserData(AutoPopupController.ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS));
+    if (charTyped == '.' || (allowSlashes && charTyped == '/') || isAutoPopup(editor, file, charTyped)) {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
   }
@@ -349,7 +339,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   @NotNull
-  public static Editor injectedEditorIfCharTypedIsSignificant(final int charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
+  static Editor injectedEditorIfCharTypedIsSignificant(final int charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
     int offset = editor.getCaretModel().getOffset();
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
@@ -406,20 +396,21 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
     if (!matched) {
       String text;
-      if (lparenChar == '(') {
-        text = ")";
-      }
-      else if (lparenChar == '[') {
-        text = "]";
-      }
-      else if (lparenChar == '<') {
-        text = ">";
-      }
-      else if (lparenChar == '{') {
-        text = "}";
-      }
-      else {
-        throw new AssertionError("Unknown char "+lparenChar);
+      switch (lparenChar) {
+        case '(':
+          text = ")";
+          break;
+        case '[':
+          text = "]";
+          break;
+        case '<':
+          text = ">";
+          break;
+        case '{':
+          text = "}";
+          break;
+        default:
+          throw new AssertionError("Unknown char '" + lparenChar+'\'');
       }
       editor.getDocument().insertString(offset, text);
       TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);

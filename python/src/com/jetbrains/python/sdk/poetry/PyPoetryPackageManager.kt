@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
@@ -91,7 +92,8 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun createVirtualEnv(destinationDir: String, useGlobalSite: Boolean): String {
-    throw ExecutionException("Creating virtual environments based on Poetry environments is not supported")
+    throw ExecutionException(
+      PyBundle.message("python.sdk.dialog.message.creating.virtual.environments.based.on.poetry.environments.not.supported"))
   }
 
   override fun getPackages() = packages

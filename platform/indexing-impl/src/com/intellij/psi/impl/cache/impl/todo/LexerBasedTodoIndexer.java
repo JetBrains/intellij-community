@@ -32,6 +32,6 @@ public abstract class LexerBasedTodoIndexer extends VersionedTodoIndexer impleme
   @Override
   @NotNull
   public Map<TodoIndexEntry,Integer> map(@NotNull final FileContent inputData) {
-    return BaseFilterLexerUtil.scanContent(inputData, this).todoMap;
+    return BaseFilterLexerUtil.calcTodoEntries(inputData, this);
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -12,7 +13,7 @@ import com.intellij.psi.util.PsiModificationTracker
  *
  * Computes nothing, just shows results from cache, the main work happens in [CodeVisionPass].
  */
-class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvider) : CodeVisionProvider<Unit> {
+class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProvider) : CodeVisionProvider<Unit> {
   override fun precomputeOnUiThread(editor: Editor) {
     // nothing
   }
@@ -26,6 +27,7 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
   }
 
   override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
+    if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
     val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
@@ -35,10 +37,10 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
 
   }
 
-  override fun computeForEditor(editor: Editor, uiData: Unit): List<Pair<TextRange, CodeVisionEntry>> {
-    val project = editor.project ?: return emptyList()
+  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
+    val project = editor.project ?: return CodeVisionState.NotReady()
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return emptyList()
+    val cached = cacheService.getVisionDataForEditor(editor, id) ?: return CodeVisionState.NotReady()
     val document = editor.document
     // ranges may be slightly outdated, so we have to unsure that they fit the document
     val lenses = cached.codeVisionEntries.map {
@@ -51,7 +53,7 @@ class CodeVisionProviderAdapter(private val delegate: DaemonBoundCodeVisionProvi
         it
       }
     }
-    return lenses
+    return CodeVisionState.Ready(lenses)
   }
 
   override fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry) {

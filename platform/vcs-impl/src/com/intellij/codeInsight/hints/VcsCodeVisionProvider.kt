@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -28,10 +29,10 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
+import java.lang.Integer.min
 import javax.swing.JComponent
 
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
@@ -43,29 +44,34 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
   }
 
-  override fun computeForEditor(editor: Editor, uiData: Unit): List<Pair<TextRange, CodeVisionEntry>> {
+
+  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
-      val project = editor.project ?: return@runReadAction emptyList()
+      val project = editor.project ?: return@runReadAction CodeVisionState.NotReady()
       val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction emptyList()
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady()
       val language = file.language
 
-      val aspect = getAspect(file, editor) ?: return@runReadAction emptyList()
+      val aspect = getAspect(file, editor) ?: return@runReadAction CodeVisionState.Ready(emptyList())
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                    ?: return@runReadAction emptyList()
+                                    ?: return@runReadAction CodeVisionState.NotReady()
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
             val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-            val codeAuthorInfo = getCodeAuthorInfo(element.project, textRange, editor, aspect)
+            val length = editor.document.textLength
+            val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
+            val codeAuthorInfo = getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
-            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()).apply { this.showInMorePopup = false })
+            val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
+            entry.showInMorePopup = false
+            lenses.add(adjustedRange to entry)
           }
         }
       }
@@ -73,35 +79,8 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         e.printStackTrace()
         throw e
       }
-      return@runReadAction lenses
+      return@runReadAction CodeVisionState.Ready(lenses)
     }
-  }
-
-  override fun collectPlaceholders(editor: Editor): List<TextRange> {
-
-    application.assertReadAccessAllowed()
-
-    val project = editor.project ?: return emptyList()
-    val document = editor.document
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return emptyList()
-    val language = file.language
-
-    val ranges = ArrayList<TextRange>()
-
-    try {
-      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return emptyList()
-      val traverser = SyntaxTraverser.psiTraverser(file)
-      for (element in traverser.preOrderDfsTraversal()) {
-        if (visionLanguageContext.isAccepted(element)) {
-          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
-        }
-      }
-    }
-    catch (e: Exception) {
-      e.printStackTrace()
-      throw e
-    }
-    return ranges
   }
 
   override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
@@ -197,7 +176,9 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
   registerAnnotation(file, annotation)
-  EditorUtil.disposeWithEditor(editor, annotationDisposable)
+  ApplicationManager.getApplication().invokeLater {
+    EditorUtil.disposeWithEditor(editor, annotationDisposable)
+  }
 
   return annotation
 }

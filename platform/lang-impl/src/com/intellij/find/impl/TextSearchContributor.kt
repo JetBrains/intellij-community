@@ -35,6 +35,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.CommonProcessors
+import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
@@ -212,7 +213,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     class TextSearchActivity : StartupActivity.DumbAware {
       override fun runActivity(project: Project) {
         RunOnceUtil.runOnceForApp(ADVANCED_OPTION_ID) {
-          AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, false)
+          AdvancedSettings.setBoolean(ADVANCED_OPTION_ID, PlatformUtils.isRider())
         }
       }
     }

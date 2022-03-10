@@ -138,6 +138,21 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     boolean publishArchive = context.proprietaryBuildTools.macHostProperties == null
 
+    List<String> binariesToSign = customizer.getBinariesToSign(context, arch)
+    if (!binariesToSign.isEmpty()) {
+      context.executeStep(spanBuilder("sign binaries for macOS distribution")
+                            .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
+        @Override
+        void run() {
+          context.signFiles(binariesToSign.collect { osAndArchSpecificDistPath.resolve(it) }, Map.of(
+            "mac_codesign_options", "runtime",
+            "mac_codesign_force", "true",
+            "mac_codesign_deep", "true",
+            ))
+        }
+      })
+    }
+
     Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
       .resolve(baseName + ".mac.${arch.name()}.zip")
     String zipRoot = getZipRoot(context, customizer)
@@ -191,24 +206,6 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String archStr = arch.name()
     // with JRE
     if (context.options.buildDmgWithBundledJre) {
-      Path additional = context.paths.tempDir.resolve("mac-additional-files-for-" + archStr)
-      Files.createDirectories(additional)
-      customizer.copyAdditionalFiles(context, additional, arch)
-      List<String> binariesToSign = customizer.getBinariesToSign(context, arch)
-      if (!binariesToSign.isEmpty()) {
-        context.executeStep(spanBuilder("sign binaries for macOS distribution")
-                              .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
-          @Override
-          void run() {
-            context.signFiles(binariesToSign.collect { additional.resolve(it) }, Map.of(
-              "mac_codesign_options", "runtime",
-              "mac_codesign_force", "true",
-              "mac_codesign_deep", "true",
-              ))
-          }
-        })
-      }
-
       tasks.add(BuildHelper.getInstance(context).createSkippableTask(
         spanBuilder("build DMG with JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
@@ -218,7 +215,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           void run() {
             Path jreArchive = jreManager.findArchive(BundledRuntime.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                          additional, jreArchive, suffix, notarize)
+                                          null, jreArchive, suffix, notarize)
           }
         }))
     }

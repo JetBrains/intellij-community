@@ -9,7 +9,6 @@ import com.intellij.formatting.virtualFormattingListener
 import com.intellij.lang.LangBundle
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -21,6 +20,12 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
   fun createAllReports(changes: List<FormattingChange>): Array<ProblemDescriptor>? {
     if (changes.isEmpty()) return null
+
+    // TODO: move to LangBundle.properties
+    // inspection.incorrect.formatting.notification.title=New code style inspection
+    // inspection.incorrect.formatting.notification.contents=It can help you maintain a consistent code style in your codebase in any language
+    // inspection.incorrect.formatting.notification.action.enable=Enable inspection
+    // inspection.incorrect.formatting.notification.action.dont.show=Don’t show again
 
     // TODO: move to reformat action
     //if (silentMode && notificationShown.compareAndSet(false, true)) {
@@ -60,7 +65,14 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
     val result = arrayListOf<ProblemDescriptor>()
 
-    result += shiftIndentDescriptors(changes)
+
+    // CPP-28543: Disable inspection in case of ShiftIndentChanges
+    // They interfere with WhitespaceReplaces
+    //result += shiftIndentDescriptors(changes)
+    if (changes.any { it is ShiftIndentChange }) {
+      return null
+    }
+
 
     val (indentChanges, inLineChanges) = classifyReplaceChanges(changes)
     result += indentChangeDescriptors(indentChanges)
@@ -73,10 +85,6 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
   // Collect all formatting changes for the file
   fun getChanges(): List<FormattingChange> {
-    val virtualFile = file.virtualFile ?: return emptyList()
-    val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-    if (!fileIndex.isInSource(virtualFile)) return emptyList()
-
     if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
       return emptyList()
     }
@@ -144,7 +152,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
 
   fun createIndentProblemDescriptors(changes: ArrayList<ReplaceChange>) =
     sequence<ProblemDescriptor> {
-      val blockFix = ReplaceQuickFix(changes.map { it.range to it.replacement })
+      val blockFix = ReplaceQuickFix(changes.map { document.createRangeMarker(it.range) to it.replacement })
       changes.forEach {
         yield(
           createProblemDescriptor(
@@ -163,7 +171,7 @@ class CheckingScope(val file: PsiFile, val document: Document, val manager: Insp
         inLineChanges
           .groupBy { document.getLineNumber(it.range.startOffset) }
           .flatMap { (lineNumber, changes) ->
-            val commonFix = ReplaceQuickFix(changes.map { it.range to it.replacement })
+            val commonFix = ReplaceQuickFix(changes.map { document.createRangeMarker(it.range) to it.replacement })
             changes.map {
               createProblemDescriptor(
                 it.range,

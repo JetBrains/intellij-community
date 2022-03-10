@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.*;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -25,14 +27,13 @@ import java.util.function.Predicate;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Fail.fail;
 
 @SuppressWarnings("TypeMayBeWeakened")
 public class MessageBusTest implements MessageBusOwner {
-  private CompositeMessageBus myBus;
-  private final List<String> myLog = new ArrayList<>();
-  private Disposable myParentDisposable = Disposer.newDisposable();
+  private CompositeMessageBus bus;
+  private final List<String> log = new ArrayList<>();
+  private CheckedDisposable parentDisposable = Disposer.newCheckedDisposable();
 
   @Override
   public @NotNull Object createListener(@NotNull ListenerDescriptor descriptor) {
@@ -41,7 +42,7 @@ public class MessageBusTest implements MessageBusOwner {
 
   @Override
   public boolean isDisposed() {
-    return Disposer.isDisposed(myParentDisposable);
+    return parentDisposable.isDisposed();
   }
 
   @Override
@@ -51,7 +52,8 @@ public class MessageBusTest implements MessageBusOwner {
 
   public interface T1Listener {
     void t11();
-    void t12();
+    default void t12() {
+    }
   }
 
   public interface T2Listener {
@@ -72,12 +74,12 @@ public class MessageBusTest implements MessageBusOwner {
 
     @Override
     public void t11() {
-      myLog.add(id + ":" + "t11");
+      log.add(id + ":" + "t11");
     }
 
     @Override
     public void t12() {
-      myLog.add(id + ":" + "t12");
+      log.add(id + ":" + "t12");
     }
   }
 
@@ -90,116 +92,116 @@ public class MessageBusTest implements MessageBusOwner {
 
     @Override
     public void t21() {
-      myLog.add(id + ":" + "t21");
+      log.add(id + ":" + "t21");
     }
 
     @Override
     public void t22() {
-      myLog.add(id + ":" + "t22");
+      log.add(id + ":" + "t22");
     }
   }
 
   @Before
   public void setUp() throws Exception {
-    myBus = new MessageBusImpl.RootBus(this);
-    Disposer.register(myParentDisposable, myBus);
+    bus = new MessageBusImpl.RootBus(this);
+    Disposer.register(parentDisposable, bus);
   }
 
   @After
   public void tearDown() throws Exception {
     try {
-      Disposer.dispose(myParentDisposable);
+      Disposer.dispose(parentDisposable);
     }
     finally {
-      myBus = null;
-      myParentDisposable = null;
+      bus = null;
+      parentDisposable = null;
     }
   }
 
   @Test
-  public void testNoListenersSubscribed() {
-    myBus.syncPublisher(TOPIC1).t11();
+  public void noListenersSubscribed() {
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents();
   }
 
   @Test
-  public void testSingleMessage() {
-    final MessageBusConnection connection = myBus.connect();
+  public void singleMessage() {
+    final MessageBusConnection connection = bus.connect();
     connection.subscribe(TOPIC1, new T1Handler("c"));
-    myBus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents("c:t11");
   }
 
   @Test
-  public void testSingleMessageToTwoConnections() {
-    final MessageBusConnection c1 = myBus.connect();
+  public void singleMessageToTwoConnections() {
+    final MessageBusConnection c1 = bus.connect();
     c1.subscribe(TOPIC1, new T1Handler("c1"));
 
-    final MessageBusConnection c2 = myBus.connect();
+    final MessageBusConnection c2 = bus.connect();
     c2.subscribe(TOPIC1, new T1Handler("c2"));
 
-    myBus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents("c1:t11", "c2:t11");
   }
 
   @Test
-  public void testSameTopicInOneConnection() {
-    MessageBusConnection connection = myBus.connect();
+  public void sameTopicInOneConnection() {
+    MessageBusConnection connection = bus.connect();
     connection.subscribe(TOPIC1, new T1Handler("c1"));
     connection.subscribe(TOPIC1, new T1Handler("c2"));
 
-    myBus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents("c1:t11", "c2:t11");
   }
 
   @Test
-  public void testTwoMessagesWithSingleSubscription() {
-    final MessageBusConnection connection = myBus.connect();
+  public void twoMessagesWithSingleSubscription() {
+    final MessageBusConnection connection = bus.connect();
     connection.subscribe(TOPIC1, new T1Handler("c"));
-    myBus.syncPublisher(TOPIC1).t11();
-    myBus.syncPublisher(TOPIC1).t12();
+    bus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t12();
 
     assertEvents("c:t11", "c:t12");
   }
 
   @Test
-  public void testTwoMessagesWithDoubleSubscription() {
-    final MessageBusConnection c1 = myBus.connect();
+  public void twoMessagesWithDoubleSubscription() {
+    final MessageBusConnection c1 = bus.connect();
     c1.subscribe(TOPIC1, new T1Handler("c1"));
 
-    final MessageBusConnection c2 = myBus.connect();
+    final MessageBusConnection c2 = bus.connect();
     c2.subscribe(TOPIC1, new T1Handler("c2"));
 
-    myBus.syncPublisher(TOPIC1).t11();
-    myBus.syncPublisher(TOPIC1).t12();
+    bus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t12();
 
     assertEvents("c1:t11", "c2:t11", "c1:t12", "c2:t12");
   }
 
   @Test
-  public void testEventFiresAnotherEvent() {
-    myBus.connect().subscribe(TOPIC1, new T1Listener() {
+  public void eventFiresAnotherEvent() {
+    bus.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
-        myLog.add("inside:t11");
-        myBus.syncPublisher(TOPIC2).t21();
-        myLog.add("inside:t11:done");
+        log.add("inside:t11");
+        bus.syncPublisher(TOPIC2).t21();
+        log.add("inside:t11:done");
       }
 
       @Override
       public void t12() {
-        myLog.add("c1:t12");
+        log.add("c1:t12");
       }
     });
 
-    final MessageBusConnection conn = myBus.connect();
+    final MessageBusConnection conn = bus.connect();
     conn.subscribe(TOPIC1, new T1Handler("handler1"));
     conn.subscribe(TOPIC2, new T2Handler("handler2"));
 
-    myBus.syncPublisher(TOPIC1).t12();
+    bus.syncPublisher(TOPIC1).t12();
     assertEvents("c1:t12", "handler1:t12");
 
-    myBus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents("c1:t12\n" +
                  "handler1:t12\n" +
                  "inside:t11\n" +
@@ -209,34 +211,34 @@ public class MessageBusTest implements MessageBusOwner {
   }
 
   @Test
-  public void testConnectionTerminatedInDispatch() {
-    final MessageBusConnection conn1 = myBus.connect();
+  public void connectionTerminatedInDispatch() {
+    final MessageBusConnection conn1 = bus.connect();
     conn1.subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
         conn1.disconnect();
-        myLog.add("inside:t11");
-        myBus.syncPublisher(TOPIC2).t21();
-        myLog.add("inside:t11:done");
+        log.add("inside:t11");
+        bus.syncPublisher(TOPIC2).t21();
+        log.add("inside:t11:done");
       }
 
       @Override
       public void t12() {
-        myLog.add("inside:t12");
+        log.add("inside:t12");
       }
     });
     conn1.subscribe(TOPIC2, new T2Handler("C1T2Handler"));
 
-    final MessageBusConnection conn2 = myBus.connect();
+    final MessageBusConnection conn2 = bus.connect();
     conn2.subscribe(TOPIC1, new T1Handler("C2T1Handler"));
     conn2.subscribe(TOPIC2, new T2Handler("C2T2Handler"));
 
-    myBus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents("inside:t11",
                  "C2T1Handler:t11",
                  "C2T2Handler:t21",
                  "inside:t11:done");
-    myBus.syncPublisher(TOPIC1).t12();
+    bus.syncPublisher(TOPIC1).t12();
 
     assertEvents("inside:t11",
                  "C2T1Handler:t11",
@@ -246,12 +248,12 @@ public class MessageBusTest implements MessageBusOwner {
   }
 
   @Test
-  public void testMessageDeliveredDespitePCE() {
-    final MessageBusConnection conn1 = myBus.connect();
+  public void messageDeliveredDespitePce() {
+    final MessageBusConnection conn1 = bus.connect();
     conn1.subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
-        myLog.add("pce");
+        log.add("pce");
         throw new ProcessCanceledException();
       }
 
@@ -261,12 +263,12 @@ public class MessageBusTest implements MessageBusOwner {
       }
     });
 
-    final MessageBusConnection conn2 = myBus.connect();
+    final MessageBusConnection conn2 = bus.connect();
     conn2.subscribe(TOPIC1, new T1Handler("handler2"));
 
     try {
-      myBus.syncPublisher(TOPIC1).t11();
-      fail("PCE expected");
+      bus.syncPublisher(TOPIC1).t11();
+      Assertions.fail("PCE expected");
     }
     catch (ProcessCanceledException ignored) {
     }
@@ -274,9 +276,9 @@ public class MessageBusTest implements MessageBusOwner {
   }
 
   @Test
-  public void testPostingPerformanceWithLowListenerDensityInHierarchy() {
-    //simulating million fileWithNoDocumentChanged events on refresh in a thousand-module project
-    CompositeMessageBus childBus = new CompositeMessageBus(this, myBus);
+  public void postingPerformanceWithLowListenerDensityInHierarchy() {
+    // simulating a million fileWithNoDocumentChanged events on refresh in a thousand-module project
+    CompositeMessageBus childBus = new CompositeMessageBus(this, bus);
     childBus.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
@@ -291,7 +293,7 @@ public class MessageBusTest implements MessageBusOwner {
     }
 
     PlatformTestUtil.assertTiming("Too long", 3_000, () -> {
-      T1Listener publisher = myBus.syncPublisher(TOPIC1);
+      T1Listener publisher = bus.syncPublisher(TOPIC1);
       for (int i = 0; i < 1_000_000; i++) {
         publisher.t11();
       }
@@ -299,12 +301,12 @@ public class MessageBusTest implements MessageBusOwner {
   }
 
   @Test
-  public void testManyChildrenCreationDeletionPerformance() {
+  public void manyChildrenCreationDeletionPerformance() {
     PlatformTestUtil.startPerformanceTest("Child bus creation/deletion", 1_000, () -> {
       List<MessageBusImpl> children = new ArrayList<>();
       int count = 10_000;
       for (int i = 0; i < count; i++) {
-        children.add(new MessageBusImpl(this, myBus));
+        children.add(new MessageBusImpl(this, bus));
       }
       // reverse iteration to avoid O(n^2) while deleting from list's beginning
       for (int i = count - 1; i >= 0; i--) {
@@ -319,7 +321,7 @@ public class MessageBusTest implements MessageBusOwner {
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
     CompositeMessageBus parentBus = new MessageBusImpl.RootBus(createSimpleMessageBusOwner("parent"));
-    Disposer.register(myParentDisposable, parentBus);
+    Disposer.register(parentDisposable, parentBus);
     List<Future<?>> threads = new ArrayList<>();
     final int iterationsNumber = 100;
     for (int i = 0; i < threadsNumber; i++) {
@@ -353,38 +355,38 @@ public class MessageBusTest implements MessageBusOwner {
   }
 
   private void assertEvents(String... expected) {
-    assertThat(String.join("\n", myLog)).isEqualTo(String.join("\n", expected));
+    assertThat(String.join("\n", log)).isEqualTo(String.join("\n", expected));
   }
 
   @Test
-  public void testHasUndeliveredEvents() {
-    assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC));
-    assertFalse(myBus.hasUndeliveredEvents(TOPIC2));
+  public void hasUndeliveredEvents() {
+    assertThat(bus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isFalse();
+    assertThat(bus.hasUndeliveredEvents(TOPIC2)).isFalse();
 
-    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> {
-      assertThat(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue();
-      assertThat(myBus.hasUndeliveredEvents(TOPIC2)).isFalse();
+    bus.connect().subscribe(RUNNABLE_TOPIC, () -> {
+      assertThat(bus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue();
+      assertThat(bus.hasUndeliveredEvents(TOPIC2)).isFalse();
     });
-    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> {
-      assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC));
-      assertFalse(myBus.hasUndeliveredEvents(TOPIC2));
+    bus.connect().subscribe(RUNNABLE_TOPIC, () -> {
+      assertThat(bus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isFalse();
+      assertThat(bus.hasUndeliveredEvents(TOPIC2)).isFalse();
     });
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
   }
 
   @Test
-  public void testHasUndeliveredEventsInChildBys() {
-    MessageBusImpl childBus = new MessageBusImpl(this, myBus);
-    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertThat(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue());
-    childBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+  public void hasUndeliveredEventsInChildBus() {
+    MessageBusImpl childBus = new MessageBusImpl(this, bus);
+    bus.connect().subscribe(RUNNABLE_TOPIC, () -> assertThat(bus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue());
+    childBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertThat(bus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isFalse());
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
   }
 
   @Test
-  public void testScheduleEmptyConnectionRemoval() throws Exception {
+  public void scheduleEmptyConnectionRemoval() throws Exception {
     // this counter serves as a proxy to number of iterations inside the compaction task loop in root bus:
     AtomicInteger compactionIterationCount = new AtomicInteger();
-    new MessageBusImpl(this, myBus) {
+    new MessageBusImpl(this, bus) {
       @Override
       void removeEmptyConnectionsRecursively() {
         compactionIterationCount.incrementAndGet();
@@ -395,7 +397,7 @@ public class MessageBusTest implements MessageBusOwner {
     Semaphore slowRemovalStarted = new Semaphore(1);
     slowRemovalStarted.acquire();
     CountDownLatch slowRemovalCanFinish = new CountDownLatch(1);
-    new MessageBusImpl(this, myBus) {
+    new MessageBusImpl(this, bus) {
       @Override
       void removeEmptyConnectionsRecursively() {
         slowRemovalStarted.release(); // signal that slow removal has started
@@ -411,7 +413,7 @@ public class MessageBusTest implements MessageBusOwner {
     // scheduleEmptyConnectionRemoving is not invoked immediately, call it until we detect that slow removal has started:
     int callCountToTriggerRemoval = 0;
     while (true) {
-      ((MessageBusImpl.RootBus)myBus).scheduleEmptyConnectionRemoving();
+      ((MessageBusImpl.RootBus)bus).scheduleEmptyConnectionRemoving();
       if (slowRemovalStarted.tryAcquire()) {
         break;
       }
@@ -422,7 +424,7 @@ public class MessageBusTest implements MessageBusOwner {
 
     // now compaction task is blocked in slow remove, schedule more compaction requests:
     for (int i = 0; i < 10 * callCountToTriggerRemoval; i++) {
-      ((MessageBusImpl.RootBus)myBus).scheduleEmptyConnectionRemoving();
+      ((MessageBusImpl.RootBus)bus).scheduleEmptyConnectionRemoving();
     }
 
     // no new compaction task was started:
@@ -443,73 +445,95 @@ public class MessageBusTest implements MessageBusOwner {
   }
 
   @Test
-  public void testDisposingBusInsideEvent() {
-    MessageBusImpl child = new MessageBusImpl(this, myBus);
-    myBus.connect().subscribe(TOPIC1, new T1Listener() {
+  public void disposingBusInsideEvent() {
+    MessageBusImpl child = new MessageBusImpl(this, bus);
+    bus.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
-        myLog.add("root 11");
-        myBus.syncPublisher(TOPIC1).t12();
+        log.add("root 11");
+        bus.syncPublisher(TOPIC1).t12();
         Disposer.dispose(child);
       }
 
       @Override
       public void t12() {
-        myLog.add("root 12");
+        log.add("root 12");
       }
     });
     child.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
-        myLog.add("child 11");
+        log.add("child 11");
       }
 
       @Override
       public void t12() {
-        myLog.add("child 12");
+        log.add("child 12");
       }
     });
-    myBus.syncPublisher(TOPIC1).t11();
+    bus.syncPublisher(TOPIC1).t11();
     assertEvents("root 11", "child 11", "root 12", "child 12");
   }
 
   @Test
-  public void testTwoHandlersBothDisconnecting() {
-    Disposable disposable = Disposer.newDisposable();
+  public void twoHandlersBothDisconnecting() {
+    CheckedDisposable disposable = Disposer.newCheckedDisposable();
     for (int i = 0; i < 2; i++) {
-      myBus.connect(disposable).subscribe(RUNNABLE_TOPIC, () -> Disposer.dispose(disposable));
+      bus.connect(disposable).subscribe(RUNNABLE_TOPIC, () -> Disposer.dispose(disposable));
     }
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
-    assertThat(Disposer.isDisposed(disposable)).isTrue();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertThat(disposable.isDisposed()).isTrue();
   }
 
   @Test
   public void subscriberCacheClearedOnChildBusDispose() {
     // ensure that subscriber cache is cleared on child bus dispose
-    MessageBusImpl child = new MessageBusImpl(this, myBus);
+    MessageBusImpl child = new MessageBusImpl(this, bus);
     Ref<Boolean> isDisposed = new Ref<>(false);
     child.connect().subscribe(RUNNABLE_TOPIC, () -> {
       if (isDisposed.get()) {
         throw new IllegalStateException("already disposed");
       }
     });
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
     Disposer.dispose(child);
     isDisposed.set(true);
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
   }
 
+  @Test
+  public void publishToAnotherBus() {
+    MessageBusImpl childBus = new CompositeMessageBus(this, bus);
+    Disposer.register(parentDisposable, childBus);
+
+    AtomicInteger counter = new AtomicInteger();
+    childBus.simpleConnect().subscribe(TOPIC1, new T1Listener() {
+      @Override
+      public void t11() {
+        counter.incrementAndGet();
+      }
+    });
+
+    bus.simpleConnect().subscribe(RUNNABLE_TOPIC, () -> {
+      // add childBus to a list of waiting buses
+      childBus.syncPublisher(TOPIC1).t11();
+    });
+
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
+
+    assertThat(counter.get()).isEqualTo(1);
+  }
   private static final Topic<Runnable> TO_PARENT_TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_PARENT);
 
   @Test
   public void subscriberCacheClearedOnConnectionToParentBusForChildBusTopic() {
     // ensure that subscriber cache is cleared on connection to app level bus for topic that published to project level bus with TO_PARENT direction.
-    MessageBus child = new CompositeMessageBus(this, myBus);
+    MessageBus child = new CompositeMessageBus(this, bus);
     // call to compute cache
     child.syncPublisher(TO_PARENT_TOPIC).run();
 
     Ref<Boolean> isCalled = new Ref<>(false);
-    myBus.connect().subscribe(TO_PARENT_TOPIC, () -> isCalled.set(true));
+    bus.connect().subscribe(TO_PARENT_TOPIC, () -> isCalled.set(true));
     child.syncPublisher(TO_PARENT_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
   }
@@ -517,22 +541,22 @@ public class MessageBusTest implements MessageBusOwner {
   @Test
   public void subscriberCacheClearedOnConnectionToChildrenBusFoRootBusTopic() {
     // child must be created before to ensure that cache is not cleared on a new child
-    MessageBus child = new CompositeMessageBus(this, myBus);
+    MessageBus child = new CompositeMessageBus(this, bus);
     // call to compute cache
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
 
     Ref<Boolean> isCalled = new Ref<>(false);
     child.connect().subscribe(RUNNABLE_TOPIC, () -> isCalled.set(true));
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
   }
 
   @Test
   public void disconnectOnPluginUnload() {
     // child must be created before to ensure that cache is not cleared on a new child
-    MessageBus child = new CompositeMessageBus(this, myBus);
+    MessageBus child = new CompositeMessageBus(this, bus);
     // call to compute cache
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
 
     AtomicInteger callCounter = new AtomicInteger();
     Runnable listener = () -> callCounter.incrementAndGet();
@@ -541,7 +565,7 @@ public class MessageBusTest implements MessageBusOwner {
     child.connect().subscribe(RUNNABLE_TOPIC, listener);
     child.connect().subscribe(RUNNABLE_TOPIC, listener);
 
-    myBus.disconnectPluginConnections(new Predicate<>() {
+    bus.disconnectPluginConnections(new Predicate<>() {
       boolean isRemoved;
 
       @Override
@@ -555,7 +579,7 @@ public class MessageBusTest implements MessageBusOwner {
       }
     });
 
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(callCounter.get()).isEqualTo(1);
   }
 
@@ -569,8 +593,8 @@ public class MessageBusTest implements MessageBusOwner {
     for (int i = 0; i < threadsNumber; i++) {
       Future<?> thread = AppExecutorUtil.getAppScheduledExecutorService().submit(() -> {
         try {
-          MessageBusConnection connection = myBus.connect();
-          myBus.removeEmptyConnectionsRecursively();
+          MessageBusConnection connection = bus.connect();
+          bus.removeEmptyConnectionsRecursively();
           connection.subscribe(RUNNABLE_TOPIC, () -> eventCounter.incrementAndGet());
         }
         catch (Throwable e) {
@@ -592,7 +616,7 @@ public class MessageBusTest implements MessageBusOwner {
       thread.get();
     }
 
-    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    bus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(eventCounter.get()).isEqualTo(threadsNumber);
   }
 
@@ -601,10 +625,10 @@ public class MessageBusTest implements MessageBusOwner {
     Topic<Runnable> TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
     Disposable disposable = Disposer.newDisposable();
-    MessageBusConnectionImpl connection = myBus.connect(disposable);
+    MessageBusConnectionImpl connection = bus.connect(disposable);
     connection.subscribe(TOPIC, () -> fail("must be not called"));
     Disposer.dispose(disposable);
-    myBus.syncPublisher(TOPIC).run();
+    bus.syncPublisher(TOPIC).run();
   }
 
   @Test
@@ -613,14 +637,14 @@ public class MessageBusTest implements MessageBusOwner {
 
     Disposable disposable = Disposer.newDisposable();
 
-    MessageBusConnection connection2 = myBus.connect();
+    MessageBusConnection connection2 = bus.connect();
     connection2.subscribe(TOPIC, () -> {
       Disposer.dispose(disposable);
     });
 
-    MessageBusConnectionImpl connection = myBus.connect(disposable);
+    MessageBusConnectionImpl connection = bus.connect(disposable);
     connection.subscribe(TOPIC, () -> fail("must be not called"));
 
-    myBus.syncPublisher(TOPIC).run();
+    bus.syncPublisher(TOPIC).run();
   }
 }

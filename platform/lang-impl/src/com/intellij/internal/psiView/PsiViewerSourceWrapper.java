@@ -23,12 +23,12 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
   final FileType myFileType;
   final PsiViewerExtension myExtension;
 
-  PsiViewerSourceWrapper(@NotNull final FileType fileType) {
+  private PsiViewerSourceWrapper(@NotNull FileType fileType) {
     myFileType = fileType;
     myExtension = null;
   }
 
-  PsiViewerSourceWrapper(final PsiViewerExtension extension) {
+  private PsiViewerSourceWrapper(@NotNull PsiViewerExtension extension) {
     myFileType = null;
     myExtension = extension;
   }
@@ -43,18 +43,18 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
   }
 
   @Override
-  public int compareTo(@NotNull final PsiViewerSourceWrapper o) {
+  public int compareTo(@NotNull PsiViewerSourceWrapper o) {
     return getText().compareToIgnoreCase(o.getText());
   }
 
 
   @NotNull
-  public static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
+  static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
     return ContainerUtil.map(PsiViewerExtension.EP_NAME.getExtensionList(), el -> new PsiViewerSourceWrapper(el));
   }
 
   @NotNull
-  public static List<PsiViewerSourceWrapper> getFileTypeBasedWrappers() {
+  static List<PsiViewerSourceWrapper> getFileTypeBasedWrappers() {
     Set<FileType> allFileTypes = new HashSet<>();
     List<PsiViewerSourceWrapper> sourceWrappers = new ArrayList<>();
     Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
@@ -66,7 +66,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
     }
     for (FileType fileType : allFileTypes) {
       if (isAcceptableFileType(fileType)) {
-        final PsiViewerSourceWrapper wrapper = new PsiViewerSourceWrapper(fileType);
+        PsiViewerSourceWrapper wrapper = new PsiViewerSourceWrapper(fileType);
         sourceWrappers.add(wrapper);
       }
     }

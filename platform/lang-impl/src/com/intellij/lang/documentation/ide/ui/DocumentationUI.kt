@@ -4,9 +4,11 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.documentation.*
+import com.intellij.codeInsight.documentation.DocumentationHintEditorPane
+import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
+import com.intellij.codeInsight.documentation.DocumentationScrollPane
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
@@ -22,19 +24,20 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JScrollPane
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal class DocumentationUI(
   project: Project,
@@ -43,34 +46,21 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
+  val fontSize: FontSizeModel = DocumentationFontSizeModel()
 
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
-  private val cs = CoroutineScope(EmptyCoroutineContext)
+  private val cs = CoroutineScope(Dispatchers.EDT)
   private val contentListeners: MutableList<() -> Unit> = SmartList()
-
-  init {
-    cs.launch(Dispatchers.EDT + CoroutineName("DocumentationUI content update")) {
-      browser.pageFlow.collectLatest { page ->
-        handlePage(page)
-      }
-    }
-  }
-
-  override fun dispose() {
-    cs.cancel("DocumentationUI disposal")
-    clearImages()
-  }
 
   init {
     scrollPane = DocumentationScrollPane()
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
     }, { icons[it] })
-    editorPane.applyFontProps(DocumentationComponent.getQuickDocFontSize())
     scrollPane.setViewportView(editorPane)
-    scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
+    scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
 
     browser.ui = this
@@ -89,6 +79,22 @@ internal class DocumentationUI(
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }
 
     DataManager.registerDataProvider(editorPane, this)
+
+    cs.launch(CoroutineName("DocumentationUI content update")) {
+      browser.pageFlow.collectLatest { page ->
+        handlePage(page)
+      }
+    }
+    cs.launch(CoroutineName("DocumentationUI font size update"), start = CoroutineStart.UNDISPATCHED) {
+      fontSize.updates.collect {
+        editorPane.applyFontProps(it)
+      }
+    }
+  }
+
+  override fun dispose() {
+    cs.cancel("DocumentationUI disposal")
+    clearImages()
   }
 
   override fun getData(dataId: String): Any? {

@@ -28,7 +28,7 @@ interface MavenProjectImporter {
         return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges, importingSettings,
                                                     VirtualFileUrlManager.getInstance(project), project)
       }
-      if (isImportToTreeStructureEnabled()) {
+      if (isImportToTreeStructureEnabled(project)) {
         return MavenProjectTreeImporter(project, projectsTree, projectsToImportWithChanges, modelsProvider, importingSettings)
       }
       return MavenProjectImporterImpl(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
@@ -39,6 +39,9 @@ interface MavenProjectImporter {
     fun isImportToWorkspaceModelEnabled(): Boolean = Registry.`is`("maven.import.to.workspace.model")
 
     @JvmStatic
-    fun isImportToTreeStructureEnabled(): Boolean = Registry.`is`("maven.import.tree.structure")
+    fun isImportToTreeStructureEnabled(project: Project?): Boolean {
+      if (project == null) return true;
+      return MavenProjectsManager.getInstance(project).importingSettings.isImportToTreeStructure
+    }
   }
 }

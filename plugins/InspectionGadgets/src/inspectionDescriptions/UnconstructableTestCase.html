@@ -1,9 +1,12 @@
 <html>
 <body>
-Reports JUnit test cases that are not <code>abstract</code> and do not
-expose a public <code>no-arg</code> constructor or a public constructor that takes a single string
-as an argument.
-Such test cases cannot be run by most JUnit test runners.
+Reports JUnit test classes that can't be constructed by a standard JUnit test runner.
+<p>
+  JUnit 4 test classes need to be <code>public</code> and have a <code>public</code> no-arg constructor or no constructor at all
+  (implicit default constructor) and no other <code>public</code> constructors.
+  JUnit 3 test classes need to be <code>public</code> and need either a <code>public</code> no-arg constructor
+  or a <code>public</code> constructor with a <code>String</code> parameter which calls a matching super constructor.
+  Otherwise the test classes cannot be run by standard JUnit test runners.
 <p><b>Example:</b></p>
 <pre><code>
 public class MyTest {

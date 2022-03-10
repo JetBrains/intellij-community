@@ -2,13 +2,10 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -19,45 +16,12 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaDocFixes {
 
   private JavaDocFixes(){
-  }
-
-  public static class AddJavadocFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private final AddJavadocIntention myIntention;
-
-    AddJavadocFix(PsiElement nameIdentifier) {
-      super(nameIdentifier);
-      myIntention = new AddJavadocIntention();
-    }
-
-    @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement startElement,
-                       @NotNull PsiElement endElement) {
-      myIntention.invoke(project, editor, startElement);
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      //noinspection DialogTitleCapitalization
-      return myIntention.getText();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return myIntention.getFamilyName();
-    }
   }
 
   public static class AddMissingTagFix implements LocalQuickFix {

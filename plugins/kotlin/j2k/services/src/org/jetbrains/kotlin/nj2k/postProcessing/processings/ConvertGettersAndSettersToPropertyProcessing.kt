@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.asGetterName
@@ -616,7 +617,6 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 }
             }
 
-
             val propertyInfo = when (property) {
                 is RealProperty -> property.property.fqNameWithoutCompanions.let(externalCodeUpdater::getMember)
                 is MergedProperty -> property.mergeTo.fqNameWithoutCompanions.let(externalCodeUpdater::getMember)
@@ -628,20 +628,18 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 ).also { externalCodeUpdater.addMember(it) }
             }?.also { it.name = property.name } as? JKFieldData
 
-
             val getterFqName = getter.safeAs<RealGetter>()?.function?.fqNameWithoutCompanions
             val setterFqName = setter.safeAs<RealSetter>()?.function?.fqNameWithoutCompanions
 
-            getterFqName?.let { fqName ->
-                externalCodeUpdater.getMember(fqName)?.safeAs<JKMethodData>()?.let {
-                    it.usedAsAccessorOfProperty = propertyInfo ?: return@let
+            fun FqName.setPropertyInfo(info: JKFieldData) {
+                externalCodeUpdater.getMember(this)?.safeAs<JKMethodData>()?.let {
+                    it.usedAsAccessorOfProperty = info
                 }
             }
 
-            setterFqName?.let { fqName ->
-                externalCodeUpdater.getMember(fqName)?.safeAs<JKMethodData>()?.let {
-                    it.usedAsAccessorOfProperty = propertyInfo ?: return@let
-                }
+            if (propertyInfo != null) {
+                getterFqName?.setPropertyInfo(propertyInfo)
+                setterFqName?.setPropertyInfo(propertyInfo)
             }
 
             val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true

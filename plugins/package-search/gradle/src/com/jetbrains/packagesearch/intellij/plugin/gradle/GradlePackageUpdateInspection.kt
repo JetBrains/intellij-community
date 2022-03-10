@@ -10,9 +10,5 @@ internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
 
     override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.upgrade.description.gradle")
 
-    override fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement? {
-        val groupId = dependency.coordinates.groupId ?: return null
-        val artifactId = dependency.coordinates.artifactId ?: return null
-        return GradleModuleTransformer.findDependencyElement(file, groupId, artifactId)
-    }
+    override fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement? = getGradleVersionPsiElement(dependency, file)
 }

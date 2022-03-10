@@ -86,7 +86,9 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
         it)
     }
     if (group.childrenCount == 0) return
-    val dataContext = DataManager.getInstance().getDataContext(FocusManager.getCurrentManager().focusOwner)
+    val focusOwner = FocusManager.getCurrentManager().focusOwner
+    if (focusOwner == null) return
+    val dataContext = DataManager.getInstance().getDataContext(focusOwner)
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(
       VcsBundle.message("action.Vcs.Toolbar.QuickListPopupAction.text"),
       group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,

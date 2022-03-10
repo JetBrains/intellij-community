@@ -517,6 +517,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
   highlightBreakpointGutter(breakpointXRange, logicalPosition)
 
   task {
+    transparentRestore = true
     textContent()
     stateCheck {
       lineWithBreakpoints() == setOf(logicalPosition().line)

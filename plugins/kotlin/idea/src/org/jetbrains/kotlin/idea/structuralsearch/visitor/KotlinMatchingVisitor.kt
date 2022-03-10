@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.structuralsearch.visitor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.elementType
 import com.intellij.structuralsearch.StructuralSearchUtil
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern
@@ -13,7 +12,6 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.util.containers.reverse
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -24,12 +22,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.calleeName
-import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.structuralsearch.*
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchCompanionObjectPredicate
@@ -50,12 +45,10 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : SSRKtVisitor() {
@@ -301,7 +294,6 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                     && myMatchingVisitor.match(expression.operationReference, other.operationReference)
             else -> false
         }
-
     }
 
     override fun visitParenthesizedExpression(expression: KtParenthesizedExpression) {
@@ -322,7 +314,6 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         val other = getTreeElementDepar<PsiElement>() ?: return
-
         val exprHandler = getHandler(expression)
         if (other is KtReferenceExpression && exprHandler is SubstitutionHandler) {
             val ref = other.mainReference
@@ -333,9 +324,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             if (referenced is ClassifierDescriptor) {
                 val fqName = referenced.fqNameOrNull()
                 val predicate = exprHandler.findRegExpPredicate()
-                if (predicate != null && fqName != null &&
-                    predicate.doMatch(fqName.asString(), myMatchingVisitor.matchContext, other)
-                ) {
+                if (predicate != null && fqName != null && predicate.doMatch(fqName.asString(), myMatchingVisitor.matchContext, other)) {
                     myMatchingVisitor.result = true
                     exprHandler.addResult(other, myMatchingVisitor.matchContext)
                     return
@@ -355,7 +344,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
         val handler = getHandler(expression.getReferencedNameElement())
         if (myMatchingVisitor.result && handler is SubstitutionHandler) {
-            handler.handle(
+            myMatchingVisitor.result = handler.handle(
                 if (other is KtSimpleNameExpression) other.getReferencedNameElement() else other,
                 myMatchingVisitor.matchContext
             )
@@ -481,33 +470,16 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         val other = getTreeElementDepar<KtExpression>() ?: return
-        val handler = getHandler(expression.receiverExpression)
-        if (other is KtDotQualifiedExpression) {
-            // Regular matching
-            myMatchingVisitor.result = myMatchingVisitor.matchOptionally(expression.receiverExpression, other.receiverExpression)
-                    && other.selectorExpression is KtCallExpression == expression.selectorExpression is KtCallExpression
-                    && myMatchingVisitor.match(expression.selectorExpression, other.selectorExpression)
-        } else {
-            val selector = expression.selectorExpression
-
-            // Match '_?.'_()
-            myMatchingVisitor.result = selector is KtCallExpression == other is KtCallExpression
-                    && (handler is SubstitutionHandler && handler.minOccurs == 0 || other.parent is KtDoubleColonExpression)
+        val receiverHandler = getHandler(expression.receiverExpression)
+        if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0) { // can match without receiver
+            myMatchingVisitor.result = other !is KtDotQualifiedExpression
                     && other.parent !is KtDotQualifiedExpression
-                    && other.parent !is KtReferenceExpression
-                    && myMatchingVisitor.match(selector, other)
-
-            // Match fq.call() with call()
-            if (!myMatchingVisitor.result && other is KtCallExpression && other.parent !is KtDotQualifiedExpression && selector is KtCallExpression) {
-                val expressionCall = expression.text.substringBefore('(')
-                val otherCall = other.getCallableDescriptor()?.fqNameSafe
-                myMatchingVisitor.result = otherCall != null
-                                           && myMatchingVisitor.matchText(expressionCall, otherCall.toString().substringBefore(".<"))
-                                           && myMatchingVisitor.match(selector.typeArgumentList, other.typeArgumentList)
-                                           && matchValueArguments(resolveParameters(other),
-                                                                  selector.valueArgumentList, other.valueArgumentList,
-                                                                  selector.lambdaArguments, other.lambdaArguments)
-            }
+                    && other.parent !is KtCallExpression
+                    && myMatchingVisitor.match(expression.selectorExpression, other)
+        } else {
+            myMatchingVisitor.result = other is KtDotQualifiedExpression
+                    && myMatchingVisitor.match(expression.receiverExpression, other.receiverExpression)
+                    && myMatchingVisitor.match(expression.selectorExpression, other.selectorExpression)
         }
     }
 
@@ -803,25 +775,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitSuperTypeList(list: KtSuperTypeList) {
         val other = getTreeElementDepar<KtSuperTypeList>() ?: return
-
-        val withinHierarchyEntries = list.entries.filter {
-            val type = it.typeReference; type is KtTypeReference && getHandler(type).withinHierarchyTextFilterSet
-        }
-        (other.parent as? KtClassOrObject)?.let { klass ->
-            val supertypes = (klass.descriptor as ClassDescriptor).toSimpleType().supertypes()
-            withinHierarchyEntries.forEach { entry ->
-                val typeReference = entry.typeReference
-                if (!matchTextOrVariable(typeReference, klass.nameIdentifier) && typeReference != null && supertypes.none {
-                        it.renderNames().any { type -> matchTypeAgainstElement(type, typeReference, other) }
-                    }) {
-                    myMatchingVisitor.result = false
-                    return@visitSuperTypeList
-                }
-            }
-        }
-
-        myMatchingVisitor.result =
-            myMatchingVisitor.matchInAnyOrder(list.entries.filter { it !in withinHierarchyEntries }, other.entries)
+        myMatchingVisitor.result = myMatchingVisitor.matchInAnyOrder(list.entries, other.entries)
     }
 
     override fun visitClass(klass: KtClass) {
@@ -830,36 +784,10 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
         val identifier = klass.nameIdentifier
         val otherIdentifier = other.nameIdentifier
-        var matchNameIdentifiers = matchTextOrVariable(identifier, otherIdentifier)
+        val matchNameIdentifiers = matchTextOrVariable(identifier, otherIdentifier)
                 || identifier != null && otherIdentifier != null && matchTypeAgainstElement(
             (otherDescriptor as LazyClassDescriptor).defaultType.fqName.toString(), identifier, otherIdentifier
                 )
-
-        // Possible match if "within hierarchy" is set
-        if (!matchNameIdentifiers && identifier != null && otherIdentifier != null) {
-            val identifierHandler = getHandler(identifier)
-            val checkHierarchyDown = identifierHandler.withinHierarchyTextFilterSet
-
-            if (checkHierarchyDown) {
-                // Check hierarchy down (down of pattern element = supertypes of code element)
-                matchNameIdentifiers = (otherDescriptor as ClassDescriptor).toSimpleType().supertypes().any { type ->
-                    type.renderNames().any { renderedType ->
-                        matchTypeAgainstElement(renderedType, identifier, otherIdentifier)
-                    }
-                }
-            } else if (identifier.getUserData(KotlinCompilingVisitor.WITHIN_HIERARCHY) == true) {
-                // Check hierarchy up (up of pattern element = inheritors of code element)
-                matchNameIdentifiers = HierarchySearchRequest(
-                    other,
-                    GlobalSearchScope.allScope(other.project),
-                    true
-                ).searchInheritors().any { psiClass ->
-                    arrayOf(psiClass.name, psiClass.qualifiedName).filterNotNull().any { renderedType ->
-                        matchTypeAgainstElement(renderedType, identifier, otherIdentifier)
-                    }
-                }
-            }
-        }
 
         myMatchingVisitor.result = myMatchingVisitor.match(klass.getClassOrInterfaceKeyword(), other.getClassOrInterfaceKeyword())
                 && myMatchingVisitor.match(klass.modifierList, other.modifierList)
@@ -1194,10 +1122,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitClassLiteralExpression(expression: KtClassLiteralExpression) {
         val other = getTreeElementDepar<KtClassLiteralExpression>() ?: return
-        myMatchingVisitor.result = myMatchingVisitor.match(expression.firstChild, other.firstChild)
-                || other.resolveType()?.let { resolved ->
-            myMatchingVisitor.matchText(expression.text, resolved.arguments.first().type.fqName.toString())
-        } ?: false
+        myMatchingVisitor.result = myMatchingVisitor.match(expression.receiverExpression, other.receiverExpression)
     }
 
     override fun visitComment(comment: PsiComment) {

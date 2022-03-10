@@ -10,9 +10,9 @@
     "Grey3": "#383A42",
     "Grey4": "#494B57",
     "Grey5": "#5A5D6B",
-    "Grey6": "#767A8A",
-    "Grey7": "#969AAB",
-    "Grey8": "#AEB3C2",
+    "Grey6": "#6C707E",
+    "Grey7": "#818594",
+    "Grey8": "#A8ADBD",
     "Grey9": "#C9CCD6",
     "Grey10": "#DFE1E5",
     "Grey11": "#EBECF0",
@@ -94,7 +94,7 @@
       "disabledText": "Grey8",
       "disabledForeground": "Grey8",
       "inactiveForeground": "Grey8",
-      "disabledBackground": "Grey12",
+      "disabledBackground": "Grey13",
       "disabledBorderColor": "Grey10",
 
       "selectionBackground": "Blue13",
@@ -123,7 +123,8 @@
       "hoverBackground": "Grey11",
       "hoverBorderColor": "Grey11",
       "pressedBackground": "Grey10",
-      "pressedBorderColor": "Grey10"
+      "pressedBorderColor": "Grey10",
+      "focusedBorderColor": "Blue7"
     },
 
     "Borders.color": "Grey11",
@@ -192,9 +193,12 @@
         "borderInsets" : "7,10,7,8",
         "background": "Grey13"
       },
-
       "Toolbar" : {
         "borderColor" : "Grey11"
+      },
+      "ToolTip": {
+        "foreground": "Grey1",
+        "background": "Grey13"
       }
     },
 
@@ -246,10 +250,17 @@
       "background": "Grey2",
       "borderColor": "Grey2",
       "foreground": "Grey13",
-      "MoreButton": {
+      "linkForeground": "Blue10",
+      "borderInsets": "4,4,4,0",
+      "Button": {
         "background": "Grey2",
-        "innerBorderColor": "Grey4",
+        "borderColor": "Grey7",
         "foreground": "Grey13"
+      },
+      "MoreButton": {
+        "background": "Grey1",
+        "innerBorderColor": "Grey4",
+        "foreground": "Grey10"
       }
     },
 
@@ -269,6 +280,7 @@
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
+        "background": "Grey12",
         "borderColor": "Grey12",
         "fontSizeOffset": {
           "os.default": -1,
@@ -282,6 +294,8 @@
       },
       "Toolbar.background": "Grey13"
     },
+
+    "ComplexPopup.Header.background": "Grey12",
 
     "CompletionPopup": {
       "foreground": "Grey2",
@@ -308,6 +322,7 @@
       "List.settingsBackground": "Grey12",
       "Advertiser": {
         "foreground": "Grey7",
+        "background": "Grey12",
         "borderInsets": "6,20,6,20"
       }
     },
@@ -316,6 +331,8 @@
       "startBackground": "Yellow9",
       "endBackground": "Yellow9"
     },
+
+    "SearchOption.selectedBackground": "Blue14",
 
     "SpeedSearch": {
       "background": "Grey13",
@@ -326,14 +343,14 @@
     "StatusBar": {
       "background": "Grey12",
       "Widget": {
-        "foreground": "Grey5",
+        "foreground": "Grey6",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "pressedBackground": "Grey10",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
-        "foreground": "Grey5",
+        "foreground": "Grey6",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "floatingBackground": "Grey13",
@@ -366,13 +383,15 @@
     "ToolTip":{
       "background": "Grey2",
       "foreground": "Grey13",
-      "infoForeground": "Grey7",
-      "shortcutForeground": "Grey7"
+      "infoForeground": "Grey8",
+      "shortcutForeground": "Grey8",
+      "linkForeground": "Blue10"
     },
 
     "HelpTooltip": {
       "defaultTextBorderInsets": "12,16,16,16",
-      "smallTextBorderInsets": "8,12,9,12"
+      "smallTextBorderInsets": "8,12,9,12",
+      "verticalGap": 6
     },
 
     "ToolWindow": {
@@ -416,6 +435,8 @@
     "OnePixelDivider.background": "Grey11",
 
     "TitlePane": {
+      "background": "Grey2",
+      "inactiveBackground": "Grey3",
       "Button": {
         "hoverBackground": "Grey3",
         "preferredSize": "36,40"
@@ -432,7 +453,7 @@
     "VersionControl": {
       "Log.Commit": {
         "currentBranchBackground": "#e8eefa",
-        "unmatchedForeground": "Grey6",
+        "unmatchedForeground": "Grey7",
         "hoveredBackground": "#000000F1"
       },
       "FileHistory.Commit.selectedBranchBackground": "Blue13"

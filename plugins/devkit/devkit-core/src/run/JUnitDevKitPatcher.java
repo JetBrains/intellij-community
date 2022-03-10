@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
@@ -8,14 +8,14 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +29,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -63,6 +64,23 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
         assert basePath != null;
         vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, Path.of(basePath, "config/test").toAbsolutePath().toString());
+      }
+
+      JavaSdkVersion sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
+      if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
+        try {
+          URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
+          if (resource != null) {
+            FileUtil.loadLines(resource.getFile())
+              .forEach(l -> vm.add("--add-opens " + l));
+          }
+        }
+        catch (ProcessCanceledException e) {
+          throw e; //unreachable
+        }
+        catch (Throwable e) {
+          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
+        }
       }
     }
 

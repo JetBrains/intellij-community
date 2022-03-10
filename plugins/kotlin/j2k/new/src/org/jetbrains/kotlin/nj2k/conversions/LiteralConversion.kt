@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import java.math.BigInteger
+import java.util.*
 
 class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -28,7 +29,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     }
 
     private fun cannotConvertLiteralMessage(element: JKLiteralExpression): String {
-        val literalType = element.type.toString().toLowerCase()
+        val literalType = element.type.toString().lowercase(Locale.getDefault())
         val literalValue = element.literal
         return "Could not convert $literalType literal '$literalValue' to Kotlin"
     }
@@ -61,7 +62,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
         }
 
     private fun JKLiteralExpression.toStringLiteral() =
-        literal.replace("""((?:\\)*)\\([0-3]?[0-7]{1,2})""".toRegex()) { matchResult ->
+        literal.replace("""(\\*)\\([0-3]?[0-7]{1,2})""".toRegex()) { matchResult ->
             val leadingBackslashes = matchResult.groupValues[1]
             if (leadingBackslashes.length % 2 == 0)
                 String.format("%s\\u%04x", leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
@@ -109,7 +110,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
     }
 
     private fun String.convertOctalLiteral(isLongLiteral: Boolean): String {
-        if (!startsWith("0") || length == 1 || get(1).toLowerCase() == 'x') return this
+        if (!startsWith("0") || length == 1 || get(1).lowercaseChar() == 'x') return this
         val value = BigInteger(drop(1), 8)
         return if (isLongLiteral) value.toLong().toString(10) else value.toInt().toString(10)
     }

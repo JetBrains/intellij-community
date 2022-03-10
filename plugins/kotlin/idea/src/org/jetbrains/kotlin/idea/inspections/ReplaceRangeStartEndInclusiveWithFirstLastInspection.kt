@@ -10,10 +10,10 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.intentions.isRange
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 
 class ReplaceRangeStartEndInclusiveWithFirstLastInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -40,18 +40,6 @@ class ReplaceRangeStartEndInclusiveWithFirstLastInspection : AbstractKotlinInspe
             }
         })
     }
-}
-
-private val rangeTypes = setOf(
-    "kotlin.ranges.IntRange",
-    "kotlin.ranges.CharRange",
-    "kotlin.ranges.LongRange",
-    "kotlin.ranges.UIntRange",
-    "kotlin.ranges.ULongRange"
-)
-
-private fun ClassDescriptor.isRange(): Boolean {
-    return rangeTypes.any { this.fqNameUnsafe.asString() == it }
 }
 
 class ReplaceIntRangeStartWithFirstQuickFix : LocalQuickFix {

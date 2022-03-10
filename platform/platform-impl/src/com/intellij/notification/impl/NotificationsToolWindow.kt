@@ -180,6 +180,14 @@ internal class NotificationContent(val project: Project,
     searchField.border = JBUI.Borders.customLineBottom(JBColor.border())
     searchField.isVisible = false
 
+    if (ExperimentalUI.isNewUI()) {
+      searchController.background = JBUI.CurrentTheme.ToolWindow.background()
+      searchField.textEditor.background = searchController.background
+    }
+    else {
+      searchController.background = UIUtil.getTextFieldBackground()
+    }
+
     searchController.searchField = searchField
 
     searchField.addDocumentListener(object : DocumentAdapter() {
@@ -382,6 +390,7 @@ private class SearchController(private val mainContent: NotificationContent,
                                private val suggestions: NotificationGroupComponent,
                                private val timeline: NotificationGroupComponent) {
   lateinit var searchField: SearchTextField
+  lateinit var background: Color
 
   fun startSearch() {
     mainContent.clearEmptyState()
@@ -395,7 +404,7 @@ private class SearchController(private val mainContent: NotificationContent,
     val query = searchField.text
 
     if (query.isEmpty()) {
-      searchField.textEditor.background = UIUtil.getTextFieldBackground()
+      searchField.textEditor.background = background
       clearSearch()
       return
     }
@@ -408,7 +417,7 @@ private class SearchController(private val mainContent: NotificationContent,
     }
     suggestions.iterateComponents(function)
     timeline.iterateComponents(function)
-    searchField.textEditor.background = if (result) UIUtil.getTextFieldBackground() else LightColors.RED
+    searchField.textEditor.background = if (result) background else LightColors.RED
     mainContent.fullRepaint()
   }
 
@@ -1034,7 +1043,10 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun createAction(action: AnAction): JComponent {
-    return LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action)
+    return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
+                                        { link, _action -> runAction(_action, link) }, action) {
+      override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
+    }
   }
 
   private fun doShowSettings() {
@@ -1090,7 +1102,7 @@ private class NotificationComponent(val project: Project,
     component.isOpaque = false
     component.border = null
 
-    NotificationsUtil.configureHtmlEditorKit(component)
+    NotificationsUtil.configureHtmlEditorKit(component, false)
 
     if (myNotificationWrapper.notification!!.listener != null) {
       component.addHyperlinkListener { e ->
@@ -1115,7 +1127,7 @@ private class NotificationComponent(val project: Project,
     }
 
     myLafUpdater = Runnable {
-      NotificationsUtil.configureHtmlEditorKit(component)
+      NotificationsUtil.configureHtmlEditorKit(component, false)
       component.text = text
       component.revalidate()
       component.repaint()
@@ -1250,6 +1262,8 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class MyDropDownAction(val notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
@@ -1280,6 +1294,8 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
 
     Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
+
+  override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
 }
 
 private class NotificationWrapper(notification: Notification) {

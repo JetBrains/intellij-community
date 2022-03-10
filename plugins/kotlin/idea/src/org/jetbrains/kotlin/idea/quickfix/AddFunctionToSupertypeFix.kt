@@ -19,16 +19,14 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.TemplateKind
-import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
-import org.jetbrains.kotlin.idea.core.implicitModality
+import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
@@ -68,6 +66,8 @@ class AddFunctionToSupertypeFix private constructor(
 
     private fun addFunction(functionData: FunctionData, project: Project) {
         project.executeWriteCommand(KotlinBundle.message("fix.add.function.supertype.progress")) {
+            element?.removeDefaultValues()
+
             val classBody = functionData.targetClass.getOrCreateBody()
 
             val functionElement = KtPsiFactory(project).createFunction(functionData.sourceCode)
@@ -79,6 +79,13 @@ class AddFunctionToSupertypeFix private constructor(
             if (insertedFunctionElement.implicitModality() == modifierToken) {
                 RemoveModifierFix(insertedFunctionElement, modifierToken, true).invoke()
             }
+        }
+    }
+
+    private fun KtNamedFunction.removeDefaultValues() {
+        valueParameters.forEach {
+            it.defaultValue?.delete()
+            it.equalsToken?.delete()
         }
     }
 
@@ -121,8 +128,7 @@ class AddFunctionToSupertypeFix private constructor(
 
         private fun createFunctionData(functionDescriptor: FunctionDescriptor, project: Project): FunctionData? {
             val classDescriptor = functionDescriptor.containingDeclaration as ClassDescriptor
-
-            var sourceCode = IdeDescriptorRenderers.SOURCE_CODE.render(functionDescriptor)
+            var sourceCode = IdeDescriptorRenderers.SOURCE_CODE.withDefaultValueOption(project).render(functionDescriptor)
             if (classDescriptor.kind != ClassKind.INTERFACE && functionDescriptor.modality != Modality.ABSTRACT) {
                 val returnType = functionDescriptor.returnType
                 sourceCode += if (returnType == null || !KotlinBuiltIns.isUnit(returnType)) {
@@ -141,10 +147,19 @@ class AddFunctionToSupertypeFix private constructor(
 
             val targetClass = DescriptorToSourceUtilsIde.getAnyDeclaration(project, classDescriptor) as? KtClass ?: return null
             return FunctionData(
-                IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(functionDescriptor),
+                IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withDefaultValueOption(project).render(functionDescriptor),
                 sourceCode,
                 targetClass
             )
+        }
+
+        private fun DescriptorRenderer.withDefaultValueOption(project: Project): DescriptorRenderer {
+            return withOptions {
+                this.defaultParameterValueRenderer = {
+                    OptionalParametersHelper.defaultParameterValueExpression(it, project)?.text
+                        ?: error("value parameter renderer shouldn't be called when there is no value to render")
+                }
+            }
         }
 
         private fun generateFunctionsToAdd(functionElement: KtNamedFunction): List<FunctionDescriptor> {

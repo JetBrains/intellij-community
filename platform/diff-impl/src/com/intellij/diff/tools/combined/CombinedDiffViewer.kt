@@ -314,7 +314,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
   }
 
   private val foldingModels: List<FoldingModelSupport>
-    get() = diffViewers.mapNotNull { viewer ->
+    get() = diffViewers.values.mapNotNull { viewer ->
       when (viewer) {
         is SimpleDiffViewer -> viewer.foldingModel
         is UnifiedDiffViewer -> viewer.foldingModel

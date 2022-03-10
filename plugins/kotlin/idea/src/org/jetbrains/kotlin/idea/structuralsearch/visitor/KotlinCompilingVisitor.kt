@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.dupLocator.util.NodeFilter
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -19,7 +18,6 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
-import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextFilterSet
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
@@ -218,19 +216,6 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         }
     }
 
-    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-        super.visitNamedDeclaration(declaration)
-
-        declaration.nameIdentifier?.let { identifier ->
-            if (getHandler(identifier).withinHierarchyTextFilterSet && declaration.parent is KtClassBody) {
-                val klass = declaration.parent.parent
-                if (klass is KtClassOrObject) {
-                    klass.nameIdentifier?.putUserData(WITHIN_HIERARCHY, true)
-                }
-            }
-        }
-    }
-
     override fun visitParameter(parameter: KtParameter) {
         super.visitParameter(parameter)
         getHandler(parameter).filter = ParameterFilter
@@ -398,9 +383,6 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
     }
 
     companion object {
-
-        val WITHIN_HIERARCHY: Key<Boolean> = Key<Boolean>("withinHierarchy")
-
         private fun deparIfNecessary(element: PsiElement): PsiElement =
             if (element is KtParenthesizedExpression) element.deparenthesize() else element
 

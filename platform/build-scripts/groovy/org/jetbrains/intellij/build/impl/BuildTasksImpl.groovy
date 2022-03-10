@@ -10,6 +10,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
+import groovy.transform.Immutable
 import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -488,9 +489,73 @@ idea.fatal.error.notification=disabled
 
     if (context.shouldBuildDistributions()) {
       layoutShared(context)
+      def distDirs = buildOsSpecificDistributions(context)
+      if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
+        if (context.buildNumber == null) {
+          context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+        }
+        else if (context.options.targetOS != BuildOptions.OS_ALL) {
+          context.messages.
+            warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+        }
+        else {
+          context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP, new Runnable() {
+            @Override
+            void run() {
+              String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
+              if (toolboxLiteGenVersion == null) {
+                context.messages.error("Toolbox Lite-Gen version is not specified!")
+              }
+              else {
+                ToolboxLiteGen.runToolboxLiteGen(
+                  context.paths.buildDependenciesCommunityRoot,
+                  context.messages,
+                  toolboxLiteGenVersion,
+                  "/artifacts-dir=${context.paths.artifacts}",
+                  "/product-code=${context.applicationInfo.productCode}",
+                  "/isEAP=${context.applicationInfo.isEAP}",
+                  "/output-dir=${context.paths.buildOutputRoot}/toolbox-lite-gen"
+                )
+              }
+            }
+          })
+        }
+      }
 
-      Path propertiesFile = patchIdeaPropertiesFile()
-      Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs = Collections.synchronizedMap(new HashMap<Pair<OsFamily, JvmArchitecture>, Path>(4))
+      if (context.productProperties.buildCrossPlatformDistribution) {
+        if (distDirs.size() == SUPPORTED_DISTRIBUTIONS.size()) {
+          context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP, new Runnable() {
+            @Override
+            void run() {
+              CrossPlatformDistributionBuilder.buildCrossPlatformZip(distDirs, context)
+            }
+          })
+        }
+        else {
+          Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
+        }
+      }
+    }
+    logFreeDiskSpace("after building distributions")
+  }
+
+  private static List<SupportedDistribution> SUPPORTED_DISTRIBUTIONS = [
+    new SupportedDistribution(os: OsFamily.MACOS, arch: JvmArchitecture.x64),
+    new SupportedDistribution(os: OsFamily.MACOS, arch: JvmArchitecture.aarch64),
+    new SupportedDistribution(os: OsFamily.WINDOWS, arch: JvmArchitecture.x64),
+    new SupportedDistribution(os: OsFamily.LINUX, arch: JvmArchitecture.x64),
+  ]
+
+  @Immutable
+  private static final class SupportedDistribution {
+    final OsFamily os
+    final JvmArchitecture arch
+  }
+
+  private Map<Pair<OsFamily, JvmArchitecture>, Path> buildOsSpecificDistributions(BuildContext context) {
+    Path propertiesFile = patchIdeaPropertiesFile()
+    Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs = Collections.synchronizedMap(new HashMap<Pair<OsFamily, JvmArchitecture>, Path>(SUPPORTED_DISTRIBUTIONS.size()))
+    buildContext.executeStep("Building OS-specific distributions", BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP) {
       List<BuildTaskRunnable> createDistTasks = List.of(
         createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
           @Override
@@ -526,53 +591,8 @@ idea.fatal.error.notification=disabled
         })
       )
       runInParallel(createDistTasks.findAll { it != null }, context)
-      if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
-        if (context.buildNumber == null) {
-          context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
-        }
-        else if (context.options.targetOS != BuildOptions.OS_ALL) {
-          context.messages.
-            warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
-        }
-        else {
-          context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP, new Runnable() {
-            @Override
-            void run() {
-              String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
-              if (toolboxLiteGenVersion == null) {
-                context.messages.error("Toolbox Lite-Gen version is not specified!")
-              }
-              else {
-                ToolboxLiteGen.runToolboxLiteGen(
-                  context.paths.buildDependenciesCommunityRoot,
-                  context.messages,
-                  toolboxLiteGenVersion,
-                  "/artifacts-dir=${context.paths.artifacts}",
-                  "/product-code=${context.applicationInfo.productCode}",
-                  "/isEAP=${context.applicationInfo.isEAP}",
-                  "/output-dir=${context.paths.buildOutputRoot}/toolbox-lite-gen"
-                )
-              }
-            }
-          })
-        }
-      }
-
-      if (context.productProperties.buildCrossPlatformDistribution) {
-        if (distDirs.size() == createDistTasks.size()) {
-          context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP, new Runnable() {
-            @Override
-            void run() {
-              CrossPlatformDistributionBuilder.buildCrossPlatformZip(distDirs, context)
-            }
-          })
-        }
-        else {
-          Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
-        }
-      }
     }
-    logFreeDiskSpace("after building distributions")
+    return distDirs
   }
 
   @Override
@@ -967,6 +987,7 @@ idea.fatal.error.notification=disabled
     if (context.productProperties.buildSourcesArchive) {
       DistributionJARsBuilder.buildSourcesArchive(projectStructureMapping, context)
     }
+    buildOsSpecificDistributions(buildContext)
   }
 
   @Override

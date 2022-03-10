@@ -2,12 +2,77 @@
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.externalSystem.dependency.analyzer.*
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNode
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNode
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode
+import com.intellij.openapi.externalSystem.view.ModuleNode
+import com.intellij.openapi.externalSystem.view.ProjectNode
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import com.intellij.openapi.module.Module
 
 class GradleDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
+
   override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
 
-  override fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView) {}
+  override fun getContributors(): List<Contributor<*>> =
+    listOf(
+      ExternalSystemContributor(),
+      ProjectViewContributor()
+    )
+
+  private class ExternalSystemContributor : Contributor<ExternalSystemNode<*>> {
+
+    override fun getSelectedData(e: AnActionEvent): ExternalSystemNode<*>? {
+      return e.getData(ExternalSystemDataKeys.SELECTED_NODES)?.firstOrNull()
+    }
+
+    override fun getExternalProjectPath(e: AnActionEvent, selectedData: ExternalSystemNode<*>): String? {
+      if (selectedData is ProjectNode) {
+        return selectedData.data?.linkedExternalProjectPath
+      }
+      return selectedData.findNode(ModuleNode::class.java)
+        ?.data?.linkedExternalProjectPath
+    }
+
+    override fun getDependencyData(e: AnActionEvent, selectedData: ExternalSystemNode<*>): DependencyAnalyzerDependency.Data? {
+      return when (val data = selectedData.data) {
+        is ProjectData -> DAModule(data.internalName)
+        is ModuleData -> DAModule(data.internalName)
+        else -> when (val node = selectedData.dependencyNode) {
+          is ProjectDependencyNode -> DAModule(node.projectName)
+          is ArtifactDependencyNode -> DAArtifact(node.group, node.module, node.version)
+          else -> null
+        }
+      }
+    }
+
+    override fun getDependencyScope(e: AnActionEvent, selectedData: ExternalSystemNode<*>): DependencyAnalyzerDependency.Scope? {
+      val dependencyNode = selectedData.findDependencyNode(DependencyScopeNode::class.java) ?: return null
+      return DAScope(dependencyNode.scope, StringUtil.toTitleCase(dependencyNode.scope))
+    }
+  }
+
+  private class ProjectViewContributor : Contributor<Module> {
+    override fun getSelectedData(e: AnActionEvent): Module? {
+      val modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) ?: return null
+      return modules.find { ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, it) }
+    }
+
+    override fun getExternalProjectPath(e: AnActionEvent, selectedData: Module): String? {
+      return ExternalSystemApiUtil.getExternalProjectPath(selectedData)
+    }
+
+    override fun getDependencyData(e: AnActionEvent, selectedData: Module): DependencyAnalyzerDependency.Data {
+      return DAModule(selectedData.name)
+    }
+
+    override fun getDependencyScope(e: AnActionEvent, selectedData: Module) = null
+  }
 }

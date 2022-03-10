@@ -24,7 +24,6 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -125,6 +124,19 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
   }
 
+  private class MyActionToolbarImpl(place: String,
+                                    actionGroup: ActionGroup,
+                                    horizontal: Boolean, decorateButtons: Boolean,
+                                    popupActionGroup: ActionGroup?,
+                                    popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons,
+                                                                                popupActionGroup, popupActionId) {
+
+    override fun addNotify() {
+      super.addNotify()
+      updateActionsImmediately()
+    }
+  }
+
   @RequiresEdt
   private fun applyTo(
     actions: Map<String, ActionGroup?>,
@@ -134,8 +146,8 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
 
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
-        val toolbar = ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
-                                        IdeActions.GROUP_EXPERIMENTAL_TOOLBAR)
+        val toolbar = MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
+                                          IdeActions.GROUP_EXPERIMENTAL_TOOLBAR)
         ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC).toolbarCreated(ActionPlaces.MAIN_TOOLBAR,
                                                                                                                  actionGroup, true, toolbar)
         toolbar
@@ -153,8 +165,6 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
         toolbar.targetComponent = null
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
         component.add(toolbar.component, layoutConstraints)
-
-        toolbar.updateActionsImmediately()
       }
     }
     component.revalidate()

@@ -16,6 +16,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -71,7 +72,7 @@ public class SamePackageImportInspection extends BaseInspection implements Clean
         final String text = importStatement.getQualifiedName();
         if (importStatement.isOnDemand()) {
           if (packageName.equals(text)) {
-            registerError(importStatement);
+            registerError(importStatement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           }
         }
         else {
@@ -87,7 +88,7 @@ public class SamePackageImportInspection extends BaseInspection implements Clean
             parentName = text.substring(0, classNameIndex);
           }
           if (packageName.equals(parentName)) {
-            registerError(importStatement);
+            registerError(importStatement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           }
         }
       }

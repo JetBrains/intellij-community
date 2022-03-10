@@ -1,3 +1,4 @@
+//file:noinspection GrPackage
 
 String[] ijTestIncludes = ${TEST_NAME_INCLUDES}
 
@@ -14,10 +15,12 @@ gradle.taskGraph.whenReady { taskGraph ->
       try {
         task.outputs.upToDateWhen { false }
         String[] strings = ['*']
-        if(ijTestIncludes != strings) {
+        if(ijTestIncludes.size() > 0 && ijTestIncludes != strings) {
           def filter = task.getFilter()
           filter.setIncludePatterns(new String[0])
-          ijTestIncludes.each(){ filter.includeTestsMatching "${it}" }
+          ijTestIncludes.each() {
+            filter.includeTestsMatching "${it}"
+          }
         }
       }
       catch (all) {

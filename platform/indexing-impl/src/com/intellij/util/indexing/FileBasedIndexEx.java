@@ -22,6 +22,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -41,6 +42,7 @@ import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,33 +120,22 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   @NotNull
   public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
-    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
+    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(filter);
 
     final List<V> values = new SmartList<>();
     ValueProcessor<V> processor = (file, value) -> {
       values.add(value);
       return true;
     };
-    if (restrictToFile != null) {
+    if (restrictToFileIt != null) {
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+      if (restrictToFile == null) return Collections.emptyList();
       processValuesInOneFile(indexId, dataKey, restrictToFile, filter, processor);
     }
     else {
       processValuesInScope(indexId, dataKey, true, filter, null, processor);
     }
     return values;
-  }
-
-  private static @Nullable VirtualFile getTheOnlyFileInScope(@NotNull GlobalSearchScope filter) {
-    VirtualFileEnumeration files = VirtualFileEnumeration.extract(filter);
-    if (files == null) return null;
-    Iterator<VirtualFile> iterator = files.asIterable().iterator();
-    if (iterator.hasNext()) {
-      VirtualFile first = iterator.next();
-      if (!iterator.hasNext()) {
-        return first;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -237,8 +228,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
     if (project instanceof LightEditCompatible) return Collections.emptyIterator();
-    VirtualFile restrictToFile = getTheOnlyFileInScope(scope);
-    if (restrictToFile != null) {
+    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
+    if (restrictToFileIt != null) {
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+      if (restrictToFile == null) return Collections.emptyIterator();
       return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
              Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
     }
@@ -436,15 +429,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                                IdFilter filesSet) {
     IntSet set = null;
     if (filter instanceof GlobalSearchScope.FilesScope) {
-      set = new IntOpenHashSet();
       VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      if (hint != null) {
-        for (VirtualFile file : hint.asIterable()) {
-          if (file instanceof VirtualFileWithId) {
-            set.add(((VirtualFileWithId)file).getId());
-          }
-        }
-      }
+      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
     }
 
     //noinspection rawtypes
@@ -800,5 +786,43 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public static Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
     Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
     return fileSet.stream().filter(scope::contains).iterator();
+  }
+
+  @ApiStatus.Internal
+  @SuppressWarnings("unchecked")
+  public static @Nullable Iterator<VirtualFile> extractSingleFileOrEmpty(@Nullable GlobalSearchScope scope) {
+    if (scope == null) return null;
+
+    VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
+    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? toFileIterable(enumeration.asArray()) :
+                                                scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
+                                                null;
+    if (scopeAsFileIterable == null) return null;
+
+    VirtualFile result = null;
+    boolean isFirst = true;
+    for (VirtualFile file : scopeAsFileIterable) {
+      if (!scope.contains(file)) continue;
+      if (!isFirst) return null;
+      result = file;
+      isFirst = false;
+    }
+
+    return isFirst ? ObjectIterators.emptyIterator() :
+           result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
+           null;
+  }
+
+  public static @NotNull Iterable<VirtualFile> toFileIterable(int @NotNull [] fileIds) {
+    Iterator<VirtualFile> iterator =
+      Arrays.stream(fileIds).mapToObj(id -> VirtualFileManager.getInstance().findFileById(id)).filter(Objects::nonNull).iterator();
+
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<VirtualFile> iterator() {
+        return iterator;
+      }
+    };
   }
 }

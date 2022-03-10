@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.todo;
 
@@ -33,7 +33,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
   public static final ID<Integer, Map<TodoIndexEntry, Integer>> NAME = ID.create("TodoIndex");
 
   public TodoIndex() {
-    ApplicationManager.getApplication().getMessageBus().connect()
+    ApplicationManager.getApplication().getMessageBus().simpleConnect()
       .subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -73,22 +73,19 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
 
   private final SingleEntryIndexer<Map<TodoIndexEntry, Integer>> myIndexer =
     new SingleEntryCompositeIndexer<Map<TodoIndexEntry, Integer>, DataIndexer<TodoIndexEntry, Integer, FileContent>, String>(false) {
-      @Nullable
       @Override
-      public DataIndexer<TodoIndexEntry, Integer, FileContent> calculateSubIndexer(@NotNull IndexedFile file) {
+      public @Nullable DataIndexer<TodoIndexEntry, Integer, FileContent> calculateSubIndexer(@NotNull IndexedFile file) {
         return PlatformIdTableBuilding.getTodoIndexer(file.getFileType());
       }
 
-      @NotNull
       @Override
-      public String getSubIndexerVersion(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
+      public @NotNull String getSubIndexerVersion(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
         int version = indexer instanceof VersionedTodoIndexer ? (((VersionedTodoIndexer)indexer).getVersion()) : 0xFF;
         return indexer.getClass().getName() + ":" + version;
       }
 
-      @NotNull
       @Override
-      public KeyDescriptor<String> getSubIndexerVersionDescriptor() {
+      public @NotNull KeyDescriptor<String> getSubIndexerVersionDescriptor() {
         return EnumeratorStringDescriptor.INSTANCE;
       }
 
@@ -111,9 +108,8 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
     return 13;
   }
 
-  @NotNull
   @Override
-  public ID<Integer, Map<TodoIndexEntry, Integer>> getName() {
+  public @NotNull ID<Integer, Map<TodoIndexEntry, Integer>> getName() {
     return NAME;
   }
 
@@ -122,15 +118,13 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
     return myIndexer;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Map<TodoIndexEntry, Integer>> getValueExternalizer() {
+  public @NotNull DataExternalizer<Map<TodoIndexEntry, Integer>> getValueExternalizer() {
     return myValueExternalizer;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {

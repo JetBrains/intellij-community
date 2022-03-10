@@ -110,22 +110,60 @@ public final class ExperimentalUI {
     paths.put("actions/edit.svg", "/expui/general/edit.svg");
     paths.put("actions/editSource.svg", "/expui/general/edit.svg");
     paths.put("actions/groupBy.svg", "/expui/general/groups.svg");
+    paths.put("actions/upload.svg", "/expui/general/upload.svg");
+    paths.put("actions/download.svg", "/expui/general/download.svg");
+    paths.put("actions/run_anything.svg", "/expui/general/runAnything.svg");
+    paths.put("actions/show.svg", "/expui/general/show.svg");
+    paths.put("actions/cancel.svg", "/expui/general/close.svg");
+    paths.put("actions/close.svg", "/expui/general/closeSmall.svg");
+    paths.put("actions/closeHovered.svg", "/expui/general/closeSmallHovered.svg");
+    paths.put("actions/dependencyAnalyzer.svg", "/expui/build/dependencyAnalyzer.svg");
+    paths.put("images/updateFolders.svg", "/expui/build/updateFolders.svg");
     paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("general/balloonError.svg", "/expui/status/error.svg");
     paths.put("general/balloonInformation.svg", "/expui/status/info.svg");
     paths.put("general/balloon.svg", "/expui/status/success.svg");
     paths.put("general/balloonWarning.svg", "/expui/status/warning.svg");
+    paths.put("nodes/abstractException.svg", "/expui/nodes/abstractException.svg");
+    paths.put("nodes/annotationtype.svg", "/expui/nodes/annotation.svg");
     paths.put("nodes/class.svg", "/expui/nodes/class.svg");
+    paths.put("nodes/abstractClass.svg", "/expui/nodes/classAbstract.svg");
+    paths.put("nodes/anonymousClass.svg", "/expui/nodes/classAnonymous.svg");
+    paths.put("nodes/classInitializer.svg", "/expui/nodes/classInitializer.svg");
+    paths.put("nodes/constant.svg", "/expui/nodes/constant.svg");
+    paths.put("nodes/enum.svg", "/expui/nodes/enum.svg");
+    paths.put("nodes/errorIntroduction.svg", "/expui/nodes/errorIntroduction.svg");
+    paths.put("nodes/exceptionClass.svg", "/expui/nodes/exception.svg");
+    paths.put("nodes/field.svg", "/expui/nodes/field.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
+    paths.put("nodes/function.svg", "/expui/nodes/function.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
     paths.put("nodes/Module.svg", "/expui/nodes/module.svg");
     paths.put("nodes/moduleGroup.svg", "/expui/nodes/moduleGroup.svg");
     paths.put("nodes/ppLib.svg", "/expui/nodes/library.svg");
+    paths.put("nodes/method.svg", "/expui/nodes/method.svg");
+    paths.put("nodes/abstractMethod.svg", "/expui/nodes/methodAbstract.svg");
+    paths.put("nodes/methodReference.svg", "/expui/nodes/methodReference.svg");
+    paths.put("nodes/parameter.svg", "/expui/nodes/parameter.svg");
+    paths.put("nodes/newParameter.svg", "/expui/nodes/parameter.svg");
+    paths.put("nodes/property.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/propertyRead.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/propertyReadStatic.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/propertyReadWrite.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/propertyReadWriteStatic.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/propertyWrite.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/propertyWriteStatic.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/static.svg", "/expui/nodes/static.svg");
+    paths.put("nodes/test.svg", "/expui/nodes/test.svg");
+    paths.put("nodes/testIgnored.svg", "/expui/nodes/testIgnored.svg");
+    paths.put("nodes/variable.svg", "/expui/nodes/variable.svg");
+    paths.put("nodes/warningIntroduction.svg", "/expui/nodes/warningIntroduction.svg");
     paths.put("modules/excludeRoot.svg", "/expui/nodes/excludeRoot.svg");
     paths.put("modules/sourceRoot.svg", "/expui/nodes/sourceRoot.svg");
+    paths.put("modules/resourcesRoot.svg", "/expui/nodes/resourcesRoot.svg");
     paths.put("modules/testRoot.svg", "/expui/nodes/testRoot.svg");
-    paths.put("toolwindows/notifications.svg", "/expui/general/notifications.svg");
+    paths.put("toolwindows/notifications.svg", "/expui/toolwindow/notifications.svg");
     paths.put("toolwindows/toolWindowAnt.svg", "/expui/toolwindow/ant.svg");
     paths.put("toolwindows/toolWindowBookmarks.svg", "/expui/toolwindow/bookmarks.svg");
     paths.put("toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
@@ -154,7 +192,6 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowFind.svg", "/expui/toolwindow/find.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
     paths.put("actions/moreHorizontal.svg", "/expui/general/moreHorizontal.svg");
-    paths.put("actions/close.svg", "/expui/general/close.svg");
     paths.put("general/hideToolWindow.svg", "/expui/general/hide.svg");
     paths.put("actions/find.svg", "/expui/general/search.svg");
     paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
@@ -167,6 +204,7 @@ public final class ExperimentalUI {
     paths.put("actions/findAndShowNextMatches.svg", "expui/general/chevronDown.svg");
     paths.put("actions/findAndShowNextMatchesSmall.svg", "expui/general/chevronDown.svg");
     paths.put("general/filter.svg", "expui/general/filter.svg");
+    paths.put("vcs/history.svg", "/expui/general/history.svg");
     paths.put("vcs/changelist.svg", "expui/vcs/changelist.svg");
     paths.put("icons/outgoing.svg", "expui/vcs/changesPush@12x12.svg");
     paths.put("icons/incoming.svg", "expui/vcs/changesUpdate@12x12.svg");
@@ -207,7 +245,28 @@ public final class ExperimentalUI {
     paths.put("org/intellij/images/icons/ImagesFileType.svg", "/expui/fileTypes/image.svg");
     paths.put("org/jetbrains/plugins/sass/sass.svg", "/expui/fileTypes/scss.svg");
     paths.put("icons/shFile.svg", "/expui/fileTypes/shell.svg");
+    paths.put("icons/AngularJS.svg", "/expui/fileTypes/angularJS.svg");
     paths.put("icons/MarkdownPlugin.svg", "/expui/fileTypes/markdown.svg");
+    paths.put("org/jetbrains/plugins/cucumber/icons/cucumber.svg", "expui/fileTypes/cucumber.svg");
+    paths.put("providers/eclipse.svg", "expui/fileTypes/eclipse.svg");
+    paths.put("icons/freemarker-icon.svg", "expui/fileTypes/freemaker.svg");
+    paths.put("icons/go.svg", "expui/fileTypes/go.svg");
+    paths.put("icons/fileTypes/jestSnapshot.svg", "expui/fileTypes/jest.svg");
+    paths.put("icons/fileTypes/jsHint.svg", "expui/fileTypes/jshint.svg");
+    paths.put("icons/less.svg", "expui/fileTypes/less.svg");
+    paths.put("icons/lombok.svg", "expui/fileTypes/lombok.svg");
+    paths.put("icons/config.svg", "expui/fileTypes/lombokConfig.svg");
+    paths.put("org/jetbrains/kotlin/idea/icons/kotlin_file.svg", "expui/fileTypes/kotlin.svg");
+    paths.put("vcs/ignore_file.svg", "expui/fileTypes/ignored.svg");
+    paths.put("vcs/patch_file.svg", "expui/fileTypes/patch.svg");
+    paths.put("protoFile.png", "expui/fileTypes/protobuf.svg");
+    paths.put("icons/com/jetbrains/python/pythonFile.svg", "expui/fileTypes/python.svg");
+    paths.put("org/jetbrains/kotlin/idea/icons/wizard/react.svg", "expui/fileTypes/react.svg");
+    paths.put("org/jetbrains/plugins/scala/images/scala16.png", "expui/fileTypes/scala.svg");
+    paths.put("hcl/terraform.png", "expui/fileTypes/terraform.svg");
+    paths.put("icons/velocity.svg", "expui/fileTypes/velocity.svg");
+    paths.put("icons/vue.svg", "expui/fileTypes/vueJs.svg");
+    paths.put("icons/nodejs/yarn.svg", "expui/fileTypes/yarn.svg");
     paths.put("actions/execute.svg", "expui/run/run.svg");
     paths.put("actions/startDebugger.svg", "expui/run/debug.svg");
     paths.put("actions/restart.svg", "expui/run/restart.svg");
@@ -235,11 +294,14 @@ public final class ExperimentalUI {
     setUIProperty("EditorTabs.underlineArc", 4, defaults);
     setUIProperty("ToolWindow.Button.selectedBackground", new ColorUIResource(0x3573f0), defaults);
     setUIProperty("ToolWindow.Button.selectedForeground", new ColorUIResource(0xffffff), defaults);
-    // avoid getting EditorColorsManager too early
-    setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
-      EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      return ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
-    }, defaults);
+
+    if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
+      // avoid getting EditorColorsManager too early
+      setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
+        EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
+        return ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
+      }, defaults);
+    }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
       installInterFont(defaults);

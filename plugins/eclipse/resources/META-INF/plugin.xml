@@ -38,6 +38,11 @@
         nameBundle="messages.EclipseBundle"
         implementationClass="org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
+    <schemeExporter
+      nameBundle="messages.EclipseBundle"
+      nameKey="eclipse.xml.profile"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="org.jetbrains.idea.eclipse.exporter.EclipseCodeStyleSchemeExporter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
     <notificationGroup id="Unknown Natures Detected" displayType="BALLOON"/>

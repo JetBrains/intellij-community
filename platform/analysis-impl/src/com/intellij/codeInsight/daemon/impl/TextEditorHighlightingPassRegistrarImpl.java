@@ -60,7 +60,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }, project);
   }
 
-  private void reRegisterFactories() {
+  void reRegisterFactories() {
     synchronized (this) {
       checkedForCycles = false;
       myRegisteredPassFactories.clear();

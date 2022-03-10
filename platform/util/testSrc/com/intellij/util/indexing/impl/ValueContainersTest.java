@@ -9,6 +9,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
@@ -37,6 +38,20 @@ public class ValueContainersTest extends TestCase {
 
   public void testManyValuesManyId() {
     runSimpleAddRemoveIteration(new Integer[] { 25, 33, 77}, new int[][]{{ 10, 20, 30}, { 11, 22 }, {44}});
+  }
+
+  public void testMixedValueContainer() {
+    ValueContainerImpl<String> container = new ValueContainerImpl<>();
+
+    container.addValue(294005, "com");
+    container.addValue(294001, "com");
+    container.addValue(294010, null);
+    container.removeValue(294010, null);
+    container.addValue(294001, "com");
+    container.removeValue(294005, "com");
+    container.removeValue(294001, "com");
+
+    assertEquals("Actual container: " + container, 0, container.size());
   }
 
   public void testTolerateHashcodeProblems() {
@@ -142,11 +157,11 @@ public class ValueContainersTest extends TestCase {
   }
 
   private static <T> void runSimpleAddRemoveIteration(T[] values, int[][] inputIds) {
-    HashMap<T, IntArrayList> valueToIdList = new HashMap<>();
+    HashMap<T, IntList> valueToIdList = new HashMap<>();
     ValueContainerImpl<T> container = new ValueContainerImpl<>();
 
     for(int i = 0; i < values.length; ++i) {
-      IntArrayList list = new IntArrayList(inputIds.length);
+      IntList list = new IntArrayList(inputIds.length);
       IntSet set = new IntOpenHashSet(inputIds.length);
       T value = values[i];
 
@@ -165,7 +180,7 @@ public class ValueContainersTest extends TestCase {
       assertTrue(valueIterator.hasNext());
 
       T value = valueIterator.next();
-      IntArrayList list = valueToIdList.get(value);
+      IntList list = valueToIdList.get(value);
       assertNotNull(list);
 
       Object object = valueIterator.getFileSetObject();

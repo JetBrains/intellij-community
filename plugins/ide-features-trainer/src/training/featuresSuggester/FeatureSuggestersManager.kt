@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFocusGainedAction
@@ -36,7 +35,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
   }
 
   private fun handleAction(action: Action) {
-    if (project.isDisposed || DumbService.isDumb(project)) return
+    if (project.isDisposed) return
     val language = action.language ?: return
     val suggesters = FeatureSuggester.suggesters
       .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
@@ -69,7 +68,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     eventMulticaster?.addFocusChangeListener(
       object : FocusChangeListener {
         override fun focusGained(editor: Editor) {
-          if (editor.project != project) return
+          if (editor.project != project || !SuggestingUtils.isActionsProcessingEnabled(project)) return
           actionPerformed(
             EditorFocusGainedAction(
               editor = editor,

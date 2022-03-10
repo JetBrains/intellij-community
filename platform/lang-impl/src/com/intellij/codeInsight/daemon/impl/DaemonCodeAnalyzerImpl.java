@@ -1132,7 +1132,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (!activeTextEditors.isEmpty()) {
       for (FileEditor fileEditor : activeTextEditors) {
         VirtualFile file = fileEditor.getFile();
-        if (file != null && files.contains(file)) {
+        if (file != null && (files.contains(file) || !file.isValid())) {
           continue;
         }
         result.add(fileEditor);

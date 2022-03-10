@@ -2,6 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -286,6 +289,19 @@ public final class ArrayUtil {
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
+  }
+
+  @Contract(pure=true)
+  public static int[] intersection(int @NotNull [] a1, int @NotNull [] a2) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+    IntSet result = new IntOpenHashSet(a1);
+    result.retainAll(new IntArrayList(a2));
+    return result.toIntArray();
   }
 
   /**

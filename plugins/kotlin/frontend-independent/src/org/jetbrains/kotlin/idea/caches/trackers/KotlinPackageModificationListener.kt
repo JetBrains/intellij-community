@@ -32,11 +32,11 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Tracks potential package changes
- * - In Kotlin and Java package directives
+ * - In Kotlin package directives
  * - VFS changes line created new file/folder
  * - Plugins load/unload
  *
- * Tested in [OutOfBlockModificationTestGenerated]
+ * Tested in [org.jetbrains.kotlin.idea.codeInsight.OutOfBlockModificationTestGenerated]
  */
 class KotlinPackageModificationListener(project: Project): Disposable {
     private val trackerImpl = SimpleModificationTracker()

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public final class TextViewer extends EditorTextField {
+  private static final String CONTEXT_MENU_GROUP_ID = "TextViewerEditorPopupMenu";
   private final boolean myEmbeddedIntoDialogWrapper;
 
   public TextViewer(@NotNull String initialText, @NotNull Project project, boolean viewer) {
@@ -74,6 +75,7 @@ public final class TextViewer extends EditorTextField {
     editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
     editor.getComponent().setPreferredSize(null);
     editor.getSettings().setUseSoftWraps(true);
+    editor.setContextMenuGroupId(CONTEXT_MENU_GROUP_ID);
 
     editor.setColorsScheme(DebuggerUIUtil.getColorScheme());
     return editor;
