@@ -412,9 +412,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         if (e.isPopupTrigger() || UIUtil.isCloseClick(e)) return;
-        PointerInfo info = MouseInfo.getPointerInfo();
         if (!isToolWindowDrag(e)) {
-          myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+          myLastPoint.set(e.getLocationOnScreen());
           myPressPoint.set(myLastPoint.get());
           myDragTracker.set(LocationOnDragTracker.startDrag(e));
           if (allowResize && ui.isResizeable()) {
