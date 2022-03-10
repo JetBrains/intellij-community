@@ -82,7 +82,7 @@ class StripedLock {
       throw exception;
     }
     else {
-      assert isComputed : "Computation in StripedLock.withAllLocksReadLocked was incorrect";
+      assert isComputed : "Computation in StripedLock.withAllLocksWriteLocked was incorrect";
       return result;
     }
   }
