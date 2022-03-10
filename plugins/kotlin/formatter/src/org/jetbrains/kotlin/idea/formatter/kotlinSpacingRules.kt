@@ -82,7 +82,16 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
                 }
             }
 
-            inPosition(right = BLOCK_COMMENT).spacing(commentSpacing(0))
+            inPosition(right = BLOCK_COMMENT).spacing(
+                Spacing.createSpacing(
+                    0,
+                    Int.MAX_VALUE,
+                    0,
+                    kotlinCommonSettings.KEEP_LINE_BREAKS,
+                    kotlinCommonSettings.KEEP_BLANK_LINES_IN_CODE,
+                )
+            )
+
             inPosition(right = EOL_COMMENT).spacing(commentSpacing(1))
             inPosition(parent = FUNCTION_LITERAL, right = BLOCK).customRule { _, _, right ->
                 when (right.node?.children()?.firstOrNull()?.elementType) {

@@ -205,8 +205,9 @@ fun foo() {
     testtest(foofoo/**/)
 
     testtest(
-            foofoo, fososos,/*
-    */
+            foofoo, fososos,
+            /*
+                */
             testtest(testtest(foofoo)),
     )
 
@@ -267,9 +268,11 @@ fun foo() {
 
 fun test() {
     baz(
-            f = fun(it: Int): String = "$it", /*dwdwd
+            f = fun(it: Int): String = "$it",
+            /*dwdwd
         */
-            name = "", /*
-        */
+            name = "",
+            /*
+                   */
     )
 }

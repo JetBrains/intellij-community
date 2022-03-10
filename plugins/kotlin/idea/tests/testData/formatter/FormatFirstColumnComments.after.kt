@@ -31,9 +31,9 @@ class KDocComments {
 
 class MultilineComments {
     fun test() {
-/*
-   * Should not be formatted
-        */
+        /*
+           * Should not be formatted
+                */
         /*
            * Format
             */

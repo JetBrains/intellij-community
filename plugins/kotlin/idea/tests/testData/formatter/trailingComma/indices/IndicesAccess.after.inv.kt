@@ -189,8 +189,9 @@ fun foo() {
     testtest[foofoo/**/]
 
     testtest[
-            foofoo, fososos,/*
-    */
+            foofoo, fososos,
+            /*
+                */
             testtest[testtest[foofoo]],
     ]
 
