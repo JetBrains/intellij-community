@@ -203,7 +203,10 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       val renderer = textRenderer
       val text = when (val item = (value as DefaultMutableTreeNode).userObject) {
         null -> return
-        is ExternalToolGroup -> item.groupName // NON-NLS
+        is ExternalToolGroup -> {
+          if (value.childCount == 0) return
+          item.groupName // NON-NLS
+        }
         is ExternalTool -> item.name // NON-NLS
         else -> item.toString() // NON-NLS
       }
