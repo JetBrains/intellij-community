@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 public final class HighlightingSessionImpl implements HighlightingSession {
   private final @NotNull PsiFile myPsiFile;
@@ -81,7 +82,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
     HighlightingSession session = map.get(file);
     if (session == null) {
-      throw new IllegalStateException("No HighlightingSession found for " + file + " ("+file.getClass()+") in " + indicator + " in map: " + map);
+      throw new IllegalStateException("No HighlightingSession found for " + file + " ("+file.getClass()+") in " + indicator + " in map: " + map.entrySet().stream().map(e->e.getKey() + " ("+e.getKey().getClass()+") -> "+e.getValue()).collect(
+        Collectors.joining("; ")));
     }
     return session;
   }
