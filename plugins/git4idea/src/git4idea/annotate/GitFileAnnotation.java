@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -26,10 +27,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.log.GitCommitTooltipLinkHandler;
@@ -99,6 +97,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     myBaseRevision = revision;
     myLines = lines;
     myLogSettings.addChangeListener(myLogSettingChangeListener);
+    Disposer.register(GitDisposable.getInstance(project), () -> myLogSettings.removeChangeListener(myLogSettingChangeListener));
   }
 
   public <T> void onLogSettingChange(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
