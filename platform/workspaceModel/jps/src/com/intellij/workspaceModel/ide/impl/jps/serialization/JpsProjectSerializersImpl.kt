@@ -835,8 +835,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 }
 
-class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
-  private val projectPointerSupplier = { JpsPathUtil.urlToPath(projectBaseDirUrl) }
+class CachingJpsFileContentReader(configLocation: JpsProjectConfigLocation) : JpsFileContentReader {
+  private val projectPointerSupplier = { JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString) }
   private val projectPathMacroManager = ProjectPathMacroManager.createInstance(projectPointerSupplier, null)
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
