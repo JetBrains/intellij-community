@@ -39,10 +39,11 @@ class ExternalDiffSettingsPanel {
           .bindSelected(settings::isExternalToolsEnabled)
       }
 
-      val externalToolsTablePanel = ExternalToolsTablePanel()
+      val models = ExternalToolsModels()
+      val externalToolsTablePanel = ExternalToolsTablePanel(models)
       indent {
         row {
-          val treePanel = ExternalToolsTreePanel(externalToolsTablePanel.model)
+          val treePanel = ExternalToolsTreePanel(models)
           cell(treePanel.component)
             .label(DiffBundle.message("settings.external.diff.panel.tree.title"), LabelPosition.TOP)
             .horizontalAlign(HorizontalAlign.FILL)
