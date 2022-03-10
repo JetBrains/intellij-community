@@ -107,7 +107,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static void invokeLater(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any());
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
   }
 
   @Override
