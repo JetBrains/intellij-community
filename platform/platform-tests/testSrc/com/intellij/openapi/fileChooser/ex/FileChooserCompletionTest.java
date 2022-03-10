@@ -1,20 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
+import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.swing.*;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 public class FileChooserCompletionTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -69,6 +76,24 @@ public class FileChooserCompletionTest extends BareTestFixtureTestCase {
       "$WHATEVER$", "/some_path");
 
     assertComplete("$", new String[]{"$DIR_11$", "$DIR_21$"}, macros, "", "$DIR_11$");
+  }
+
+  @Test
+  public void testWslMatching() throws Exception {
+    assumeTrue("No WSL", WSLUtil.isSystemCompatible());
+    List<WSLDistribution> vms = WslDistributionManager.getInstance().getInstalledDistributionsFuture().get(30, TimeUnit.SECONDS);
+    assumeTrue("No WSL distros", !vms.isEmpty());
+
+    String[] roots = vms.stream().map(d -> StringUtil.trimTrailing(d.getUNCRootPath().toString(), '\\')).toArray(String[]::new);
+    String first = Stream.of(roots).sorted().findFirst().orElseThrow();
+    int p = first.indexOf('\\', 2);
+    assertThat(p).withFailMessage("Malformed name: '%s'", first).isGreaterThan(2);
+
+    assertComplete("\\\\", roots, Map.of(), "", first);
+    assertComplete(first.substring(0, 3), roots, Map.of(), "", first);  // '\\w'
+    assertComplete(first.substring(0, p + 1), roots, Map.of(), "", first);  // '\\wsl$\'
+    assertComplete(first, new String[]{first}, Map.of(), "", first);  // '\\wsl$\xxx'
+    assertComplete(first + "\\ho", new String[]{"home"}, Map.of(), "", "home");  // '\\wsl$\xxx\ho'
   }
 
   private void assertComplete(String typed, String[] expected, Map<String, String> macros, String completionBase, String preselected) {
