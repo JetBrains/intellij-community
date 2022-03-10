@@ -8,17 +8,25 @@ import org.jetbrains.annotations.NotNull;
 public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements ProjectDependencyNode {
 
   private final String projectName;
+  private final String projectPath;
 
-  @PropertyMapping({"id", "projectName"}) //NON-NLS
-  public ProjectDependencyNodeImpl(long id, @NotNull String projectName) {
+  @PropertyMapping({"id", "projectName", "projectPath"}) //NON-NLS
+  public ProjectDependencyNodeImpl(long id, @NotNull String projectName, @NotNull String projectPath) {
     super(id);
     this.projectName = projectName;
+    this.projectPath = projectPath;
   }
 
   @NotNull
   @Override
   public String getProjectName() {
     return projectName;
+  }
+
+  @NotNull
+  @Override
+  public String getProjectPath() {
+    return projectPath;
   }
 
   @NonNls

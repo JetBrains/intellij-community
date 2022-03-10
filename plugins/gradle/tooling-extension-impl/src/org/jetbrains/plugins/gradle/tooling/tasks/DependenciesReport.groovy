@@ -144,7 +144,7 @@ class DependenciesReport extends DefaultTask {
       if (dependency instanceof ResolvedDependencyResult) {
         def componentId = getId(dependency.selected)
         if (componentId instanceof ProjectComponentIdentifier) {
-          node = new ProjectDependencyNodeImpl(id, projectNameFunction.fun(componentId))
+          node = new ProjectDependencyNodeImpl(id, projectNameFunction.fun(componentId), componentId.getProjectPath())
         }
         else if (componentId instanceof ModuleComponentIdentifier) {
           node = new ArtifactDependencyNodeImpl(id, componentId.getGroup(), componentId.getModule(), componentId.getVersion())
@@ -153,8 +153,10 @@ class DependenciesReport extends DefaultTask {
           node = new UnknownDependencyNode(id, componentId.displayName)
         }
         node.resolutionState = RESOLVED
-        if (!dependency.selected.selectionReason.descriptions.isEmpty()) {
-          node.selectionReason = dependency.selected.selectionReason.descriptions.last().description
+        if (dependency.selected.selectionReason.hasProperty("descriptions")) {
+          if (!dependency.selected.selectionReason.descriptions.isEmpty()) {
+            node.selectionReason = dependency.selected.selectionReason.descriptions.last().description
+          }
         }
         added.put(id, node)
         def iterator = dependency.selected.dependencies.iterator()

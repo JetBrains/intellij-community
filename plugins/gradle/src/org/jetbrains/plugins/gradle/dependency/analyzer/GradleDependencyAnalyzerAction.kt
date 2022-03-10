@@ -44,7 +44,7 @@ class GradleDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
     override fun getDependencyData(e: AnActionEvent, selectedData: ExternalSystemNode<*>): DependencyAnalyzerDependency.Data? {
       return when (val data = selectedData.data) {
         is ProjectData -> DAModule(data.internalName)
-        is ModuleData -> DAModule(data.internalName)
+        is ModuleData -> DAModule(data.moduleName)
         else -> when (val node = selectedData.dependencyNode) {
           is ProjectDependencyNode -> DAModule(node.projectName)
           is ArtifactDependencyNode -> DAArtifact(node.group, node.module, node.version)
