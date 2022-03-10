@@ -177,7 +177,17 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
+  @Override
+  public void invalidateAnnotationsFor(@NotNull VirtualFile file, @Nullable VcsKey vcsKey) {
+    synchronized (myLock) {
+      Collection<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotations, it ->
+        file.equals(it.getFile()) && (vcsKey == null || vcsKey.equals(it.getVcsKey())));
+      invalidateAnnotations(copy, false);
+    }
+  }
+
   private static void invalidateAnnotations(@NotNull Collection<? extends FileAnnotation> annotations, boolean reload) {
+    if (annotations.isEmpty()) return;
     getApplication().invokeLater(() -> {
       for (FileAnnotation annotation : annotations) {
         try {

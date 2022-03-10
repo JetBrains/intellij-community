@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @see com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
@@ -46,5 +47,10 @@ public interface VcsAnnotationLocalChangesListener {
 
   void reloadAnnotations();
 
-  void reloadAnnotationsForVcs(VcsKey key);
+  void reloadAnnotationsForVcs(@NotNull VcsKey key);
+
+  /**
+   * @param vcsKey pass 'null' to refresh annotations for all vcses
+   */
+  void invalidateAnnotationsFor(@NotNull VirtualFile file, @Nullable VcsKey vcsKey);
 }
