@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
@@ -26,6 +27,14 @@ interface CodeVisionProvider<T> {
     val providersExtensionPoint = ExtensionPointName.create<CodeVisionProvider<*>>(EP_NAME)
   }
 
+  /**
+   * It affects  whether the group will be shown in settings or not.
+   *
+   * @return true iff it could potentially provide any lenses for the project
+   */
+  @JvmDefault
+  fun isAvailableFor(project: Project) = true
+  
   /**
    * Computes some data on UI thread, before the background thread invocation
    */
