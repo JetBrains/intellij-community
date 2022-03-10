@@ -167,13 +167,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     CharSequence vcsContent = getVcsContent(range);
     CharSequence currentContent = getCurrentContent(range);
-    int currentStartOffset = getCurrentTextRange(range).getStartOffset();
 
     List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
     if (wordDiff == null) return;
 
-    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);
+    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.getLine1(), range.getLine2(), wordDiff, disposable);
     LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff);
   }
 
