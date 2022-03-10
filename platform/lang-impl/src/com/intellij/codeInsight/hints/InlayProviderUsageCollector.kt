@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
@@ -14,7 +14,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 12)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 13)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",
