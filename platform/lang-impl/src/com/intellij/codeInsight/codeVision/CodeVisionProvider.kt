@@ -46,7 +46,7 @@ interface CodeVisionProvider<T> {
   @Deprecated("Use computeForEditor2 instead", ReplaceWith("computeForEditor2"))
   fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
-  fun computeForEditor2(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
+  fun computeCodeVision(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
 
     /**
    * Handle click on a lens at given range

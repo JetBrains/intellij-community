@@ -37,7 +37,7 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
 
   }
 
-  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
+  override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
     val cached = cacheService.getVisionDataForEditor(editor, id) ?: return CodeVisionState.NotReady

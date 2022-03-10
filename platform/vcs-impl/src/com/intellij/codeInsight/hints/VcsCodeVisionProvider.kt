@@ -45,7 +45,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   }
 
 
-  override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
+  override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
       val project = editor.project ?: return@runReadAction CodeVisionState.ReadyEmpty
       val document = editor.document

@@ -372,7 +372,7 @@ open class CodeVisionHost(val project: Project) {
         }
         providerWhoWantToUpdate.add(it.id)
         try {
-          val state = it.computeForEditor2(editor, precalculatedUiThings[it.id])
+          val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
           if (state.isReady.not()) {
             everyProviderReadyToUpdate = false
           }
