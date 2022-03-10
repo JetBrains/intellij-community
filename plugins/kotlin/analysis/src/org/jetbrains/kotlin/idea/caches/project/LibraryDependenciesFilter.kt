@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -20,7 +21,7 @@ fun interface LibraryDependenciesFilter {
 @IntellijInternalApi
 object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
-        return candidates.filterTo(mutableSetOf()) { candidate -> platform representsSubsetOf candidate.platform }
+        return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate -> platform representsSubsetOf candidate.platform }
     }
 }
 
@@ -111,7 +112,10 @@ class LibraryDependenciesFilterUnion(
 ) : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return filters
-            .map { filter -> filter(platform, candidates) }
+            .map { filter ->
+                ProgressManager.checkCanceled()
+                filter(platform, candidates)
+            }
             .reduce { acc, set -> acc + set }
     }
 

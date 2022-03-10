@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
@@ -108,6 +109,7 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
     }
 
     override fun findStdlibInModuleDependencies(module: IdeaModuleInfo): LibraryInfo? {
+        ProgressManager.checkCanceled()
         val stdlibDependency = moduleStdlibDependencyCache.getOrPut(module) {
             val stdLib = module.dependencies().firstOrNull {
                 it is LibraryInfo && isStdlib(it)
