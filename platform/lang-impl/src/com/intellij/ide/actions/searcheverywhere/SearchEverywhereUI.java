@@ -1445,6 +1445,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
 
         @Override
+        public String getTooltip() {
+          if (!(action instanceof TextSearchRightActionAction)) return null;
+          return ((TextSearchRightActionAction)action).getTooltipText();
+        }
+
+        @Override
         public Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
           return () -> {
             AnActionEvent event =
