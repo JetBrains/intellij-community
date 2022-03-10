@@ -81,7 +81,7 @@
     <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="Since15"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
-                     implementationClass="com.intellij.codeInspection.javaapi.JavaApiUsageInspection"/>
+                     implementationClass="com.intellij.codeInspection.JavaApiUsageInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>

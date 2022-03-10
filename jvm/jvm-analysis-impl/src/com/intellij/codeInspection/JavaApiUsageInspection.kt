@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.javaapi
+package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.intention.QuickFixFactory
-import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.java.JavaBundle
@@ -241,16 +237,11 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
     private const val EFFECTIVE_LL = "effectiveLL"
 
-    private val ignored6ClassesApi = JavaApiUsageInspection::class.java.getResource("ignore6List.txt")?.let {
-      LanguageLevelUtil.loadSignatureList(it)
-    } ?: run {
-      logger.warn("Could not load ignore list.")
-      emptySet<String>()
-    }
+    private val ignored6ClassesApi = setOf("java.awt.geom.GeneralPath")
 
-    private val generifiedClasses = hashSetOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
+    private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
 
-    private val defaultMethods = hashSetOf("java.util.Iterator#remove()")
+    private val defaultMethods = setOf("java.util.Iterator#remove()")
 
     fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
       return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)

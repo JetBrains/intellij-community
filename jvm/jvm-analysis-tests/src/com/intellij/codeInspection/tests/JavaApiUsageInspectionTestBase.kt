@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
-import com.intellij.codeInspection.javaapi.JavaApiUsageInspection
+import com.intellij.codeInspection.JavaApiUsageInspection
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.JarFileSystem
