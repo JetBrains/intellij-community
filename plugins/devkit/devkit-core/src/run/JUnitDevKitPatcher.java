@@ -27,9 +27,12 @@ import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -68,18 +71,17 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
 
       JavaSdkVersion sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
       if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-        try {
-          URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
-          if (resource != null) {
-            FileUtil.loadLines(resource.getFile())
-              .forEach(l -> vm.add("--add-opens " + l));
+        URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
+        if (resource != null) {
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
+            FileUtil.loadLines(reader).forEach(l -> vm.add("--add-opens=" + l));
           }
-        }
-        catch (ProcessCanceledException e) {
-          throw e; //unreachable
-        }
-        catch (Throwable e) {
-          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
+          catch (ProcessCanceledException e) {
+            throw e; //unreachable
+          }
+          catch (Throwable e) {
+            LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
+          }
         }
       }
     }
