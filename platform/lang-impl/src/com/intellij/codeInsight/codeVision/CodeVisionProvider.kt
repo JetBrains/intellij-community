@@ -52,9 +52,14 @@ interface CodeVisionProvider<T> {
    *
    * Note that this method is not executed under read action.
    */
-  @Deprecated("Use computeForEditor2 instead", ReplaceWith("computeForEditor2"))
+  @Deprecated("Use computeCodeVision instead", ReplaceWith("computeCodeVision"))
   fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
+  /**
+   * Should return text ranges and applicable hints for them, invoked on background thread.
+   *
+   * Note that this method is not executed under read action.
+   */
   fun computeCodeVision(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
 
     /**
