@@ -67,18 +67,24 @@ fun removeRedundantBracesInStringTemplate(context: InsertionContext) {
 }
 
 fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
-    for (i in startIndex..this.length - 1) {
+    for (i in startIndex until this.length) {
         val currentChar = this[i]
         if (c == currentChar) return i
         if (currentChar != ' ' && currentChar != '\t') return null
     }
+
     return null
 }
 
-fun CharSequence.skipSpaces(index: Int): Int = (index..length - 1).firstOrNull { val c = this[it]; c != ' ' && c != '\t' } ?: this.length
+fun CharSequence.skipSpaces(index: Int): Int = index.until(length).firstOrNull {
+    val c = this[it]
+    c != ' ' && c != '\t'
+} ?: this.length
 
-fun CharSequence.skipSpacesAndLineBreaks(index: Int): Int =
-    (index..length - 1).firstOrNull { val c = this[it]; c != ' ' && c != '\t' && c != '\n' && c != '\r' } ?: this.length
+fun CharSequence.skipSpacesAndLineBreaks(index: Int): Int = index.until(length).firstOrNull {
+    val c = this[it]
+    c != ' ' && c != '\t' && c != '\n' && c != '\r'
+} ?: this.length
 
 fun CharSequence.isCharAt(offset: Int, c: Char) = offset < length && this[offset] == c
 
