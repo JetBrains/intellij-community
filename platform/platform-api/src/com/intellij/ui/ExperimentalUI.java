@@ -114,6 +114,7 @@ public final class ExperimentalUI {
     paths.put("actions/download.svg", "/expui/general/download.svg");
     paths.put("actions/run_anything.svg", "/expui/general/runAnything.svg");
     paths.put("actions/show.svg", "/expui/general/show.svg");
+    paths.put("actions/menu-open.svg", "/expui/general/open.svg");
     paths.put("actions/cancel.svg", "/expui/general/close.svg");
     paths.put("actions/close.svg", "/expui/general/closeSmall.svg");
     paths.put("actions/closeHovered.svg", "/expui/general/closeSmallHovered.svg");
