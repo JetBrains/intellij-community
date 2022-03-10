@@ -361,6 +361,11 @@
                  description="Calculate import quick fix suggestion lazy."
                  defaultValue="false"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.cache.packages.strong.map"
+                 description="Hold info about packages using strong references instead of soft ones"
+                 defaultValue="true"
+                 restartRequired="true"/>
   </extensions>
 
   <!-- Tips and Tricks -->
