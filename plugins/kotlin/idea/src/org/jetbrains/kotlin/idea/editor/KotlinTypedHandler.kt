@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.codeInsight.AutoPopupController
@@ -241,8 +241,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 val chars = editor.document.charsSequence
                 val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
 
-                return@autoPopupMemberLookup lastNodeType == KDocTokens.TEXT
-                        || (isLabelCompletion(chars, offset) && lastNodeType === KtTokens.AT)
+                lastNodeType === KDocTokens.TEXT || (lastNodeType === KtTokens.AT && isLabelCompletion(chars, offset))
             }
         }
 
@@ -297,7 +296,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             if (currElement != null) {
                 // Should be applied only if there's nothing but the whitespace in line before the element
                 val prevLeaf = PsiTreeUtil.prevLeaf(currElement)
-                if (!(prevLeaf is PsiWhiteSpace && prevLeaf.getText().contains("\n"))) {
+                if (!(prevLeaf is PsiWhiteSpace && prevLeaf.textContains('\n'))) {
                     return false
                 }
 
