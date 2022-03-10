@@ -59,10 +59,12 @@ fun main() {
     }
 
     val x: (
-            y: Comparable<Comparable<Number>>,/*
+            y: Comparable<Comparable<Number>>,
+            /*
     */
-            z: Iterable<Iterable<Number>>, /* //
-    */
+            z: Iterable<Iterable<Number>>,
+            /* //
+               */
     ) -> Int = {
         10
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -718,9 +718,9 @@ abstract class KotlinCommonBlock(
             val elementType = element.elementType
             if (!forward) {
                 sibling = element
-                if (elementType != delimiterType && elementType !in COMMENTS) break
+                if (elementType != delimiterType && elementType != EOL_COMMENT) break
             } else {
-                if (elementType !in COMMENTS) break
+                if (elementType != EOL_COMMENT) break
                 sibling = element
             }
         }
@@ -737,7 +737,8 @@ abstract class KotlinCommonBlock(
             typeOfFirstElement,
             typeOfLastElement,
             delimiterType,
-            in WHITE_SPACE_OR_COMMENT_BIT_SET,
+            EOL_COMMENT,
+            in WHITESPACES,
             -> return false
         }
 
@@ -773,7 +774,7 @@ abstract class KotlinCommonBlock(
         return createWrapAlwaysIf(
             (!checkTrailingComma || childElement.treeParent.addTrailingComma) && (
                     rightAnchor != null && rightAnchor === childElementType ||
-                            leftAnchor != null && leftAnchor === getSiblingWithoutWhitespaceAndComments(childElement)?.elementType ||
+                            leftAnchor != null && leftAnchor === getPrevWithoutWhitespace(childElement)?.elementType ||
                             additionalCheck(childElement)
                     ),
         )
@@ -1142,7 +1143,11 @@ private fun getAlignmentForChildInParenthesis(
                 return bracketsAlignment
             }
 
-            if (childNodeType === parameter || childNodeType === delimiter) {
+            if (childNodeType === parameter ||
+                childNodeType === delimiter ||
+                childNodeType === BLOCK_COMMENT ||
+                childNodeType === DOC_COMMENT
+            ) {
                 return parameterAlignment
             }
 
