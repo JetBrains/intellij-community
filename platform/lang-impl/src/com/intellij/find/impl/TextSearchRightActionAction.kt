@@ -19,6 +19,10 @@ sealed class TextSearchRightActionAction(message: String,
                                          private val callback: Runnable,
                                          private val myTooltipLink: TooltipLinkProvider.TooltipLink? = null) :
   DumbAwareToggleAction(FindBundle.message(message), null, icon), TooltipLinkProvider, TooltipDescriptionProvider {
+
+  val tooltipText = FindBundle.message(message)
+
+
   init {
     templatePresentation.hoveredIcon = hoveredIcon
     templatePresentation.selectedIcon = selectedIcon
