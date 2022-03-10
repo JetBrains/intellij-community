@@ -50,9 +50,13 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
             .filter { platform == null || it.kind.isCompatibleWith(platform) }
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
+    override fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean?
+    ): Icon? {
         val icons = getRelevantToolings(declaration.module?.platform)
-            .mapNotNull { it.getTestIcon(declaration, descriptorProvider) }
+            .mapNotNull { it.getTestIcon(declaration, descriptorProvider, includeSlowProviders) }
             .distinct()
 
         return when (icons.size) {
