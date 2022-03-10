@@ -173,6 +173,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
     paths.put("icons/artifact.svg", "expui/toolwindow/dependencies.svg");
     paths.put("icons/artifactSmall.svg", "expui/toolwindow/dependencies.svg");
+    paths.put("icons/com/jetbrains/python/pythonPackages.svg", "expui/toolwindow/dependencies.svg");
     paths.put("toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
     paths.put("icons/toolWindowEndpoints.svg", "/expui/toolwindow/endpoints.svg");
     paths.put("icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
