@@ -234,7 +234,11 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       (revisions) -> {
         if (revisions == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
-          GitFileAnnotation newFileAnnotation = new GitFileAnnotation(fileAnnotation);
+          GitFileAnnotation newFileAnnotation =
+            new GitFileAnnotation(fileAnnotation.getProject(),
+                                  fileAnnotation.getFile(),
+                                  fileAnnotation.getCurrentRevision(),
+                                  fileAnnotation.getLines());
           newFileAnnotation.setRevisions(revisions);
           fileAnnotation.reload(newFileAnnotation);
         }, myProject.getDisposed());

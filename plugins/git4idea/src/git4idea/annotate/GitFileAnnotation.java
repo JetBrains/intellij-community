@@ -106,10 +106,6 @@ public final class GitFileAnnotation extends FileAnnotation {
     }
   }
 
-  public GitFileAnnotation(@NotNull GitFileAnnotation annotation) {
-    this(annotation.getProject(), annotation.getFile(), annotation.getCurrentRevision(), annotation.getLines());
-  }
-
   @Override
   public void dispose() {
     myLogSettings.removeChangeListener(myLogSettingChangeListener);
