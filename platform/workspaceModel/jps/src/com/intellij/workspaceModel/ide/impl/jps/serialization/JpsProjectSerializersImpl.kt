@@ -835,9 +835,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 }
 
-class CachingJpsFileContentReader(configLocation: JpsProjectConfigLocation) : JpsFileContentReader {
-  private val projectPointerSupplier = { JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString) }
-  private val projectPathMacroManager = ProjectPathMacroManager.createInstance(projectPointerSupplier, null)
+class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLocation) : JpsFileContentReader {
+  private val projectPathMacroManager = ProjectPathMacroManager.createInstance(
+    configLocation::projectFilePath,
+    { JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString) },
+    null
+  )
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
@@ -862,7 +865,7 @@ class CachingJpsFileContentReader(configLocation: JpsProjectConfigLocation) : Jp
                               customModuleFilePath: String?): PathMacroManager {
     val path = JpsPathUtil.urlToPath(fileUrl)
     return if (FileUtil.extensionEquals(fileUrl, "iml") || isExternalModuleFile(path)) {
-      ModulePathMacroManager.createInstance(projectPointerSupplier, Supplier { customModuleFilePath ?: path })
+      ModulePathMacroManager.createInstance(configLocation::projectFilePath, Supplier { customModuleFilePath ?: path })
     }
     else {
       projectPathMacroManager
