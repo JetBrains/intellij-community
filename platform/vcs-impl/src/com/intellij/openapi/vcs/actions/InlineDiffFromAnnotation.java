@@ -56,6 +56,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   private int myCurrentLine = -1;
   @Nullable private ProgressIndicator myIndicator;
+  @Nullable private Disposable myDisposable;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   private InlineDiffFromAnnotation(@NotNull EditorEx editor,
@@ -123,10 +124,17 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
       myIndicator.cancel();
       myIndicator = null;
     }
-    myEditor.putUserData(DiffDrawUtil.EDITOR_WITH_HIGH_PRIORITY_RENDERER, null);
+    removeHighlighters();
+    myCurrentLine = -1;
+  }
+
+  private void removeHighlighters() {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
     myHighlighters.forEach(highlighter -> myEditor.getMarkupModel().removeHighlighter(highlighter));
     myHighlighters.clear();
-    myCurrentLine = -1;
   }
 
   @RequiresEdt
@@ -159,6 +167,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   private void showDiff(int editorLine, @NotNull AnnotatedLineModificationDetails details, @Nullable ProgressIndicator indicator) {
     if (indicator != null) indicator.checkCanceled();
     if (editorLine == myCurrentLine) {
+      removeHighlighters();
       addHighlighters(editorLine, details);
     }
   }
@@ -172,7 +181,8 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     String contentAfter = details.lineContentAfter;
     List<InnerChange> changes = details.changes;
 
-    myEditor.putUserData(DiffDrawUtil.EDITOR_WITH_HIGH_PRIORITY_RENDERER, true);
+    myDisposable = Disposer.newDisposable();
+    DiffDrawUtil.setupLayeredRendering(myEditor, editorLine, editorLine + 1, DiffDrawUtil.LAYER_PRIORITY_MAX, myDisposable);
 
     InnerChange onlyItem = ContainerUtil.getOnlyItem(changes);
     if (onlyItem != null && onlyItem.startOffset == 0 && onlyItem.endOffset == contentAfter.length()) {

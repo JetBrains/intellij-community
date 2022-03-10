@@ -27,7 +27,7 @@ public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {
         @Override
         protected boolean accept(RangeHighlighterEx ex) {
           return ex.getLayer() > highlighter.getLayer() &&
-                 ex.getLineMarkerRenderer() instanceof DiffLineMarkerRenderer;
+                 ex.getCustomRenderer() instanceof DiffDrawUtil.DiffLayeredRendererMarker;
         }
       };
       markupModel.processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), processor);
