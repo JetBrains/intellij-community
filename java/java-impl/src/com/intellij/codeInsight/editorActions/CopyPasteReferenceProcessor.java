@@ -55,7 +55,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
   
   @NotNull
   @Override
-  public List<ReferenceTransferableData> collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public List<ReferenceTransferableData> collectTransferableData(@NotNull PsiFile file, final @NotNull Editor editor, final int @NotNull [] startOffsets, final int @NotNull [] endOffsets) {
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
       return Collections.emptyList();
     }
@@ -85,7 +85,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
 
   @NotNull
   @Override
-  public List<ReferenceTransferableData> extractTransferableData(final Transferable content) {
+  public List<ReferenceTransferableData> extractTransferableData(final @NotNull Transferable content) {
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
       try {
@@ -106,11 +106,11 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
   }
 
   @Override
-  public void processTransferableData(final Project project,
-                                      final Editor editor,
-                                      final RangeMarker bounds,
+  public void processTransferableData(final @NotNull Project project,
+                                      final @NotNull Editor editor,
+                                      final @NotNull RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<? super Boolean> indented, final List<? extends ReferenceTransferableData> values) {
+                                      @NotNull Ref<? super Boolean> indented, final @NotNull List<? extends ReferenceTransferableData> values) {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }
@@ -139,7 +139,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               reviewImports(project, file, imported);
             }
-          }), ModalityState.NON_MODAL);
+          }), ModalityState.NON_MODAL, __->editor.isDisposed());
       }
     });
   }
