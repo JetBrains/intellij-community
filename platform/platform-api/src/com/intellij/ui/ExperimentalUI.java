@@ -138,6 +138,7 @@ public final class ExperimentalUI {
     paths.put("nodes/field.svg", "/expui/nodes/field.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/function.svg", "/expui/nodes/function.svg");
+    paths.put("nodes/lambda.svg", "/expui/nodes/lambda.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
     paths.put("nodes/Module.svg", "/expui/nodes/module.svg");
     paths.put("nodes/moduleGroup.svg", "/expui/nodes/moduleGroup.svg");
