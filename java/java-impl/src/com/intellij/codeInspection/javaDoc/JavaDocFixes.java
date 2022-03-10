@@ -57,6 +57,7 @@ public class JavaDocFixes {
     }
 
     private static void moveCaretAfter(PsiElement newCaretPosition) {
+      if (!newCaretPosition.isPhysical()) return;
       PsiElement sibling = newCaretPosition.getNextSibling();
       if (sibling != null) {
         ((Navigatable)sibling).navigate(true);
