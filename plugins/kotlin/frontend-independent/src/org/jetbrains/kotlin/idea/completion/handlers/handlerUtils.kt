@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -15,6 +17,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.core.moveCaret
+import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -96,11 +99,20 @@ private data class KeywordConstructLookupObject(
     private val constructToInsert: String
 ) : KeywordLookupObject()
 
+fun LookupElement.withLineIndentAdjuster(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(
+    this,
+    InsertHandler { context, item ->
+        item.handleInsert(context)
+        context.document.adjustLineIndent(context.project, context.startOffset)
+    },
+)
+
 fun createKeywordConstructLookupElement(
     project: Project,
     keyword: String,
     fileTextToReformat: String,
-    trimSpacesAroundCaret: Boolean = false
+    trimSpacesAroundCaret: Boolean = false,
+    adjustLineIndent: Boolean = false,
 ): LookupElement {
     val file = KtPsiFactory(project).createFile(fileTextToReformat)
     CodeStyleManager.getInstance(project).reformat(file)
@@ -141,10 +153,16 @@ fun createKeywordConstructLookupElement(
                 insertionContext.completionChar == Lookup.REPLACE_SELECT_CHAR ||
                 insertionContext.completionChar == Lookup.AUTO_INSERT_SELECT_CHAR
             ) {
+                val keywordStartOffset = if (!adjustLineIndent) {
+                    insertionContext.tailOffset - keyword.length
+                } else {
+                    val offset = insertionContext.tailOffset - keyword.length
+                    insertionContext.document.adjustLineIndent(insertionContext.project, offset)
+                    insertionContext.tailOffset - keyword.length
+                }
 
-                val offset = insertionContext.tailOffset
-                val newIndent = detectIndent(insertionContext.document.charsSequence, offset - keyword.length)
-
+                val offset = keywordStartOffset + keyword.length
+                val newIndent = detectIndent(insertionContext.document.charsSequence, keywordStartOffset)
                 val beforeCaret = tailBeforeCaret.indentLinesAfterFirst(newIndent)
                 val afterCaret = tailAfterCaret.indentLinesAfterFirst(newIndent)
 
@@ -156,14 +174,8 @@ fun createKeywordConstructLookupElement(
                     else -> element.getNextSiblingIgnoringWhitespace(true)
                 }
 
-                if (sibling != null && beforeCaret.trimStart().startsWith(
-                        insertionContext.document.getText(
-                            TextRange.from(
-                                sibling.startOffset,
-                                1
-                            )
-                        )
-                    )
+                if (sibling != null &&
+                    beforeCaret.trimStart().startsWith(insertionContext.document.getText(TextRange.from(sibling.startOffset, 1)))
                 ) {
                     insertionContext.editor.moveCaret(sibling.startOffset + 1)
                 } else {
