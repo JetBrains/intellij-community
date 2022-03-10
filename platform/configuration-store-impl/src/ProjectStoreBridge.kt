@@ -68,7 +68,7 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     return if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
-      ModulePathMacroManager.createInstance(project::getBasePath, Supplier { filePath }).replacePathMap
+      ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
     }
     else {
       ProjectPathMacroManager.getInstance(project).replacePathMap
