@@ -269,10 +269,13 @@ public final class FileBasedIndexScanUtil {
     FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
     FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
     DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     return file -> {
       if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return null;
       int fileId = FileBasedIndex.getFileId(file);
-      if (IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
+      Document document = fileDocumentManager.getCachedDocument(file);
+      boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
+      if (!unsavedDocument && IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
         try {
           return index.getIndexedFileData(fileId);
         }
@@ -282,6 +285,7 @@ public final class FileBasedIndexScanUtil {
       }
       FileContent content = getFileContent(file, project, binary);
       Map<K, V> map = content == null ? null : indexer.map(content);
+      if (unsavedDocument) return map;
       InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
       Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
       ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);

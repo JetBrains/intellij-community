@@ -4,9 +4,11 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -66,6 +68,14 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
         idSet.set(fileId);
         return true;
       }, scope, null);
+    });
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    fileDocumentManager.processUnsavedDocuments(document -> {
+      VirtualFile file = fileDocumentManager.getFile(document);
+      if (file instanceof VirtualFileWithId) {
+        idSet.clear(((VirtualFileWithId)file).getId());
+      }
+      return true;
     });
     for (int fileId = idSet.nextSetBit(0); fileId > 0; fileId = idSet.nextSetBit(fileId + 1)) {
       if (IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) != FileIndexingState.UP_TO_DATE) {
