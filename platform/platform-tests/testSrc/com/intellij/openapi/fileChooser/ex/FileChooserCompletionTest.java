@@ -38,33 +38,31 @@ public class FileChooserCompletionTest extends BareTestFixtureTestCase {
     tempDir.newDirectory("folder1/folder12");
     tempDir.newFile("a");
     tempDir.newFile("file1");
-    Map<String, String> macros = Map.of();
-    String completionBase = tempDir.getRoot().getPath();
 
-    assertComplete("f", ArrayUtil.EMPTY_STRING_ARRAY, macros, completionBase, null);
+    assertComplete("f", ArrayUtil.EMPTY_STRING_ARRAY, null);
 
-    assertComplete("/", new String[]{"a", "folder1", "file1"}, macros, completionBase, "a");
-    assertComplete("/f", new String[]{"folder1", "file1"}, macros, completionBase, "file1");
-    assertComplete("/fo", new String[]{"folder1"}, macros, completionBase, "folder1");
-    assertComplete("/folder", new String[]{"folder1"}, macros, completionBase, "folder1");
-    assertComplete("/folder1", new String[]{"folder1"}, macros, completionBase, "folder1");
+    assertComplete("/", new String[]{"a", "folder1", "file1"}, "a");
+    assertComplete("/f", new String[]{"folder1", "file1"}, "file1");
+    assertComplete("/fo", new String[]{"folder1"}, "folder1");
+    assertComplete("/folder", new String[]{"folder1"}, "folder1");
+    assertComplete("/folder1", new String[]{"folder1"}, "folder1");
 
-    assertComplete("/folder1/", new String[]{"folder11", "folder12"}, macros, completionBase, "folder11");
-    assertComplete("/folder1/folder1", new String[]{"folder11", "folder12"}, macros, completionBase, "folder11");
+    assertComplete("/folder1/", new String[]{"folder11", "folder12"}, "folder11");
+    assertComplete("/folder1/folder1", new String[]{"folder11", "folder12"}, "folder11");
 
-    assertComplete("/foo", ArrayUtil.EMPTY_STRING_ARRAY, macros, completionBase, null);
+    assertComplete("/foo", ArrayUtil.EMPTY_STRING_ARRAY, null);
 
     tempDir.newFile("qw/child.txt");
     tempDir.newDirectory("qwe");
-    assertComplete("/qw", new String[]{"qw", "qwe"}, macros, completionBase, "qw");
-    assertComplete("/qw/", new String[]{"child.txt"}, macros, completionBase, "child.txt");
+    assertComplete("/qw", new String[]{"qw", "qwe"}, "qw");
+    assertComplete("/qw/", new String[]{"child.txt"}, "child.txt");
   }
 
   @Test
   public void testMiddleMatching() {
     tempDir.newDirectory("folder1");
 
-    assertComplete("/old", new String[]{"folder1"}, Map.of(), tempDir.getRoot().getPath(), "folder1");
+    assertComplete("/old", new String[]{"folder1"}, "folder1");
   }
 
   @Test
@@ -96,11 +94,15 @@ public class FileChooserCompletionTest extends BareTestFixtureTestCase {
     assertComplete(first + "\\ho", new String[]{"home"}, Map.of(), "", "home");  // '\\wsl$\xxx\ho'
   }
 
-  private void assertComplete(String typed, String[] expected, Map<String, String> macros, String completionBase, String preselected) {
+  private void assertComplete(String typed, String[] expected, String preselected) {
+    assertComplete(typed, expected, Map.of(), tempDir.getRoot().getPath(), preselected);
+  }
+
+  private static void assertComplete(String typed, String[] expected, Map<String, String> macros, String completionBase, String preselected) {
     LocalFsFinder finder = new LocalFsFinder(false).withBaseDir(null);
     FileTextFieldImpl.CompletionResult result = new FileTextFieldImpl.CompletionResult();
     result.myCompletionBase = completionBase + typed.replace("/", finder.getSeparator());
-    new FileTextFieldImpl(new JTextField(), finder, file -> true, macros, getTestRootDisposable()).processCompletion(result);
+    FileTextFieldUtil.processCompletion(result, finder, file -> true, new TreeMap<>(macros));
 
     String[] actualVariants = result.myToComplete.stream().map(f -> toFileText(f, result, finder.getSeparator())).toArray(String[]::new);
     String[] expectedVariants = Stream.of(expected).map(s -> s.replace("/", finder.getSeparator())).toArray(String[]::new);
