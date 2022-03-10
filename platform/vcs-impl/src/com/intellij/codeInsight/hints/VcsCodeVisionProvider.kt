@@ -63,9 +63,9 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
             val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-            val codeAuthorInfo = getCodeAuthorInfo(element.project, textRange, editor, aspect)
             val length = editor.document.textLength
             val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
+            val codeAuthorInfo = getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
