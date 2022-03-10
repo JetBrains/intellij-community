@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,12 +24,18 @@ import java.util.Map;
 public interface ProjectWidePathMacroContributor {
   ExtensionPointName<ProjectWidePathMacroContributor> EP_NAME = new ExtensionPointName<>("com.intellij.projectPathMacroContributor");
 
-  @NotNull Map<@NotNull String, @NotNull String> getProjectPathMacros(@NotNull String projectDir);
+  /**
+   * @param projectFilePath See {@link com.intellij.openapi.project.Project#getProjectFilePath}
+   */
+  @NotNull Map<@NotNull String, @NotNull String> getProjectPathMacros(@NotNull @SystemIndependent String projectFilePath);
 
-  static @NotNull Map<@NotNull String, @NotNull String> getAllMacros(@NotNull String projectDir) {
+  /**
+   * @param projectFilePath See {@link com.intellij.openapi.project.Project#getProjectFilePath}
+   */
+  static @NotNull Map<@NotNull String, @NotNull String> getAllMacros(@NotNull @SystemIndependent String projectFilePath) {
     Map<String, String> result = new HashMap<>();
     for (ProjectWidePathMacroContributor contributor : EP_NAME.getExtensionList()) {
-      result.putAll(contributor.getProjectPathMacros(projectDir));
+      result.putAll(contributor.getProjectPathMacros(projectFilePath));
     }
     return result;
   }

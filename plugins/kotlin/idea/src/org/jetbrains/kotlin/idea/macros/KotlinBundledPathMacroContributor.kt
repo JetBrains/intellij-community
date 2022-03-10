@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.exists
 import com.intellij.util.xmlb.XmlSerializer
@@ -12,18 +11,22 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
 import java.nio.file.Paths
-import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.extension
 
 const val KOTLIN_BUNDLED = "KOTLIN_BUNDLED"
 
 class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
-    override fun getProjectPathMacros(projectDir: String): Map<String, String> {
+    override fun getProjectPathMacros(projectFilePath: String): Map<String, String> {
         // It's not possible to use KotlinJpsPluginSettings.getInstance(project) because the project isn't yet initialized
-        val version = Paths.get(projectDir, Project.DIRECTORY_STORE_FOLDER, SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE)
-            .takeIf { it.exists() }
-            .let {
-                it ?: Paths.get(projectDir).listDirectoryEntries(glob = "*.${ProjectFileType.DEFAULT_EXTENSION}").singleOrNull()
+        val version = Paths.get(projectFilePath)
+            .let { iprOrMisc ->
+                when (iprOrMisc.extension) {
+                    ProjectFileType.DEFAULT_EXTENSION -> iprOrMisc
+                    "xml" -> iprOrMisc.resolveSibling(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE)
+                    else -> error("projectFilePath should be either misc.xml or *.ipr file")
+                }
             }
+            .takeIf { it.exists() }
             ?.let { JDOMUtil.load(it) }
             ?.children
             ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
