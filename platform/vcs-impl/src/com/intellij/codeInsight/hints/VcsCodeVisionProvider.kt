@@ -40,6 +40,10 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     const val id: String = "vcs.code.vision"
   }
 
+  override fun isAvailableFor(project: Project): Boolean {
+    return VcsCodeVisionLanguageContext.providersExtensionPoint.hasAnyExtensions()
+  }
+
   override fun precomputeOnUiThread(editor: Editor) {
 
   }
