@@ -1,32 +1,86 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
-import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
-import com.intellij.testFramework.TestDataPath
 
-private const val inspectionPath = "/codeInspection/junitrule"
-
-@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
-  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
-
   fun `test @Rule highlighting`() {
-    myFixture.testHighlighting("Rule.kt")
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      package test
+
+      import org.junit.Rule
+
+      class PrivateRule {
+        @Rule
+        private var <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error> = 0
+      }
+    """.trimIndent())
   }
 
   fun `test @Rule quickFixes`() {
-    val quickfixes = myFixture.getAllQuickFixes("RuleQf.kt")
-    quickfixes.forEach { myFixture.launchAction(it) }
-    myFixture.checkResultByFile("RuleQf.after.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      package test
+
+      import org.junit.Rule
+
+      class PrivateRule {
+        @Rule
+        var x<caret> = 0
+      }
+    """.trimIndent(), """
+      package test
+
+      import org.junit.Rule
+
+      class PrivateRule {
+        @kotlin.jvm.JvmField
+        @Rule
+        var x = 0
+      }
+    """.trimIndent(), "Annotate as @JvmField")
   }
 
   fun `test @ClassRule highlighting`() {
-    myFixture.testHighlighting("ClassRule.kt")
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      package test
+      
+      import org.junit.rules.TestRule
+      import org.junit.ClassRule
+      import test.SomeTestRule
+      
+      object PrivateClassRule {
+        @ClassRule
+        private var <error descr="Fields annotated with '@org.junit.ClassRule' should be 'public'">x</error> = SomeTestRule()
+      
+        @ClassRule
+        private var <error descr="Field type should be subtype of 'org.junit.rules.TestRule'"><error descr="Fields annotated with '@org.junit.ClassRule' should be 'public'">y</error></error> = 0
+      }
+    """.trimIndent())
   }
 
   fun `test @ClassRule quickFixes`() {
-    val quickfixes = myFixture.getAllQuickFixes("ClassRuleQf.kt")
-    quickfixes.forEach { myFixture.launchAction(it) }
-    myFixture.checkResultByFile("ClassRuleQf.after.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      package test
+
+      import org.junit.rules.TestRule
+      import org.junit.ClassRule
+      import test.SomeTestRule
+
+      object PrivateClassRule {
+        @ClassRule
+        private var x<caret> = SomeTestRule()
+      }
+    """.trimIndent(), """
+      package test
+
+      import org.junit.rules.TestRule
+      import org.junit.ClassRule
+      import test.SomeTestRule
+
+      object PrivateClassRule {
+        @kotlin.jvm.JvmField
+        @ClassRule
+        var x = SomeTestRule()
+      }
+    """.trimIndent(), "Remove 'private' modifier", "Annotate as @JvmField")
   }
 }
