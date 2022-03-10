@@ -196,9 +196,13 @@ public final class ExperimentalUI {
     paths.put("general/hideToolWindow.svg", "/expui/general/hide.svg");
     paths.put("actions/find.svg", "/expui/general/search.svg");
     paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
+    paths.put("general/arrowDown.svg", "expui/general/chevronDown.svg");
     paths.put("general/chevron-down.svg", "expui/general/chevronDown.svg");
+    paths.put("general/arrowLeft.svg", "expui/general/chevronLeft.svg");
     paths.put("general/chevron-left.svg", "expui/general/chevronLeft.svg");
+    paths.put("general/arrowRight.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
+    paths.put("general/arrowUp.svg", "expui/general/chevronUp.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
     paths.put("actions/findAndShowPrevMatches.svg", "expui/general/chevronUp.svg");
     paths.put("actions/findAndShowPrevMatchesSmall.svg", "expui/general/chevronUp.svg");
