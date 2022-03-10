@@ -2,12 +2,13 @@
 package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
-import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolConfiguration
-import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
+import com.intellij.diff.tools.external.ExternalDiffSettings.*
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ui.ComboBoxTableRenderer
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
@@ -21,15 +22,19 @@ import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
-internal class ExternalToolsTablePanel : BorderLayoutPanel() {
-  val model = ListTableModel<ExternalToolConfiguration>(FileTypeColumn(),
-                                                        ExternalToolColumn(ExternalToolGroup.DIFF_TOOL),
-                                                        ExternalToolColumn(ExternalToolGroup.MERGE_TOOL))
+internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
   val component: JComponent
 
+  private val model: ListTableModel<ExternalToolConfiguration> = models.tableModel
   private val table: TableView<ExternalToolConfiguration> = TableView(model).apply {
     visibleRowCount = 8
+    rowSelectionAllowed = false
+    tableHeader.reorderingAllowed = false
+
+    setExpandableItemsEnabled(false)
   }
 
   init {
@@ -69,7 +74,11 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
   }
 
   private fun addData() {
-    model.addRow(ExternalToolConfiguration(""))
+    val fileTypes = FileTypeManager.getInstance().registeredFileTypes.map { it.displayName }.toSet()
+    val configuredFileTypes = models.tableModel.items.map { it.fileTypeName }.toSet()
+    val availableFileTypes = fileTypes - configuredFileTypes
+
+    model.addRow(ExternalToolConfiguration(availableFileTypes.first()))
   }
 
   private fun removeData() {
@@ -84,11 +93,10 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
     }
   }
 
-  class FileTypeColumn : ColumnInfo<ExternalToolConfiguration, String>(
+  class FileTypeColumn(private val models: ExternalToolsModels) : ColumnInfo<ExternalToolConfiguration, String>(
     DiffBundle.message("settings.external.diff.table.filetype.column")
   ) {
-    private val values = FileTypeManager.getInstance().registeredFileTypes.map { it.displayName }
-    private val comboBoxCellRendererAndEditor = FileTypeCellComboBox(values).withClickCount(1)
+    private val fileTypes = FileTypeManager.getInstance().registeredFileTypes.map { it.displayName }.toSet()
 
     override fun valueOf(externalToolConfiguration: ExternalToolConfiguration): String {
       return externalToolConfiguration.fileTypeName
@@ -98,13 +106,20 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
       item.fileTypeName = value
     }
 
-    override fun getEditor(item: ExternalToolConfiguration): TableCellEditor = comboBoxCellRendererAndEditor
+    override fun getEditor(item: ExternalToolConfiguration): TableCellEditor = createComboBoxRendererAndEditor()
 
-    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer = comboBoxCellRendererAndEditor
+    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer = createComboBoxRendererAndEditor()
 
     override fun isCellEditable(item: ExternalToolConfiguration): Boolean = true
 
-    private class FileTypeCellComboBox(values: List<String>) : ComboBoxTableRenderer<String>(values.toTypedArray()) {
+    private fun createComboBoxRendererAndEditor(): ComboBoxTableRenderer<String> {
+      val configuredFileTypes = models.tableModel.items.map { it.fileTypeName }.toSet()
+      val availableFileTypes = fileTypes - configuredFileTypes
+
+      return FileTypeCellComboBox(availableFileTypes.toTypedArray()).withClickCount(1)
+    }
+
+    private class FileTypeCellComboBox(values: Array<String>) : ComboBoxTableRenderer<String>(values) {
       private val fileTypeManager = FileTypeManager.getInstance()
 
       override fun getTableCellRendererComponent(table: JTable, value: Any,
@@ -131,9 +146,11 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
     }
   }
 
-  class ExternalToolColumn(private val externalToolGroup: ExternalToolGroup) : ColumnInfo<ExternalToolConfiguration, String>(
-    DiffBundle.message("settings.external.diff.table.difftool.column")
-  ) {
+  class ExternalToolColumn(
+    private val externalToolGroup: ExternalToolGroup,
+    private val treeModel: DefaultTreeModel,
+    @NlsContexts.ColumnName columnMessage: String
+  ) : ColumnInfo<ExternalToolConfiguration, String>(columnMessage) {
     override fun valueOf(externalToolConfiguration: ExternalToolConfiguration): String = when (externalToolGroup) {
       ExternalToolGroup.DIFF_TOOL -> externalToolConfiguration.diffToolName
       ExternalToolGroup.MERGE_TOOL -> externalToolConfiguration.mergeToolName
@@ -146,16 +163,31 @@ internal class ExternalToolsTablePanel : BorderLayoutPanel() {
       }
     }
 
-    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer {
-      val values = ExternalDiffSettings.collectExternalToolNames(externalToolGroup).toTypedArray()
-      return ComboBoxTableRenderer(values).withClickCount(1)
-    }
+    override fun getRenderer(item: ExternalToolConfiguration): TableCellRenderer = createComboBoxRendererAndEditor()
 
-    override fun getEditor(item: ExternalToolConfiguration): TableCellEditor {
-      val values = ExternalDiffSettings.collectExternalToolNames(externalToolGroup).toTypedArray()
-      return ComboBoxTableRenderer(values).withClickCount(1)
-    }
+    override fun getEditor(item: ExternalToolConfiguration): TableCellEditor = createComboBoxRendererAndEditor()
 
     override fun isCellEditable(item: ExternalToolConfiguration): Boolean = true
+
+    private fun createComboBoxRendererAndEditor(): ComboBoxTableRenderer<String> {
+      val values = treeModel.collectTools(externalToolGroup).toTypedArray()
+      return ComboBoxTableRenderer(values).withClickCount(1)
+    }
+
+    private fun DefaultTreeModel.collectTools(externalToolGroup: ExternalToolGroup): List<String> {
+      val tools = mutableListOf(ExternalToolConfiguration.BUILTIN_TOOL)
+      for (child in (root as CheckedTreeNode).children()) {
+        val treeNode = child as DefaultMutableTreeNode
+        if (treeNode.userObject as ExternalToolGroup == externalToolGroup) {
+          tools.addAll(treeNode.children().asSequence().map {
+            val node = it as DefaultMutableTreeNode
+            val tool = node.userObject as ExternalTool
+            tool.name
+          }.toList())
+        }
+      }
+
+      return tools
+    }
   }
 }
