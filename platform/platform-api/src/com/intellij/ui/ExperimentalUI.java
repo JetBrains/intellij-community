@@ -265,6 +265,7 @@ public final class ExperimentalUI {
     paths.put("icons/less.svg", "expui/fileTypes/less.svg");
     paths.put("icons/lombok.svg", "expui/fileTypes/lombok.svg");
     paths.put("icons/config.svg", "expui/fileTypes/lombokConfig.svg");
+    paths.put("org/jetbrains/kotlin/idea/icons/kotlin.svg", "expui/fileTypes/kotlin.svg");
     paths.put("org/jetbrains/kotlin/idea/icons/kotlin_file.svg", "expui/fileTypes/kotlin.svg");
     paths.put("vcs/ignore_file.svg", "expui/fileTypes/ignored.svg");
     paths.put("vcs/patch_file.svg", "expui/fileTypes/patch.svg");
