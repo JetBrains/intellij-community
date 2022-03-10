@@ -291,16 +291,14 @@ public class MacWinTabsHandler {
       if (cPlatformWindow != null) {
         Class<?> windowClass = cPlatformWindow.getClass();
 
-        Method deliverMoveResize = ReflectionUtil.getDeclaredMethod(windowClass, "callDeliverMoveResizeEvent");
+        Method deliverMoveResize = ReflectionUtil.getDeclaredMethod(windowClass, "doDeliverMoveResizeEvent");
         if (deliverMoveResize != null) {
-          Foundation.executeOnMainThread(true, false, () -> {
-            try {
-              deliverMoveResize.invoke(cPlatformWindow);
-            }
-            catch (Throwable e) {
-              Logger.getInstance(MacWinTabsHandler.class).error(e);
-            }
-          });
+          try {
+            deliverMoveResize.invoke(cPlatformWindow);
+          }
+          catch (Throwable e) {
+            Logger.getInstance(MacWinTabsHandler.class).error(e);
+          }
           return;
         }
 
