@@ -300,16 +300,13 @@ public class LocalFsFinder implements Finder {
     public List<LookupFile> getChildren(LookupFilter filter) {
       List<Path> files = NioFiles.list(myFile);
       List<LookupFile> result = new ArrayList<>(files.size());
-      if (files.isEmpty()) return result;
-
       for (Path each : files) {
         IoFile file = new IoFile(each);
         if (filter.isAccepted(file)) {
           result.add(file);
         }
       }
-      result.sort((o1, o2) -> FileUtil.comparePaths(o1.getName(), o2.getName()));
-
+      result.sort((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), SystemInfo.isFileSystemCaseSensitive));
       return result;
     }
 

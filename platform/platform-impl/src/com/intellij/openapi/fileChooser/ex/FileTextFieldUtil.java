@@ -34,8 +34,8 @@ public final class FileTextFieldUtil {
     result.myToComplete = new ArrayList<>();
     result.mySiblings = new ArrayList<>();
     result.myKidsAfterSeparator = new ArrayList<>();
-    String typed = result.myCompletionBase;
 
+    String typed = result.myCompletionBase;
     if (typed == null) return;
 
     FileTextFieldImpl.addMacroPaths(result, typed, finder, macroMap);
@@ -53,7 +53,9 @@ public final class FileTextFieldUtil {
       result.closedPath = typed.endsWith(finder.getSeparator()) && typedText.length() > finder.getSeparator().length();
       String currentParentText = result.current.getAbsolutePath();
 
-      if (!StringUtil.toUpperCase(typedText).startsWith(StringUtil.toUpperCase(currentParentText))) return;
+      if (!StringUtil.startsWithIgnoreCase(typedText, currentParentText)) {
+        return;
+      }
 
       String prefix = typedText.substring(currentParentText.length());
       if (prefix.startsWith(finder.getSeparator())) {
@@ -140,12 +142,7 @@ public final class FileTextFieldUtil {
 
       private List<FileLookup.LookupFile> getMatchingChildren(String prefix, FileLookup.LookupFile parent) {
         MinusculeMatcher matcher = createMatcher(prefix);
-        return parent.getChildren(new FileLookup.LookupFilter() {
-          @Override
-          public boolean isAccepted(FileLookup.LookupFile file) {
-            return !file.equals(result.current) && filter.isAccepted(file) && matcher.matches(file.getName());
-          }
-        });
+        return parent.getChildren(file -> !file.equals(result.current) && filter.isAccepted(file) && matcher.matches(file.getName()));
       }
     });
   }
