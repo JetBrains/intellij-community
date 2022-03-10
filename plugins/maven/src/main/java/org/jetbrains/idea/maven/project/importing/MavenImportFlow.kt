@@ -72,7 +72,7 @@ class MavenImportFlow {
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
     val rootFiles = MavenProjectsManager.getInstance(context.project).projectsTree?.rootProjectsFiles
-    val pomFiles = HashSet<VirtualFile>()
+    val pomFiles = LinkedHashSet<VirtualFile>()
     rootFiles?.let { pomFiles.addAll(it.filterNotNull()) }
 
     val newPomFiles = when (context.paths) {
@@ -82,8 +82,8 @@ class MavenImportFlow {
     pomFiles.addAll(newPomFiles.filterNotNull())
 
     projectsTree.addManagedFilesWithProfiles(pomFiles.toList(), context.profiles)
-    val toResolve = HashSet<MavenProject>()
-    val errorsSet = HashSet<MavenProject>()
+    val toResolve = LinkedHashSet<MavenProject>()
+    val errorsSet = LinkedHashSet<MavenProject>()
     val d = Disposer.newDisposable("MavenImportFlow:readMavenFiles:treeListener")
     Disposer.register(projectManager, d)
     projectsTree.addListener(object : MavenProjectsTree.Listener {
@@ -180,7 +180,7 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    val unresolvedPlugins = HashSet<MavenPlugin>()
+    val unresolvedPlugins = LinkedHashSet<MavenPlugin>()
     context.nativeProjectHolder.forEach {
       unresolvedPlugins.addAll(resolver.resolvePlugins(it.first, it.second, embeddersManager, consoleToBeRemoved,
                                                        context.initialContext.indicator, false,
@@ -230,7 +230,7 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
     val d = Disposer.newDisposable("MavenImportFlow:resolveFolders:treeListener")
-    val projectsToImport = HashSet<MavenProject>(context.projectsToImport);
+    val projectsToImport = LinkedHashSet<MavenProject>(context.projectsToImport);
     val projectsFoldersResolved = ArrayList<MavenProject>();
     Disposer.register(projectManager, d)
     context.readContext.projectsTree.addListener(object : MavenProjectsTree.Listener {
