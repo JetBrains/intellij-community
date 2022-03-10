@@ -4,6 +4,7 @@ package com.intellij.codeInsight.codeVision
 import com.intellij.openapi.util.TextRange
 
 sealed class CodeVisionState(val isReady: Boolean, val result: List<Pair<TextRange, CodeVisionEntry>>) {
-  class Ready(lenses: List<Pair<TextRange, CodeVisionEntry>>) : CodeVisionState(true, lenses)
-  class NotReady : CodeVisionState(false, emptyList())
+  object ReadyEmpty : Ready(emptyList())
+  open class Ready(lenses: List<Pair<TextRange, CodeVisionEntry>>) : CodeVisionState(true, lenses)
+  object NotReady : CodeVisionState(false, emptyList())
 }

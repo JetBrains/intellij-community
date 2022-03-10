@@ -47,18 +47,20 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
   override fun computeForEditor2(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
-      val project = editor.project ?: return@runReadAction CodeVisionState.NotReady()
+      val project = editor.project ?: return@runReadAction CodeVisionState.ReadyEmpty
       val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady()
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
       val language = file.language
 
-      val aspect = getAspect(file, editor) ?: return@runReadAction CodeVisionState.Ready(emptyList())
+      val aspectResult = getAspect(file, editor)
+      if (aspectResult.isSuccess.not()) return@runReadAction CodeVisionState.NotReady
+      val aspect = aspectResult.result ?: return@runReadAction CodeVisionState.NotReady
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                    ?: return@runReadAction CodeVisionState.NotReady()
+                                    ?: return@runReadAction CodeVisionState.ReadyEmpty
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
@@ -146,21 +148,23 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
   )
 }
 
-fun getAspect(file: PsiFile, editor: Editor): LineAnnotationAspect? {
-  if (hasPreviewInfo(file)) return LineAnnotationAspectAdapter.NULL_ASPECT
-  val virtualFile = file.virtualFile ?: return null
-  val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
-  return annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR }
+private fun getAspect(file: PsiFile, editor: Editor): Result<LineAnnotationAspect?> {
+  if (hasPreviewInfo(file)) return Result.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
+  val virtualFile = file.virtualFile ?: return Result.SuccessEmpty()
+  val annotationResult = getAnnotation(file.project, virtualFile, editor)
+  if (annotationResult.isSuccess.not()) return Result.Failure()
+
+  return Result.Success(annotationResult.result?.aspects?.find { it.id == LineAnnotationAspect.AUTHOR })
 }
 
 private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAuthor.Annotation")
 
-private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): FileAnnotation? {
-  editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return it }
+private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): Result<FileAnnotation?> {
+  editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return Result.Success(it) }
 
-  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return null
-  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return null
-  val annotation = provider.getFromCache(file) ?: return null
+  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return Result.SuccessEmpty()
+  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return Result.SuccessEmpty()
+  val annotation = provider.getFromCache(file) ?: return Result.Failure()
 
   val annotationDisposable = Disposable {
     unregisterAnnotation(file, annotation)
@@ -180,7 +184,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
     EditorUtil.disposeWithEditor(editor, annotationDisposable)
   }
 
-  return annotation
+  return Result.Success(annotation)
 }
 
 private fun registerAnnotation(file: VirtualFile, annotation: FileAnnotation) =
@@ -201,4 +205,10 @@ private fun VcsCodeAuthorInfo.getText(): String {
     !isMultiAuthor && isModified -> VcsBundle.message("label.single.author.modified.code", mainAuthorText)
     else -> mainAuthorText
   }
+}
+
+private sealed class Result<T>(val isSuccess: Boolean, val result: T?){
+  class SuccessEmpty<T> : Result<T>(true, null)
+  open class Success<T>(result: T) : Result<T>(true, result)
+  class Failure<T> : Result<T>(false, null)
 }
