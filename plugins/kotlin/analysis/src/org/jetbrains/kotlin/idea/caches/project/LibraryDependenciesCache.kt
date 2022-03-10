@@ -51,7 +51,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks {
         val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
         val libraryDependenciesFilter = DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
-        val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).map { it.libraries }.flatten()
+        val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
         return Pair(libraries, sdks.toList())
     }
 

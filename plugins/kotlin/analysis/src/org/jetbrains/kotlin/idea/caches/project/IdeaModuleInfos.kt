@@ -235,10 +235,10 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
     override fun contentScope(): GlobalSearchScope = LibraryWithoutSourceScope(project, library)
 
     override fun dependencies(): List<IdeaModuleInfo> {
-        val result = LinkedHashSet<IdeaModuleInfo>()
-        result.add(this)
-
         val (libraries, sdks) = LibraryDependenciesCache.getInstance(project).getLibrariesAndSdksUsedWith(this)
+
+        val result = LinkedHashSet<IdeaModuleInfo>(1 + sdks.size + libraries.size)
+        result.add(this)
 
         result.addAll(sdks)
 
