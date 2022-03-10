@@ -664,7 +664,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       KeyMapBundle.message("conflict.shortcut.dialog.message"),
       KeyMapBundle.message("conflict.shortcut.dialog.title"),
       KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
-      KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
+      KeyMapBundle.message("conflict.shortcut.dialog.keep.button"),
       KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
       Messages.getWarningIcon());
   }
