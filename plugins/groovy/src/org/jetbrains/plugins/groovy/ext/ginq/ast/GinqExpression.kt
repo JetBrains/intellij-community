@@ -69,7 +69,7 @@ data class GinqJoinFragment(
   val onCondition: GinqOnFragment?,
 ) : GinqDataSourceFragment, GinqQueryFragment
 
-interface GinqFilterFragment : GinqQueryFragment {
+interface GinqFilterFragment {
   val filter: GrExpression
 }
 

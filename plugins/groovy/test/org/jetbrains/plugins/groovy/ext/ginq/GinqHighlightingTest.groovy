@@ -26,8 +26,8 @@ class GinqHighlightingTest extends GrHighlightingTestBase {
   void testKeywordHighlighting() {
     testHighlighting """
 <info descr="null">GQ</info> {
-    <info descr="null"><info descr="null">from</info></info> n in [1, 2, 3]
-    <info descr="null"><info descr="null">select</info></info> n
+    <info descr="null">from</info> n in [1, 2, 3]
+    <info descr="null">select</info> n
 }
 """, false, true, false
   }
@@ -707,4 +707,108 @@ select switch (n) {
 """
   }
 
+  void testIncorrectFrom() {
+    testGinqHighlighting """
+from <error>a</error>
+select b
+"""
+  }
+
+  void testIncorrectAlias() {
+    testGinqHighlighting """
+from <error>10</error> in 10
+select b
+"""
+  }
+
+  void testIncompleteDataSource() {
+    testGinqHighlighting """
+(from a <error>in</error><error>)</error>
+"""
+  }
+
+  void testIncorrectJoin() {
+    testGinqHighlighting """
+from a in [1]
+join <error>e</error>
+select a
+"""
+  }
+
+  void testIncorrectJoinAlias() {
+    testGinqHighlighting """
+from a in [1]
+join <error>10</error> in [1]
+select a
+"""
+  }
+
+  void testIncompleteJoinDataSource() {
+    testGinqHighlighting """
+from a in [1]
+(join e <error>in</error><error>)</error>
+select a
+"""
+  }
+
+  void testIncorrectWhereBlock() {
+    testGinqHighlighting """
+from a in [1]
+where <error>1, 2</error>
+select a
+"""
+  }
+
+  void testMisplacedOn() {
+    testGinqHighlighting """
+from a in [1]
+<error>on 1</error>
+select a
+"""
+  }
+
+  void testEmptyLimit() {
+    testGinqHighlighting """
+from a in [1]
+limit<error>()</error>
+select a
+"""
+  }
+
+  void testTooBigLimit() {
+    testGinqHighlighting """
+from a in [1]
+limit <error>1, 2, 3</error>
+select a
+"""
+  }
+
+  void testUnrecognizedQuery() {
+    testGinqHighlighting """
+<error>foo</error> 1
+"""
+  }
+
+  void testMisplacedQueries() {
+    testGinqHighlighting """
+from a in [1]
+<error>where</error> true
+<error>join</error> e in []
+select a
+"""
+  }
+
+  void testFromShouldBeFirst() {
+    testGinqHighlighting """
+<error>join</error> a in [1]
+where true
+"""
+  }
+
+  void testSelectShouldBeLast() {
+    testGinqHighlighting """
+from b in [1]
+<error>join</error> a in [1]
+"""
+  }
 }
