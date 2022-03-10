@@ -1,0 +1,5 @@
+var v: Int
+    set<caret>
+
+// ELEMENT: "set"
+// TAIL_TEXT: ""

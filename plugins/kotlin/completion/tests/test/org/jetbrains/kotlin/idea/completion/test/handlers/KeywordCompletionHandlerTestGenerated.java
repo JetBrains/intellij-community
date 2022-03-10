@@ -28,6 +28,66 @@ public class KeywordCompletionHandlerTestGenerated extends AbstractKeywordComple
         runTest("testData/handlers/keywords/AddCompanionToObject.kt");
     }
 
+    @TestMetadata("AutoIndentGetter.kt")
+    public void testAutoIndentGetter() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentGetter.kt");
+    }
+
+    @TestMetadata("AutoIndentGetter2.kt")
+    public void testAutoIndentGetter2() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentGetter2.kt");
+    }
+
+    @TestMetadata("AutoIndentGetter3.kt")
+    public void testAutoIndentGetter3() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentGetter3.kt");
+    }
+
+    @TestMetadata("AutoIndentGetterAndModifier.kt")
+    public void testAutoIndentGetterAndModifier() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentGetterAndModifier.kt");
+    }
+
+    @TestMetadata("AutoIndentGetterAndModifier2.kt")
+    public void testAutoIndentGetterAndModifier2() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentGetterAndModifier2.kt");
+    }
+
+    @TestMetadata("AutoIndentGetterAndModifier3.kt")
+    public void testAutoIndentGetterAndModifier3() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentGetterAndModifier3.kt");
+    }
+
+    @TestMetadata("AutoIndentSetter.kt")
+    public void testAutoIndentSetter() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentSetter.kt");
+    }
+
+    @TestMetadata("AutoIndentSetter2.kt")
+    public void testAutoIndentSetter2() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentSetter2.kt");
+    }
+
+    @TestMetadata("AutoIndentSetter3.kt")
+    public void testAutoIndentSetter3() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentSetter3.kt");
+    }
+
+    @TestMetadata("AutoIndentSetterAndModifier.kt")
+    public void testAutoIndentSetterAndModifier() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentSetterAndModifier.kt");
+    }
+
+    @TestMetadata("AutoIndentSetterAndModifier2.kt")
+    public void testAutoIndentSetterAndModifier2() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentSetterAndModifier2.kt");
+    }
+
+    @TestMetadata("AutoIndentSetterAndModifier3.kt")
+    public void testAutoIndentSetterAndModifier3() throws Exception {
+        runTest("testData/handlers/keywords/AutoIndentSetterAndModifier3.kt");
+    }
+
     @TestMetadata("Break.kt")
     public void testBreak() throws Exception {
         runTest("testData/handlers/keywords/Break.kt");
