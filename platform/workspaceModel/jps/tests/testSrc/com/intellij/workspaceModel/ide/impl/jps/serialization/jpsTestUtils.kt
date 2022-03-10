@@ -55,7 +55,7 @@ internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: V
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
   val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, originalProjectDir)
-  serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
+  serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, virtualFileManager)
   return loadedProjectData
 }
 
@@ -75,8 +75,8 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuild
                                               externalStorageConfigurationManager)
 }
 
-internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, projectDir: File) {
-  val writer = JpsFileContentWriterImpl(projectDir)
+internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, configLocation: JpsProjectConfigLocation) {
+  val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
   writer.writeFiles()
 }
@@ -112,14 +112,19 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
 }
 
-internal fun createProjectSerializers(projectDir: File, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializersImpl {
-  val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
+internal fun createProjectSerializers(projectDir: File,
+                                      virtualFileManager: VirtualFileUrlManager): Pair<JpsProjectSerializersImpl, JpsProjectConfigLocation> {
+  val configLocation = toConfigLocation(projectDir.toPath(), virtualFileManager)
+  val reader = CachingJpsFileContentReader(configLocation)
   val externalStoragePath = projectDir.toPath().resolve("cache")
-  return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader,
-                                                           externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
+  val serializer = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, reader, externalStoragePath, true,
+                                                                     virtualFileManager) as JpsProjectSerializersImpl
+  return serializer to configLocation
 }
 
-fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager) {
+fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigLocation,
+                                               storage: WorkspaceEntityStorage,
+                                               virtualFileManager: VirtualFileUrlManager) {
   fun getNonNullActualFileUrl(source: EntitySource): String {
     return getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")
   }
@@ -134,7 +139,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
   moduleListSerializersByUrl.forEach { (url, fileSerializer) ->
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = moduleSerializers.getKeysByValue(fileSerializer) ?: emptyList()
-    val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl), virtualFileManager)
+    val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(configLocation), virtualFileManager)
     assertEquals(urlsFromFactory.map { it.first.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
@@ -180,7 +185,7 @@ internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlMana
   }
 }
 
-internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsFileContentWriter {
+internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectConfigLocation) : JpsFileContentWriter {
   val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
@@ -188,7 +193,7 @@ internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsF
   }
 
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
-    val projectPointerSupplier = { baseProjectDir.systemIndependentPath }
+    val projectPointerSupplier = { JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString) }
     return if (isModuleFile(JpsPathUtil.urlToFile(fileUrl)))
       ModulePathMacroManager.createInstance(projectPointerSupplier, Supplier { JpsPathUtil.urlToOsPath(fileUrl) }).replacePathMap
     else
@@ -202,7 +207,7 @@ internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsF
       val replaceMacroMap = getReplacePathMacroMap(url)
       val newRootElement = when {
         isModuleFile(file) -> Element("module")
-        FileUtil.filesEqual(File(baseProjectDir, ".idea"), file.parentFile.parentFile) -> null
+        FileUtil.filesEqual(File(JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString), ".idea"), file.parentFile.parentFile) -> null
         else -> Element("project")
       }
 
