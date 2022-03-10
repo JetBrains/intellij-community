@@ -26,11 +26,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("annotationsOnEnumEntry.java")
-        public void testAnnotationsOnEnumEntry() throws Exception {
-            runTest("testData/newJ2k/annotations/annotationsOnEnumEntry.java");
-        }
-
         @TestMetadata("annotationArrayArgument.java")
         public void testAnnotationArrayArgument() throws Exception {
             runTest("testData/newJ2k/annotations/annotationArrayArgument.java");
@@ -79,6 +74,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("annotationsOnAnnotationMethod.java")
         public void testAnnotationsOnAnnotationMethod() throws Exception {
             runTest("testData/newJ2k/annotations/annotationsOnAnnotationMethod.java");
+        }
+
+        @TestMetadata("annotationsOnEnumEntry.java")
+        public void testAnnotationsOnEnumEntry() throws Exception {
+            runTest("testData/newJ2k/annotations/annotationsOnEnumEntry.java");
         }
 
         @TestMetadata("forLoopParameter.java")
