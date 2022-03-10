@@ -11,6 +11,7 @@ object Test {
                 b = 1
                 a = b
             }
+
             else -> {
                 b = -1
                 a = b

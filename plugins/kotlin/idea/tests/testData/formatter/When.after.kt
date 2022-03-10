@@ -40,8 +40,10 @@ fun some(x: Any) {
 val a = when {
     true && true && true -> {
     }
+
     else -> {
     }
 }
 
 // SET_FALSE: ALIGN_IN_COLUMNS_CASE_BRANCH
+// SET_TRUE: LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY
