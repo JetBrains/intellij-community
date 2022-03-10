@@ -193,11 +193,12 @@ internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectCo
   }
 
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
-    val projectPointerSupplier = { JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString) }
     return if (isModuleFile(JpsPathUtil.urlToFile(fileUrl)))
-      ModulePathMacroManager.createInstance(projectPointerSupplier, Supplier { JpsPathUtil.urlToOsPath(fileUrl) }).replacePathMap
+      ModulePathMacroManager.createInstance(configLocation::projectFilePath, Supplier { JpsPathUtil.urlToOsPath(fileUrl) }).replacePathMap
     else
-      ProjectPathMacroManager.createInstance(projectPointerSupplier, null).replacePathMap
+      ProjectPathMacroManager.createInstance(configLocation::projectFilePath,
+                                             { JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString) },
+                                             null).replacePathMap
   }
 
   internal fun writeFiles() {
