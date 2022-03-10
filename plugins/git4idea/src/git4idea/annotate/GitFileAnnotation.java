@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -24,10 +23,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.GitVcs;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.log.GitCommitTooltipLinkHandler;
@@ -57,7 +62,6 @@ public final class GitFileAnnotation extends FileAnnotation {
   @Nullable private List<VcsFileRevision> myRevisions;
   @Nullable private Object2IntMap<VcsRevisionNumber> myRevisionMap;
   @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
-  private final VcsLogApplicationSettings myLogSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
   private final LineAnnotationAspect DATE_ASPECT =
     new GitAnnotationAspect(LineAnnotationAspect.DATE, VcsBundle.message("line.annotation.aspect.date"), true) {
@@ -83,7 +87,6 @@ public final class GitFileAnnotation extends FileAnnotation {
         return VcsUserUtil.toExactString(lineInfo.getAuthorUser());
       }
     };
-  private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;
 
   public GitFileAnnotation(@NotNull Project project,
                            @NotNull VirtualFile file,
@@ -96,19 +99,10 @@ public final class GitFileAnnotation extends FileAnnotation {
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
-    myLogSettings.addChangeListener(myLogSettingChangeListener);
-    Disposer.register(GitDisposable.getInstance(project), () -> myLogSettings.removeChangeListener(myLogSettingChangeListener));
-  }
-
-  public <T> void onLogSettingChange(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE)) {
-      reload(null);
-    }
   }
 
   @Override
   public void dispose() {
-    myLogSettings.removeChangeListener(myLogSettingChangeListener);
   }
 
   @Override
@@ -117,8 +111,9 @@ public final class GitFileAnnotation extends FileAnnotation {
   }
 
   @NotNull
-  private Date getDate(LineInfo info) {
-    return Boolean.TRUE.equals(myLogSettings.get(CommonUiProperties.PREFER_COMMIT_DATE)) ? info.getCommitterDate() : info.getAuthorDate();
+  private static Date getDate(LineInfo info) {
+    VcsLogApplicationSettings logSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
+    return Boolean.TRUE.equals(logSettings.get(CommonUiProperties.PREFER_COMMIT_DATE)) ? info.getCommitterDate() : info.getAuthorDate();
   }
 
   @Nullable

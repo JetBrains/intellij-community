@@ -28,7 +28,7 @@ import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
-import git4idea.annotate.GitRepositoryForAnnotationsListener;
+import git4idea.annotate.GitAnnotationsListener;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
@@ -217,7 +217,7 @@ public final class GitVcs extends AbstractVcs {
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 
-    GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
+    GitAnnotationsListener.registerListener(myProject, myDisposable);
     GitAdvancedSettingsListener.registerListener(myProject, myDisposable);
 
     GitUserRegistry.getInstance(myProject).activate();
