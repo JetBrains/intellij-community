@@ -14,8 +14,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
@@ -220,8 +218,6 @@ abstract class ScriptClassRootsUpdater(
                             KotlinBundle.message("script.name.kotlin.script.dependencies")
                         )
 
-                        // Temporary workaround to address KTIJ-21286: we should NOT trigger `makeRootsChange`
-                        ProjectRootManagerEx.getInstanceEx(project)?.makeRootsChange(EmptyRunnable.getInstance(), false, true)
                         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
                     }
                 }
