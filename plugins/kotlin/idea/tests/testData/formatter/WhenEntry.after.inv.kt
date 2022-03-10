@@ -3,6 +3,7 @@ fun a() {
         true && true -> {}
         false -> {
         }
+
         else -> {}
     }
 }

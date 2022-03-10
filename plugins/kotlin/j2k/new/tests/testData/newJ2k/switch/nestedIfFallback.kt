@@ -5,6 +5,7 @@ fun foo(i: Int, j: Int): String {
                 "1"
             } else "2"
         }
+
         1 -> "2"
         else -> "3"
     }

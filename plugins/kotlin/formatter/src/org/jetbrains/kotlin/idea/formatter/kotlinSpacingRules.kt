@@ -529,14 +529,31 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             inPosition(right = CLASS_BODY).customRule(leftBraceRule(blockType = CLASS_BODY))
 
             inPosition(left = WHEN_ENTRY, right = WHEN_ENTRY).customRule { _, left, right ->
-                val leftEntry = left.requireNode().psi as KtWhenEntry
-                val rightEntry = right.requireNode().psi as KtWhenEntry
-                val blankLines = if (leftEntry.expression is KtBlockExpression || rightEntry.expression is KtBlockExpression)
-                    kotlinCustomSettings.BLANK_LINES_AROUND_BLOCK_WHEN_BRANCHES
-                else
-                    0
+                val blankLines = kotlinCustomSettings.BLANK_LINES_AROUND_BLOCK_WHEN_BRANCHES
+                if (blankLines != 0) {
+                    val leftEntry = left.requireNode().psi as KtWhenEntry
+                    val rightEntry = right.requireNode().psi as KtWhenEntry
+                    if (leftEntry.expression is KtBlockExpression || rightEntry.expression is KtBlockExpression) {
+                        return@customRule createSpacing(0, minLineFeeds = blankLines + 1)
+                    }
+                }
 
-                createSpacing(0, minLineFeeds = blankLines + 1)
+                if (kotlinCustomSettings.LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY) {
+                    builderUtil.createLineFeedDependentSpacing(
+                        minSpaces = 0,
+                        maxSpaces = 0,
+                        minimumLineFeeds = 1,
+                        keepLineBreaks = commonCodeStyleSettings.KEEP_LINE_BREAKS,
+                        keepBlankLines = commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE,
+                        dependency = left.textRange,
+                        rule = DependentSpacingRule(DependentSpacingRule.Trigger.HAS_LINE_FEEDS).registerData(
+                            DependentSpacingRule.Anchor.MIN_LINE_FEEDS,
+                            2,
+                        ),
+                    )
+                } else {
+                    createSpacing(0, minLineFeeds = 1)
+                }
             }
 
             inPosition(parent = WHEN_ENTRY, right = BLOCK).customRule(leftBraceRule())
