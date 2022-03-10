@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.initApp
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.initSdk
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.lang.management.ManagementFactory
 
 abstract class AbstractProjectBasedTest : UsefulTestCase() {
     private lateinit var jdk: Sdk
@@ -66,8 +65,39 @@ abstract class AbstractProjectBasedTest : UsefulTestCase() {
             nullableProject = ProjectOpener.openProject(project, jdk)
         }
 
+        globalWarmup(actions, project, profile)
+        runActions(actions, project, profile)
+    }
+
+    private fun globalWarmup(actions: List<ProjectAction>, project: ProjectData, profile: ProjectBasedTestPreferences) {
+        runActions(
+            actions,
+            project,
+            profile.copy(
+                actionOnError = ActionOnError.DO_NOTHING,
+                uploadResultsToEs = false,
+                warmUpIterations = profile.warmUpIterations + profile.iterations,
+                iterations = 0,
+            ),
+            namePrefix = "globalWarmup"
+        )
+    }
+
+    private fun runActions(
+        actions: List<ProjectAction>,
+        project: ProjectData,
+        profile: ProjectBasedTestPreferences,
+        namePrefix: String? = null,
+    ) {
         for (action in actions) {
-            TeamCity.suite("${project.id}_${action.id}_${action.filePath.substringAfterLast('/')}") {
+            val name = listOfNotNull(
+                project.id,
+                namePrefix,
+                action.id,
+                action.filePath.substringAfterLast('/')
+            ).joinToString(separator = "_")
+
+            TeamCity.suite(name) {
                 runAction(action, project, profile)
             }
         }
@@ -136,7 +166,7 @@ abstract class FrontendConfiguration {
     abstract fun invalidateCaches(project: Project)
 }
 
-class ProjectBasedTestPreferences(
+data class ProjectBasedTestPreferences(
     val warmUpIterations: Int,
     val iterations: Int,
     val checkForValidity: Boolean,
