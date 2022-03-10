@@ -283,8 +283,14 @@ public final class IndexingStamp {
 
   @TestOnly
   public static int @NotNull [] dumpCachedUnfinishedFiles() {
-    return ourLock.withAllLocksReadLocked(() -> {
-      int[] cachedKeys = ourTimestampsCache.keys();
+    return ourLock.withAllLocksWriteLocked(() -> {
+      int[] cachedKeys = ourTimestampsCache
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue().isDirty())
+        .mapToInt(e -> e.getKey())
+        .toArray();
+
       if (cachedKeys.length == 0) {
         return ArrayUtil.EMPTY_INT_ARRAY;
       }
