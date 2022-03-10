@@ -29,7 +29,9 @@ import java.awt.event.MouseEvent;
 final class ContentComboLabel extends ContentLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
-  private final ActiveIcon myComboIcon = new ActiveIcon(AllIcons.General.ArrowDown);
+  private final ActiveIcon myComboIcon = new ActiveIcon(ExperimentalUI.isNewUI()
+                                                        ? AllIcons.General.LinkDropTriangle
+                                                        : AllIcons.General.ArrowDown);
   private final Point myComboIconPoint = new Point();
 
   private final ComboContentLayout myLayout;
