@@ -45,7 +45,7 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestImplementation().show(message);
     }
 
-    if (SystemInfo.isMac && AlertMessagesManager.isEnabled()) {
+    if (AlertMessagesManager.isEnabled()) {
       return AlertMessagesManager.instance().showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex,
                                                                focusedOptionIndex, icon, doNotAskOption, helpId);
     }
@@ -69,7 +69,7 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestImplementation().show(message);
     }
 
-    if (SystemInfo.isMac && AlertMessagesManager.isEnabled()) {
+    if (AlertMessagesManager.isEnabled() && moreInfo == null) {
       return AlertMessagesManager.instance().showMessageDialog(project, null, message, title, options, defaultOptionIndex,
                                                                focusedOptionIndex, icon, null, null);
     }
