@@ -21,6 +21,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -94,7 +95,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     checkByDirtyScope(paths, changes, files);
   }
 
-  private void checkByDirtyScope(Set<String> removed, Map<String, VcsRevisionNumber> refresh, Set<? extends VirtualFile> files) {
+  private void checkByDirtyScope(@NotNull Set<String> removed,
+                                 @NotNull Map<String, VcsRevisionNumber> refresh,
+                                 @NotNull Set<? extends VirtualFile> files) {
     for (String path : removed) {
       refreshForPath(path, null);
     }
@@ -106,7 +109,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
-  private void processUnderFile(VirtualFile file) {
+  private void processUnderFile(@NotNull VirtualFile file) {
     final MultiMap<VirtualFile, FileAnnotation> annotations = new MultiMap<>();
     synchronized (myLock) {
       for (VirtualFile virtualFile : myFileAnnotationMap.keySet()) {
@@ -118,7 +121,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
         }
       }
     }
-    if (! annotations.isEmpty()) {
+    if (!annotations.isEmpty()) {
       for (Map.Entry<VirtualFile, Collection<FileAnnotation>> entry : annotations.entrySet()) {
         final VirtualFile key = entry.getKey();
         final VcsRevisionNumber number = fromDiffProvider(key);
@@ -130,7 +133,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
-  private void refreshForPath(String path, VcsRevisionNumber number) {
+  private void refreshForPath(@NotNull String path, @Nullable VcsRevisionNumber number) {
     final File file = new File(path);
     VirtualFile vf = myLocalFileSystem.findFileByIoFile(file);
     if (vf == null) {
@@ -140,12 +143,12 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     processFile(number, vf);
   }
 
-  private void processFile(VcsRevisionNumber number, VirtualFile vf) {
+  private void processFile(@Nullable VcsRevisionNumber number, @NotNull VirtualFile vf) {
     final Collection<FileAnnotation> annotations;
     synchronized (myLock) {
       annotations = new ArrayList<>(myFileAnnotationMap.get(vf));
     }
-    if (! annotations.isEmpty()) {
+    if (!annotations.isEmpty()) {
       if (number == null) {
         number = fromDiffProvider(vf);
       }
@@ -157,7 +160,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
   }
 
-  private VcsRevisionNumber fromDiffProvider(final VirtualFile vf) {
+  private VcsRevisionNumber fromDiffProvider(@NotNull VirtualFile vf) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(vf);
     DiffProvider diffProvider;
     if (vcsRoot != null && vcsRoot.getVcs() != null && (diffProvider = vcsRoot.getVcs().getDiffProvider()) != null) {
@@ -166,17 +169,17 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     return null;
   }
 
-  private void closeForVcs(final Set<VcsKey> refresh) {
+  private void closeForVcs(@NotNull Set<VcsKey> refresh) {
     if (refresh.isEmpty()) return;
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> it.getVcsKey() != null && refresh.contains(it.getVcsKey()));
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> refresh.contains(it.getVcsKey()));
       invalidateAnnotations(copy, false);
     }
   }
 
   private static void invalidateAnnotations(@NotNull Collection<? extends FileAnnotation> annotations, boolean reload) {
     getApplication().invokeLater(() -> {
-      for (FileAnnotation annotation: annotations) {
+      for (FileAnnotation annotation : annotations) {
         try {
           if (reload) {
             annotation.reload(null);
@@ -194,14 +197,14 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   // annotations for already committed revisions should not register with this method - they are not subject to refresh
   @Override
-  public void registerAnnotation(final VirtualFile file, final FileAnnotation annotation) {
+  public void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
     synchronized (myLock) {
       myFileAnnotationMap.putValue(file, annotation);
     }
   }
 
   @Override
-  public void unregisterAnnotation(final VirtualFile file, final FileAnnotation annotation) {
+  public void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
     synchronized (myLock) {
       final Collection<FileAnnotation> annotations = myFileAnnotationMap.get(file);
       if (!annotations.isEmpty()) {
@@ -246,7 +249,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
 
     @Override
-    public void dirty(BaseRevision currentRevision) {
+    public void dirty(@NotNull BaseRevision currentRevision) {
       synchronized (myLock) {
         myDirtyChanges.put(currentRevision.getPath(), currentRevision.getRevision());
       }
@@ -254,7 +257,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
 
     @Override
-    public void dirty(String path) {
+    public void dirty(@NotNull String path) {
       synchronized (myLock) {
         myDirtyPaths.add(path);
       }
@@ -262,7 +265,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     }
 
     @Override
-    public void configurationChanged(VcsKey vcsKey) {
+    public void configurationChanged(@NotNull VcsKey vcsKey) {
       synchronized (myLock) {
         myVcsKeySet.add(vcsKey);
       }
