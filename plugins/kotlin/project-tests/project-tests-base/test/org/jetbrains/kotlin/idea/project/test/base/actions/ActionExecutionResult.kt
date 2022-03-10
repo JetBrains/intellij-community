@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.project.test.base.actions
 
+import org.jetbrains.kotlin.idea.project.test.base.jvm.utils.JvmRuntimeUtils
+import org.jetbrains.kotlin.idea.project.test.base.metrics.DefaultMetrics
 import org.jetbrains.kotlin.idea.project.test.base.metrics.Metric
 import org.jetbrains.kotlin.idea.project.test.base.metrics.MetricsCollector
 import kotlin.contracts.ExperimentalContracts
@@ -24,8 +26,15 @@ inline fun <R : Any> MetricsCollector.reportMetricForAction(metric: Metric, acti
     }
     try {
         val result: R
+        val beforeGcTime = JvmRuntimeUtils.getGCTime()
+        val beforeJitTime = JvmRuntimeUtils.getJitTime()
         val timeMs = measureTimeMillis { result = action() }
+        val afterJitTime = JvmRuntimeUtils.getJitTime()
+        val afterGcTime = JvmRuntimeUtils.getGCTime()
+
         reportMetric(metric, timeMs)
+        reportMetric(DefaultMetrics.gcTime, afterGcTime - beforeGcTime)
+        reportMetric(DefaultMetrics.jitTime, afterJitTime - beforeJitTime)
         return result
     } catch (exception: Throwable) {
         reportFailure(ActionExecutionResultError.ExceptionDuringActionExecution(exception))
