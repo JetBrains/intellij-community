@@ -26,7 +26,7 @@ class Line {
     p2 = new Point(x2, y2);
   }
 
-  Line(Line other) { // Copy constructor does not copy fields 'p1' and 'p2'
+  Line(Line other) {
     this(other.p1.x, other.p1.y, other.p2.x, other.p2.y);
   }
 }
@@ -45,7 +45,6 @@ class B {
     this.data = data;
   }
 
-  // IDEA warns that 'data' field is not copied
   B(B b) {
     this(java.util.Arrays.copyOf(b.data, b.data.length));
   }
@@ -62,7 +61,7 @@ class WithGetters {
   public WithGetters(Map<String, String> map) {
     this.map = map;
   }
-  // warning on constructor below, that it does not copy 'map'
+
   public WithGetters(WithGetters withGetters) {
     this(withGetters.getMap());
   }
@@ -74,9 +73,7 @@ class FinalField {
     id = new java.util.Random().nextInt();
   }
 
-  // warning on constructor below
   public FinalField(FinalField ff) {
     this();
-    //copy other fields
   }
 }
