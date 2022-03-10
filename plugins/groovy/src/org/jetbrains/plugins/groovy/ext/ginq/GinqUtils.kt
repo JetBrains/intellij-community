@@ -142,13 +142,40 @@ fun resolveAsPagination(place: PsiElement, name: String): PsiMethod? {
   return null
 }
 
+private data class Signature(val returnType: String, val parameters: List<Pair<String, String>>)
+
+private val windowFunctions : Map<String, Signature> = mapOf(
+  "rowNumber" to Signature(JAVA_LANG_LONG, emptyList()),
+  "rank" to Signature(JAVA_LANG_LONG, emptyList()),
+  "denseRank" to Signature(JAVA_LANG_LONG, emptyList()),
+  "percentRank" to Signature(JAVA_MATH_BIG_DECIMAL, emptyList()),
+  "cumeDist" to Signature(JAVA_MATH_BIG_DECIMAL, emptyList()),
+  "ntile" to Signature(JAVA_LANG_LONG, listOf("expr" to JAVA_LANG_LONG)),
+  "lead" to Signature("T", listOf("expr" to "T", "?offset" to JAVA_LANG_LONG, "?default" to "T")),
+  "lag" to Signature("T", listOf("expr" to "T", "?offset" to JAVA_LANG_LONG, "?default" to "T")),
+  "firstValue" to Signature("T", listOf("expr" to "T")),
+  "lastValue" to Signature("T", listOf("expr" to "T")),
+  "nthValue" to Signature("T", listOf("expr" to "T", "n" to JAVA_LANG_LONG)),
+  )
+
 fun resolveInOverQualifier(place: PsiElement, name: String): PsiMethod? {
   val facade = JavaPsiFacade.getInstance(place.project)
-  if (name == "rowNumber") {
-    val proxy = GrLightMethodBuilder(place.manager, "rowNumber")
-    proxy.setReturnType(JAVA_LANG_LONG, place.resolveScope)
-    proxy.navigationElement = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_WINDOW, place.resolveScope)?.findMethodsByName("rowNumber", false)?.singleOrNull() ?: proxy
-    return proxy
+  val (returnType, parameters) = windowFunctions[name] ?: return null
+  val proxy = GrLightMethodBuilder(place.manager, name)
+  val actualReturnType = if (returnType == "T") {
+    proxy.addTypeParameter("T").type()
+  } else {
+    PsiType.getTypeByName(returnType, place.project, place.resolveScope)
   }
-  return null
+  proxy.returnType = actualReturnType
+  for ((parameterName, parameterType) in parameters) {
+    val actualType = if (parameterType == "T") actualReturnType else PsiType.getTypeByName(parameterType, place.project, place.resolveScope)
+    if (parameterName.startsWith('?')) {
+      proxy.addParameter(parameterName.substring(1), actualType, true)
+    } else {
+      proxy.addParameter(parameterName, actualType)
+    }
+  }
+  proxy.navigationElement = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_WINDOW, place.resolveScope)?.findMethodsByName(name, false)?.find { it.parameterList.parametersCount == parameters.size } ?: proxy
+  return proxy
 }

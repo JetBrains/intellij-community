@@ -375,4 +375,318 @@ from n in [2, 1, null, 3]
 """
   }
 
+  void testRowNumber2() {
+    testGinqHighlighting """
+from n in [1, 2, null, 3]
+    select n, (rowNumber() over(orderby n in asc(nullslast))),
+              (rowNumber() over(orderby n in asc(nullsfirst))),
+              (rowNumber() over(orderby n in desc(nullslast))),
+              (rowNumber() over(orderby n in desc(nullsfirst)))
+"""
+  }
+
+  void testRank() {
+    testGinqHighlighting """
+from s in ['a', 'b', 'b', 'c', 'c', 'd', 'e']
+    select s, 
+        (rank() over(orderby s)),
+        (denseRank() over(orderby s))
+"""
+  }
+
+  void testRank2() {
+    testGinqHighlighting """
+from n in [60, 60, 80, 80, 100]
+    select n,
+        (percentRank() over(orderby n)),
+        (cumeDist() over(orderby n))
+"""
+  }
+
+  void testRank3() {
+    testGinqHighlighting """
+from n in 1..10
+    select n, (ntile(4) over(orderby n))
+"""
+  }
+
+  void testLead1() {
+    testGinqHighlighting """
+from n in [2, 1, 3]
+    select n, (lead(n) over(orderby n))
+"""
+  }
+
+  void testLead2() {
+    testGinqHighlighting """
+from n in [2, 1, 3]
+    select n, (lead(n) over(orderby n in asc))
+"""
+  }
+
+  void testLead3() {
+    testGinqHighlighting """
+from s in ['a', 'ab', 'b', 'bc']
+    select s, (lead(s) over(orderby s.length(), s in desc))
+"""
+  }
+
+  void testLead4() {
+    testGinqHighlighting """
+from s in ['a', 'ab', 'b', 'bc']
+    select s, (lead(s) over(partitionby s.length() orderby s.length(), s in desc))
+"""
+  }
+
+  void testLead5() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lag(n) over(orderby n))
+"""
+  }
+
+  void testLead6() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lag(n) over(orderby n in desc))
+"""
+  }
+
+  void testLead7() {
+    testGinqHighlighting """
+    from s in ['a', 'b', 'aa', 'bb']
+    select s, (lag(s) over(partitionby s.length() orderby s))
+"""
+  }
+
+  void testLead8() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lead(n) over(orderby n)), (lag(n) over(orderby n))
+"""
+  }
+
+  void testLead9() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lead(n, 2) over(orderby n)), (lag(n, 2) over(orderby n))
+"""
+  }
+
+  void testLead10() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lead(n, 2, 'NONE') over(orderby n)), (lag(n, 2, 'NONE') over(orderby n))
+"""
+  }
+
+  void testFirstValue1() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (firstValue(n) over(orderby n rows -1, 1))
+"""
+  }
+
+  void testLastValue1() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lastValue(n) over(orderby n rows -1, 1))
+"""
+  }
+
+  void testFirstValue2() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (firstValue(n) over(orderby n rows 0, 1))
+"""
+  }
+
+  void testFirstValue3() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (firstValue(n) over(orderby n rows -2, -1))
+"""
+  }
+
+  void testLastValue2() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lastValue(n) over(orderby n rows -2, -1))
+"""
+  }
+
+  void testLastValue3() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lastValue(n) over(orderby n rows 1, 2))
+"""
+  }
+
+  void testFirstValue4() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (firstValue(n) over(orderby n rows 1, 2))
+"""
+  }
+
+  void testLastValue4() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lastValue(n) over(orderby n rows -1, 0))
+"""
+  }
+
+  void testFirstValue5() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (firstValue(n) over(orderby n rows null, 1))
+"""
+  }
+
+  void testLastValue5() {
+    testGinqHighlighting """
+    from n in [2, 1, 3]
+    select n, (lastValue(n) over(orderby n rows -1, null))
+"""
+  }
+
+  void testValues1() {
+    testGinqHighlighting """
+    from s in ['a', 'aa', 'b', 'bb']
+    select s, (firstValue(s) over(partitionby s.length() orderby s)),
+            (lastValue(s) over(partitionby s.length() orderby s))
+"""
+  }
+
+  void testValues2() {
+    testGinqHighlighting """
+    from n in 1..3
+    select n, (nthValue(n, 0) over(orderby n)),
+              (nthValue(n, 1) over(orderby n)),
+              (nthValue(n, 2) over(orderby n)),
+              (nthValue(n, 3) over(orderby n))
+"""
+  }
+
+  void testMinMax() {
+    testGinqHighlighting """
+    from s in ['a', 'b', 'aa', 'bb']
+    select s, (min(s) over(partitionby s.length())), (max(s) over(partitionby s.length()))
+"""
+  }
+
+  void testPartitionby() {
+    testGinqHighlighting """
+    from n in [1, 1, 2, 2, 3, 3]
+    select n, (count() over(partitionby n)),
+              (count(n) over(partitionby n)),
+              (sum(n) over(partitionby n)),
+              (avg(n) over(partitionby n)),
+              (median(n) over(partitionby n))
+"""
+  }
+
+  void testEmptyOver() {
+    testGinqHighlighting """
+    from n in [2, 1, 3, null]
+    select n, (sum(n) over()), 
+              (max(n) over()), 
+              (min(n) over()),
+              (count(n) over()),
+              (count() over())
+"""
+  }
+
+  void testNegativeRange() {
+    testGinqHighlighting """
+from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n range -2, 0)),
+              (sum(n) over(orderby n range -2, 0))
+"""
+  }
+
+  void testRange() {
+    testGinqHighlighting """
+    from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n range 0, 1)),
+              (sum(n) over(orderby n range 0, 1))
+"""
+  }
+
+  void testRange2() {
+    testGinqHighlighting """
+    from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n range -1, 1)), 
+              (sum(n) over(orderby n range -1, 1))
+"""
+  }
+
+  void testDescRange() {
+    testGinqHighlighting """
+    from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n in desc range 1, 2)), 
+              (sum(n) over(orderby n in desc range 1, 2))
+"""
+  }
+
+  void testDescRange2() {
+    testGinqHighlighting """
+    from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n in desc range -2, -1)), 
+              (sum(n) over(orderby n in desc range -2, -1))
+"""
+  }
+
+  void testNullRange() {
+    testGinqHighlighting """
+    from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n range 1, null)), 
+              (sum(n) over(orderby n range 1, null))
+"""
+  }
+
+  void testNullRange2() {
+    testGinqHighlighting """
+    from n in [1, 2, 5, 5]
+    select n, (count() over(orderby n range null, 1)), 
+              (sum(n) over(orderby n range null, 1))
+"""
+  }
+
+  void testStdev2() {
+    testGinqHighlighting """
+    from n in [1, 2, 3]
+    select n, (stdev(n) over())
+"""
+  }
+
+  void testStdevp2() {
+    testGinqHighlighting """
+    from n in [1, 2, 3]
+    select n, (stdevp(n) over())
+"""
+  }
+
+  void testVar2() {
+    testGinqHighlighting """
+    from n in [1, 2, 3]
+    select n, (var(n) over())
+"""
+  }
+
+  void testVarp2() {
+    testGinqHighlighting """
+    from n in [1, 2, 3]
+    select n, (varp(n) over())
+"""
+  }
+
+  void testAgg2() {
+    testGinqHighlighting """
+    from n in [1, 2, 3]
+    select n,
+           (agg(_g.stream().map(r -> r.n.toBigDecimal()).reduce(BigDecimal.ZERO, BigDecimal::add)) over(partitionby n % 2))
+"""
+  }
+
 }
