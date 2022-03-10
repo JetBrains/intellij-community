@@ -130,14 +130,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   private static class ProcessorAndData<Data extends TextBlockTransferableData> {
     final CopyPastePostProcessor<Data> processor;
-    final List<Data> data;
+    final @NotNull List<? extends Data> data;
 
-    private ProcessorAndData(@NotNull CopyPastePostProcessor<Data> processor, @NotNull List<Data> data) {
+    private ProcessorAndData(@NotNull CopyPastePostProcessor<Data> processor, @NotNull List<? extends Data> data) {
       this.processor = processor;
       this.data = data;
     }
 
-    void process(Project project, Editor editor, RangeMarker bounds, int caretOffset, Ref<Boolean> skipIndentation) {
+    void process(@NotNull Project project, @NotNull Editor editor, @NotNull RangeMarker bounds, int caretOffset, @NotNull Ref<? super Boolean> skipIndentation) {
       processor.processTransferableData(project, editor, bounds, caretOffset, skipIndentation, data);
     }
 

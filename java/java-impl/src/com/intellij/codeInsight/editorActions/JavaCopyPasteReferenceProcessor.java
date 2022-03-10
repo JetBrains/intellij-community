@@ -49,7 +49,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
   @Override
-  protected void removeImports(PsiFile file, Set<String> imports) {
+  protected void removeImports(@NotNull PsiFile file, @NotNull Set<String> imports) {
     removeImports((PsiJavaFile)file, imports);
   }
 
@@ -69,9 +69,9 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
 
 
   @Override
-  protected PsiJavaCodeReferenceElement @NotNull [] findReferencesToRestore(PsiFile file,
-                                                                            RangeMarker bounds,
-                                                                            ReferenceData[] referenceData) {
+  protected PsiJavaCodeReferenceElement @NotNull [] findReferencesToRestore(@NotNull PsiFile file,
+                                                                            @NotNull RangeMarker bounds,
+                                                                            ReferenceData @NotNull [] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();
@@ -117,9 +117,9 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
   @Override
-  protected void restoreReferences(ReferenceData[] referenceData,
-                                   PsiJavaCodeReferenceElement[] refs,
-                                   Set<String> imported) {
+  protected void restoreReferences(ReferenceData @NotNull [] referenceData,
+                                   PsiJavaCodeReferenceElement @NotNull [] refs,
+                                   @NotNull Set<? super String> imported) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
       if (reference == null || !reference.isValid()) continue;

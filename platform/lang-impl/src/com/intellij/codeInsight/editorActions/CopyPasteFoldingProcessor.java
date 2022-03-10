@@ -37,7 +37,7 @@ import java.util.List;
 public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
   @NotNull
   @Override
-  public List<FoldingTransferableData> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
+  public List<FoldingTransferableData> collectTransferableData(final @NotNull PsiFile file, final @NotNull Editor editor, final int @NotNull [] startOffsets, final int @NotNull [] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
@@ -68,7 +68,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
 
   @NotNull
   @Override
-  public List<FoldingTransferableData> extractTransferableData(final Transferable content) {
+  public List<FoldingTransferableData> extractTransferableData(final @NotNull Transferable content) {
     FoldingTransferableData foldingData = null;
     try {
       final DataFlavor flavor = FoldingData.getDataFlavor();
@@ -87,12 +87,12 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
   }
 
   @Override
-  public void processTransferableData(final Project project,
-                                      final Editor editor,
-                                      final RangeMarker bounds,
+  public void processTransferableData(final @NotNull Project project,
+                                      final @NotNull Editor editor,
+                                      final @NotNull RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<? super Boolean> indented,
-                                      final List<? extends FoldingTransferableData> values) {
+                                      @NotNull Ref<? super Boolean> indented,
+                                      final @NotNull List<? extends FoldingTransferableData> values) {
     assert values.size() == 1;
     final FoldingTransferableData value = values.get(0);
     if (value.getData().length == 0 || indented.get() != null) {
