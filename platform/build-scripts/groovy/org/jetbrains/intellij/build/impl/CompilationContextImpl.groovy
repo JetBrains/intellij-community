@@ -286,8 +286,8 @@ final class CompilationContextImpl implements CompilationContext {
     JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl = url
   }
 
-
   void exportModuleOutputProperties() {
+    // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs 
     for (JpsModule module : project.modules) {
       for (boolean test : [true, false]) {
         [module.name, getOldModuleName(module.name)].findAll { it != null}.each {
