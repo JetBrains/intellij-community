@@ -29,9 +29,7 @@ public class EnsureIndexInBoundsInstruction extends Instruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue newTransfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
-    var instruction = new EnsureIndexInBoundsInstruction(myProblem, newTransfer);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new EnsureIndexInBoundsInstruction(myProblem, newTransfer);
   }
 
   @Override

@@ -34,9 +34,7 @@ public class CheckNotNullInstruction extends Instruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myTransferValue == null) return this;
-    var instruction = new CheckNotNullInstruction(myProblem, myTransferValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new CheckNotNullInstruction(myProblem, myTransferValue.bindToFactory(factory));
   }
 
   @NotNull

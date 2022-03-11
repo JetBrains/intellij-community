@@ -40,9 +40,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue newTransfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
     DfaVariableValue newStaticValue = myStaticValue == null ? null : myStaticValue.bindToFactory(factory);
-    var instruction = new ArrayAccessInstruction(getDfaAnchor(), myProblem, newTransfer, newStaticValue);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new ArrayAccessInstruction(getDfaAnchor(), myProblem, newTransfer, newStaticValue);
   }
 
   @Override
