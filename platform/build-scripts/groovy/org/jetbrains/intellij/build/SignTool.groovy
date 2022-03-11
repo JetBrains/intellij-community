@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.Nullable
 
 import java.nio.file.Path
 
@@ -11,4 +12,5 @@ import java.nio.file.Path
 @CompileStatic
 interface SignTool {
   void signFiles(List<Path> files, BuildContext context, Map<String, String> options)
+  @Nullable Path commandLineClient(BuildContext context)
 }

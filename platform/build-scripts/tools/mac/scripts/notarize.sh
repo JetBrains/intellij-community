@@ -1,22 +1,12 @@
 #!/bin/bash
 
 # Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-APP_DIRECTORY=$1
-APPL_USER=$2
-APPL_PASSWORD=$3
+SIT_FILE=$1
+BUNDLE_ID=$2
+FAKE_ROOT="${3:-fake-root}"
 
-APP_NAME=$4
-BUNDLE_ID=$5
-FAKE_ROOT="${6:-fake-root}"
-
-if [[ -z "$APP_DIRECTORY" ]] || \
-   [[ -z "$APPL_USER" ]] || [[ -z "$APPL_PASSWORD" ]] || \
-   [[ -z "$APP_NAME" ]] || [[ -z "$BUNDLE_ID" ]] ; then
-  echo "Usage: $0 AppDirectory Username Password AppName BundleId [FakeRootForAltool]"
-  exit 1
-fi
-if [[ ! -d "$APP_DIRECTORY" ]]; then
-  echo "AppDirectory '$APP_DIRECTORY' does not exist or not a directory"
+if [[ -z "$SIT_FILE" ]] || [[ -z "$BUNDLE_ID" ]] ; then
+  echo "Usage: $0 SitFile BundleId [FakeRootForAltool]"
   exit 1
 fi
 
@@ -59,14 +49,14 @@ function altool-upload() {
   fi
   check-itmstransporter
   # For some reason altool prints everything to stderr, not stdout
-  set +e
+  set +ex
   xcrun altool --notarize-app \
-    --username "$APPL_USER" --password "$APPL_PASSWORD" \
+    --username "$APPLE_USERNAME" --password "$APPLE_PASSWORD" \
     --primary-bundle-id "$BUNDLE_ID" \
     --asc-provider JetBrainssro --file "$1" 2>&1 | tee "altool.init.out"
   unset TMPDIR
   export HOME="$OLD_HOME"
-  set -e
+  set -ex
 }
 
 #immediately exit script with an error if a command fails
@@ -74,17 +64,13 @@ set -euo pipefail
 
 set -x
 
-file="$APP_NAME.zip"
-
-log "Zipping $file..."
-rm -rf "$file"
-ditto -c -k --sequesterRsrc --keepParent "$APP_DIRECTORY" "$file"
-
-log "Notarizing $file..."
+# only ZIP or DMG file can be notarized
+ZIP_FILE="${SIT_FILE%.*}".zip
+mv "$SIT_FILE" "$ZIP_FILE"
+log "Notarizing $ZIP_FILE..."
 rm -rf "altool.init.out" "altool.check.out"
-altool-upload "$file"
-
-rm -rf "$file"
+altool-upload "$ZIP_FILE"
+mv "$ZIP_FILE" "$SIT_FILE"
 
 notarization_info="$(grep -e "RequestUUID" "altool.init.out" | grep -oE '([0-9a-f-]{36})')"
 
@@ -100,8 +86,10 @@ spent=0
 
 max_wait=300
 while true; do
+  set +x
   # For some reason altool prints everything to stderr, not stdout
-  xcrun altool --username "$APPL_USER" --notarization-info "$notarization_info" --password "$APPL_PASSWORD" >"altool.check.out" 2>&1 || true
+  xcrun altool --username "$APPLE_USERNAME" --notarization-info "$notarization_info" --password "$APPLE_PASSWORD" >"altool.check.out" 2>&1 || true
+  set -x
   status="$(grep -oe 'Status: .*' "altool.check.out" | cut -c 9- || true)"
   log "Current status: $status"
   if [ "$status" = "invalid" ]; then

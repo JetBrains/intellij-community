@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.logging.*
 import java.util.zip.Deflater
+import kotlin.io.path.name
 
 private val random by lazy { SecureRandom() }
 
@@ -74,7 +75,6 @@ private const val regularFileMode = 420
 // 0777 octal -> 511 decimal
 private const val executableFileMode = 511
 
-@Suppress("unused")
 fun signMacApp(
   host: String,
   user: String,
@@ -90,6 +90,7 @@ fun signMacApp(
   dmgImage: Path?,
   artifactBuilt: Consumer<Path>,
   publishAppArchive: Boolean,
+  jetSignClient: Path
 ) {
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
     tracer.spanBuilder("upload file")
@@ -120,13 +121,14 @@ fun signMacApp(
       .startSpan().use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
         @Suppress("SpellCheckingInspection")
-        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py")) {
+        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py", "codesign.sh")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
         }
 
         if (dmgImage != null) {
           sftp.put(NioFileSource(dmgImage, filePermission = regularFileMode), "$remoteDir/$fullBuildNumber.png")
         }
+        sftp.put(NioFileSource(jetSignClient, filePermission = executableFileMode), "$remoteDir/${jetSignClient.name}")
       }
 
     val args = listOf(
@@ -139,9 +141,16 @@ fun signMacApp(
       if (notarize) "yes" else "no",
       bundleIdentifier,
       publishAppArchive.toString(),
+      "/Users/$user/$remoteDir/${jetSignClient.name}"
     )
 
-    val env = System.getenv("ARTIFACTORY_URL")?.takeIf { it.isNotEmpty() }?.let { "ARTIFACTORY_URL=$it " } ?: ""
+    val env = sequenceOf("ARTIFACTORY_URL", "SERVICE_ACCOUNT_NAME", "SERVICE_ACCOUNT_TOKEN")
+                .map { it to System.getenv(it) }
+                .filterNot { it.second.isNullOrEmpty() }
+                .toList().takeIf { it.isNotEmpty() }
+                ?.joinToString(separator = " ", postfix = " ") {
+                  "${it.first}=${it.second}"
+                } ?: ""
     @Suppress("SpellCheckingInspection")
     tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).startSpan().useWithScope {
       signFile(remoteDir = remoteDir,
