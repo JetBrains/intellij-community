@@ -13,10 +13,11 @@ private class LibraryUsageStatisticsStartupActivity : StartupActivity.Background
     }
 
     val libraryDescriptorFinder = service<LibraryDescriptorFinderService>().libraryDescriptorFinder() ?: return
-    val storageService = LibraryUsageStatisticsStorageService.getInstance(project)
-    project.messageBus.connect(storageService).subscribe(
+    val processedFilesService = ProcessedFilesStorageService.getInstance(project)
+    val libraryUsageService = LibraryUsageStatisticsStorageService.getInstance(project)
+    project.messageBus.connect(processedFilesService).subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
-      LibraryUsageStatisticsProvider(project, storageService, libraryDescriptorFinder),
+      LibraryUsageStatisticsProvider(project, processedFilesService, libraryUsageService, libraryDescriptorFinder),
     )
   }
 }
