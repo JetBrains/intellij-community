@@ -104,7 +104,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private volatile boolean myExitInProgress;
 
   private final Disposable myLastDisposable = Disposer.newDisposable();  // the last to be disposed
-  private boolean myFiringListeners; // accessed in EDT only
 
   // defer reading isUnitTest flag until it's initialized
   private static class Holder {
@@ -1197,7 +1196,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private void startWrite(@NotNull Class<?> clazz) {
     assertIsWriteThread();
     assertNotInsideListener();
-    boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
@@ -1210,8 +1208,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (!myLock.isWriteLocked()) {
         int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
         Future<?> reportSlowWrite = delay <= 0 ? null :
-                                    AppExecutorUtil.getAppScheduledExecutorService()
-                                      .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+           AppExecutorUtil.getAppScheduledExecutorService()
+           .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
                                                               delay, delay, TimeUnit.MILLISECONDS);
         long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
         myLock.writeLock();
@@ -1227,7 +1225,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       }
     }
     finally {
-      myWriteActionPending = writeActionPending;
+      myWriteActionPending = false;
     }
 
     myWriteActionsStack.push(clazz);
@@ -1235,7 +1233,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void assertNotInsideListener() {
-    if (myFiringListeners) {
+    if (myWriteActionPending) {
       throw new IllegalStateException("Must not start write action from inside write action listener");
     }
   }
@@ -1396,23 +1394,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void fireBeforeWriteActionStart(@NotNull Class<?> action) {
-    myFiringListeners = true;
-    try {
-      myDispatcher.getMulticaster().beforeWriteActionStart(action);
-    }
-    finally {
-      myFiringListeners = false;
-    }
+    myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
   private void fireWriteActionStarted(@NotNull Class<?> action) {
-    myFiringListeners = true;
-    try {
-      myDispatcher.getMulticaster().writeActionStarted(action);
-    }
-    finally {
-      myFiringListeners = false;
-    }
+    myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
   private void fireWriteActionFinished(@NotNull Class<?> action) {
