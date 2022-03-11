@@ -59,6 +59,11 @@ public interface DfaAssistProvider {
                                             @NotNull DfaVariableValue var,
                                             @NotNull PsiElement anchor) throws EvaluateException;
 
+  /**
+   * @return a new listener to attach to DFA session that will gather DFAAssist hints
+   */
+  @NotNull DebuggerDfaListener createListener();
+
 
   /**
    * A helper method to implement {@link #getJdiValueForDfaVariable(StackFrameProxyEx, DfaVariableValue, PsiElement)}

@@ -67,7 +67,7 @@ class DebuggerDfaRunner {
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return null;
     }
-    var interceptor = new DebuggerDfaListener();
+    var interceptor = myProvider.createListener();
     // interpret() could be called several times in case if ReadAction is cancelled
     // So we need to copy the mutable myStartingState. Otherwise, restarted analysis will start from the wrong memory state
     DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
