@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 
 internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
-    private val cache = CollectionFactory.createConcurrentWeakIdentityMap<ModuleInfo, KtModule>()
+    private val cache = CollectionFactory.createConcurrentSoftKeySoftValueMap<ModuleInfo, KtModule>(16, .75f, 16)
 
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
         val moduleInfo = element.getModuleInfo(createSourceLibraryInfoForLibraryBinaries = false)
