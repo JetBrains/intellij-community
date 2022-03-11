@@ -1,78 +1,65 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryUsage
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.DigestUtil
 import com.intellij.util.xmlb.annotations.XMap
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 @Service(Service.Level.PROJECT)
 @State(
-  name = "LibraryUsageStatisticsStorage",
+  name = "LibraryUsageStatistics",
   storages = [Storage(StoragePathMacros.CACHE_FILE)],
   reportStatistic = false,
   reloadable = false,
 )
-class LibraryUsageStatisticsStorageService :
-  PersistentStateComponentWithModificationTracker<LibraryUsageStatisticsStorageService.MyState>,
-  Disposable {
-  override fun initializeComponent() {
-    if (dropOutdatedPaths()) {
-      tracker.incModificationCount()
+class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsageStatisticsStorageService.LibraryUsageStatisticsState> {
+  private val lock = ReentrantReadWriteLock()
+  private var statistics = Object2IntOpenHashMap<LibraryUsage>()
+
+  override fun getState(): LibraryUsageStatisticsState = lock.read {
+    val result = LibraryUsageStatisticsState()
+    result.statistics.putAll(statistics)
+    result
+  }
+
+  override fun loadState(state: LibraryUsageStatisticsState): Unit = lock.write {
+    statistics = Object2IntOpenHashMap(state.statistics)
+  }
+
+  fun getStatisticsAndResetState(): Map<LibraryUsage, Int> = lock.write {
+    val old = statistics
+    statistics = Object2IntOpenHashMap()
+    old
+  }
+
+  fun increaseUsages(libraries: Collection<LibraryUsage>): Unit = lock.write {
+    libraries.forEach {
+      statistics.addTo(it, 1)
     }
   }
 
-  @Volatile
-  private var state = MyState()
-  private val tracker = SimpleModificationTracker()
-
-  override fun getState(): MyState = state
-
-  override fun getStateModificationCount(): Long = tracker.modificationCount
-
-  override fun loadState(state: MyState) {
-    this.state = state
-  }
-
-  class MyState {
+  class LibraryUsageStatisticsState {
     @XMap
     @JvmField
-    val timestamps: MutableMap<String, Long> = ConcurrentHashMap()
+    val statistics = HashMap<LibraryUsage, Int>()
   }
-
-  fun isVisited(vFile: VirtualFile): Boolean {
-    val fileTime = state.timestamps[vFile.pathMd5Hash()] ?: return false
-    val currentTime = System.currentTimeMillis()
-    return !isDayPassed(lastTime = fileTime, currentTime = currentTime)
-  }
-
-  fun visit(vFile: VirtualFile) {
-    val hash = vFile.pathMd5Hash()
-    val currentTime = System.currentTimeMillis()
-    state.timestamps[hash] = currentTime
-    dropOutdatedPaths(currentTime)
-    tracker.incModificationCount()
-  }
-
-  /**
-   * @return **true** if any elements were removed
-   */
-  private fun dropOutdatedPaths(currentTime: Long = System.currentTimeMillis()): Boolean {
-    return state.timestamps.values.removeIf { isDayPassed(lastTime = it, currentTime = currentTime) }
-  }
-
-  private fun VirtualFile.pathMd5Hash(): String = DigestUtil.md5Hex(path.encodeToByteArray())
-
-  override fun dispose() = Unit
 
   companion object {
     fun getInstance(project: Project): LibraryUsageStatisticsStorageService = project.service()
   }
 }
 
-private fun isDayPassed(lastTime: Long, currentTime: Long): Boolean = TimeUnit.MILLISECONDS.toDays(currentTime - lastTime) >= 1
+data class LibraryUsage(
+  var name: String? = null,
+  var version: String? = null,
+  var fileTypeName: String? = null,
+) {
+  constructor(name: String, version: String, fileType: FileType) : this(name = name, version = version, fileTypeName = fileType.name)
+
+  override fun toString(): String = "$name-$version for $fileTypeName"
+}
