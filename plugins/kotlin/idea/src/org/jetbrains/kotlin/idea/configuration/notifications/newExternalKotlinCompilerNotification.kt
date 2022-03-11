@@ -48,15 +48,10 @@ fun checkExternalKotlinCompilerVersion(project: Project) {
         .notify(project)
 }
 
-private fun Project.findExternalCompilerVersion(): KotlinVersion? = runReadAction { findAnyExternalKotlinCompilerVersion() }?.plainVersion
+private fun Project.findExternalCompilerVersion(): KotlinVersion? = runReadAction { findAnyExternalKotlinCompilerVersion() }?.kotlinVersion
 
 private fun bundledCompilerVersionIfReleased(): KotlinVersion? {
-    val kotlinCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
-    val kotlinVersionVerbose = KotlinVersionVerbose.parse(kotlinCompilerVersion)?.takeIf {
-        it.milestone == KotlinVersionVerbose.KotlinVersionMilestone.release
-    } ?: return null
-
-    return kotlinVersionVerbose.plainVersion
+    return KotlinPluginLayout.instance.standaloneCompilerVersion.takeIf { it.isRelease }?.kotlinVersion
 }
 
 private fun KotlinVersion.disableNewNotifications(): Unit = runWriteAction {

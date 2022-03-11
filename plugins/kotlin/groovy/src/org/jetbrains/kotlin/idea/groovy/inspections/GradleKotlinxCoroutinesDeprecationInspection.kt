@@ -55,7 +55,7 @@ class GradleKotlinxCoroutinesDeprecationInspection : BaseInspection(), CleanupLo
                     }
 
                     val libVersion =
-                        DifferentStdlibGradleVersionInspection.getResolvedLibVersion(
+                        DifferentStdlibGradleVersionInspection.getRawResolvedLibVersion(
                             dependencyStatement.containingFile, outdatedInfo.lib.groupId, listOf(outdatedInfo.lib.name)
                         ) ?: DeprecatedGradleDependencyInspection.libraryVersionFromOrderEntry(
                             dependencyStatement.containingFile,

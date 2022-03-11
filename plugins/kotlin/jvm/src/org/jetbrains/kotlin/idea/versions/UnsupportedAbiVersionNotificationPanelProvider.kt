@@ -28,6 +28,7 @@ import com.intellij.ui.EditorNotificationProvider.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.application.invokeLater
@@ -93,7 +94,8 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateLibraries(project, KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort, badRuntimeLibraries)
+                        val newArtifactVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion
+                        updateLibraries(project, newArtifactVersion, badRuntimeLibraries)
                     }
                 }
             }
@@ -162,7 +164,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 assert(!badVersionedRoots.isEmpty()) { "This action should only be called when bad roots are present" }
 
                 val listPopupModel = LibraryRootsPopupModel(
-                    KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinPluginUtil.getPluginVersion()),
+                    KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinIdePlugin.version),
                     project,
                     badVersionedRoots
                 )

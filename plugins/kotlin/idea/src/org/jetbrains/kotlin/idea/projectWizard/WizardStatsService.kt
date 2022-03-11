@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.StringListEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -228,7 +228,7 @@ class WizardStatsService : CounterUsagesCollector() {
 
         val moduleTypeField = EventFields.String("module_type", allowedModuleTypes)
 
-        private val pluginInfoField = EventFields.PluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID))
+        private val pluginInfoField = EventFields.PluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
 
         // Events
         private val projectCreatedEvent = GROUP.registerVarargEvent(

@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.core.isAndroidModule
@@ -33,7 +34,7 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"jvm\")" else "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getJvmTarget(sdk: Sdk?, version: String) = getDefaultJvmTarget(sdk, version)?.description
+    override fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion) = getDefaultJvmTarget(sdk, version)?.description
 
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !module.isAndroidModule()
@@ -43,7 +44,8 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         module: Module,
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
-        version: String, collector: NotificationMessageCollector,
+        version: IdeKotlinVersion,
+        collector: NotificationMessageCollector,
         filesToOpen: MutableCollection<PsiFile>
     ) {
         super.configureModule(module, file, isTopLevelProjectFile, version, collector, filesToOpen)

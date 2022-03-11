@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
@@ -41,7 +42,7 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
     override val libraryKind: PersistentLibraryKind<*>? = null
     override fun getLibraryDescription(project: Project) = JavaRuntimeLibraryDescription(project)
 
-    override fun getLibraryVersionProvider(project: Project): (Library) -> String? {
+    override fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion? {
         return JavaRuntimeDetectionUtil::getJavaRuntimeVersion
     }
 

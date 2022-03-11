@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
@@ -19,34 +17,32 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.nameWithoutExtension
 
-sealed interface KotlinPluginLayout {
+sealed class KotlinPluginLayout {
     /**
      * Directory with the bundled Kotlin compiler distribution. Includes the compiler itself and a set of compiler plugins
      * with a compatible version.
      */
-    val kotlinc: File
+    abstract val kotlinc: File
 
     /**
      * Location of the JPS plugin, compatible with the bundled Kotlin compiler distribution.
      */
-    val jpsPluginJar: File
+    abstract val jpsPluginJar: File
 
     /**
      * Version of the stand-alone compiler (artifacts in the 'kotlinc/' directory of the Kotlin plugin).
      * Stand-alone compiler is always stable in 'master' and release branches. It is used for compilation with JPS.
      */
-    val standaloneCompilerVersion: String
-        @NlsSafe get() = kotlinc.resolve("build.txt").readText().trim()
-
-    val lastStableKnownCompilerVersion: String
-        @NlsSafe get() = "1.6.10-release-952"
+    val standaloneCompilerVersion: IdeKotlinVersion by lazy {
+        val rawVersion = kotlinc.resolve("build.txt").readText().trim()
+        IdeKotlinVersion.get(rawVersion)
+    }
 
     /**
      * Version of the compiler's analyzer bundled into the Kotlin IDE plugin ('kotlin-compiler-for-ide' and so on).
      * Used solely for IDE code insight. Might have a pre-release version higher than `standaloneCompilerVersion`.
      */
-    val ideCompilerVersion: String
-        @NlsSafe get() = KotlinCompilerVersion.VERSION
+    val ideCompilerVersion: IdeKotlinVersion = IdeKotlinVersion.get(KotlinCompilerVersion.VERSION)
 
     companion object {
         const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
@@ -54,27 +50,31 @@ sealed interface KotlinPluginLayout {
         @JvmStatic
         val instance: KotlinPluginLayout by lazy {
             val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
-            if (ideaDirectory.isDirectory() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
-                return@lazy KotlinPluginLayoutWhenRunFromSources(ideaDirectory)
+
+            val layout = if (ideaDirectory.isDirectory() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
+                KotlinPluginLayoutWhenRunFromSources(ideaDirectory)
+            } else {
+                val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
+                    ?.let { File(it) }
+                    ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
+
+                check(jarInsideLib.extension == "jar") { "$jarInsideLib should be jar file" }
+
+                KotlinPluginLayoutWhenRunInProduction(
+                    jarInsideLib
+                        .parentFile
+                        .also { check(it.name == "lib") { "$it should be lib directory" } }
+                        .parentFile
+                )
             }
 
-            val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
-                ?.let { File(it) }
-                ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
-
-            check(jarInsideLib.extension == "jar") { "$jarInsideLib should be jar file" }
-
-            KotlinPluginLayoutWhenRunInProduction(
-                jarInsideLib
-                    .parentFile
-                    .also { check(it.name == "lib") { "$it should be lib directory" } }
-                    .parentFile
-            )
+            assert(layout.standaloneCompilerVersion <= layout.ideCompilerVersion)
+            return@lazy layout
         }
     }
 }
 
-private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot: File) : KotlinPluginLayout {
+private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot: File) : KotlinPluginLayout() {
     init {
         check(kotlinPluginRoot.exists()) { "$kotlinPluginRoot doesn't exist" }
     }
@@ -85,7 +85,7 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
     private fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
 }
 
-private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Path) : KotlinPluginLayout {
+private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Path) : KotlinPluginLayout() {
     private val bundledJpsVersion by lazy {
         val distLibraryFile = ideaDirectory.resolve("libraries/kotlinc_kotlin_dist.xml")
         require(distLibraryFile.isFile()) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }
@@ -133,7 +133,7 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
 
     override val jpsPluginJar: File by lazy {
         KotlinPathsProvider.getExpectedMavenArtifactJarPath(
-            KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             bundledJpsVersion
         )
     }

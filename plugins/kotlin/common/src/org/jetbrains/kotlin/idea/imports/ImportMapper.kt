@@ -105,10 +105,9 @@ class ImportMapper {
         @TestOnly
         fun getImport2AliasMap(): Map<FqName, FqName> = javaToKotlinMap.mapValues { it.value.fqName }
 
-        fun findCorrespondingKotlinFqName(
-            fqName: FqName,
-            availableVersion: ApiVersion = ApiVersion.LATEST_STABLE
-        ): FqName? = javaToKotlinMap[fqName]?.takeIf { it.version <= availableVersion }?.fqName
+        fun findCorrespondingKotlinFqName(fqName: FqName, availableVersion: ApiVersion): FqName? {
+            return javaToKotlinMap[fqName]?.takeIf { it.version <= availableVersion }?.fqName
+        }
     }
 }
 

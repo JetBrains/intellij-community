@@ -18,12 +18,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.InternalArgument;
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.config.*;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames;
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.facet.FacetUtilsKt;
@@ -47,14 +48,13 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.*;
-import static org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.getLastStableKnownCompilerVersionShort;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testNewLibrary() {
         doTestSingleJvmModule();
 
-        String kotlinVersion = getLastStableKnownCompilerVersionShort(KotlinPluginLayout.getInstance());
+        String kotlinVersion = KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getArtifactVersion();
 
         ModuleRootManager.getInstance(getModule()).orderEntries().forEachLibrary(library -> {
             assertSameElements(
@@ -134,14 +134,14 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
 
     public void testJsLibraryVersion11() {
         Library jsRuntime = KotlinRuntimeLibraryUtilKt.findAllUsedLibraries(myProject).keySet().iterator().next();
-        String version = JsLibraryStdDetectionUtil.INSTANCE.getJsLibraryStdVersion(jsRuntime, myProject);
-        assertEquals("1.1.0", version);
+        IdeKotlinVersion version = JsLibraryStdDetectionUtil.INSTANCE.getJsLibraryStdVersion(jsRuntime, myProject);
+        assertEquals(new KotlinVersion(1, 1, 0), version.getKotlinVersion());
     }
 
     public void testJsLibraryVersion106() {
         Library jsRuntime = KotlinRuntimeLibraryUtilKt.findAllUsedLibraries(myProject).keySet().iterator().next();
-        String version = JsLibraryStdDetectionUtil.INSTANCE.getJsLibraryStdVersion(jsRuntime, myProject);
-        assertEquals("1.0.6", version);
+        IdeKotlinVersion version = JsLibraryStdDetectionUtil.INSTANCE.getJsLibraryStdVersion(jsRuntime, myProject);
+        assertEquals(new KotlinVersion(1, 0, 6), version.getKotlinVersion());
     }
 
     public void testMavenProvidedTestJsKind() {
@@ -305,7 +305,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             TargetPlatform platform = JvmPlatforms.INSTANCE.jvmPlatformByTargetVersion(jvmTarget);
             FacetUtilsKt.configureFacet(
                     facet,
-                    "1.4",
+                    IdeKotlinVersion.get("1.4.0"),
                     platform,
                     modelsProvider,
                     emptySet()

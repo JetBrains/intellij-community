@@ -581,7 +581,11 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     }
 
     private static @NlsSafe @NotNull String normalizeKotlinJpsPluginVersion(@Nullable String version) {
-        return version == null || version.isEmpty() ? KotlinPluginLayout.getInstance().getStandaloneCompilerVersion() : version;
+        if (version != null && !version.isEmpty()) {
+            return version;
+        }
+
+        return KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getRawVersion();
     }
 
     public void applyTo(

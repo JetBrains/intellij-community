@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.FileTypeIndex
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinVersionVerbose
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 
 fun hasKotlinFilesOnlyInTests(module: Module): Boolean {
@@ -19,7 +19,7 @@ fun hasKotlinFilesInSources(module: Module): Boolean {
     return FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, module.getModuleScope(false))
 }
 
-fun Project.findAnyExternalKotlinCompilerVersion(): KotlinVersionVerbose? =
+fun Project.findAnyExternalKotlinCompilerVersion(): IdeKotlinVersion? =
     ModuleManager.getInstance(this).modules.firstNotNullOfOrNull { it.findExternalKotlinCompilerVersion() }
 
 fun <T> Project.syncNonBlockingReadAction(smartMode: Boolean = false, task: () -> T): T =

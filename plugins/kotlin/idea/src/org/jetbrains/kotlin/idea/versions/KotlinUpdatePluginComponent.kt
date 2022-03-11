@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.nio.file.Path
 
@@ -30,7 +30,7 @@ internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
         val propertiesComponent = PropertiesComponent.getInstance()
         val installedKotlinVersion = propertiesComponent.getValue(INSTALLED_KOTLIN_VERSION)
 
-        if (KotlinPluginUtil.getPluginVersion() != installedKotlinVersion) {
+        if (KotlinIdePlugin.version != installedKotlinVersion) {
             // Force refresh jar handlers
             KotlinArtifacts.instance.kotlincLibDirectory.listFiles()
                 ?.filter { it.extension == "jar" }
@@ -38,7 +38,7 @@ internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
                     requestFullJarUpdate(it.toPath())
                 }
 
-            propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinPluginUtil.getPluginVersion())
+            propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinIdePlugin.version)
         }
     }
 

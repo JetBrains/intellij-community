@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.maven.configuration
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.hasKotlinJsRuntimeInScope
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 
 class KotlinJavascriptMavenConfigurator : KotlinMavenConfigurator(null, false, NAME, PRESENTABLE_TEXT) {
 
-    override fun getStdlibArtifactId(module: Module, version: String) = MAVEN_JS_STDLIB_ID
+    override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion) = MAVEN_JS_STDLIB_ID
 
     override fun isKotlinModule(module: Module): Boolean {
         return hasKotlinJsRuntimeInScope(module)

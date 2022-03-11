@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.extensions.ApplicationExtensionDescriptor
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.psi.KtFunction
@@ -27,7 +28,7 @@ abstract class IdePlatformKindTooling {
 
     abstract val libraryKind: PersistentLibraryKind<*>?
     abstract fun getLibraryDescription(project: Project): CustomLibraryDescription?
-    abstract fun getLibraryVersionProvider(project: Project): (Library) -> String?
+    abstract fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion?
 
     abstract fun getTestIcon(
         declaration: KtNamedDeclaration,

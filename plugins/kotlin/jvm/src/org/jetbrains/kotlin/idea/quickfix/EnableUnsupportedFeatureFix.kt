@@ -130,9 +130,7 @@ sealed class EnableUnsupportedFeatureFix(
 
 fun checkUpdateRuntime(project: Project, requiredVersion: ApiVersion): Boolean {
     val modulesWithOutdatedRuntime = project.allModules().filter { module ->
-        val parsedModuleRuntimeVersion = getRuntimeLibraryVersion(module)?.let { version ->
-            ApiVersion.parse(version.substringBefore("-"))
-        }
+        val parsedModuleRuntimeVersion = getRuntimeLibraryVersion(module)?.apiVersion
         parsedModuleRuntimeVersion != null && parsedModuleRuntimeVersion < requiredVersion
     }
     if (modulesWithOutdatedRuntime.isNotEmpty()) {

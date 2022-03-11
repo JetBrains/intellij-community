@@ -17,10 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.coerceAtMostVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.core.isAndroidModule
 import org.jetbrains.kotlin.idea.defaultSubstitutors
@@ -62,7 +59,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
     module: Module,
     rootModel: ModuleRootModel?,
     platform: TargetPlatform? = null, // if null, detect by module dependencies
-    compilerVersion: String? = null
+    compilerVersion: IdeKotlinVersion? = null
 ) {
     val project = module.project
 
@@ -102,6 +99,21 @@ fun KotlinFacetSettings.initializeIfNeeded(
             languageLevel?.coerceAtMostVersion(maximumValue)
         }
     }
+}
+
+private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVersion {
+    fun isUpToNextMinor(major: Int, minor: Int, patch: Int): Boolean {
+        return version.kotlinVersion.isAtLeast(major, minor, patch) && !version.kotlinVersion.isAtLeast(major, minor + 1)
+    }
+
+    // 1.4.30+ and 1.5.30+ have full support of next language version
+    val languageVersion = when {
+        isUpToNextMinor(1, 4, 30) -> LanguageVersion.KOTLIN_1_5
+        isUpToNextMinor(1, 5, 30) -> LanguageVersion.KOTLIN_1_6
+        else -> version.languageVersion
+    }
+
+    return this.coerceAtMost(languageVersion)
 }
 
 val mavenLibraryIdToPlatform: Map<String, IdePlatformKind> by lazy {
@@ -164,7 +176,7 @@ fun Module.removeKotlinFacet(
 //method used for non-mpp modules
 @JvmOverloads
 fun KotlinFacet.configureFacet(
-    compilerVersion: String?,
+    compilerVersion: IdeKotlinVersion?,
     platform: TargetPlatform?,
     modelsProvider: IdeModifiableModelsProvider,
     additionalVisibleModuleNames: Set<String> = emptySet()
@@ -182,7 +194,7 @@ fun KotlinFacet.configureFacet(
 
 @JvmOverloads
 fun KotlinFacet.configureFacet(
-    compilerVersion: String?,
+    compilerVersion: IdeKotlinVersion?,
     platform: TargetPlatform?, // if null, detect by module dependencies
     modelsProvider: IdeModifiableModelsProvider,
     hmppEnabled: Boolean,
@@ -212,7 +224,7 @@ fun KotlinFacet.configureFacet(
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 
-    module.externalCompilerVersion = compilerVersion
+    module.externalCompilerVersion = compilerVersion?.rawVersion
 }
 
 private fun Module.externalSystemRunTasks(): List<ExternalSystemRunTask> {

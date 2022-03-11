@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.framework.MAVEN_SYSTEM_ID
@@ -278,7 +279,12 @@ private fun collectMaxCompilerSettings(project: Project): LanguageVersionSetting
             }
         }
 
-        LanguageVersionSettingsImpl(maxLanguageVersion ?: LanguageVersion.LATEST_STABLE, maxApiVersion ?: ApiVersion.LATEST_STABLE)
+        val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+
+        LanguageVersionSettingsImpl(
+            maxLanguageVersion ?: bundledKotlinVersion.languageVersion,
+            maxApiVersion ?: bundledKotlinVersion.apiVersion
+        )
     }
 }
 

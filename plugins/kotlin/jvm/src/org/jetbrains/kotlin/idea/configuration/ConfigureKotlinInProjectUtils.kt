@@ -28,6 +28,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
@@ -37,8 +38,6 @@ import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.findFirstPsiJavaModule
-import org.jetbrains.kotlin.idea.util.isDev
-import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -50,7 +49,7 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
-const val LAST_SNAPSHOT_VERSION = "1.5.255-SNAPSHOT"
+val LAST_SNAPSHOT_VERSION: IdeKotlinVersion = IdeKotlinVersion.get("1.5.255-SNAPSHOT")
 
 val SNAPSHOT_REPOSITORY = RepositoryDescription(
     "sonatype.oss.snapshots",
@@ -68,10 +67,10 @@ val DEFAULT_GRADLE_PLUGIN_REPOSITORY = RepositoryDescription(
     isSnapshot = false
 )
 
-fun devRepository(version: String) = RepositoryDescription(
+fun devRepository(version: IdeKotlinVersion) = RepositoryDescription(
     "teamcity.kotlin.dev",
     "Teamcity Repository of Kotlin Development Builds",
-    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate),number:$version,branch:(default:any)/artifacts/content/maven",
+    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate),number:${version.rawVersion},branch:(default:any)/artifacts/content/maven",
     null,
     isSnapshot = false
 )
@@ -104,9 +103,9 @@ fun RepositoryDescription.toGroovyRepositorySnippet() = "maven { url '$url' }"
  */
 fun RepositoryDescription.toKotlinRepositorySnippet() = "maven(\"$url\")"
 
-fun getRepositoryForVersion(version: String): RepositoryDescription? = when {
-    isSnapshot(version) -> SNAPSHOT_REPOSITORY
-    isDev(version) -> devRepository(version)
+fun getRepositoryForVersion(version: IdeKotlinVersion): RepositoryDescription? = when {
+    version.isSnapshot -> SNAPSHOT_REPOSITORY
+    version.isDev -> devRepository(version)
     else -> null
 }
 

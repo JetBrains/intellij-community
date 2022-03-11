@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.test.util.ignored
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -49,11 +50,10 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
     fun testCurrentPluginVersionParsing() {
         if (ignored("see above")) return
 
-        val pluginVersion = KotlinPluginUtil.getPluginVersion()
-        if (pluginVersion == "@snapshot@") return
+        if (KotlinIdePlugin.isSnapshot) return
 
         val currentVersion = KotlinPluginVersion.getCurrent()
-        assert(currentVersion is NewKotlinPluginVersion) { "Can not parse current Kotlin Plugin version: $pluginVersion" }
+        assert(currentVersion is NewKotlinPluginVersion) { "Can not parse current Kotlin Plugin version: ${KotlinIdePlugin.version}" }
     }
 
 

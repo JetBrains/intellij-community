@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
@@ -23,12 +24,12 @@ class KotlinJsGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         if (forKotlinDsl) "id(\"kotlin2js\")" else "id 'kotlin2js'"
 
     override fun getMinimumSupportedVersion() = "1.1.0"
-    override fun getStdlibArtifactName(sdk: Sdk?, version: String): String = MAVEN_JS_STDLIB_ID
+    override fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion): String = MAVEN_JS_STDLIB_ID
 
     @Suppress("DEPRECATION_ERROR")
     override fun getTargetPlatform() = JsPlatforms.CompatJsPlatform
 
-    override fun addElementsToFile(file: PsiFile, isTopLevelProjectFile: Boolean, version: String): Boolean {
+    override fun addElementsToFile(file: PsiFile, isTopLevelProjectFile: Boolean, version: IdeKotlinVersion): Boolean {
         val gradleVersion = GradleVersionProviderImpl.fetchGradleVersion(file)
 
         if (KotlinGradleFacadeImpl.getManipulator(file).useNewSyntax(kotlinPluginName, gradleVersion, GradleVersionProviderImpl)) {

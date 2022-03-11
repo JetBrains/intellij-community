@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.lastStableKnownCompilerVersionShort
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -92,9 +91,8 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.languageVersion)
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
 
-        val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        val expectedVersionPrefix = KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
-        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
+        val actualVersion = getRuntimeLibraryVersion(myFixture.module)?.kotlinVersion
+        assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion, actualVersion)
     }
 
     fun testIncreaseLangLevelFacet_10() {
@@ -111,8 +109,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
 
         val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        val expectedVersionPrefix = KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort
-        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
+        assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion, actualVersion?.artifactVersion)
     }
 
     fun testAddKotlinReflect() {
@@ -139,7 +136,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
         assertContainsElements(
             sources.map { it.name },
-            "kotlin-reflect-${KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort}-sources.jar"
+            "kotlin-reflect-${KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion}-sources.jar"
         )
     }
 
@@ -178,7 +175,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { resetProjectSettings(LanguageVersion.LATEST_STABLE) },
+            ThrowableRunnable { resetProjectSettings(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion) },
             ThrowableRunnable {
                 FacetManager.getInstance(module).getFacetByType(KotlinFacetType.TYPE_ID)?.let {
                     FacetUtil.deleteFacet(it)

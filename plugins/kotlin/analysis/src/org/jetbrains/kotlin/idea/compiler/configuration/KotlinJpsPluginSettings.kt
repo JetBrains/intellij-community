@@ -18,7 +18,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
     companion object {
         // Use bundled by default because this will work even without internet connection
-        val DEFAULT_VERSION = KotlinPluginLayout.instance.standaloneCompilerVersion
+        val DEFAULT_VERSION = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
 
         fun getInstance(project: Project): KotlinJpsPluginSettings? {
             val jpsPluginSettings = project.getServiceSafe<KotlinJpsPluginSettings>()

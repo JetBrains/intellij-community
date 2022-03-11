@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
@@ -47,7 +48,6 @@ import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 
 abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
@@ -2058,7 +2058,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             with(facetSettings("myModule3")) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-                Assert.assertEquals(LanguageVersion.LATEST_STABLE, languageLevel)
+                Assert.assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion, languageLevel)
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_1, apiLevel)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals(

@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.facet.*
@@ -268,7 +269,7 @@ fun configureFacetByGradleModule(
     val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
         .firstOrNull { it.data.sourceSetName == sourceSetName }
 
-    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
     // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
         ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
         ?: return null

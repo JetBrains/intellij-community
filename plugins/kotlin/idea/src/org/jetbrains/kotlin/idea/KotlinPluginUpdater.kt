@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.update.verify
 import java.io.IOException
 import java.io.PrintWriter
@@ -147,7 +148,7 @@ class KotlinPluginUpdater : Disposable {
 
     private fun updateCheck(callback: (PluginUpdateStatus) -> Boolean) {
         var updateStatus: PluginUpdateStatus
-        if (KotlinPluginUtil.isSnapshotVersion() || KotlinPluginUtil.isPatched()) {
+        if (KotlinIdePlugin.isSnapshot || KotlinIdePlugin.hasPatchedVersion) {
             updateStatus = PluginUpdateStatus.LatestVersionInstalled
         } else {
             try {
@@ -177,8 +178,8 @@ class KotlinPluginUpdater : Disposable {
     }
 
     private fun initPluginDescriptor(newVersion: String): IdeaPluginDescriptor {
-        val originalPlugin = PluginManagerCore.getPlugin(KotlinPluginUtil.KOTLIN_PLUGIN_ID)!!
-        return PluginNode(KotlinPluginUtil.KOTLIN_PLUGIN_ID).apply {
+        val originalPlugin = KotlinIdePlugin.getPluginDescriptor()
+        return PluginNode(KotlinIdePlugin.id).apply {
             version = newVersion
             name = originalPlugin.name
             description = originalPlugin.description
@@ -187,10 +188,10 @@ class KotlinPluginUpdater : Disposable {
 
     private fun checkUpdatesInMainRepository(): PluginUpdateStatus {
         val buildNumber = ApplicationInfo.getInstance().apiVersion
-        val currentVersion = KotlinPluginUtil.getPluginVersion()
+        val currentVersion = KotlinIdePlugin.version
         val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
         val uid = PermanentInstallationID.get()
-        val pluginId = KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString
+        val pluginId = KotlinIdePlugin.id.idString
         val url =
             "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
 
@@ -228,14 +229,14 @@ class KotlinPluginUpdater : Disposable {
         }
 
         val kotlinPlugin = plugins.find { pluginDescriptor ->
-            pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID && PluginManagerCore.isCompatible(pluginDescriptor)
+            pluginDescriptor.pluginId == KotlinIdePlugin.id && PluginManagerCore.isCompatible(pluginDescriptor)
         } ?: return PluginUpdateStatus.LatestVersionInstalled
 
         return updateIfNotLatest(kotlinPlugin, host)
     }
 
     private fun updateIfNotLatest(kotlinPlugin: IdeaPluginDescriptor, host: String?): PluginUpdateStatus {
-        if (VersionComparatorUtil.compare(kotlinPlugin.version, KotlinPluginUtil.getPluginVersion()) <= 0) {
+        if (VersionComparatorUtil.compare(kotlinPlugin.version, KotlinIdePlugin.version) <= 0) {
             return PluginUpdateStatus.LatestVersionInstalled
         }
 

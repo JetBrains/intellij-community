@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.createArguments
 import org.jetbrains.kotlin.idea.caches.project.isKpmModule
 import org.jetbrains.kotlin.idea.caches.project.refinesFragmentIds
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findKotlinPluginVersion
@@ -56,7 +57,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
 
     companion object {
         private fun KotlinFacet.configureFacet(
-            compilerVersion: String?,
+            compilerVersion: IdeKotlinVersion?,
             platform: TargetPlatform?, // if null, detect by module dependencies
             modelsProvider: IdeModifiableModelsProvider,
         ) {
@@ -78,7 +79,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
                 }
             }
 
-            module.externalCompilerVersion = compilerVersion
+            module.externalCompilerVersion = compilerVersion?.rawVersion
         }
 
         private fun configureFacetByFragmentData(

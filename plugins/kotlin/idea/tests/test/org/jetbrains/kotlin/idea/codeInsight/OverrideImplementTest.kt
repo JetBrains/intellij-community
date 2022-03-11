@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import com.intellij.codeInsight.generation.ClassMember
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -286,7 +288,7 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
     }
 
    open fun testCopyExperimental() {
-        withCustomLanguageAndApiVersion(project, module, "1.3", "1.3") {
+        withCustomLanguageAndApiVersion(project, module, LanguageVersion.KOTLIN_1_3, ApiVersion.KOTLIN_1_3) {
             doOverrideFileTest("targetFun")
         }
     }

@@ -12,7 +12,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -48,13 +48,13 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
 
     private fun loadKotlinInspections(): List<InspectionToolWrapper<InspectionProfileEntry, InspectionEP>> {
         return InspectionToolRegistrar.getInstance().createTools().filter {
-            it.extension.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
+            it.extension.pluginDescriptor.pluginId == KotlinIdePlugin.id
         } as List<InspectionToolWrapper<InspectionProfileEntry, InspectionEP>>
     }
 
     private fun loadKotlinInspectionExtensions() =
         LocalInspectionEP.LOCAL_INSPECTION.extensions.filter {
-            it.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
+            it.pluginDescriptor.pluginId == KotlinIdePlugin.id
         }
 
     private fun desc(tool: InspectionToolWrapper<InspectionProfileEntry, InspectionEP>): String {

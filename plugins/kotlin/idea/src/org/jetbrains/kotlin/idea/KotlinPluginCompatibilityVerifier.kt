@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.text.nullize
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 object KotlinPluginCompatibilityVerifier {
     @JvmStatic
@@ -82,7 +83,7 @@ interface KotlinPluginVersion {
             return OldKotlinPluginVersion.parse(version) ?: NewKotlinPluginVersion.parse(version)
         }
 
-        fun getCurrent(): KotlinPluginVersion? = parse(KotlinPluginUtil.getPluginVersion())
+        fun getCurrent(): KotlinPluginVersion? = parse(KotlinIdePlugin.version)
     }
 }
 

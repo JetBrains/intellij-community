@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.checkers.utils.DebugInfoUtil
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -77,16 +77,11 @@ class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBind
 
     class Factory : TextEditorHighlightingPassFactory {
         override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-            return if (file is KtFile &&
-                (isUnitTestMode() ||
-                        isApplicationInternalMode() &&
-                        (KotlinPluginUtil.isSnapshotVersion() || KotlinPluginUtil.isDevVersion())) &&
-                ProjectRootsUtil.isInProjectOrLibSource(file)
-            ) {
-                DebugInfoHighlightingPass(file, editor.document)
-            } else {
-                null
-            }
+            val useDebugInfoPass = file is KtFile
+                    && (isUnitTestMode() || isApplicationInternalMode() && (KotlinIdePlugin.isSnapshot || KotlinIdePlugin.isDev))
+                    && ProjectRootsUtil.isInProjectOrLibSource(file)
+
+            return if (useDebugInfoPass) DebugInfoHighlightingPass(file as KtFile, editor.document) else null
         }
     }
 

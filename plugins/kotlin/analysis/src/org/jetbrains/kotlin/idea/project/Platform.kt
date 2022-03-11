@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
 import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.name.Name
@@ -117,7 +118,7 @@ fun Project.getLanguageVersionSettings(
     val languageVersion =
         kotlinFacetSettings?.languageLevel ?: LanguageVersion.fromVersionString(arguments.languageVersion)
         ?: contextModule?.getAndCacheLanguageLevelByDependencies()
-        ?: LanguageVersion.LATEST_STABLE
+        ?: KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
     val apiVersion = ApiVersion.createByLanguageVersion(LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion)
     val compilerSettings = KotlinCompilerSettings.getInstance(this).settings
 

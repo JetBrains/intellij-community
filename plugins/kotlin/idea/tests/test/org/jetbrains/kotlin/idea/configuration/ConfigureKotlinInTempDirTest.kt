@@ -5,15 +5,13 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.util.io.FileUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.VersionView
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.junit.Assert
@@ -58,8 +56,9 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
     fun testNoKotlincExistsNoSettingsLatestRuntime() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
-        Assert.assertEquals(LanguageVersion.LATEST_STABLE, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(LanguageVersion.LATEST_STABLE, myProject.getLanguageVersionSettings(null).languageVersion)
+        val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
+        Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
         checkKotlincPresence(false)
     }
@@ -67,8 +66,9 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
-        Assert.assertEquals(LanguageVersion.LATEST_STABLE, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(LanguageVersion.LATEST_STABLE, myProject.getLanguageVersionSettings(null).languageVersion)
+        val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
+        Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
             autoAdvanceLanguageVersion = false
             autoAdvanceApiVersion = false
