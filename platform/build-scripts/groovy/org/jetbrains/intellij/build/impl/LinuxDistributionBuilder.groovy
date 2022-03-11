@@ -193,40 +193,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
-      if (buildContext.options.ant) {
-        antTar(tarPath, tarRoot, paths, executableFilesPatterns, buildContext)
-      } else {
-        paths.each {
-          BuildTasksImpl.updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
-        }
-        ArchiveUtils.tar(tarPath, tarRoot, paths, buildContext.options.buildDateInSeconds)
+      paths.each {
+        BuildTasksImpl.updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
       }
+      ArchiveUtils.tar(tarPath, tarRoot, paths, buildContext.options.buildDateInSeconds)
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)
       buildContext.notifyArtifactBuilt(tarPath)
       return tarPath
-    }
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void antTar(Path tarPath, String tarRoot, List<String> paths, List<String> executableFilesPatterns, BuildContext buildContext) {
-    buildContext.ant.tar(tarfile: tarPath.toString(), longfile: "gnu", compression: "gzip") {
-      paths.each { path ->
-        tarfileset(dir: path, prefix: tarRoot) {
-          executableFilesPatterns.each { pattern ->
-            exclude(name: pattern)
-          }
-          type(type: "file")
-        }
-      }
-
-      paths.each { path ->
-        tarfileset(dir: path, prefix: tarRoot, filemode: "755") {
-          executableFilesPatterns.each { pattern ->
-            include(name: pattern)
-          }
-          type(type: "file")
-        }
-      }
     }
   }
 
