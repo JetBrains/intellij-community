@@ -110,28 +110,20 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
           }
         }
       }
-      synchronized (this) {
-        myParameters = newParameters.toArray(EMPTY_PARAMS_ARRAY);
-      }
+      myParameters = newParameters.toArray(EMPTY_PARAMS_ARRAY);
     }
 
     RefElement parentRef = findParentRef(sourcePsi, method, myManager);
     if (parentRef == null) return;
-    this.setOwner((WritableRefEntity)parentRef);
+    setOwner((WritableRefEntity)parentRef);
     if (!myManager.isDeclarationsFound()) return;
 
     PsiMethod javaPsi = method.getJavaPsi();
     RefClass ownerClass = ObjectUtils.tryCast(parentRef, RefClass.class);
     if (!isConstructor()) {
-      if (ownerClass != null && ownerClass.isInterface()) {
-        setAbstract(false);
-      }
-      else {
-        setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
-      }
+      setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
-      boolean isNative = javaPsi.hasModifierProperty(PsiModifier.NATIVE);
-      setLibraryOverride(isNative);
+      setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
       if (javaPsi.hasModifierProperty(PsiModifier.PUBLIC)) {
         setAppMain(isAppMain(javaPsi, this));
 
