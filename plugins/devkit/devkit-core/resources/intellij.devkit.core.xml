@@ -1,22 +1,9 @@
 <idea-plugin package="org.jetbrains.idea.devkit">
-  <!--suppress PluginXmlValidity -->
-  <name>Plugin DevKit</name>
-  <id>DevKit</id>
-
-  <description><![CDATA[
-    Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
-    <br>
-    <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
-  ]]></description>
-
-  <category>Plugin Development</category>
-  <vendor>JetBrains</vendor>
-
-  <depends>com.intellij.properties</depends>
-  <depends>com.intellij.modules.java</depends>
-
+  <dependencies>
+    <plugin id="com.intellij.properties"/>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
   <resource-bundle>messages.DevKitBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
@@ -36,7 +23,7 @@
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <xmlStructureViewBuilderProvider
-        implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
+      implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
@@ -67,8 +54,8 @@
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
     <searchScopesProvider
-        order="last"
-        implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
+      order="last"
+      implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
 
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
@@ -350,20 +337,20 @@
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdater"/>
     <postStartupActivity
-        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
+      implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
-        implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+      implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
     <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.KotlinTestGeneratedSourcesFilter"/>
 
     <psi.referenceContributor
-        language="XML"
-        implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeReferenceContributor"/>
+      language="XML"
+      implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeReferenceContributor"/>
     <psi.fileReferenceHelper
-        order="first"
-        implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
+      order="first"
+      implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
     <daemon.externalAnnotatorsFilter
       implementation="org.jetbrains.idea.devkit.inspections.PluginXmlExternalAnnotatorsFilter"/>
 
@@ -394,8 +381,8 @@
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
   </extensions>
 
-  <extensionPoints >
-    <extensionPoint name="lang.goodCodeRedVisitor"
+  <extensionPoints>
+    <extensionPoint qualifiedName="DevKit.lang.goodCodeRedVisitor"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
@@ -446,5 +433,4 @@
       <add-to-group group-id="Internal.Dump"/>
     </action>
   </actions>
-
 </idea-plugin>

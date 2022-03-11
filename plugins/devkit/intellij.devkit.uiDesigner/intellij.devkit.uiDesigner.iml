@@ -11,6 +11,6 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" />
-    <orderEntry type="module" module-name="intellij.devkit" />
+    <orderEntry type="module" module-name="intellij.devkit.core" />
   </component>
 </module>

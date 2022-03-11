@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.vcs.git" />
-    <orderEntry type="module" module-name="intellij.devkit" />
+    <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
   </component>

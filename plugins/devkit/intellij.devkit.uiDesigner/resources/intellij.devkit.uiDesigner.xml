@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.idea.devkit.uiDesigner">
   <dependencies>
-    <plugin id="DevKit"/>
+    <module name="intellij.devkit.core"/>
     <plugin id="com.intellij.uiDesigner"/>
   </dependencies>
   <!-- todo IDEA-282478

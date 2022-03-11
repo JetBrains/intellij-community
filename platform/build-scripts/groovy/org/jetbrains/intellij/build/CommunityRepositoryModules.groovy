@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -152,6 +152,15 @@ final class CommunityRepositoryModules {
       withProjectLibrary("TestNG")
     },
     plugin("intellij.devkit") {
+      withModule("intellij.devkit.core")
+      withModule("intellij.devkit.git")
+      withModule("intellij.devkit.themes")
+      withModule("intellij.devkit.gradle")
+      withModule("intellij.devkit.i18n")
+      withModule("intellij.devkit.images")
+      withModule("intellij.devkit.intelliLang")
+      withModule("intellij.devkit.uiDesigner")
+      withModule("intellij.groovy.devkit")
       withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") {

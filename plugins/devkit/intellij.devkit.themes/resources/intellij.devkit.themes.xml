@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.idea.devkit.themes">
   <dependencies>
-    <plugin id="DevKit"/>
+    <module name="intellij.devkit.core"/>
     <plugin id="com.intellij.modules.json"/>
   </dependencies>
   <resource-bundle>messages.DevKitThemesBundle</resource-bundle>

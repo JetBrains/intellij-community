@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.idea.devkit.images">
   <dependencies>
-    <plugin id="DevKit"/>
+    <module name="intellij.devkit.core"/>
     <plugin id="com.intellij.platform.images"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
