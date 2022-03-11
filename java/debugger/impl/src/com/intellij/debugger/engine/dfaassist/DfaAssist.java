@@ -34,8 +34,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -238,11 +236,13 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     catch (IllegalArgumentException iea) {
       throw new EvaluateException(iea.getMessage(), iea);
     }
-    PsiElement anchor = getAnchor(element);
+    DfaAssistProvider provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage());
+    if (provider == null) return null;
+    PsiElement anchor = provider.getAnchor(element);
     if (anchor == null) return null;
-    PsiElement body = getCodeBlock(anchor);
+    PsiElement body = provider.getCodeBlock(anchor);
     if (body == null) return null;
-    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, anchor, proxy);
+    DebuggerDfaRunner runner = new DebuggerDfaRunner(provider, body, anchor, proxy);
     return runner.isValid() ? runner : null;
   }
 
@@ -269,73 +269,6 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
       return method.name().equals(expectedMethod);
     }
     return false;
-  }
-
-  private static PsiElement getAnchor(@NotNull PsiElement element) {
-    while (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
-      element = element.getNextSibling();
-    }
-    while (!(element instanceof PsiStatement)) {
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiStatement) && (parent == null || element.getTextRangeInParent().getStartOffset() > 0)) {
-        if (parent instanceof PsiCodeBlock && ((PsiCodeBlock)parent).getRBrace() == element) {
-          PsiElement grandParent = parent.getParent();
-          if (grandParent instanceof PsiBlockStatement) {
-            return PsiTreeUtil.getNextSiblingOfType(grandParent, PsiStatement.class);
-          }
-        }
-        if (parent instanceof PsiPolyadicExpression) {
-          // If we are inside the expression we can position only at locations where the stack is empty
-          // currently only && and || chains inside if/return/yield are allowed
-          IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-            PsiElement grandParent = parent.getParent();
-            if (grandParent instanceof PsiIfStatement || grandParent instanceof PsiYieldStatement ||
-                grandParent instanceof PsiReturnStatement) {
-              if (element instanceof PsiExpression) {
-                return element;
-              }
-              return PsiTreeUtil.getNextSiblingOfType(element, PsiExpression.class);
-            }
-          }
-        }
-        return null;
-      }
-      element = parent;
-    }
-    return element;
-  }
-
-  private static @Nullable PsiElement getCodeBlock(@NotNull PsiElement anchor) {
-    if (anchor instanceof PsiWhileStatement || anchor instanceof PsiDoWhileStatement) {
-      return anchor;
-    }
-    if (anchor instanceof PsiSwitchLabeledRuleStatement) {
-      return null; // unsupported yet
-    }
-    PsiElement e = anchor;
-    while (e != null && !(e instanceof PsiClass) && !(e instanceof PsiFileSystemItem)) {
-      e = e.getParent();
-      if (e instanceof PsiCodeBlock) {
-        PsiElement parent = e.getParent();
-        if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression || parent instanceof PsiClassInitializer ||
-            // We cannot properly restore context if we started from finally, so let's analyze just finally block
-            parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
-            parent instanceof PsiBlockStatement &&
-            (parent.getParent() instanceof PsiLoopStatement ||
-             parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
-             ((PsiSwitchLabeledRuleStatement)parent.getParent()).getEnclosingSwitchBlock() instanceof PsiSwitchExpression)) {
-          if (parent.getParent() instanceof PsiDoWhileStatement) {
-            return parent.getParent();
-          }
-          return e;
-        }
-      }
-      if (e instanceof PsiDoWhileStatement) {
-        return e;
-      }
-    }
-    return null;
   }
 
   private final class TurnOffDfaProcessorAction extends AnAction {
