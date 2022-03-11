@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections.internal;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.groovy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAccessibilityChecker;
 import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitorBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;

@@ -42,7 +42,6 @@
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="module" module-name="intellij.groovy.psi" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
