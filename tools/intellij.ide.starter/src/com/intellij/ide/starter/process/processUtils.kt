@@ -100,8 +100,9 @@ fun dumpListOfProcessesOnLinux(): List<LinuxProcessMetaInfo> {
 }
 
 private fun killProcessOnUnix(pid: Int) {
-  check(SystemInfo.isLinux)
+  check(SystemInfo.isUnix)
   logOutput("Killing process $pid")
+
   exec(
     "kill-process-$pid",
     di.direct.instance<GlobalPaths>().testsDirectory,
