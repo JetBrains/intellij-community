@@ -76,8 +76,8 @@ public abstract class EdtInvocationManager {
         System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
         // todo temporary hack to diagnose hanging builds
         try {
-          System.err.println(ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null)
-                             + "\n" + ThreadDumper.dumpThreadsToString());
+          Object application = ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null);
+          System.err.println("Application="+ application + "\n" + ThreadDumper.dumpThreadsToString());
         }
         catch (Exception e) {
           throw new RuntimeException(e);

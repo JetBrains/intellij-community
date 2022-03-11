@@ -1462,9 +1462,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
            + (isHeadlessEnvironment() ? " (headless)" : "")
            + (isCommandLine() ? " (command line)" : "")
            + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" + (writeActionPending ? " pending" : "") + (writeActionInProgress ? " inProgress" : "") + (writeAccessAllowed ? " allowed" : "") + ")" : "")
-           + (isReadAccessAllowed() ? "(RA allowed)" : "")
-           + (isInImpatientReader() ? "(impatient reader)" : "")
-           + (isExitInProgress() ? "(exit in progress)" : "")
+           + (isReadAccessAllowed() ? " (RA allowed)" : "")
+           + (isInImpatientReader() ? " (impatient reader)" : "")
+           + (isExitInProgress() ? " (exit in progress)" : "")
       ;
   }
 
