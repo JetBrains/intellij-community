@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -171,7 +170,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             }
           }
         } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
-          if (method.isAbstract()) {
+          if (method.isAbstract() && !refClass.isInterface()) {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis15"));

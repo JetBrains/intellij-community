@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
@@ -86,8 +86,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
 
   @NotNull
   private static @InspectionMessage String getMessage(@NotNull final RefMethod refMethod) {
-    final RefClass ownerClass = refMethod.getOwnerClass();
-    if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
+    if (refMethod.isAbstract()) {
       return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor", "<code>#ref</code>");
     }
     if (!refMethod.getDerivedMethods().isEmpty()) {
