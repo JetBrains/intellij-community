@@ -16,7 +16,7 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test @Rule quickFixes`() {
+  fun `test @Rule quickFix make field public`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       package test
 
@@ -36,7 +36,7 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
         @Rule
         var x = 0
       }
-    """.trimIndent(), "Annotate as @JvmField")
+    """.trimIndent(), "Make field 'x' public")
   }
 
   fun `test @ClassRule highlighting`() {
@@ -57,7 +57,7 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test @ClassRule quickFixes`() {
+  fun `test @ClassRule quickfix make field public`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       package test
 
@@ -81,6 +81,6 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
         @ClassRule
         var x = SomeTestRule()
       }
-    """.trimIndent(), "Remove 'private' modifier", "Annotate as @JvmField")
+    """.trimIndent(), "Make field 'x' public")
   }
 }

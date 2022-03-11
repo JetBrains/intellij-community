@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -164,6 +165,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
+
+        if (modifier == JvmModifier.PUBLIC && shouldPresent && kModifierOwner is KtProperty) {
+            return listOf(MakeFieldPublicFix(kModifierOwner))
+        }
+
         //TODO: make similar to `createAddMethodActions`
         val (kToken, shouldPresentMapped) = when {
             modifier == JvmModifier.FINAL -> KtTokens.OPEN_KEYWORD to !shouldPresent
