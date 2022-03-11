@@ -68,6 +68,11 @@ public abstract class DelegatingLogger<T extends Logger> extends Logger {
   }
 
   @Override
+  public void error(@NotNull Throwable t) {
+    myDelegate.error(t);
+  }
+
+  @Override
   public void setLevel(@NotNull Level level) {
     myDelegate.setLevel(level);
   }
