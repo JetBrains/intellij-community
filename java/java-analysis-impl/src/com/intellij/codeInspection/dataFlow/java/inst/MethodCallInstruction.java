@@ -124,9 +124,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myPrecalculatedReturnValue == null) return this;
-    var instruction = new MethodCallInstruction(this, myPrecalculatedReturnValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new MethodCallInstruction(this, myPrecalculatedReturnValue.bindToFactory(factory));
   }
 
   /**
