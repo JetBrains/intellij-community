@@ -13,6 +13,9 @@
     <extensionPoint name="outerLanguageRangePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TemplateDataElementType$OuterLanguageRangePatcher"/>
     </extensionPoint>
+    <extensionPoint name="dataflowIRProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor" dynamic="true"/>
     <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor" dynamic="true"/>
