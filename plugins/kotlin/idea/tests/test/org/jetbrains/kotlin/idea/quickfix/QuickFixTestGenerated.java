@@ -14962,6 +14962,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassVariable.kt");
             }
 
+            @TestMetadata("genericType.kt")
+            public void testGenericType() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/genericType.kt");
+            }
+
+            @TestMetadata("genericType2.kt")
+            public void testGenericType2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/genericType2.kt");
+            }
+
             @TestMetadata("multiFakeOverride.kt")
             public void testMultiFakeOverride() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/multiFakeOverride.kt");
