@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.formConversion
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.uiDesigner
 
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -12,7 +12,6 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.uiDesigner.editor.UIFormEditor
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 
@@ -32,7 +31,7 @@ class ConvertFormNotificationProvider : EditorNotifications.Provider<EditorNotif
     val psiClass = JavaPsiFacade.getInstance(project).findClass(classToBind, ProjectScope.getProjectScope(project)) ?: return null
 
     return EditorNotificationPanel(LightColors.RED).apply {
-      setText(DevKitBundle.message("convert.form.editor.notification.label"))
+      setText(DevKitUIDesignerBundle.message("convert.form.editor.notification.label"))
       /* todo IDEA-282478
       createActionLabel(DevKitBundle.message("convert.form.editor.notification.link.convert")) {
         convertFormToUiDsl(psiClass, formPsiFile)
