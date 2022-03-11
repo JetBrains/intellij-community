@@ -192,7 +192,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(myInlays));
   }
 
-  private void displayInlays(Map<PsiExpression, DfaHint> hints) {
+  private void displayInlays(Map<PsiElement, DfaHint> hints) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     cleanUp();
     if (hints.isEmpty()) return;
@@ -219,11 +219,10 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     }
   }
 
-  private static @NotNull Map<PsiExpression, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
+  private static @NotNull Map<PsiElement, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
     DebuggerDfaListener interceptor = runner.interpret();
     if (interceptor == null) return Collections.emptyMap();
-    interceptor.cleanup();
-    return interceptor.getHints();
+    return interceptor.computeHints();
   }
 
   static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy, @Nullable PsiElement element)

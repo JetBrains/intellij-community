@@ -168,4 +168,10 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
     }
     return null;
   }
+
+  @Override
+  @NotNull
+  public DebuggerDfaListener createListener() {
+    return new JavaDebuggerDfaListener();
+  }
 }
