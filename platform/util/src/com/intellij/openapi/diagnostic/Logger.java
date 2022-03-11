@@ -205,7 +205,7 @@ public abstract class Logger {
   }
 
   public void error(@NotNull Throwable t) {
-    error(t.getMessage(), t, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    error(null, t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public abstract void error(String message, @Nullable Throwable t, String @NotNull ... details);
