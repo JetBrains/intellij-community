@@ -5,11 +5,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.*
-import java.util.jar.JarFile
 import kotlin.io.path.*
 import kotlin.streams.toList
 
@@ -33,30 +33,38 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     ((firstIteration - nextIteration) + (nextIteration - firstIteration))
       .filterNot { it.name == ".DS_Store" }
 
-  private fun assertTheSameContent(relativePath: Path, dir1: Path, dir2: Path): AssertionError? {
-    val path1 = dir1.resolve(relativePath)
-    val path2 = dir2.resolve(relativePath)
-    if (!Files.exists(path1) || !Files.exists(path2) ||
-        !path1.isRegularFile() || path1.checksum() == path2.checksum()) {
+  fun assertTheSame(relativeFilePath: Path, dir1: Path, dir2: Path): AssertionError? {
+    val path1 = dir1.resolve(relativeFilePath)
+    val path2 = dir2.resolve(relativeFilePath)
+    if (!Files.exists(path1) ||
+        !Files.exists(path2) ||
+        !path1.isRegularFile() ||
+        path1.checksum() == path2.checksum() &&
+        path1.permissions() == path2.permissions()) {
       return null
     }
-    val error = AssertionError("Failed for $relativePath")
-    println(error.message)
-    return when (relativePath.extension) {
+    println("Failed for $relativeFilePath")
+    val contentError = when (relativeFilePath.extension) {
       "tar.gz", "gz", "tar" -> assertTheSameContent(
         path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
         path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
-      ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
-      "zip", "ijx" -> assertTheSameContent(
+      ) ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+      "zip", "jar", "ijx" -> assertTheSameContent(
         path1.unpackingDir().also { Decompressor.Zip(path1).extract(it) },
         path2.unpackingDir().also { Decompressor.Zip(path2).extract(it) }
-      ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
-      "jar" -> assertTheSameContent(path1.unpackJar(), path2.unpackJar()) ?: AssertionError("No difference in $relativePath content")
-      else -> {
-        saveDiff(relativePath, path1, path2)
-        error
+      ) ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+      else -> if (path1.checksum() != path2.checksum()) {
+        saveDiff(relativeFilePath, path1, path2)
+        AssertionError("Checksum mismatch for $relativeFilePath")
       }
+      else null
     }
+    if (path1.permissions() != path2.permissions()) {
+      val permError = AssertionError("Permissions mismatch for $relativeFilePath: ${path1.permissions()} vs ${path2.permissions()}")
+      contentError?.addSuppressed(permError) ?: return permError
+    }
+    requireNotNull(contentError)
+    return contentError
   }
 
   private fun saveDiff(relativePath: Path, file1: Path, file2: Path) {
@@ -87,6 +95,10 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     Base64.getEncoder().encodeToString(digest.digest())
   }
 
+  private fun Path.permissions(): Set<PosixFilePermission> =
+    Files.getFileAttributeView(this, PosixFileAttributeView::class.java)
+      ?.readAttributes()?.permissions() ?: emptySet()
+
   private fun Path.writeContent(target: Path) {
     when (extension) {
       "jar", "zip", "tar.gz", "gz", "tar", "ijx" -> error("$this is expected to be already unpacked")
@@ -104,35 +116,6 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     return unpackingDir
   }
 
-  private fun Path.unpackJar(): Path {
-    assert(extension == "jar")
-    val unpackingDir = unpackingDir()
-    JarFile(toFile()).use { jar ->
-      val meta = jar.entries().toList().associate { entry ->
-        if (!entry.isDirectory) {
-          jar.getInputStream(entry).use {
-            val targetFile = unpackingDir.resolve(entry.name)
-            targetFile.parent.createDirectories()
-            // FIXME workaround for case-insensitive file systems
-            if (!targetFile.exists()) targetFile.createFile()
-            targetFile.writeBytes(it.readAllBytes(), StandardOpenOption.TRUNCATE_EXISTING)
-          }
-        }
-        entry.name to entry.time
-      }
-      if (meta.isNotEmpty()) {
-        val targetFile = unpackingDir.resolve("__meta__")
-        targetFile.parent.createDirectories()
-        assert(!Files.exists(targetFile))
-        targetFile.createFile()
-        targetFile.writeText(meta.entries.joinToString(separator = System.lineSeparator()) { (path, date) ->
-          "$path=$date"
-        })
-      }
-    }
-    return unpackingDir
-  }
-
   private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2")
 
   private fun process(vararg command: String): String {
@@ -147,7 +130,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     val listing2 = Files.walk(dir2).use { it.toList() }
     val relativeListing1 = listing1.map(dir1::relativize)
     val listingDiff = listingDiff(relativeListing1.toSet(), listing2.map(dir2::relativize).toSet())
-    val contentComparisonFailures = relativeListing1.mapNotNull { assertTheSameContent(it, dir1, dir2) }
+    val contentComparisonFailures = relativeListing1.mapNotNull { assertTheSame(it, dir1, dir2) }
     return when {
       listingDiff.isNotEmpty() -> AssertionError(listingDiff.joinToString(prefix = "Listing diff for $dir1 and $dir2:\n", separator = "\n"))
       contentComparisonFailures.isNotEmpty() -> AssertionError("$dir1 doesn't match $dir2")
