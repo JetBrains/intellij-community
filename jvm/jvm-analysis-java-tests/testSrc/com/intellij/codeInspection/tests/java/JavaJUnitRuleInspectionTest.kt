@@ -3,7 +3,7 @@ package com.intellij.codeInspection.tests.java
 import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 
 class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
-  fun `test @Rule highlighting`() {
+  fun `test field @Rule highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       package test;
 
@@ -20,7 +20,24 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test @Rule make public`() {
+  fun `test method @Rule highlighting`() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      package test;
+
+      import org.junit.Rule;
+      import org.junit.rules.TestRule;
+      import test.SomeTestRule;
+
+      class RuleTest {
+        @Rule
+        private SomeTestRule <error descr="Methods annotated with '@org.junit.Rule' should be 'public'">x</error>() { 
+          return new SomeTestRule();  
+        };
+      }
+    """.trimIndent())
+  }
+
+  fun `test field @Rule make public`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
       package test;
 
@@ -50,7 +67,7 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent(), "Make 'x' public")
   }
 
-  fun `test @ClassRule highlighting`() {
+  fun `test field @ClassRule highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       package test;
 
@@ -74,7 +91,7 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test @ClassRule make public`() {
+  fun `test field @ClassRule make public`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
       package test;
 
@@ -100,7 +117,7 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent(), "Make 'x' public")
   }
 
-  fun `test @ClassRule make static`() {
+  fun `test field @ClassRule make static`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
       package test;
 
@@ -127,7 +144,7 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
   }
 
 
-  fun `test @ClassRule make public and static`() {
+  fun `test field @ClassRule make public and static`() {
     myFixture.testQuickFix(ULanguage.JAVA, """
       package test;
 

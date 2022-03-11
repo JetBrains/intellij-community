@@ -3,7 +3,7 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 
 class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
-  fun `test @Rule highlighting`() {
+  fun `test field @Rule highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       package test
 
@@ -16,7 +16,20 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test @Rule quickFix make field public`() {
+  fun `test method @Rule highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      package test
+
+      import org.junit.Rule
+
+      class PrivateRule {
+        @Rule
+        private fun <error descr="Methods annotated with '@org.junit.Rule' should be 'public'">x</error>() = 0
+      }
+    """.trimIndent())
+  }
+
+  fun `test field @Rule quickFix make public`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       package test
 
@@ -39,7 +52,7 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent(), "Make field 'x' public")
   }
 
-  fun `test @ClassRule highlighting`() {
+  fun `test field @ClassRule highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       package test
       
@@ -57,7 +70,7 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test @ClassRule quickfix make field public`() {
+  fun `test field @ClassRule quickfix make public`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       package test
 
