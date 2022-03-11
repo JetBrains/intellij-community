@@ -653,7 +653,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myComponentsWithEditorBackground.add(myReplaceWrapper);
 
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.width(4).fillXY().growXY().get());
-    myReplaceWrapper.add(shortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insetsTLB(10).get());
+    myReplaceWrapper.add(shortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insets(10, 10, 10, 0).get());
     myReplaceWrapper.add(staticImport, wrapperConstraint.get());
     myReplaceWrapper.add(reformat, wrapperConstraint.get());
 
