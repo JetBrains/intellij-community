@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -149,9 +149,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             .getElementFactory(project)
             .createParameterList(
                 parameters.map { it.semanticNames.firstOrNull() }.toTypedArray(),
-                parameters.map {
-                    it.expectedTypes.firstOrNull()?.theType
-                        ?.let { JvmPsiConversionHelper.getInstance(project).convertType(it) } ?: return null
+                parameters.map { param ->
+                    param.expectedTypes.firstOrNull()?.theType?.let { type ->
+                        JvmPsiConversionHelper.getInstance(project).convertType(type)
+                    } ?: return null
                 }.toTypedArray()
             )
             .parameters
@@ -181,10 +182,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
         if (kToken == null) return emptyList()
 
-        val action = if (shouldPresentMapped)
+        val action = if (shouldPresentMapped) {
             AddModifierFixFE10.createIfApplicable(kModifierOwner, kToken)
-        else
-            RemoveModifierFix(kModifierOwner, kToken, false)
+        } else {
+            RemoveModifierFixBase(kModifierOwner, kToken, false)
+        }
         return listOfNotNull(action)
     }
 
@@ -456,8 +458,7 @@ internal fun addAnnotationEntry(
             FqName(request.qualifiedName), NoLookupLocation.FROM_IDE
         ) ?: return@prefixEvaluation ""
 
-        val applicableTargetSet =
-            AnnotationChecker.applicableTargetSet(annotationClassDescriptor) ?: KotlinTarget.DEFAULT_TARGET_SET
+        val applicableTargetSet = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
 
         if (KotlinTarget.PROPERTY !in applicableTargetSet) return@prefixEvaluation ""
 
