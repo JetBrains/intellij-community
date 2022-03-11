@@ -9,6 +9,7 @@ import java.nio.file.*
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler
+import kotlin.io.path.createDirectories
 
 
 class RollingFileHandler @JvmOverloads constructor(
@@ -54,6 +55,7 @@ class RollingFileHandler @JvmOverloads constructor(
   }
 
   private fun open(append: Boolean) {
+    logPath.parent.createDirectories()
     val fout = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     val bout = BufferedOutputStream(fout)
     meter = MeteredOutputStream(bout, if (append) Files.size(logPath) else 0)
