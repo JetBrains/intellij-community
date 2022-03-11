@@ -110,7 +110,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       finishProcessors.add(handleCommitWithoutPsi(task, documentManager));
     }
     else {
-      // while we were messing around transferring things to background thread, the viewprovider can become obsolete
+      // while we were messing around transferring things to background thread, the ViewProvider can become obsolete
       // when e.g. virtual file was renamed. store new provider to retain it from GC
       task.cachedViewProvider = viewProvider;
 
@@ -168,7 +168,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   @TestOnly
-  // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
+  // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -236,7 +236,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     }
   }
 
-  // returns runnable to execute under write action in AWT to finish the commit
+  // returns runnable to execute under the write action in AWT to finish the commit
   @NotNull
   private static BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,
