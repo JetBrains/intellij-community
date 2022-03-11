@@ -42,9 +42,9 @@ fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
 fun uExpression(): UExpressionPattern.Capture<UExpression> = expressionCapture(UExpression::class.java)
 
-fun uMethod(): UMethodPattern = UMethodPattern()
+fun uMethod(): UDeclarationPattern<UMethod> = UDeclarationPattern(UMethod::class.java)
 
-fun uClass(): UClassPattern = UClassPattern()
+fun uClass(): UDeclarationPattern<UClass> = UDeclarationPattern(UClass::class.java)
 
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
@@ -276,9 +276,9 @@ fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<Stri
     } ?: false
   }
 
-open class UDeclarationPattern<T : UDeclaration, Self : UDeclarationPattern<T, Self>>(clazz: Class<T>) : UElementPattern<T, Self>(clazz) {
+open class UDeclarationPattern<T : UDeclaration>(clazz: Class<T>) : UElementPattern<T, UDeclarationPattern<T>>(clazz) {
 
-  fun annotatedWith(@NotNull annotationQualifiedNames: List<String>): UDeclarationPattern<T, Self> {
+  fun annotatedWith(@NotNull annotationQualifiedNames: List<String>): UDeclarationPattern<T> {
     return this.with(object : PatternCondition<UDeclaration>("annotatedWith") {
       override fun accepts(uDeclaration: UDeclaration, context: ProcessingContext?): Boolean {
         return uDeclaration.uAnnotations.any { uAnno ->
@@ -290,7 +290,3 @@ open class UDeclarationPattern<T : UDeclaration, Self : UDeclarationPattern<T, S
     })
   }
 }
-
-class UMethodPattern : UDeclarationPattern<UMethod, UMethodPattern>(UMethod::class.java)
-
-class UClassPattern : UDeclarationPattern<UClass, UClassPattern>(UClass::class.java)
