@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import java.util.*;
 
 public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
@@ -84,6 +85,11 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   public void setItems(@NotNull List<Item> items) {
     myItems = items;
     fireTableDataChanged();
+  }
+
+  public void setItem(int rowIndex, @NotNull Item item) {
+    myItems.set(rowIndex, item);
+    fireTableCellUpdated(rowIndex, TableModelEvent.ALL_COLUMNS);
   }
 
   @Override
