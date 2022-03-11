@@ -17,7 +17,8 @@ import org.jetbrains.annotations.TestOnly
 
 internal class LibraryUsageStatisticsProvider(
   private val project: Project,
-  private val storageService: LibraryUsageStatisticsStorageService,
+  private val processedFilesService: ProcessedFilesStorageService,
+  private val libraryUsageService: LibraryUsageStatisticsStorageService,
   private val libraryDescriptorFinder: LibraryDescriptorFinder,
 ) : FileEditorManagerListener {
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -25,13 +26,13 @@ internal class LibraryUsageStatisticsProvider(
 
     ReadAction.nonBlocking { processFile(file) }
       .inSmartMode(source.project)
-      .expireWith(storageService)
-      .coalesceBy(file, storageService)
+      .expireWith(processedFilesService)
+      .coalesceBy(file, processedFilesService)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   private fun processFile(vFile: VirtualFile) {
-    if (storageService.isVisited(vFile)) return
+    if (processedFilesService.isVisited(vFile)) return
     val fileIndex = ProjectFileIndex.getInstance(project)
     if (!fileIndex.isInSource(vFile) || fileIndex.isInLibrary(vFile)) return
 
@@ -61,11 +62,9 @@ internal class LibraryUsageStatisticsProvider(
       )
     }
 
-    for (libraryUsage in usages) {
-      LibraryUsageCollector.log(project, libraryUsage)
+    if (processedFilesService.visit(vFile)) {
+      libraryUsageService.increaseUsages(usages)
     }
-
-    storageService.visit(vFile)
   }
 
   companion object {
