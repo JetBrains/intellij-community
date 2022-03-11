@@ -39,10 +39,10 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
 
     val checkingContext = state.checkingContext
     for (id in checkingContext.disabledLanguages) {
-      metrics.add(CHECKING_CONTEXT.metric(EventFields.LanguageById.with(id), USER_CHANGE_FIELD.with("disabled")))
+      metrics.add(CHECKING_CONTEXT.metric(LANGUAGE_FIELD.with(id), USER_CHANGE_FIELD.with("disabled")))
     }
     for (id in checkingContext.enabledLanguages) {
-      metrics.add(CHECKING_CONTEXT.metric(EventFields.LanguageById.with(id), USER_CHANGE_FIELD.with("enabled")))
+      metrics.add(CHECKING_CONTEXT.metric(LANGUAGE_FIELD.with(id), USER_CHANGE_FIELD.with("enabled")))
     }
 
     val defaults = CheckingContext()
@@ -61,7 +61,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("grazie.state", 4)
+    private val GROUP = EventLogGroup("grazie.state", 5)
     private val ENABLE_LANGUAGE = GROUP.registerEvent("enabled.language",
                                                       EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() })
     private val RULE = GROUP.registerEvent("rule",
@@ -73,8 +73,9 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     private val LITERALS_FIELD = EventFields.StringValidatedByEnum("literals", "state")
     private val COMMIT_FIELD = EventFields.StringValidatedByEnum("commit", "state")
     private val USER_CHANGE_FIELD = EventFields.StringValidatedByEnum("userChange", "state")
+    private val LANGUAGE_FIELD = EventFields.StringValidatedByCustomRule("language", "lang")
     private val CHECKING_CONTEXT = GROUP.registerVarargEvent("checkingContext",
-                                                             EventFields.LanguageById,
+                                                             LANGUAGE_FIELD,
                                                              USER_CHANGE_FIELD,
                                                              DOCUMENTATION_FIELD,
                                                              COMMENTS_FIELD,
