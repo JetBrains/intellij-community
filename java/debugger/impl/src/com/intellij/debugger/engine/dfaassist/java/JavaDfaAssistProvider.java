@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine.dfaassist;
+package com.intellij.debugger.engine.dfaassist.java;
 
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener;
+import com.intellij.debugger.engine.dfaassist.DfaAssistProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;

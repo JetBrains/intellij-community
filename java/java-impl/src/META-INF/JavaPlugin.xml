@@ -2278,7 +2278,7 @@
                  defaultValue="false"
                  description="Format chained calls as in versions prior to 2021.2"/>
     <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java" key="ide.java.refactoring.suggested.call.site"/>
-    <dataflowAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.JavaDfaAssistProvider"/>
+    <dataflowAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
   </extensions>
 
