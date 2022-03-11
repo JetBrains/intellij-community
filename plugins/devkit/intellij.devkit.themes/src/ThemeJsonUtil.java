@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.google.common.collect.Lists;
@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-final class ThemeJsonUtil {
+public final class ThemeJsonUtil {
 
   @NonNls
   private static final String UI_PROPERTY_NAME = "ui";
@@ -48,7 +48,7 @@ final class ThemeJsonUtil {
       .collect(Collectors.joining("."));
   }
 
-  static boolean isThemeFilename(@NotNull String fileName) {
+  public static boolean isThemeFilename(@NotNull String fileName) {
     return StringUtil.endsWithIgnoreCase(fileName, ".theme.json");
   }
 

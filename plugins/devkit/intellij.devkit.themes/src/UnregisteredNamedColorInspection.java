@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.inspections;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -16,7 +16,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory;
 import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 import org.jetbrains.uast.*;
@@ -96,13 +96,13 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     if (identifierPsi == null) return;
 
     holder.registerProblem(identifierPsi,
-                           DevKitBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
+                           DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
 
         @Nls(capitalization = Nls.Capitalization.Sentence)
         @NotNull
         @Override
         public String getFamilyName() {
-          return DevKitBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file");
+          return DevKitThemesBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file");
         }
 
         @Override
@@ -121,7 +121,8 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
           DataManager.getInstance().getDataContextFromFocusAsync()
             .onSuccess(context -> {
               NavigationUtil.getPsiElementPopup(psiFiles,
-                                                DevKitBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file.popup.title"))
+                                                DevKitThemesBundle.message(
+                                                  "inspections.unregistered.named.color.fix.navigate.theme.metadata.file.popup.title"))
                 .showInBestPositionFor(context);
             });
         }

@@ -14,7 +14,6 @@
 
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.java</depends>
-  <depends>com.intellij.modules.json</depends>
 
   <resource-bundle>messages.DevKitBundle</resource-bundle>
 
@@ -249,11 +248,6 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"
                      key="inspection.presentation.annotation.display.name"/>
-    <localInspection language="UAST" shortName="UnregisteredNamedColor"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" isInternal="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"
-                     key="inspection.unregistered.named.color.display.name"/>
     <localInspection language="UAST" shortName="MissingRecentApi"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
@@ -287,7 +281,6 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.AdvancedSettingsIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
-    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemeEPPathReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
@@ -379,19 +372,6 @@
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
-    <!-- themes -->
-    <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
-    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
-    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeAnnotator"/>
-    <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.themes.ThemeJsonPsiReferenceContributor"/>
-    <spellchecker.support language="JSON"
-                          order="first"
-                          implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
-    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService"/>
-    <lang.documentationProvider language="JSON"
-                                order="first"
-                                implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
     <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.devkit.deployment"/>
     <notificationGroup id="DevKit Errors" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Update from Sources" displayType="BALLOON" hideFromSettings="true"/>
@@ -408,10 +388,6 @@
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
     <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for kotlin plugin"/>
-  </extensions>
-  <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
-    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
@@ -439,7 +415,6 @@
       <separator/>
       <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.NewMessageBundleAction"/>
       <separator/>
-      <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -470,16 +445,6 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-
-    <!-- Theme Toolbar -->
-    <group id="DevKit.ThemeEditorToolbar">
-      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" icon="AllIcons.Actions.Execute"/>
-      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" icon="AllIcons.Actions.Suspend"/>
-      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" icon="AllIcons.Actions.EditScheme"/>
-      <separator/>
-      <action class="org.jetbrains.idea.devkit.themes.OpenThemeReferenceDocsAction" id="DevKit.OpenThemeReferenceDocs" icon="AllIcons.Actions.Help"/>
-    </group>
-
   </actions>
 
 </idea-plugin>

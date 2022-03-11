@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonProperty;
@@ -18,7 +17,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.function.Supplier;
 
@@ -60,13 +58,13 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     HtmlBuilder contentBuilder = new HtmlBuilder();
     if (uiKeyMetadata.isDeprecated()) {
       contentBuilder.append(
-        HtmlChunk.text(DevKitBundle.message("theme.json.documentation.key.deprecated"))
+        HtmlChunk.text(DevKitThemesBundle.message("theme.json.documentation.key.deprecated"))
           .bold()
           .wrapWith(HtmlChunk.font("#" + ColorUtil.toHex(JBColor.RED))))
         .append(HtmlChunk.br());
     }
     contentBuilder.append(HtmlChunk.text(StringUtil.notNullize(uiKeyMetadata.getDescription(),
-                                                               DevKitBundle.message("theme.json.documentation.key.no.description"))));
+                                                               DevKitThemesBundle.message("theme.json.documentation.key.no.description"))));
     contentBuilder.append(HtmlChunk.br()).append(HtmlChunk.br());
     final HtmlChunk.Element content = contentBuilder.wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
     builder.append(content);
@@ -76,7 +74,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
 
     final String source = uiKeyMetadata.getSource();
     if (source != null) {
-      appendSection(sectionsBuilder, DevKitBundle.message("theme.json.documentation.section.source.title"), () -> {
+      appendSection(sectionsBuilder, DevKitThemesBundle.message("theme.json.documentation.section.source.title"), () -> {
         final PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createTypeByFQClassName(source);
 
         StringBuilder typeBuilder = new StringBuilder();
@@ -87,7 +85,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
 
     final String since = uiKeyMetadata.getSince();
     if (since != null) {
-      appendSection(sectionsBuilder, DevKitBundle.message("theme.json.documentation.section.since.title"), since);
+      appendSection(sectionsBuilder, DevKitThemesBundle.message("theme.json.documentation.section.since.title"), since);
     }
     final HtmlChunk.Element sections = sectionsBuilder.wrapWith(DocumentationMarkup.SECTIONS_TABLE);
     builder.append(sections);

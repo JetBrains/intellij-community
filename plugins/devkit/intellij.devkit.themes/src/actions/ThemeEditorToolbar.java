@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.themes;
+package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -18,6 +18,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.themes.ThemeJsonUtil;
 
 import javax.swing.*;
 

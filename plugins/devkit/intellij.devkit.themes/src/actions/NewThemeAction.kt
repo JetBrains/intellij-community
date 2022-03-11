@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.actions
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.themes.actions
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
@@ -18,9 +18,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
-import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.idea.devkit.themes.DevKitThemesBundle
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
@@ -122,21 +123,21 @@ class NewThemeAction : AnAction(), UpdateInBackground {
 
   class NewThemeDialog(project: Project) : DialogWrapper(project) {
     val name = JBTextField()
-    val isDark = CheckBox(DevKitBundle.message("new.theme.dialog.is.dark.checkbox.text"), true)
+    val isDark = CheckBox(DevKitThemesBundle.message("new.theme.dialog.is.dark.checkbox.text"), true)
 
     init {
-      title = DevKitBundle.message("new.theme.dialog.title")
+      title = DevKitThemesBundle.message("new.theme.dialog.title")
       init()
     }
 
     override fun createCenterPanel(): JComponent? {
       return panel {
-        row(DevKitBundle.message("new.theme.dialog.name.text.field.text")) {
+        row(DevKitThemesBundle.message("new.theme.dialog.name.text.field.text")) {
           cell {
             name(growPolicy = GrowPolicy.MEDIUM_TEXT)
               .focused()
               //TODO max name length, maybe some other restrictions?
-              .withErrorOnApplyIf(DevKitBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
+              .withErrorOnApplyIf(DevKitThemesBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
           }
         }
         row("") {

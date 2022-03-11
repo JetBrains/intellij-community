@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -11,7 +11,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class ThemeAnnotator implements Annotator {
 
@@ -32,7 +31,7 @@ public class ThemeAnnotator implements Annotator {
 
       String fullKey = parentNames.isEmpty() ? property.getName() : parentNames + "." + property.getName();
       holder.newAnnotation(HighlightSeverity.WARNING,
-                           DevKitBundle.message("theme.highlighting.unresolved.key", fullKey))
+                           DevKitThemesBundle.message("theme.highlighting.unresolved.key", fullKey))
         .range(property.getNameElement())
         .highlightType(ProblemHighlightType.WARNING).create();
       return;
@@ -40,7 +39,7 @@ public class ThemeAnnotator implements Annotator {
 
     if (pair.second.isDeprecated()) {
       holder.newAnnotation(HighlightSeverity.WARNING,
-                           DevKitBundle.message("theme.highlighting.deprecated.key", pair.second.getKey()))
+                           DevKitThemesBundle.message("theme.highlighting.deprecated.key", pair.second.getKey()))
         .range(property.getNameElement())
         .highlightType(ProblemHighlightType.LIKE_DEPRECATED).create();
     }

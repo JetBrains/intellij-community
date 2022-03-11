@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
@@ -28,7 +28,6 @@ import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,7 +110,7 @@ public class ThemeColorAnnotator implements Annotator {
     @Nullable
     @Override
     public String getTooltipText() {
-      return canChooseColor() ? DevKitBundle.message("theme.choose.color.tooltip") : null;
+      return canChooseColor() ? DevKitThemesBundle.message("theme.choose.color.tooltip") : null;
     }
 
     @Nullable
@@ -119,7 +118,7 @@ public class ThemeColorAnnotator implements Annotator {
     public AnAction getClickAction() {
       if (!canChooseColor()) return null;
 
-      return new AnAction(DevKitBundle.messagePointer("action.Anonymous.text.choose.color")) {
+      return new AnAction(DevKitThemesBundle.messagePointer("action.Anonymous.text.choose.color")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -135,7 +134,7 @@ public class ThemeColorAnnotator implements Annotator {
           } else {
             Color newColor = ColorChooser.chooseColor(editor.getProject(),
                                                       editor.getComponent(),
-                                                      DevKitBundle.message("theme.choose.color.dialog.title"),
+                                                      DevKitThemesBundle.message("theme.choose.color.dialog.title"),
                                                       currentColor,
                                                       withAlpha);
             applyColor(currentColor, withAlpha, newColor);

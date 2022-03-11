@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,6 @@ import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +28,7 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
       @NotNull
       @Override
       public String getName() {
-        return DevKitBundle.message("theme.json.display.name");
+        return DevKitThemesBundle.message("theme.json.display.name");
       }
 
       @Nullable
