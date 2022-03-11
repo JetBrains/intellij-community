@@ -67,9 +67,9 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-java" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.3.7" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.3.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.7/completion-ranking-java-0.3.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.9/completion-ranking-java-0.3.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
