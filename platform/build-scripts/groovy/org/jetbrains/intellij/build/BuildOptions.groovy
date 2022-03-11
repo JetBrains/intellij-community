@@ -261,8 +261,6 @@ final class BuildOptions {
    */
   long buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLong() ?: System.currentTimeSeconds()
 
-  boolean ant = false
-
   BuildOptions() {
     targetOS = System.getProperty(TARGET_OS)
     if (targetOS == OS_CURRENT) {
