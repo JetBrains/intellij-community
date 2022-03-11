@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -46,7 +46,7 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
         if (classRuleAnnotated && !isStatic) {
           actions.addAll(createModifierActions(field, modifierRequest(JvmModifier.STATIC, true)))
         }
-        actions.addAll(field.createMakePublicActions())
+        actions.addAll(createModifierActions(field, modifierRequest(JvmModifier.PUBLIC, true)))
         val intention = IntentionWrapper.wrapToQuickFixes(actions, sourcePsi.containingFile).toTypedArray()
         val problem = manager.createProblemDescriptor(
           nameIdentifier,
