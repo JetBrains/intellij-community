@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle;
 
 import com.intellij.execution.RunManager;
@@ -80,7 +80,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       @NotNull
       @Override
       public String getPresentableName() {
-        return DevKitBundle.message("module.wizard.gradle.presentable.name");
+        return DevKitGradleBundle.message("module.wizard.gradle.presentable.name");
       }
 
       @NotNull
@@ -158,7 +158,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     }
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setHtmlText(DevKitBundle.message("module.wizard.gradle.learn.title"));
+    linkLabel.setHtmlText(DevKitGradleBundle.message("module.wizard.gradle.learn.title"));
     linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/gradle-build-system.html?from=DevkitGradleProjectWizard");
     return linkLabel;
   }
