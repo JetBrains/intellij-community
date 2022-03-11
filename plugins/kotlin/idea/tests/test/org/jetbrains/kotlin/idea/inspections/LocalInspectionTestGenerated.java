@@ -8261,6 +8261,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotated.kt")
+        public void testAnnotated() throws Exception {
+            runTest("testData/inspectionsLocal/redundantExplicitType/annotated.kt");
+        }
+
         @TestMetadata("boolean.kt")
         public void testBoolean() throws Exception {
             runTest("testData/inspectionsLocal/redundantExplicitType/boolean.kt");
