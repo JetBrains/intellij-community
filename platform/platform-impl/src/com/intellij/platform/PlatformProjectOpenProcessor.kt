@@ -3,6 +3,7 @@ package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -105,6 +106,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
         }
       })
+      TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
       val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
       openFileFromCommandLine(project, file, copy.line, copy.column)
       return project
