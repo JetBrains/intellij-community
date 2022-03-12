@@ -275,22 +275,27 @@ public final class FileBasedIndexScanUtil {
       int fileId = FileBasedIndex.getFileId(file);
       Document document = fileDocumentManager.getCachedDocument(file);
       boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
-      if (!unsavedDocument && IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
-        try {
-          return index.getIndexedFileData(fileId);
+      try {
+        if (!unsavedDocument && IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
+          try {
+            return index.getIndexedFileData(fileId);
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (StorageException e) {
-          throw new RuntimeException(e);
-        }
+        FileContent content = getFileContent(file, project, binary);
+        Map<K, V> map = content == null ? null : indexer.map(content);
+        if (unsavedDocument) return map;
+        InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
+        Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
+        ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        return map;
       }
-      FileContent content = getFileContent(file, project, binary);
-      Map<K, V> map = content == null ? null : indexer.map(content);
-      if (unsavedDocument) return map;
-      InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
-      Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
-      ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
-      IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
-      return map;
+      finally {
+        IndexingStamp.flushCache(fileId);
+      }
     };
   }
 
