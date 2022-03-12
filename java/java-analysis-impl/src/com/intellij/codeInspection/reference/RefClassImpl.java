@@ -42,10 +42,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private Set<RefClass> myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
   private List<RefMethod> myConstructors; // guarded by this
-  private RefMethodImpl myDefaultConstructor; //guarded by this
-  private List<RefMethod> myOverridingMethods; //guarded by this
-  private Set<RefElement> myInTypeReferences; //guarded by this
-  private List<RefJavaElement> myClassExporters; //guarded by this
+  private RefMethodImpl myDefaultConstructor; // guarded by this
+  private List<RefMethod> myOverridingMethods; // guarded by this
+  private Set<RefElement> myInTypeReferences; // guarded by this
+  private List<RefJavaElement> myClassExporters; // guarded by this
   private final RefModule myRefModule;
 
   RefClassImpl(UClass uClass, PsiElement psi, RefManager manager) {
@@ -215,7 +215,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
           RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(superClass);
           if (refClass != null) {
             addBaseClass(refClass);
-            refClass.addDerivedReference(this);
+            getRefManager().executeTask(() -> refClass.addDerivedReference(this));
           }
         });
     }
