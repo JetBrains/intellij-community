@@ -33,7 +33,8 @@ import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
 
 internal class SettingsSyncIdeCommunicator(private val componentStore: ComponentStoreImpl,
-                                           private val rootConfig: Path) : StreamProvider {
+                                           private val rootConfig: Path,
+                                           private val enabledCondition: () -> Boolean) : StreamProvider {
 
   companion object {
     val LOG = logger<SettingsSyncIdeCommunicator>()
@@ -46,7 +47,7 @@ internal class SettingsSyncIdeCommunicator(private val componentStore: Component
     get() = true
 
   override val enabled: Boolean
-    get() = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
+    get() = enabledCondition()
 
   override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
     return true
