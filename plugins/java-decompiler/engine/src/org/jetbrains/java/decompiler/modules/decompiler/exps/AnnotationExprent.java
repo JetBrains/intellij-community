@@ -84,6 +84,11 @@ public class AnnotationExprent extends Exprent {
   }
 
   @Override
+  public int hashCode() {
+    return Objects.hash(className, parNames, parValues);
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof AnnotationExprent)) return false;
