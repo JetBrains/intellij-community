@@ -67,7 +67,8 @@ internal class SettingsSyncTest {
 
   private fun initSettingsSync() {
     val settingsSyncStorage = configDir.resolve("settingsSync")
-    val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore, remoteCommunicator)
+    val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore,
+                                         remoteCommunicator, enabledCondition = { true })
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
@@ -252,7 +253,7 @@ internal class SettingsSyncTest {
     assertSnapshot(pushedSnap!!)
   }
 
-  private fun <T : PersistentStateComponent<*>> T.init() : T {
+  private fun <T : PersistentStateComponent<*>> T.init(): T {
     componentStore.initComponent(this, null, null)
     return this
   }
@@ -305,7 +306,7 @@ internal class SettingsSyncTest {
     }
   }
 
-  internal class TestComponentStore(configDir: Path): ApplicationStoreImpl() {
+  internal class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 
