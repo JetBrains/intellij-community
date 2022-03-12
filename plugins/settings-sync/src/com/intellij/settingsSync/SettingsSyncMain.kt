@@ -12,7 +12,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.messages.Topic
 import java.nio.file.Path
 
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
@@ -91,7 +90,7 @@ internal class SettingsSyncMain : Disposable {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable) {
         getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
       }
-      val ideUpdater = SettingsSyncIdeCommunicator(application, componentStore, appConfigPath)
+      val ideUpdater = SettingsSyncIdeCommunicator(componentStore, appConfigPath)
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
       val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker) {
                                       componentStore.storageManager.addStreamProvider(ideUpdater, true) }

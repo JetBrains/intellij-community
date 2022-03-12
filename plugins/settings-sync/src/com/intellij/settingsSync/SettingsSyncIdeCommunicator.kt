@@ -10,7 +10,6 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
@@ -33,8 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
 
-internal class SettingsSyncIdeCommunicator(private val application: Application,
-                                           private val componentStore: ComponentStoreImpl,
+internal class SettingsSyncIdeCommunicator(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path) : StreamProvider {
 
   companion object {
