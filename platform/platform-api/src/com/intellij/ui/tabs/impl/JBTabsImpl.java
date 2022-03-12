@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
@@ -2134,6 +2135,10 @@ public class JBTabsImpl extends JComponent
   }
 
   protected List<TabInfo> getVisibleInfos() {
+    if (!AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+      return isAlphabeticalMode() ? ContainerUtil.sorted(myVisibleInfos, ABC_COMPARATOR) : myVisibleInfos;
+    }
+
     if (!isAlphabeticalMode()) {
       return groupPinnedFirst(myVisibleInfos, null);
     } else {
