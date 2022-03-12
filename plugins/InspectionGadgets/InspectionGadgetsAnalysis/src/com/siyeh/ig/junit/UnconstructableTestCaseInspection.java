@@ -42,6 +42,8 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("unconstructable.test.case.incompatible.constructor.problem.descriptor");
       case NO_PUBLIC_NOARG_CONSTRUCTOR:
         return InspectionGadgetsBundle.message("unconstructable.test.case.no.constructor.problem.descriptor");
+      case NO_NOARG_NO_STRING_CONSTRUCTOR:
+        return InspectionGadgetsBundle.message("unconstructable.test.case.no.constructor.junit3.problem.descriptor");
       default:
         throw new AssertionError();
     }
@@ -112,13 +114,13 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
             if (parametersCount == 1) {
               final PsiParameter[] parameters = parameterList.getParameters();
               final PsiType type = parameters[0].getType();
-              if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
+              if (TypeUtils.isJavaLangString(type)) {
                 hasStringConstructor = true;
               }
             }
           }
           if (hasConstructor && !hasNoArgConstructor && !hasStringConstructor) {
-            registerClassError(aClass, ProblemType.NO_PUBLIC_NOARG_CONSTRUCTOR);
+            registerClassError(aClass, ProblemType.NO_NOARG_NO_STRING_CONSTRUCTOR);
           }
         }
       }
@@ -126,6 +128,6 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
   }
 
   enum ProblemType {
-    CLASS_NOT_PUBLIC, INCOMPATIBLE_CONSTRUCTOR, NO_PUBLIC_NOARG_CONSTRUCTOR
+    CLASS_NOT_PUBLIC, INCOMPATIBLE_CONSTRUCTOR, NO_PUBLIC_NOARG_CONSTRUCTOR, NO_NOARG_NO_STRING_CONSTRUCTOR
   }
 }
