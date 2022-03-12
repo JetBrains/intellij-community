@@ -78,6 +78,7 @@ internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaAc
     if (actionButton is SquareStripeButton && actionButton.isFocused() && color != null) {
       val fg = ColorUtil.toHtmlColor(color)
       val map: Map<String, String> = mapOf("#767a8a" to fg,
+                                           "#6c707e" to fg,
                                            "#ced0d6" to fg,
                                            "#6e6e6e" to fg,
                                            "#afb1b3" to fg)
