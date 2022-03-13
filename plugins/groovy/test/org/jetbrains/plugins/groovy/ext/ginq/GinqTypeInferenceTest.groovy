@@ -71,6 +71,28 @@ ee[0].b<caret>b
 """, JAVA_LANG_STRING
   }
 
+  void testGetAt1() {
+    doTest """
+def ee = GQL {
+        from aa in [1]
+        crossjoin bb in [""]
+        select aa as e1, bb as e2
+    }
+ee[0].ge<caret>t(0)
+""", JAVA_LANG_INTEGER
+  }
+
+  void testGetAt2() {
+    doTest """
+def ee = GQL {
+        from aa in [1]
+        crossjoin bb in [""]
+        select aa as e1, bb as e2
+    }
+ee[0].ge<caret>t(1)
+""", JAVA_LANG_STRING
+  }
+
   void testNestedGinq() {
     doTest """
 GQ {

@@ -17,9 +17,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
  */
 class GrSyntheticNamedRecordClass(val typeParameters: List<PsiTypeParameter>,
                                   val typeMap: Map<String, Lazy<PsiType>>,
+                                  val exposedBindings: List<String>, // bindings in `select` clause. Order is important
                                   private val namedRecord: PsiClass) : LightClass(namedRecord) {
 
-  constructor(ginqExpression: GinqExpression, namedRecord: PsiClass) : this(emptyList(), getTypeMap(ginqExpression), namedRecord)
+  constructor(ginqExpression: GinqExpression, namedRecord: PsiClass) :
+    this(emptyList(),
+         getTypeMap(ginqExpression),
+         ginqExpression.select.projections.mapNotNull { it.alias?.text },
+         namedRecord)
 
   operator fun get(name: String): PsiType? {
     return typeMap[name]?.value

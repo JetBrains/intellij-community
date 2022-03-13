@@ -142,7 +142,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       if (method != null) {
         call.navigationElement = method
       }
-      val resultTypeCollector = mutableMapOf<String, Lazy<PsiType>>()
+      val resultTypeCollector = LinkedHashMap<String, Lazy<PsiType>>()
       val typeParameters = mutableListOf<PsiTypeParameter>()
       for ((i, arg) in tree.select.projections.withIndex()) {
         val typeParameter = call.addTypeParameter("T$i")
@@ -156,7 +156,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       }
       val clazz = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD,
                                                                          macroCall.resolveScope)
-      call.returnType = clazz?.let { GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, it).type() }
+      call.returnType = clazz?.let { GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, resultTypeCollector.keys.toList(), it).type() }
 
       return processor.execute(call, state)
     }
@@ -186,7 +186,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val aliasName = it.alias.referenceName ?: return@mapNotNull null
         aliasName to lazyPub { it.dataSource.type?.let(::inferDataSourceComponentType) ?: PsiType.NULL }
       }.toMap()
-      val type = clazz?.let { GrSyntheticNamedRecordClass(emptyList(), dataSourceTypes, it).type() } ?: return null
+      val type = clazz?.let { GrSyntheticNamedRecordClass(emptyList(), dataSourceTypes, emptyList(), it).type() } ?: return null
       val resultType = facade.elementFactory.createType(containerClass, type)
       return GrLightVariable(place.manager, "_g", resultType, containerClass)
     }
