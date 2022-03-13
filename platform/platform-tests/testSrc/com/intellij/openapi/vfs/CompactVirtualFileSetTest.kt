@@ -24,29 +24,17 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   @Test
   fun `test small set`() {
-    val size = 5
-
-    assertTrue(size < CompactVirtualFileSet.INT_SET_LIMIT)
-    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
-    doSimpleAddTest(size)
+    doSimpleAddTest(smallSetSize)
   }
 
   @Test
   fun `test reasonable set`() {
-    val size = 50
-
-    assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
-    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
-    doSimpleAddTest(size)
+    doSimpleAddTest(reasonableSetSize)
   }
 
   @Test
   fun `test big set`() {
-    val size = 2000
-
-    assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
-    assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
-    doSimpleAddTest(size)
+    doSimpleAddTest(bigSetSize)
   }
 
   @Test
@@ -66,31 +54,100 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   @Test
   fun `test retainAll() of standard collection`() {
-
+    val set = (0 until 10).map { createFile() }.toHashSet()
+    doTestRetainAll(set)
   }
 
   @Test
   fun `test retainAll() of small CVFSet`() {
-    val size = 5
-    assertTrue(size < CompactVirtualFileSet.INT_SET_LIMIT)
-    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
-
+    val set = generateCVFSet(smallSetSize)
+    doTestRetainAll(set)
   }
 
   @Test
   fun `test retainAll() of reasonable CVFSet`() {
-    val size = 50
-
-    assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
-    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
+    val set = generateCVFSet(reasonableSetSize)
+    doTestRetainAll(set)
   }
 
   @Test
   fun `test retainAll() of big CVFSet`() {
-    val size = 2000
+    val set = generateCVFSet(bigSetSize)
+    doTestRetainAll(set)
+  }
 
-    assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
-    assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
+  @Test
+  fun `test remove() from small CVSet`() {
+    doTestRemove(smallSetSize)
+  }
+
+  @Test
+  fun `test remove() from reasonable CVSet`() {
+    doTestRemove(reasonableSetSize)
+  }
+
+  @Test
+  fun `test remove() from big CVSet`() {
+    doTestRemove(bigSetSize)
+  }
+
+  @Test
+  fun `test iterator remove from small CVSet`() {
+    doTestIteratorRemove(smallSetSize)
+  }
+
+  @Test
+  fun `test iterator remove from reasonable CVSet`() {
+    doTestIteratorRemove(reasonableSetSize)
+  }
+
+  @Test
+  fun `test iterator remove from big CVSet`() {
+    doTestIteratorRemove(bigSetSize)
+  }
+
+  @Test
+  fun `test clear`() {
+    val set = generateCVFSet(10)
+    assertEquals(10, set.size)
+    set.clear()
+    assertEquals(0, set.size)
+    repeat(10) {
+      set.add(createFile())
+    }
+    assertEquals(10, set.size)
+  }
+
+  private fun doTestRetainAll(set: Set<VirtualFile>) {
+    val target = generateCVFSet(10)
+    target.addAll(set)
+    assertEquals(set.size + 10, target.size)
+    target.retainAll(set)
+    assertEquals(set.size, target.size)
+    assertEquals(set, target.toHashSet())
+  }
+
+  private fun doTestIteratorRemove(size: Int) {
+    val set = generateCVFSet(size)
+    val iterator = set.iterator()
+    while (iterator.hasNext()) {
+      iterator.next()
+      iterator.remove()
+    }
+    assertEquals(0, set.size)
+  }
+
+  private fun doTestRemove(size: Int) {
+    val set = generateCVFSet(size)
+    val copy = set.toList()
+    val removedFile = set.first()
+    set.remove(removedFile)
+    assertEquals(size - 1, set.size)
+    for (virtualFile in copy.drop(1)) {
+      assertTrue(set.contains(virtualFile))
+    }
+    assertFalse(set.contains(removedFile))
+    assertEquals(set.toHashSet(), copy.drop(1).toHashSet())
   }
 
   private fun doSimpleAddAllTest(sliceSize: Int) {
@@ -143,6 +200,36 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   private val counter = AtomicInteger()
+
+  private val smallSetSize: Int
+    get() {
+      val size = 5
+      assertTrue(size < CompactVirtualFileSet.INT_SET_LIMIT)
+      assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
+      return size
+    }
+
+  private val reasonableSetSize: Int
+    get() {
+      val size = 50
+      assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
+      assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
+      return size
+    }
+
+  private val bigSetSize: Int
+    get() {
+      val size = 2000
+      assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
+      assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
+      return size
+    }
+
+  private fun generateCVFSet(size: Int): CompactVirtualFileSet {
+    val set = CompactVirtualFileSet()
+    repeat(size) { set.add(createFile()) }
+    return set
+  }
 
   private fun createFile(): VirtualFile =
     tempDir.newVirtualFile("file${counter.incrementAndGet()}.txt")
