@@ -280,16 +280,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
-  public void addSuperMethod(RefMethodImpl refSuperMethod) {
-    if (!refSuperMethod.getSuperMethods().contains(this)) {
-      synchronized (this) {
-        if (mySuperMethods == null) {
-          mySuperMethods = new ArrayList<>(1);
-        }
-        if (!mySuperMethods.contains(refSuperMethod)) {
-          mySuperMethods.add(refSuperMethod);
-        }
-      }
+  public synchronized void addSuperMethod(RefMethodImpl refSuperMethod) {
+    if (mySuperMethods == null) {
+      mySuperMethods = new ArrayList<>(1);
+    }
+    if (!mySuperMethods.contains(refSuperMethod)) {
+      mySuperMethods.add(refSuperMethod);
     }
   }
 
