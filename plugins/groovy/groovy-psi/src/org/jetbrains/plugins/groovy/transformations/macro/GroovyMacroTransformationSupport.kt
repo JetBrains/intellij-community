@@ -54,24 +54,28 @@ interface GroovyMacroTransformationSupport {
   /**
    * Allows to tune type inference algorithms within the macro-expanded code.
    *
-   * Macro expansion affects a correctly-parsed AST, and it means that the main Groovy type-checker can successfully run in the non-expanded code.
+   * Macro expansion affects a correctly-parsed AST, and it means that the main Groovy type-checker is able to successfully run in the non-expanded code.
    * It is expected that macro-expansion target contains regular Groovy code that will not be transformed, but the type-checker will not
    * return sane results for it. That is where this method can be used.
    *
-   * **Note:** If this method returns `null`, and [expression] is a descendant of [isUntransformed] element,
+   * **Note:** If this method returns `null`, and [expression] is [isUntransformed],
    * then the main Groovy type-checker will handle the type of the [expression].
    */
   fun computeType(macroCall: GrMethodCall, expression: GrExpression) : PsiType? = null
 
+  /**
+   * Allows to add custom completion within the macro-expandable code. It is guaranteed that [offset] is within
+   * one of the arguments of [macroCall]
+   */
   fun computeCompletionVariants(macroCall: GrCall, offset: Int) : List<LookupElement> = emptyList()
 
   /**
-   * Allows to add references during the heavyweight resolve
+   * Allows to add references during the heavyweight resolve (i.e. methods and non-static variables).
    */
   fun processResolve(macroCall: GrMethodCall, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean = true
 
   /**
-   * Used to mimic a synthetic "variable declaration"
+   * Used to mimic a synthetic variable declaration
    *
    * @see [org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget]
    */

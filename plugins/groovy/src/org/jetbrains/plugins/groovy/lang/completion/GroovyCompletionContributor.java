@@ -39,6 +39,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     GrNamedRecordCompletionProvider.register(this);
     GroovyDocCompletionProvider.register(this);
     GrStatementStartCompletionProvider.register(this);
+    GrMacroCompletionProvider.register(this);
     GrMainCompletionProvider.register(this);
     GrAnnotationAttributeCompletionProvider.register(this);
 
