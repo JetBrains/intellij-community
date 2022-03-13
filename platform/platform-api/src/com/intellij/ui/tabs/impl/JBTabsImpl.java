@@ -2134,6 +2134,8 @@ public class JBTabsImpl extends JComponent
   }
 
   protected List<TabInfo> getVisibleInfos() {
+    if ( Registry.is("ide.disable.keep.tabs.to.the.left.if.pinned", false) ) return myVisibleInfos;
+    
     if (!isAlphabeticalMode()) {
       return groupPinnedFirst(myVisibleInfos, null);
     } else {
