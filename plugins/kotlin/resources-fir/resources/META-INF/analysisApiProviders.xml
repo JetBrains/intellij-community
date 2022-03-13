@@ -3,7 +3,7 @@
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
                     serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdeDeclarationProviderFactory"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.CompiledDeclarationProviderFactory"
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinCompiledDeclarationProviderFactory"
                     serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdeCompiledDeclarationProviderFactory"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinAnnotationsResolverFactory"

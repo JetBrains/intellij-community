@@ -5,21 +5,17 @@
 package org.jetbrains.kotlin.analysis.providers.ide
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
-import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.providers.CompiledDeclarationProvider
-import org.jetbrains.kotlin.analysis.providers.CompiledDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.providers.KotlinCompiledDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.KotlinCompiledDeclarationProviderFactory
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 
-internal class KotlinIdeCompiledDeclarationProviderFactory(private val project: Project) : CompiledDeclarationProviderFactory() {
-    override fun createCompiledDeclarationProvider(searchScope: GlobalSearchScope): CompiledDeclarationProvider {
+internal class KotlinIdeCompiledDeclarationProviderFactory(private val project: Project) : KotlinCompiledDeclarationProviderFactory() {
+    override fun createCompiledDeclarationProvider(searchScope: GlobalSearchScope): KotlinCompiledDeclarationProvider {
         return KotlinIdeCompiledDeclarationProvider(project, searchScope)
     }
 }
@@ -27,31 +23,11 @@ internal class KotlinIdeCompiledDeclarationProviderFactory(private val project: 
 private class KotlinIdeCompiledDeclarationProvider(
     private val project: Project,
     private val searchScope: GlobalSearchScope
-) : CompiledDeclarationProvider() {
-    override fun getClassesByClassId(classId: ClassId): Collection<PsiClass> {
-        return JavaFullClassNameIndex
-            .getInstance()[classId.asIndexKey(), project, searchScope]
-    }
+) : KotlinCompiledDeclarationProvider() {
+    override fun getClassesByClassId(classId: ClassId): Collection<KtClassOrObject> = emptyList()
 
-    override fun getFunctions(callableId: CallableId): Collection<PsiMethod> {
-        return JavaMethodNameIndex
-            .getInstance()[callableId.callableName.identifier, project, searchScope]
-            .filter { it.checkContainingClass(callableId) }
-    }
+    override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = emptyList()
 
-    override fun getProperties(callableId: CallableId): Collection<PsiField> {
-        return JavaFieldNameIndex
-            .getInstance()[callableId.callableName.identifier, project, searchScope]
-            .filter { it.checkContainingClass(callableId) }
-    }
+    override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> = emptyList()
 
-    companion object  {
-        private fun PsiMember.checkContainingClass(callableId: CallableId): Boolean {
-            val className = callableId.className?.shortName()?.identifier ?: return true
-            return containingClass?.name == className
-        }
-
-        private fun ClassId.asIndexKey(): Int =
-            asSingleFqName().hashCode()
-    }
 }
