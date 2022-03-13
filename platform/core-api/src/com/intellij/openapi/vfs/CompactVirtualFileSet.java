@@ -396,9 +396,9 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       totalIterator = ContainerUtil.concatIterators(fromIdsIterator, weirdFiles.iterator());
     }
     else {
-      StrippedIntOpenHashSet.SetIterator iterator = idSet.iterator();
       Iterator<VirtualFile> idSetIterator = new Iterator<VirtualFile>() {
-        int storedId;
+        final StrippedIntOpenHashSet.SetIterator iterator = idSet.iterator();
+
         @Override
         public boolean hasNext() {
           return iterator.hasNext();
@@ -406,15 +406,13 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
         @Override
         public VirtualFile next() {
-          int id = iterator.nextInt();
-          storedId = id;
           ProgressManager.checkCanceled();
-          return virtualFileManager.findFileById(id);
+          return virtualFileManager.findFileById(iterator.nextInt());
         }
 
         @Override
         public void remove() {
-          idSet.remove(storedId);
+          iterator.remove();
         }
       };
       totalIterator = ContainerUtil.concatIterators(fromIdsIterator, idSetIterator, weirdFiles.iterator());
