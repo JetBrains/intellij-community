@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -13,7 +14,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -127,8 +127,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       if (javaPsi.hasModifierProperty(PsiModifier.PUBLIC)) {
         setAppMain(isAppMain(javaPsi, this));
 
-        @NonNls final String name = method.getName();
-        if (ownerClass != null && ownerClass.isTestCase() && name.startsWith("test")) {
+        if (TestFrameworks.getInstance().isTestMethod(javaPsi)) {
           setTestMethod(true);
         }
       }
