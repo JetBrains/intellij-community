@@ -811,4 +811,12 @@ from b in [1]
 <error>join</error> a in [1]
 """
   }
+
+  void testWhereTyped() {
+    testGinqHighlighting """
+        from aa in [1]
+        where <warning>aa</warning>
+        select aa as e1
+"""
+  }
 }

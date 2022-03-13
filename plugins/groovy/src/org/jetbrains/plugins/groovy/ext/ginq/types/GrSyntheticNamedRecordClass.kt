@@ -48,15 +48,19 @@ class GrSyntheticNamedRecordClass(val typeParameters: List<PsiTypeParameter>,
     if (this === other) return true
     if (other !is GrSyntheticNamedRecordClass) return false
 
-    if (namedRecord != other.namedRecord) return false
+    if (typeParameters != other.typeParameters) return false
     if (typeMap != other.typeMap) return false
+    if (exposedBindings != other.exposedBindings) return false
+    if (namedRecord != other.namedRecord) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = namedRecord.hashCode()
+    var result = typeParameters.hashCode()
     result = 31 * result + typeMap.hashCode()
+    result = 31 * result + exposedBindings.hashCode()
+    result = 31 * result + namedRecord.hashCode()
     return result
   }
 }
