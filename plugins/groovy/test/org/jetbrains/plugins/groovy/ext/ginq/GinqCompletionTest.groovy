@@ -25,7 +25,17 @@ class GinqCompletionTest extends GroovyCompletionTestBase {
     completeGinq('''\
 fro<caret>
 ''', '''\
-from
+from x in
+''')
+  }
+
+  void testSelect() {
+    completeGinq('''\
+from x in [1]
+sele<caret>
+''', '''\
+from x in [1]
+select
 ''')
   }
 

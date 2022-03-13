@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq
 
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.quickfix.ReferenceNameExpression
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
@@ -225,9 +229,20 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   override fun computeCompletionVariants(macroCall: GrCall, offset: Int): List<LookupElement> {
     val topTree = getParsedGinqTree(macroCall)
     if (topTree == null) {
-      return listOf(LookupElementBuilder.create("from").bold(), LookupElementBuilder.create("select").bold()).map { PrioritizedLookupElement.withPriority(it, 1.0) }
+      return listOf(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler),
+                    LookupElementBuilder.create("select").bold())
+        .map { PrioritizedLookupElement.withPriority(it, 1.0) }
     }
     return emptyList()
+  }
+
+  private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, item ->
+    val template = TemplateManager.getInstance(context.project).createTemplate("ginq_data_source_${item.lookupString}", "ginq", "${item.lookupString} \$NAME$ in \$DATA_SOURCE$\$END$")
+    template.addVariable("NAME", ReferenceNameExpression(emptyArray(), "x"), true)
+    template.addVariable("DATA_SOURCE", VariableNode("data source", null), true)
+    val editor = context.editor
+    editor.document.deleteString(context.startOffset, context.tailOffset)
+    TemplateManager.getInstance(context.project).startTemplate(editor, template)
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
