@@ -7,7 +7,6 @@ import com.intellij.psi.util.*
 import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport
 import org.jetbrains.plugins.groovy.ext.ginq.joins
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -123,14 +122,14 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           recordError(argument.leftOperand, GroovyBundle.message("ginq.error.message.expected.alias"))
         }
         else {
-          alias.putUserData(ginqBinding, Unit)
+          alias.putUserData(GINQ_BINDING, Unit)
           markAsReferenceResolveTarget(alias)
         }
         val dataSource = argument.rightOperand
         if (dataSource == null) {
           recordError(argument.operationToken, GroovyBundle.message("ginq.error.message.expected.data.source"))
         } else {
-          dataSource.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+          dataSource.markAsGinqUntransformed()
         }
         if (alias == null || dataSource == null) {
           return
@@ -149,7 +148,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.a.boolean.expression"))
           return
         } else {
-          argument.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+          argument.markAsGinqUntransformed()
         }
         if (callName == "on") {
           val last = container.lastOrNull()
@@ -184,7 +183,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           return
         }
         arguments.forEach {
-          it.expression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+          it.expression.markAsGinqUntransformed()
         }
         container.add(GinqGroupByFragment(callKw, arguments, null))
       }
@@ -195,7 +194,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           return
         }
         arguments.forEach {
-          it.sorter.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+          it.sorter.markAsGinqUntransformed()
         }
         container.add(GinqOrderByFragment(callKw, arguments))
       }
@@ -205,7 +204,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.one.or.two.arguments.for.limit"))
           return
         }
-        arguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+        arguments.forEach(GrExpression::markAsGinqUntransformed)
         container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
       }
       "select" -> {
@@ -239,20 +238,20 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                     "range", "rows" -> {
                       rowsOrRangeKw = invokedInner.referenceNameElement
                       rowsOrRangeArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
-                      rowsOrRangeArguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+                      rowsOrRangeArguments.forEach { it.markAsGinqUntransformed() }
                       localQualifier = invokedInner.qualifier
                     }
                     "partitionby" -> {
                       partitionKw = invokedInner.referenceNameElement
                       partitionArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
-                      partitionArguments.forEach { it.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+                      partitionArguments.forEach { it.markAsGinqUntransformed() }
                       localQualifier = invokedInner.qualifier
                     }
                     "orderby" -> {
                       val orderByKw = invokedInner.referenceNameElement!!
                       val fields = call.argumentList.allArguments.toList().mapNotNull { it.castSafelyTo<GrExpression>()?.let(::getOrdering) }
                       orderBy = GinqOrderByFragment(orderByKw, fields)
-                      orderBy.sortingFields.forEach { it.sorter.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+                      orderBy.sortingFields.forEach { it.sorter.markAsGinqUntransformed() }
                       localQualifier = invokedInner.qualifier
                     }
                     else -> {
@@ -263,20 +262,20 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                 windows.add(
                   GinqWindowFragment(qualifier, overKw, partitionKw, partitionArguments, orderBy, rowsOrRangeKw, rowsOrRangeArguments))
               }
-              qualifier.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+              qualifier.markAsGinqUntransformed()
               super.visitMethodCallExpression(methodCallExpression)
             }
           })
           AggregatableAliasedExpression(aliased, windows, alias)
         }
         parsedArguments.forEach {
-          it.aggregatedExpression.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit)
+          it.aggregatedExpression.markAsGinqUntransformed()
           it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
-          it.alias?.referenceElement?.putUserData(ginqBinding, Unit)
+          it.alias?.referenceElement?.putUserData(GINQ_BINDING, Unit)
         }
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
-      "exists" -> { methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement?.putUserData(GinqMacroTransformationSupport.UNTRANSFORMED_ELEMENT, Unit) }
+      "exists" -> { methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement?.markAsGinqUntransformed() }
       else -> recordError(methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: methodCall.invokedExpression,
                           GroovyBundle.message("ginq.error.message.unrecognized.query"))
     }
@@ -285,7 +284,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
   override fun visitExpression(expression: GrExpression) {
     if (isApproximatelyGinq(expression)) {
       val (innerErrors) =
-        CachedValuesManager.getCachedValue(expression, rootGinq, CachedValueProvider { CachedValueProvider.Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
+        CachedValuesManager.getCachedValue(expression, INJECTED_GINQ_KEY, CachedValueProvider { CachedValueProvider.Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
       errors.addAll(innerErrors)
     }
     else {
@@ -312,15 +311,21 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
   return e is GrMethodCall && e.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "select"
 }
 
-private val rootGinq: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
+private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
 
-fun PsiElement.isGinqRoot() : Boolean = getUserData(rootGinq) != null
+fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
 
-fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(rootGinq)?.upToDateOrNull?.get()?.second
+fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second
 
-private val ginqBinding: Key<Unit> = Key.create("Ginq binding")
+private val GINQ_BINDING: Key<Unit> = Key.create("Ginq binding")
 
-fun PsiElement.isGinqBinding() : Boolean = getUserData(ginqBinding) != null
+fun PsiElement.isGinqBinding() : Boolean = getUserData(GINQ_BINDING) != null
+
+private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
+
+fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORMED_ELEMENT, Unit)
+
+fun PsiElement.isGinqUntransformed() = getUserData(GINQ_UNTRANSFORMED_ELEMENT) != null
 
 fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
@@ -366,7 +371,7 @@ fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
 }
 
 private fun getParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-  return CachedValuesManager.getCachedValue(macroCall, rootGinq, CachedValueProvider {
+  return CachedValuesManager.getCachedValue(macroCall, INJECTED_GINQ_KEY, CachedValueProvider {
     CachedValueProvider.Result(doGetParsedGinqTree(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
   })
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
@@ -145,7 +144,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       if (parent.isGinqRoot() || localRoots.contains(parent)) {
         return false
       }
-      if (parent.getUserData(UNTRANSFORMED_ELEMENT) != null) {
+      if (parent.isGinqUntransformed()) {
         return true
       }
     }
@@ -157,8 +156,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
                               state: ResolveState,
                               place: PsiElement): Boolean {
     val name = ResolveUtil.getNameHint(processor) ?: return true
-    val tree = getParsedGinqTree(macroCall) ?: return true
-    // todo: pick the closest tree
+    val topTree = getParsedGinqTree(macroCall) ?: return true
+    val tree = place.ginqParents(macroCall, topTree).first()
     if (name == "distinct" && processor.shouldProcessMethods() && tree.select.distinct == place) {
       val call = GrLightMethodBuilder(macroCall.manager, "distinct")
       val method = JavaPsiFacade.getInstance(macroCall.project)
@@ -172,9 +171,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       for ((i, arg) in tree.select.projections.withIndex()) {
         val typeParameter = call.addTypeParameter("T$i")
         val typeParameterType = typeParameter.type()
-        call.addParameter("expr", typeParameterType)
+        call.addParameter("expr$i", typeParameterType)
         if (arg.alias != null) {
-          // todo: indexes
           typeParameters.add(typeParameter)
           resultTypeCollector[arg.alias.text] = lazy(LazyThreadSafetyMode.NONE) { typeParameterType }
         }
@@ -195,7 +193,6 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     if (processor.shouldProcessProperties() || processor.shouldProcessFields()) {
       val implicitVariable = resolveToCustomMember(place, name, tree)
       if (implicitVariable != null) {
-        // todo: pick the closest tree
         return processor.execute(implicitVariable, state)
       }
     }
@@ -237,8 +234,4 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return null
   }
 
-  companion object {
-    @JvmStatic
-    val UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
-  }
 }
