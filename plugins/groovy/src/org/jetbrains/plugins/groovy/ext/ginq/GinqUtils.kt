@@ -37,7 +37,7 @@ val joins : Set<String> = setOf(
   "fullhashjoin",
 )
 
-fun inferDataSourceComponentType(type: PsiType): PsiType? = when (type) {
+fun inferDataSourceComponentType(type: PsiType?): PsiType? = when (type) {
   is PsiArrayType -> type.componentType
   is PsiClassType -> {
     extractComponent(type, JAVA_LANG_ITERABLE)

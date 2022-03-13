@@ -47,49 +47,55 @@ data class GinqExpression(
   val select: GinqSelectFragment,
 ) {
   fun getDataSourceFragments(): Iterable<GinqDataSourceFragment> = listOf(from) + joins
+
+  fun getFilterFragments(): Iterable<GinqFilterFragment> = listOfNotNull(where, groupBy?.having) + joins.mapNotNull { it.onCondition }
+
+  fun getQueryFragments(): Iterable<GinqQueryFragment> = listOfNotNull(from, where, groupBy, orderBy, limit, select) + joins + joins.mapNotNull { it.onCondition }
 }
 
-sealed interface GinqQueryFragment
+sealed interface GinqQueryFragment {
+  val keyword: PsiElement
+}
 
-interface GinqDataSourceFragment {
+sealed interface GinqDataSourceFragment {
   val alias: GrReferenceExpression
   val dataSource: GrExpression
 }
 
 data class GinqFromFragment(
-  val fromKw: PsiElement,
+  override val keyword: PsiElement,
   override val alias: GrReferenceExpression,
   override val dataSource: GrExpression,
 ) : GinqDataSourceFragment, GinqQueryFragment
 
 data class GinqJoinFragment(
-  val joinKw: PsiElement,
+  override val keyword: PsiElement,
   override val alias: GrReferenceExpression,
   override val dataSource: GrExpression,
   val onCondition: GinqOnFragment?,
 ) : GinqDataSourceFragment, GinqQueryFragment
 
-interface GinqFilterFragment {
+sealed interface GinqFilterFragment {
   val filter: GrExpression
 }
 
 data class GinqOnFragment(
-  val onKw: PsiElement,
+  override val keyword: PsiElement,
   override val filter: GrBinaryExpression,
 ) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqWhereFragment(
-  val whereKw: PsiElement,
+  override val keyword: PsiElement,
   override val filter: GrExpression,
 ) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqHavingFragment(
-  val havingKw: PsiElement,
+  override val keyword: PsiElement,
   override val filter: GrExpression,
 ) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqGroupByFragment(
-  val groupByKw: PsiElement,
+  override val keyword: PsiElement,
   val classifiers: List<AliasedExpression>,
   val having: GinqHavingFragment?,
 ) : GinqQueryFragment
@@ -97,7 +103,7 @@ data class GinqGroupByFragment(
 data class AliasedExpression(val expression: GrExpression, val alias: GrClassTypeElement?)
 
 data class GinqOrderByFragment(
-  val orderByKw: PsiElement,
+  override val keyword: PsiElement,
   val sortingFields: List<Ordering>,
 ) : GinqQueryFragment
 
@@ -116,13 +122,13 @@ sealed interface Ordering {
 }
 
 data class GinqLimitFragment(
-  val limitKw: PsiElement,
+  override val keyword: PsiElement,
   val offset: GrExpression,
   val size: GrExpression?,
 ) : GinqQueryFragment
 
 data class GinqSelectFragment(
-  val selectKw: PsiElement,
+  override val keyword: PsiElement,
   val distinct: GrReferenceExpression?,
   val projections: List<AggregatableAliasedExpression>,
 ) : GinqQueryFragment

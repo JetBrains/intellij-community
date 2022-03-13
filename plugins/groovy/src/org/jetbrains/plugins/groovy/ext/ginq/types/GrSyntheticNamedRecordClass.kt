@@ -69,7 +69,7 @@ private fun getTypeMap(ginqExpression: GinqExpression): Map<String, Lazy<PsiType
   val map = mutableMapOf<String, Lazy<PsiType>>()
   for (fragment in ginqExpression.getDataSourceFragments()) {
     val name = fragment.alias.referenceName ?: continue
-    val type = lazyPub { fragment.dataSource.type?.let(::inferDataSourceComponentType) ?: GrLiteralClassType.NULL }
+    val type = lazyPub { inferDataSourceComponentType(fragment.dataSource.type) ?: GrLiteralClassType.NULL }
     map[name] = type
   }
   for (projection in ginqExpression.select.projections) {

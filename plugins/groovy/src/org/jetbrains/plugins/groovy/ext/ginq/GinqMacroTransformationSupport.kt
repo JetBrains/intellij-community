@@ -10,7 +10,6 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
-import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.lazyPub
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -50,13 +49,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       override fun visitElement(element: GroovyPsiElement) {
         val nestedGinq = element.getStoredGinq()
         if (nestedGinq != null) {
-          keywords.addAllIfNotNull(nestedGinq.from.fromKw, nestedGinq.where?.whereKw, nestedGinq.groupBy?.groupByKw,
-                                   nestedGinq.groupBy?.having?.havingKw, nestedGinq.orderBy?.orderByKw, nestedGinq.limit?.limitKw,
-                                   nestedGinq.select.selectKw)
-          keywords.addAll(nestedGinq.joins.mapNotNull { it.onCondition?.onKw })
-          keywords.addAll(nestedGinq.joins.map { it.joinKw })
+          keywords.addAll(nestedGinq.getQueryFragments().map { it.keyword })
           keywords.addAll(nestedGinq.select.projections.flatMap { projection ->
-            projection.windows.flatMap { listOfNotNull(it.overKw, it.rowsOrRangeKw, it.partitionKw, it.orderBy?.orderByKw) }
+            projection.windows.flatMap { listOfNotNull(it.overKw, it.rowsOrRangeKw, it.partitionKw, it.orderBy?.keyword) }
           })
           warnings.addAll(getTypecheckingWarnings(nestedGinq))
           softKeywords.addAll((nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList()) +
@@ -84,8 +79,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   private fun getTypecheckingWarnings(ginq: GinqExpression): Collection<Pair<PsiElement, @Nls String>> {
-    val filteringGragments = listOfNotNull(ginq.where, ginq.groupBy?.having) + ginq.joins.mapNotNull { it.onCondition }
-    return filteringGragments.mapNotNull {
+    val dataSourceFragments = ginq.getDataSourceFragments()
+    val filteringFragments = ginq.getFilterFragments()
+    val filterResults = filteringFragments.mapNotNull {
       val type = it.filter.type
       if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true) {
         it.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
@@ -93,6 +89,15 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         null
       }
     }
+    val dataSourceResults = dataSourceFragments.mapNotNull {
+      val type = inferDataSourceComponentType(it.dataSource.type)
+      if (type == null) {
+        it.dataSource to GroovyBundle.message("ginq.error.message.container.expected")
+      } else {
+        null
+      }
+    }
+    return filterResults + dataSourceResults
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
@@ -127,7 +132,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val dataSourceFragment = expression.ginqParents(macroCall,
                                                       tree).firstNotNullOfOrNull { parentGinq -> parentGinq.getDataSourceFragments().find { it.alias == resolved } }
       if (dataSourceFragment != null) {
-        return dataSourceFragment.dataSource.type?.let(::inferDataSourceComponentType)
+        return inferDataSourceComponentType(dataSourceFragment.dataSource.type)
       }
     }
     return null
@@ -204,7 +209,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val clazz = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, place.resolveScope)
       val dataSourceTypes = tree.getDataSourceFragments().mapNotNull {
         val aliasName = it.alias.referenceName ?: return@mapNotNull null
-        aliasName to lazyPub { it.dataSource.type?.let(::inferDataSourceComponentType) ?: PsiType.NULL }
+        aliasName to lazyPub { inferDataSourceComponentType(it.dataSource.type) ?: PsiType.NULL }
       }.toMap()
       val type = clazz?.let { GrSyntheticNamedRecordClass(emptyList(), dataSourceTypes, emptyList(), it).type() } ?: return null
       val resultType = facade.elementFactory.createType(containerClass, type)

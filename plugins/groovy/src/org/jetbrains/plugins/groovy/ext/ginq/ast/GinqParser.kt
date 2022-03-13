@@ -36,8 +36,8 @@ private fun gatherGinqExpression(errors: MutableList<ParsingError>,
   if (container.size < 2) {
     return errors to null
   }
-  val from = container.first() as? GinqFromFragment ?: return errors.also { it.add(container.first().getKw() to GroovyBundle.message("ginq.error.message.query.should.start.from.from")) } to null
-  val select = container.last() as? GinqSelectFragment ?: return errors.also { it.add(container.last().getKw() to GroovyBundle.message("ginq.error.message.query.should.end.with.select")) } to null
+  val from = container.first() as? GinqFromFragment ?: return errors.also { it.add(container.first().keyword to GroovyBundle.message("ginq.error.message.query.should.start.from.from")) } to null
+  val select = container.last() as? GinqSelectFragment ?: return errors.also { it.add(container.last().keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select")) } to null
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
@@ -48,28 +48,28 @@ private fun gatherGinqExpression(errors: MutableList<ParsingError>,
   while (index < container.lastIndex) {
     when (val currentFragment = container[index]) {
       is GinqJoinFragment -> {
-        reportMisplacement(errors, currentFragment.joinKw, listOfNotNull(where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(where?.keyword, groupBy?.keyword, orderBy?.keyword, limit?.keyword).firstOrNull())
         joins.add(container[index] as GinqJoinFragment)
       }
       is GinqWhereFragment -> {
-        reportMisplacement(errors, currentFragment.whereKw, listOfNotNull(groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(groupBy?.keyword, orderBy?.keyword, limit?.keyword).firstOrNull())
         where = currentFragment
       }
       is GinqGroupByFragment -> {
-        reportMisplacement(errors, currentFragment.groupByKw, listOfNotNull(orderBy?.orderByKw, limit?.limitKw).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(orderBy?.keyword, limit?.keyword).firstOrNull())
         groupBy = currentFragment
       }
       is GinqOrderByFragment -> {
-        reportMisplacement(errors, currentFragment.orderByKw, listOfNotNull(limit?.limitKw).firstOrNull())
+        reportMisplacement(errors, currentFragment.keyword, listOfNotNull(limit?.keyword).firstOrNull())
         orderBy = currentFragment
       }
       is GinqLimitFragment -> {
         limit = currentFragment
       }
-      is GinqFromFragment -> errors.add(currentFragment.fromKw to GroovyBundle.message("ginq.error.message.from.must.be.in.the.start.of.a.query"))
-      is GinqHavingFragment -> errors.add(currentFragment.havingKw to GroovyBundle.message("ginq.error.message.0.must.be.after.1", "having", "groupby"))
-      is GinqOnFragment -> errors.add(currentFragment.onKw to GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
-      is GinqSelectFragment -> errors.add(currentFragment.selectKw to GroovyBundle.message("ginq.error.message.select.must.be.in.the.end.of.a.query"))
+      is GinqFromFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.from.must.be.in.the.start.of.a.query"))
+      is GinqHavingFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.0.must.be.after.1", "having", "groupby"))
+      is GinqOnFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
+      is GinqSelectFragment -> errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.select.must.be.in.the.end.of.a.query"))
     }
     index += 1
   }
@@ -82,20 +82,6 @@ private fun reportMisplacement(errors: MutableList<ParsingError>, kwBefore: PsiE
   }
   errors.add(kwBefore to GroovyBundle.message("ginq.error.message.0.must.be.before.1", kwBefore.text, kwAfter.text))
   errors.add(kwAfter to GroovyBundle.message("ginq.error.message.0.must.be.after.1", kwAfter.text, kwBefore.text))
-}
-
-private fun GinqQueryFragment.getKw() : PsiElement {
-  return when(this) {
-    is GinqFromFragment -> fromKw
-    is GinqGroupByFragment -> groupByKw
-    is GinqHavingFragment -> havingKw
-    is GinqJoinFragment -> joinKw
-    is GinqLimitFragment -> limitKw
-    is GinqOnFragment -> onKw
-    is GinqOrderByFragment -> orderByKw
-    is GinqSelectFragment -> selectKw
-    is GinqWhereFragment -> whereKw
-  }
 }
 
 /**

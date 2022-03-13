@@ -819,4 +819,11 @@ from b in [1]
         select aa as e1
 """
   }
+
+  void testDataSourceTyped() {
+    testGinqHighlighting """
+        from aa in <warning>1</warning>
+        select aa as e1
+"""
+  }
 }
