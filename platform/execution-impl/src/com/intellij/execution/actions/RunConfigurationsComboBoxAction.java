@@ -191,9 +191,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
 
-    allActionsGroup.add(new RunCurrentFileAction());
-    allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
-
     RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
     if (selected != null) {
       ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
@@ -202,6 +199,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       allActionsGroup.addSeparator();
     }
+
+    allActionsGroup.add(new RunCurrentFileAction());
+    allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
