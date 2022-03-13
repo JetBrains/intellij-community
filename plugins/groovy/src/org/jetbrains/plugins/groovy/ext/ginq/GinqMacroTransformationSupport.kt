@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -91,7 +92,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val type = it.filter.type
       if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true) {
         it.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
-      } else {
+      }
+      else {
         null
       }
     }
@@ -99,7 +101,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val type = inferDataSourceComponentType(it.dataSource.type)
       if (type == null) {
         it.dataSource to GroovyBundle.message("ginq.error.message.container.expected")
-      } else {
+      }
+      else {
         null
       }
     }
@@ -186,7 +189,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       }
       val clazz = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD,
                                                                          macroCall.resolveScope)
-      call.returnType = clazz?.let { GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, resultTypeCollector.keys.toList(), it).type() }
+      call.returnType = clazz?.let {
+        GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, resultTypeCollector.keys.toList(), it).type()
+      }
 
       return processor.execute(call, state)
     }
@@ -229,15 +234,27 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   override fun computeCompletionVariants(macroCall: GrCall, offset: Int): List<LookupElement> {
     val topTree = getParsedGinqTree(macroCall)
     if (topTree == null) {
-      return listOf(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler),
-                    LookupElementBuilder.create("select").bold())
+      val closure = macroCall.argumentList?.allArguments?.find { it is GrClosableBlock } ?: return emptyList()
+      var hasFrom = false
+      var hasSelect = false
+      closure.accept(object : GroovyRecursiveElementVisitor() {
+        override fun visitMethodCall(call: GrMethodCall) {
+          super.visitMethodCall(call)
+          val invoked = call.invokedExpression.castSafelyTo<GrReferenceExpression>()
+          if (invoked?.referenceName == "from") hasFrom = true
+          if (invoked?.referenceName == "select") hasSelect = true
+        }
+      })
+      return listOfNotNull(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler).takeUnless { hasFrom },
+                           LookupElementBuilder.create("select").bold().takeUnless { hasSelect })
         .map { PrioritizedLookupElement.withPriority(it, 1.0) }
     }
     return emptyList()
   }
 
   private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, item ->
-    val template = TemplateManager.getInstance(context.project).createTemplate("ginq_data_source_${item.lookupString}", "ginq", "${item.lookupString} \$NAME$ in \$DATA_SOURCE$\$END$")
+    val template = TemplateManager.getInstance(context.project).createTemplate("ginq_data_source_${item.lookupString}", "ginq",
+                                                                               "${item.lookupString} \$NAME$ in \$DATA_SOURCE$\$END$")
     template.addVariable("NAME", ReferenceNameExpression(emptyArray(), "x"), true)
     template.addVariable("DATA_SOURCE", VariableNode("data source", null), true)
     val editor = context.editor
