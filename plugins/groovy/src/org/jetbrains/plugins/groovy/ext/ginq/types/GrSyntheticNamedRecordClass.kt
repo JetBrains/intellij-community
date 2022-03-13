@@ -64,7 +64,10 @@ private fun getTypeMap(ginqExpression: GinqExpression): Map<String, Lazy<PsiType
     map[name] = type
   }
   for (projection in ginqExpression.select.projections) {
-    val name = projection.alias?.text ?: continue // todo expression name
+    // Actually, `projection.aggregatedExpression.text` is a valid key in the absence of `projection.alias`.
+    // The problem is that the key in this case is a toString-ed parsed expression produced by the Groovy AST.
+    // It is too hard to compute and maintain such representation in a groovy-compatible way, so we'd rather not support it at all.
+    val name = projection.alias?.text ?: continue
     val type = lazyPub { projection.aggregatedExpression.type ?: GrLiteralClassType.NULL }
     map[name] = type
   }

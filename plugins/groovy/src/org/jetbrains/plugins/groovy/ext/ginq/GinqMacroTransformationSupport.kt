@@ -7,9 +7,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addAllIfNotNull
@@ -20,7 +17,6 @@ import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -37,33 +33,13 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return macro.name in ginqMethods && macro.containingClass?.name == "GinqGroovyMethods"
   }
 
-  private fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
-    return getParsedGinqInfo(macroCall).second
-  }
-
-  private fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
-    return getParsedGinqInfo(macroCall).first
-  }
-
-  private fun getParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-    return CachedValuesManager.getCachedValue(macroCall, rootGinq, CachedValueProvider {
-      CachedValueProvider.Result(doGetParsedGinqTree(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
-    })
-  }
-
-  private fun doGetParsedGinqTree(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-    val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
-                  ?: macroCall.closureArguments.singleOrNull()
-                  ?: return emptyList<ParsingError>() to null
-    return parseGinq(closure)
-  }
-
   override fun computeHighlighing(macroCall: GrCall): List<HighlightInfo> {
     val errors = getParsedGinqErrors(macroCall).mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(it.first)
         .descriptionAndTooltip(it.second)
-        .textAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).create() }
+        .textAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).create()
+    }
     val keywords = mutableListOf<PsiElement?>()
     val softKeywords = mutableListOf<PsiElement?>()
     macroCall.accept(object : GroovyRecursiveElementVisitor() {
@@ -80,7 +56,13 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           })
           softKeywords.addAll((nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList()) +
                               (nestedGinq.orderBy?.sortingFields?.mapNotNull { it.nullsKw } ?: emptyList()) +
-                              (nestedGinq.select.projections.flatMap { projection -> projection.windows.flatMap { window -> window.orderBy?.sortingFields?.flatMap { listOfNotNull(it.orderKw, it.nullsKw) } ?: emptyList() } }))
+                              (nestedGinq.select.projections.flatMap { projection ->
+                                projection.windows.flatMap { window ->
+                                  window.orderBy?.sortingFields?.flatMap {
+                                    listOfNotNull(it.orderKw, it.nullsKw)
+                                  } ?: emptyList()
+                                }
+                              }))
         }
         super.visitElement(element)
       }
@@ -103,7 +85,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val singleProjection = ginq.select.projections.singleOrNull()?.takeIf { it.alias == null }
         val componentType = if (singleProjection != null) {
           singleProjection.aggregatedExpression.type ?: PsiType.NULL
-        } else {
+        }
+        else {
           val namedRecord = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, expression.resolveScope)
           namedRecord?.let { GrSyntheticNamedRecordClass(ginq, it).type() } ?: PsiType.NULL
         }
@@ -121,7 +104,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         }
       }
       val resolved = expression.staticReference.resolve()
-      val dataSourceFragment = expression.ginqParents(macroCall, tree).firstNotNullOfOrNull { ginq ->  ginq.getDataSourceFragments().find { it.alias == resolved } }
+      val dataSourceFragment = expression.ginqParents(macroCall,
+                                                      tree).firstNotNullOfOrNull { parentGinq -> parentGinq.getDataSourceFragments().find { it.alias == resolved } }
       if (dataSourceFragment != null) {
         return dataSourceFragment.dataSource.type?.let(::inferDataSourceComponentType)
       }
@@ -133,7 +117,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val tree = getParsedGinqTree(macroCall) ?: return false
     val localRoots = tree.select.projections.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
     for (parent in element.parents(true)) {
-      if (parent.getUserData(rootGinq) != null || localRoots.contains(parent)) {
+      if (parent.isGinqRoot() || localRoots.contains(parent)) {
         return false
       }
       if (parent.getUserData(UNTRANSFORMED_ELEMENT) != null) {
@@ -154,7 +138,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val call = GrLightMethodBuilder(macroCall.manager, "distinct")
       val method = JavaPsiFacade.getInstance(macroCall.project)
         .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)
-        ?.findMethodsByName("distinct",false)?.singleOrNull()
+        ?.findMethodsByName("distinct", false)?.singleOrNull()
       if (method != null) {
         call.navigationElement = method
       }
@@ -170,7 +154,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           resultTypeCollector[arg.alias.text] = lazy(LazyThreadSafetyMode.NONE) { typeParameterType }
         }
       }
-      val clazz = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD, macroCall.resolveScope)
+      val clazz = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD,
+                                                                         macroCall.resolveScope)
       call.returnType = clazz?.let { GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, it).type() }
 
       return processor.execute(call, state)

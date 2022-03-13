@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.ext.ginq.joins
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
@@ -35,8 +36,8 @@ private fun gatherGinqExpression(errors: MutableList<ParsingError>,
   if (container.size < 2) {
     return errors to null
   }
-  val from = container.first() as? GinqFromFragment ?: return errors.also { it.add(container.first().getKw() to GroovyBundle.message("ginq.error.message.from.must.be.in.the.start.of.a.query")) } to null
-  val select = container.last() as? GinqSelectFragment ?: return errors.also { it.add(container.last().getKw() to GroovyBundle.message("ginq.error.message.select.must.be.in.the.end.of.a.query")) } to null
+  val from = container.first() as? GinqFromFragment ?: return errors.also { it.add(container.first().getKw() to GroovyBundle.message("ginq.error.message.query.should.start.from.from")) } to null
+  val select = container.last() as? GinqSelectFragment ?: return errors.also { it.add(container.last().getKw() to GroovyBundle.message("ginq.error.message.query.should.end.with.select")) } to null
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
@@ -47,8 +48,7 @@ private fun gatherGinqExpression(errors: MutableList<ParsingError>,
   while (index < container.lastIndex) {
     when (val currentFragment = container[index]) {
       is GinqJoinFragment -> {
-        reportMisplacement(errors, currentFragment.joinKw,
-                           listOfNotNull(where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw).firstOrNull())
+        reportMisplacement(errors, currentFragment.joinKw, listOfNotNull(where?.whereKw, groupBy?.groupByKw, orderBy?.orderByKw, limit?.limitKw).firstOrNull())
         joins.add(container[index] as GinqJoinFragment)
       }
       is GinqWhereFragment -> {
@@ -326,10 +326,15 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
   return e is GrMethodCall && e.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "select"
 }
 
-val rootGinq: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
+private val rootGinq: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
 
-@Deprecated("too internal, hide under functions")
-val ginqBinding: Key<Unit> = Key.create("Ginq binding")
+fun PsiElement.isGinqRoot() : Boolean = getUserData(rootGinq) != null
+
+fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(rootGinq)?.upToDateOrNull?.get()?.second
+
+private val ginqBinding: Key<Unit> = Key.create("Ginq binding")
+
+fun PsiElement.isGinqBinding() : Boolean = getUserData(ginqBinding) != null
 
 fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
@@ -343,10 +348,6 @@ fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<G
 }
 
 typealias ParsingError = Pair<PsiElement, @Nls String>
-
-fun PsiElement.getStoredGinq() : GinqExpression? {
-  return this.getUserData(rootGinq)?.upToDateOrNull?.get()?.second
-}
 
 fun getOrdering(expr: GrExpression): Ordering {
   if (expr is GrBinaryExpression && expr.operationTokenType == KW_IN) {
@@ -368,4 +369,25 @@ fun getOrdering(expr: GrExpression): Ordering {
   else {
     return Ordering.Asc(null, null, expr)
   }
+}
+
+fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
+  return getParsedGinqInfo(macroCall).second
+}
+
+fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
+  return getParsedGinqInfo(macroCall).first
+}
+
+private fun getParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
+  return CachedValuesManager.getCachedValue(macroCall, rootGinq, CachedValueProvider {
+    CachedValueProvider.Result(doGetParsedGinqTree(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
+  })
+}
+
+private fun doGetParsedGinqTree(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
+  val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
+                ?: macroCall.closureArguments.singleOrNull()
+                ?: return emptyList<ParsingError>() to null
+  return parseGinq(closure)
 }

@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceTestBase
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 
 class GinqTypeInferenceTest extends TypeInferenceTestBase {
 
@@ -17,6 +18,57 @@ class GinqTypeInferenceTest extends TypeInferenceTestBase {
     super.setUp()
     GinqTestUtils.setUp(fixture)
     myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+  }
+
+  void testGQL() {
+    doTest """
+def ee = GQL {
+        from a in [1]
+        select a
+    }
+e<caret>e
+""", "java.util.List<java.lang.Integer>"
+  }
+
+  void testNamedRecord() {
+    doTest """
+def ee = GQL {
+        from a in [1]
+        select a, a
+    }
+e<caret>e
+""", "java.util.List<org.apache.groovy.ginq.provider.collection.runtime.NamedRecord>"
+  }
+
+  void testActualBinding() {
+    doTest """
+def ee = GQL {
+        from aa in [1]
+        select aa as e1, aa as e2
+    }
+ee[0].e<caret>1
+""", JAVA_LANG_INTEGER
+  }
+
+  void testDataSourceBinding() {
+    doTest """
+def ee = GQL {
+        from aa in [1]
+        select aa as e1, aa as e2
+    }
+ee[0].a<caret>a
+""", JAVA_LANG_INTEGER
+  }
+
+  void testJoinSourceBinding() {
+    doTest """
+def ee = GQL {
+        from aa in [1]
+        crossjoin bb in [""]
+        select aa as e1, bb as e2
+    }
+ee[0].b<caret>b
+""", JAVA_LANG_STRING
   }
 
   void testNestedGinq() {
