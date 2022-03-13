@@ -24,6 +24,7 @@ class GrNamedRecordCompletionProvider : CompletionProvider<CompletionParameters>
 
 
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    // todo move typeMap to fields
     val position = parameters.position.parent?.castSafelyTo<GrReferenceExpression>() ?: return
     val qualifier = position.qualifier ?: return
     val qualifierType = qualifier.type?.resolve()?.castSafelyTo<GrSyntheticNamedRecordClass>() ?: return

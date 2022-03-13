@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
@@ -217,6 +220,14 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       return GrLightVariable(place.manager, "_rn", CommonClassNames.JAVA_LANG_LONG, containerClass)
     }
     return null
+  }
+
+  override fun computeCompletionVariants(macroCall: GrCall, offset: Int): List<LookupElement> {
+    val topTree = getParsedGinqTree(macroCall)
+    if (topTree == null) {
+      return listOf(LookupElementBuilder.create("from").bold(), LookupElementBuilder.create("select").bold()).map { PrioritizedLookupElement.withPriority(it, 1.0) }
+    }
+    return emptyList()
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
