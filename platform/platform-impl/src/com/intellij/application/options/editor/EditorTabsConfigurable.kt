@@ -140,19 +140,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
   private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
     enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
   }
-
-  private fun <T : JComponent> Cell<T>.enableIfKeepPinnedTabsOnLeft() {
-    enabledIf(object : ComponentPredicate() {
-      override fun addListener(listener: (Boolean) -> Unit) {
-        TODO("Not yet implemented")
-      }
-
-      override fun invoke(): Boolean {
-        return AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")
-      }
-    })
-  }
-
   override fun apply() {
     val uiSettingsChanged = isModified
     super.apply()
