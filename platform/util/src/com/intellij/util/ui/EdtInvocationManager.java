@@ -56,7 +56,7 @@ public abstract class EdtInvocationManager {
 
       EdtInvocationManager.dispatchEventMethod = dispatchEventMethod;
     }
-
+    boolean threadsDumped = false;
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
@@ -74,13 +74,16 @@ public abstract class EdtInvocationManager {
       if (i % 10000 == 0) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
-        // todo temporary hack to diagnose hanging builds
-        try {
-          Object application = ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null);
-          System.err.println("Application="+ application + "\n" + ThreadDumper.dumpThreadsToString());
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
+        if (!threadsDumped) {
+          threadsDumped = true;
+          // todo temporary hack to diagnose hanging builds
+          try {
+            Object application = ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null);
+            System.err.println("Application="+ application + "\n" + ThreadDumper.dumpThreadsToString());
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }
       }
     }
