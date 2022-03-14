@@ -298,7 +298,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
   }
 
   override fun visitExpression(expression: GrExpression) {
-    if (isApproximatelyGinq(expression)) {
+    if (!isTopLevel && isApproximatelyGinq(expression)) {
       val (innerErrors) =
         CachedValuesManager.getCachedValue(expression, INJECTED_GINQ_KEY, CachedValueProvider { CachedValueProvider.Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
       errors.addAll(innerErrors)
@@ -324,7 +324,11 @@ private fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.cas
 
 // e is not ginq --> false
 private fun isApproximatelyGinq(e: PsiElement): Boolean {
-  return e is GrMethodCall && e.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "select"
+  val available = listOf("select", "from")
+  val qualifiers = generateSequence({ e }) {
+    if (it is GrMethodCall) it.invokedExpression else if (it is GrReferenceExpression) it.qualifierExpression else null
+  }
+  return qualifiers.any { (it is GrMethodCall && it.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName in available) || (it is GrReferenceExpression && it.referenceName in available)}
 }
 
 private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")

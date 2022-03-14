@@ -181,4 +181,14 @@ select (rowNumber() over (partitionby x orderby x rows ))
 ''')
   }
 
+  void testCompleteInner() {
+    completeGinq('''
+from nnnn in (from a in [1] innerhashjo<caret> select b)
+select nnnn
+''', '''
+from nnnn in (from a in [1] innerhashjoin x in  on  select b)
+select nnnn
+''')
+  }
+
 }

@@ -32,10 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 import org.jetbrains.plugins.groovy.lang.resolve.*
@@ -286,6 +283,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     }
     val offset = parameters.offset
     if (this.isUntransformed(macroCall, position)) {
+      if (position.parent?.parent is GrParenthesizedExpression) {
+        result.addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
+      }
       val bindings = closestGinq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset }
       for (binding in bindings) {
         val name = binding.referenceName ?: continue
