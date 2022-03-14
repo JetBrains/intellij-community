@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
@@ -29,11 +29,13 @@ private val initializeTracer by lazy {
   }
 }
 
-fun createBuildContext(homePath: String, productProperties: ProductProperties,
-                       buildTools: ProprietaryBuildTools,
-                       skipDependencySetup: Boolean = false,
-                       communityHomePath: String = "$homePath/community",
-                       buildOptionsCustomizer: (BuildOptions) -> Unit = {}): BuildContext {
+fun createBuildContext(
+  homePath: String, productProperties: ProductProperties,
+  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  skipDependencySetup: Boolean = false,
+  communityHomePath: String = "$homePath/community",
+  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+): BuildContext {
   val options = BuildOptions()
   options.isSkipDependencySetup = skipDependencySetup
   options.isIsTestBuild = true
@@ -45,14 +47,39 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
 
-fun runTestBuild(homePath: String,
-                 productProperties: ProductProperties,
-                 buildTools: ProprietaryBuildTools,
-                 communityHomePath: String = "$homePath/community",
-                 traceSpanName: String? = null,
-                 verifier: (paths: BuildPaths) -> Unit = {},
-                 buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
+fun runTestBuild(
+  homePath: String,
+  productProperties: ProductProperties,
+  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  communityHomePath: String = "$homePath/community",
+  traceSpanName: String? = null,
+  verifier: (paths: BuildPaths) -> Unit = {},
+  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+) {
+  val buildContext = createBuildContext(
+    homePath = homePath,
+    productProperties = productProperties,
+    buildTools = buildTools,
+    skipDependencySetup = false,
+    communityHomePath = communityHomePath,
+    buildOptionsCustomizer = buildOptionsCustomizer,
+  )
+
+  runTestBuild(
+    buildContext = buildContext,
+    traceSpanName = traceSpanName,
+    verifier = verifier,
+  )
+}
+
+fun runTestBuild(
+  buildContext: BuildContext,
+  traceSpanName: String? = null,
+  verifier: (paths: BuildPaths) -> Unit = {},
+) {
   initializeTracer
+
+  val productProperties = buildContext.productProperties
 
   // to see in Jaeger as a one trace
   val traceFileName = "${productProperties.baseFileName}-trace.json"
@@ -61,7 +88,6 @@ fun runTestBuild(homePath: String,
   val spanScope = span.makeCurrent()
 
   try {
-    val buildContext = createBuildContext(homePath, productProperties, buildTools, false, communityHomePath, buildOptionsCustomizer)
     val outDir = buildContext.paths.buildOutputDir
     span.setAttribute("outDir", outDir.toString())
     val messages = buildContext.messages as BuildMessagesImpl

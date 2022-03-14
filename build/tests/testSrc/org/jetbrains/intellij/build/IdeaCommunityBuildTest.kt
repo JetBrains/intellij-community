@@ -11,9 +11,9 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomePathFor(javaClass)!!
     val communityHomePath = "$homePath/community"
     runTestBuild(
-      homePath = communityHomePath, communityHomePath = communityHomePath,
+      homePath = communityHomePath,
+      communityHomePath = communityHomePath,
       productProperties = IdeaCommunityProperties(communityHomePath),
-      buildTools = ProprietaryBuildTools.DUMMY
     ) {
       it.projectClassesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
                                          ?: "$homePath/out/classes"
