@@ -368,11 +368,11 @@ public final class JBUI {
       }
 
       public static int elementIconGap() {
-        return new JBValue.UIInteger("ActionsList.icon.gap", scale(6)).get();
+        return new JBValue.UIInteger("ActionsList.icon.gap", 6).get();
       }
 
       public static int mnemonicIconGap() {
-        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", scale(6)).get();
+        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", 6).get();
       }
 
       public static @NotNull Font applyStylesForNumberMnemonic(Font font) {
