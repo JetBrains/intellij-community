@@ -1082,17 +1082,16 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsDispatchThread() {
-    if (isDispatchThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    throwThreadAccessException("Access is allowed from event dispatch thread only");
+    if (!isDispatchThread()) {
+      throwThreadAccessException("Access is allowed from event dispatch thread only");
+    }
   }
 
   @Override
   public void assertIsNonDispatchThread() {
-    if (isUnitTestMode() || isHeadlessEnvironment()) return;
-    if (!isDispatchThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    throwThreadAccessException("Access from event dispatch thread is not allowed.");
+    if (!isUnitTestMode() && !isHeadlessEnvironment() && isDispatchThread()) {
+      throwThreadAccessException("Access from event dispatch thread is not allowed");
+    }
   }
 
   private static void throwThreadAccessException(@NotNull String message) {
@@ -1106,14 +1105,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsWriteThread() {
-    if (isWriteThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    throw new RuntimeExceptionWithAttachments(
-      "Access is allowed from write thread only.",
-      "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-      "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nWrite thread: " + describe(myLock.writeThread),
-      new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+    if (!isWriteThread()) {
+      throwThreadAccessException("Access is allowed from write thread only");
+    }
   }
 
   @Override
