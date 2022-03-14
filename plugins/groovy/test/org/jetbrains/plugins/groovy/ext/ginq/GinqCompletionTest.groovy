@@ -18,7 +18,11 @@ class GinqCompletionTest extends GroovyCompletionTestBase {
   }
 
   private void completeGinq(String before, String after) {
-    doBasicTest("GQ { \n $before \n }", "GQ { \n $after \n }")
+    doBasicTest("GQ {\n$before\n}", "GQ {\n$after\n}")
+  }
+
+  private void noCompleteGinq(String before, String... excluded) {
+    doNoVariantsTest("GQ { \n $before \n }", excluded)
   }
 
   void testFrom() {
@@ -29,6 +33,13 @@ from x in
 ''')
   }
 
+  void testNoFrom() {
+    noCompleteGinq('''\
+from x in [1]
+fro<caret>
+''', 'from')
+  }
+
   void testSelect() {
     completeGinq('''\
 from x in [1]
@@ -37,6 +48,72 @@ sele<caret>
 from x in [1]
 select
 ''')
+  }
+
+  void testJoin() {
+    completeGinq('''\
+from x in [1] 
+fullhashjoi<caret>
+select x
+''', '''\
+from x in [1] 
+fullhashjoin x in
+select x
+''')
+  }
+
+  void testWhere() {
+    completeGinq('''\
+from x in [1] 
+whe<caret>
+select x
+''', '''\
+from x in [1] 
+where
+select x
+''')
+  }
+
+  void testOn() {
+    completeGinq('''\
+from x in [1] 
+join y in [1] o<caret>
+select x
+''', '''\
+from x in [1] 
+join y in [1] on
+select x
+''')
+  }
+
+  void testAfterCrossjoin() {
+    completeGinq('''\
+from x in [1] 
+crossjoin y in [1]
+whe<caret>
+select x
+''', '''\
+from x in [1] 
+crossjoin y in [1]
+where
+select x
+''')
+  }
+
+  void testNoOnAfterCrossjoin() {
+    noCompleteGinq('''\
+from x in [1] 
+crossjoin y in [1] <caret>
+select x
+''', 'on')
+  }
+
+  void testNoJoinAfterJoin() {
+    noCompleteGinq('''\
+from x in [1] 
+join y in [1] <caret>
+select x
+''', 'join', 'crossjoin')
   }
 
 }

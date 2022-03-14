@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
+import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
 import com.intellij.util.lazyPub
 import org.jetbrains.annotations.Nls
@@ -261,8 +262,46 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       if (!hasSelect) {
         result.addElement(LookupElementBuilder.create("select").bold())
       }
+      return
     }
-    val completionVariants = mutableListOf<LookupElement>()
+    val offset = parameters.offset
+    val latestGinq = topTree.getQueryFragments().minByOrNull {
+      val endOffset = it.keyword.endOffset
+      if (endOffset <= offset) {
+        offset - endOffset
+      }
+      else {
+        Int.MAX_VALUE
+      }
+    }
+    if (latestGinq != null) {
+      val joinStartCondition : (GinqQueryFragment) -> Boolean = {
+        it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == "crossjoin")
+      }
+      if (joinStartCondition(latestGinq)) {
+        joins.forEach { result.addElement(LookupElementBuilder.create(it).bold().withInsertHandler(dataSourceInsertHandler)) }
+      }
+      if (latestGinq is GinqJoinFragment && latestGinq.onCondition == null && latestGinq.keyword.text != "crossjoin") {
+        result.addElement(LookupElementBuilder.create("on").bold())
+      }
+      if (joinStartCondition(latestGinq) && closestGinq.where == null) {
+        result.addElement(LookupElementBuilder.create("where").bold())
+      }
+      val groupByCondition : (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
+      if (groupByCondition(latestGinq) && closestGinq.groupBy == null) {
+        result.addElement(LookupElementBuilder.create("groupby").bold())
+      }
+      if (latestGinq is GinqGroupByFragment && latestGinq.having == null) {
+        result.addElement(LookupElementBuilder.create("having").bold())
+      }
+      val orderByCondition : (GinqQueryFragment) -> Boolean = { groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment }
+      if (orderByCondition(latestGinq) && closestGinq.orderBy == null) {
+        result.addElement(LookupElementBuilder.create("orderby").bold())
+      }
+      if ((orderByCondition(latestGinq) || latestGinq is GinqOrderByFragment) && closestGinq.limit == null) {
+        result.addElement(LookupElementBuilder.create("limit").bold())
+      }
+    }
     return
   }
 
