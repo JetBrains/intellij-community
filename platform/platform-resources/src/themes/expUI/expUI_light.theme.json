@@ -157,6 +157,10 @@
       "ArrowButton.background": "Grey13"
     },
 
+    "ComboPopup.border": {
+      "os.windows": "1,1,1,1,#B9BDC9"
+    },
+
     "ContextHelp": {
       "fontSizeOffset": {
         "os.windows": 0
@@ -277,6 +281,7 @@
 
     "Popup": {
       "background": "Grey13",
+      "borderColor": "#B9BDC9",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
