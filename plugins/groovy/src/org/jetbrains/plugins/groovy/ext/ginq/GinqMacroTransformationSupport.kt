@@ -16,6 +16,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.endOffset
@@ -290,12 +291,22 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         val name = binding.referenceName ?: continue
         result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withPsiElement(binding).withTypeText(binding.type?.presentableText).withIcon(JetgroovyIcons.Groovy.Variable), 1.0))
       }
+      if (closestGinq.select.projections.any { PsiTreeUtil.isAncestor(it.aggregatedExpression, position, false) }) {
+        for ((windowName, signature) in windowFunctions) {
+          val lookupElement = LookupElementBuilder.create(windowName)
+            .withIcon(JetgroovyIcons.Groovy.Method)
+            .withTypeText(signature.returnType.substringAfterLast('.'))
+            .withTailText(signature.parameters.joinToString(", ", "(", ")") { it.second.substringAfterLast('.') })
+            .withInsertHandler(windowInsertHandler)
+          result.addElement(lookupElement)
+        }
+      }
       return
     }
     else {
       result.stopHere()
     }
-    val latestGinq = topTree.getQueryFragments().minByOrNull {
+    val latestGinq = closestGinq.getQueryFragments().minByOrNull {
       val endOffset = it.keyword.endOffset
       if (endOffset <= offset) {
         offset - endOffset
@@ -347,6 +358,20 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     template.addVariable("DATA_SOURCE", VariableNode("data source", null), true)
     if (requiresOn) {
       template.addVariable("COND", VariableNode("on condition", null), true)
+    }
+    val editor = context.editor
+    editor.document.deleteString(context.startOffset, context.tailOffset)
+    TemplateManager.getInstance(context.project).startTemplate(editor, template)
+  }
+
+  private val windowInsertHandler = InsertHandler<LookupElement> { context, lookupItem ->
+    val item = lookupItem.lookupString
+    val zeroArg = item in windowFunctions.filter { (name, sign) -> sign.parameters.isEmpty() }.keys
+    val template = TemplateManager.getInstance(context.project)
+      .createTemplate("ginq_window_$item", "ginq",
+                      "($item(${if (zeroArg) "" else "\$ARG$"}) over (\$END$))")
+    if (!zeroArg) {
+      template.addVariable("ARG", VariableNode("argument", null), true)
     }
     val editor = context.editor
     editor.document.deleteString(context.startOffset, context.tailOffset)

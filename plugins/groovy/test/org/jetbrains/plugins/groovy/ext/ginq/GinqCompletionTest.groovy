@@ -33,13 +33,6 @@ from x in
 ''')
   }
 
-  void testNoFrom() {
-    noCompleteGinq('''\
-from x in [1]
-fro<caret>
-''', 'from')
-  }
-
   void testSelect() {
     completeGinq('''\
 from x in [1]
@@ -125,6 +118,26 @@ select xxxx
 from xxxx in [1] 
 where xxxx
 select xxxx
+''')
+  }
+
+  void testCompleteInWindow() {
+    completeGinq('''
+from x in [1]
+select rowNu<caret>
+''', '''
+from x in [1]
+select (rowNumber() over ())
+''')
+  }
+
+  void testCompleteInWindow2() {
+    completeGinq('''
+from x in [1]
+select firstVal<caret>
+''', '''
+from x in [1]
+select (firstValue() over ())
 ''')
   }
 

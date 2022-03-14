@@ -141,9 +141,9 @@ fun resolveInOverClause(place: PsiElement, name: String): PsiMethod? {
   }
 }
 
-private data class Signature(val returnType: String, val parameters: List<Pair<String, String>>)
+data class Signature(val returnType: String, val parameters: List<Pair<String, String>>)
 
-private val windowFunctions : Map<String, Signature> = mapOf(
+val windowFunctions : Map<String, Signature> = mapOf(
   "rowNumber" to Signature(JAVA_LANG_LONG, emptyList()),
   "rank" to Signature(JAVA_LANG_LONG, emptyList()),
   "denseRank" to Signature(JAVA_LANG_LONG, emptyList()),
