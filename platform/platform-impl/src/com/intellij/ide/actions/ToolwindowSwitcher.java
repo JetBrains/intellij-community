@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -23,13 +22,11 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,26 +126,18 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
   }
 
   private static final class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
-    private final JPanel myPanel;
+    private final SelectablePanel myPanel;
     private final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     private final JLabel myShortcutLabel = new JLabel();
 
     private ToolWindowsWidgetCellRenderer() {
-      myPanel = new BorderLayoutPanel() {
-        @Override
-        public void paintComponent(Graphics g) {
-          Color bg = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground(false, false);
-          g.setColor(bg);
-          g.fillRect(0,0, getWidth(), getHeight());
-          if (!getBackground().equals(bg)) {
-            g.setColor(getBackground());
-            GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-            g.fillRoundRect(4, 1, getWidth() - 8, getHeight() - 2, 8, 8);
-            config.restore();
-          }
-        }
-      }.addToLeft(myTextLabel).addToRight(myShortcutLabel);
-      myShortcutLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
+      myPanel = new SelectablePanel(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground(false, false));
+      myPanel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+      myPanel.setSelectionInsets(JBUI.insets(1, 4));
+      myPanel.setLayout(new BorderLayout());
+      myPanel.add(myTextLabel, BorderLayout.WEST);
+      myPanel.add(myShortcutLabel, BorderLayout.EAST);
+      myShortcutLabel.setBorder(JBUI.Borders.empty(0, 8, 1, 0));
       myPanel.setBorder(JBUI.Borders.empty(4, 12));
     }
 
