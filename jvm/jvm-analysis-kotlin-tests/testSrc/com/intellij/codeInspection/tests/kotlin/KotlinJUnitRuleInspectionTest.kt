@@ -3,20 +3,21 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 
 class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
-  fun `test field @Rule highlighting`() {
+  fun `test field @Rule highlighting public`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       package test
 
       import org.junit.Rule
+      import test.SomeTestRule
 
       class PrivateRule {
         @Rule
-        private var <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error> = 0
+        private var <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error> = SomeTestRule()
       }
     """.trimIndent())
   }
 
-  fun `test method @Rule highlighting`() {
+  fun `test method @Rule highlighting static`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       package test
 
@@ -24,7 +25,20 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
 
       class PrivateRule {
         @Rule
-        private fun <error descr="Methods annotated with '@org.junit.Rule' should be 'public'">x</error>() = 0
+        private fun <error descr="Methods annotated with '@org.junit.Rule' should be 'public'">x</error>() = SomeTestRule()
+      }
+    """.trimIndent())
+  }
+
+  fun `test method @Rule highlighting type`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      package test
+
+      import org.junit.Rule
+
+      class PrivateRule {
+        @Rule
+        fun <error descr="Method return type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">x</error>() = 0
       }
     """.trimIndent())
   }
