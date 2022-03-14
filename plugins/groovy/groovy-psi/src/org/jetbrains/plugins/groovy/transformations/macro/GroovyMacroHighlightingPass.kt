@@ -34,7 +34,7 @@ private class GroovyMacroHighlightingPass(val file: GroovyFileBase, document: Do
       override fun visitMethodCall(call: GrMethodCall) {
         progress.checkCanceled()
         val availableMacroSupport = getAvailableMacroSupport(call)
-        val customHighlighting = availableMacroSupport?.computeHighlighing(call)?.takeUnless(List<HighlightInfo>::isEmpty)
+        val customHighlighting = availableMacroSupport?.computeHighlighting(call)?.takeUnless(List<HighlightInfo>::isEmpty)
         if (customHighlighting == null) {
           return super.visitMethodCall(call)
         }

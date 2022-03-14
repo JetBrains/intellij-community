@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -394,7 +394,7 @@ public class GroovyBlockGenerator {
   }
 
   @NotNull
-  List<Block> generateCodeSubBlocks(final List<ASTNode> children) {
+  public List<Block> generateCodeSubBlocks(final List<ASTNode> children) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
 
     List<ASTNode> flattenChildren = flattenChildren(children);
@@ -692,7 +692,7 @@ public class GroovyBlockGenerator {
    * @param node Tree node
    * @return true, if the current node can be myBlock node, else otherwise
    */
-  private static boolean canBeCorrectBlock(final ASTNode node) {
+  public static boolean canBeCorrectBlock(final ASTNode node) {
     return !node.getText().trim().isEmpty();
   }
 

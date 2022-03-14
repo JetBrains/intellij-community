@@ -4,6 +4,8 @@ package org.jetbrains.plugins.groovy.lang.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
+import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupportEx
 import org.jetbrains.plugins.groovy.transformations.macro.getMacroHandler
 
 class GrMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -18,6 +20,6 @@ class GrMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val position = parameters.position
     val (macroCall, macroSupport) = getMacroHandler(position) ?: return
-    macroSupport.computeCompletionVariants(macroCall, parameters, result)
+    macroSupport.castSafelyTo<GroovyMacroTransformationSupportEx>()?.computeCompletionVariants(macroCall, parameters, result)
   }
 }
