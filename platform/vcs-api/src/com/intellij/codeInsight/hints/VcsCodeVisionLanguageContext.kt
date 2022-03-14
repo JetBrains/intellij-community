@@ -4,11 +4,13 @@ package com.intellij.codeInsight.hints
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
 /**
  * Adds support for author code lenses to editor.
  */
+@ApiStatus.Experimental
 interface VcsCodeVisionLanguageContext {
   companion object {
     const val EXTENSION = "com.intellij.vcs.codeVisionLanguageContext"
