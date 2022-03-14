@@ -13,14 +13,7 @@ import java.util.Comparator;
  * @author Bas Leijdekkers
  */
 public final class NaturalComparator implements Comparator<String> {
-  public static final Comparator<String> INSTANCE = new NaturalComparator(true);
-  public static final Comparator<String> CASE_SENSITIVE_INSTANCE = new NaturalComparator(false);
-
-  private final boolean myIgnoreCase;
-
-  private NaturalComparator(boolean ignoreCase) {
-    myIgnoreCase = ignoreCase;
-  }
+  public static final Comparator<String> INSTANCE = new NaturalComparator();
 
   @Override
   public int compare(String s1, String s2) {
@@ -28,7 +21,7 @@ public final class NaturalComparator implements Comparator<String> {
     if (s1 == s2) return 0;
     if (s1 == null) return -1;
     if (s2 == null) return +1;
-    return naturalCompare(s1, s2, s1.length(), s2.length(), myIgnoreCase);
+    return naturalCompare(s1, s2, s1.length(), s2.length(), true);
   }
 
   @Contract(pure = true)
