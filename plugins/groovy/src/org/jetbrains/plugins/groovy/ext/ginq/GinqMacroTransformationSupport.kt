@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq
 
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.quickfix.ReferenceNameExpression
@@ -33,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport
 
@@ -147,7 +150,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return null
   }
 
-  override fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement): Boolean {
+  override fun isUntransformed(macroCall: GrMethodCall, element: PsiElement): Boolean {
     val tree = getParsedGinqTree(macroCall) ?: return false
     val localRoots = tree.select.projections.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
     for (parent in element.parents(true)) {
@@ -231,13 +234,20 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return null
   }
 
-  override fun computeCompletionVariants(macroCall: GrCall, offset: Int): List<LookupElement> {
+  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet) {
+    val position = parameters.position
     val topTree = getParsedGinqTree(macroCall)
-    if (topTree == null) {
-      val closure = macroCall.argumentList?.allArguments?.find { it is GrClosableBlock } ?: return emptyList()
+    val closestGinq = topTree?.let { position.ginqParents(macroCall, it) }?.firstOrNull()
+    if (this.isUntransformed(macroCall, position)) {
+      return
+    } else {
+      result.stopHere()
+    }
+    if (closestGinq == null) {
+      val closure = macroCall.getArguments()?.filterIsInstance<ExpressionArgument>()?.find { it.expression is GrClosableBlock } ?: return
       var hasFrom = false
       var hasSelect = false
-      closure.accept(object : GroovyRecursiveElementVisitor() {
+      closure.expression.accept(object : GroovyRecursiveElementVisitor() {
         override fun visitMethodCall(call: GrMethodCall) {
           super.visitMethodCall(call)
           val invoked = call.invokedExpression.castSafelyTo<GrReferenceExpression>()
@@ -245,11 +255,15 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           if (invoked?.referenceName == "select") hasSelect = true
         }
       })
-      return listOfNotNull(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler).takeUnless { hasFrom },
-                           LookupElementBuilder.create("select").bold().takeUnless { hasSelect })
-        .map { PrioritizedLookupElement.withPriority(it, 1.0) }
+      if (!hasFrom) {
+        result.addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
+      }
+      if (!hasSelect) {
+        result.addElement(LookupElementBuilder.create("select").bold())
+      }
     }
-    return emptyList()
+    val completionVariants = mutableListOf<LookupElement>()
+    return
   }
 
   private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, item ->

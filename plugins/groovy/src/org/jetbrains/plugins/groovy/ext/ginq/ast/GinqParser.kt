@@ -32,11 +32,11 @@ fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpress
 
 private fun gatherGinqExpression(errors: MutableList<ParsingError>,
                                  container: List<GinqQueryFragment>): Pair<List<ParsingError>, GinqExpression?> {
-  if (container.size < 2) {
-    return errors to null
+  if (container.isEmpty()) {
+    return emptyList<ParsingError>() to null
   }
-  val from = container.first() as? GinqFromFragment ?: return errors.also { it.add(container.first().keyword to GroovyBundle.message("ginq.error.message.query.should.start.from.from")) } to null
-  val select = container.last() as? GinqSelectFragment ?: return errors.also { it.add(container.last().keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select")) } to null
+  val from = container.first() as? GinqFromFragment ?: return listOf(container.first().keyword to GroovyBundle.message("ginq.error.message.query.should.start.from.from")) to null
+  val select = container.last() as? GinqSelectFragment ?: return listOf((container.last().keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select"))) to null
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
