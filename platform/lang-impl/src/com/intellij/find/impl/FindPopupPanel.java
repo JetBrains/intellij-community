@@ -90,6 +90,7 @@ import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -830,8 +831,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
       //noinspection UseDPIAwareInsets
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
-      //noinspection UseDPIAwareInsets
-      scrollPane.setBorder(JBUI.Borders.empty(new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right)));
       bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
@@ -843,9 +842,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
       myUsagePreviewTitle.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
-      scrollPane.setBorder(JBUI.Borders.empty());
       bottomPanel.setBorder(JBUI.Borders.empty(5));
     }
+    scrollPane.setBorder(JBUI.Borders.empty());
     add(header.panel, "growx, pushx, wrap");
 
     add(mySearchTextArea, "pushx, growx, wrap");
@@ -1972,8 +1971,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     private UsageTableCellRenderer(@NotNull GlobalSearchScope scope) {
       if (ExperimentalUI.isNewUI()) {
-        setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
+        Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+        Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+        //noinspection UseDPIAwareBorders
+        setBorder(new EmptyBorder(innerInsets.top, innerInsets.left + textFieldBorderInsets.left, innerInsets.bottom,
+                                  innerInsets.right + textFieldBorderInsets.right));
         setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+        //noinspection UseDPIAwareInsets
+        setSelectionInsets(new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
       } else {
         setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
       }
