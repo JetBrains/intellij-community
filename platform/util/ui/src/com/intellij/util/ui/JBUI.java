@@ -923,6 +923,15 @@ public final class JBUI {
       public static int minimumHintWidth() {
         return JBUIScale.scale(170);
       }
+
+      public static class Selection {
+        public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
+
+        @NotNull
+        public static Insets innerInsets() {
+          return insets("Popup.Selection.innerInsets", insets(2, 8));
+        }
+      }
     }
 
     public static final class Focus {

@@ -65,6 +65,7 @@ import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -1886,7 +1887,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
-  static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
+
+  private static class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
     private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -1904,6 +1906,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           }
         }
         setBorder(null);
+      }
+
+      @Override
+      protected boolean shouldPaintBackground() {
+        return false;
       }
 
       @NotNull
@@ -1938,6 +1945,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         setBorder(null);
       }
 
+      @Override
+      protected boolean shouldPaintBackground() {
+        return false;
+      }
+
       @NotNull
       private @NlsSafe String getFilePath(@NotNull UsageInfo2UsageAdapter ua) {
         VirtualFile file = ua.getFile();
@@ -1959,11 +1971,19 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     private final GlobalSearchScope myScope;
 
     UsageTableCellRenderer(@NotNull GlobalSearchScope scope) {
+      if (ExperimentalUI.isNewUI()) {
+        setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
+        setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+      } else {
+        setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+      }
+
       myScope = scope;
+      myUsageRenderer.setOpaque(false);
+      myFileAndLineNumber.setOpaque(false);
       setLayout(new BorderLayout());
       add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
-      setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
     }
 
     @Override
@@ -2006,15 +2026,16 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      setBackground(myUsageRenderer.getBackground());
-      if (!isSelected && value instanceof UsageInfo2UsageAdapter) {
+      Color bg;
+      if (value instanceof UsageInfo2UsageAdapter) {
         UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
         Project project = usageAdapter.getUsageInfo().getProject();
-        Color color = VfsPresentationUtil.getFileBackgroundColor(project, usageAdapter.getFile());
-        setBackground(color);
-        myUsageRenderer.setBackground(color);
-        myFileAndLineNumber.setBackground(color);
+        bg = VfsPresentationUtil.getFileBackgroundColor(project, usageAdapter.getFile());
+      } else {
+        bg = RenderingUtil.getBackground(table, false);
       }
+      setUnselectedBackground(bg);
+      setBackground(isSelected ? RenderingUtil.getBackground(table, true) : bg);
       getAccessibleContext().setAccessibleName(FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(), myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
       return this;
     }

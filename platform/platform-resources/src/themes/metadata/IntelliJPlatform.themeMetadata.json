@@ -883,6 +883,16 @@
       "description": "On Mac, the popup border is not visible by default. Set to true to make it visible"
     },
     {
+      "key": "Popup.Selection.arc",
+      "description": "Selection border corners radius in selection (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "Popup.Selection.innerInsets",
+      "description": "Inner insets in selection line (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
       "key": "Popup.separatorColor",
       "description": "Separator line in lists and the vertical separator line in the Switcher and Recent Files popups"
     },
