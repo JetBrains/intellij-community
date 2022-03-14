@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -63,11 +64,13 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
   private InspectionProfileImpl myExternalProfile;
-  private Runnable myRerunAction = () -> {};
+  @NotNull
+  private Runnable myRerunAction = EmptyRunnable.getInstance();
 
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
-  private final Map<String, Tools> myTools = new HashMap<>();
+  /** null means {@link #initializeTools(List, List, List)} wasn't called yet */
+  private Map<String, Tools> myTools;
 
   @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
@@ -130,13 +133,16 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       extension.cleanup();
     }
 
-    for (Tools tools : myTools.values()) {
-      for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper<?,?> toolWrapper = state.getTool();
-        toolWrapper.cleanup(myProject);
+    // allow to call cleanupTools() even when initializeTools() wasn't called: suspicious but this is how launchInspections() works - by calling cleanupTools() first
+    if (myTools != null) {
+      for (Tools tools : myTools.values()) {
+        for (ScopeToolState state : tools.getTools()) {
+          InspectionToolWrapper<?,?> toolWrapper = state.getTool();
+          toolWrapper.cleanup(myProject);
+        }
       }
+      myTools = null;
     }
-    myTools.clear();
 
     EntryPointsManager entryPointsManager = getProject().isDisposed() ? null : EntryPointsManager.getInstance(getProject());
     if (entryPointsManager != null) {
@@ -189,7 +195,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   public boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool) {
-    Tools tools = myTools.get(tool.getShortName());
+    Tools tools = getTools().get(tool.getShortName());
     if (tools != null && file != null) {
       for (ScopeToolState state : tools.getTools()) {
         NamedScope namedScope = state.getScope(file.getProject());
@@ -284,9 +290,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                               @NotNull List<Tools> outLocalTools,
                               @NotNull List<? super Tools> outGlobalSimpleTools) {
     List<Tools> usedTools = getUsedTools();
+    Map<String, Tools> tools = new HashMap<>(usedTools.size());
     for (Tools currentTools : usedTools) {
       String shortName = currentTools.getShortName();
-      myTools.put(shortName, currentTools);
+      tools.put(shortName, currentTools);
       InspectionToolWrapper<?,?> toolWrapper = currentTools.getTool();
       classifyTool(outGlobalTools, outLocalTools, outGlobalSimpleTools, currentTools, toolWrapper);
 
@@ -299,6 +306,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         appendJobDescriptor(jobDescriptor);
       }
     }
+    myTools = Collections.unmodifiableMap(tools);
     for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
       extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
     }
@@ -348,6 +356,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   public Map<String, Tools> getTools() {
+    if (myTools == null) {
+      throw new IllegalStateException("Tools are not initialized. Please call initializeTools() before use");
+    }
     return myTools;
   }
 
