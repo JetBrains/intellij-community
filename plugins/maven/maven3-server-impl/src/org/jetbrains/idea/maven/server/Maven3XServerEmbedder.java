@@ -678,7 +678,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
     ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
 
-    ModelValidator modelValidator = getComponent(ModelValidator.class);
+    ModelValidator modelValidator;
+    if (VersionComparatorUtil.compare("3.8.5", getMavenVersion()) >= 0) {
+      modelValidator = getComponent(ModelValidator.class);
+    } else {
+      modelValidator = getComponent(ModelValidator.class, "ide");
+    }
     myContainer.addComponent(modelValidator, ModelValidator.class.getName());
 
     DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
