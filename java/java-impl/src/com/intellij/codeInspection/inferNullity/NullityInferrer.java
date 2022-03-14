@@ -245,7 +245,8 @@ public class NullityInferrer {
     }
   }
 
-  private boolean isNotNull(PsiModifierListOwner owner) {
+  private boolean isNotNull(@Nullable PsiModifierListOwner owner) {
+    if (owner == null) return false;
     if (NullableNotNullManager.isNotNull(owner)) {
       return true;
     }
