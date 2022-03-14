@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.references
 
@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.search.canHaveSyntheticGetter
+import org.jetbrains.kotlin.idea.search.canHaveSyntheticSetter
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
@@ -33,6 +35,7 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         if (element !is PsiMethod || !isAccessorName(element.name)) return false
+        if (getter && !element.canHaveSyntheticGetter || !getter && !element.canHaveSyntheticSetter) return false
         if (!getter && expression.readWriteAccess(true) == ReferenceAccess.READ) return false
         return additionalIsReferenceToChecker(element)
     }
