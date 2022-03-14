@@ -793,7 +793,7 @@ select a
     testGinqHighlighting """
 from a in [1]
 <error>where</error> true
-<error>join</error> e in []
+<error>join</error> e in [2] on e == e
 select a
 """
   }
@@ -823,6 +823,29 @@ from b in [1]
   void testDataSourceTyped() {
     testGinqHighlighting """
         from aa in <warning>1</warning>
+        select aa as e1
+"""
+  }
+
+  void testDataSourceTyped2() {
+    testGinqHighlighting """
+        from aa in []
+        select aa as e1
+"""
+  }
+
+  void testJoinWithoutOn() {
+    testGinqHighlighting """
+        from aa in [1]
+        <error>join</error> x in [2]
+        select aa as e1
+"""
+  }
+
+  void testCrossjoinWithOn() {
+    testGinqHighlighting """
+        from aa in [1]
+        <error>crossjoin x in [2] on x == aa</error>
         select aa as e1
 """
   }

@@ -49,7 +49,7 @@ fun inferDataSourceComponentType(type: PsiType?): PsiType? = when (type) {
 
 private fun extractComponent(type : PsiType, className: String) : PsiType? {
   if (InheritanceUtil.isInheritor(type, className)) {
-    return PsiUtil.substituteTypeParameter(type, className, 0, false)
+    return PsiUtil.substituteTypeParameter(type, className, 0, false) ?: PsiType.NULL
   } else {
     return null
   }

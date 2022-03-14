@@ -24,19 +24,20 @@ import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
   val parser = GinqParser()
   statementsOwner.statements.forEach { it.accept(parser) }
-  return gatherGinqExpression(parser.errors, parser.container)
+  return gatherGinqExpression(parser.errors, parser.incompleteFrom, parser.container)
 }
 
 fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
-  GinqParser().also(psiGinq::accept).run { gatherGinqExpression(errors, container) }
+  GinqParser().also(psiGinq::accept).run { gatherGinqExpression(errors, incompleteFrom, container) }
 
 private fun gatherGinqExpression(errors: MutableList<ParsingError>,
+                                 incompleteFrom: Boolean,
                                  container: List<GinqQueryFragment>): Pair<List<ParsingError>, GinqExpression?> {
   if (container.isEmpty()) {
-    return emptyList<ParsingError>() to null
+    return errors to null
   }
-  val from = container.first() as? GinqFromFragment ?: return listOf(container.first().keyword to GroovyBundle.message("ginq.error.message.query.should.start.from.from")) to null
-  val select = container.last() as? GinqSelectFragment ?: return listOf((container.last().keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select"))) to null
+  val from = container.first() as? GinqFromFragment ?: return (errors + if (incompleteFrom) emptyList() else listOf (container.first().keyword to GroovyBundle.message("ginq.error.message.query.should.start.from.from"))) to null
+  val select = container.last() as? GinqSelectFragment ?: return (errors + listOf((container.last().keyword to GroovyBundle.message("ginq.error.message.query.should.end.with.select")))) to null
   // otherwise it is a valid ginq expression
   val joins: MutableList<GinqJoinFragment> = mutableListOf()
   var where: GinqWhereFragment? = null
@@ -48,6 +49,9 @@ private fun gatherGinqExpression(errors: MutableList<ParsingError>,
     when (val currentFragment = container[index]) {
       is GinqJoinFragment -> {
         reportMisplacement(errors, currentFragment.keyword, listOfNotNull(where?.keyword, groupBy?.keyword, orderBy?.keyword, limit?.keyword).firstOrNull())
+        if (currentFragment.onCondition == null && currentFragment.keyword.text != "crossjoin") {
+          errors.add(currentFragment.keyword to GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
+        }
         joins.add(container[index] as GinqJoinFragment)
       }
       is GinqWhereFragment -> {
@@ -90,6 +94,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
   val container: MutableList<GinqQueryFragment> = mutableListOf()
   val errors: MutableList<ParsingError> = mutableListOf()
   var isTopLevel = true
+  var incompleteFrom = false
 
   override fun visitMethodCall(methodCall: GrMethodCall) {
     if (isTopLevel) {
@@ -112,6 +117,9 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
     val callKw = methodCall.refCallIdentifier()
     when (callName) {
       "from", in joins -> {
+        if (callName == "from") {
+          incompleteFrom = true
+        }
         val argument = methodCall.getSingleArgument<GrBinaryExpression>()?.takeIf { it.operationTokenType == KW_IN }
         if (argument == null) {
           recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.in.operator"))
@@ -153,6 +161,9 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         if (callName == "on") {
           val last = container.lastOrNull()
           if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
+            if (last.keyword.text == "crossjoin") {
+              recordError(methodCall, GroovyBundle.message("ginq.error.message.on.should.not.be.provided.after.crossjoin"))
+            }
             val newJoin = last.copy(onCondition = GinqOnFragment(callKw, argument))
             container.removeLast()
             container.add(newJoin)

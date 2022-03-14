@@ -15,6 +15,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
@@ -93,10 +94,11 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   private fun getTypecheckingWarnings(ginq: GinqExpression): Collection<Pair<PsiElement, @Nls String>> {
     val dataSourceFragments = ginq.getDataSourceFragments()
     val filteringFragments = ginq.getFilterFragments()
-    val filterResults = filteringFragments.mapNotNull {
-      val type = it.filter.type
-      if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true) {
-        it.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
+    val filterResults = filteringFragments.mapNotNull { fragment ->
+      val type = fragment.filter.type
+      val parentCall = fragment.filter.parentOfType<GrMethodCall>()?.parentOfType<GrMethodCall>()?.invokedExpression?.castSafelyTo<GrReferenceExpression>()?.takeIf { it.referenceName == "exists" }
+      if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true && parentCall == null) {
+        fragment.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
       }
       else {
         null
@@ -130,7 +132,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           namedRecord?.let { GrSyntheticNamedRecordClass(ginq, it).type() } ?: PsiType.NULL
         }
         return facade.findClass(container, macroCall.resolveScope)?.let {
-          facade.elementFactory.createType(it, componentType.box(expression))
+          val actualComponentType = if (componentType == PsiType.NULL) PsiWildcardType.createUnbounded(expression.manager) else componentType.box(expression)
+          facade.elementFactory.createType(it, actualComponentType)
         }
       }
     }
@@ -203,6 +206,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     if (processor.shouldProcessMethods()) {
       val aggregate = resolveToAggregateFunction(place, name)
                       ?: resolveInOverClause(place, name)
+                      ?: resolveToExists(place)
       if (aggregate != null) {
         return processor.execute(aggregate, state)
       }
@@ -214,6 +218,20 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       }
     }
     return true
+  }
+
+  private fun resolveToExists(place: PsiElement): PsiMethod? {
+    val facade = JavaPsiFacade.getInstance(place.project)
+    if (place is GrMethodCall && place.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "exists") {
+      val method = GrLightMethodBuilder(place.manager, "exists")
+      method.setReturnType(CommonClassNames.JAVA_LANG_BOOLEAN, place.resolveScope)
+      val navigationResult = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, place.resolveScope)?.findMethodsByName("exists", false)?.singleOrNull()
+      if (navigationResult != null) {
+        method.navigationElement = navigationResult
+      }
+      return method
+    }
+    return null
   }
 
   private fun resolveToCustomMember(place: PsiElement, name: String, tree: GinqExpression): GrLightVariable? {
@@ -242,7 +260,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val closestGinq = topTree?.let { position.ginqParents(macroCall, it) }?.firstOrNull()
     if (this.isUntransformed(macroCall, position)) {
       return
-    } else {
+    }
+    else {
       result.stopHere()
     }
     if (closestGinq == null) {
@@ -276,7 +295,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       }
     }
     if (latestGinq != null) {
-      val joinStartCondition : (GinqQueryFragment) -> Boolean = {
+      val joinStartCondition: (GinqQueryFragment) -> Boolean = {
         it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == "crossjoin")
       }
       if (joinStartCondition(latestGinq)) {
@@ -288,14 +307,16 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       if (joinStartCondition(latestGinq) && closestGinq.where == null) {
         result.addElement(LookupElementBuilder.create("where").bold())
       }
-      val groupByCondition : (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
+      val groupByCondition: (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
       if (groupByCondition(latestGinq) && closestGinq.groupBy == null) {
         result.addElement(LookupElementBuilder.create("groupby").bold())
       }
       if (latestGinq is GinqGroupByFragment && latestGinq.having == null) {
         result.addElement(LookupElementBuilder.create("having").bold())
       }
-      val orderByCondition : (GinqQueryFragment) -> Boolean = { groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment }
+      val orderByCondition: (GinqQueryFragment) -> Boolean = {
+        groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment
+      }
       if (orderByCondition(latestGinq) && closestGinq.orderBy == null) {
         result.addElement(LookupElementBuilder.create("orderby").bold())
       }
@@ -306,11 +327,17 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return
   }
 
-  private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, item ->
-    val template = TemplateManager.getInstance(context.project).createTemplate("ginq_data_source_${item.lookupString}", "ginq",
-                                                                               "${item.lookupString} \$NAME$ in \$DATA_SOURCE$\$END$")
+  private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, lookupItem ->
+    val item = lookupItem.lookupString
+    val requiresOn = item != "from" && item != "crossjoin"
+    val template = TemplateManager.getInstance(context.project)
+      .createTemplate("ginq_data_source_$item", "ginq",
+                      "$item \$NAME$ in \$DATA_SOURCE$${if (requiresOn) " on \$COND$" else ""}\$END$")
     template.addVariable("NAME", ReferenceNameExpression(emptyArray(), "x"), true)
     template.addVariable("DATA_SOURCE", VariableNode("data source", null), true)
+    if (requiresOn) {
+      template.addVariable("COND", VariableNode("on condition", null), true)
+    }
     val editor = context.editor
     editor.document.deleteString(context.startOffset, context.tailOffset)
     TemplateManager.getInstance(context.project).startTemplate(editor, template)
