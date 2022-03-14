@@ -260,6 +260,7 @@ final class BuildOptions {
    * See https://reproducible-builds.org/specs/source-date-epoch/
    */
   long buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLong() ?: System.currentTimeSeconds()
+  long randomSeedNumber = System.getProperty("intellij.build.randomSeed")?.toLong() ?: new Random().nextLong()
 
   BuildOptions() {
     targetOS = System.getProperty(TARGET_OS)
