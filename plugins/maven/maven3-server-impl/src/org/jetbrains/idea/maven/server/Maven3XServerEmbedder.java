@@ -678,7 +678,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
 
     ModelValidator modelValidator;
-    if (VersionComparatorUtil.compare("3.8.5", getMavenVersion()) >= 0) {
+    if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
       modelValidator = getComponent(ModelValidator.class);
     } else {
       modelValidator = getComponent(ModelValidator.class, "ide");
