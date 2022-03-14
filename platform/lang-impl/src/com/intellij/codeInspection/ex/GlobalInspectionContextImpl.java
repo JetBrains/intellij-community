@@ -43,6 +43,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -289,8 +290,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progressIndicator == null) {
-      throw new IncorrectOperationException("Must be run under progress");
+    if (!(progressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
+      throw new IncorrectOperationException("Must be run under ProgressWindow");
     }
     if (!isOfflineInspections && ApplicationManager.getApplication().isDispatchThread()) {
       throw new IncorrectOperationException("Must not start inspections from within EDT");
@@ -328,8 +329,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     BlockingQueue<VirtualFile> filesToInspect = new ArrayBlockingQueue<>(1000);
     // use original progress indicator here since we don't want it to cancel on write action start
-    ProgressIndicator iteratingIndicator = new SensitiveProgressWrapper(progressIndicator);
-    Future<?> future = startIterateScopeInBackground(scope, iteratingIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
+    ProgressIndicator fileScanningIndicator = new SensitiveProgressWrapper(progressIndicator);
+    Future<?> future = startIterateScopeInBackground(scope, fileScanningIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
     PsiManager psiManager = PsiManager.getInstance(getProject());
     Processor<VirtualFile> processor = virtualFile -> {
@@ -420,7 +421,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
     }
     finally {
-      iteratingIndicator.cancel(); // tell file scanning thread to stop
+      fileScanningIndicator.cancel(); // tell file scanning thread to stop
       filesToInspect.clear(); // let file scanning thread a chance to put TOMBSTONE and complete
       try {
         future.get(30, TimeUnit.SECONDS);
@@ -478,12 +479,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                            boolean inspectInjectedPsi) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
-
-    InspectionProfileWrapper.runWithCustomInspectionWrapper(file, p -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
+    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progressIndicator == null) {
+      throw new IllegalStateException("Must be run under progress");
+    }
+    InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
       try {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
           InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
-                                     myProgressIndicator,
+                                     progressIndicator,
                                      (wrapper, descriptor) -> true);
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
           LocalInspectionToolWrapper toolWrapper = entry.getKey();
@@ -495,7 +499,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         assertUnderDaemonProgress();
 
         JobLauncher.getInstance()
-          .invokeConcurrentlyUnderProgress(globalSimpleTools, ProgressIndicatorProvider.getGlobalProgressIndicator(), toolWrapper -> {
+          .invokeConcurrentlyUnderProgress(globalSimpleTools, progressIndicator, toolWrapper -> {
             GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
             ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
