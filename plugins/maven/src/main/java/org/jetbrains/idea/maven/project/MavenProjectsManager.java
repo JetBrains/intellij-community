@@ -221,8 +221,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       initMavenized();
     };
 
-    StartupManager startupManager = StartupManager.getInstance(myProject);
-    if (startupManager.postStartupActivityPassed()) {
+    StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
+    if (startupManager.startupActivityPassed()) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
     else {
