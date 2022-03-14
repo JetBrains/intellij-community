@@ -290,10 +290,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                               @NotNull List<Tools> outLocalTools,
                               @NotNull List<? super Tools> outGlobalSimpleTools) {
     List<Tools> usedTools = getUsedTools();
-    Map<String, Tools> tools = new HashMap<>(usedTools.size());
+    myTools = new HashMap<>(usedTools.size());
     for (Tools currentTools : usedTools) {
       String shortName = currentTools.getShortName();
-      tools.put(shortName, currentTools);
+      myTools.put(shortName, currentTools);
       InspectionToolWrapper<?,?> toolWrapper = currentTools.getTool();
       classifyTool(outGlobalTools, outLocalTools, outGlobalSimpleTools, currentTools, toolWrapper);
 
@@ -306,7 +306,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         appendJobDescriptor(jobDescriptor);
       }
     }
-    myTools = Collections.unmodifiableMap(tools);
+    myTools = Collections.unmodifiableMap(myTools);
     for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
       extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
     }
