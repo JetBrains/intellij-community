@@ -476,6 +476,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     try {
 
       CustomMaven3ModelInterpolator2 interpolator = new CustomMaven3ModelInterpolator2();
+      if (VersionComparatorUtil.compare(System.getProperty(MAVEN_EMBEDDER_VERSION), "3.8.5") >= 0) {
+        try {
+          Class<?> clazz = Class.forName("org.apache.maven.model.interpolation.DefaultModelVersionProcessor");
+          Constructor<?> constructor = clazz.getConstructor();
+          Object component = constructor.newInstance();
+          Method processor = interpolator.getClass()
+            .getMethod("setVersionPropertiesProcessor", Class.forName("org.apache.maven.model.interpolation.ModelVersionProcessor"));
+          processor.invoke(interpolator, component);
+        }
+        catch (Exception e) {
+          Maven3ServerGlobals.getLogger().error(e);
+        }
+      }
       //interpolator.initialize();
 
       Properties userProperties = new Properties();
@@ -665,12 +678,33 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
     ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
 
-    ModelValidator modelValidator = getComponent(ModelValidator.class, "ide");
+    ModelValidator modelValidator = getComponent(ModelValidator.class);
     myContainer.addComponent(modelValidator, ModelValidator.class.getName());
 
     DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
     defaultModelBuilder.setModelValidator(modelValidator);
     defaultModelBuilder.setModelInterpolator(modelInterpolator);
+  }
+
+  private StringSearchModelInterpolator createCustomModelInterpolator() {
+    StringSearchModelInterpolator interpolator = new CustomMaven3ModelInterpolator2();
+    if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
+      try {
+        Class<?> clazz = Class.forName("org.apache.maven.model.interpolation.ModelVersionProcessor");
+        Object component = getComponent(clazz);
+        Method methodSetModelVersionProcessor = interpolator.getClass().getMethod("setVersionPropertiesProcessor", clazz);
+        methodSetModelVersionProcessor.invoke(interpolator, component);
+      }
+      catch (Exception e) {
+        try {
+          Maven3ServerGlobals.getLogger().error(e);
+        }
+        catch (RemoteException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }
+    return interpolator;
   }
 
   private ModelInterpolator createAndPutInterpolator(DefaultPlexusContainer container) {
@@ -683,7 +717,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       container.addComponent(urlNormalizer, UrlNormalizer.class.getName());
       container.addComponent(urlNormalizer, UrlNormalizer.class, "ide");
 
-      StringSearchModelInterpolator interpolator = new CustomMaven3ModelInterpolator2();
+      StringSearchModelInterpolator interpolator = createCustomModelInterpolator();
       interpolator.setPathTranslator(pathTranslator);
       interpolator.setUrlNormalizer(urlNormalizer);
       return interpolator;
