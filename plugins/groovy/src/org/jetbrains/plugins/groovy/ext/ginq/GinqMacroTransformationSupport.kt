@@ -21,6 +21,7 @@ import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
 import com.intellij.util.lazyPub
+import icons.JetgroovyIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
@@ -137,6 +138,9 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           facade.elementFactory.createType(it, actualComponentType)
         }
       }
+    }
+    if (expression is GrMethodCall && expression.resolveMethod().castSafelyTo<OriginInfoAwareElement>()?.originInfo == OVER_ORIGIN_INFO) {
+      return expression.invokedExpression.castSafelyTo<GrReferenceExpression>()?.qualifierExpression?.type
     }
     if (expression is GrReferenceExpression) {
       val tree = getParsedGinqTree(macroCall) ?: return null
@@ -275,7 +279,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         result.addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
       }
       if (!hasSelect) {
-        result.addElement(LookupElementBuilder.create("select").bold())
+        result.addElement(LookupElementBuilder.create("select ").bold())
       }
       return
     }
@@ -284,7 +288,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       val bindings = closestGinq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset }
       for (binding in bindings) {
         val name = binding.referenceName ?: continue
-        result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withPsiElement(binding).withTypeText(binding.type?.presentableText), 1.0))
+        result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withPsiElement(binding).withTypeText(binding.type?.presentableText).withIcon(JetgroovyIcons.Groovy.Variable), 1.0))
       }
       return
     }
@@ -308,26 +312,26 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         joins.forEach { result.addElement(LookupElementBuilder.create(it).bold().withInsertHandler(dataSourceInsertHandler)) }
       }
       if (latestGinq is GinqJoinFragment && latestGinq.onCondition == null && latestGinq.keyword.text != "crossjoin") {
-        result.addElement(LookupElementBuilder.create("on").bold())
+        result.addElement(LookupElementBuilder.create("on ").bold())
       }
       if (joinStartCondition(latestGinq) && closestGinq.where == null) {
-        result.addElement(LookupElementBuilder.create("where").bold())
+        result.addElement(LookupElementBuilder.create("where ").bold())
       }
       val groupByCondition: (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
       if (groupByCondition(latestGinq) && closestGinq.groupBy == null) {
-        result.addElement(LookupElementBuilder.create("groupby").bold())
+        result.addElement(LookupElementBuilder.create("groupby ").bold())
       }
       if (latestGinq is GinqGroupByFragment && latestGinq.having == null) {
-        result.addElement(LookupElementBuilder.create("having").bold())
+        result.addElement(LookupElementBuilder.create("having ").bold())
       }
       val orderByCondition: (GinqQueryFragment) -> Boolean = {
         groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment
       }
       if (orderByCondition(latestGinq) && closestGinq.orderBy == null) {
-        result.addElement(LookupElementBuilder.create("orderby").bold())
+        result.addElement(LookupElementBuilder.create("orderby ").bold())
       }
       if ((orderByCondition(latestGinq) || latestGinq is GinqOrderByFragment) && closestGinq.limit == null) {
-        result.addElement(LookupElementBuilder.create("limit").bold())
+        result.addElement(LookupElementBuilder.create("limit ").bold())
       }
     }
     return

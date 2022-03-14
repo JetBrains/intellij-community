@@ -116,6 +116,8 @@ fun resolveToAggregateFunction(place: PsiElement, name: String): PsiMethod? {
   return proxy
 }
 
+internal const val OVER_ORIGIN_INFO = "Ginq over"
+
 fun resolveInOverClause(place: PsiElement, name: String): PsiMethod? {
   val facade = JavaPsiFacade.getInstance(place.project)
   val over = place.parentsOfType<GrMethodCallExpression>().firstOrNull { call ->
@@ -126,6 +128,7 @@ fun resolveInOverClause(place: PsiElement, name: String): PsiMethod? {
   val qualifier = (over.invokedExpression as GrReferenceExpression).qualifierExpression!!
   if (place == over.invokedExpression) {
     val method = GrLightMethodBuilder(place.manager, "over")
+    method.originInfo = OVER_ORIGIN_INFO
     if (over.argumentList.allArguments.isNotEmpty()) {
       method.addParameter(GrLightParameter("pagination", null, place))
     }

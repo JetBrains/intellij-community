@@ -112,4 +112,13 @@ def aa = GQL {
     }
 a<caret>a""", "java.util.List<java.lang.Byte>"
   }
+
+  void testOver() {
+    doTest """
+def aa = GQL {
+        from nnnn in [3]
+        select (rowNumber() over(orderby nnnn))
+    }
+a<caret>a""", "java.util.List<java.lang.Long>"
+  }
 }
