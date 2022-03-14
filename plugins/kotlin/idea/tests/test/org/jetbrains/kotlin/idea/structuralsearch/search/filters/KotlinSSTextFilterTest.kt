@@ -8,15 +8,15 @@ class KotlinSSTextFilterTest : KotlinSSResourceInspectionTest() {
         class X {
             open class Foo
             <warning descr="SSR">open class Foo2: Foo()</warning>
-            class Foo3 : Foo2()
+            <warning descr="SSR">class Foo3 : Foo2()</warning>
         }
     """.trimIndent()) }
 
     fun testHierarchyClassDeclaration() { doTest("class Foo2 { val '_:*[regex(.*)] }", """
         class X {
-            open class Foo {
+            <warning descr="SSR">open class Foo {
                 val x = 1
-            }
+            }</warning>
         
             <warning descr="SSR">open class Foo2: Foo() {
                 val y = 2
@@ -28,9 +28,9 @@ class KotlinSSTextFilterTest : KotlinSSResourceInspectionTest() {
         }
         
         class Y {
-            open class Foo<T> {
+            <warning descr="SSR">open class Foo<T> {
                 val x = 1
-            }
+            }</warning>
         
             <warning descr="SSR">open class Foo2<T> : Foo<T>() {
                 val y = 2
@@ -45,7 +45,7 @@ class KotlinSSTextFilterTest : KotlinSSResourceInspectionTest() {
     fun testHierarchyClassSuperType() { doTest("class '_ : '_:*[regex(Foo2)]()", """
         class X {
             open class Foo
-            open class Foo2: Foo()
+            <warning descr="SSR">open class Foo2: Foo()</warning>
             <warning descr="SSR">class Foo3 : Foo2()</warning>
         }
     """.trimIndent()) }
