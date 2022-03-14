@@ -271,12 +271,13 @@ public final class FileBasedIndexScanUtil {
     DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     return file -> {
-      if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return null;
+      IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+      if (!FileBasedIndexEx.acceptsInput(inputFilter, indexedFile)) return null;
       int fileId = FileBasedIndex.getFileId(file);
       Document document = fileDocumentManager.getCachedDocument(file);
       boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
       try {
-        if (!unsavedDocument && IndexingStamp.isFileIndexedStateCurrent(fileId, TodoIndex.NAME) == FileIndexingState.UP_TO_DATE) {
+        if (!unsavedDocument && index.getIndexingStateForFile(fileId, indexedFile) == FileIndexingState.UP_TO_DATE) {
           try {
             return index.getIndexedFileData(fileId);
           }
