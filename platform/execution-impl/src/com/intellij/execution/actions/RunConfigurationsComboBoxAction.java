@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -50,12 +49,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       // The 'Run Current File' feature doesn't look great together with the Run Widget.
       return false;
     }
-
-    if (PlatformUtils.isIdeaUltimate()) return true;
-    if (PlatformUtils.isIdeaCommunity()) return true;
-    if (PlatformUtils.isPhpStorm()) return true;
-    if (PlatformUtils.isWebStorm()) return true;
-    if (PlatformUtils.isRubyMine()) return true;
 
     return Registry.is("run.current.file.item.in.run.configurations.combobox");
   }
