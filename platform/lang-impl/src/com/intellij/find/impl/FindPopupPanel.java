@@ -1888,7 +1888,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private static class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
+  static class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
     private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -1970,7 +1970,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     private static final int MARGIN = 2;
     private final GlobalSearchScope myScope;
 
-    UsageTableCellRenderer(@NotNull GlobalSearchScope scope) {
+    private UsageTableCellRenderer(@NotNull GlobalSearchScope scope) {
       if (ExperimentalUI.isNewUI()) {
         setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
         setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
