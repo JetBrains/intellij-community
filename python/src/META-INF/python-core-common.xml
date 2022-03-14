@@ -428,6 +428,9 @@
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
     <executionTargetLanguageRuntimeType implementation="com.jetbrains.python.target.PythonLanguageRuntimeType"/>
+
+  <!--  Code vision -->
+    <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
   </extensions>
 
   <extensionPoints>
