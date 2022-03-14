@@ -243,8 +243,16 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                 var rowsOrRangeArguments: List<GrExpression> = emptyList()
                 var localQualifier = argument.single()
                 while (localQualifier != null) {
-                  val call = localQualifier.castSafelyTo<GrMethodCall>() ?: return super.visitMethodCallExpression(methodCallExpression)
-                  val invokedInner = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: return super.visitMethodCallExpression(methodCallExpression)
+                  val call = localQualifier.castSafelyTo<GrMethodCall>()
+                  if (call == null) {
+                    if (localQualifier is GrReferenceExpression) {
+                      localQualifier = localQualifier.qualifierExpression
+                      continue
+                    } else {
+                      break
+                    }
+                  }
+                  val invokedInner = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: break
                   when (invokedInner.referenceName) {
                     "range", "rows" -> {
                       rowsOrRangeKw = invokedInner.referenceNameElement
@@ -265,13 +273,10 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                       orderBy.sortingFields.forEach { it.sorter.markAsGinqUntransformed() }
                       localQualifier = invokedInner.qualifier
                     }
-                    else -> {
-                      return super.visitMethodCallExpression(methodCallExpression)
-                    }
+                    else -> continue
                   }
                 }
-                windows.add(
-                  GinqWindowFragment(qualifier, overKw, partitionKw, partitionArguments, orderBy, rowsOrRangeKw, rowsOrRangeArguments))
+                windows.add(GinqWindowFragment(qualifier, overKw, partitionKw, partitionArguments, orderBy, rowsOrRangeKw, rowsOrRangeArguments))
               }
               qualifier.markAsGinqUntransformed()
               super.visitMethodCallExpression(methodCallExpression)

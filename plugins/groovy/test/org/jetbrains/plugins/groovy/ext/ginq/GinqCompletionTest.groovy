@@ -141,4 +141,44 @@ select (firstValue() over ())
 ''')
   }
 
+  void testCompleteInOver() {
+    completeGinq('''
+from x in [1]
+select (rowNumber() over (orde<caret>))
+''', '''
+from x in [1]
+select (rowNumber() over (orderby ))
+''')
+  }
+
+  void testCompleteInOver2() {
+    completeGinq('''
+from x in [1]
+select (rowNumber() over (parti<caret>))
+''', '''
+from x in [1]
+select (rowNumber() over (partitionby ))
+''')
+  }
+
+  void testCompleteInOver3() {
+    completeGinq('''
+from x in [1]
+select (rowNumber() over (partitionby x orderb<caret>))
+''', '''
+from x in [1]
+select (rowNumber() over (partitionby x orderby ))
+''')
+  }
+
+  void testCompleteInOver4() {
+    completeGinq('''
+from x in [1]
+select (rowNumber() over (partitionby x orderby x ro<caret>))
+''', '''
+from x in [1]
+select (rowNumber() over (partitionby x orderby x rows ))
+''')
+  }
+
 }
