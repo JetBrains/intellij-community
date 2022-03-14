@@ -428,7 +428,21 @@ NSString *getOverridePropertiesPath() {
     if (vmOptions != nil) {
         [args_array addObjectsFromArray:vmOptions];
     }
+    //special case for NMT, logic is from java.c from openjdk
+    static const char*  NMT_Env_Name    = "NMT_LEVEL_";
 
+    for (NSString * arg in vmOptions)
+    {
+        if([arg hasPrefix:@"-XX:NativeMemoryTracking="]) {
+            // get what follows this parameter, include "=", limited to 10 characters
+            NSString * value = [arg substringFromIndex:strlen("-XX:NativeMemoryTracking=")];
+            if (value.length > 10) value = [value substringToIndex:10];
+
+            int pid = [[NSProcessInfo processInfo] processIdentifier];
+            NSString * envName = [NSString stringWithFormat:@"%s%d", NMT_Env_Name, pid];
+            setenv([envName UTF8String], [value UTF8String], 1);
+        }
+    }
     NSString *properties = getOverridePropertiesPath();
     if (properties != nil) {
         [args_array addObject:[NSString stringWithFormat:@"-Didea.properties.file=%@", properties]];
