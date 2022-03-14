@@ -1133,8 +1133,9 @@ public final class PluginManagerCore {
     return true;
   }
 
-  private static @NotNull List<PluginId> getNonOptionalDependenciesIds(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    List<PluginId> dependencies = new ArrayList<>();
+  @ApiStatus.Internal
+  public static @NotNull Set<PluginId> getNonOptionalDependenciesIds(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    Set<PluginId> dependencies = new LinkedHashSet<>();
 
     for (PluginDependency dependency : descriptor.pluginDependencies) {
       if (!dependency.isOptional()) {
@@ -1146,7 +1147,7 @@ public final class PluginManagerCore {
       dependencies.add(plugin.id);
     }
 
-    return Collections.unmodifiableList(dependencies);
+    return Collections.unmodifiableSet(dependencies);
   }
 
   @ApiStatus.Internal
