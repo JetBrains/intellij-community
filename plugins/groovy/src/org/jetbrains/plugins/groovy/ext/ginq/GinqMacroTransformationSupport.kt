@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.castSafelyTo
 import com.intellij.util.lazyPub
 import icons.JetgroovyIcons
@@ -351,15 +350,15 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     }
     val overRoot = overRoots.find { PsiTreeUtil.isAncestor(it.overKw.parent.parent.castSafelyTo<GrMethodCall>()?.argumentList, position, false) }
     if (overRoot != null) {
-      if (overRoot.partitionKw == null && (overRoot.orderBy?.keyword?.startOffset ?: -1) < offset) {
-        result.addElement(LookupElementBuilder.create("partitionby "))
+      if (overRoot.partitionKw == null) {
+        result.addElement(LookupElementBuilder.create("partitionby ").bold())
       }
-      if (overRoot.orderBy?.keyword == null && (overRoot.partitionKw?.endOffset ?: Int.MAX_VALUE) > offset) {
-        result.addElement(LookupElementBuilder.create("orderby "))
+      if (overRoot.orderBy?.keyword == null) {
+        result.addElement(LookupElementBuilder.create("orderby ").bold())
       }
-      if (overRoot.rowsOrRangeKw == null && (overRoot.orderBy?.keyword?.endOffset ?: Int.MAX_VALUE) < offset) {
-        result.addElement(LookupElementBuilder.create("rows "))
-        result.addElement(LookupElementBuilder.create("range "))
+      if (overRoot.rowsOrRangeKw == null) {
+        result.addElement(LookupElementBuilder.create("rows ").bold())
+        result.addElement(LookupElementBuilder.create("range ").bold())
       }
     }
     return

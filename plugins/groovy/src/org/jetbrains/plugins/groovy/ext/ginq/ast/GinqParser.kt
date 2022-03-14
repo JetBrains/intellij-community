@@ -273,7 +273,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
                       orderBy.sortingFields.forEach { it.sorter.markAsGinqUntransformed() }
                       localQualifier = invokedInner.qualifier
                     }
-                    else -> continue
+                    else -> break
                   }
                 }
                 windows.add(GinqWindowFragment(qualifier, overKw, partitionKw, partitionArguments, orderBy, rowsOrRangeKw, rowsOrRangeArguments))
