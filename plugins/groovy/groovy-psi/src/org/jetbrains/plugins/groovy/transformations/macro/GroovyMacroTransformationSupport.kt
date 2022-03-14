@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.macro
 
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -49,7 +49,7 @@ interface GroovyMacroTransformationSupport {
    * Allows to indicate that an [element] will not be transformed after [macroCall] expansion.
    * Therefore, regular Groovy code insight rules will be applied to it.
    */
-  fun isUntransformed(macroCall: GrMethodCall, element: GroovyPsiElement) : Boolean = false
+  fun isUntransformed(macroCall: GrMethodCall, element: PsiElement) : Boolean = false
 
   /**
    * Allows to tune type inference algorithms within the macro-expanded code.
@@ -64,10 +64,12 @@ interface GroovyMacroTransformationSupport {
   fun computeType(macroCall: GrMethodCall, expression: GrExpression) : PsiType? = null
 
   /**
-   * Allows to add custom completion within the macro-expandable code. It is guaranteed that [offset] is within
-   * one of the arguments of [macroCall]
+   * Allows to add custom completion within the macro-expandable code.
+   *
+   * By default, regular Groovy completion is used within the macro.
+   * Consider using [CompletionResultSet.stopHere] if you want to get rid of it.
    */
-  fun computeCompletionVariants(macroCall: GrCall, offset: Int) : List<LookupElement> = emptyList()
+  fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet)
 
   /**
    * Allows to add references during the heavyweight resolve (i.e. methods and non-static variables).

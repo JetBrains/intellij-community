@@ -18,7 +18,6 @@ class GrMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val position = parameters.position
     val (macroCall, macroSupport) = getMacroHandler(position) ?: return
-    val results = macroSupport.computeCompletionVariants(macroCall, parameters.offset)
-    result.addAllElements(results)
+    macroSupport.computeCompletionVariants(macroCall, parameters, result)
   }
 }
