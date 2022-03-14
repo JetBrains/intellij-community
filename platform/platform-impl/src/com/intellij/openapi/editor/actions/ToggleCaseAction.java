@@ -61,6 +61,10 @@ public class ToggleCaseAction extends TextComponentEditorAction {
         editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset,
                                            toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get()));
         c.moveToVisualPosition(caretPosition);
+        //Restore selection for TextComponentEditorImpl/TextAreaDocument etc.
+        if (!c.hasSelection()) {
+          c.setSelection(selectionStartOffset, selectionEndOffset);
+        }
       });
     }
 
