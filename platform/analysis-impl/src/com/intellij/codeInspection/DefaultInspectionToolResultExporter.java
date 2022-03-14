@@ -59,9 +59,9 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public static final @NonNls String INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE = "attribute_key";
   public static final @NonNls String INSPECTION_RESULTS_ID_ATTRIBUTE = "id";
   public static final @NonNls String INSPECTION_RESULTS_DESCRIPTION_ELEMENT = "description";
-  public static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
-  public static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
-  public static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
+  protected static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
+  protected static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
+  protected static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
   public static final @NonNls String INSPECTION_RESULTS_LANGUAGE = "language";
   protected final @NotNull InspectionToolWrapper<?,?> myToolWrapper;
   protected final @NotNull GlobalInspectionContextEx myContext;
@@ -70,7 +70,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
-  protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
+  private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
 
   private Map<String, Set<RefEntity>> myContents;
 
@@ -453,7 +453,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         myProblemElements.put(refElement, descriptors);
       }
       else {
-       addLocalInspectionProblem(refElement, descriptors);
+        addLocalInspectionProblem(refElement, descriptors);
       }
     }
     else {
@@ -461,7 +461,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
   }
 
-  public void addLocalInspectionProblem(@NotNull RefEntity refElement, CommonProblemDescriptor @NotNull[] descriptors) {
+  private void addLocalInspectionProblem(@NotNull RefEntity refElement, CommonProblemDescriptor @NotNull [] descriptors) {
     try {
       writeOutput(descriptors, refElement);
     }

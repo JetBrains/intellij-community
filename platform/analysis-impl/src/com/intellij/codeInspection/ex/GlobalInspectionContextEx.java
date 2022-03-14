@@ -73,21 +73,18 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     cleanupTools();
     setCurrentScope(scope);
 
-    Runnable action = () -> {
-      myOutputDir = outputDir;
+    myOutputDir = outputDir;
+    try {
       try {
-        try {
-          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
-        }
-        finally {
-          exportResultsSmart(inspectionsResults, outputDir);
-        }
+        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
       }
       finally {
-        myOutputDir = null;
+        exportResultsSmart(inspectionsResults, outputDir);
       }
-    };
-    action.run();
+    }
+    finally {
+      myOutputDir = null;
+    }
   }
 
   private void exportResults(@NotNull List<? super Path> inspectionsResults,
@@ -231,7 +228,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       }
     }
 
-    exportResultsWithAggregation(inspectionsResults, toolsWithResultsToAggregate, myOutputDir);
+    exportResultsWithAggregation(inspectionsResults, toolsWithResultsToAggregate, outputDir);
 
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
