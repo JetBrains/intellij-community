@@ -313,7 +313,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         }
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
-            val packageExists = PackageIndexUtil.packageExists(packageFqName, moduleInfo.contentScope(), project)
+            val packageExists = PackageIndexUtil.packageExists(packageFqName, moduleInfo.contentScope())
             LOG.debugIfEnabled(project) { "Computed cache value for $packageFqName in $moduleInfo is $packageExists" }
             packageExists
         }

@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.analysis.providers.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.cachedValue
+import org.jetbrains.kotlin.idea.util.getValue
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import java.util.concurrent.ConcurrentHashMap
@@ -29,14 +30,14 @@ private class KotlinPackageProviderIdeImpl(
     ) { ConcurrentHashMap<FqName, Boolean>() }
 
     override fun doKotlinPackageExists(packageFqName: FqName): Boolean {
-        return cache[packageFqName] ?: PackageIndexUtil.packageExists(packageFqName, searchScope, project).also {
+        return cache[packageFqName] ?: PackageIndexUtil.packageExists(packageFqName, searchScope).also {
             cache.putIfAbsent(packageFqName, it)
         }
     }
 
     override fun getKotlinSubPackageFqNames(packageFqName: FqName): Set<Name> {
         return PackageIndexUtil
-            .getSubPackageFqNames(packageFqName, searchScope, project) { true }
+            .getSubPackageFqNames(packageFqName, searchScope) { true }
             .mapTo(mutableSetOf()) { it.shortName() }
     }
 }

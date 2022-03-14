@@ -271,7 +271,7 @@ class BasicCompletionSession(
                 callTypeAndReceiver.callType.descriptorKindFilter.kindMask.and(DescriptorKindFilter.PACKAGES_MASK) != 0
             ) {
                 //TODO: move this code somewhere else?
-                val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, project, prefixMatcher.asNameFilter())
+                val packageNames = PackageIndexUtil.getSubPackageFqNames(FqName.ROOT, searchScope, prefixMatcher.asNameFilter())
                     .toHashSet()
 
                 if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {
