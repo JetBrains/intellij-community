@@ -371,7 +371,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       fromIdsIterator = Collections.emptyIterator();
     }
     else {
-      Iterator<Integer> idIterator = new BitSetIterator(ids);
+      BitSetIterator idIterator = new BitSetIterator(ids);
       fromIdsIterator = new Iterator<VirtualFile>() {
         @Override
         public boolean hasNext() {
@@ -463,23 +463,20 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     };
   }
 
-  private static class BitSetIterator implements Iterator<Integer> {
+  private static class BitSetIterator {
     private final @NotNull BitSet myBitSet;
     private int currentBit = -1;
     private Boolean hasNext;
-
     private BitSetIterator(@NotNull BitSet set) {
       myBitSet = set;
     }
 
-    @Override
     public boolean hasNext() {
       findNext();
       return hasNext;
     }
 
-    @Override
-    public Integer next() {
+    public int next() {
       findNext();
       if (!hasNext) {
         throw new NoSuchElementException();
@@ -489,7 +486,6 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     }
 
     // be careful: doesn't follow contract of Iterator#remove()
-    @Override
     public void remove() {
       if (currentBit >= 0) {
         myBitSet.set(currentBit, false);
