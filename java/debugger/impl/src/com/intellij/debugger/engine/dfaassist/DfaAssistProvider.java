@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * Language specific helpers to implement DFAAssist (for JVM languages only)
  */
 public interface DfaAssistProvider {
-  LanguageExtension<DfaAssistProvider> EP_NAME = new LanguageExtension<>("com.intellij.dataflowAssistProvider");
+  LanguageExtension<DfaAssistProvider> EP_NAME = new LanguageExtension<>("com.intellij.debugger.dfaAssistProvider");
 
   /**
    * A sentinel to represent null constant.
