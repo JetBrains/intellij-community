@@ -2329,8 +2329,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    */
   @Nullable
   public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, @NotNull DfaValueFactory targetFactory, boolean useInliners) {
-    if (useInliners) {
-      new ControlFlowAnalyzer(targetFactory, psiBlock, true).buildControlFlow();
+    if (!useInliners) {
+      return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
     return DataFlowIRProvider.forElement(psiBlock, targetFactory);
   }
