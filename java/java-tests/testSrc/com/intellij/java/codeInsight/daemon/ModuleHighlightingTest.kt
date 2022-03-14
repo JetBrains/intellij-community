@@ -497,6 +497,30 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testAutomaticModuleModuleInfo() {
+    highlight("""
+        module M {
+          requires m9;
+          requires <error descr="Module not found: m42">m42</error>;
+        }""".trimIndent())
+  }
+
+  fun testAutomaticModuleJavaCode() {
+    addFile("module-info.java", """
+        module M {
+          requires m9;
+        }""".trimIndent())
+    
+    addFile("p/B.java", "package p; public class B {}", module = M9)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
   fun testLightModuleDescriptorCaching() {
     val libClass = myFixture.javaFacade.findClass("pkg.lib2.LC2", ProjectScope.getLibrariesScope(project))!!
     val libModule = JavaModuleGraphUtil.findDescriptorByElement(libClass)!!

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -31,6 +31,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M6("${TEST_MODULE_NAME}_m6", "src_m6", null),
     M7("${TEST_MODULE_NAME}_m7", "src_m7", null),
     M8("${TEST_MODULE_NAME}_m8", "src_m8", null),
+    M9("m9", "src_m9", null),
     M_TEST("${TEST_MODULE_NAME}_m_test", null, "m_test_src");
 
     fun root(): VirtualFile? = when {
@@ -70,6 +71,9 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val m8 = makeModule(project, ModuleDescriptor.M8)
       ModuleRootModificationUtil.addDependency(m6, m8)
+
+      val m9 = makeModule(project, ModuleDescriptor.M9)
+      ModuleRootModificationUtil.addDependency(main, m9)
 
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
