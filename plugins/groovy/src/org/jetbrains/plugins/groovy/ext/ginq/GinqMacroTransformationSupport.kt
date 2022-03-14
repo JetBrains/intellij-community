@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.ext.ginq
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.quickfix.ReferenceNameExpression
@@ -258,12 +259,6 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val position = parameters.position
     val topTree = getParsedGinqTree(macroCall)
     val closestGinq = topTree?.let { position.ginqParents(macroCall, it) }?.firstOrNull()
-    if (this.isUntransformed(macroCall, position)) {
-      return
-    }
-    else {
-      result.stopHere()
-    }
     if (closestGinq == null) {
       val closure = macroCall.getArguments()?.filterIsInstance<ExpressionArgument>()?.find { it.expression is GrClosableBlock } ?: return
       var hasFrom = false
@@ -285,6 +280,17 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       return
     }
     val offset = parameters.offset
+    if (this.isUntransformed(macroCall, position)) {
+      val bindings = closestGinq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset }
+      for (binding in bindings) {
+        val name = binding.referenceName ?: continue
+        result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withPsiElement(binding).withTypeText(binding.type?.presentableText), 1.0))
+      }
+      return
+    }
+    else {
+      result.stopHere()
+    }
     val latestGinq = topTree.getQueryFragments().minByOrNull {
       val endOffset = it.keyword.endOffset
       if (endOffset <= offset) {
