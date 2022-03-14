@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Version
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHome
 import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
@@ -51,7 +52,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     @Suppress("DEPRECATION")
     usages.add(LOGGING_LEVEL.metric(generalSettings.loggingLevel))
     try {
-      val mavenWrapperFile = getMavenWrapper(manager, project)
+      val mavenWrapperFile = getMavenWrapper(manager, generalSettings, project)
       var mavenVersion = MavenUtil.getMavenVersion(resolveMavenHome(generalSettings, project, null, mavenWrapperFile))
       mavenVersion = mavenVersion?.let { Version.parseVersion(it)?.toCompactString() } ?: "unknown"
       usages.add(MAVEN_VERSION.metric(mavenVersion))
@@ -105,8 +106,9 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   private fun getMavenWrapper(manager: MavenProjectsManager,
+                              generalSettings: MavenGeneralSettings,
                               project: Project): File? {
-    return if (manager.rootProjects.size == 1)
+    return if (MavenUtil.isWrapper(generalSettings) && manager.rootProjects.size == 1)
       MavenDistributionsCache.getInstance(project).getWrapper(manager.rootProjects.first().directory)?.mavenHome?.toFile() else null
   }
 
