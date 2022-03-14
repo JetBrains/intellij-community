@@ -23,8 +23,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.NaturalComparator;
@@ -444,8 +442,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
-    var dot = new FsItem(directory, ".", false, true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
-    var uplink = new FsItem(parent(directory), FsItem.UPLINK, false, true, true, false, AllIcons.Nodes.UpFolder);
+    var dot = new FsItem(directory, ".", true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
+    var uplink = new FsItem(parent(directory), FsItem.UPLINK, true, true, false, AllIcons.Nodes.UpFolder);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
       myPath.setItem(new PathWrapper(directory));
@@ -460,14 +458,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       var options = isSymlink ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
 
       Files.walkFileTree(directory, options, 1, new SimpleFileVisitor<>() {
-        private Boolean cs = null;
-
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-          if (cs == null) {
-            cs = isDirectoryCaseSensitive(file);
-          }
-
           if (attrs.isSymbolicLink()) {
             try {
               attrs = new DelegatingFileAttributes(Files.readAttributes(file, BasicFileAttributes.class));
@@ -484,7 +476,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           var visible = myDescriptor.isFileVisible(virtualFile, false);
           var selectable = myDescriptor.isFileSelectable(virtualFile);
           var icon = myDescriptor.getIcon(virtualFile);
-          var item = new FsItem(file, file.getFileName().toString(), cs, attrs.isDirectory(), visible, selectable, icon);
+          var item = new FsItem(file, file.getFileName().toString(), attrs.isDirectory(), visible, selectable, icon);
           update(id, cancelled, () -> {
             myCurrentContent.add(item);
             if (visible || myShowHiddenFiles) {
@@ -563,7 +555,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
             name += " [" + store + ']';
           }
         }
-        var item = new FsItem(root, name, false, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
+        var item = new FsItem(root, name, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
         update(id, cancelled, () -> myModel.add(item));
         if (pathToSelect != null && root.equals(pathToSelect)) {
           selection.set(item);
@@ -631,17 +623,6 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
 
     return NioFiles.toPath(text);
-  }
-
-  private static boolean isDirectoryCaseSensitive(Path file) {
-    if (isLocalFs(file)) {
-      var cs = FileSystemUtil.readParentCaseSensitivity(file.toFile());
-      return cs == CaseSensitivity.SENSITIVE ||
-             cs == CaseSensitivity.UNKNOWN && SystemInfo.isFileSystemCaseSensitive;
-    }
-    else {
-      return true;
-    }
   }
 
   private static boolean isJar(URI uri) {
@@ -712,16 +693,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     private final Path path;
     private final @NlsSafe String name;
-    private final boolean cs;
     private final boolean directory;
     private final boolean visible;
     private final boolean selectable;
     private final @Nullable Icon icon;
 
-    private FsItem(Path path, String name, boolean cs, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
+    private FsItem(Path path, String name, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
       this.path = path;
       this.name = name;
-      this.cs = cs;
       this.directory = directory;
       this.visible = visible;
       this.selectable = selectable;
@@ -740,7 +719,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (byType != 0) return byType;
       byType = Boolean.compare(o1.name.startsWith("\\\\"), o2.name.startsWith("\\\\"));
       if (byType != 0) return byType;
-      return (o1.cs ? NaturalComparator.CASE_SENSITIVE_INSTANCE : NaturalComparator.INSTANCE).compare(o1.name, o2.name);
+      return NaturalComparator.INSTANCE.compare(o1.name, o2.name);
     };
   }
 
