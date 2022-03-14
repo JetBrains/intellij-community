@@ -32,10 +32,10 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Object myInputIdMapping;
   private Object myInputIdMappingValue;
 
-  private Int2ObjectMap<Object> myPresentInputIds = IndexDebugProperties.IS_UNIT_TEST_MODE
+  private Int2ObjectMap<Object> myPresentInputIds = IndexDebugProperties.IS_UNIT_TEST_MODE || IndexDebugProperties.EXTRA_SANITY_CHECKS
                                                     ? new Int2ObjectOpenHashMap<>()
                                                     : null;
-  private List<UpdateOp> myUpdateOps = IndexDebugProperties.IS_UNIT_TEST_MODE
+  private List<UpdateOp> myUpdateOps = IndexDebugProperties.IS_UNIT_TEST_MODE || IndexDebugProperties.EXTRA_SANITY_CHECKS
                                        ? new SmartList<>()
                                        : null;
 
@@ -415,7 +415,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       clone.myPresentInputIds = myPresentInputIds != null
                                 ? new Int2ObjectOpenHashMap<>(myPresentInputIds)
                                 : null;
-      clone.myUpdateOps = IndexDebugProperties.IS_UNIT_TEST_MODE
+      clone.myUpdateOps = myUpdateOps != null
                           ? new SmartList<>(myUpdateOps)
                           : null;
       return clone;
