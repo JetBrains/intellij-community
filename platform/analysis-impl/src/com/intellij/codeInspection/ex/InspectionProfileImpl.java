@@ -529,7 +529,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected void copyToolsConfigurations(@Nullable Project project) {
   }
 
-  public final void addTool(@Nullable Project project, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @Nullable Map<String, List<String>> dependencies) {
+  public final void addTool(@Nullable Project project, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @Nullable Map<? super String, List<String>> dependencies) {
     String shortName = toolWrapper.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
@@ -873,7 +873,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return myTools.get(name);
   }
 
-  public Collection<ToolsImpl> getTools(@Nullable Project project) {
+  public Collection<ToolsImpl> getTools() {
     initInspectionTools();
     return myTools.values();
   }
