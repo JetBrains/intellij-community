@@ -922,7 +922,7 @@
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
-    
+
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.lists.JoinLinesIntention</className>
       <bundleName>messages.LangBundle</bundleName>
