@@ -76,7 +76,7 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
   companion object {
     private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-16"
     private const val JDK_HOME = "/home/me/java/jdk-17"
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_16_PREVIEW
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_17
     private const val VERSION = "17"
   }
 }

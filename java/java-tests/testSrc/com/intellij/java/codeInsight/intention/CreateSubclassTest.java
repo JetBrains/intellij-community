@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
@@ -7,17 +7,11 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.LightMultiFileTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 
 public class CreateSubclassTest extends LightMultiFileTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
-  }
-
+ 
   public void testGenerics() {
     doTest();
   }
