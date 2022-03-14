@@ -304,7 +304,9 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
-          recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
+          application.invokeLater(
+            { recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate) },
+            ModalityState.stateForComponent(editor.contentComponent))
         }
       })
     }
