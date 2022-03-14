@@ -39,13 +39,13 @@ final class PythonCommunityPluginModules {
       "intellij.python.community.plugin",
       "intellij.python.community.plugin.minor",
     ]
-    pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) {
+    pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules, []) {
       body.delegate = delegate
       body()
     }
   }
 
-  static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
+  static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules, List<String> projectLibraries,
                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     PluginLayout.plugin(mainModuleName) {
       directoryName = name
@@ -56,8 +56,8 @@ final class PythonCommunityPluginModules {
       withModule(mainModuleName, mainJarName)
       withGeneratedResources(new HelpersGenerator())
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
-      if (modules.contains("intellij.python.jupyter")) {
-        withProjectLibrary("Java-WebSocket", ProjectLibraryData.PackMode.STANDALONE_MERGED) // Required for intellij.python.jupyter
+      for (String projectLibrary : projectLibraries) {
+        withProjectLibrary(projectLibrary, ProjectLibraryData.PackMode.STANDALONE_MERGED) // Required for intellij.python.jupyter
       }
       body.delegate = delegate
       body()
