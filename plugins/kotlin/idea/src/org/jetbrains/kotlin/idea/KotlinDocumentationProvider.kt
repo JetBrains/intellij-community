@@ -588,7 +588,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 if (!quickNavigation) {
                     description {
                         declarationDescriptor.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(ktElement.project, it) }?.let {
-                            renderKDoc(it)
+                            renderKDoc(it.contentTag, it.sections)
                             return@description
                         }
                         if (declarationDescriptor is ClassConstructorDescriptor && !declarationDescriptor.isPrimary) {
@@ -598,7 +598,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                                     it
                                 )
                             }?.let {
-                                renderKDoc(it)
+                                renderKDoc(it.contentTag, it.sections)
                                 return@description
                             }
                         }
