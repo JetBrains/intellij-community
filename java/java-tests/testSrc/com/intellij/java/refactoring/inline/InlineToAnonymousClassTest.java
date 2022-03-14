@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -256,12 +256,12 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testSealedNoMembers() {
-    setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTest(false, false);
   }
 
   public void testSealedParentChildWithMembers() {
-    setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTestCanBeInvokedOnReference(false);
   }
 

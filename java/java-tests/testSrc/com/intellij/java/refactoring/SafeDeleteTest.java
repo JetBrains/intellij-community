@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -432,12 +432,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testSealedParent() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_16_PREVIEW);
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_17, getTestRootDisposable());
     doSingleFileTest();
   }
 
   public void testSealedGrandParent() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16_PREVIEW, () -> doTest("Parent"));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest("Parent"));
   }
 
   public void testRecordImplementsInterface() throws Exception {
