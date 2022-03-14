@@ -102,8 +102,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             KotlinSourceFilterScope.sourceAndClassFiles(
                 scope,
                 project
-            ),
-            project
+            )
         )
     }
 
@@ -114,7 +113,6 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                 scope,
                 project
             ),
-            project,
             MemberScope.ALL_NAME_FILTER
         )
     }

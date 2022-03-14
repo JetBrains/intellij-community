@@ -66,7 +66,7 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
             return javaFunctions
         }
 
-        if (!targetFqName.isRoot && PackageIndexUtil.packageExists(targetFqName, scope, project))
+        if (!targetFqName.isRoot && PackageIndexUtil.packageExists(targetFqName, scope))
             return listOf(GlobalSyntheticPackageViewDescriptor(targetFqName, project, scope))
         return emptyList()
     }
@@ -122,7 +122,7 @@ private class GlobalSyntheticPackageViewDescriptor(
             .flatMap { KotlinTopLevelFunctionFqnNameIndex.getInstance()[it.asString(), project, scope].asSequence() }
             .map { it.resolveToDescriptorIfAny() as? DeclarationDescriptor }
 
-        fun getSubpackages(nameFilter: (Name) -> Boolean) = PackageIndexUtil.getSubPackageFqNames(fqName, scope, project, nameFilter)
+        fun getSubpackages(nameFilter: (Name) -> Boolean) = PackageIndexUtil.getSubPackageFqNames(fqName, scope, nameFilter)
             .map { GlobalSyntheticPackageViewDescriptor(it, project, scope) }
 
         override fun getContributedDescriptors(

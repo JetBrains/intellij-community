@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
 import org.jetbrains.kotlin.resolve.lazy.data.KtScriptInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import java.util.*
 
 class StubBasedPackageMemberDeclarationProvider(
     private val fqName: FqName,
@@ -92,7 +91,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getAllDeclaredSubPackages(nameFilter: (Name) -> Boolean): Collection<FqName> {
-        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, project, nameFilter)
+        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, nameFilter)
     }
 
     override fun getPackageFiles(): Collection<KtFile> {
