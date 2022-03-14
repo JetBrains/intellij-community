@@ -70,6 +70,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -87,6 +88,10 @@ import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOB
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
 
+/**
+ * To create an instance, see {@link InspectionManager#createNewGlobalContext()}
+ */
+@ApiStatus.Internal
 public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
   @SuppressWarnings("StaticNonFinalField")
