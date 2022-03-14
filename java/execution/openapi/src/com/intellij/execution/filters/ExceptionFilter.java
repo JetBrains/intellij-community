@@ -18,7 +18,9 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +62,12 @@ public class ExceptionFilter implements Filter, DumbAware {
       }
     }
     return result;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public ExceptionLineRefiner getLocationRefiner() {
+    return myNextLineRefiner;
   }
 
   @NotNull
