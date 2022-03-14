@@ -45,19 +45,18 @@ public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
-  private static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                                           @NotNull ProblemsHolder holder,
-                                                                           boolean isOnTheFly,
-                                                                           @NotNull LocalInspectionToolSession session,
-                                                                           @NotNull List<? extends PsiElement> elements) {
+  private static void createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
+                                                     @NotNull ProblemsHolder holder,
+                                                     boolean isOnTheFly,
+                                                     @NotNull LocalInspectionToolSession session,
+                                                     @NotNull List<? extends PsiElement> elements) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, isOnTheFly);
-      ProgressManager.getInstance().runProcess(() -> acceptElements(elements, visitor), new EmptyProgressIndicator());
+      acceptElements(elements, visitor);
       tool.inspectionFinished(session, holder);
     }
-    return visitor;
   }
 
   @NotNull
@@ -455,7 +454,7 @@ public final class InspectionEngine {
     return dialectIds;
   }
 
-  public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
+  private static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
     Set<String> dialectIds = new HashSet<>();
     Set<Language> processedLanguages = new HashSet<>();
     addDialects(elements, processedLanguages, dialectIds);

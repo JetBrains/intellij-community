@@ -9,11 +9,11 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -245,8 +245,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public void performInspectionsWithProgress(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!(myProgressIndicator instanceof ProgressIndicatorEx)) {
-      throw new IllegalStateException("Inspections must be run under ProgressIndicatorEx but got: "+myProgressIndicator);
+    if (!(myProgressIndicator instanceof ProgressIndicatorEx) || !(myProgressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
+      throw new IllegalStateException("Inspections must be run under ProgressWindow but got: "+myProgressIndicator);
     }
     myProgressIndicator.setIndeterminate(false);
     ((ProgressIndicatorEx)myProgressIndicator).addStateDelegate(new AbstractProgressIndicatorExBase(){
@@ -264,8 +264,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
           getStdJobDescriptors().BUILD_GRAPH.setTotalAmount(scope.getFileCount());
           getStdJobDescriptors().LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
           getStdJobDescriptors().FIND_EXTERNAL_USAGES.setTotalAmount(0);
-          //to override current progress in order to hide useless messages/%
-          ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), new SensitiveProgressWrapper(myProgressIndicator));
+
+          runTools(scope, runGlobalToolsOnly, isOfflineInspections);
         }
         catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
