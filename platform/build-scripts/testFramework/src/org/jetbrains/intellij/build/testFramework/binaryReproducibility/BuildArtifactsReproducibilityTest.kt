@@ -6,12 +6,14 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class BuildArtifactsReproducibilityTest {
   private val buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLongOrNull()
+  private val randomSeedNumber = Random().nextLong()
   private lateinit var diffDirectory: Path
   val isEnabled = System.getProperty("intellij.build.test.artifacts.reproducibility") == "true"
 
@@ -21,6 +23,7 @@ internal class BuildArtifactsReproducibilityTest {
       "SOURCE_DATE_EPOCH environment variable is required"
     }
     options.buildDateInSeconds = buildDateInSeconds
+    options.randomSeedNumber = randomSeedNumber
     // FIXME IJI-823 workaround
     options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
     if (options.targetOS != BuildOptions.OS_NONE) {
