@@ -3,24 +3,25 @@ package com.intellij.codeInspection.tests.java
 import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 
 class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
-  fun `test field @Rule highlighting`() {
+  fun `test field @Rule highlighting modifier`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       package test;
 
       import org.junit.Rule;
       import org.junit.rules.TestRule;
+      import test.SomeTestRule;
 
       class RuleTest {
         @Rule
-        private int <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error>;
+        private SomeTestRule <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error>;
 
         @Rule
-        public static int <error descr="Fields annotated with '@org.junit.Rule' should be non-static">y</error>;
+        public static SomeTestRule <error descr="Fields annotated with '@org.junit.Rule' should be non-static">y</error>;
       }
     """.trimIndent())
   }
 
-  fun `test method @Rule highlighting`() {
+  fun `test method @Rule highlighting modifier`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       package test;
 
@@ -33,6 +34,11 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
         private SomeTestRule <error descr="Methods annotated with '@org.junit.Rule' should be 'public'">x</error>() { 
           return new SomeTestRule();  
         };
+        
+        @Rule
+        public static SomeTestRule <error descr="Methods annotated with '@org.junit.Rule' should be non-static">y</error>() { 
+          return new SomeTestRule();  
+        };        
       }
     """.trimIndent())
   }
@@ -47,9 +53,6 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
       class RuleQfTest {
         @Rule
         private int x<caret>;
-
-        @Rule
-        public int y;
       }
     """.trimIndent(), """
       package test;
@@ -60,11 +63,32 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
       class RuleQfTest {
         @Rule
         public int x;
-      
-        @Rule
-        public int y;
       }
     """.trimIndent(), "Make 'x' public")
+  }
+
+    fun `test method @Rule make non-static`() {
+      myFixture.testQuickFix(ULanguage.JAVA, """
+      package test;
+
+      import org.junit.Rule;
+      import org.junit.rules.TestRule;
+
+      class RuleQfTest {
+        @Rule
+        public static int y<caret>() { return 0; }
+      }
+    """.trimIndent(), """
+      package test;
+      
+      import org.junit.Rule;
+      import org.junit.rules.TestRule;
+      
+      class RuleQfTest {
+        @Rule
+        public int y() { return 0; }
+      }
+    """.trimIndent(), "Make 'y' not static")
   }
 
   fun `test field @ClassRule highlighting`() {

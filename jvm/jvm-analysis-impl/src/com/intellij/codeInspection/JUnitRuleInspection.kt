@@ -76,24 +76,28 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
         problems.add(problem)
       }
 
-      if (classRuleAnnotated) {
-        val actions = SmartList<IntentionAction>()
-        val type = when (uDeclaration) {
-          is UMethod -> uDeclaration.returnType
-          is UField -> uDeclaration.type
-          else -> throw IllegalStateException("Expected method or field.")
-        }
-        val aClass = PsiUtil.resolveClassInClassTypeOnly(type)
-        if (!InheritanceUtil.isInheritor(aClass, false, "org.junit.rules.TestRule") &&
-            !InheritanceUtil.isInheritor(aClass, false, "org.junit.rules.MethodRule")
-        ) {
-          val intention = IntentionWrapper.wrapToQuickFixes(actions, sourcePsi.containingFile).toTypedArray()
-          val problem = manager.createProblemDescriptor(
-            nameIdentifier, JvmAnalysisBundle.message(typeMessage, CLASS_RULE_FQN), isOnTheFly,
-            intention, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          )
-          problems.add(problem)
-        }
+      val actions = SmartList<IntentionAction>()
+      val type = when (uDeclaration) {
+        is UMethod -> uDeclaration.returnType
+        is UField -> uDeclaration.type
+        else -> throw IllegalStateException("Expected method or field.")
+      }
+      val aClass = PsiUtil.resolveClassInClassTypeOnly(type)
+      val isTestRuleInheritor = InheritanceUtil.isInheritor(aClass, false, TEST_RULE)
+      val isMethodRuleInheritor = InheritanceUtil.isInheritor(aClass, false, METHOD_RULE)
+      val typeErrorMessage: String? = when {
+        ruleAnnotated && !isTestRuleInheritor && !isMethodRuleInheritor ->
+          JvmAnalysisBundle.message(typeMessage, "'$TEST_RULE' or '$METHOD_RULE'")
+        classRuleAnnotated && !isTestRuleInheritor -> JvmAnalysisBundle.message(typeMessage, "'${TEST_RULE}'")
+        else -> null
+      }
+      typeErrorMessage?.let { errorMessage ->
+        val quickFix = IntentionWrapper.wrapToQuickFixes(actions, sourcePsi.containingFile).toTypedArray()
+        val problem = manager.createProblemDescriptor(
+          nameIdentifier, errorMessage, isOnTheFly,
+          quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        )
+        problems.add(problem)
       }
     }
     return problems.toTypedArray()
@@ -101,6 +105,11 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
 
   companion object {
     const val RULE_FQN = "org.junit.Rule"
+
     const val CLASS_RULE_FQN = "org.junit.ClassRule"
+
+    const val TEST_RULE = "org.junit.rules.TestRule"
+
+    const val METHOD_RULE = "org.junit.rules.MethodRule"
   }
 }
