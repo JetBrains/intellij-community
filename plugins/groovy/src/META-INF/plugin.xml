@@ -218,8 +218,11 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureOwnerDelegateTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
+    <!--this duplication makes GroovyMacroTypeCalculator run before DefaultMethodCallTypeCalculator for methods-->
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
+                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression"
-                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator" order="first"/>
+                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultNewExpressionTypeCalculator" order="last"/>
