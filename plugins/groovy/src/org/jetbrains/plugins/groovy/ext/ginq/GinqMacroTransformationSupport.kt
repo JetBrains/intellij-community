@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.typing.box
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport
 
 internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport {
@@ -129,7 +130,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
           namedRecord?.let { GrSyntheticNamedRecordClass(ginq, it).type() } ?: PsiType.NULL
         }
         return facade.findClass(container, macroCall.resolveScope)?.let {
-          facade.elementFactory.createType(it, componentType)
+          facade.elementFactory.createType(it, componentType.box(expression))
         }
       }
     }

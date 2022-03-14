@@ -103,4 +103,13 @@ GQ {
   select v.n<caret>n, v.powerOfN
 }""", JAVA_LANG_INTEGER
   }
+
+  void testPrimitive() {
+    doTest """
+def aa = GQL {
+        from x in [1]
+        select x.byteValue()
+    }
+a<caret>a""", "java.util.List<java.lang.Byte>"
+  }
 }
