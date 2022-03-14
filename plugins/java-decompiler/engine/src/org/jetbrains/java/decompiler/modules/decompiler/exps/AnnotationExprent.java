@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.List;
+import java.util.Objects;
 
 public class AnnotationExprent extends Exprent {
   public static final int ANNOTATION_NORMAL = 1;
