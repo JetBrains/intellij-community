@@ -67,7 +67,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     override fun setupAssets(project: Project) {
       outputDirectory = contentRoot
       if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+        addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       }
       if (addSampleCode) {
         withJavaSampleCodeAsset("src", "")
