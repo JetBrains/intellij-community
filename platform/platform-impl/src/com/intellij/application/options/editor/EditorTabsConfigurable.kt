@@ -9,6 +9,7 @@ import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
@@ -84,7 +85,8 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
               }
             }
           }
-          row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
+          row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
+                                                                   and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!)) }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
@@ -137,6 +139,18 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
 
   private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
     enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
+  }
+
+  private fun <T : JComponent> Cell<T>.enableIfKeepPinnedTabsOnLeft() {
+    enabledIf(object : ComponentPredicate() {
+      override fun addListener(listener: (Boolean) -> Unit) {
+        TODO("Not yet implemented")
+      }
+
+      override fun invoke(): Boolean {
+        return AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")
+      }
+    })
   }
 
   override fun apply() {

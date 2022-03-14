@@ -657,7 +657,7 @@ public class JBTabsImpl extends JComponent
     boolean useTableLayout = !isSingleRow();
      useTableLayout |= getTabsPosition() == JBTabsPosition.top
                 && supportsTableLayoutAsSingleRow()
-                && UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+                && TabLayout.showPinnedTabsSeparately();
     TabLayout layout = useTableLayout ? myTableLayout : mySingleRowLayout;
     if (setLayout(layout)) {
       relayout(true, true);
@@ -751,7 +751,7 @@ public class JBTabsImpl extends JComponent
       return myTabsLayout != null && myTabsLayout.ignoreTabLabelLimitedWidthWhenPaint();
     } else {
       return myLayout instanceof ScrollableSingleRowLayout
-             || (myLayout instanceof TableLayout && UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow());
+             || (myLayout instanceof TableLayout && TabLayout.showPinnedTabsSeparately());
     }
   }
 
