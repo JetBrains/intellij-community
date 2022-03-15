@@ -89,10 +89,6 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
       return Collections.emptyList();
     }
 
-    if (data == null) {
-      return Collections.emptyList();
-    }
-
     if (!(data instanceof FoldingTransferableData)) {
       LOG.error("Transferable content has returned invalid data\ncontent: " + content + "\ndata: " + data);
       return Collections.emptyList();
