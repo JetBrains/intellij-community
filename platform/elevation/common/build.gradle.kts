@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import com.google.protobuf.gradle.*
 
-val grpcVersion = "1.21.1"  // Android Studio: b/176938468
+val grpcVersion = "1.31.1"
 val grpcKotlinVersion = "0.2.0" // CURRENT_GRPC_KOTLIN_VERSION
 val protobufVersion = "3.15.8"
 val coroutinesVersion = "1.3.8"

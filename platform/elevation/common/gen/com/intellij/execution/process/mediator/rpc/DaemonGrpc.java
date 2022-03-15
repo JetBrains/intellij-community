@@ -18,7 +18,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 /**
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.21.1)",  // Android Studio: b/176938468
+    value = "by gRPC proto compiler (version 1.31.1)",
     comments = "Source: processMediator.proto")
 public final class DaemonGrpc {
 
@@ -44,7 +44,7 @@ public final class DaemonGrpc {
           DaemonGrpc.getAdjustQuotaMethod = getAdjustQuotaMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.QuotaOptions, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.Daemon", "AdjustQuota"))  // Android Studio: b/176938468
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "AdjustQuota"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.QuotaOptions.getDefaultInstance()))
@@ -106,7 +106,7 @@ public final class DaemonGrpc {
           DaemonGrpc.getShutdownMethod = getShutdownMethod =
               io.grpc.MethodDescriptor.<com.google.protobuf.Empty, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.Daemon", "Shutdown"))  // Android Studio: b/176938468
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Shutdown"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.google.protobuf.Empty.getDefaultInstance()))
@@ -124,7 +124,6 @@ public final class DaemonGrpc {
    * Creates a new async stub that supports all call types for the service
    */
   public static DaemonStub newStub(io.grpc.Channel channel) {
-    return new DaemonStub(channel);  /* Android Studio: b/176938468
     io.grpc.stub.AbstractStub.StubFactory<DaemonStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<DaemonStub>() {
         @java.lang.Override
@@ -133,7 +132,6 @@ public final class DaemonGrpc {
         }
       };
     return DaemonStub.newStub(factory, channel);
-    Android Studio: b/176938468 */
   }
 
   /**
@@ -141,7 +139,6 @@ public final class DaemonGrpc {
    */
   public static DaemonBlockingStub newBlockingStub(
       io.grpc.Channel channel) {
-    return new DaemonBlockingStub(channel);  /* Android Studio: b/176938468
     io.grpc.stub.AbstractStub.StubFactory<DaemonBlockingStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<DaemonBlockingStub>() {
         @java.lang.Override
@@ -150,7 +147,6 @@ public final class DaemonGrpc {
         }
       };
     return DaemonBlockingStub.newStub(factory, channel);
-    Android Studio: b/176938468 */
   }
 
   /**
@@ -158,7 +154,6 @@ public final class DaemonGrpc {
    */
   public static DaemonFutureStub newFutureStub(
       io.grpc.Channel channel) {
-    return new DaemonFutureStub(channel);  /* Android Studio: b/176938468
     io.grpc.stub.AbstractStub.StubFactory<DaemonFutureStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<DaemonFutureStub>() {
         @java.lang.Override
@@ -167,7 +162,6 @@ public final class DaemonGrpc {
         }
       };
     return DaemonFutureStub.newStub(factory, channel);
-    Android Studio: b/176938468 */
   }
 
   /**
@@ -224,12 +218,7 @@ public final class DaemonGrpc {
 
   /**
    */
-  // Android Studio: b/176938468
-  public static final class DaemonStub extends io.grpc.stub.AbstractStub<DaemonStub> {
-    private DaemonStub(io.grpc.Channel channel) {
-      super(channel);
-    }
-
+  public static final class DaemonStub extends io.grpc.stub.AbstractAsyncStub<DaemonStub> {
     private DaemonStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -268,12 +257,7 @@ public final class DaemonGrpc {
 
   /**
    */
-  // Android Studio: b/176938468
-  public static final class DaemonBlockingStub extends io.grpc.stub.AbstractStub<DaemonBlockingStub> {
-    private DaemonBlockingStub(io.grpc.Channel channel) {
-      super(channel);
-    }
-
+  public static final class DaemonBlockingStub extends io.grpc.stub.AbstractBlockingStub<DaemonBlockingStub> {
     private DaemonBlockingStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -310,12 +294,7 @@ public final class DaemonGrpc {
 
   /**
    */
-  // Android Studio: b/176938468
-  public static final class DaemonFutureStub extends io.grpc.stub.AbstractStub<DaemonFutureStub> {
-    private DaemonFutureStub(io.grpc.Channel channel) {
-      super(channel);
-    }
-
+  public static final class DaemonFutureStub extends io.grpc.stub.AbstractFutureStub<DaemonFutureStub> {
     private DaemonFutureStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);

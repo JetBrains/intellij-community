@@ -17,9 +17,7 @@ import io.grpc.netty.shaded.io.netty.util.NetUtil;
 import io.grpc.protobuf.ProtoUtils;
 import io.grpc.protobuf.lite.ProtoLiteUtils;
 import io.grpc.stub.AbstractStub;
-/* Android Studio: b/176938468
 import io.perfmark.PerfMark;
-Android Studio: b/176938468 */
 import kotlin.KotlinVersion;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.future.FutureKt;
@@ -58,9 +56,7 @@ public class DaemonProcessRuntimeClasspath {
     AddressResolverGroup.class, // netty resolver
     ByteBufAllocator.class, // netty buffer
     ProtobufDecoder.class, // netty codec
-/* Android Studio: b/176938468
     PerfMark.class, // perfmark-api
-Android Studio: b/176938468 */
 
     Native.class, // JNA
   });
