@@ -66,12 +66,7 @@ class UndoApplyPatchDialog extends DialogWrapper {
     }
     panel.add(labelsPanel, BorderLayout.NORTH);
     if (numFiles > 0) {
-      ChangesTree browser = new ChangesTreeImpl.FilePaths(myProject, false, false, myFailedFilePaths) {
-        @Override
-        public Dimension getPreferredSize() {
-          return new Dimension(infoLabel.getPreferredSize().width, 50);
-        }
-      };
+      ChangesTree browser = new ChangesTreeImpl.FilePaths(myProject, false, false, myFailedFilePaths);
       panel.add(ScrollPaneFactory.createScrollPane(browser), BorderLayout.CENTER);
     }
     return panel;
