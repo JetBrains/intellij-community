@@ -36,6 +36,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 sealed class PluginUpdateStatus {
     val timestamp = System.currentTimeMillis()
@@ -80,12 +81,11 @@ sealed class PluginUpdateStatus {
 }
 
 class KotlinPluginUpdater : Disposable {
+    @Volatile
     private var updateDelay = INITIAL_UPDATE_DELAY
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
     private val notificationGroup get() = NotificationGroupManager.getInstance().getNotificationGroup("Kotlin plugin updates")
-
-    @Volatile
-    private var checkQueued = false
+    private val checkQueued = AtomicBoolean(false)
 
     @Volatile
     private var lastUpdateStatus: PluginUpdateStatus? = null
@@ -94,7 +94,7 @@ class KotlinPluginUpdater : Disposable {
         if (!file.isInLocalFileSystem) return
         if (!UpdateSettings.getInstance().isCheckNeeded) return
 
-        val lastUpdateTime = PropertiesComponent.getInstance().getLong(PROPERTY_NAME, 0L)
+        val lastUpdateTime = runReadAction { PropertiesComponent.getInstance().getLong(PROPERTY_NAME, 0L) }
         if (lastUpdateTime == 0L || System.currentTimeMillis() - lastUpdateTime > CACHED_REQUEST_DELAY) {
             queueUpdateCheck { updateStatus ->
                 when (updateStatus) {
@@ -110,9 +110,18 @@ class KotlinPluginUpdater : Disposable {
 
     private fun queueUpdateCheck(callback: (PluginUpdateStatus) -> Boolean) {
         ApplicationManager.getApplication().assertIsDispatchThread()
-        if (!checkQueued) {
-            checkQueued = true
-            alarm.addRequest({ updateCheck(callback) }, updateDelay)
+        if (checkQueued.compareAndSet(/* expectedValue = */ false, /* newValue = */ true)) {
+            alarm.addRequest(
+                {
+                    try {
+                        updateCheck(callback)
+                    } finally {
+                        checkQueued.set(false)
+                    }
+                },
+                updateDelay,
+            )
+
             updateDelay *= 2 // exponential backoff
         }
     }
@@ -143,7 +152,6 @@ class KotlinPluginUpdater : Disposable {
         } else {
             try {
                 updateStatus = checkUpdatesInMainRepository()
-
                 for (host in RepositoryHelper.getPluginHosts().filterNotNull()) {
                     val customUpdateStatus = checkUpdatesInCustomRepository(host)
                     updateStatus = updateStatus.mergeWith(customUpdateStatus)
@@ -154,8 +162,6 @@ class KotlinPluginUpdater : Disposable {
         }
 
         lastUpdateStatus = updateStatus
-        checkQueued = false
-
         if (updateStatus is PluginUpdateStatus.Update) {
             updateStatus = verify(updateStatus)
         }
@@ -237,7 +243,7 @@ class KotlinPluginUpdater : Disposable {
     }
 
     private fun recordSuccessfulUpdateCheck() {
-        PropertiesComponent.getInstance().setValue(PROPERTY_NAME, System.currentTimeMillis().toString())
+        runWriteAction { PropertiesComponent.getInstance().setValue(PROPERTY_NAME, System.currentTimeMillis().toString()) }
         updateDelay = INITIAL_UPDATE_DELAY
     }
 
