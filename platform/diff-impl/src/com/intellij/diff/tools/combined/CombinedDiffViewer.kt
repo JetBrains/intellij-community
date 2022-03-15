@@ -123,6 +123,9 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
     if (insertIndex != -1 && insertIndex < diffBlocks.size) {
       contentPanel.add(diffBlock.component, insertIndex)
+      for (index in insertIndex until  diffBlocks.size) {
+        getBlockId(index)?.let { id -> diffBlocksPositions[id] = index + 1 }
+      }
       diffBlocks[blockId] = diffBlock
       diffViewers[blockId] = viewer
       diffBlocksPositions[blockId] = insertIndex
