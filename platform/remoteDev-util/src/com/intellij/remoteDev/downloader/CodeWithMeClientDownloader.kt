@@ -116,7 +116,7 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
 
-    val clientDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$hostBuildNumber$platformSuffix"
+    val clientDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$hostBuildNumber$platformSuffix"
 
     val platformString = when {
       SystemInfo.isLinux -> "linux-x64"
@@ -133,7 +133,7 @@ object CodeWithMeClientDownloader {
 
     val jdkVersion = jreBuildParts[0]
     val jdkBuild = jreBuildParts[1]
-    val jreDownloadUrl = "${config.jreDownloadLocation}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
+    val jreDownloadUrl = "${config.jreDownloadUrl}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
     val clientName = "$clientDistributionName-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast(jreDownloadUrl.downloadDelimiter()).removeSuffix(".tar.gz")
@@ -166,7 +166,7 @@ object CodeWithMeClientDownloader {
     jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
-    val clientJdkDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
+    val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
     LOG.info("Downloading from $clientJdkDownloadUrl")
 
     val tempFile = Files.createTempFile("jdk-build", "txt")
@@ -423,10 +423,16 @@ object CodeWithMeClientDownloader {
       try {
         LOG.info("Downloading from $url to ${path.absolutePathString()}, attempt $i of $MAX_ATTEMPTS")
 
-        if (url.toString().startsWith("http")) {
-          HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
-        } else {
-          Files.copy(url.toPath(), path)
+        when (url.scheme) {
+          "http", "https" -> {
+            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+          }
+          "file" -> {
+            Files.copy(url.toPath(), path)
+          }
+          else -> {
+            error("scheme ${url.scheme} is not supported")
+          }
         }
 
         LOG.info("Download from $url to ${path.absolutePathString()} succeeded on attempt $i of $MAX_ATTEMPTS")
