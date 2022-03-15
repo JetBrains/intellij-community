@@ -43,7 +43,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertEquals(TextRange(0, 6), TextRange(keywords[0].startOffset, keywords[0].endOffset))
     assertEquals(TextRange(11, 18), TextRange(keywords[1].startOffset, keywords[1].endOffset))
   }
-  
+
   fun testDependencyOnIllegalPackage() {
     addFile("a/secret/Secret.java", "package a.secret;\npublic class Secret {}", M4)
     addFile("module-info.java", "module M4 { exports pkg.module; }", M4)
@@ -497,23 +497,16 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
-  fun testAutomaticModuleModuleInfo() {
-    highlight("""
+  fun testAutomaticModuleFromIdeaModule() {
+    highlight("module-info.java", """
         module M {
-          requires m9;
+          requires ${M6.moduleName.replace('_', '.')};  // `light.idea.test.m6`
           requires <error descr="Module not found: m42">m42</error>;
         }""".trimIndent())
-  }
 
-  fun testAutomaticModuleJavaCode() {
-    addFile("module-info.java", """
-        module M {
-          requires m9;
-        }""".trimIndent())
-    
-    addFile("p/B.java", "package p; public class B {}", module = M9)
+    addFile("p/B.java", "package p; public class B {}", module = M6)
     addFile("p/C.java", "package p; public class C {}", module = M4)
-    
+
     highlight("A.java", """
         public class A extends p.B {
           private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
@@ -535,7 +528,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testModuleInSources() {
     val classInLibrary = myFixture.javaFacade.findClass("lib.named.C", GlobalSearchScope.allScope(project))!!
     val elementInSources = classInLibrary.navigationElement
-    assertThat(JavaModuleGraphUtil.findDescriptorByFile (PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
+    assertThat(JavaModuleGraphUtil.findDescriptorByFile(PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
   }
 
   //<editor-fold desc="Helpers.">

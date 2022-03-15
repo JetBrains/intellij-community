@@ -24,24 +24,24 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
   enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String?, internal val testRootName: String?) {
     MAIN(TEST_MODULE_NAME, null, "test_src"),
-    M2("${TEST_MODULE_NAME}_m2", "src_m2", null),
-    M3("${TEST_MODULE_NAME}_m3", "src_m3", null),
-    M4("${TEST_MODULE_NAME}_m4", "src_m4", null),
-    M5("${TEST_MODULE_NAME}_m5", "src_m5", null),
-    M6("${TEST_MODULE_NAME}_m6", "src_m6", null),
-    M7("${TEST_MODULE_NAME}_m7", "src_m7", null),
-    M8("${TEST_MODULE_NAME}_m8", "src_m8", null),
-    M9("m9", "src_m9", null),
-    M_TEST("${TEST_MODULE_NAME}_m_test", null, "m_test_src");
+    M2("light_idea_test_m2", "src_m2", null),
+    M3("light_idea_test_m3", "src_m3", null),
+    M4("light_idea_test_m4", "src_m4", null),
+    M5("light_idea_test_m5", "src_m5", null),
+    M6("light_idea_test_m6", "src_m6", null),
+    M7("light_idea_test_m7", "src_m7", null),
+    M8("light_idea_test_m8", "src_m8", null),
+    M_TEST("light_idea_test_m_test", null, "m_test_src");
 
     fun root(): VirtualFile? = when {
       this === MAIN -> LightPlatformTestCase.getSourceRoot()
-      rootName != null -> TempFileSystem.getInstance().findFileByPath("/$rootName")!!
+      rootName != null -> TempFileSystem.getInstance().findFileByPath("/${rootName}") ?: throw IllegalStateException("Cannot find /${rootName}")
       else -> null
     }
 
     fun testRoot(): VirtualFile? =
-      if (testRootName != null) TempFileSystem.getInstance().findFileByPath("/$testRootName")!! else null
+      if (testRootName == null) null
+      else TempFileSystem.getInstance().findFileByPath("/${testRootName}") ?: throw IllegalStateException("Cannot find /${testRootName}")
   }
 
   override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -72,9 +72,6 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       val m8 = makeModule(project, ModuleDescriptor.M8)
       ModuleRootModificationUtil.addDependency(m6, m8)
 
-      val m9 = makeModule(project, ModuleDescriptor.M9)
-      ModuleRootModificationUtil.addDependency(main, m9)
-
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
 
@@ -104,7 +101,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
   }
 
   private fun makeModule(project: Project, descriptor: ModuleDescriptor): Module {
-    val path = FileUtil.join(FileUtil.getTempDirectory(), "${descriptor.moduleName}.iml")
+    val path = "${FileUtil.getTempDirectory()}/${descriptor.moduleName}.iml"
     val module = createModule(project, path)
     ModuleRootModificationUtil.updateModel(module) { configureModule(module, it, descriptor) }
     return module
