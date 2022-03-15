@@ -80,10 +80,26 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                             }
                         }
                     )
+                    val foundMainCandidates = functionCandidates?.isNotEmpty() ?: false
                     TestCase.assertTrue(
                         "function candidates expected to be found for $file",
-                        functionCandidates?.isNotEmpty() ?: false
+                        foundMainCandidates
                     )
+
+                    val foundMainFileContainer = EntryPointContainerFinder.find(ktFile)
+
+                    if (functionCandidates?.any { it.isMainFunction(languageVersionSettings) } == true) {
+                        assertNotNull(
+                            "$file: Kotlin configuration producer should produce configuration for $file",
+                            foundMainFileContainer
+                        )
+                    } else {
+                        assertNull(
+                            "$file: Kotlin configuration producer shouldn't produce configuration for $file",
+                            foundMainFileContainer
+                        )
+                    }
+
                 }
             }
         }
@@ -237,6 +253,9 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
     }
 
     companion object {
+        fun KtNamedFunction.isMainFunction(languageSettings: LanguageVersionSettings) =
+            MainFunctionDetector(languageSettings) { it.resolveToDescriptorIfAny() }.isMain(this)
+
         private fun functionVisitor(fileLanguageSettings: LanguageVersionSettings, function: KtNamedFunction): List<KtNamedFunction> {
             val project = function.project
             val file = function.containingKtFile
@@ -254,11 +273,8 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                 val assertIsMain = "yes" in options
                 val assertIsNotMain = "no" in options
 
-                fun isMainFunction(f: KtNamedFunction) =
-                    MainFunctionDetector(fileLanguageSettings) { it.resolveToDescriptorIfAny() }.isMain(f)
-
-                val isMainFunction = isMainFunction(function)
-                val functionCandidatesAreMain = functionCandidates.map(::isMainFunction)
+                val isMainFunction = function.isMainFunction(fileLanguageSettings)
+                val functionCandidatesAreMain = functionCandidates.map { it.isMainFunction(fileLanguageSettings) }
                 val anyFunctionCandidatesAreMain = functionCandidatesAreMain.any { it }
                 val allFunctionCandidatesAreNotMain = functionCandidatesAreMain.none { it }
 
@@ -303,7 +319,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
                     assertNotNull(
                         "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                        foundMainContainer,
+                        foundMainContainer
                     )
                 } else {
                     try {
@@ -327,6 +343,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
             }
+
             return functionCandidates
         }
 

@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private fun getMainFunCandidates(psiClass: PsiClass): Collection<KtNamedFunction> {
     return psiClass.allMethods.map { method: PsiMethod ->
@@ -43,6 +44,7 @@ object EntryPointContainerFinder {
         val mainLocatingService = KotlinMainFunctionLocatingService.getInstance()
 
         var currentElement = locationElement.declarationContainer(false)
+        // look up outside: from the inner declaration to the most top level declarations
         while (currentElement != null) {
             var entryPointContainer = currentElement
             if (entryPointContainer is KtClass) {
@@ -52,6 +54,24 @@ object EntryPointContainerFinder {
             currentElement = (currentElement as PsiElement).declarationContainer(true)
         }
 
+        // if locationElement is KtFile (the most top element) and nothing is found - look up inside declarations
+        if (locationElement is KtFile) {
+            locationElement.declarations.filterIsInstance<KtClassOrObject>().forEach {classOrObject ->
+                classOrObject.lookupMainDeclarations(mainLocatingService)?.let { return it }
+            }
+        }
+
+        return null
+    }
+
+    private fun KtClassOrObject.lookupMainDeclarations(mainLocatingService: KotlinMainFunctionLocatingService): KtDeclarationContainer? {
+        if (this.isLocal) return null
+
+        if (mainLocatingService.hasMain(declarations)) return this
+
+        for (declaration in declarations) {
+            declaration.safeAs<KtClassOrObject>()?.lookupMainDeclarations(mainLocatingService)?.let { return it }
+        }
         return null
     }
 
