@@ -30,7 +30,9 @@ private val TYPE_TOKENS_INSIDE_ANGLE_BRACKETS = TokenSet.orSet(
         KtTokens.IDENTIFIER, KtTokens.COMMA,
         KtTokens.AT,
         KtTokens.RBRACKET, KtTokens.LBRACKET,
-        KtTokens.IN_KEYWORD, KtTokens.OUT_KEYWORD, KtTokens.MUL
+        KtTokens.IN_KEYWORD, KtTokens.OUT_KEYWORD, KtTokens.MUL,
+        KtTokens.COLON, KtTokens.COLONCOLON, KtTokens.LPAR, KtTokens.RPAR,
+        KtTokens.CLASS_KEYWORD, KtTokens.DOT
     )
 )
 
