@@ -18,6 +18,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -66,24 +69,33 @@ public class ContentTabLabel extends ContentLabel {
   }
 
   private void updateText() {
-    if (myText != null && myText.startsWith("<html>")) {
-      super.setText(myText); // SwingUtilities2.clipString does not support HTML
-      return;
+    try {
+      if (myText != null && myText.startsWith("<html>")) {
+        super.setText(myText); // SwingUtilities2.clipString does not support HTML
+        return;
+      }
+      FontMetrics fm = getFontMetrics(getFont());
+      int textWidth = UIUtilities.stringWidth(this, fm, myText);
+      int prefWidth = myIconWithInsetsWidth + textWidth;
+
+      int maxWidth = getMaximumSize().width;
+
+      if (prefWidth > maxWidth) {
+        int offset = maxWidth - myIconWithInsetsWidth;
+        String s = UIUtilities.clipString(this, fm, myText, offset);
+        super.setText(s);
+        return;
+      }
+
+      super.setText(myText);
+    } finally {
+      new SingleAlarm(() -> {
+          ObjectUtils.consumeIfNotNull(getParent(), c -> {
+            c.revalidate();
+            c.repaint();
+          });
+      }, 50, myContent, Alarm.ThreadToUse.SWING_THREAD).request();
     }
-    FontMetrics fm = getFontMetrics(getFont());
-    int textWidth = UIUtilities.stringWidth(this, fm, myText);
-    int prefWidth = myIconWithInsetsWidth + textWidth;
-
-    int maxWidth = getMaximumSize().width;
-
-    if (prefWidth > maxWidth) {
-      int offset = maxWidth - myIconWithInsetsWidth;
-      String s = UIUtilities.clipString(this, fm, myText, offset);
-      super.setText(s);
-      return;
-    }
-
-    super.setText(myText);
   }
 
   ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
