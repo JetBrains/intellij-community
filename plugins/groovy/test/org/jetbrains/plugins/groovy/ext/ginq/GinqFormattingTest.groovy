@@ -45,4 +45,22 @@ GQ {
 }
 ''')
   }
+
+  void testHaving() {
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  groupby x
+      having x == y
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  groupby x
+    having x == y
+  select x
+}
+''')
+  }
 }

@@ -50,7 +50,7 @@ data class GinqExpression(
 
   fun getFilterFragments(): Iterable<GinqFilterFragment> = listOfNotNull(where, groupBy?.having) + joins.mapNotNull { it.onCondition }
 
-  fun getQueryFragments(): Iterable<GinqQueryFragment> = listOfNotNull(from, where, groupBy, orderBy, limit, select) + joins + joins.mapNotNull { it.onCondition }
+  fun getQueryFragments(): Iterable<GinqQueryFragment> = listOfNotNull(from, where, groupBy, groupBy?.having, orderBy, limit, select) + joins + joins.mapNotNull { it.onCondition }
 }
 
 sealed interface GinqQueryFragment {
