@@ -227,7 +227,7 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
       return true;
     }
     Object object = getObject();
-    return object instanceof PsiElement && ((PsiElement)object).getContainingFile() != null;
+    return object instanceof PsiElement && ((PsiElement) object).isValid() && ((PsiElement)object).getContainingFile() != null;
   }
 
   public int getVerticalIconOffset() {
