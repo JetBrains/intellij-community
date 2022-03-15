@@ -2,12 +2,11 @@
 
 package org.jetbrains.uast.kotlin.internal
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -54,8 +53,11 @@ internal fun KtAnalysisSession.toPsiClass(
     return PsiTypesUtil.getPsiClass(toPsiType(ktType, source, context, typeOwnerKind, boxed = true))
 }
 
-internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol): PsiMethod? {
-    return when (val psi = functionSymbol.psi) {
+internal fun KtAnalysisSession.toPsiMethod(
+    functionSymbol: KtFunctionLikeSymbol,
+    context: KtElement,
+): PsiMethod? {
+    return when (val psi = functionSymbol.psiForUast(context.project)) {
         null -> null
         is PsiMethod -> psi
         is KtClassOrObject -> {
@@ -74,7 +76,7 @@ internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol)
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val ktModule = source.getKtModule()
+                val ktModule = source.getKtModule(context.project)
                 if (ktModule !is KtSourceModule) return null
                 return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
             }
@@ -143,4 +145,16 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
     if (ktType == null) return null
     if (ktType is KtClassErrorType) return null
     return if (ktType.canBeNull) TypeNullability.NULLABLE else TypeNullability.NOT_NULL
+}
+
+/**
+ * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
+ */
+internal fun KtSymbol.psiForUast(project: Project): PsiElement? {
+    return when (origin) {
+        KtSymbolOrigin.LIBRARY -> {
+            FirPsiDeclarationProvider.findPsi(this, project) ?: psi
+        }
+        else -> psi
+    }
 }
