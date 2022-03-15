@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -63,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -634,10 +636,17 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title, list.getBackground()), BorderLayout.NORTH);
         }
       }
-      JPanel wrapped = new JPanel(new BorderLayout());
+      SelectablePanel wrapped = new SelectablePanel(list.getBackground());
+      wrapped.setLayout(new BorderLayout());
       wrapped.setBackground(bg);
       wrapped.setForeground(foreground);
-      wrapped.setBorder(RENDERER_BORDER);
+      if (ExperimentalUI.isNewUI()) {
+        wrapped.setBorder(new EmptyBorder(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
+        wrapped.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+      }
+      else {
+        wrapped.setBorder(RENDERER_BORDER);
+      }
       wrapped.add(cmp, BorderLayout.CENTER);
       myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {

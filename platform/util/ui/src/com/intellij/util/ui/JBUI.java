@@ -926,6 +926,7 @@ public final class JBUI {
 
       public static class Selection {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
+        public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 12);
 
         @NotNull
         public static Insets innerInsets() {
@@ -1005,7 +1006,7 @@ public final class JBUI {
         return JBColor.namedColor("SearchEverywhere.List.separatorColor", Gray.xDC);
       }
 
-      public static @NotNull Color LIST_SETTINGS_BACKGROUND =
+      public static final @NotNull Color LIST_SETTINGS_BACKGROUND =
         JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
 
       public static @NotNull Color listTitleLabelForeground() {

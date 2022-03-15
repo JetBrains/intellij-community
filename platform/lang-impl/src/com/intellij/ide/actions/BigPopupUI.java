@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
@@ -111,8 +112,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
         setBorder(PopupUtil.createComplexPopupTextFieldBorder());
       }
       else {
-        Insets insets = JBUI.CurrentTheme.BigPopup.searchFieldInsets();
-        Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+        Border empty = new EmptyBorder(JBUI.CurrentTheme.BigPopup.searchFieldInsets());
         Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
         setBorder(JBUI.Borders.merge(empty, topLine, true));
         setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
@@ -179,7 +179,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
       if (header.getBorder() == null) {
         header.setBorder(
           JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
-                                JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
+                                new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.headerInsets())));
       }
       header.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       myResultsList.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
@@ -232,7 +232,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     if (ExperimentalUI.isNewUI()) {
-      resultsScroll.setBorder(JBUI.Borders.empty(PopupUtil.createComplexPopupTextFieldInsets(0, 0)));
+      int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+      //noinspection UseDPIAwareBorders
+      resultsScroll.setBorder(new EmptyBorder(0, leftRightInset, 0, leftRightInset));
     }
     else {
       resultsScroll.setBorder(null);

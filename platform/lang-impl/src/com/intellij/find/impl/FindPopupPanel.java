@@ -1971,14 +1971,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     private UsageTableCellRenderer(@NotNull GlobalSearchScope scope) {
       if (ExperimentalUI.isNewUI()) {
-        Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+        int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
         Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
         //noinspection UseDPIAwareBorders
-        setBorder(new EmptyBorder(innerInsets.top, innerInsets.left + textFieldBorderInsets.left, innerInsets.bottom,
-                                  innerInsets.right + textFieldBorderInsets.right));
+        setBorder(new EmptyBorder(innerInsets.top, innerInsets.left + leftRightInset, innerInsets.bottom,
+                                  innerInsets.right + leftRightInset));
         setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
         //noinspection UseDPIAwareInsets
-        setSelectionInsets(new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
+        setSelectionInsets(new Insets(0, leftRightInset, 0, leftRightInset));
       } else {
         setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
       }
