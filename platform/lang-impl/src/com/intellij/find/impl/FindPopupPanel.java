@@ -551,6 +551,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         });
       }, FindBundle.message("find.replace.command"), null);
     });
+    myOKButton.setOpaque(false);
     myOKButton.addActionListener(myOkActionListener);
     boolean enterAsOK = false;
 
@@ -771,7 +772,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     };
     myPreviewSplitter.setFirstComponent(scrollPane);
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 0 0 0 0, fillx, hidemode 3, gap 0"));
-    bottomPanel.add(myNewTabCheckbox = new JBCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView()));
+    myNewTabCheckbox = new JBCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView());
+    myNewTabCheckbox.setOpaque(false);
+    bottomPanel.add(myNewTabCheckbox);
     myNewTabCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -832,6 +835,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       //noinspection UseDPIAwareInsets
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
       bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
+      bottomPanel.setBackground(JBUI.CurrentTheme.Advertiser.background());
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
       mySearchTextArea.setBorder(JBUI.Borders.compound(
