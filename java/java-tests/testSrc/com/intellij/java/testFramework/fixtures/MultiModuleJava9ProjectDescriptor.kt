@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
@@ -22,7 +23,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
  * Test dependencies: 'm.test' -> 'm2'
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
-  enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String?, internal val testRootName: String?) {
+  enum class ModuleDescriptor(internal val moduleName: String, 
+                              internal val rootName: String?, 
+                              internal val testRootName: String?,
+                              internal val resourceRootName : String? = null) {
     MAIN(TEST_MODULE_NAME, null, "test_src"),
     M2("light_idea_test_m2", "src_m2", null),
     M3("light_idea_test_m3", "src_m3", null),
@@ -31,6 +35,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M6("light_idea_test_m6", "src_m6", null),
     M7("light_idea_test_m7", "src_m7", null),
     M8("light_idea_test_m8", "src_m8", null),
+    M9("light_idea_test_m9", "src_m9", null, "res_m9"),
     M_TEST("light_idea_test_m_test", null, "m_test_src");
 
     fun root(): VirtualFile? = when {
@@ -42,6 +47,10 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     fun testRoot(): VirtualFile? =
       if (testRootName == null) null
       else TempFileSystem.getInstance().findFileByPath("/${testRootName}") ?: throw IllegalStateException("Cannot find /${testRootName}")
+    
+    fun resourceRoot(): VirtualFile? =
+      if (resourceRootName == null) null
+      else TempFileSystem.getInstance().findFileByPath("/${resourceRootName}") ?: throw IllegalStateException("Cannot find /${resourceRootName}")
   }
 
   override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -71,6 +80,9 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val m8 = makeModule(project, ModuleDescriptor.M8)
       ModuleRootModificationUtil.addDependency(m6, m8)
+      
+      val m9 = makeModule(project, ModuleDescriptor.M9)
+      ModuleRootModificationUtil.addDependency(main, m9)
 
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
@@ -125,11 +137,16 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       registerSourceRoot(module.project, testRoot)
       model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
     }
+    if (descriptor.resourceRootName != null) {
+      val resourceRoot = createSourceRoot(module, descriptor.resourceRootName)
+      registerSourceRoot(module.project, resourceRoot)
+      model.addContentEntry(resourceRoot).addSourceFolder(resourceRoot, JavaResourceRootType.RESOURCE)
+    }
   }
 
   fun cleanupSourceRoots() = runWriteAction {
     ModuleDescriptor.values().asSequence()
-      .flatMap { if (it === ModuleDescriptor.MAIN) sequenceOf(it.testRoot()) else sequenceOf(it.root(), it.testRoot()) }
+      .flatMap { if (it === ModuleDescriptor.MAIN) sequenceOf(it.testRoot()) else sequenceOf(it.root(), it.testRoot(), it.resourceRoot()) }
       .filterNotNull()
       .flatMap { it.children.asSequence() }
       .forEach { it.delete(this) }
