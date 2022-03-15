@@ -43,6 +43,11 @@ public class FirHighlightingMetaInfoTestGenerated extends AbstractFirHighlightin
         runTest("../idea/tests/testData/highlighterMetaInfo/Enums.kt");
     }
 
+    @TestMetadata("ExplicitInvokeCall.kt")
+    public void testExplicitInvokeCall() throws Exception {
+        runTest("../idea/tests/testData/highlighterMetaInfo/ExplicitInvokeCall.kt");
+    }
+
     @TestMetadata("Field.kt")
     public void testField() throws Exception {
         runTest("../idea/tests/testData/highlighterMetaInfo/Field.kt");

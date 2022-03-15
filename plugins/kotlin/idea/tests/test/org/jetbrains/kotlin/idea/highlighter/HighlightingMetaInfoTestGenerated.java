@@ -43,6 +43,11 @@ public class HighlightingMetaInfoTestGenerated extends AbstractHighlightingMetaI
         runTest("testData/highlighterMetaInfo/Enums.kt");
     }
 
+    @TestMetadata("ExplicitInvokeCall.kt")
+    public void testExplicitInvokeCall() throws Exception {
+        runTest("testData/highlighterMetaInfo/ExplicitInvokeCall.kt");
+    }
+
     @TestMetadata("Field.kt")
     public void testField() throws Exception {
         runTest("testData/highlighterMetaInfo/Field.kt");
