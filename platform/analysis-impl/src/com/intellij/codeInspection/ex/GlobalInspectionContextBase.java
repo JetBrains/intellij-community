@@ -160,6 +160,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     myJobDescriptors.clear();
   }
 
+  protected boolean areToolsInitialized() {
+    return myTools != null;
+  }
+
   public void setCurrentScope(@NotNull AnalysisScope currentScope) {
     myCurrentScope = currentScope;
   }
