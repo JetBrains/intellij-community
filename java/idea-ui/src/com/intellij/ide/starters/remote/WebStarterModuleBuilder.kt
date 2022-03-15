@@ -266,7 +266,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
                               ?: throw IllegalStateException("Module root not found")
 
       runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-        GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot)
+        GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
       }
     }
 
