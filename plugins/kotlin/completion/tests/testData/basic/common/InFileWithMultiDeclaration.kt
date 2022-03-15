@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 data class LocalData(val first : Int, val second : Int)
 
 val (localFirst, localSecond) = LocalData(11, 12)
