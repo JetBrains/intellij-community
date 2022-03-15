@@ -129,7 +129,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       if (!javaPsi.hasModifierProperty(PsiModifier.PRIVATE)) {
         initializeSuperMethods(javaPsi);
         if (ownerClass != null && isExternalOverride()) {
-          ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this);
+          getRefManager().executeTask(() -> ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this));
         }
       }
     }
@@ -250,19 +250,20 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    if (getRefManager().isOfflineView()) return;
+    final RefManagerImpl refManager = getRefManager();
+    if (refManager.isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
-      if (getRefManager().belongsToScope(psiSuperMethod)) {
+      if (refManager.belongsToScope(psiSuperMethod)) {
         PsiElement sourceElement = psiSuperMethod;
         if (!(RefManagerImpl.isKotlinLightFieldOrMethod(psiSuperMethod) &&
               psiSuperMethod.getNavigationElement().getClass().getSimpleName().equals("KtProperty"))) {
           sourceElement = psiSuperMethod.getNavigationElement();
         }
-        RefElement refElement = getRefManager().getReference(sourceElement);
+        RefElement refElement = refManager.getReference(sourceElement);
         if (refElement instanceof RefMethodImpl) {
           RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
           addSuperMethod(refSuperMethod);
-          refSuperMethod.markExtended(this);
+          refManager.executeTask(() -> refSuperMethod.markExtended(this));
         }
         else {
           setLibraryOverride(true);
