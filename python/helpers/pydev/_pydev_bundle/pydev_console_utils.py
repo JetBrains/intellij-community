@@ -375,7 +375,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
 
                 from _pydevd_bundle.pydevd_constants import set_thread_id
                 from _pydev_bundle import pydev_localhost
-                set_thread_id(threading.currentThread(), "console_main")
+                set_thread_id(threading.current_thread(), "console_main")
 
                 self.orig_find_frame = pydevd_vars.find_frame
                 pydevd_vars.find_frame = self._findFrame

@@ -102,7 +102,7 @@ if SUPPORT_PLUGINS:
 
 
 threadingEnumerate = threading.enumerate
-threadingCurrentThread = threading.currentThread
+threadingCurrentThread = threading.current_thread
 
 original_excepthook = sys.__excepthook__
 
@@ -130,7 +130,7 @@ class PyDBCommandThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self._py_db_command_thread_event = py_db._py_db_command_thread_event
         self.py_db = py_db
-        self.setName('pydevd.CommandThread')
+        self.name = 'pydevd.CommandThread'
 
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
@@ -1528,7 +1528,7 @@ class PyDB(object):
     def wait_for_commands(self, globals):
         self._activate_mpl_if_needed()
 
-        thread = threading.currentThread()
+        thread = threading.current_thread()
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)

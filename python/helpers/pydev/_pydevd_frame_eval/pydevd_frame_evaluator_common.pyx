@@ -24,7 +24,7 @@ cdef class ThreadInfo:
         self.thread_trace_func = None
 
     def initialize_if_possible(self):
-        # Don't call threading.currentThread because if we're too early in the process
+        # Don't call threading.current_thread because if we're too early in the process
         # we may create a dummy thread.
         self.inside_frame_eval += 1
 
