@@ -314,7 +314,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   private void customizeEditorSettings(@NotNull EditorSettings settings) {
-    settings.setLineMarkerAreaShown(false);
+    settings.setLineMarkerAreaShown(myIsEditor);
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
