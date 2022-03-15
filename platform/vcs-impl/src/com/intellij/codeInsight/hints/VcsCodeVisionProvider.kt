@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.ShortNameType
@@ -61,7 +62,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       val aspectResult = getAspect(file, editor)
       if (aspectResult.isSuccess.not()) return@runReadAction CodeVisionState.NotReady
-      val aspect = aspectResult.result ?: return@runReadAction CodeVisionState.NotReady
+      val aspect = aspectResult.result ?: return@runReadAction READY_EMPTY
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
@@ -201,6 +202,8 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
 
   val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return SUCCESS_EMPTY
   val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return SUCCESS_EMPTY
+  val isFileInVcs = AbstractVcs.fileInVcsByFileStatus(project, file)
+  if (!isFileInVcs) return SUCCESS_EMPTY
   val annotation = provider.getFromCache(file) ?: return Result.Failure()
 
   val annotationDisposable = Disposable {
