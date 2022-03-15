@@ -84,7 +84,7 @@ import java.util.List;
  *      <tr valign="top"><td></td><td><pre>is test</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
  *      <tr valign="top"><td></td><td><pre>access public</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
  *      <tr valign="top"><td>26</td><td><pre>is implicitly used constructor</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}</td></tr>
- *      <tr valign="top"><td>27</td><td><pre>is test method</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
+ *      <tr valign="top"><td>27</td><td><pre>-</pre></td><td>-<br>
  *      <tr valign="top"><td></td><td><pre>is with duplicates</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
  *      <tr valign="top"><td></td><td><pre>is abstract</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
  *      <tr valign="top"><td>28</td><td><pre>is called on subclass</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
