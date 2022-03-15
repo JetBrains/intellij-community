@@ -5,24 +5,22 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -167,15 +165,6 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
     fun isUnused(marker: FqName): Boolean = marker !in foundMarkers
 
     /**
-     * Extract the module API version from the Kotlin facet.
-     *
-     * @receiver the module to analyze
-     * @return module API version or null
-     */
-    private fun Module.getApiVersion(): LanguageVersion? =
-        KotlinFacetSettingsProvider.getInstance(project)?.getSettings(this)?.apiLevel
-
-    /**
      * Collect experimental markers for a declaration and add them to [foundMarkers].
      *
      * The `@OptIn` annotation is useful for declarations that override a marked declaration (e.g., overridden
@@ -189,7 +178,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
         if (declaration !is KtFunction && declaration !is KtProperty && declaration !is KtParameter) return
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
             val descriptor = declaration.resolveToDescriptorIfAny(resolutionFacade)?.safeAs<CallableMemberDescriptor>() ?: return
-            descriptor.getDirectlyOverriddenDeclarations().forEach { it.collectMarkers(declaration.module?.getApiVersion()) }
+            descriptor.getDirectlyOverriddenDeclarations().forEach { it.collectMarkers(declaration.languageVersionSettings.apiVersion) }
         }
     }
 
@@ -213,7 +202,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
             .resolveMainReferenceToDescriptors()
             .flatMap { setOf(it, it.getImportableDescriptor()) }
 
-        val moduleApiVersion = expression.module?.getApiVersion()
+        val moduleApiVersion = expression.languageVersionSettings.apiVersion
 
         for (descriptor in descriptorList) {
             descriptor.collectMarkers(moduleApiVersion)
@@ -240,7 +229,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @receiver the type to collect markers
      * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
-    private fun KotlinType.collectMarkers(moduleApiVersion: LanguageVersion?) {
+    private fun KotlinType.collectMarkers(moduleApiVersion: ApiVersion) {
         arguments.forEach { it.type.collectMarkers(moduleApiVersion) }
         val descriptor = this.constructor.declarationDescriptor ?: return
         descriptor.collectMarkers(moduleApiVersion)
@@ -252,7 +241,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @receiver the descriptor to collect markers
      * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
-    private fun DeclarationDescriptor.collectMarkers(moduleApiVersion: LanguageVersion?) {
+    private fun DeclarationDescriptor.collectMarkers(moduleApiVersion: ApiVersion) {
         for (ann in annotations) {
             val annotationFqName = ann.fqName ?: continue
             val annotationClass = ann.annotationClass ?: continue
@@ -285,16 +274,10 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
             // from the resolver, so `@OptIn` is necessary for the code to compile.
             val sinceKotlinApiVersion = sinceKotlin.allValueArguments[VERSION_ARGUMENT]
                 ?.safeAs<StringValue>()?.value?.let {
-                    LanguageVersion.fromVersionString(it)
+                    ApiVersion.parse(it)
                 }
 
-            // If the Kotlin API version of the current module could not be found,
-            // add the marker, as it is better to skip a redundant `@OptIn` than to remove
-            // a necessary annotation. If the module API version is known, compare it
-            // to the API version specified via the `@SinceKotlin` annotation.
-            // Add the marker only if the module API version is less than the version
-            // required by the declaration.
-            if (moduleApiVersion == null || (sinceKotlinApiVersion != null && moduleApiVersion < sinceKotlinApiVersion)) {
+            if (sinceKotlinApiVersion != null && moduleApiVersion < sinceKotlinApiVersion) {
                 wasExperimental.allValueArguments[OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS]?.safeAs<ArrayValue>()?.value
                     ?.mapNotNull { it.safeAs<KClassValue>()?.getArgumentType(module)?.fqName }
                     ?.forEach { foundMarkers.add(it) }
