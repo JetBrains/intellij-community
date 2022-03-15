@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
@@ -213,20 +214,10 @@ public final class PopupUtil {
   }
 
   public static Border createComplexPopupTextFieldBorder() {
-    return JBUI.Borders.compound(JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets()),
+    return JBUI.Borders.compound(new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets()),
                                  JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0,
                                                          JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT, 0),
-                                 JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets()));
-  }
-
-  /**
-   * Creates insets with specified top/bottom insets and left/right insets from complex popup text filed
-   */
-  public static Insets createComplexPopupTextFieldInsets(int top, int bottom) {
-    Insets borderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
-    Insets inputInsets = JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets();
-    //noinspection UseDPIAwareInsets
-    return new Insets(JBUI.scale(top), borderInsets.left + inputInsets.left, JBUI.scale(bottom), borderInsets.right + inputInsets.right);
+                                 new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets()));
   }
 
   public static void applyNewUIBackground(@Nullable Component component) {
@@ -237,13 +228,13 @@ public final class PopupUtil {
 
   public static Border getComplexPopupHorizontalHeaderBorder() {
     Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
-    //noinspection UseDPIAwareInsets
-    return JBUI.Borders.empty(new Insets(0, headerInsets.left, 0, headerInsets.right));
+    //noinspection UseDPIAwareBorders
+    return new EmptyBorder(0, headerInsets.left, 0, headerInsets.right);
   }
 
   public static Border getComplexPopupVerticalHeaderBorder() {
     Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
-    //noinspection UseDPIAwareInsets
-    return JBUI.Borders.empty(new Insets(headerInsets.top, 0, headerInsets.bottom, 0));
+    //noinspection UseDPIAwareBorders
+    return new EmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0);
   }
 }

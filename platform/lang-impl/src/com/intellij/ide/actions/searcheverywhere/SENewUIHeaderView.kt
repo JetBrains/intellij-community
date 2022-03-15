@@ -9,10 +9,10 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import java.awt.Insets
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.border.EmptyBorder
 
 internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String?, String?>,
                                  toolbar: JComponent) {
@@ -43,7 +43,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
     val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
     panel.border = JBUI.Borders.compound(
       JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
-      JBUI.Borders.empty(Insets(0, headerInsets.left, 0, headerInsets.right)))
+      EmptyBorder(0, headerInsets.left, 0, headerInsets.right))
 
     for (tab in tabs) {
       val shortcut = shortcutSupplier.apply(tab.id)

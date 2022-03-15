@@ -48,6 +48,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
@@ -1288,10 +1289,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       textField.putClientProperty("TextFieldWithoutMargins", true);
       textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true);
       textField.putClientProperty("TextField.NoMinHeightBounds", true);
-      JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
+      EmptyBorder outsideBorder = new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
       mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
-                                                                JBUI.Borders.empty(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
+                                                                new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
       textField.setBorder(JBUI.Borders.empty());
     } else {
       if (mySpeedSearchAlwaysShown) {
