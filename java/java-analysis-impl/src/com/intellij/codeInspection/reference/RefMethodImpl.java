@@ -31,7 +31,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final int IS_ONLY_CALLS_SUPER_MASK = 0b100000_00000000_00000000;
   private static final int IS_RETURN_VALUE_USED_MASK = 0b1000000_00000000_00000000;
 
-  private static final int IS_TEST_METHOD_MASK = 0b100_00000000_00000000_00000000;
   private static final int IS_CALLED_ON_SUBCLASS_MASK = 0b1000_00000000_00000000_00000000;
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
@@ -126,10 +125,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
       if (javaPsi.hasModifierProperty(PsiModifier.PUBLIC)) {
         setAppMain(isAppMain(javaPsi, this));
-
-        if (TestFrameworks.getInstance().isTestMethod(javaPsi)) {
-          setTestMethod(true);
-        }
       }
       if (!javaPsi.hasModifierProperty(PsiModifier.PRIVATE)) {
         initializeSuperMethods(javaPsi);
@@ -672,11 +667,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isTestMethod() {
-    return checkFlag(IS_TEST_METHOD_MASK);
-  }
-
-  private void setTestMethod(boolean testMethod) {
-    setFlag(testMethod, IS_TEST_METHOD_MASK);
+    UMethod method = (UMethod)getUastElement();
+    return TestFrameworks.getInstance().isTestMethod(method.getJavaPsi());
   }
 
   public synchronized @Nullable RefField getBackingField() {
