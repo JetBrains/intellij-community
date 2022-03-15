@@ -21,6 +21,21 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     """.trimIndent())
   }
 
+  fun `test field @Rule highlighting type`() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      package test;
+
+      import org.junit.Rule;
+      import org.junit.rules.TestRule;
+      import test.SomeTestRule;
+
+      class RuleTest {
+        @Rule
+        public int <error descr="Field type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">x</error>;
+      }
+    """.trimIndent())
+  }
+
   fun `test method @Rule highlighting modifier`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       package test;
