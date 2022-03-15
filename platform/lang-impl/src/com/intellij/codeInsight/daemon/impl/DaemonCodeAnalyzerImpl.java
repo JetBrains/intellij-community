@@ -371,11 +371,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     HighlightingSession session = queuePassesCreation(textEditors, passesToIgnore);
 
-    //PsiFile actualFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    //actualFile = actualFile instanceof PsiCompiledFile ? ((PsiCompiledFile)actualFile).getDecompiledPsiFile() : actualFile;
-    //PsiFile passedFile = file instanceof PsiCompiledFile ? ((PsiCompiledFile)file).getDecompiledPsiFile() : file;
-    //assert actualFile != null && actualFile == passedFile : "Expected file " + actualFile + " (" + (actualFile == null ? null : actualFile.getVirtualFile())+") "+
-    //                                                        " but the passed PsiFile points to: " + passedFile +" ("+passedFile.getVirtualFile()+")";
     DaemonProgressIndicator progress = getUpdateProgress();
     progress.checkCanceled(); // there can be PCE in FJP during queuePassesCreation
 
@@ -923,8 +918,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     // pre-create HighlightingSession in EDT to make visible range available in a background thread
     for (FileEditor fileEditor : fileEditors) {
       VirtualFile virtualFile = fileEditor.getFile();
-      if (virtualFile == null) continue;
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+      PsiFile psiFile = virtualFile == null ? null : PsiManager.getInstance(myProject).findFile(virtualFile);
       if (psiFile == null) continue;
       psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
 
@@ -935,7 +929,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     Map<Document, List<FileEditor>> preferredFileEditorMap = createPreferredFileEditorMap(fileEditors);
 
     doSubmit(fileEditors, passesToIgnore, modificationCountBefore, highlighters, progress, preferredFileEditorMap);
-    assert session != null;
+    assert session != null : fileEditors;
     return session;
   }
 
