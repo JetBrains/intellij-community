@@ -14,7 +14,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.SmartList
 import com.siyeh.ig.junit.getPublicStaticErrorMessage
-import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.uast.*
 import javax.swing.JComponent
 
@@ -44,8 +44,8 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
     uDeclaration: UDeclaration,
     manager: InspectionManager,
     isOnTheFly: Boolean,
-    modifierMessage: @Nls String,
-    typeMessage: @Nls String,
+    modifierMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
+    typeMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
   ): Array<ProblemDescriptor> {
     val sourcePsi = uDeclaration.sourcePsi ?: return emptyArray()
     val nameIdentifier = uDeclaration.uastAnchor.sourcePsiElement ?: return emptyArray()
