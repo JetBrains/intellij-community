@@ -131,7 +131,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 else -> return null
             }
             val start = loopVar::initializer.detached()
-            val right = condition::right.detached().parenthesizeIfBinaryExpression()
+            val right = condition::right.detached().parenthesizeIfCompoundExpression()
             val range = forIterationRange(start, right, reversed, inclusive)
             val explicitType =
                 if (context.converter.settings.specifyLocalVariableTypeByDefault)

@@ -2728,6 +2728,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/operationsWithChar.java");
         }
 
+        @TestMetadata("ternary.java")
+        public void testTernary() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ternary.java");
+        }
+
         @TestMetadata("unary.java")
         public void testUnary() throws Exception {
             runTest("testData/newJ2k/implicitCasts/unary.java");

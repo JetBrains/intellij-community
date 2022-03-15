@@ -56,8 +56,8 @@ fun downToExpression(
         conversionContext
     )
 
-fun JKExpression.parenthesizeIfBinaryExpression() = when (this) {
-    is JKBinaryExpression -> JKParenthesizedExpression(this)
+fun JKExpression.parenthesizeIfCompoundExpression() = when (this) {
+    is JKIfElseExpression, is JKBinaryExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 

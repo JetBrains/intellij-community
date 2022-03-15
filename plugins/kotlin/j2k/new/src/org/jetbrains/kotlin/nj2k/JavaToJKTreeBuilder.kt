@@ -189,7 +189,7 @@ class JavaToJKTreeBuilder constructor(
             )
             is PsiPolyadicExpression -> {
                 val token = JKOperatorToken.fromElementType(operationTokenType)
-                val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfBinaryExpression() to it.type }
+                val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfCompoundExpression() to it.type }
                 jkOperandsWithPsiTypes.reduce { (left, leftType), (right, rightType) ->
                     val psiType = calcTypeForBinaryExpression(leftType, rightType, operationTokenType, true)
                     val jkType = psiType?.toJK() ?: typeFactory.types.nullableAny
@@ -360,7 +360,7 @@ class JavaToJKTreeBuilder constructor(
                     when (val origin = target.kotlinOrigin) {
                         is KtNamedFunction -> {
                             if (origin.isExtensionDeclaration()) {
-                                val receiver = arguments.expressions.firstOrNull()?.toJK()?.parenthesizeIfBinaryExpression()
+                                val receiver = arguments.expressions.firstOrNull()?.toJK()?.parenthesizeIfCompoundExpression()
                                 origin.fqName?.also { importStorage.addImport(it) }
                                 JKCallExpressionImpl(
                                     symbolProvider.provideDirectSymbol(origin) as JKMethodSymbol,
