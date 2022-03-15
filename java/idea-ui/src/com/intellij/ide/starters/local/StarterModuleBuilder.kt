@@ -360,7 +360,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
           if (starterContext.gitIntegration) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot)
+              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
             }
           }
 
