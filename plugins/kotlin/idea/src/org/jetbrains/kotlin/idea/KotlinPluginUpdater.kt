@@ -94,7 +94,7 @@ class KotlinPluginUpdater : Disposable {
         if (!file.isInLocalFileSystem) return
         if (!UpdateSettings.getInstance().isCheckNeeded) return
 
-        val lastUpdateTime = runReadAction { PropertiesComponent.getInstance().getLong(PROPERTY_NAME, 0L) }
+        val lastUpdateTime = PropertiesComponent.getInstance().getLong(PROPERTY_NAME, 0L)
         if (lastUpdateTime == 0L || System.currentTimeMillis() - lastUpdateTime > CACHED_REQUEST_DELAY) {
             queueUpdateCheck { updateStatus ->
                 when (updateStatus) {
@@ -243,7 +243,7 @@ class KotlinPluginUpdater : Disposable {
     }
 
     private fun recordSuccessfulUpdateCheck() {
-        runWriteAction { PropertiesComponent.getInstance().setValue(PROPERTY_NAME, System.currentTimeMillis().toString()) }
+        PropertiesComponent.getInstance().setValue(PROPERTY_NAME, System.currentTimeMillis().toString())
         updateDelay = INITIAL_UPDATE_DELAY
     }
 
