@@ -249,12 +249,13 @@ class KotlinPluginUpdater : Disposable {
                 NotificationType.INFORMATION,
             )
             .setSuggestionType(true)
-            .setListener(NotificationListener { notification, _ ->
-                notification.expire()
-                installPluginUpdate(update) {
-                    notifyPluginUpdateAvailable(update)
+            .addAction(
+                NotificationAction.createSimpleExpiring(KotlinBundle.message("action.text.install")) {
+                    installPluginUpdate(update) {
+                        notifyPluginUpdateAvailable(update)
+                    }
                 }
-            })
+            )
             .setIcon(KotlinIcons.SMALL_LOGO)
             .notify(null)
     }
@@ -317,10 +318,11 @@ class KotlinPluginUpdater : Disposable {
 
         notificationGroup
             .createNotification(KotlinBundle.message("plugin.updater.notification.title"), content, NotificationType.INFORMATION)
-            .setListener(NotificationListener { notification, _ ->
-                ShowLogAction.showLog()
-                notification.expire()
-            })
+            .addAction(
+                NotificationAction.createSimpleExpiring(KotlinBundle.message("plugin.updater.not.installed.see.log.action")) {
+                    ShowLogAction.showLog()
+                }
+            )
             .notify(null)
     }
 
