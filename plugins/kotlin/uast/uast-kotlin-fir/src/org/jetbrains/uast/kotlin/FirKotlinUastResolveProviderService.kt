@@ -178,7 +178,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         return analyseForUast(ktElement) {
-            ktElement.resolveCall()?.singleFunctionCallOrNull()?.symbol?.let { toPsiMethod(it) }
+            ktElement.resolveCall()?.singleFunctionCallOrNull()?.symbol?.let { toPsiMethod(it, ktElement) }
         }
     }
 
@@ -187,8 +187,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val variableAccessCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>() ?: return null
             val propertySymbol = variableAccessCall.symbol as? KtPropertySymbol ?: return null
             when (variableAccessCall.simpleAccess) {
-                is KtSimpleVariableAccess.Read -> toPsiMethod(propertySymbol.getter ?: return null)
-                is KtSimpleVariableAccess.Write -> toPsiMethod(propertySymbol.setter ?: return null)
+                is KtSimpleVariableAccess.Read ->
+                    toPsiMethod(propertySymbol.getter ?: return null, ktSimpleNameExpression)
+                is KtSimpleVariableAccess.Write ->
+                    toPsiMethod(propertySymbol.setter ?: return null, ktSimpleNameExpression)
             }
         }
     }
@@ -286,7 +288,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             else -> null
         } ?: return null
 
-        val resolvedTargetElement = resolvedTargetSymbol.psi
+        val resolvedTargetElement = resolvedTargetSymbol.psiForUast(ktExpression.project)
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
         //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
@@ -297,7 +299,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolvedTargetElement
         }
 
-        val ktModule = (resolvedTargetElement as? KtDeclaration)?.getKtModule()
+        val ktModule = (resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)
         when (ktModule) {
             is KtSourceModule -> {
                 // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
