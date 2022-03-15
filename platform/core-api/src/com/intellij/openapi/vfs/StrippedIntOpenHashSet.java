@@ -267,22 +267,28 @@ final class StrippedIntOpenHashSet {
      * A downward counter measuring how many entries must still be returned.
      */
     int last = -1;
-    /** A downward counter measuring how many entries must still be returned. */
+    /**
+     * A downward counter measuring how many entries must still be returned.
+     */
     int c = size;
-    /** A boolean telling us whether we should return the null key. */
+    /**
+     * A boolean telling us whether we should return the null key.
+     */
     boolean mustReturnNull = containsNull;
     /**
      * A lazily allocated list containing elements that have wrapped around the
      * table because of removals.
      */
     ArrayList<Integer> wrapped;
+
     public boolean hasNext() {
       return c != 0;
     }
 
     public int nextInt() {
-      if (!hasNext())
+      if (!hasNext()) {
         throw new NoSuchElementException();
+      }
       c--;
       if (mustReturnNull) {
         mustReturnNull = false;
@@ -290,14 +296,15 @@ final class StrippedIntOpenHashSet {
         return key[n];
       }
       final int key[] = StrippedIntOpenHashSet.this.key;
-      for (;;) {
+      for (; ; ) {
         if (--pos < 0) {
           // We are just enumerating elements from the wrapped list.
           last = Integer.MIN_VALUE;
           return wrapped.get(-pos - 1);
         }
-        if (!((key[pos]) == (0)))
+        if (!((key[pos]) == (0))) {
           return key[last = pos];
+        }
       }
     }
 
@@ -306,21 +313,23 @@ final class StrippedIntOpenHashSet {
       int last, slot;
       int curr;
       final int[] key = StrippedIntOpenHashSet.this.key;
-      for (;;) {
+      for (; ; ) {
         pos = ((last = pos) + 1) & mask;
-        for (;;) {
+        for (; ; ) {
           if (((curr = key[pos]) == (0))) {
             key[last] = (0);
             return;
           }
           slot = (Hash.mix((curr))) & mask;
-          if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos)
+          if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
             break;
+          }
           pos = (pos + 1) & mask;
         }
         if (pos < last) { // Wrapped entry.
-          if (wrapped == null)
+          if (wrapped == null) {
             wrapped = new ArrayList<>(2);
+          }
           wrapped.add(key[pos]);
         }
         key[last] = curr;
@@ -328,13 +337,16 @@ final class StrippedIntOpenHashSet {
     }
 
     public void remove() {
-      if (last == -1)
+      if (last == -1) {
         throw new IllegalStateException();
+      }
       if (last == n) {
         StrippedIntOpenHashSet.this.containsNull = false;
         StrippedIntOpenHashSet.this.key[n] = (0);
-      } else if (pos >= 0)
+      }
+      else if (pos >= 0) {
         shiftKeys(last);
+      }
       else {
         // We're removing wrapped entries.
         StrippedIntOpenHashSet.this.remove(wrapped.get(-pos - 1));
