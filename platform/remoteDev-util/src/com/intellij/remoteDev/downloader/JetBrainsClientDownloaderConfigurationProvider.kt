@@ -31,8 +31,8 @@ import kotlin.io.path.*
 interface JetBrainsClientDownloaderConfigurationProvider {
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
 
-  val clientDownloadLocation: URI
-  val jreDownloadLocation: URI
+  val clientDownloadUrl: URI
+  val jreDownloadUrl: URI
   val clientCachesDir: Path
 
   val verifySignature: Boolean
@@ -45,8 +45,8 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
-  override val clientDownloadLocation: URI = RemoteDevSystemSettings.getClientDownloadLocation().value
-  override val jreDownloadLocation: URI = RemoteDevSystemSettings.getJreDownloadLocation().value
+  override val clientDownloadUrl: URI = RemoteDevSystemSettings.getClientDownloadUrl().value
+  override val jreDownloadUrl: URI = RemoteDevSystemSettings.getJreDownloadUrl().value
   override val clientCachesDir: Path = getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
   override val verifySignature: Boolean = true
 
@@ -73,8 +73,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     }
   }
 
-  override var clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override var jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
+  override var clientDownloadUrl: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
+  override var jreDownloadUrl: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
   override var clientCachesDir: Path = Files.createTempDirectory("")
   override var verifySignature: Boolean = true
 
@@ -137,11 +137,11 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     thisLogger().info("Starting http server at ${server.address}")
 
 
-    clientDownloadLocation = URI("http:/${server.address}/")
+    clientDownloadUrl = URI("http:/${server.address}/")
     verifySignature = false
 
     lifetime.onTerminationOrNow {
-      clientDownloadLocation = URI("INVALID")
+      clientDownloadUrl = URI("INVALID")
       verifySignature = true
 
       tarGzServer = null
