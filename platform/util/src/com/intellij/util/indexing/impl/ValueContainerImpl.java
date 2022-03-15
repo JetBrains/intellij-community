@@ -91,7 +91,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       Object previousValue = myPresentInputIds.put(inputId, normalizedValue);
       myUpdateOps.add(new UpdateOp(isDirect ? UpdateOp.Type.ADD_DIRECT : UpdateOp.Type.ADD, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
-        LOG.error("Can't add value '" + normalizedValue + "'; input id " + inputId + " is already present in:\n" + this);
+        LOG.error("Can't add value '" + normalizedValue + "'; input id " + inputId + " is already present in:\n" + getDebugMessage());
       }
     }
   }
@@ -107,7 +107,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       Object previousValue = myPresentInputIds.remove(inputId);
       myUpdateOps.add(new UpdateOp(UpdateOp.Type.REMOVE, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
-        LOG.error("Can't remove value '" + normalizedValue + "'; input id " + inputId + " is not present for the specified value in:\n" + this);
+        LOG.error("Can't remove value '" + normalizedValue + "'; input id " + inputId + " is not present for the specified value in:\n" + getDebugMessage());
       }
     }
   }
@@ -159,10 +159,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
           valueObjects = new SmartList<>();
         }
         else if (IndexDebugProperties.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() +
-                    ", ;\nActual value container = \n" + this +
-                    (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds) +
-                    (myUpdateOps == null ? "" : "\nUpdate operations = " + myUpdateOps));
+          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() + ";\n" + getDebugMessage());
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -174,6 +171,13 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
         removeValue(inputId, fileSetObjects.get(i), valueObjects.get(i));
       }
     }
+  }
+
+  @NotNull
+  private String getDebugMessage() {
+    return "Actual value container = \n" + this +
+           (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds) +
+           (myUpdateOps == null ? "" : "\nUpdate operations = " + myUpdateOps);
   }
 
   @Override
