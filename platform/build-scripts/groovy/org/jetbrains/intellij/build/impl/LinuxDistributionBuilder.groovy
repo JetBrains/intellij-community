@@ -195,7 +195,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
       paths.each {
-        new BuildTasksImpl(buildContext).updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
+        BuildTasksImpl.updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
       }
       ArchiveUtils.tar(tarPath, tarRoot, paths, buildContext.options.buildDateInSeconds)
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)

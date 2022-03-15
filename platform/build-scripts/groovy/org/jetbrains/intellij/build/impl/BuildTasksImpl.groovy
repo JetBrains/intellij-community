@@ -1039,12 +1039,31 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  void updateExecutablePermissions(Path targetDirectory, List<String> executableFilesPatterns) {
-    buildContext.ant.chmod(perm: "755") {
-      fileset(dir: targetDirectory.toString()) {
-        for (String pattern in executableFilesPatterns) {
-          include(name: pattern)
+  static void updateExecutablePermissions(Path destinationDir, List<String> executableFilesPatterns) {
+    Set<PosixFilePermission> executable = EnumSet.of(
+      OWNER_READ, OWNER_WRITE, OWNER_EXECUTE,
+      GROUP_READ, GROUP_EXECUTE,
+      OTHERS_READ, OTHERS_EXECUTE
+    )
+    Set<PosixFilePermission> regular = EnumSet.of(
+      OWNER_READ, OWNER_WRITE,
+      GROUP_READ,
+      OTHERS_READ
+    )
+    List<PathMatcher> executableFilesMatchers = executableFilesPatterns.collect {
+      FileSystems.getDefault().getPathMatcher("glob:$it")
+    }
+    Files.walk(destinationDir).withCloseable { stream ->
+      stream.filter { !Files.isDirectory(it) }.forEach { file ->
+        if (SystemInfoRt.isUnix) {
+          Path relativeFile = destinationDir.relativize(file)
+          boolean isExecutable = executableFilesMatchers.any {
+            it.matches(relativeFile)
+          }
+          Files.setPosixFilePermissions(file, isExecutable ? executable : regular)
+        }
+        else {
+          ((DosFileAttributeView)Files.getFileAttributeView(file, DosFileAttributeView.class)).setReadOnly(false)
         }
       }
     }
