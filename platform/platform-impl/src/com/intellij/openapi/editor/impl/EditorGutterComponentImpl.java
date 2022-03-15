@@ -737,7 +737,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
             Icon iconOnTheLine = null;
             Icon hoverIcon = null;
-            if (ExperimentalUI.isNewUI() && EditorUtil.isRealFileEditor(getEditor())) {
+            if (ExperimentalUI.isNewUI() /*&& EditorUtil.isRealFileEditor(getEditor())*/) {
               VisualPosition visualPosition = myEditor.logicalToVisualPosition(new LogicalPosition(logicalLine, 0));
               Optional<GutterMark> breakpoint = getGutterRenderers(visualPosition.line).stream()
                 .filter(r -> r instanceof GutterIconRenderer &&
