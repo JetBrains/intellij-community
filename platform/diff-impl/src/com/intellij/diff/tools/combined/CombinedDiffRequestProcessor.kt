@@ -12,7 +12,6 @@ import com.intellij.diff.tools.combined.CombinedDiffRequest.NewChildDiffRequestD
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -188,8 +187,6 @@ open class CombinedDiffRequestProcessor(private val project: Project?,
       fromDifferences && canGoToDifference() -> goToDifference()
       fromDifferences && canGoToBlock() -> {
         goToBlock()
-        context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE,
-                                        if (next) ScrollToPolicy.FIRST_CHANGE else ScrollToPolicy.LAST_CHANGE)
         combinedDiffViewer.selectDiffBlock(ScrollPolicy.DIFF_CHANGE)
       }
 

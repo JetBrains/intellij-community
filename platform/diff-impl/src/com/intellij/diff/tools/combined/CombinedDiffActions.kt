@@ -10,6 +10,7 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.text.SmartTextDiffProvider
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
@@ -109,6 +110,7 @@ internal open class CombinedNextDifferenceAction(private val settings: DiffSetti
   override fun actionPerformed(e: AnActionEvent) {
     val iterable = getDifferenceIterable(e)
     val processor = context.getUserData(COMBINED_DIFF_PROCESSOR) ?: return
+    context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.FIRST_CHANGE)
     if (iterable != null && iterable.canGoNext()) {
       iterable.goNext()
       processor.iterationState = CombinedDiffRequestProcessor.IterationState.NONE
@@ -154,6 +156,7 @@ internal open class CombinedPrevDifferenceAction(private val settings: DiffSetti
   override fun actionPerformed(e: AnActionEvent) {
     val iterable = getDifferenceIterable(e)
     val processor = context.getUserData(COMBINED_DIFF_PROCESSOR) ?: return
+    context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.LAST_CHANGE)
     if (iterable != null && iterable.canGoPrev()) {
       iterable.goPrev()
       processor.iterationState = CombinedDiffRequestProcessor.IterationState.NONE
