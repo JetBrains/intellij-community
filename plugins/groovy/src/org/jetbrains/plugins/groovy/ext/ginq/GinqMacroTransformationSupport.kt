@@ -12,6 +12,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.VariableNode
+import com.intellij.formatting.Block
+import com.intellij.formatting.Indent
+import com.intellij.formatting.Wrap
+import com.intellij.formatting.WrapType
+import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
@@ -26,7 +31,11 @@ import icons.JetgroovyIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
+import org.jetbrains.plugins.groovy.ext.ginq.formatting.GinqFragmentBlock
 import org.jetbrains.plugins.groovy.ext.ginq.types.GrSyntheticNamedRecordClass
+import org.jetbrains.plugins.groovy.formatter.FormattingContext
+import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator
+import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -40,15 +49,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.typing.box
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport
+import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupportEx
 
-internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport {
+internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupportEx {
 
   override fun isApplicable(macro: PsiMethod): Boolean {
     return macro.name in ginqMethods && macro.containingClass?.name == "GinqGroovyMethods"
   }
 
-  override fun computeHighlighing(macroCall: GrCall): List<HighlightInfo> {
+  override fun computeHighlighting(macroCall: GrCall): List<HighlightInfo> {
     val errors = getParsedGinqErrors(macroCall).mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(it.first)
@@ -320,6 +329,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == "crossjoin")
       }
       if (joinStartCondition(latestGinq)) {
+        // todo: new binding name should be inferred
         joins.forEach { result.addElement(LookupElementBuilder.create(it).bold().withInsertHandler(dataSourceInsertHandler)) }
       }
       if (latestGinq is GinqJoinFragment && latestGinq.onCondition == null && latestGinq.keyword.text != "crossjoin") {
@@ -392,6 +402,21 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val editor = context.editor
     editor.document.deleteString(context.startOffset, context.tailOffset)
     TemplateManager.getInstance(context.project).startTemplate(editor, template)
+  }
+
+  override fun computeFormattingBlock(macroCall: GrMethodCall, node: ASTNode, context: FormattingContext, generator: GroovyBlockGenerator): Block {
+    if (node !is GrClosableBlock) {
+      return super.computeFormattingBlock(macroCall, node, context, generator)
+    }
+    val topTree = getParsedGinqTree(macroCall) ?: return super.computeFormattingBlock(macroCall, node, context, generator)
+    // todo: closest tree
+    //val closestTree = node.psi.ginqParents(macroCall, topTree).firstOrNull() ?: return super.computeFormattingBlock(macroCall, node, context)
+    val topBlocks = listOf(topTree.from) + topTree.joins + listOfNotNull(topTree.where, topTree.orderBy, topTree.groupBy, topTree.limit, topTree.select)
+    val subBlocks = topBlocks.map { GinqFragmentBlock(it, context) }
+    val children = GroovyBlockGenerator.visibleChildren(node)
+    val remainingSubblocks = generator.generateCodeSubBlocks(children.filter { child -> subBlocks.all { !it.textRange.intersects(child.textRange) } })
+    val allBlocks = (remainingSubblocks + subBlocks).sortedBy { it.textRange.startOffset }
+    return SyntheticGroovyBlock(allBlocks, Wrap.createWrap(WrapType.NONE, false), Indent.getContinuationIndent(), Indent.getContinuationIndent(), context)
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
