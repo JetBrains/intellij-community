@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -710,51 +711,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private @NotNull ProgressIndicatorBase createProcessIndicator() {
-    return new ProgressIndicatorBase() {
-      private String lastPrefix = "";
-      private int myLastPercent = -1;
-
-      {
-        setText("");
-      }
-
-      @Override
-      public void setText(String text) {
-        if (myVerboseLevel == 0) return;
-
-        if (myVerboseLevel == 1) {
-          if (text == null) {
-            return;
-          }
-          String prefix = getPrefix(text);
-          if (prefix.equals(lastPrefix)) {
-            reportMessageNoLineBreak(1, ".");
-            return;
-          }
-          lastPrefix = prefix;
-          reportMessage(1, "");
-          reportMessage(1, prefix);
-          return;
-        }
-
-        if (myVerboseLevel == 3) {
-          if (text == null) {
-            return;
-          }
-          if (!isIndeterminate() && getFraction() > 0) {
-            final int percent = (int)(getFraction() * 100);
-            if (myLastPercent == percent) return;
-            String prefix = getPrefix(text);
-            myLastPercent = percent;
-            String msg = prefix + " " + percent + "%";
-            reportMessage(2, msg);
-          }
-          return;
-        }
-
-        reportMessage(2, text);
-      }
-    };
+    return new InspectionProgressIndicator();
   }
 
   private static void runAnalysisAfterShelvingSync(Project project, List<? extends VirtualFile> files,
@@ -955,6 +912,57 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     catch (VcsException | IOException e) {
       LOG.error("Couldn't load content", e);
       return Collections.emptyList();
+    }
+  }
+
+  private class InspectionProgressIndicator extends ProgressIndicatorBase implements ProgressIndicatorWithDelayedPresentation {
+    private String lastPrefix = "";
+    private int myLastPercent = -1;
+
+    private InspectionProgressIndicator() {
+      setText("");
+    }
+
+    @Override
+    public void setText(String text) {
+      if (myVerboseLevel == 0) return;
+
+      if (myVerboseLevel == 1) {
+        if (text == null) {
+          return;
+        }
+        String prefix = getPrefix(text);
+        if (prefix.equals(lastPrefix)) {
+          reportMessageNoLineBreak(1, ".");
+          return;
+        }
+        lastPrefix = prefix;
+        reportMessage(1, "");
+        reportMessage(1, prefix);
+        return;
+      }
+
+      if (myVerboseLevel == 3) {
+        if (text == null) {
+          return;
+        }
+        if (!isIndeterminate() && getFraction() > 0) {
+          final int percent = (int)(getFraction() * 100);
+          if (myLastPercent == percent) return;
+          String prefix = getPrefix(text);
+          myLastPercent = percent;
+          String msg = prefix + " " + percent + "%";
+          reportMessage(2, msg);
+        }
+        return;
+      }
+
+      reportMessage(2, text);
+    }
+
+    @Override
+    public void setDelayInMillis(int delayInMillis) {
+
     }
   }
 }

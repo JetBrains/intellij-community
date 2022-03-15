@@ -79,7 +79,9 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
         performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
       }
       finally {
-        exportResultsSmart(inspectionsResults, outputDir);
+        if (areToolsInitialized()) {
+          exportResultsSmart(inspectionsResults, outputDir);
+        }
       }
     }
     finally {
