@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.wm.IdeFrame
@@ -81,6 +79,8 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     val rect = Rectangle(comp.size)
     return RelativeRectangle(comp, rect)
   }
+
+  override fun getHeaderBackground(active: Boolean) = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
 
   private fun updateBorders() {
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null

@@ -17,12 +17,13 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.UIManager
+import javax.swing.SwingUtilities
 
 private val EP_NAME = ExtensionPointName<MainToolbarProjectWidgetFactory>("com.intellij.projectToolbarWidget")
 
@@ -36,8 +37,12 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val disposable = Disposer.newDisposable()
 
   init {
-    background = UIManager.getColor("MainToolbar.background")
     isOpaque = true
+  }
+
+  override fun getBackground(): Color {
+    val active = SwingUtilities.getWindowAncestor(this)?.isActive ?: true
+    return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
