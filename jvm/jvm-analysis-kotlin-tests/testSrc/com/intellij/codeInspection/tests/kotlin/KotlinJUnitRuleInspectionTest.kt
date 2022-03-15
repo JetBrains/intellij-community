@@ -12,8 +12,38 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
 
       class PrivateRule {
         @Rule
-        private var <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error> = SomeTestRule()
+        var <error descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</error> = SomeTestRule()
       }
+    """.trimIndent())
+  }
+
+  fun `test object inherited TestRule`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      package test
+
+      import org.junit.Rule
+      import org.junit.rules.TestRule
+      
+      object OtherRule : TestRule { }
+      
+      object ObjRule {
+        @Rule
+        private var <error descr="Fields annotated with '@org.junit.Rule' should be 'public' and non-static">x</error> = SomeTestRule()
+      }
+
+      class ClazzRule {
+        @Rule
+        fun x() = OtherRule
+        
+        @Rule
+        fun <error descr="Method return type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">y</error>() = 0
+
+        @Rule
+        public fun z() = object : TestRule { }
+
+        @Rule
+        public fun <error descr="Method return type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">a</error>() = object { }
+      }  
     """.trimIndent())
   }
 
