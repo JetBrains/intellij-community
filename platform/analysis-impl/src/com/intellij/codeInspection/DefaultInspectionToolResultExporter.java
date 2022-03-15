@@ -186,7 +186,10 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           }
           return desc1.getDescriptionTemplate().compareTo(desc2.getDescriptionTemplate());
         }
-        return file1 == null || file2 == null ? 0 : file1.getPath().compareTo(file2.getPath());
+        if (file1 == null && file2 == null) return 0;
+        if (file1 == null) return 1;
+        if (file2 == null) return -1;
+        return file1.getPath().compareTo(file2.getPath());
       });
     }
     for (CommonProblemDescriptor descriptor : sorted) {
