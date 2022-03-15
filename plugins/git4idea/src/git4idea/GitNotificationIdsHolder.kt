@@ -100,7 +100,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       UPDATE_DETACHED_HEAD_ERROR,
       UPDATE_ERROR,
       UPDATE_NO_TRACKED_BRANCH,
-      UPDATE_NOTHING_TO_UPDATE
+      UPDATE_NOTHING_TO_UPDATE,
+      BAD_EXECUTABLE
     )
   }
 
@@ -200,5 +201,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val UPDATE_ERROR = "git.update.error"
     const val UPDATE_NO_TRACKED_BRANCH = "git.update.no.tracked.branch.error"
     const val UPDATE_NOTHING_TO_UPDATE = "git.update.nothing.to.update"
+    const val BAD_EXECUTABLE = "git.bad.executable"
   }
 }
