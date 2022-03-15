@@ -17,14 +17,15 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.AncestorListenerAdapter
+import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
@@ -35,15 +36,12 @@ import java.awt.Cursor.TEXT_CURSOR
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
 import javax.swing.FocusManager
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
-import javax.swing.event.AncestorEvent
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
@@ -112,7 +110,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       override fun updateToolTipText() {
-        val shortcutText = getShortcut()
+        val shortcutText = "Double" + if (SystemInfo.isMac) FontUtil.thinSpace() + MacKeymapUtil.SHIFT else " Shift"
+
         val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
         if (Registry.`is`("ide.helptooltip.enabled")) {
           HelpTooltip.dispose(this)
