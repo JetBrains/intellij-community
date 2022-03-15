@@ -32,6 +32,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
@@ -130,7 +131,8 @@ public final class JavaModuleGraphUtil {
       return null;
     }
     JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    List<VirtualFile> sourceRoots = rootManager.getSourceRoots(rootType);
     List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
     if (files.size() == 1) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
@@ -139,7 +141,10 @@ public final class JavaModuleGraphUtil {
       }
     }
     else if (files.isEmpty()) {
-      files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
+      JavaResourceRootType resourceRootType = inTests ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;
+      List<VirtualFile> roots = new ArrayList<>(rootManager.getSourceRoots(resourceRootType));
+      roots.addAll(sourceRoots);
+      files = ContainerUtil.mapNotNull(roots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
       if (files.size() == 1) {
         VirtualFile manifest = files.get(0);
         PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
