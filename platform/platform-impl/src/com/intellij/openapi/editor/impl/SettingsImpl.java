@@ -3,7 +3,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorCoreUtil;
@@ -81,6 +80,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace;
   private Boolean myIsRefrainFromScrolling;
   private Boolean myUseSoftWraps;
+  private boolean myPaintSoftWraps = true;
   private Boolean myUseCustomSoftWrapIndent;
   private Integer myCustomSoftWrapIndent;
   private Boolean myRenamePreselect;
@@ -686,6 +686,16 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public boolean isAllSoftWrapsShown() {
     return EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
+  }
+
+  @Override
+  public boolean isPaintSoftWraps() {
+    return myPaintSoftWraps;
+  }
+
+  @Override
+  public void setPaintSoftWraps(boolean val) {
+    myPaintSoftWraps = val;
   }
 
   @Override

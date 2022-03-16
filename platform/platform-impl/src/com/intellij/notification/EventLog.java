@@ -3,6 +3,7 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
@@ -19,6 +20,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
@@ -223,6 +225,47 @@ public final class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list, titleLength);
+  }
+
+  public static void formatContent(@NotNull EditorEx editor, @NotNull Notification notification) {
+    DocumentImpl logDoc = new DocumentImpl("",true);
+    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<>();
+    List<RangeMarker> lineSeparators = new ArrayList<>();
+
+    boolean hasHtml =
+      parseHtmlContent(addIndents(notification.getContent(), ""), notification, logDoc, new AtomicBoolean(false), links, lineSeparators);
+
+    indentNewLines(logDoc, lineSeparators, null, hasHtml, "");
+
+    List<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<>();
+    for (RangeMarker marker : links.keySet()) {
+      if (!marker.isValid()) {
+        continue;
+      }
+      list.add(Pair.create(new TextRange(marker.getStartOffset(), marker.getEndOffset()), links.get(marker)));
+    }
+
+    int msgStart = editor.getDocument().getTextLength();
+    editor.getDocument().insertString(0, logDoc.getText());
+
+    if (!list.isEmpty()) {
+      EditorHyperlinkSupport rangeHighlighter = EditorHyperlinkSupport.get(editor);
+
+      for (Pair<TextRange, HyperlinkInfo> link : list) {
+        HyperlinkInfo hyperlinkInfo = new HyperlinkInfo() {
+          @Override
+          public void navigate(@NotNull Project project) {
+            NotificationListener listener = notification.getListener();
+            if (listener != null) {
+              JComponent component = editor.getComponent();
+              String href = ((NotificationHyperlinkInfo)link.second).myHref;
+              listener.hyperlinkUpdate(notification, IJSwingUtilities.createHyperlinkEvent(href, component));
+            }
+          }
+        };
+        rangeHighlighter.createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, hyperlinkInfo);
+      }
+    }
   }
 
   private static @NotNull String addIndents(@NotNull String text, @NotNull String indent) {
