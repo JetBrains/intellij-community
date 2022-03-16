@@ -23,8 +23,7 @@ import java.util.function.IntPredicate;
 
 @ApiStatus.Internal
 public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
-  private static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
-  private static final Object myNullValue = ObjectUtils.sentinel("null");
+  static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
@@ -61,7 +60,6 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     private final int myInputId;
     private final Object myValue;
   }
-
   @Override
   public void addValue(int inputId, Value value) {
     Object fileSetObject = getFileSetObject(value);
@@ -87,7 +85,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
   private void ensureInputIdIsntAssociatedWithAnotherValue(int inputId, Value value, boolean isDirect) {
     if (myPresentInputIds != null) {
-      Object normalizedValue = normalizeValue(value);
+      Object normalizedValue = wrapValue(value);
       Object previousValue = myPresentInputIds.put(inputId, normalizedValue);
       myUpdateOps.add(new UpdateOp(isDirect ? UpdateOp.Type.ADD_DIRECT : UpdateOp.Type.ADD, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
@@ -95,15 +93,9 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       }
     }
   }
-
-  @NotNull
-  private Value normalizeValue(Value value) {
-    return value == null ? nullValue() : value;
-  }
-
   private void ensureInputIdAssociatedWithValue(int inputId, Value value) {
     if (myPresentInputIds != null) {
-      Object normalizedValue = normalizeValue(value);
+      Object normalizedValue = wrapValue(value);
       Object previousValue = myPresentInputIds.remove(inputId);
       myUpdateOps.add(new UpdateOp(UpdateOp.Type.REMOVE, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
@@ -123,13 +115,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     return (Value)myInputIdMapping;
   }
 
-  private Value nullValue() {
-    //noinspection unchecked
-    return (Value)myNullValue;
-  }
-
   private void resetFileSetForValue(Value value, @NotNull Object fileSet) {
-    value = normalizeValue(value);
+    value = wrapValue(value);
     Map<Value, Object> map = asMapping();
     if (map == null) {
       myInputIdMappingValue = fileSet;
@@ -145,36 +132,19 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   }
 
   @Override
-  public void removeAssociatedValue(int inputId) {
-    if (myInputIdMapping == null) return;
-
-    List<Object> fileSetObjects = null;
-    List<Value> valueObjects = null;
-    for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
-      final Value value = valueIterator.next();
-
+  public boolean removeAssociatedValue(int inputId) {
+    for (InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      Value value = valueIterator.next();
       if (valueIterator.getValueAssociationPredicate().test(inputId)) {
-        if (fileSetObjects == null) {
-          fileSetObjects = new SmartList<>();
-          valueObjects = new SmartList<>();
-        }
-        else if (IndexDebugProperties.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get() + ";\n" + getDebugMessage());
-        }
-        fileSetObjects.add(valueIterator.getFileSetObject());
-        valueObjects.add(value);
+        removeValue(inputId, valueIterator.getFileSetObject(), value);
+        return true;
       }
     }
-
-    if (fileSetObjects != null) {
-      for (int i = 0, len = valueObjects.size(); i < len; ++i) {
-        removeValue(inputId, fileSetObjects.get(i), valueObjects.get(i));
-      }
-    }
+    return false;
   }
 
   @NotNull
-  private String getDebugMessage() {
+  String getDebugMessage() {
     return "Actual value container = \n" + this +
            (myPresentInputIds == null ? "" : "\nExpected value container = " + myPresentInputIds) +
            (myUpdateOps == null ? "" : "\nUpdate operations = " + myUpdateOps);
@@ -202,7 +172,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
 
     if (fileSet instanceof ChangeBufferingList) {
-      final ChangeBufferingList changesList = (ChangeBufferingList)fileSet;
+      ChangeBufferingList changesList = (ChangeBufferingList)fileSet;
       changesList.remove(inputId);
       if (!changesList.isEmpty()) return;
     }
@@ -212,7 +182,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       }
     }
 
-    value = normalizeValue(value);
+    value = wrapValue(value);
     Map<Value, Object> mapping = asMapping();
     if (mapping == null) {
       myInputIdMapping = null;
@@ -229,6 +199,16 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
         myInputIdMappingValue = inputIdMappingValue != null ? inputIdMappingValue : Integer.valueOf(0);
       }
     }
+  }
+
+  @NotNull
+  static <Value> Value wrapValue(Value value) {
+    //noinspection unchecked
+    return value == null ? (Value)ObjectUtils.NULL : value;
+  }
+
+  static <Value> Value unwrap(Value value) {
+    return value == ObjectUtils.NULL ? null : value;
   }
 
   @NotNull
@@ -267,8 +247,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
         @Override
         public Value next() {
-          Value next = value;
-          if (next == myNullValue) next = null;
+          Value next = unwrap(value);
           value = null;
           return next;
         }
@@ -296,8 +275,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
           current = entry.getKey();
           Value next = current;
           currentValue = entry.getValue();
-          if (next == myNullValue) next = null;
-          return next;
+          return unwrap(next);
         }
 
         @Override
@@ -386,7 +364,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Object getFileSetObject(Value value) {
     if (myInputIdMapping == null) return null;
 
-    value = normalizeValue(value);
+    value = wrapValue(value);
 
     if (myInputIdMapping == value || // myNullValue is Object
         myInputIdMapping.equals(value)) {
@@ -404,7 +382,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
       ValueContainerImpl<Value> clone = (ValueContainerImpl<Value>)super.clone();
       ValueToInputMap<Value> mapping = asMapping();
       if (mapping != null) {
-        final ValueToInputMap<Value> cloned = mapping.clone();
+        ValueToInputMap<Value> cloned = mapping.clone();
         cloned.forEach((key, val) -> {
           if (val instanceof ChangeBufferingList) {
             cloned.put(key, ((ChangeBufferingList)val).clone());
@@ -482,7 +460,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   }
 
   private void attachFileSetForNewValue(Value value, Object fileSet) {
-    value = normalizeValue(value);
+    value = wrapValue(value);
 
     if (myInputIdMapping != null) {
       Map<Value, Object> mapping = asMapping();
@@ -553,24 +531,12 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
         boolean doCompact = false;
         if (inputIds instanceof int[]) {
           for (int inputId : (int[])inputIds) {
-            if (mapping != null) {
-              if (mapping.removeFileId(inputId)) doCompact = true;
-            }
-            else {
-              removeAssociatedValue(inputId);
-              doCompact = true;
-            }
+            doCompact = removeValue(mapping, inputId);
           }
         }
         else {
           int inputId = (int)inputIds;
-          if (mapping != null) {
-            if (mapping.removeFileId(inputId)) doCompact = true;
-          }
-          else {
-            removeAssociatedValue(inputId);
-            doCompact = true;
-          }
+          doCompact = removeValue(mapping, inputId);
         }
 
         if (doCompact) setNeedsCompacting(true);
@@ -585,14 +551,12 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
             if (inputIds instanceof int[]) {
               for (int inputId : (int[])inputIds) {
-                addValue(inputId, value);
-                if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                associateValue(mapping, value, inputId);
               }
             }
             else {
               int inputId = (int)inputIds;
-              addValue(inputId, value);
-              if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+              associateValue(mapping, value, inputId);
             }
           }
           else {
@@ -606,32 +570,55 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
               if (inputIds instanceof int[]) {
                 for (int inputId : (int[])inputIds) {
-                  if (changeBufferingList != null) {
-                    changeBufferingList.add(inputId);
-                    ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
-                  }
-                  else {
-                    addValue(inputId, value);
-                  }
-                  if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                  associateValueOptimizely(mapping, value, changeBufferingList, inputId);
                 }
               }
               else {
                 int inputId = (int)inputIds;
-                if (changeBufferingList != null) {
-                  changeBufferingList.add(inputId);
-                  ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
-                }
-                else {
-                  addValue(inputId, value);
-                }
-                if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                associateValueOptimizely(mapping, value, changeBufferingList, inputId);
               }
 
               prev += id;
             }
           }
         }
+      }
+    }
+  }
+
+  private boolean removeValue(FileId2ValueMapping<Value> mapping, int inputId) {
+    if (mapping != null) {
+      return mapping.removeFileId(inputId);
+    }
+    else {
+      removeAssociatedValue(inputId);
+      return true;
+    }
+  }
+
+  private void associateValue(FileId2ValueMapping<Value> mapping, Value value, int inputId) {
+    if (mapping != null) {
+      mapping.associateFileIdToValue(inputId, value);
+    }
+    else {
+      addValue(inputId, value);
+    }
+  }
+
+  private void associateValueOptimizely(FileId2ValueMapping<Value> mapping, Value value, ChangeBufferingList changeBufferingList, int inputId) {
+    if (changeBufferingList != null) {
+      changeBufferingList.add(inputId);
+      ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
+      if (mapping != null) {
+        mapping.associateFileIdToValueSkippingContainer(inputId, value);
+      }
+    }
+    else {
+      if (mapping != null) {
+        mapping.associateFileIdToValue(inputId, value);
+      }
+      else {
+        addValue(inputId, value);
       }
     }
   }
