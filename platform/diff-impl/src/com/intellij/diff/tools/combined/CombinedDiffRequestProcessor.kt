@@ -264,8 +264,7 @@ open class CombinedDiffRequestProcessor(private val project: Project?,
         ProgressManager.checkCanceled()
 
         val lazyDiffViewer = combinedViewer.diffViewers[blockId] as? CombinedLazyDiffViewer ?: continue
-        val childDiffRequest =
-          runBlockingCancellable(indicator) { runUnderIndicator { lazyDiffViewer.requestProducer.process(context, indicator) } }
+        val childDiffRequest = lazyDiffViewer.requestProducer.process(context, indicator)
 
         childDiffRequest.putUserData(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, true)
 
