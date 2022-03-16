@@ -3,6 +3,7 @@ package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -31,10 +32,13 @@ class CodeVisionRichTextPainter<T>(
     g as Graphics2D
 
     val richSegments = printer.invoke(value).parts
+    val themeInfoProvider = service<CodeVisionThemeInfoProvider>()
 
     val inSelectedBlock = textAttributes.backgroundColor == editor.selectionModel.textAttributes.backgroundColor
     g.color = if (inSelectedBlock) editor.selectionModel.textAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
-    else CodeVisionTheme.foregroundColor(editor, hovered)
+    else {
+      themeInfoProvider.foregroundColor(editor, hovered)
+    }
 
     val x = point.x + theme.left
     val y = point.y + theme.top
@@ -49,7 +53,7 @@ class CodeVisionRichTextPainter<T>(
       val foregroundColor = it.attributes.fgColor
       if (underlineColor == null) underlineColor = foregroundColor
       else if(underlineColor != foregroundColor) underlineColor = g.color
-      val font = CodeVisionTheme.font(editor, it.attributes.fontStyle)
+      val font = themeInfoProvider.font(editor, it.attributes.fontStyle)
       g.font = font
       withColor(g, foregroundColor) {
         g.drawString(it.text, xOffset, y)
@@ -78,9 +82,10 @@ class CodeVisionRichTextPainter<T>(
     val richSegments = printer.invoke(value).parts
     var width = theme.left
     var height = theme.top
+    val themeInfoProvider = service<CodeVisionThemeInfoProvider>()
 
     richSegments.forEach {
-      val font = CodeVisionTheme.font(editor, it.attributes.fontStyle)
+      val font = themeInfoProvider.font(editor, it.attributes.fontStyle)
       val metrics = editor.component.getFontMetrics(font)
       width += metrics.stringWidth(it.text)
       height = maxOf(height, metrics.height)
