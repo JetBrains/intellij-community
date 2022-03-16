@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -26,11 +26,11 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
       if (returnValue != null) {
         final String message;
         if (refMethod.getDerivedReferences().isEmpty()) {
-          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor", "<code>" + returnValue + "</code>");
+          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor", returnValue);
         } else if (refMethod.hasBody()) {
-          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor1", "<code>" + returnValue + "</code>");
+          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor1", returnValue);
         } else {
-          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
+          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor2", returnValue);
         }
 
         final UDeclaration decl = refMethod.getUastElement();
