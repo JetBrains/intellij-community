@@ -16,6 +16,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.io.path.name
 import kotlin.streams.asSequence
 
 internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
@@ -27,17 +28,21 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
     "te", "th", "tr", "uk", "ur", "uz", "vi", "yo", "zh", "zu")
 
   @Suppress("SpellCheckingInspection")
+  private val SHELLS = listOf("sh", "ash", "bash", "csh", "dash", "fish", "ksh", "tcsh", "xonsh", "zsh", "nu", "other", "unknown")
+
+  @Suppress("SpellCheckingInspection")
   private val DISTROS = listOf(
     "almalinux", "alpine", "amzn", "arch", "bunsenlabs", "centos", "chromeos", "debian", "deepin", "devuan", "elementary",
     "endeavouros", "fedora", "galliumos", "garuda", "gentoo", "kali", "linuxmint", "mageia", "manjaro", "neon", "nixos", "ol",
     "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
     "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 15)
+  private val GROUP = EventLogGroup("system.os", 16)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
-  private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ)
+  private val OS_SHELL = String("shell", SHELLS)
+  private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
   @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
@@ -49,7 +54,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
   override fun getMetrics(): Set<MetricEvent> {
     val tz = getTimeZone()
     val metrics = mutableSetOf(
-      OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz)),
+      OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell())),
       TIMEZONE.metric(tz))
 
     when {
@@ -80,6 +85,10 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
 
   private fun getTimeZone(): String = OffsetDateTime.now().offset.toString()
 
+  private fun getShell(): String? =
+    if (SystemInfo.isWindows) null
+    else SHELLS.coerce(runCatching { System.getenv("SHELL")?.let { Path.of(it).name } }.getOrNull())
+
   // https://www.freedesktop.org/software/systemd/man/os-release.html
   private fun getReleaseData(): Pair<String, String?> =
     try {
@@ -89,11 +98,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
           .map { it.split('=') }
           .filter { it.size == 2 && it[0] in fields }
           .associate { it[0] to it[1].trim('"') }
-        val distro = when (val id = values["ID"]) {
-          null -> "unknown"
-          in DISTROS -> id
-          else -> "other"
-        }
+        val distro = DISTROS.coerce(values["ID"])
         distro to values["VERSION_ID"]
       }
     }
@@ -108,5 +113,12 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
     }
     catch(e: IOException) {
       false
+    }
+
+  private fun List<String>.coerce(value: String?): String =
+    when (value) {
+      null -> "unknown"
+      in this -> value
+      else -> "other"
     }
 }
