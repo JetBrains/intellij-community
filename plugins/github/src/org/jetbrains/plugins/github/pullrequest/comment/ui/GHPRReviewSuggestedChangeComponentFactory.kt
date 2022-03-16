@@ -36,9 +36,7 @@ import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import javax.swing.AbstractAction
-import javax.swing.JButton
-import javax.swing.JComponent
+import javax.swing.*
 
 class GHPRReviewSuggestedChangeComponentFactory(
   private val project: Project,
@@ -142,6 +140,33 @@ class GHPRReviewSuggestedChangeComponentFactory(
 
     private fun createPopupComponentContainer(commentDocument: Document, cancelActionListener: ActionListener): ComponentContainer {
       return object : ComponentContainer {
+        private val commitAction = ActionListener {
+          if (commitEditor.text.isBlank()) {
+            errorLabel.isVisible = true
+            return@ActionListener
+          }
+
+          object : Task.Backgroundable(
+            project,
+            GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.commit"),
+            true
+          ) {
+            private var commitStatus = ApplyPatchStatus.FAILURE
+
+            override fun run(indicator: ProgressIndicator) {
+              commitStatus = suggestionApplier.commitSuggestedChanges(commitEditor.text)
+            }
+
+            override fun onSuccess() {
+              cancelActionListener.actionPerformed(it)
+              if (commitStatus == ApplyPatchStatus.SUCCESS) {
+                suggestedChangeHelper.resolveThread(thread.id)
+                runWriteAction { commentDocument.setText("") }
+              }
+            }
+          }.queue()
+        }
+
         private val errorLabel = JBLabel().apply {
           text = VcsBundle.message("error.no.commit.message")
           icon = AllIcons.General.Error
@@ -164,32 +189,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
 
         private val commitButton = JButton(VcsBundle.message("commit.progress.title")).apply {
           isOpaque = false
-          addActionListener {
-            if (commitEditor.text.isBlank()) {
-              errorLabel.isVisible = true
-              return@addActionListener
-            }
-
-            object : Task.Backgroundable(
-              project,
-              GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.commit"),
-              true
-            ) {
-              private var commitStatus = ApplyPatchStatus.FAILURE
-
-              override fun run(indicator: ProgressIndicator) {
-                commitStatus = suggestionApplier.commitSuggestedChanges(commitEditor.text)
-              }
-
-              override fun onSuccess() {
-                cancelActionListener.actionPerformed(it)
-                if (commitStatus == ApplyPatchStatus.SUCCESS) {
-                  suggestedChangeHelper.resolveThread(thread.id)
-                  runWriteAction { commentDocument.setText("") }
-                }
-              }
-            }.queue()
-          }
+          addActionListener(commitAction)
         }.defaultButton()
 
         private val cancelButton = JButton(CommonBundle.getCancelButtonText()).apply {
@@ -211,6 +211,8 @@ class GHPRReviewSuggestedChangeComponentFactory(
         }.apply {
           background = EditorColorsManager.getInstance().globalScheme.defaultBackground
           preferredSize = JBDimension(450, 165)
+
+          registerKeyboardAction(commitAction, KeyStroke.getKeyStroke("ctrl ENTER"), JPanel.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
         }
 
         override fun getPreferredFocusableComponent(): JComponent = commitEditor
