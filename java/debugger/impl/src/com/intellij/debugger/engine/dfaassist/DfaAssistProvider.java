@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
+import com.sun.jdi.Location;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
@@ -32,6 +33,15 @@ public interface DfaAssistProvider {
     @Override
     public String toString() { return "null"; }
   };
+
+  /**
+   * Quick check whether code location matches the source code in the editor
+   * @param element PsiElement in the editor
+   * @param location location reported by debugger
+   * @return true if debugger location likely matches to the editor location;
+   * false if definitely doesn't match (in this case, DFA Assist will be turned off)
+   */
+  boolean locationMatches(@NotNull PsiElement element, @NotNull Location location);
 
   /**
    * @param element psi element the debugger state points at

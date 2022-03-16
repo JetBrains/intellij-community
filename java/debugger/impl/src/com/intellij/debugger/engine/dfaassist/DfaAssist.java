@@ -10,7 +10,10 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
@@ -33,7 +36,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -114,10 +120,10 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
       cleanUp();
       return;
     }
-    PsiJavaFile file = ObjectUtils.tryCast(sourcePosition.getFile(), PsiJavaFile.class);
+    DfaAssistProvider provider = DfaAssistProvider.EP_NAME.forLanguage(sourcePosition.getFile().getLanguage());
     DebugProcessImpl debugProcess = newContext.getDebugProcess();
     PsiElement element = sourcePosition.getElementAt();
-    if (debugProcess == null || file == null || element == null) {
+    if (debugProcess == null || provider == null || element == null) {
       cleanUp();
       return;
     }
@@ -229,45 +235,20 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     throws EvaluateException {
     if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
 
+    DfaAssistProvider provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage());
+    if (provider == null) return null;
     try {
-      if (!locationMatches(element, proxy.location())) return null;
+      if (!provider.locationMatches(element, proxy.location())) return null;
     }
     catch (IllegalArgumentException iea) {
       throw new EvaluateException(iea.getMessage(), iea);
     }
-    DfaAssistProvider provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage());
-    if (provider == null) return null;
     PsiElement anchor = provider.getAnchor(element);
     if (anchor == null) return null;
     PsiElement body = provider.getCodeBlock(anchor);
     if (body == null) return null;
     DebuggerDfaRunner runner = new DebuggerDfaRunner(provider, body, anchor, proxy);
     return runner.isValid() ? runner : null;
-  }
-
-  /**
-   * Quick check whether code location matches the source code in the editor
-   * @param element PsiElement in the editor
-   * @param location location reported by debugger
-   * @return true if debugger location likely matches to the editor location
-   */
-  private static boolean locationMatches(@NotNull PsiElement element, Location location) {
-    Method method = location.method();
-    PsiElement context = DebuggerUtilsEx.getContainingMethod(element);
-    if (context instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)context;
-      String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
-      return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.argumentTypeNames().size();
-    }
-    if (context instanceof PsiLambdaExpression) {
-      return DebuggerUtilsEx.isLambda(method) &&
-             method.argumentTypeNames().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
-    }
-    if (context instanceof PsiClassInitializer) {
-      String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
-      return method.name().equals(expectedMethod);
-    }
-    return false;
   }
 
   private final class TurnOffDfaProcessorAction extends AnAction {
