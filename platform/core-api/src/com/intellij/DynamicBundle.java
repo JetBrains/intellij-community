@@ -24,6 +24,7 @@ import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.function.Function;
 
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
@@ -42,12 +43,24 @@ public class DynamicBundle extends AbstractBundle {
     @NotNull ClassLoader baseLoader,
     @NotNull ResourceBundle.Control control
   ) {
-    ResourceBundle base = super.findBundle(pathToBundle, baseLoader, control);
-    ClassLoader pluginClassLoader = languagePluginClassLoader(getClass().getClassLoader());
+    return resolveResourceBundle(
+      getClass().getClassLoader(),
+      baseLoader,
+      loader -> super.findBundle(pathToBundle, loader, control)
+    );
+  }
+
+  private static @NotNull ResourceBundle resolveResourceBundle(
+    @NotNull ClassLoader bundleClassLoader,
+    @NotNull ClassLoader baseLoader,
+    @NotNull Function<@NotNull ClassLoader, @NotNull ResourceBundle> bundleResolver
+  ) {
+    ResourceBundle base = bundleResolver.apply(baseLoader);
+    ClassLoader pluginClassLoader = languagePluginClassLoader(bundleClassLoader);
     if (pluginClassLoader == null) {
       return base;
     }
-    ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginClassLoader, control);
+    ResourceBundle pluginBundle = bundleResolver.apply(pluginClassLoader);
     if (!setBundleParent(pluginBundle, base)) {
       return base;
     }
