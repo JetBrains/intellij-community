@@ -28,11 +28,10 @@ import icons.JetgroovyIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
-import org.jetbrains.plugins.groovy.ext.ginq.formatting.GinqFragmentBlock
-import org.jetbrains.plugins.groovy.ext.ginq.formatting.GinqFragmentContainerBlock
+import org.jetbrains.plugins.groovy.ext.ginq.formatting.GINQ_AWARE_GROOVY_BLOCK_PRODUCER
+import org.jetbrains.plugins.groovy.ext.ginq.formatting.produceGinqFormattingBlock
 import org.jetbrains.plugins.groovy.ext.ginq.types.GrSyntheticNamedRecordClass
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
-import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -401,19 +400,13 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     TemplateManager.getInstance(context.project).startTemplate(editor, template)
   }
 
-  override fun computeFormattingBlock(macroCall: GrMethodCall, node: ASTNode, context: FormattingContext, generator: GroovyBlockGenerator): Block {
+  override fun computeFormattingBlock(macroCall: GrMethodCall, node: ASTNode, context: FormattingContext): Block {
     if (node !is GrClosableBlock) {
-      return super.computeFormattingBlock(macroCall, node, context, generator)
+      return super.computeFormattingBlock(macroCall, node, context)
     }
-    val topTree = getParsedGinqTree(macroCall) ?: return super.computeFormattingBlock(macroCall, node, context, generator)
-    // todo: closest tree
-    //val closestTree = node.psi.ginqParents(macroCall, topTree).firstOrNull() ?: return super.computeFormattingBlock(macroCall, node, context)
-    val topBlocks = listOf(topTree.from) + topTree.joins + listOfNotNull(topTree.where, topTree.orderBy, topTree.groupBy, topTree.limit, topTree.select)
-    val subBlocks = topBlocks.map { GinqFragmentBlock(it, context) }
-    val children = GroovyBlockGenerator.visibleChildren(node)
-    val remainingSubblocks = generator.generateCodeSubBlocks(children.filter { child -> subBlocks.all { !it.textRange.intersects(child.textRange) } })
-    val allBlocks = (remainingSubblocks + subBlocks).sortedBy { it.textRange.startOffset }
-    return GinqFragmentContainerBlock(allBlocks, context)
+    val topTree = getParsedGinqTree(macroCall) ?: return super.computeFormattingBlock(macroCall, node, context)
+    val newContext = FormattingContext(context.settings, context.alignmentProvider, context.groovySettings, context.isForbidWrapping, context.isForbidNewLineInSpacing, GINQ_AWARE_GROOVY_BLOCK_PRODUCER)
+    return produceGinqFormattingBlock(topTree, newContext, node)
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {

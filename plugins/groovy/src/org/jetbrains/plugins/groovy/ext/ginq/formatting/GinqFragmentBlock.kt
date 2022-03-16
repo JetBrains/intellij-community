@@ -44,7 +44,7 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment, context: FormattingCont
           tempBlocks.add(GroovyMacroBlock(child, context))
           continue
         }
-        tempBlocks.add(GroovyBlock(child, Indent.getNormalIndent(), null, context))
+        tempBlocks.add(context.createBlock(child, Indent.getNormalIndent(), null))
       }
       if (fragment is GinqJoinFragment && fragment.onCondition != null) {
         tempBlocks.add(GinqFragmentBlock(fragment.onCondition, myContext))
