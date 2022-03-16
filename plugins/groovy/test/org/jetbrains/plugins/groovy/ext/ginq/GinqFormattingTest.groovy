@@ -63,4 +63,68 @@ GQ {
 }
 ''')
   }
+
+  void testFormattingForUntransformed() {
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  where x == y
+                        && y == y
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  where x == y
+      && y == y
+  select x
+}
+''')
+  }
+
+  void testUntransformedInFrom() {
+    checkFormatting('''\
+GQ {
+  from x in [1     ]
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  select x
+}
+''')
+  }
+
+  void testUntransformedInJoin() {
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  join y in [2     ]
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  join y in [2]
+  select x
+}
+''')
+  }
+
+  void testUntransformedInOn() {
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  join y in [2     ]
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  join y in [2]
+  select x
+}
+''')
+  }
 }
