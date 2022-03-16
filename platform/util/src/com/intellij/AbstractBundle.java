@@ -147,8 +147,19 @@ public class AbstractBundle {
   }
 
   private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+    return resolveResourceBundleWithFallback(
+      () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
+      loader, pathToBundle
+    );
+  }
+
+  private static @NotNull ResourceBundle resolveResourceBundleWithFallback(
+    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry,
+    @NotNull ClassLoader loader,
+    @NotNull String pathToBundle
+  ) {
     try {
-      return findBundle(pathToBundle, loader, MyResourceControl.INSTANCE);
+      return firstTry.get();
     }
     catch (MissingResourceException e) {
       LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
