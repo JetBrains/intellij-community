@@ -29,10 +29,25 @@ public class AbstractBundle {
 
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
+  private final @NotNull ClassLoader myBundleClassLoader;
   private final @NonNls String myPathToBundle;
+
+  /**
+   * @param bundleClass a class to obtain the classloader, usually a class which declared the field which references the bundle instance
+   */
+  public AbstractBundle(@NotNull Class<?> bundleClass, @NonNls @NotNull String pathToBundle) {
+    myPathToBundle = pathToBundle;
+    myBundleClassLoader = bundleClass.getClassLoader();
+  }
 
   public AbstractBundle(@NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
+    myBundleClassLoader = getClass().getClassLoader();
+  }
+
+  @ApiStatus.Internal
+  protected final @NotNull ClassLoader getBundleClassLoader() {
+    return myBundleClassLoader;
   }
 
   @ApiStatus.Internal
@@ -42,7 +57,7 @@ public class AbstractBundle {
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(getResourceBundle(getClass().getClassLoader()), key, null, params);
+    return BundleBase.messageOrDefault(getResourceBundle(), key, null, params);
   }
 
   /**
@@ -107,7 +122,7 @@ public class AbstractBundle {
   }
 
   public ResourceBundle getResourceBundle() {
-    return getResourceBundle(getClass().getClassLoader());
+    return getResourceBundle(myBundleClassLoader);
   }
 
   @ApiStatus.Internal

@@ -33,6 +33,10 @@ public class DynamicBundle extends AbstractBundle {
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
+  public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
+    super(bundleClass, pathToBundle);
+  }
+
   public DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }
@@ -45,7 +49,7 @@ public class DynamicBundle extends AbstractBundle {
     @NotNull ResourceBundle.Control control
   ) {
     return resolveResourceBundle(
-      getClass().getClassLoader(),
+      getBundleClassLoader(),
       baseLoader,
       loader -> super.findBundle(pathToBundle, loader, control)
     );
