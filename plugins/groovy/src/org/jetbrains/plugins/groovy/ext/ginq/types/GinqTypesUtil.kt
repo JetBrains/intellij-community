@@ -68,7 +68,7 @@ fun inferOverType(expression: GrMethodCall) : PsiType? {
 }
 
 fun inferLocalReferenceExpressionType(macroCall: GrMethodCall, refExpr: GrReferenceExpression): PsiType? {
-  val tree = getClosestGinqTree(macroCall, refExpr) ?: return null
+  val tree = refExpr.getClosestGinqTree(macroCall) ?: return null
   if (refExpr.referenceName == "_g") {
     resolveToCustomMember(refExpr, "_g", tree)?.run { return type }
   }

@@ -130,7 +130,6 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
           recordError(argument.leftOperand, GroovyBundle.message("ginq.error.message.expected.alias"))
         }
         else {
-          alias.putUserData(GINQ_BINDING, Unit)
           markAsReferenceResolveTarget(alias)
         }
         val dataSource = argument.rightOperand
@@ -287,7 +286,6 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
         parsedArguments.forEach {
           it.aggregatedExpression.markAsGinqUntransformed()
           it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
-          it.alias?.referenceElement?.putUserData(GINQ_BINDING, Unit)
         }
         container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
       }
@@ -337,10 +335,6 @@ fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
 
 fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second
 
-private val GINQ_BINDING: Key<Unit> = Key.create("Ginq binding")
-
-fun PsiElement.isGinqBinding() : Boolean = getUserData(GINQ_BINDING) != null
-
 private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
 
 fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORMED_ELEMENT, Unit)
@@ -386,9 +380,9 @@ fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
   return getParsedGinqInfo(macroCall).second
 }
 
-fun getClosestGinqTree(macroCall: GrMethodCall, expression: GrExpression): GinqExpression? {
+fun PsiElement.getClosestGinqTree(macroCall: GrMethodCall): GinqExpression? {
   val top = getParsedGinqTree(macroCall) ?: return null
-  return expression.ginqParents(macroCall, top).firstOrNull()
+  return ginqParents(macroCall, top).firstOrNull()
 }
 
 fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {

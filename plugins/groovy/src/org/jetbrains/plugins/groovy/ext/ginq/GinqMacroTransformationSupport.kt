@@ -3,30 +3,21 @@ package org.jetbrains.plugins.groovy.ext.ginq
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.quickfix.ReferenceNameExpression
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.formatting.Block
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
-import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
-import icons.JetgroovyIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
+import org.jetbrains.plugins.groovy.ext.ginq.completion.GinqCompletionUtils
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.GINQ_AWARE_GROOVY_BLOCK_PRODUCER
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.produceGinqFormattingBlock
 import org.jetbrains.plugins.groovy.ext.ginq.resolve.resolveToCustomMember
@@ -37,11 +28,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupportEx
 
@@ -213,148 +205,24 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return null
   }
 
-
-
-  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet) {
+  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet)
+  = with(GinqCompletionUtils) {
     val position = parameters.position
-    val topTree = getParsedGinqTree(macroCall)
-    val closestGinq = topTree?.let { position.ginqParents(macroCall, it) }?.firstOrNull()
-    if (closestGinq == null) {
-      val closure = macroCall.getArguments()?.filterIsInstance<ExpressionArgument>()?.find { it.expression is GrClosableBlock } ?: return
-      var hasFrom = false
-      var hasSelect = false
-      closure.expression.accept(object : GroovyRecursiveElementVisitor() {
-        override fun visitMethodCall(call: GrMethodCall) {
-          super.visitMethodCall(call)
-          val invoked = call.invokedExpression.castSafelyTo<GrReferenceExpression>()
-          if (invoked?.referenceName == "from") hasFrom = true
-          if (invoked?.referenceName == "select") hasSelect = true
-        }
-      })
-      if (!hasFrom) {
-        result.addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
-      }
-      if (!hasSelect) {
-        result.addElement(LookupElementBuilder.create("select ").bold())
-      }
-      return
+    val tree = position.getClosestGinqTree(macroCall)
+    if (tree == null) {
+      result.addFromAndSelect(macroCall)
+      return@with
     }
     val offset = parameters.offset
-    if (this.isUntransformed(macroCall, position)) {
-      if (position.parent?.parent is GrParenthesizedExpression) {
-        result.addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
-      }
-      val bindings = closestGinq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset }
-      for (binding in bindings) {
-        val name = binding.referenceName ?: continue
-        result.addElement(PrioritizedLookupElement.withPriority(
-          LookupElementBuilder.create(name).withPsiElement(binding).withTypeText(binding.type?.presentableText).withIcon(
-            JetgroovyIcons.Groovy.Variable), 1.0))
-      }
-      if (closestGinq.select.projections.any { PsiTreeUtil.isAncestor(it.aggregatedExpression, position, false) }) {
-        for ((windowName, signature) in windowFunctions) {
-          val lookupElement = LookupElementBuilder.create(windowName)
-            .withIcon(JetgroovyIcons.Groovy.Method)
-            .withTypeText(signature.returnType.substringAfterLast('.'))
-            .withTailText(signature.parameters.joinToString(", ", "(", ")") { it.second.substringAfterLast('.') })
-            .withInsertHandler(windowInsertHandler)
-          result.addElement(lookupElement)
-        }
-      }
+    if (isUntransformed(macroCall, position)) {
+      result.addGeneralGroovyResults(position, offset, tree, macroCall)
       return
     }
     else {
       result.stopHere()
     }
-    val latestGinq = closestGinq.getQueryFragments().minByOrNull {
-      val endOffset = it.keyword.endOffset
-      if (endOffset <= offset) {
-        offset - endOffset
-      }
-      else {
-        Int.MAX_VALUE
-      }
-    }
-    if (latestGinq != null) {
-      val joinStartCondition: (GinqQueryFragment) -> Boolean = {
-        it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == "crossjoin")
-      }
-      if (joinStartCondition(latestGinq)) {
-        // todo: new binding name should be inferred
-        joins.forEach { result.addElement(LookupElementBuilder.create(it).bold().withInsertHandler(dataSourceInsertHandler)) }
-      }
-      if (latestGinq is GinqJoinFragment && latestGinq.onCondition == null && latestGinq.keyword.text != "crossjoin") {
-        result.addElement(LookupElementBuilder.create("on ").bold())
-      }
-      if (joinStartCondition(latestGinq) && closestGinq.where == null) {
-        result.addElement(LookupElementBuilder.create("where ").bold())
-      }
-      val groupByCondition: (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
-      if (groupByCondition(latestGinq) && closestGinq.groupBy == null) {
-        result.addElement(LookupElementBuilder.create("groupby ").bold())
-      }
-      if (latestGinq is GinqGroupByFragment && latestGinq.having == null) {
-        result.addElement(LookupElementBuilder.create("having ").bold())
-      }
-      val orderByCondition: (GinqQueryFragment) -> Boolean = {
-        groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment
-      }
-      if (orderByCondition(latestGinq) && closestGinq.orderBy == null) {
-        result.addElement(LookupElementBuilder.create("orderby ").bold())
-      }
-      if ((orderByCondition(latestGinq) || latestGinq is GinqOrderByFragment) && closestGinq.limit == null) {
-        result.addElement(LookupElementBuilder.create("limit ").bold())
-      }
-    }
-    val overRoots = closestGinq.select.projections.flatMap { partition ->
-      partition.windows
-    }
-    val overRoot = overRoots.find {
-      PsiTreeUtil.isAncestor(it.overKw.parent.parent.castSafelyTo<GrMethodCall>()?.argumentList, position, false)
-    }
-    if (overRoot != null) {
-      if (overRoot.partitionKw == null) {
-        result.addElement(LookupElementBuilder.create("partitionby ").bold())
-      }
-      if (overRoot.orderBy?.keyword == null) {
-        result.addElement(LookupElementBuilder.create("orderby ").bold())
-      }
-      if (overRoot.rowsOrRangeKw == null) {
-        result.addElement(LookupElementBuilder.create("rows ").bold())
-        result.addElement(LookupElementBuilder.create("range ").bold())
-      }
-    }
-    return
-  }
-
-  private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, lookupItem ->
-    val item = lookupItem.lookupString
-    val requiresOn = item != "from" && item != "crossjoin"
-    val template = TemplateManager.getInstance(context.project)
-      .createTemplate("ginq_data_source_$item", "ginq",
-                      "$item \$NAME$ in \$DATA_SOURCE$${if (requiresOn) " on \$COND$" else ""}\$END$")
-    template.addVariable("NAME", ReferenceNameExpression(emptyArray(), "x"), true)
-    template.addVariable("DATA_SOURCE", VariableNode("data source", null), true)
-    if (requiresOn) {
-      template.addVariable("COND", VariableNode("on condition", null), true)
-    }
-    val editor = context.editor
-    editor.document.deleteString(context.startOffset, context.tailOffset)
-    TemplateManager.getInstance(context.project).startTemplate(editor, template)
-  }
-
-  private val windowInsertHandler = InsertHandler<LookupElement> { context, lookupItem ->
-    val item = lookupItem.lookupString
-    val zeroArg = item in windowFunctions.filter { (name, sign) -> sign.parameters.isEmpty() }.keys
-    val template = TemplateManager.getInstance(context.project)
-      .createTemplate("ginq_window_$item", "ginq",
-                      "($item(${if (zeroArg) "" else "\$ARG$"}) over (\$END$))")
-    if (!zeroArg) {
-      template.addVariable("ARG", VariableNode("argument", null), true)
-    }
-    val editor = context.editor
-    editor.document.deleteString(context.startOffset, context.tailOffset)
-    TemplateManager.getInstance(context.project).startTemplate(editor, template)
+    result.addGinqKeywords(tree, offset)
+    result.addOverKeywords(tree, position)
   }
 
   override fun computeFormattingBlock(macroCall: GrMethodCall, node: ASTNode, context: FormattingContext): Block {
