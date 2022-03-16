@@ -50,18 +50,28 @@ public class DynamicBundle extends AbstractBundle {
         ClassLoader pluginClassLoader = pluginDescriptor == null ? getClass().getClassLoader()
                                                                  : pluginDescriptor.getClassLoader();
         ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginClassLoader, control);
-        try {
-          if (DynamicBundleInternal.SET_PARENT != null && pluginBundle != base) {
-            DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
-          }
+        if (setBundleParent(pluginBundle, base)) {
           return pluginBundle;
-        }
-        catch (Throwable e) {
-          LOG.warn(e);
         }
       }
     }
     return base;
+  }
+
+  private static boolean setBundleParent(@NotNull ResourceBundle pluginBundle, ResourceBundle base) {
+    if (pluginBundle == base) {
+      return true;
+    }
+    try {
+      if (DynamicBundleInternal.SET_PARENT != null) {
+        DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
+      }
+      return true;
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+      return false;
+    }
   }
 
   /**
