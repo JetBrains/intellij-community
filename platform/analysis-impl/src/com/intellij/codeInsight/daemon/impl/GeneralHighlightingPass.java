@@ -57,7 +57,10 @@ import java.util.function.Predicate;
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
+  static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
+    HighlightingLevelManager manager = HighlightingLevelManager.getInstance(file.getProject());
+    return manager != null && manager.shouldHighlight(file);
+  };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   final boolean myUpdateAll;
@@ -342,8 +345,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         try {
           visitor.visit(element);
 
-          // assume that the visitor is done messing with just created HighlightInfo after its visit() method completed
-          // and we can start applying them incrementally at last.
+          // assume that the visitor is done messing with just created HighlightInfo after its visit() method completed,
+          // so we can start applying them incrementally at last.
           // (but not sooner, thanks to awfully racey HighlightInfo.setXXX() and .registerFix() API)
           holder.queueToUpdateIncrementally();
         }
