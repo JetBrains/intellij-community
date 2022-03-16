@@ -87,13 +87,13 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
   @NotNull
   private static @InspectionMessage String getMessage(@NotNull final RefMethod refMethod) {
     if (refMethod.isAbstract()) {
-      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor", "<code>#ref</code>");
+      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor");
     }
     if (!refMethod.getDerivedMethods().isEmpty()) {
-      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>");
+      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor1");
     }
 
-    return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>");
+    return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor2");
   }
 
 
