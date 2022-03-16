@@ -232,6 +232,12 @@ open class CodeVisionHost(val project: Project) {
   }
 
   open fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
+    if (actionId == settingsLensProviderId) {
+      val provider = getProviderById(entry.providerId)
+      openCodeVisionSettings(provider?.groupId)
+      return
+    }
+
     val frontendProvider = providers.firstOrNull { it.id == entry.providerId }
     if (frontendProvider != null) {
       frontendProvider.handleExtraAction(editor, range, actionId)
@@ -257,7 +263,7 @@ open class CodeVisionHost(val project: Project) {
     return defaultSortedProvidersList.indexOf(id)
   }
 
-  protected open fun getProviderById(id: String): CodeVisionProvider<*>? {
+  open fun getProviderById(id: String): CodeVisionProvider<*>? {
     return providers.firstOrNull { it.id == id }
   }
 
@@ -435,9 +441,11 @@ open class CodeVisionHost(val project: Project) {
     return indicator
   }
 
-  private fun openCodeVisionSettings() {
+  private fun openCodeVisionSettings(groupId: String? = null) {
     InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY) {
-      return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
+      if(groupId == null) return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
+
+      return@showSettingsDialogForLanguage  it.group == InlayGroup.CODE_VISION_GROUP_NEW && it.id == groupId
     }
   }
 
