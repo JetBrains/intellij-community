@@ -25,7 +25,7 @@ val ginqMethods: Set<String> = setOf(
   "GQL",
 )
 
-val joins : Set<String> = setOf(
+val JOINS : Set<String> = setOf(
   "join",
   "innerjoin",
   "innerhashjoin",
@@ -37,6 +37,15 @@ val joins : Set<String> = setOf(
   "fulljoin",
   "fullhashjoin",
 )
+
+const val KW_FROM: String = "from"
+const val KW_ON: String  = "on"
+const val KW_WHERE: String  = "where"
+const val KW_GROUPBY: String  = "groupby"
+const val KW_HAVING: String  = "having"
+const val KW_ORDERBY: String  = "orderby"
+const val KW_LIMIT: String  = "limit"
+const val KW_SELECT = "select"
 
 const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
   "org.apache.groovy.ginq.provider.collection.runtime.Queryable"

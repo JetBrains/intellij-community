@@ -14,14 +14,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
 import icons.JetgroovyIcons
+import org.jetbrains.plugins.groovy.ext.ginq.*
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
-import org.jetbrains.plugins.groovy.ext.ginq.joins
-import org.jetbrains.plugins.groovy.ext.ginq.windowFunctions
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
@@ -34,25 +32,20 @@ object GinqCompletionUtils {
     closure.expression.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitMethodCall(call: GrMethodCall) {
         super.visitMethodCall(call)
-        val invoked = call.invokedExpression.castSafelyTo<GrReferenceExpression>()
-        if (invoked?.referenceName == "from") hasFrom = true
-        if (invoked?.referenceName == "select") hasSelect = true
+        if (call.refCallIdentifier().text == KW_FROM) hasFrom = true
+        if (call.refCallIdentifier().text == KW_SELECT) hasSelect = true
       }
     })
-    if (!hasFrom) {
-      addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
-    }
-    if (!hasSelect) {
-      addElement(LookupElementBuilder.create("select ").bold())
-    }
+    if (!hasFrom) addElement(lookupElement(KW_FROM))
+    if (!hasSelect) addElement(lookupElement(KW_SELECT))
   }
 
   fun CompletionResultSet.addGeneralGroovyResults(position: PsiElement, offset: Int, ginq: GinqExpression, top: GrMethodCall) {
     if (position.parent?.parent is GrParenthesizedExpression) {
-      addElement(LookupElementBuilder.create("from").bold().withInsertHandler(dataSourceInsertHandler))
+      addElement(lookupElement(KW_FROM))
     }
     val bindings = position.ginqParents(top, top.getStoredGinq()!!)
-      .flatMap { gq ->  gq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset } }
+      .flatMap { gq -> gq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset } }
     for (binding in bindings) {
       val name = binding.referenceName ?: continue
       val bindingItem = LookupElementBuilder.create(name)
@@ -89,29 +82,29 @@ object GinqCompletionUtils {
       }
       if (joinStartCondition(closestFragmentUp)) {
         // todo: new binding name should be inferred
-        joins.forEach { addElement(LookupElementBuilder.create(it).bold().withInsertHandler(dataSourceInsertHandler)) }
+        addAllElements(JOINS.map(::lookupElement))
       }
       if (closestFragmentUp is GinqJoinFragment && closestFragmentUp.onCondition == null && closestFragmentUp.keyword.text != "crossjoin") {
-        addElement(LookupElementBuilder.create("on ").bold())
+        addElement(lookupElement(KW_ON))
       }
       if (joinStartCondition(closestFragmentUp) && ginq.where == null) {
-        addElement(LookupElementBuilder.create("where ").bold())
+        addElement(lookupElement(KW_WHERE))
       }
       val groupByCondition: (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
       if (groupByCondition(closestFragmentUp) && ginq.groupBy == null) {
-        addElement(LookupElementBuilder.create("groupby ").bold())
+        addElement(lookupElement(KW_GROUPBY))
       }
       if (closestFragmentUp is GinqGroupByFragment && closestFragmentUp.having == null) {
-        addElement(LookupElementBuilder.create("having ").bold())
+        addElement(lookupElement(KW_HAVING))
       }
       val orderByCondition: (GinqQueryFragment) -> Boolean = {
         groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment
       }
       if (orderByCondition(closestFragmentUp) && ginq.orderBy == null) {
-        addElement(LookupElementBuilder.create("orderby ").bold())
+        addElement(lookupElement(KW_ORDERBY))
       }
       if ((orderByCondition(closestFragmentUp) || closestFragmentUp is GinqOrderByFragment) && ginq.limit == null) {
-        addElement(LookupElementBuilder.create("limit ").bold())
+        addElement(lookupElement(KW_LIMIT))
       }
     }
   }
@@ -140,10 +133,9 @@ object GinqCompletionUtils {
 
 private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, lookupItem ->
   val item = lookupItem.lookupString
-  val requiresOn = item != "from" && item != "crossjoin"
+  val requiresOn = !item.contains(KW_FROM) && item != "crossjoin"
   val template = TemplateManager.getInstance(context.project)
-    .createTemplate("ginq_data_source_$item", "ginq",
-                    "$item \$NAME$ in \$DATA_SOURCE$${if (requiresOn) " on \$COND$" else ""}\$END$")
+    .createTemplate("ginq_data_source_$item", "ginq", "$item\$NAME$ in \$DATA_SOURCE$${if (requiresOn) " on \$COND$" else ""}\$END$")
   template.addVariable("NAME", ReferenceNameExpression(emptyArray(), "x"), true)
   template.addVariable("DATA_SOURCE", VariableNode("data source", null), true)
   if (requiresOn) {
@@ -156,14 +148,19 @@ private val dataSourceInsertHandler = InsertHandler<LookupElement> { context, lo
 
 private val windowInsertHandler = InsertHandler<LookupElement> { context, lookupItem ->
   val item = lookupItem.lookupString
-  val zeroArg = item in windowFunctions.filter { (name, sign) -> sign.parameters.isEmpty() }.keys
+  val zeroArg = item in windowFunctions.filter { (_, sign) -> sign.parameters.isEmpty() }.keys
   val template = TemplateManager.getInstance(context.project)
-    .createTemplate("ginq_window_$item", "ginq",
-                    "($item(${if (zeroArg) "" else "\$ARG$"}) over (\$END$))")
+    .createTemplate("ginq_window_$item", "ginq", "($item(${if (zeroArg) "" else "\$ARG$"}) over (\$END$))")
   if (!zeroArg) {
     template.addVariable("ARG", VariableNode("argument", null), true)
   }
   val editor = context.editor
   editor.document.deleteString(context.startOffset, context.tailOffset)
   TemplateManager.getInstance(context.project).startTemplate(editor, template)
+}
+
+private fun lookupElement(keyword: String): LookupElementBuilder {
+  return LookupElementBuilder.create("$keyword ").bold().let {
+    if (keyword == KW_FROM || keyword in JOINS) it.withInsertHandler(dataSourceInsertHandler) else it
+  }
 }

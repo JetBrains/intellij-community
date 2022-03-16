@@ -7,7 +7,7 @@ import com.intellij.psi.util.*
 import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.ext.ginq.joins
+import org.jetbrains.plugins.groovy.ext.ginq.JOINS
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
@@ -116,7 +116,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
     }
     val callKw = methodCall.refCallIdentifier()
     when (callName) {
-      "from", in joins -> {
+      "from", in JOINS -> {
         if (callName == "from") {
           incompleteFrom = true
         }
@@ -317,7 +317,7 @@ private inline fun <reified T : GrExpression> GrMethodCall.getSingleArgument(): 
 private inline fun <reified T : GrExpression> GrMethodCall.collectExpressionArguments(): List<T>? =
   this.getArguments()?.filterIsInstance<ExpressionArgument>()?.map { it.expression }?.filterIsInstance<T>()?.takeIf { it.size == getArguments()?.size }
 
-private fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement
+internal fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement
                                                            ?: invokedExpression
 
 // e is not ginq --> false
