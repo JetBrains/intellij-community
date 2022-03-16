@@ -379,4 +379,42 @@ GQ {
 }
 ''')
   }
+
+  void testIndentOn() {
+    groovyCustomSettings.GINQ_INDENT_ON_CLAUSE = false
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  join y in [2]
+  on x == y
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  join y in [2]
+  on x == y
+  select x
+}
+''')
+  }
+
+  void testIndentHaving() {
+    groovyCustomSettings.GINQ_INDENT_HAVING_CLAUSE = false
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  groupby x
+  having x == x
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  groupby x
+  having x == x
+  select x
+}
+''')
+  }
 }
