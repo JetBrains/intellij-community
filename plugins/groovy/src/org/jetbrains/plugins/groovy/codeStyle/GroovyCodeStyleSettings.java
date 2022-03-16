@@ -65,9 +65,9 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
 
   // GINQ
   public int GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
-  public int GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP;
+  public int GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean GINQ_INDENT_ON_CLAUSE = true;
-  public int GINQ_HAVING_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP;
+  public int GINQ_HAVING_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean GINQ_INDENT_HAVING_CLAUSE = true;
   public boolean GINQ_SPACE_AFTER_KEYWORD = true;
 

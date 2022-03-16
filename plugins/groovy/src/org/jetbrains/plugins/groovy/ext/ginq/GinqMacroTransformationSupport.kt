@@ -13,9 +13,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.formatting.Block
-import com.intellij.formatting.Indent
-import com.intellij.formatting.Wrap
-import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -32,10 +29,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.GinqFragmentBlock
+import org.jetbrains.plugins.groovy.ext.ginq.formatting.GinqFragmentContainerBlock
 import org.jetbrains.plugins.groovy.ext.ginq.types.GrSyntheticNamedRecordClass
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator
-import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -416,7 +413,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val children = GroovyBlockGenerator.visibleChildren(node)
     val remainingSubblocks = generator.generateCodeSubBlocks(children.filter { child -> subBlocks.all { !it.textRange.intersects(child.textRange) } })
     val allBlocks = (remainingSubblocks + subBlocks).sortedBy { it.textRange.startOffset }
-    return SyntheticGroovyBlock(allBlocks, Wrap.createWrap(WrapType.NONE, false), Indent.getContinuationIndent(), Indent.getContinuationIndent(), context)
+    return GinqFragmentContainerBlock(allBlocks, context)
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
