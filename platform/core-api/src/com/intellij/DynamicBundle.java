@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.diagnostic.LoadingState;
@@ -37,15 +37,19 @@ public class DynamicBundle extends AbstractBundle {
 
   // see BundleUtil
   @Override
-  protected ResourceBundle findBundle(@NotNull String pathToBundle,
-                                      @NotNull ClassLoader baseLoader,
-                                      @NotNull ResourceBundle.Control control) {
+  protected ResourceBundle findBundle(
+    @NotNull String pathToBundle,
+    @NotNull ClassLoader baseLoader,
+    @NotNull ResourceBundle.Control control
+  ) {
     ResourceBundle base = super.findBundle(pathToBundle, baseLoader, control);
     if (!DefaultBundleService.isDefaultBundle()) {
       LanguageBundleEP langBundle = findLanguageBundle();
       if (langBundle != null) {
         PluginDescriptor pluginDescriptor = langBundle.pluginDescriptor;
-        ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getClassLoader(), control);
+        ClassLoader pluginClassLoader = pluginDescriptor == null ? getClass().getClassLoader()
+                                                                 : pluginDescriptor.getClassLoader();
+        ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginClassLoader, control);
         if (pluginBundle != null) {
           try {
             if (DynamicBundleInternal.SET_PARENT != null && pluginBundle != base) {
@@ -63,23 +67,24 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   /**
-   * "SET_PARENT" has been temporary moved into the internal class to fix Kotlin compiler.
+   * "SET_PARENT" has been temporarily moved into the internal class to fix Kotlin compiler.
    * It's to be refactored with "ResourceBundleProvider" since 'core-api' module will use java 1.9+
    */
- private static class DynamicBundleInternal {
-   private static final MethodHandle SET_PARENT;
+  private static class DynamicBundleInternal {
 
-   static {
-     try {
-       Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
-       method.setAccessible(true);
-       SET_PARENT = MethodHandles.lookup().unreflect(method);
-     }
-     catch (NoSuchMethodException | IllegalAccessException e) {
-       throw new RuntimeException(e);
-     }
-   }
- }
+    private static final MethodHandle SET_PARENT;
+
+    static {
+      try {
+        Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
+        method.setAccessible(true);
+        SET_PARENT = MethodHandles.lookup().unreflect(method);
+      }
+      catch (NoSuchMethodException | IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   // todo: one language per application
   public static @Nullable LanguageBundleEP findLanguageBundle() {
@@ -103,7 +108,8 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
-  public static final DynamicBundle INSTANCE = new DynamicBundle("") { };
+  public static final DynamicBundle INSTANCE = new DynamicBundle("") {
+  };
 
   @ApiStatus.Internal
   public static final class LanguageBundleEP implements PluginAware {
@@ -119,17 +125,22 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
-  /** @deprecated used only by GUI form builder */
+  /**
+   * @deprecated used only by GUI form builder
+   */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName) {
     Class<?> callerClass = ReflectionUtil.findCallerClass(2);
     return getBundle(baseName, callerClass == null ? DynamicBundle.class : callerClass);
   }
 
-  /** @deprecated used only by GUI form builder */
+  /**
+   * @deprecated used only by GUI form builder
+   */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName, @NotNull Class<?> formClass) {
-    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) { });
+    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {
+    });
     ResourceBundle rb = dynamic.getResourceBundle(formClass.getClassLoader());
     if (!BundleBase.SHOW_LOCALIZED_MESSAGES) {
       return rb;
