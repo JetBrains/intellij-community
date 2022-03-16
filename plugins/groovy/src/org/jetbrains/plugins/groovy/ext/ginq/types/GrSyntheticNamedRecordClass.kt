@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.types
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightClass
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
-import org.jetbrains.plugins.groovy.ext.ginq.inferDataSourceComponentType
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 
 /**
  * The results of GINQ execution reside in the `NamedRecord` class. This class does not provide any syntactic/bytecode info
@@ -26,12 +24,14 @@ class GrSyntheticNamedRecordClass(val typeParameters: List<PsiTypeParameter>,
          ginqExpression.select.projections.mapNotNull { it.alias?.text },
          namedRecord)
 
-  operator fun get(name: String): PsiType? {
-    return typeMap[name]?.value
+  private val pseudoFields: Lazy<List<GrField>> = lazyPub {
+    typeMap.map { (name, ltype) ->
+      GrLightField(this@GrSyntheticNamedRecordClass, name, ltype.value, navigationElement)
+    }
   }
 
-  fun allKeys(): Set<String> {
-    return typeMap.keys
+  override fun getFields(): Array<PsiField> {
+    return super.getFields() + pseudoFields.value
   }
 
   override fun hasTypeParameters(): Boolean = typeParameters.isEmpty()

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.ext.ginq.types.GrNamedRecordCompletionProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -36,7 +35,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     MapArgumentCompletionProvider.register(this);
     GroovyConfigSlurperCompletionProvider.register(this);
     MapKeysCompletionProvider.register(this);
-    GrNamedRecordCompletionProvider.register(this);
     GroovyDocCompletionProvider.register(this);
     GrStatementStartCompletionProvider.register(this);
     GrMacroCompletionProvider.register(this);

@@ -386,6 +386,11 @@ fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
   return getParsedGinqInfo(macroCall).second
 }
 
+fun getClosestGinqTree(macroCall: GrMethodCall, expression: GrExpression): GinqExpression? {
+  val top = getParsedGinqTree(macroCall) ?: return null
+  return expression.ginqParents(macroCall, top).firstOrNull()
+}
+
 fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
   return getParsedGinqInfo(macroCall).first
 }
