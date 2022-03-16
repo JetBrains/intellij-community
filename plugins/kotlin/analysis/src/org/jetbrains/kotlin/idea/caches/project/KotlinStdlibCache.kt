@@ -118,12 +118,10 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
 
     override fun findStdlibInModuleDependencies(module: IdeaModuleInfo): LibraryInfo? {
         ProgressManager.checkCanceled()
-        var moduleSourceInfo: ModuleSourceInfo? = null
         val stdlibDependency = moduleStdlibDependencyCache.getOrPut(module) {
-
-            moduleSourceInfo = module.safeAs<ModuleSourceInfo>()
+            val moduleSourceInfo = module.safeAs<ModuleSourceInfo>()
             val stdLib = moduleSourceInfo?.module?.moduleWithLibrariesScope?.let index@{ scope ->
-                val filesWithinStdlib = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                val stdlibManifests = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
                     FileBasedIndex.getInstance().getContainingFiles(
                         KotlinStdlibIndex.KEY,
                         KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
@@ -131,8 +129,8 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
                     )
                 })
                 val index = ProjectFileIndex.SERVICE.getInstance(project)
-                for (file in filesWithinStdlib) {
-                    val orderEntries = index.getOrderEntriesForFile(file)
+                for (manifest in stdlibManifests) {
+                    val orderEntries = index.getOrderEntriesForFile(manifest)
                     orderEntries.firstNotNullOfOrNull { it.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>() }?.let {
                         createLibraryInfo(project, it)
                     }?.firstOrNull(::isStdlib)?.let {
@@ -143,8 +141,8 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
             } ?: module.safeAs<LibraryInfo>()?.takeIf(::isStdlib) ?: module.dependencies().firstOrNull {
                 it is LibraryInfo && isStdlib(it)
             } as LibraryInfo?
+
             val stdlibDependency = StdlibDependency(stdLib)
-            // if stdlib is created (i.e. is not fetched from a cache) for a module source info
             moduleSourceInfo?.let { _ ->
                 // all module dependencies have same stdlib as module itself
                 module.dependencies().forEach {
