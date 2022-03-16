@@ -145,7 +145,7 @@ public class GroovyBlockGenerator {
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false), context));
+          subBlocks.add(context.createBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false)));
         }
       }
       return subBlocks;
@@ -223,10 +223,10 @@ public class GroovyBlockGenerator {
         }
 
         if (switchBody) {
-          bodyBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+          bodyBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
         }
         else {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+          subBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
         }
       }
       if (!bodyBlocks.isEmpty()) {
@@ -247,7 +247,7 @@ public class GroovyBlockGenerator {
       PsiElement lbrace = closableBlock.getLBrace();
       if (lbrace != null) {
         ASTNode node = lbrace.getNode();
-        blocks.add(new GroovyBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false), myContext));
+        blocks.add(myContext.createBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false)));
       }
 
       {
@@ -262,7 +262,7 @@ public class GroovyBlockGenerator {
       PsiElement rbrace = closableBlock.getRBrace();
       if (rbrace != null) {
         ASTNode node = rbrace.getNode();
-        blocks.add(new GroovyBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false), myContext));
+        blocks.add(myContext.createBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false)));
       }
 
       return blocks;
@@ -349,7 +349,7 @@ public class GroovyBlockGenerator {
 
   @NotNull
   private List<Block> getGenericBlocks(@NotNull List<ASTNode> astNodes) {
-    return ContainerUtil.map(astNodes, it -> new GroovyBlock(it, getIndent(it), getChildWrap(it), myContext));
+    return ContainerUtil.map(astNodes, it -> myContext.createBlock(it, getIndent(it), getChildWrap(it)));
   }
 
   private Block createSwitchBodyBlock(List<Block> bodyBlocks) {
@@ -420,7 +420,7 @@ public class GroovyBlockGenerator {
         i--;
       }
       else {
-        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+        subBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
       }
     }
 
@@ -430,12 +430,12 @@ public class GroovyBlockGenerator {
   List<Block> generateSubBlocks(List<ASTNode> children) {
     final List<Block> subBlocks = new ArrayList<>();
     for (ASTNode childNode : children) {
-      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+      subBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
     }
     return subBlocks;
   }
 
-  private static List<ASTNode> flattenChildren(List<ASTNode> children) {
+  public static List<ASTNode> flattenChildren(List<ASTNode> children) {
     ArrayList<ASTNode> result = new ArrayList<>();
     for (ASTNode child : children) {
       processNodeFlattening(result, child);
@@ -761,7 +761,7 @@ public class GroovyBlockGenerator {
           if (op != psi && aligner != null) {
             aligner.append(psi);
           }
-          list.add(new GroovyBlock(childNode, indent, getChildWrap(childNode), myContext));
+          list.add(myContext.createBlock(childNode, indent, getChildWrap(childNode)));
         }
       }
       if (myExpr.getRightOperand() instanceof GrBinaryExpression) {
@@ -808,7 +808,7 @@ public class GroovyBlockGenerator {
       Wrap identifierWrap = shouldWrapAfterDot ? wrap : noneWrap;
       Wrap dotWrap = shouldWrapAfterDot ? noneWrap : wrap;
 
-      childBlocks.add(new GroovyBlock(dotNode, getIndent(dotNode), dotWrap, myContext));
+      childBlocks.add(myContext.createBlock(dotNode, getIndent(dotNode), dotWrap));
 
       List<ASTNode> callNodes = nodes.subList(i + 1, nodes.size());
       if (!callNodes.isEmpty()) {
@@ -851,7 +851,7 @@ public class GroovyBlockGenerator {
     }
     else {
       Indent indent = getContinuationWithoutFirstIndent();
-      list.add(new GroovyBlock(fst, indent, getChildWrap(fst), myContext));
+      list.add(myContext.createBlock(fst, indent, getChildWrap(fst)));
     }
     addNestedChildrenSuffix(list, topLevel, children.subList(1, children.size()));
   }
@@ -868,7 +868,7 @@ public class GroovyBlockGenerator {
                         || topLevel
                         ? getContinuationWithoutFirstIndent() : getNoneIndent();
 
-        list.add(new GroovyBlock(childNode, indent, getChildWrap(childNode), myContext));
+        list.add(myContext.createBlock(childNode, indent, getChildWrap(childNode)));
       }
     }
   }
