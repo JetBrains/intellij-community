@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -24,7 +25,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -385,10 +385,9 @@ open class CodeVisionHost(val project: Project) {
             results.addAll(state.result)
           }
         }
-        catch (e : ProcessCanceledException) {
-          throw e
-        }
         catch (e: Exception) {
+          if (e is ControlFlowException) throw e
+
           logger.error("Exception during computeForEditor for ${it.id}", e)
         }
       }
