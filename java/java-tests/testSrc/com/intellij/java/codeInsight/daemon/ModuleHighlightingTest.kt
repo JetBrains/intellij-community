@@ -16,7 +16,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.testFramework.VfsTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -507,20 +506,19 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     addFile("p/B.java", "package p; public class B {}", module = M6)
     addFile("p/C.java", "package p; public class C {}", module = M4)
-
     highlight("A.java", """
         public class A extends p.B {
           private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
         }
         """.trimIndent())
   }
-  
-  fun testAutomaticModuleFromManifest() {
-    VfsTestUtil.createFile(M9.resourceRoot()!!, JarFile.MANIFEST_NAME, "Automatic-Module-Name: m9.bar\n")
-    highlight("module-info.java", "module M { requires m9.bar; }")
-    addFile("p/B.java", "package p; public class B {}", module = M9)
-    addFile("p/C.java", "package p; public class C {}", module = M4)
 
+  fun testAutomaticModuleFromManifest() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+    highlight("module-info.java", "module M { requires m6.bar; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
     highlight("A.java", """
         public class A extends p.B {
           private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
