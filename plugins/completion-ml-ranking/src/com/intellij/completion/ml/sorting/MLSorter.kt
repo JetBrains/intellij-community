@@ -197,8 +197,17 @@ class MLSorter : CompletionFinalSorter() {
       lookupStorage.fireReorderedUsingMLScores()
       val decoratingItemsPolicy = lookupStorage.model?.decoratingPolicy() ?: DecoratingItemsPolicy.DISABLED
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
+      val ignoredItemsPositions = mutableMapOf<Int, LookupElement>()
+      for (processor in IgnoreItemsProcessor.forLanguage(lookupStorage.language)) {
+        for (item in processor.ignored(items)) {
+          ignoredItemsPositions[items.indexOf(item)] = item
+        }
+      }
+      val ignoredItems = ignoredItemsPositions.values.toSet()
       return items
+        .filter { it !in ignoredItems }
         .reorderByMLScores(element2score, topItemsCount)
+        .insertIgnoredItems(ignoredItemsPositions)
         .markRelevantItemsIfNeeded(element2score, lookup, decoratingItemsPolicy)
         .addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)
     }
@@ -232,6 +241,14 @@ class MLSorter : CompletionFinalSorter() {
       .take(toReorder)
       .toCollection(linkedSetOf())
     result.addAll(this)
+    return result
+  }
+
+  private fun Iterable<LookupElement>.insertIgnoredItems(ignoredItemsPositions: Map<Int, LookupElement>): Iterable<LookupElement> {
+    val result = this.toMutableList()
+    for ((index, item) in ignoredItemsPositions.toSortedMap()) {
+      result.add(index, item)
+    }
     return result
   }
 

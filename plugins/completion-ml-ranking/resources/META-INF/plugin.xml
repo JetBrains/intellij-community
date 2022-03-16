@@ -34,6 +34,10 @@
       <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.AdditionalContextFeatureProvider"/>
     </extensionPoint>
 
+    <extensionPoint qualifiedName="com.intellij.completion.ml.ignoreItemsForSorting" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.IgnoreItemsProcessor"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.completion.ml.elementIdProvider" dynamic="true" interface="com.intellij.completion.ml.util.LookupElementIdProvider" />
 
     <extensionPoint qualifiedName="com.intellij.completion.ml.localModelProvider" dynamic="true" interface="com.intellij.completion.ml.ranker.local.LocalZipModelProvider" />
