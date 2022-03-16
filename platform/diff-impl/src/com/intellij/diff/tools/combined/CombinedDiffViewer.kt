@@ -238,7 +238,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
   fun getAllBlocks() = diffBlocks.values.asSequence()
 
-  fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
+  fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it.value == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
 
   fun getViewer(id: CombinedBlockId) = diffViewers[id]
 
