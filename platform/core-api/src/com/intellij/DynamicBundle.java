@@ -43,19 +43,28 @@ public class DynamicBundle extends AbstractBundle {
     @NotNull ResourceBundle.Control control
   ) {
     ResourceBundle base = super.findBundle(pathToBundle, baseLoader, control);
-    if (!DefaultBundleService.isDefaultBundle()) {
-      LanguageBundleEP langBundle = findLanguageBundle();
-      if (langBundle != null) {
-        PluginDescriptor pluginDescriptor = langBundle.pluginDescriptor;
-        ClassLoader pluginClassLoader = pluginDescriptor == null ? getClass().getClassLoader()
-                                                                 : pluginDescriptor.getClassLoader();
-        ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginClassLoader, control);
-        if (setBundleParent(pluginBundle, base)) {
-          return pluginBundle;
-        }
-      }
+    ClassLoader pluginClassLoader = languagePluginClassLoader(getClass().getClassLoader());
+    if (pluginClassLoader == null) {
+      return base;
     }
-    return base;
+    ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginClassLoader, control);
+    if (!setBundleParent(pluginBundle, base)) {
+      return base;
+    }
+    return pluginBundle;
+  }
+
+  private static @Nullable ClassLoader languagePluginClassLoader(@NotNull ClassLoader bundleClassLoader) {
+    if (DefaultBundleService.isDefaultBundle()) {
+      return null;
+    }
+    LanguageBundleEP langBundle = findLanguageBundle();
+    if (langBundle == null) {
+      return null;
+    }
+    PluginDescriptor pluginDescriptor = langBundle.pluginDescriptor;
+    return pluginDescriptor == null ? bundleClassLoader
+                                    : pluginDescriptor.getClassLoader();
   }
 
   private static boolean setBundleParent(@NotNull ResourceBundle pluginBundle, ResourceBundle base) {
