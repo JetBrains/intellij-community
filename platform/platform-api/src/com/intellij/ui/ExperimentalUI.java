@@ -156,7 +156,6 @@ public final class ExperimentalUI {
     paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("general/balloonError.svg", "/expui/status/error.svg");
     paths.put("general/balloonInformation.svg", "/expui/status/info.svg");
-    paths.put("general/balloon.svg", "/expui/status/success.svg");
     paths.put("general/balloonWarning.svg", "/expui/status/warning.svg");
     paths.put("nodes/abstractException.svg", "/expui/nodes/abstractException.svg");
     paths.put("nodes/annotationtype.svg", "/expui/nodes/annotation.svg");
