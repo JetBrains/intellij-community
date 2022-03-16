@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.ClickableRichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.util.ObjectUtils
@@ -38,11 +40,17 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
+    val project = editor.project ?: return emptyList()
+    val problems = ProjectProblemUtils.getReportedProblems(editor)
+    if (!CodeVisionSettings.instance().isProviderEnabled(PlatformCodeVisionIds.PROBLEMS.key)) {
+      if (!problems.isEmpty()) {
+        ProjectProblemUtils.reportProblems(editor, emptyMap())
+        updateHighlighters(project, psiFile, editor, SmartList())
+      }
+      return emptyList()
+    }
     val prevState = FileStateUpdater.getState(psiFile)
     if (prevState == null) return emptyList()
-    val project = editor.project ?: return emptyList()
-
-    val problems = ProjectProblemUtils.getReportedProblems(editor)
     val prevChanges = getPrevChanges(prevState.changes, problems.keys)
     val curState = findState(psiFile, prevState.snapshot, prevChanges)
     val changes = curState.changes
@@ -59,7 +67,6 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     val fileState = FileState(snapshot, allChanges)
     updateState(psiFile, fileState)
 
-    val document = editor.document
     val highlighters: MutableList<HighlightInfo> = SmartList()
     val lenses: MutableList<Pair<TextRange, CodeVisionEntry>> = ArrayList()
 
@@ -74,18 +81,25 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember!!, identifier))
     }
 
+    updateHighlighters(project, psiFile, editor, highlighters)
+
+    return lenses
+  }
+
+  private fun updateHighlighters(project: Project,
+                                 psiFile: PsiFile,
+                                 editor: Editor,
+                                 highlighters: MutableList<HighlightInfo>) {
     ApplicationManager.getApplication()
       .invokeLater({
                      if (project.isDisposed || !psiFile.isValid) return@invokeLater
                      val fileTextLength: Int = psiFile.textLength
                      val colorsScheme = editor.colorsScheme
-                     UpdateHighlightersUtil.setHighlightersToEditor(project, document, 0, fileTextLength,
+                     UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength,
                                                                     highlighters, colorsScheme, -1)
                    },
                    ModalityState.NON_MODAL
       )
-
-    return lenses
   }
 
   private fun getCodeVisionColor(): Color {
