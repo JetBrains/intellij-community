@@ -72,16 +72,16 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment, context: FormattingCont
       // for on or having
       if (child2.fragment is GinqOnFragment) {
         return when (context.groovySettings.GINQ_ON_WRAP_POLICY) {
-          CommonCodeStyleSettings.WRAP_ALWAYS -> Spacing.createSpacing(0, 0, 1, true, 0)
-          CommonCodeStyleSettings.WRAP_AS_NEEDED -> Spacing.createSpacing(1, 1, 0, true, 0)
+          CommonCodeStyleSettings.WRAP_ALWAYS -> Spacing.createSpacing(0, 0, 1, true, 2)
+          CommonCodeStyleSettings.WRAP_AS_NEEDED -> Spacing.createSpacing(1, 1, 0, true, 2)
           CommonCodeStyleSettings.DO_NOT_WRAP -> Spacing.createSpacing(1, 1, 0, false, 0)
           else -> Spacing.createSpacing(1, 1, 0, true, 0)
         }
       }
       if (child2.fragment is GinqHavingFragment) {
         return when (context.groovySettings.GINQ_HAVING_WRAP_POLICY) {
-          CommonCodeStyleSettings.WRAP_ALWAYS -> Spacing.createSpacing(0, 0, 1, true, 0)
-          CommonCodeStyleSettings.WRAP_AS_NEEDED -> Spacing.createSpacing(1, 1, 0, true, 0)
+          CommonCodeStyleSettings.WRAP_ALWAYS -> Spacing.createSpacing(0, 0, 1, true, 2)
+          CommonCodeStyleSettings.WRAP_AS_NEEDED -> Spacing.createSpacing(1, 1, 0, true, 2)
           CommonCodeStyleSettings.DO_NOT_WRAP -> Spacing.createSpacing(1, 1, 0, false, 0)
           else -> Spacing.createSpacing(1, 1, 0, true, 0)
         }

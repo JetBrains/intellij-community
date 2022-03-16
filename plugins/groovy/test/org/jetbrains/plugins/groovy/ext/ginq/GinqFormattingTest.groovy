@@ -267,4 +267,20 @@ GQ {
 }
 ''')
   }
+
+  void testBlankLines() {
+    checkFormatting('''\
+GQ {
+  from x in [1]
+
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+
+  select x
+}
+''')
+  }
 }
