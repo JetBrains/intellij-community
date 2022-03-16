@@ -5,9 +5,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Insets
+import java.awt.*
 
 /**
  * Allows to paint selection: when background color differs from [unselectedBackground] then selection is
@@ -15,6 +13,16 @@ import java.awt.Insets
  */
 @ApiStatus.Experimental
 open class SelectablePanel(var unselectedBackground: Color? = null) : BorderLayoutPanel() {
+
+  companion object {
+    @JvmStatic
+    fun wrap(component: Component, unselectedBackground: Color? = null): SelectablePanel {
+      val result = SelectablePanel(unselectedBackground)
+      result.layout = BorderLayout()
+      result.add(component, BorderLayout.CENTER)
+      return result
+    }
+  }
 
   var selectionArc: Int = 0
   var selectionInsets: Insets = JBUI.emptyInsets()

@@ -636,18 +636,20 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title, list.getBackground()), BorderLayout.NORTH);
         }
       }
-      SelectablePanel wrapped = new SelectablePanel(list.getBackground());
-      wrapped.setLayout(new BorderLayout());
+      SelectablePanel wrapped = SelectablePanel.wrap(cmp, list.getBackground());
       wrapped.setBackground(bg);
       wrapped.setForeground(foreground);
       if (ExperimentalUI.isNewUI()) {
-        wrapped.setBorder(new EmptyBorder(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
         wrapped.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+        wrapped.setBorder(new EmptyBorder(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
+        int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+        //noinspection UseDPIAwareBorders
+        myMainPanel.setBorder(new EmptyBorder(0, leftRightInset, 0, leftRightInset));
       }
       else {
         wrapped.setBorder(RENDERER_BORDER);
       }
-      wrapped.add(cmp, BorderLayout.CENTER);
+      myMainPanel.setBackground(list.getBackground());
       myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {
         myMainPanel.setAccessible((Accessible)cmp);

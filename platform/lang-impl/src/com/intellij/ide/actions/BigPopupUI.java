@@ -59,6 +59,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   @NotNull
   protected abstract ListCellRenderer<Object> createCellRenderer();
 
+  /**
+   * todo make the method abstract after {@link #createTopLeftPanel()} and {link {@link #createSettingsPanel()}} are removed
+   */
   @NotNull
   protected JComponent createHeader() {
     JPanel header = new JPanel(new BorderLayout());
@@ -231,14 +234,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     pnl.setOpaque(false);
 
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
-    if (ExperimentalUI.isNewUI()) {
-      int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-      //noinspection UseDPIAwareBorders
-      resultsScroll.setBorder(new EmptyBorder(0, leftRightInset, 0, leftRightInset));
-    }
-    else {
-      resultsScroll.setBorder(null);
-    }
+    resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     ComponentUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
 
