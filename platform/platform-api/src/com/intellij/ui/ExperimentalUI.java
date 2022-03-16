@@ -237,6 +237,9 @@ public final class ExperimentalUI {
     paths.put("general/chevron-left.svg", "expui/general/chevronLeft.svg");
     paths.put("general/arrowRight.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
+    paths.put("ide/link.svg", "expui/general/chevronRight.svg");
+    paths.put("icons/ide/menuArrow.svg", "expui/general/chevronRight.svg");
+    paths.put("icons/ide/menuArrowSelected.svg", "expui/general/chevronRight.svg");
     paths.put("general/arrowUp.svg", "expui/general/chevronUp.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
     paths.put("actions/findAndShowPrevMatches.svg", "expui/general/chevronUp.svg");
