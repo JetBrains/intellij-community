@@ -15762,6 +15762,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/jsExport.kt");
         }
 
+        @TestMetadata("lastPropertyInPrimaryConstructor.kt")
+        public void testLastPropertyInPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("lastPropertyInPrimaryConstructorWithComments.kt")
+        public void testLastPropertyInPrimaryConstructorWithComments() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
+        }
+
         @TestMetadata("privateProperty.kt")
         public void testPrivateProperty() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/privateProperty.kt");

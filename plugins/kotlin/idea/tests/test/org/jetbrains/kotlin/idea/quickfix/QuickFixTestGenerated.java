@@ -3003,6 +3003,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testRemoveUnusedPrimaryConstructorParameter2() throws Exception {
             runTest("testData/quickfix/changeSignature/removeUnusedPrimaryConstructorParameter2.kt");
         }
+
+        @TestMetadata("removeUnusedPrimaryConstructorParameterWithComments.kt")
+        public void testRemoveUnusedPrimaryConstructorParameterWithComments() throws Exception {
+            runTest("testData/quickfix/changeSignature/removeUnusedPrimaryConstructorParameterWithComments.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -28,6 +29,7 @@ class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val check
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val parameter = element ?: return
         val parameterList = parameter.parent as? KtParameterList ?: return
+        val parameterListHasComments = parameterList.anyDescendantOfType<PsiComment>()
         if (!checkUsages) {
             runWriteAction {
                 parameterList.removeParameter(parameter)
@@ -50,7 +52,7 @@ class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val check
             }
         }
 
-        if (primaryConstructor != null) {
+        if (primaryConstructor != null && !parameterListHasComments) {
             val removeConstructorIntention = RemoveEmptyPrimaryConstructorIntention()
             if (removeConstructorIntention.isApplicableTo(primaryConstructor)) {
                 editor?.caretModel?.moveToOffset(primaryConstructor.endOffset)

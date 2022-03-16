@@ -803,9 +803,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
         }
     }
 
-    if (commonCount == 0) return originalList.listReplacer(newList)
-
-    val lastOriginalParameter = oldParameters.last()
+    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
 
     if (oldCount > commonCount) {
         if (keepComments) {
@@ -820,9 +818,10 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
                 oldParameter.delete()
             }
         } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, lastOriginalParameter)
+            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
         }
     } else if (newCount > commonCount) {
+        val lastOriginalParameter = oldParameters.last()
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
             (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
