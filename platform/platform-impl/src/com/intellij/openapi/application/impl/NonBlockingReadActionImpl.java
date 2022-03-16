@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -432,7 +432,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
           if (isDone()) {
             try {
-              return blockingGet(0, TimeUnit.MILLISECONDS);
+              T value = blockingGet(0, TimeUnit.MILLISECONDS);
+              if (value == null && isCancelled()) {
+                throw new ProcessCanceledException();
+              }
+              return value;
             }
             catch (TimeoutException e) {
               throw new RuntimeException(e);
