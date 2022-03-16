@@ -19,6 +19,7 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
 
     const val MORE_PROVIDER_ID = "!More"
     const val HIDE_PROVIDER_ID = "!Hide"
+    const val HIDE_ALL = "!HideAll"
   }
 
   val maxVisibleLensCount = ViewableMap<CodeVisionAnchorKind, Int>()
@@ -28,7 +29,6 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
 
   val moreEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
 
-  val hideLens = CodeVisionEntryExtraActionModel(CodeVisionBundle.message("action.hide.this.metric.text"), HIDE_PROVIDER_ID)
 
   private fun getCodeVisionHost() = CodeVisionHost.getInstance(project)
 
@@ -48,7 +48,13 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == HIDE_PROVIDER_ID) {
       CodeVisionSettings.instance().setProviderEnabled(entry.providerId, false)
-      CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null, listOf(entry.providerId)))
+      CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
+      return
+    }
+
+    if (actionId == HIDE_ALL) {
+      CodeVisionSettings.instance().codeVisionEnabled = false
+      CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
       return
     }
 

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.map
 import com.jetbrains.rd.util.throttleLast
@@ -63,7 +64,7 @@ class CodeVisionListData(
   }
 
   fun state() = rangeCodeVisionModel.state()
-  fun isMoreLensActive() = throttle
+  fun isMoreLensActive() = throttle && Registry.`is`("editor.codeVision.more.inlay")
   fun isHoveredEntry(entry: CodeVisionEntry) = projectModel.hoveredEntry.value == entry && projectModel.hoveredInlay.value == inlay
 }
 
