@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class GinqFragmentBlock(val fragment: GinqQueryFragment, val thisAlignment: Alignment?, context: FormattingContext) :
+class GinqFragmentBlock(val fragment: GinqQueryFragment, private val thisAlignment: Alignment?, context: FormattingContext) :
   GroovyBlock(fragment.keyword.parent.node,
               Indent.getNormalIndent(),
               Wrap.createWrap(WrapType.NORMAL, true), context) {

@@ -15,6 +15,12 @@ class GinqFormattingTest extends GroovyFormatterTestCase {
     GinqTestUtils.setUp(myFixture)
   }
 
+  void doEnterTest(String before, String after) throws Throwable {
+    myFixture.configureByText("a.groovy", before)
+    myFixture.type('\n' as char)
+    myFixture.checkResult(after, true)
+  }
+
   void testBasicFragmentFormatting() {
     checkFormatting('''\
 GQ {
@@ -293,6 +299,38 @@ GQ {
 ''', '''\
 GQ {
   from x in (from y in [2]
+             select y)
+  select x
+}
+''')
+  }
+
+  void testEnter() {
+    doEnterTest('''\
+GQ {
+  from x in [1]<caret>
+  select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  <caret>
+  select x
+}
+''')
+  }
+
+  void testEnter2() {
+    doEnterTest('''\
+GQ {
+  from x in (from y in [2]<caret>
+             select y)
+  select x
+}
+''', '''\
+GQ {
+  from x in (from y in [2]
+             <caret>
              select y)
   select x
 }
