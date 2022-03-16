@@ -1404,7 +1404,7 @@ public class JavaDocInfoGenerator {
       }
       var tagName = tag.getName();
       if (!ourKnownTags.contains(tagName)) {
-        generateSingleTagSection(buffer, comment, tagName, () -> tagName);
+        generateSingleTagSection(buffer, () -> tagName, tag);
       }
     }
   }
@@ -1976,7 +1976,10 @@ public class JavaDocInfoGenerator {
                                         PsiDocComment comment,
                                         String tagName,
                                         Supplier<String> computePresentableName) {
-    PsiDocTag tag = comment.findTagByName(tagName);
+    generateSingleTagSection(buffer, computePresentableName, comment.findTagByName(tagName));
+  }
+
+  private void generateSingleTagSection(StringBuilder buffer, Supplier<String> computePresentableName, PsiDocTag tag) {
     if (tag != null) {
       startHeaderSection(buffer, computePresentableName.get()).append("<p>");
       final PsiElement[] elements = Arrays.stream(tag.getChildren())
