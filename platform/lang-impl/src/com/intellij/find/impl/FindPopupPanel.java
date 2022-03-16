@@ -2043,8 +2043,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       } else {
         bg = RenderingUtil.getBackground(table, false);
       }
-      setUnselectedBackground(bg);
-      setBackground(isSelected ? RenderingUtil.getBackground(table, true) : bg);
+      setBackground(bg);
+      setSelectionColor(isSelected ? RenderingUtil.getBackground(table, true) : null);
       getAccessibleContext().setAccessibleName(FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(), myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
       return this;
     }

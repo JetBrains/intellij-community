@@ -637,7 +637,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
         }
       }
       SelectablePanel wrapped = SelectablePanel.wrap(cmp, list.getBackground());
-      wrapped.setBackground(bg);
+      wrapped.setSelectionColor(bg);
       wrapped.setForeground(foreground);
       if (ExperimentalUI.isNewUI()) {
         wrapped.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());

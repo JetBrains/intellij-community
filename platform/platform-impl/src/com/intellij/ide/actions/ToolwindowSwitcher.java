@@ -131,7 +131,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     private final JLabel myShortcutLabel = new JLabel();
 
     private ToolWindowsWidgetCellRenderer() {
-      myPanel = new SelectablePanel(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground(false, false));
+      myPanel = new SelectablePanel();
       myPanel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
       myPanel.setSelectionInsets(JBUI.insets(1, 4));
       myPanel.setLayout(new BorderLayout());
@@ -147,9 +147,13 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      Color background = isSelected || !ExperimentalUI.isNewUI() ? UIUtil.getListBackground(isSelected, true) :
-                         JBUI.CurrentTheme.Popup.BACKGROUND;
-      UIUtil.setBackgroundRecursively(myPanel, background);
+      if (ExperimentalUI.isNewUI()) {
+        myPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        myPanel.setSelectionColor(isSelected ? UIUtil.getListBackground(true, true) : null);
+      } else {
+        myPanel.setBackground(UIUtil.getListBackground(false, false));
+        myPanel.setSelectionColor(UIUtil.getListBackground(isSelected, true));
+      }
       myTextLabel.clear();
       myTextLabel.append(value.getStripeTitle());
       Icon icon = value.getIcon();
@@ -158,7 +162,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
       }
       myTextLabel.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
-      myTextLabel.setBackground(background);
+      myTextLabel.setOpaque(false);
       String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
       if (shortcut != null) {

@@ -3,21 +3,20 @@ package com.intellij.ui.popup.list
 
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
+import javax.swing.JPanel
 
 /**
- * Allows to paint selection: when background color differs from [unselectedBackground] then selection is
- * painted according to selection configurations and current [background]
+ * Allows to paint selection according to [selectionArc], [selectionColor] and [selectionInsets]
  */
 @ApiStatus.Experimental
-open class SelectablePanel(var unselectedBackground: Color? = null) : BorderLayoutPanel() {
+open class SelectablePanel(background: Color? = null) : JPanel() {
 
   companion object {
     @JvmStatic
-    fun wrap(component: Component, unselectedBackground: Color? = null): SelectablePanel {
-      val result = SelectablePanel(unselectedBackground)
+    fun wrap(component: Component, background: Color? = null): SelectablePanel {
+      val result = SelectablePanel(background)
       result.layout = BorderLayout()
       result.add(component, BorderLayout.CENTER)
       return result
@@ -25,24 +24,29 @@ open class SelectablePanel(var unselectedBackground: Color? = null) : BorderLayo
   }
 
   var selectionArc: Int = 0
+  var selectionColor: Color? = null
   var selectionInsets: Insets = JBUI.emptyInsets()
 
   init {
-    background = unselectedBackground
+    if (background != null) {
+      this.background = background
+    }
   }
 
   override fun paintComponent(g: Graphics) {
-    unselectedBackground?.let {
-      g.color = it
-      g.fillRect(0, 0, width, height)
+    background?.let {
+      if (isOpaque) {
+        g.color = it
+        g.fillRect(0, 0, width, height)
+      }
     }
 
-    if (background == unselectedBackground) {
+    if (selectionColor == null || background == selectionColor) {
       return
     }
 
     // Paint selection
-    g.color = background
+    g.color = selectionColor
     val config = GraphicsUtil.setupAAPainting(g)
     g.fillRoundRect(selectionInsets.left, selectionInsets.top,
                     width - selectionInsets.left - selectionInsets.right,
