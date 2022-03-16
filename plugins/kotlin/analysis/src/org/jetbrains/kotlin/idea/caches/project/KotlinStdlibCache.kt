@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
@@ -19,6 +21,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -141,6 +144,10 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
             } ?: module.safeAs<LibraryInfo>()?.takeIf(::isStdlib) ?: module.dependencies().firstOrNull {
                 it is LibraryInfo && isStdlib(it)
             } as LibraryInfo?
+
+            if (stdLib == null && runReadAction { project.isDisposed || DumbService.isDumb(project) }) {
+                throw ProcessCanceledException()
+            }
 
             val stdlibDependency = StdlibDependency(stdLib)
             moduleSourceInfo?.let { _ ->
