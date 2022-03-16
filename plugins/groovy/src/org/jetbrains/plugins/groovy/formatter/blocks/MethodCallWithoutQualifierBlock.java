@@ -62,7 +62,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
         List<Block> blocks = new ArrayList<>(3);
         for (ASTNode node : children) {
           if (support != null) {
-            blocks.add(support.computeFormattingBlock(psi, node, context, generator));
+            blocks.add(support.computeFormattingBlock(psi, node, context));
           } else {
             blocks.add(new GroovyMacroBlock(node, context));
           }

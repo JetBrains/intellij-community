@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.formatting.Block
 import com.intellij.lang.ASTNode
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
-import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyMacroBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 
@@ -23,9 +22,10 @@ interface GroovyMacroTransformationSupportEx : GroovyMacroTransformationSupport 
    * Allows to define custom formatting rules within the macro-expandable code.
    *
    * By default, the code in macro will be untouched by the formatting actions.
+   * **Node:** There may be parts of macro-expanded code within the plain Groovy one.
+   * In that case, you can customize the behavior of [FormattingContext.createBlock]
    */
   fun computeFormattingBlock(macroCall: GrMethodCall,
                              node: ASTNode,
-                             context: FormattingContext,
-                             generator: GroovyBlockGenerator): Block = GroovyMacroBlock(node, context)
+                             context: FormattingContext): Block = GroovyMacroBlock(node, context)
 }
