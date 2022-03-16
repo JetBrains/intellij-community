@@ -176,9 +176,6 @@ public class DynamicBundle extends AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
 
   public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle) {
-    if (pathToBundle.isEmpty()) {
-      return INSTANCE.getResourceBundle(loader);
-    }
     return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
       .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle));
