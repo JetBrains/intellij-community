@@ -52,7 +52,7 @@ fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supp
   }
 
   try {
-    val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
+    val bundle = DynamicBundle.getResourceBundle(classLoader, bundleName)
     val key = "toolwindow.stripe.${id}".replace(" ", "_")
 
     @Suppress("HardCodedStringLiteral", "UnnecessaryVariable")

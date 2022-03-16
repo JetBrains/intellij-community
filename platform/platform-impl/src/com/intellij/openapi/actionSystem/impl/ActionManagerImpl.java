@@ -52,12 +52,12 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import kotlin.Unit;
@@ -270,7 +270,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                          String descriptionValue,
                                                                          @NotNull ClassLoader classLoader) {
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + DESCRIPTION, Strings.notNullize(descriptionValue));
   }
@@ -283,7 +283,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                  @NotNull ClassLoader classLoader) {
     String defaultValue = Strings.notNullize(textValue);
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return bundle == null ? defaultValue : AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, defaultValue);
   }
@@ -465,7 +465,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getClassLoader());
+          bundle = DynamicBundle.getResourceBundle(module.getClassLoader(), bundleName);
           lastBundle = bundle;
           lastBundleName = bundleName;
         }

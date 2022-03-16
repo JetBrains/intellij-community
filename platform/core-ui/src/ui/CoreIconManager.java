@@ -235,7 +235,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       if (classLoader == null) {
         classLoader = CoreIconManager.class.getClassLoader();
       }
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(ep.resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, ep.resourceBundle);
       String description = AbstractBundle.messageOrNull(bundle, key);
       if (description != null) {
         result.set(description);

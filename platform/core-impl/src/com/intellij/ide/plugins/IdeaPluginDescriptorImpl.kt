@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
@@ -429,7 +429,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     result = (resourceBundleBaseName?.let { baseName ->
       try {
         AbstractBundle.messageOrDefault(
-          DynamicBundle.INSTANCE.getResourceBundle(baseName, classLoader),
+          DynamicBundle.getResourceBundle(classLoader, baseName),
           "plugin.$id.description",
           descriptionChildText ?: "",
         )

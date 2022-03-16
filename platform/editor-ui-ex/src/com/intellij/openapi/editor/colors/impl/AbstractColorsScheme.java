@@ -156,7 +156,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String bundlePath = getMetaProperties().getProperty(NAME_BUNDLE_PROPERTY);
     String bundleKey = getMetaProperties().getProperty(NAME_KEY_PROPERTY);
     if (bundlePath != null && bundleKey != null) {
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundlePath, getClass().getClassLoader());
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(getClass().getClassLoader(), bundlePath);
       return BundleBase.messageOrDefault(bundle, bundleKey, null);
     }
     return null;

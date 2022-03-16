@@ -117,7 +117,7 @@ public final class NotificationGroupEP implements PluginAware {
       return id;
     }
 
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, pluginDescriptor.getClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.getResourceBundle(pluginDescriptor.getClassLoader(), baseName);
     return BundleBase.messageOrDefault(resourceBundle, key, null);
   }
 
