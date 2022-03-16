@@ -1127,7 +1127,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       PsiElement element = file.findElementAt(context.getStartOffset());
-      if (file.getName().equals("module-info.java")) {
+      if (file.getName().equals(PsiJavaModule.MODULE_INFO_FILE)) {
         if (element instanceof PsiWhiteSpace &&
             element.textContains('\n') &&
             element.getTextRange().getStartOffset() == context.getStartOffset()) {
