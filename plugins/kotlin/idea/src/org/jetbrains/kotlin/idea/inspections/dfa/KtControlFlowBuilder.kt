@@ -78,6 +78,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processExpression(expr: KtExpression?) {
+        flow.startElement(expr)
         when (expr) {
             null -> pushUnknown()
             is KtBlockExpression -> processBlock(expr)

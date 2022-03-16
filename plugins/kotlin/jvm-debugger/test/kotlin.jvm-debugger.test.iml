@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger.tests" scope="TEST" />
   </component>
 </module>
