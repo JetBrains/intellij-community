@@ -32,7 +32,6 @@ public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
-  private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
 
   public DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
@@ -210,9 +209,7 @@ public class DynamicBundle extends AbstractBundle {
    */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName, @NotNull Class<?> formClass) {
-    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {
-    });
-    ResourceBundle rb = dynamic.getResourceBundle(formClass.getClassLoader());
+    ResourceBundle rb = getResourceBundle(formClass.getClassLoader(), baseName);
     if (!BundleBase.SHOW_LOCALIZED_MESSAGES) {
       return rb;
     }
@@ -236,7 +233,6 @@ public class DynamicBundle extends AbstractBundle {
     if (langBundle != null) {
       ourLangTag = langBundle.locale;
       ourCache.clear();
-      ourBundlesForForms.clear();
     }
   }
 
