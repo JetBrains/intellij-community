@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -98,8 +98,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
         else {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
               context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-            holder.registerProblem(context,
-                                   JavaBundle.message("inspection.unused.assignment.problem.descriptor4", "<code>#ref</code> #loc"));
+            holder.registerProblem(context, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
           }
         }
       }
@@ -124,7 +123,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(lExpression.getParent());
         if (parent instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
             parent instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-          holder.registerProblem(parent, JavaBundle.message("inspection.unused.assignment.problem.descriptor4", "<code>#ref</code> #loc"));
+          holder.registerProblem(parent, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
         }
         else if (parent instanceof PsiAssignmentExpression) {
           if (expression instanceof PsiArrayInitializerExpression ||
@@ -142,8 +141,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
       isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix() : null);
     holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
-                           JavaBundle.message("inspection.unused.assignment.problem.descriptor2",
-                                              "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
+                           JavaBundle.message("inspection.unused.assignment.problem.descriptor2", psiVariable.getName()),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
     );
@@ -156,7 +154,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, assignment.getRExpression()) ? new RemoveAssignmentFix() : null);
     holder.registerProblem(assignment.getLExpression(),
                            JavaBundle.message("inspection.unused.assignment.problem.descriptor3",
-                                              Objects.requireNonNull(assignment.getRExpression()).getText(), "<code>#ref</code>" + " #loc"),
+                                              Objects.requireNonNull(assignment.getRExpression()).getText()),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
     );
   }
