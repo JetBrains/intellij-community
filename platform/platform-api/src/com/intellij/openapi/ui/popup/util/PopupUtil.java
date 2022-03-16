@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -236,5 +237,16 @@ public final class PopupUtil {
     Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
     //noinspection UseDPIAwareBorders
     return new EmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0);
+  }
+
+  public static void configSelectablePanel(SelectablePanel selectablePanel) {
+    int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+    Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+    //noinspection UseDPIAwareBorders
+    selectablePanel.setBorder(new EmptyBorder(innerInsets.top, innerInsets.left + leftRightInset, innerInsets.bottom,
+                              innerInsets.right + leftRightInset));
+    selectablePanel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+    //noinspection UseDPIAwareInsets
+    selectablePanel.setSelectionInsets(new Insets(0, leftRightInset, 0, leftRightInset));
   }
 }
