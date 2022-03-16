@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkGroup
+import com.intellij.ide.bookmark.BookmarkOccurrence
 import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.LineBookmark
@@ -65,8 +66,11 @@ internal class NextBookmarkService(private val project: Project) : BookmarksList
 
   fun next(forward: Boolean, bookmark: LineBookmark?): LineBookmark? {
     val bookmarks = getCachedBookmarks().ifEmpty { return null }
-    bookmark ?: return if (forward) bookmarks.first() else bookmarks.last()
-    return bookmarks.getOrNull(next(forward, bookmarks.binarySearch(bookmark, this)))
+    if (bookmark != null) {
+      val next = bookmarks.getOrNull(next(forward, bookmarks.binarySearch(bookmark, this)))
+      if (next != null || !BookmarkOccurrence.cyclic) return next
+    }
+    return if (forward) bookmarks.first() else bookmarks.last()
   }
 
   init {
