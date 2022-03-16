@@ -102,13 +102,13 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
         val kotlinOptions = (parameters as? KotlinAwareReferencesSearchParameters)?.kotlinOptions ?: Empty
         if (!kotlinOptions.acceptImportAlias) return
 
-        runReadAction {
+        val queryFunction = ReadAction.nonBlocking(Callable {
             val element = parameters.elementToSearch
 
-            if (!element.isValid) return@runReadAction null
-            val unwrappedElement = element.namedUnwrappedElement ?: return@runReadAction null
+            if (!element.isValid) return@Callable null
+            val unwrappedElement = element.namedUnwrappedElement ?: return@Callable null
             val name = unwrappedElement.name
-            if (name == null || StringUtil.isEmptyOrSpaces(name)) return@runReadAction null
+            if (name == null || StringUtil.isEmptyOrSpaces(name)) return@Callable null
             val effectiveSearchScope = calculateEffectiveScope(unwrappedElement, parameters)
 
             val collector = parameters.optimizer
@@ -124,7 +124,8 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
                 )
             }
             function
-        }?.invoke()
+        }).executeSynchronously()
+        queryFunction?.invoke()
     }
 
     private class AliasProcessor(
@@ -236,17 +237,17 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 if (elementToSearchPointer.element is KtParameter && kotlinOptions.searchNamedArguments) {
                     longTasks.add {
-                        ReadAction.nonBlocking {
+                        ReadAction.nonBlocking(Callable {
                             elementToSearchPointer.element.safeAs<KtParameter>()?.let(::searchNamedArguments)
-                        }.executeSynchronously()
+                        }).executeSynchronously()
                     }
                 }
 
                 if (!(elementToSearchPointer.element is KtElement && runReadAction { isOnlyKotlinSearch(effectiveSearchScope) })) {
                     longTasks.add {
-                        ReadAction.nonBlocking {
+                        ReadAction.nonBlocking(Callable {
                             element?.element?.let(::searchLightElements)
-                        }.executeSynchronously()
+                        }).executeSynchronously()
                     }
                 }
 
@@ -380,11 +381,11 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         }
 
         private fun searchForComponentConventions(elementPointer: SmartPsiElementPointer<PsiElement>) {
-            ReadAction.nonBlocking {
+            ReadAction.nonBlocking(Callable {
                 when (val element = elementPointer.element) {
                     is KtParameter -> {
-                        val componentMethodName = element.dataClassComponentMethodName ?: return@nonBlocking
-                        val containingClass = element.getStrictParentOfType<KtClassOrObject>()?.toLightClass() ?: return@nonBlocking
+                        val componentMethodName = element.dataClassComponentMethodName ?: return@Callable
+                        val containingClass = element.getStrictParentOfType<KtClassOrObject>()?.toLightClass() ?: return@Callable
                         searchDataClassComponentUsages(
                             containingClass = containingClass,
                             componentMethodName = componentMethodName,
@@ -393,17 +394,17 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     }
 
                     is KtLightParameter -> {
-                        val componentMethodName = element.kotlinOrigin?.dataClassComponentMethodName ?: return@nonBlocking
-                        val containingClass = element.method.containingClass ?: return@nonBlocking
+                        val componentMethodName = element.kotlinOrigin?.dataClassComponentMethodName ?: return@Callable
+                        val containingClass = element.method.containingClass ?: return@Callable
                         searchDataClassComponentUsages(
                             containingClass = containingClass,
                             componentMethodName = componentMethodName,
                             kotlinOptions = kotlinOptions
                         )
                     }
-                    else -> return@nonBlocking
+                    else -> return@Callable
                 }
-            }.executeSynchronously()
+            }).executeSynchronously()
         }
 
         @RequiresReadLock
