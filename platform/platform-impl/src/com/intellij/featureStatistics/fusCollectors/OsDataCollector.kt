@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -56,7 +56,6 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
     val metrics = mutableSetOf(
       OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell())),
       TIMEZONE.metric(tz))
-
     when {
       SystemInfo.isLinux -> {
         val (distro, release) = getReleaseData()
@@ -64,8 +63,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
         metrics += LINUX.metric(distro, release, isUnderWsl)
       }
       SystemInfo.isWin10OrNewer -> {
-        // `-1` is unknown
-        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)
+        metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)  // `-1` is unknown
       }
     }
     return metrics
