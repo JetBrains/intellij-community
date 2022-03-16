@@ -234,7 +234,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
     @JvmStatic
     protected fun getFontMetrics(editor: Editor, useEditorFont: Boolean): MyFontMetrics {
-      val size = max(1f, editor.colorsScheme.editorFontSize2D - 1f)
+      val size = HintUtil.getSize(editor)
       var metrics = editor.getUserData(HINT_FONT_METRICS)
       val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       val fontType = attributes.fontType
