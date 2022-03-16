@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -376,6 +377,8 @@ open class CodeVisionHost(val project: Project) {
           results.addAll(result)
         }
         catch (e: Exception) {
+          if (e is ControlFlowException) throw e
+
           logger.error("Exception during computeForEditor for ${it.id}", e)
         }
       }
