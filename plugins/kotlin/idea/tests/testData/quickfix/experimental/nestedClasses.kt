@@ -8,7 +8,7 @@
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClasses.kt'
 // ACTION: Add '-opt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments
 // ACTION: Introduce import alias
-// ERROR: This declaration is experimental and its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 
 @RequiresOptIn
 annotation class MyExperimentalAPI
