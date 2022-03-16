@@ -11,17 +11,15 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 
 internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
-    private val cache = CollectionFactory.createConcurrentSoftKeySoftValueMap<ModuleInfo, KtModule>(16, .75f, 16)
-
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
         val moduleInfo = element.getModuleInfo(createSourceLibraryInfoForLibraryBinaries = false)
         return getKtModuleByModuleInfo(moduleInfo)
     }
 
+    // TODO maybe introduce some cache?
     fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule =
-        cache.getOrPut(moduleInfo) {
-            createKtModuleByModuleInfo(moduleInfo)
-        }
+        createKtModuleByModuleInfo(moduleInfo)
+
 
     private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule = when (moduleInfo) {
         is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo, this)
