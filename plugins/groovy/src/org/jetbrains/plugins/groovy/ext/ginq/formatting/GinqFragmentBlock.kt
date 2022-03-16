@@ -69,7 +69,6 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment, private val thisAlignme
       }
     }
     if (child2 is GinqFragmentBlock) {
-      // for on or having
       if (child2.fragment is GinqOnFragment) {
         return when (context.groovySettings.GINQ_ON_WRAP_POLICY) {
           CommonCodeStyleSettings.WRAP_ALWAYS -> Spacing.createSpacing(0, 0, 1, true, 2)

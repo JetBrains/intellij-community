@@ -25,7 +25,7 @@ fun produceGinqFormattingBlock(ginq: GinqExpression,
   }
   val allBlocks = (remainingSubBlocks + fragmentContainer).sortedBy { it.textRange.startOffset }
 
-  return SyntheticGroovyBlock(allBlocks, Wrap.createWrap(WrapType.NORMAL, false), Indent.getNoneIndent(), Indent.getNoneIndent(), context)
+  return SyntheticGroovyBlock(allBlocks, Wrap.createWrap(WrapType.NORMAL, false), Indent.getNoneIndent(), Indent.getNormalIndent(), context)
 }
 
 val GINQ_AWARE_GROOVY_BLOCK_PRODUCER: GroovyBlockProducer = GroovyBlockProducer { node, indent, wrap, context ->

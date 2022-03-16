@@ -35,6 +35,34 @@ GQ {
 ''')
   }
 
+  void testBasicFragmentFormatting2() {
+    checkFormatting('''\
+GQ {
+from x in [1]
+select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  select x
+}
+''')
+  }
+
+  void testBasicFragmentFormatting3() {
+    checkFormatting('''\
+GQ {
+    from x in [1]
+    select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  select x
+}
+''')
+  }
+
   void testOn() {
     groovyCustomSettings.GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP
     checkFormatting('''\
@@ -332,6 +360,21 @@ GQ {
   from x in (from y in [2]
              <caret>
              select y)
+  select x
+}
+''')
+  }
+
+  void testEnter3() {
+    doEnterTest('''\
+GQ {<caret>
+  from x in [1]
+  select x
+}
+''', '''\
+GQ {
+  <caret>
+  from x in [1]
   select x
 }
 ''')
