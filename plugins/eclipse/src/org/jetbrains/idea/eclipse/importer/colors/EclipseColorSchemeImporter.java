@@ -17,6 +17,7 @@ package org.jetbrains.idea.eclipse.importer.colors;
 
 import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -171,6 +172,12 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
     scheme.setAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES, matchedBrace);
     TextAttributes unmatchedBrace = matchedBrace.clone();
     unmatchedBrace.setEffectColor(ColorUtil.mix(background, Color.RED, 0.5));
+
+    TextAttributes visibilityModifier = new TextAttributes();
+    scheme.setAttributes(JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES, visibilityModifier);
+    scheme.setAttributes(JavaHighlightingColors.PRIVATE_REFERENCE_ATTRIBUTES, visibilityModifier);
+    scheme.setAttributes(JavaHighlightingColors.PACKAGE_PRIVATE_REFERENCE_ATTRIBUTES, visibilityModifier);
+    scheme.setAttributes(JavaHighlightingColors.PROTECTED_REFERENCE_ATTRIBUTES, visibilityModifier);
   }
   
   private static void copyAttributes(@NotNull EditorColorsScheme source, @NotNull EditorColorsScheme target, @NotNull TextAttributesKey key) {
