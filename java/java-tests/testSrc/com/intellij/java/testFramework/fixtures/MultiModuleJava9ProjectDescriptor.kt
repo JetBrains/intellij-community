@@ -26,17 +26,16 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
   enum class ModuleDescriptor(internal val moduleName: String, 
                               internal val rootName: String?, 
                               internal val testRootName: String?,
-                              internal val resourceRootName : String? = null) {
-    MAIN(TEST_MODULE_NAME, null, "test_src"),
-    M2("light_idea_test_m2", "src_m2", null),
-    M3("light_idea_test_m3", "src_m3", null),
-    M4("light_idea_test_m4", "src_m4", null),
-    M5("light_idea_test_m5", "src_m5", null),
-    M6("light_idea_test_m6", "src_m6", null),
-    M7("light_idea_test_m7", "src_m7", null),
-    M8("light_idea_test_m8", "src_m8", null),
-    M9("light_idea_test_m9", "src_m9", null, "res_m9"),
-    M_TEST("light_idea_test_m_test", null, "m_test_src");
+                              internal val resourceRootName : String?) {
+    MAIN(TEST_MODULE_NAME, null, "test_src", null),
+    M2("light_idea_test_m2", "src_m2", null, null),
+    M3("light_idea_test_m3", "src_m3", null, null),
+    M4("light_idea_test_m4", "src_m4", null, null),
+    M5("light_idea_test_m5", "src_m5", null, null),
+    M6("light_idea_test_m6", "src_m6", null, "res_m6"),
+    M7("light_idea_test_m7", "src_m7", null, null),
+    M8("light_idea_test_m8", "src_m8", null, null),
+    M_TEST("light_idea_test_m_test", null, "m_test_src", null);
 
     fun root(): VirtualFile? = when {
       this === MAIN -> LightPlatformTestCase.getSourceRoot()
@@ -47,7 +46,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     fun testRoot(): VirtualFile? =
       if (testRootName == null) null
       else TempFileSystem.getInstance().findFileByPath("/${testRootName}") ?: throw IllegalStateException("Cannot find /${testRootName}")
-    
+
     fun resourceRoot(): VirtualFile? =
       if (resourceRootName == null) null
       else TempFileSystem.getInstance().findFileByPath("/${resourceRootName}") ?: throw IllegalStateException("Cannot find /${resourceRootName}")
@@ -80,9 +79,6 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val m8 = makeModule(project, ModuleDescriptor.M8)
       ModuleRootModificationUtil.addDependency(m6, m8)
-      
-      val m9 = makeModule(project, ModuleDescriptor.M9)
-      ModuleRootModificationUtil.addDependency(main, m9)
 
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
@@ -146,7 +142,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
   fun cleanupSourceRoots() = runWriteAction {
     ModuleDescriptor.values().asSequence()
-      .flatMap { if (it === ModuleDescriptor.MAIN) sequenceOf(it.testRoot()) else sequenceOf(it.root(), it.testRoot(), it.resourceRoot()) }
+      .flatMap { sequenceOf(if (it !== ModuleDescriptor.MAIN) it.root() else null, it.testRoot(), it.resourceRoot()) }
       .filterNotNull()
       .flatMap { it.children.asSequence() }
       .forEach { it.delete(this) }
