@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.formatting
 
-import com.intellij.formatting.Block
-import com.intellij.formatting.Indent
-import com.intellij.formatting.Wrap
-import com.intellij.formatting.WrapType
+import com.intellij.formatting.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,6 +14,7 @@ import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyMacroBlock
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
@@ -58,6 +56,20 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment, context: FormattingCont
       mySubBlocks = tempBlocks
     }
     return mySubBlocks
+  }
+
+  override fun getSpacing(child1: Block?, child2: Block): Spacing? {
+    if (child1 == null) {
+      return super.getSpacing(null, child2)
+    }
+    if (child1 is GroovyMacroBlock && child1.node == actualChildren.firstOrNull() && child2 is GroovyBlock && child2.node.elementType == GroovyElementTypes.ARGUMENT_LIST) {
+      return if (context.groovySettings.GINQ_SPACE_AFTER_KEYWORD) {
+        Spacing.createSpacing(1, 1, 0, false, 0)
+      } else {
+        Spacing.createSpacing(0, 0, 0, false, 0)
+      }
+    }
+    return super.getSpacing(child1, child2)
   }
 
   override fun isLeaf(): Boolean {

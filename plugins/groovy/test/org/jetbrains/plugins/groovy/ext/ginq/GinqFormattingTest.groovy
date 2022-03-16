@@ -127,4 +127,33 @@ GQ {
 }
 ''')
   }
+
+  void testSpaceAfterCall() {
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  select(x)
+}
+''', '''\
+GQ {
+  from x in [1]
+  select (x)
+}
+''')
+  }
+
+  void testNoSpaceAfterCall() {
+    groovyCustomSettings.GINQ_SPACE_AFTER_KEYWORD = false
+    checkFormatting('''\
+GQ {
+  from x in [1]
+  select(x)
+}
+''', '''\
+GQ {
+  from x in [1]
+  select(x)
+}
+''')
+  }
 }
