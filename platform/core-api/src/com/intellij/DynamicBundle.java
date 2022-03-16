@@ -37,7 +37,7 @@ public class DynamicBundle extends AbstractBundle {
 
   // see BundleUtil
   @Override
-  protected ResourceBundle findBundle(
+  protected @NotNull ResourceBundle findBundle(
     @NotNull String pathToBundle,
     @NotNull ClassLoader baseLoader,
     @NotNull ResourceBundle.Control control
@@ -50,16 +50,14 @@ public class DynamicBundle extends AbstractBundle {
         ClassLoader pluginClassLoader = pluginDescriptor == null ? getClass().getClassLoader()
                                                                  : pluginDescriptor.getClassLoader();
         ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginClassLoader, control);
-        if (pluginBundle != null) {
-          try {
-            if (DynamicBundleInternal.SET_PARENT != null && pluginBundle != base) {
-              DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
-            }
-            return pluginBundle;
+        try {
+          if (DynamicBundleInternal.SET_PARENT != null && pluginBundle != base) {
+            DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
           }
-          catch (Throwable e) {
-            LOG.warn(e);
-          }
+          return pluginBundle;
+        }
+        catch (Throwable e) {
+          LOG.warn(e);
         }
       }
     }
