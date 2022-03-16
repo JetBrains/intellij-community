@@ -283,4 +283,19 @@ GQ {
 }
 ''')
   }
+
+  void testFormatNestedGinq() {
+    checkFormatting('''\
+GQ {
+  from x in (from y in [2] select y)
+  select x
+}
+''', '''\
+GQ {
+  from x in (from y in [2]
+             select y)
+  select x
+}
+''')
+  }
 }

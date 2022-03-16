@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class GinqFragmentBlock(val fragment: GinqQueryFragment, context: FormattingContext) :
+class GinqFragmentBlock(val fragment: GinqQueryFragment, val thisAlignment: Alignment?, context: FormattingContext) :
   GroovyBlock(fragment.keyword.parent.node,
               Indent.getNormalIndent(),
               Wrap.createWrap(WrapType.NORMAL, true), context) {
@@ -47,10 +47,10 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment, context: FormattingCont
         tempBlocks.add(context.createBlock(child, Indent.getNormalIndent(), null))
       }
       if (fragment is GinqJoinFragment && fragment.onCondition != null) {
-        tempBlocks.add(GinqFragmentBlock(fragment.onCondition, myContext))
+        tempBlocks.add(GinqFragmentBlock(fragment.onCondition, null, myContext))
       }
       if (fragment is GinqGroupByFragment && fragment.having != null) {
-        tempBlocks.add(GinqFragmentBlock(fragment.having, myContext))
+        tempBlocks.add(GinqFragmentBlock(fragment.having, null, myContext))
       }
       mySubBlocks = tempBlocks
     }
@@ -88,6 +88,10 @@ class GinqFragmentBlock(val fragment: GinqQueryFragment, context: FormattingCont
       }
     }
     return super.getSpacing(child1, child2)
+  }
+
+  override fun getAlignment(): Alignment? {
+    return thisAlignment ?: super.getAlignment()
   }
 
   override fun isLeaf(): Boolean {

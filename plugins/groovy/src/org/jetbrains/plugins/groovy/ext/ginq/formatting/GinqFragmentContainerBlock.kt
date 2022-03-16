@@ -7,7 +7,8 @@ import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock
 
 class GinqFragmentContainerBlock(blocks : List<Block>, context: FormattingContext) :
-  SyntheticGroovyBlock(blocks, Wrap.createWrap(WrapType.NONE, false), Indent.getContinuationIndent(), Indent.getContinuationIndent(), context) {
+  SyntheticGroovyBlock(blocks, Wrap.createWrap(WrapType.NONE, false),
+                       Indent.getNoneIndent(), Indent.getContinuationIndent(), context) {
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? {
     if (child1 is GinqFragmentBlock && child2 is GinqFragmentBlock) {
