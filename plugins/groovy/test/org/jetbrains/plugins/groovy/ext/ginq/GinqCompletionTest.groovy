@@ -50,7 +50,7 @@ fullhashjoi<caret>
 select x
 ''', '''\
 from x in [1] 
-fullhashjoin x in  on
+fullhashjoin x1 in  on
 select x
 ''')
   }
