@@ -14,6 +14,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,8 +140,23 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
+  /**
+   * @deprecated use {@link #getResourceBundle(ClassLoader, String)}
+   */
+  @Deprecated
+  @ScheduledForRemoval
   public static final DynamicBundle INSTANCE = new DynamicBundle("") {
   };
+
+  /**
+   * @deprecated use {@link #getResourceBundle(ClassLoader, String)}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  @ScheduledForRemoval
+  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
+    return getResourceBundle(loader, pathToBundle);
+  }
 
   @ApiStatus.Internal
   public static final class LanguageBundleEP implements PluginAware {
@@ -159,18 +175,28 @@ public class DynamicBundle extends AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
 
-  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
+  public static @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader loader, @NotNull @NonNls String pathToBundle) {
     if (pathToBundle.isEmpty()) {
-      return getResourceBundle(loader);
+      return INSTANCE.getResourceBundle(loader);
     }
-    Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
-      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
-    ResourceBundle result = cache.get(pathToBundle);
-    if (result == null) {
-      result = resolveResourceBundle(pathToBundle, loader);
-      cache.put(pathToBundle, result);
-    }
-    return result;
+    return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
+      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap())
+      .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle));
+  }
+
+  private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
+    return resolveResourceBundleWithFallback(
+      () -> resolveResourceBundle(
+        DynamicBundle.class.getClassLoader(),
+        loader,
+        bundleResolver(pathToBundle)
+      ),
+      loader, pathToBundle
+    );
+  }
+
+  private static @NotNull Function<@NotNull ClassLoader, @NotNull ResourceBundle> bundleResolver(@NonNls @NotNull String pathToBundle) {
+    return l -> AbstractBundle.resolveBundle(l, pathToBundle);
   }
 
   /**

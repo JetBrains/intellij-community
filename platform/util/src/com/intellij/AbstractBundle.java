@@ -127,14 +127,15 @@ public class AbstractBundle {
     return bundle;
   }
 
-  protected final @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     return resolveResourceBundleWithFallback(
       () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
       loader, pathToBundle
     );
   }
 
-  private static @NotNull ResourceBundle resolveResourceBundleWithFallback(
+  @ApiStatus.Internal
+  protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(
     @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry,
     @NotNull ClassLoader loader,
     @NotNull String pathToBundle
@@ -157,6 +158,11 @@ public class AbstractBundle {
     if (myBundle != null) {
       myBundle.clear();
     }
+  }
+
+  @ApiStatus.Internal
+  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
+    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, MyResourceControl.INSTANCE);
   }
 
   // UTF-8 control for Java <= 1.8.
