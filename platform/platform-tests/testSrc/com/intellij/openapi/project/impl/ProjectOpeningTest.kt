@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -13,10 +14,13 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.systemIndependentPath
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("UsePropertyAccessSyntax")
@@ -34,6 +38,10 @@ class ProjectOpeningTest {
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
+
+  @Rule
+  @JvmField
+  val tempDir = TempDirectory()
 
   @Test
   fun cancelOnRunPostStartUpActivities() {
@@ -107,6 +115,16 @@ class ProjectOpeningTest {
       val iprFilePath2 = projectDir.resolve("project2.ipr")
       assertThat(ProjectUtil.isSameProject(iprFilePath2, fileBasedProject)).isFalse()
     }
+  }
+
+  @Test
+  fun projectFileLookup() {
+    val projectDir = tempDir.root.toPath()
+    val projectFile = Files.writeString(projectDir.resolve ("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
+    assertThat(project).isNotNull()
+    val projectFilePath = project!!.use { it.projectFilePath }
+    assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
   }
 }
 
