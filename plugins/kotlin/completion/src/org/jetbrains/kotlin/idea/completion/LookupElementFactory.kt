@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.completion.handlers.GenerateLambdaInfo
-import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.createNormalFunctionInsertHandler
 import org.jetbrains.kotlin.idea.util.CallType
@@ -170,11 +169,6 @@ class LookupElementFactory(
         explicitLambdaParameters: Boolean
     ): LookupElement {
         var lookupElement = createLookupElement(descriptor, useReceiverTypes)
-        val inputTypeArguments = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
-            is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
-            is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
-            else -> false
-        }
         val lambdaInfo = GenerateLambdaInfo(parameterType, explicitLambdaParameters)
         val lambdaPresentation = if (explicitLambdaParameters)
             LambdaSignatureTemplates.lambdaPresentation(parameterType, LambdaSignatureTemplates.SignaturePresentation.NAMES_OR_TYPES)
@@ -205,7 +199,7 @@ class LookupElementFactory(
             editor,
             callType,
             descriptor.name,
-            inputTypeArguments,
+            insertHandlerProvider.needTypeArguments(descriptor),
             inputValueArguments = false,
             lambdaInfo = lambdaInfo,
         )
@@ -246,13 +240,12 @@ class LookupElementFactory(
         useReceiverTypes: Boolean
     ): LookupElement {
         val lookupElement = createLookupElement(descriptor, useReceiverTypes)
-
-        val needTypeArguments = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
-            is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
-            is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
-            else -> false
-        }
-        return FunctionCallWithArgumentsLookupElement(lookupElement, descriptor, argumentText, needTypeArguments)
+        return FunctionCallWithArgumentsLookupElement(
+            lookupElement,
+            descriptor,
+            argumentText,
+            insertHandlerProvider.needTypeArguments(descriptor),
+        )
     }
 
     private inner class FunctionCallWithArgumentsLookupElement(

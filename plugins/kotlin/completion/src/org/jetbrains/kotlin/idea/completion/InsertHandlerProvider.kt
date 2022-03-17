@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.types.KotlinType
 class InsertHandlerProvider(
     private val callType: CallType<*>,
     private val editor: Editor,
-    expectedInfosCalculator: () -> Collection<ExpectedInfo>
+    expectedInfosCalculator: () -> Collection<ExpectedInfo>,
 ) {
     private val expectedInfos by lazy(LazyThreadSafetyMode.NONE) { expectedInfosCalculator() }
 
@@ -95,7 +95,7 @@ class InsertHandlerProvider(
         }
     }
 
-    private fun needTypeArguments(function: FunctionDescriptor): Boolean {
+    fun needTypeArguments(function: FunctionDescriptor): Boolean {
         if (function.typeParameters.isEmpty()) return false
 
         val originalFunction = function.original

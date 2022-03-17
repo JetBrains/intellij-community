@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.handlers.BaseDeclarationInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinClassifierInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject
@@ -192,7 +193,12 @@ class BasicLookupElementFactory(
                     parametersAndTypeGrayed
                 )
 
-                val insertsLambda = (insertHandler as? KotlinFunctionInsertHandler.Normal)?.lambdaInfo != null
+                val insertsLambda = when (insertHandler) {
+                    is KotlinFunctionInsertHandler.Normal -> insertHandler.lambdaInfo != null
+                    is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.isLambda
+                    else -> false
+                }
+
                 if (insertsLambda) {
                     element = element.appendTailText(" {...} ", parametersAndTypeGrayed)
                 }
