@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -66,7 +67,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
 
   /**
-   * active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
+   * active (i.e., which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
    * which are not inherited from {@link StandardProgressIndicator}.
    * for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
    * to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
@@ -338,7 +339,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    * Different places in IntelliJ codebase behaves differently in case of headless mode.
    * <p>
    * Often, they're trying to make async parts synchronous to make it more predictable or controllable.
-   * E.g. in tests or IntelliJ-based command line tools this is the usual code:
+   * E.g., in tests or IntelliJ-based command line tools this is the usual code:
    * <p>
    * ```
    * if (ApplicationManager.getApplication().isHeadless()) {
@@ -518,7 +519,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   }
 
-  // ASSERT IS EDT->UI bg or calling if cant
+  // ASSERT IS EDT->UI bg or calling if can't
   // NEW: no assert; bg or calling ...
   protected boolean runProcessWithProgressSynchronously(@NotNull Task task) {
     Ref<Throwable> exceptionRef = new Ref<>();
@@ -868,19 +869,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private boolean isCurrentThreadEffectivelyPrioritized() {
-    Thread current = Thread.currentThread();
-    for (Thread prioritized : myEffectivePrioritizedThreads) {
-      if (prioritized == current) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(myEffectivePrioritizedThreads, Thread.currentThread()) != -1;
   }
 
   private boolean checkLowPriorityReallyApplicable() {
     long time = System.nanoTime() - myPrioritizingStarted;
     if (time < 5_000_000) {
-      return false; // don't sleep when activities are very short (e.g. empty processing of mouseMoved events)
+      return false; // don't sleep when activities are very short (e.g., empty processing of mouseMoved events)
     }
 
     if (avoidBlockingPrioritizingThread()) {

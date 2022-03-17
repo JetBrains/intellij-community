@@ -987,9 +987,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOfIdentity(T @NotNull [] list, T element) {
-    for (int i = 0; i < list.length; i++) {
-      if (list[i] == element) {
+  public static <T> int indexOfIdentity(T @NotNull [] array, T element) {
+    for (int i = 0; i < array.length; i++) {
+      if (array[i] == element) {
         return i;
       }
     }
