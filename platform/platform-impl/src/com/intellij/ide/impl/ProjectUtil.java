@@ -63,7 +63,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   public static final String PROPERTY_PROJECT_PATH = "%s.project.path";
 
   @ApiStatus.Internal
-  public static final Key<Boolean> FORCE_CHECK_DIRECTORY_KEY = Key.create("project.util.processor.chooser");
+  public static final Key<Boolean> PREVENT_IPR_LOOKUP_KEY = Key.create("project.util.prevent.ipr.lookup");
 
   @ApiStatus.Internal
   public static final Key<Function<List<? extends ProjectOpenProcessor>, ProjectOpenProcessor>> PROCESSOR_CHOOSER_KEY =
@@ -179,7 +179,7 @@ public final class ProjectUtil extends ProjectUtilCore {
       return openResult(project, OpenResult.failure());
     }
 
-    if (FORCE_CHECK_DIRECTORY_KEY.get(options) == Boolean.TRUE && Files.isDirectory(file)) {
+    if (PREVENT_IPR_LOOKUP_KEY.get(options) != Boolean.TRUE && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
@@ -256,7 +256,7 @@ public final class ProjectUtil extends ProjectUtilCore {
       return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.withRunConfigurators());
     }
 
-    if (FORCE_CHECK_DIRECTORY_KEY.get(options) == Boolean.TRUE && Files.isDirectory(file)) {
+    if (PREVENT_IPR_LOOKUP_KEY.get(options) != Boolean.TRUE && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
