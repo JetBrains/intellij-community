@@ -125,7 +125,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
         cancelRunnable?.invoke()
       }
 
-      val container = createPopupComponentContainer(suggestedChangeHelper.submitReviewCommentDocument, cancelActionListener)
+      val container = createPopupComponentContainer(suggestedChangeHelper.suggestedChangeCommitMessageDocument, cancelActionListener)
       val popup = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
         .setFocusable(true)
