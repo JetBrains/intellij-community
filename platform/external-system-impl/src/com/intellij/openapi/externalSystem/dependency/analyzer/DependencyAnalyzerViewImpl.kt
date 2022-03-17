@@ -95,19 +95,19 @@ class DependencyAnalyzerViewImpl(
 
   override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data) {
     setSelectedExternalProject(externalProjectPath) {
-      dependency = findDependency { it.data == data }
+      dependency = findDependency { it.data == data } ?: dependency
     }
   }
 
   override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Dependency.Scope) {
     setSelectedExternalProject(externalProjectPath) {
-      dependency = findDependency { it.data == data && it.scope == scope }
+      dependency = findDependency { it.data == data && it.scope == scope } ?: dependency
     }
   }
 
   private fun setSelectedExternalProject(externalProjectPath: String, onReady: () -> Unit) {
     whenLoadingOperationCompleted {
-      externalProject = externalProjects.find { it.path == externalProjectPath }
+      externalProject = findExternalProject { it.path == externalProjectPath } ?: externalProject
       whenLoadingOperationCompleted {
         onReady()
       }
@@ -117,6 +117,10 @@ class DependencyAnalyzerViewImpl(
   private fun findDependency(predicate: (Dependency) -> Boolean): Dependency? {
     return dependencyListModel.items.flatMap { it.variances }.find(predicate)
            ?: dependencyModel.flatMap { it.variances }.find(predicate)
+  }
+
+  private fun findExternalProject(predicate: (DependencyAnalyzerProject) -> Boolean): DependencyAnalyzerProject? {
+    return externalProjects.find(predicate)
   }
 
   override fun getData(dataId: String): Any? {
