@@ -13,6 +13,10 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
   override fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? {
     @Suppress("SpellCheckingInspection")
     return when (moduleName) {
+      "intellij.devkit" -> IntellijIconClassGeneratorModuleConfig(
+        className = "DevKitIcons",
+        packageName = "org.jetbrains.idea.devkit",
+      )
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
       "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
@@ -21,6 +25,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         packageName = "com.intellij.lang.ognl",
         iconDirectory = "icons",
       )
+
       "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(
         className = "Struts2Icons",
         packageName = "com.intellij.struts2",
