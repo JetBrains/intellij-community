@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -181,5 +182,22 @@ class KotlinVersionUtilsTest {
         assertTrue(
             parseKotlinVersion("1.5.30").toWildcard() < parseKotlinVersion("1.5.30-unknown")
         )
+    }
+
+    @Test
+    fun maturity() {
+        fun check(version: String, maturity: KotlinVersionMaturity) {
+            val kotlinVersion = parseKotlinVersion(version)
+            assertEquals(maturity, kotlinVersion.maturity, "Incorrect for $version")
+        }
+
+        check("1.6.20-343", KotlinVersionMaturity.STABLE)
+        check("1.6.20", KotlinVersionMaturity.STABLE)
+        check("1.6.20-RC-343", KotlinVersionMaturity.RC)
+        check("1.6.20-RC2-343", KotlinVersionMaturity.RC)
+        check("1.6.20-RC2", KotlinVersionMaturity.RC)
+        check("1.6.20-RC", KotlinVersionMaturity.RC)
+        check("1.6.20-release-343", KotlinVersionMaturity.STABLE)
+        check("1.6.20-RC-release-343", KotlinVersionMaturity.RC)
     }
 }
