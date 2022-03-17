@@ -124,7 +124,8 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
                 )
             }
             function
-        }).executeSynchronously()
+        }).inSmartMode(parameters.project)
+            .executeSynchronously()
         queryFunction?.invoke()
     }
 
@@ -197,10 +198,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }).inSmartMode(queryParameters.project)
                 .executeSynchronously() ?: return
 
-            runReadAction {
-                element?.element
-            } ?: return
-
+            runReadAction { element?.element } ?: return
 
             runReadAction {
                 elementToSearchPointer.element?.let { elementToSearch ->
