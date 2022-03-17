@@ -122,7 +122,7 @@ class GHSuggestionHtmlSyntaxHighlighterTest {
   }
 
   private fun checkSuggestedChange(expected: List<String>, diffHunk: String, afterStartLine: Int, afterEndLine: Int) {
-    val suggestedChangeInfo = GHSuggestedChangeInfo.create(diffHunk, "", afterStartLine, afterEndLine)
+    val suggestedChangeInfo = GHSuggestedChange.create("", diffHunk, "", afterStartLine, afterEndLine)
     val changedContent = suggestedChangeInfo.cutChangedContent()
 
     assertArrayEquals(expected.toTypedArray(), changedContent.toTypedArray())

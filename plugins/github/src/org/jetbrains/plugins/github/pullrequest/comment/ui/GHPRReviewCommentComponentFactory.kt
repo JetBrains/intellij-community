@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.VerticalLayout
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
-import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
@@ -22,16 +22,15 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
   }
 
   fun createCommentWithSuggestedChangeComponent(
-    commentBody: String,
     thread: GHPRReviewThreadModel,
-    suggestedChangeInfo: GHSuggestedChangeInfo,
+    suggestedChange: GHSuggestedChange,
     suggestedChangeHelper: GHPRSuggestedChangeHelper
   ): JComponent {
-    val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(commentBody, suggestedChangeInfo)
+    val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(suggestedChange)
     val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
     val commentBlocks = collectCommentBlocks(content)
 
-    val suggestedChangeApplier = GHSuggestedChangeApplier(project, suggestedChangeHelper.repository, commentBody, suggestedChangeInfo)
+    val suggestedChangeApplier = GHSuggestedChangeApplier(project, suggestedChangeHelper.repository, suggestedChange)
     val suggestedChangeComponent = GHPRReviewSuggestedChangeComponentFactory(project, thread, suggestedChangeApplier, suggestedChangeHelper)
 
     return JPanel(VerticalLayout(0)).apply {
