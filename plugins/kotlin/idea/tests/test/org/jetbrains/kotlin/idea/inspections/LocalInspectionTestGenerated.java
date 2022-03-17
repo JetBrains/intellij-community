@@ -13273,6 +13273,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/arrayList")
+        public static class ArrayList extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/arrayList/notNullAndIsNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/collection")
         public static class Collection extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -13291,15 +13304,51 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/intArray")
-        public static class IntArray extends AbstractLocalInspectionTest {
+        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/complex")
+        public static class Complex extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("nullOrCountEqZero.kt")
-            public void testNullOrCountEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/intArray/nullOrCountEqZero.kt");
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/complex/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/complex/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty3.kt")
+            public void testNullOrIsEmpty3() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/complex/nullOrIsEmpty3.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty4.kt")
+            public void testNullOrIsEmpty4() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/complex/nullOrIsEmpty4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/hashSet")
+        public static class HashSet extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/hashSet/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/intArray")
+        public static class IntArray extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("nullOrIsEmpty.kt")
@@ -13320,11 +13369,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("notNullAndCountGreaterThanZero.kt")
-            public void testNotNullAndCountGreaterThanZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/notNullAndCountGreaterThanZero.kt");
-            }
-
             @TestMetadata("notNullAndIsEmpty.kt")
             public void testNotNullAndIsEmpty() throws Exception {
                 runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/notNullAndIsEmpty.kt");
@@ -13338,21 +13382,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("notNullAndNotIsEmpty.kt")
             public void testNotNullAndNotIsEmpty() throws Exception {
                 runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/notNullAndNotIsEmpty.kt");
-            }
-
-            @TestMetadata("notNullAndSizeNotEqZero.kt")
-            public void testNotNullAndSizeNotEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/notNullAndSizeNotEqZero.kt");
-            }
-
-            @TestMetadata("nullOrCountEqZero.kt")
-            public void testNullOrCountEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/nullOrCountEqZero.kt");
-            }
-
-            @TestMetadata("nullOrCountEqZero2.kt")
-            public void testNullOrCountEqZero2() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/nullOrCountEqZero2.kt");
             }
 
             @TestMetadata("nullOrIsEmpty.kt")
@@ -13374,16 +13403,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testNullOrNotIsNotEmpty() throws Exception {
                 runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/nullOrNotIsNotEmpty.kt");
             }
-
-            @TestMetadata("nullOrSizeEqZero.kt")
-            public void testNullOrSizeEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/nullOrSizeEqZero.kt");
-            }
-
-            @TestMetadata("nullOrSizeEqZero2.kt")
-            public void testNullOrSizeEqZero2() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/list/nullOrSizeEqZero2.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -13400,41 +13419,40 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/mutableList")
-        public static class MutableList extends AbstractLocalInspectionTest {
+        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers")
+        public static class Receivers extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("nullOrSizeEqZero.kt")
-            public void testNullOrSizeEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/mutableList/nullOrSizeEqZero.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/mutableMap")
-        public static class MutableMap extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers/nullOrIsEmpty.kt");
             }
 
-            @TestMetadata("nullOrSizeEqZero.kt")
-            public void testNullOrSizeEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/mutableMap/nullOrSizeEqZero.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/mutableSet")
-        public static class MutableSet extends AbstractLocalInspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers/nullOrIsEmpty2.kt");
             }
 
-            @TestMetadata("nullOrSizeEqZero.kt")
-            public void testNullOrSizeEqZero() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/mutableSet/nullOrSizeEqZero.kt");
+            @TestMetadata("nullOrIsEmpty3.kt")
+            public void testNullOrIsEmpty3() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers/nullOrIsEmpty3.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty4.kt")
+            public void testNullOrIsEmpty4() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers/nullOrIsEmpty4.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty5.kt")
+            public void testNullOrIsEmpty5() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers/nullOrIsEmpty5.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty6.kt")
+            public void testNullOrIsEmpty6() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/receivers/nullOrIsEmpty6.kt");
             }
         }
 
@@ -13476,6 +13494,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("nullOrIsEmpty.kt")
             public void testNullOrIsEmpty() throws Exception {
                 runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/str/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceWithIsNullOrEmpty/wrapped")
+        public static class Wrapped extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithIsNullOrEmpty/wrapped/nullOrIsEmpty.kt");
             }
         }
     }

@@ -6,156 +6,280 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.ValueDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
-import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
+import org.jetbrains.kotlin.types.isError
 
 class ReplaceWithIsNullOrEmptyInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = binaryExpressionVisitor(fun(expression: KtBinaryExpression) {
-        val operationToken = expression.operationToken
-        val isOr = operationToken == KtTokens.OROR
-        val isAnd = operationToken == KtTokens.ANDAND
-        if (!isOr && !isAnd) return
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = binaryExpressionVisitor(fun(binaryExpression) {
+        val nullCheckExpression = binaryExpression.left?.deparenthesize() as? KtExpression ?: return
+        val nullCheck = getNullCheck(nullCheckExpression) ?: return
 
-        val right = expression.rightExpression()?.first ?: return
-        val rightCallText =
-            (right.safeAs<KtCallExpression>() ?: right.safeAs<KtQualifiedExpression>()?.callExpression)?.calleeExpression?.text
+        val operationToken = binaryExpression.operationToken
 
-        val checkedExpressionInLeft = expression.getCheckedExpressionInLeft(isOr) ?: return
-        val context = expression.analyze(BodyResolveMode.PARTIAL)
-        val checkedDeclarationInLeft = when (checkedExpressionInLeft) {
-            is KtThisExpression -> checkedExpressionInLeft.getResolvedCall(context)?.resultingDescriptor?.containingDeclaration
-            is KtSimpleNameExpression -> context[REFERENCE_TARGET, checkedExpressionInLeft]
-            else -> null
-        } ?: return
+        val isPositiveCheck = when {
+            !nullCheck.isEqualNull && operationToken == KtTokens.ANDAND -> true // a != null && a.isNotEmpty()
+            nullCheck.isEqualNull && operationToken == KtTokens.OROR -> false // a == null || a.isEmpty()
+            else -> return
+        }
 
-        val checkedDeclarationInRight = expression.getCheckedDeclarationInRight(isOr, context)
-        if (checkedDeclarationInLeft != checkedDeclarationInRight) return
+        val contentCheckExpression = binaryExpression.right?.deparenthesize() as? KtExpression ?: return
+        val contentCheck = getContentCheck(contentCheckExpression) ?: return
 
-        val functionName = if (rightCallText == "isBlank" || rightCallText == "isNotBlank") "isNullOrBlank" else "isNullOrEmpty"
-        if (functionName == expression.getStrictParentOfType<KtFunction>()?.name) return
-        holder.registerProblem(expression, KotlinBundle.message("replace.with.0.call", functionName), ReplaceFix(functionName, isOr))
+        if (isPositiveCheck != contentCheck.isPositiveCheck) return
+        if (!isSimilar(nullCheck.target, contentCheck.target, ::psiOnlyTargetCheck)) return
+
+        val bindingContext = binaryExpression.analyze(BodyResolveMode.PARTIAL)
+        if (!isSimilar(nullCheck.target, contentCheck.target, resolutionTargetCheckFactory(bindingContext))) return
+
+        // Lack of smart-cast in 'a != null && <<a>>.isNotEmpty()' means it's rather some complex expression. Skip those for now
+        if (!contentCheck.target.last().hasSmartCast(bindingContext)) return
+
+        val contentCheckCall = contentCheck.call.getResolvedCall(bindingContext) ?: return
+        val contentCheckFunction = contentCheckCall.resultingDescriptor as? SimpleFunctionDescriptor ?: return
+        if (!checkTargetFunctionReceiver(contentCheckFunction)) return
+
+        val overriddenFunctions = contentCheckFunction.findOriginalTopMostOverriddenDescriptors()
+        if (overriddenFunctions.none { it.fqNameOrNull()?.asString() in contentCheck.data.callableNames }) return
+
+        val hasExplicitReceiver = contentCheck.target.singleOrNull() !is TargetChunk.ImplicitThis
+        val replacementName = contentCheck.data.replacementName
+
+        holder.registerProblem(
+            binaryExpression,
+            KotlinBundle.message("replace.with.0.call", (if (isPositiveCheck) "!" else "") + replacementName),
+            ReplaceFix(replacementName, hasExplicitReceiver, isPositiveCheck)
+        )
     })
 
-    private class ReplaceFix(private val functionName: String, private val isOr: Boolean) : LocalQuickFix {
+    private fun checkTargetFunctionReceiver(function: SimpleFunctionDescriptor): Boolean {
+        val type = getSingleReceiver(function.dispatchReceiverParameter?.value, function.extensionReceiverParameter?.value)?.type
+        return type != null && !type.isError && !type.isMarkedNullable && !KotlinBuiltIns.isPrimitiveArray(type)
+    }
+
+    private fun psiOnlyTargetCheck(left: TargetChunk, right: TargetChunk) = left.kind == right.kind && left.name == right.name
+
+    private fun resolutionTargetCheckFactory(bindingContext: BindingContext): (TargetChunk, TargetChunk) -> Boolean = r@ { left, right ->
+        val leftValue = left.resolve(bindingContext) ?: return@r false
+        val rightValue = right.resolve(bindingContext) ?: return@r false
+        return@r leftValue == rightValue
+    }
+
+    private fun getTargetChain(targetExpression: KtExpression): TargetChain? {
+        val result = mutableListOf<TargetChunk>()
+
+        fun processDepthFirst(expression: KtExpression): Boolean {
+            when (val unwrapped = expression.deparenthesize()) {
+                is KtNameReferenceExpression -> result += TargetChunk.Name(unwrapped)
+                is KtDotQualifiedExpression -> {
+                    if (!processDepthFirst(unwrapped.receiverExpression)) return false
+                    val selectorExpression = unwrapped.selectorExpression as? KtNameReferenceExpression ?: return false
+                    result += TargetChunk.Name(selectorExpression)
+                }
+                is KtThisExpression -> result += TargetChunk.ExplicitThis(unwrapped)
+                else -> return false
+            }
+
+            return true
+        }
+
+        return if (processDepthFirst(targetExpression)) result.takeIf { it.isNotEmpty() } else null
+    }
+
+    private fun isSimilar(left: TargetChain, right: TargetChain, checker: (TargetChunk, TargetChunk) -> Boolean): Boolean {
+        return left.size == right.size && left.indices.all { index -> checker(left[index], right[index]) }
+    }
+
+    private fun <T: Any> unwrapNegation(expression: KtExpression, block: (KtExpression, Boolean) -> T?): T? {
+        if (expression is KtPrefixExpression && expression.operationToken == KtTokens.EXCL) {
+            val baseExpression = expression.baseExpression?.deparenthesize() as? KtExpression ?: return null
+            return block(baseExpression, true)
+        }
+
+        return block(expression, false)
+    }
+
+    private class NullCheck(val target: TargetChain, val isEqualNull: Boolean)
+
+    private fun getNullCheck(expression: KtExpression) = unwrapNegation(expression, fun(expression, isNegated): NullCheck? {
+        if (expression !is KtBinaryExpression) return null
+
+        val isNull = when (expression.operationToken) {
+            KtTokens.EQEQ -> true
+            KtTokens.EXCLEQ -> false
+            else -> return null
+        } xor isNegated
+
+        val left = expression.left ?: return null
+        val right = expression.right ?: return null
+
+        fun createTarget(targetExpression: KtExpression, isNull: Boolean): NullCheck? {
+            val targetReferenceExpression = getTargetChain(targetExpression) ?: return null
+            return NullCheck(targetReferenceExpression, isNull)
+        }
+
+        return when {
+            left.isNullLiteral() -> createTarget(right, isNull)
+            right.isNullLiteral() -> createTarget(left, isNull)
+            else -> null
+        }
+    })
+
+    private class ContentCheck(val target: TargetChain, val call: KtCallExpression, val data: ContentFunction, val isPositiveCheck: Boolean)
+
+    private fun getContentCheck(expression: KtExpression) = unwrapNegation(expression, fun(expression, isNegated): ContentCheck? {
+        val (callExpression, target) = when (expression) {
+            is KtCallExpression -> expression to listOf(TargetChunk.ImplicitThis(expression))
+            is KtDotQualifiedExpression -> {
+                val targetChain = getTargetChain(expression.receiverExpression) ?: return null
+                (expression.selectorExpression as? KtCallExpression) to targetChain
+            }
+            else -> return null
+        }
+
+        val calleeText = callExpression?.calleeExpression?.text ?: return null
+        val contentFunction = contentCheckingFunctions[calleeText] ?: return null
+        return ContentCheck(target, callExpression, contentFunction, contentFunction.isPositiveCheck xor isNegated)
+    })
+
+    private class ReplaceFix(
+        private val functionName: String,
+        private val hasExplicitReceiver: Boolean,
+        private val isPositiveCheck: Boolean
+    ) : LocalQuickFix {
         override fun getFamilyName() = KotlinBundle.message("replace.with.0.call", functionName)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val expression = descriptor.psiElement as? KtBinaryExpression ?: return
-            val checkedExpressionInLeft = expression.getCheckedExpressionInLeft(isOr) ?: return
-            val receiver = if (checkedExpressionInLeft is KtThisExpression) "" else "${checkedExpressionInLeft.text}."
-            val negated = if (isOr) "" else "!"
-            expression.replace(KtPsiFactory(project).createExpression("$negated$receiver$functionName()"))
+            val binaryExpression = descriptor.psiElement as? KtBinaryExpression ?: return
+            val expressionText = buildString {
+                if (isPositiveCheck) append("!")
+                if (hasExplicitReceiver) {
+                    val nullCheckExpression = binaryExpression.left?.deparenthesize() as? KtExpression ?: return
+                    val receiverExpression = getReceiver(nullCheckExpression) ?: return
+                    append(receiverExpression.text).append(".")
+                }
+                append(functionName).append("()")
+            }
+            binaryExpression.replace(KtPsiFactory(project).createExpression(expressionText))
+        }
+
+        private fun getReceiver(expression: KtExpression?): KtExpression? = when {
+            expression is KtPrefixExpression && expression.operationToken == KtTokens.EXCL -> getReceiver(expression.baseExpression)
+            expression is KtBinaryExpression -> when {
+                expression.left?.isNullLiteral() == true -> expression.right
+                expression.right?.isNullLiteral() == true -> expression.left
+                else -> null
+            }
+            else -> null
         }
     }
 
+    private class ContentFunction(val isPositiveCheck: Boolean, val replacementName: String, vararg val callableNames: String)
+
     companion object {
-        private val collectionClasses = listOf(
-            StandardNames.FqNames.list,
-            StandardNames.FqNames.set,
-            StandardNames.FqNames.collection,
-            StandardNames.FqNames.map,
-            StandardNames.FqNames.mutableList,
-            StandardNames.FqNames.mutableSet,
-            StandardNames.FqNames.mutableCollection,
-            StandardNames.FqNames.mutableMap,
+        private val contentCheckingFunctions = mapOf(
+            "isEmpty" to ContentFunction(
+                isPositiveCheck = false, replacementName = "isNullOrEmpty",
+                "kotlin.collections.Collection.isEmpty",
+                "kotlin.collections.Map.isEmpty",
+                "kotlin.collections.isEmpty",
+                "kotlin.text.isEmpty"
+            ),
+            "isBlank" to ContentFunction(
+                isPositiveCheck = false, replacementName = "isNullOrBlank",
+                "kotlin.text.isBlank"
+            ),
+            "isNotEmpty" to ContentFunction(
+                isPositiveCheck = true, replacementName = "isNullOrEmpty",
+                "kotlin.collections.isNotEmpty",
+                "kotlin.text.isNotEmpty"
+            ),
+            "isNotBlank" to ContentFunction(
+                isPositiveCheck = true, replacementName = "isNullOrBlank",
+                "kotlin.text.isNotBlank"
+            )
         )
 
-        private val emptyCheckFunctions = collectionClasses.map { FqName("$it.isEmpty") } +
-                listOf("kotlin.collections.isEmpty", "kotlin.text.isEmpty", "kotlin.text.isBlank").map(::FqName)
+        private fun KtExpression.isNullLiteral(): Boolean =
+            (deparenthesize() as? KtConstantExpression)?.text == KtTokens.NULL_KEYWORD.value
+    }
+}
 
-        private val notEmptyCheckFunctions = collectionClasses.map { FqName("$it.isNotEmpty") } +
-                listOf("kotlin.collections.isNotEmpty", "kotlin.text.isNotEmpty", "kotlin.text.isNotBlank").map(::FqName)
+private typealias TargetChain = List<TargetChunk>
 
-        private fun KtBinaryExpression.getCheckedExpressionInLeft(isOr: Boolean): KtExpression? {
-            val checkedExpression = left.safeAs<KtBinaryExpression>()
-                ?.takeIf { it.operationToken == if (isOr) KtTokens.EQEQ else KtTokens.EXCLEQ }
-                ?.let {
-                    when {
-                        it.left?.text == KtTokens.NULL_KEYWORD.value -> it.right
-                        it.right?.text == KtTokens.NULL_KEYWORD.value -> it.left
-                        else -> null
-                    }
-                } ?: return null
-            return checkedExpression.safeAs<KtSimpleNameExpression>() ?: checkedExpression.safeAs<KtThisExpression>()
+private sealed class TargetChunk(val kind: Kind) {
+    enum class Kind { THIS, NAME }
+
+    class ExplicitThis(val expression: KtThisExpression) : TargetChunk(Kind.THIS) {
+        override val name: String?
+            get() = null
+
+        override fun resolve(bindingContext: BindingContext): Any? {
+            val descriptor = expression.getResolvedCall(bindingContext)?.resultingDescriptor
+            return (descriptor as? ReceiverParameterDescriptor)?.value ?: descriptor
         }
 
-        private fun KtBinaryExpression.getCheckedDeclarationInRight(isOr: Boolean, context: BindingContext): DeclarationDescriptor? {
-            val (right, negated) = rightExpression() ?: return null
-            val emptyCheckFunctions = if (isOr) {
-                if (!negated) emptyCheckFunctions else notEmptyCheckFunctions
-            } else {
-                if (!negated) notEmptyCheckFunctions else emptyCheckFunctions
-            }
-            val (declaration, declarationType) = when (right) {
-                is KtBinaryExpression -> {
-                    val checkedExpression = if (isOr) {
-                        ReplaceSizeZeroCheckWithIsEmptyIntention.getCheckedExpression(right)
-                    } else {
-                        ReplaceSizeCheckWithIsNotEmptyIntention.getCheckedExpression(right)
-                    }?.takeIf { it.isSizeOrLength(context) || it.isCountCall { call -> call.valueArguments.isEmpty() } }
-                    checkedExpression.safeAs<KtDotQualifiedExpression>()?.receiverReference(context)
-                        ?: checkedExpression?.getResolvedCall(context)?.implicitReceiverReference()
-                }
-                is KtDotQualifiedExpression -> {
-                    if (right.callExpression?.isCalling(emptyCheckFunctions, context) == true) right.receiverReference(context) else null
-                }
-                is KtCallExpression -> {
-                    val calleeText = right.calleeExpression?.text
-                    if (emptyCheckFunctions.any { it.shortName().asString() == calleeText }) {
-                        val resolvedCall = right.getResolvedCall(context)
-                        val fqName = resolvedCall?.resultingDescriptor?.fqNameSafe
-                        if (fqName in emptyCheckFunctions) resolvedCall?.implicitReceiverReference() else null
-                    } else {
-                        null
-                    }
-                }
-                else -> null
-            } ?: return null
-            if (declarationType == null || KotlinBuiltIns.isPrimitiveArray(declarationType)) return null
-            return declaration
+        override fun hasSmartCast(bindingContext: BindingContext): Boolean {
+            return bindingContext[BindingContext.SMARTCAST, expression] != null
+        }
+    }
+
+    class ImplicitThis(val expression: KtCallExpression) : TargetChunk(Kind.THIS) {
+        override val name: String?
+            get() = null
+
+        override fun resolve(bindingContext: BindingContext): Any? {
+            val resolvedCall = expression.getResolvedCall(bindingContext) ?: return null
+            return getSingleReceiver(resolvedCall.dispatchReceiver, resolvedCall.extensionReceiver)
         }
 
-        private fun KtBinaryExpression.rightExpression(): Pair<KtExpression, Boolean>? {
-            val right = this.right ?: return null
-            return if (right is KtPrefixExpression) {
-                val base = right.baseExpression
-                if (base != null && right.operationToken == KtTokens.EXCL) base to true else null
-            } else {
-                right to false
-            }
+        override fun hasSmartCast(bindingContext: BindingContext): Boolean {
+            return bindingContext[BindingContext.IMPLICIT_RECEIVER_SMARTCAST, expression.calleeExpression] != null
         }
+    }
 
-        private fun KtDotQualifiedExpression.receiverReference(context: BindingContext): Pair<DeclarationDescriptor?, KotlinType?> {
-            val receiver = receiverExpression as? KtSimpleNameExpression
-            val declaration = context[REFERENCE_TARGET, receiver]
-            val declarationType = (declaration as? ValueDescriptor)?.type
-            return declaration to declarationType
-        }
+    class Name(val expression: KtNameReferenceExpression) : TargetChunk(Kind.NAME) {
+        override val name: String
+            get() = expression.getReferencedName()
 
-        private fun ResolvedCall<out CallableDescriptor>.implicitReceiverReference(): Pair<DeclarationDescriptor?, KotlinType?> {
-            val implicitReceiverValue = getImplicitReceiverValue()
-            val declaration = implicitReceiverValue?.declarationDescriptor
-            val declarationType = implicitReceiverValue?.type
-            return declaration to declarationType
+        override fun resolve(bindingContext: BindingContext) = bindingContext[BindingContext.REFERENCE_TARGET, expression]
+
+        override fun hasSmartCast(bindingContext: BindingContext): Boolean {
+            return expression.getQualifiedExpressionForSelectorOrThis().parenthesize()
+                .any { bindingContext[BindingContext.SMARTCAST, it] != null }
         }
+    }
+
+    abstract val name: String?
+    abstract fun resolve(bindingContext: BindingContext): Any?
+    abstract fun hasSmartCast(bindingContext: BindingContext): Boolean
+}
+
+private fun getSingleReceiver(dispatchReceiver: ReceiverValue?, extensionReceiver: ReceiverValue?): ReceiverValue? {
+    if (dispatchReceiver != null && extensionReceiver != null) {
+        // Sic! Functions such as 'isEmpty()' never have both dispatch and extension receivers
+        return null
+    }
+
+    return dispatchReceiver ?: extensionReceiver
+}
+
+private fun KtExpression.parenthesize(): Sequence<KtExpression> = sequence {
+    var current = this@parenthesize
+    while (true) {
+        yield(current)
+        current = (current.parent as? KtExpression)?.takeIf { KtPsiUtil.deparenthesizeOnce(it) === current } ?: break
     }
 }

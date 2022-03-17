@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(map: MutableMap<Int, String>?) {
-    val x = map.isNullOrEmpty()
-}
