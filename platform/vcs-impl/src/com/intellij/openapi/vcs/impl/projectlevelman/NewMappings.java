@@ -124,7 +124,7 @@ public final class NewMappings implements Disposable {
     if (activator != null) {
       boolean wasChanged = activator.activate();
       if (forceFireEvent || wasChanged) {
-        myProject.getMessageBus().syncPublisher(ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
+        BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
       }
     }
 
