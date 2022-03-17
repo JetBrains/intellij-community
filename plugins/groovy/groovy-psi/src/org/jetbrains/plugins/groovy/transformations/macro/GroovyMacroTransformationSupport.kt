@@ -43,6 +43,8 @@ interface GroovyMacroTransformationSupport {
    * the clients can provide custom keywords and type-checking errors.
    *
    * It is OK to depend on [computeType] and [computeStaticReference] here.
+   *
+   * **Node:** If some element within the macro is [isUntransformed], then Groovy will add its highlighting to the element.
    */
   fun computeHighlighting(macroCall: GrCall): List<HighlightInfo> = emptyList()
 
@@ -55,9 +57,9 @@ interface GroovyMacroTransformationSupport {
   /**
    * Allows to tune type inference algorithms within the macro-expanded code.
    *
-   * Macro expansion affects a correctly-parsed AST, and it means that the main Groovy type-checker is able to successfully run in the non-expanded code.
-   * It is expected that macro-expansion target contains regular Groovy code that will not be transformed, but the type-checker will not
-   * return sane results for it. That is where this method can be used.
+   * Macro expansion affects a correctly-parsed AST, and it means that the main Groovy type-checker
+   * is able to successfully run in the non-expanded code. Some parts of macro-expandable code should not be typechecked by Groovy,
+   * so that is where this method can be used.
    *
    * **Note:** If this method returns `null`, and [expression] is [isUntransformed],
    * then the main Groovy type-checker will handle the type of the [expression].
@@ -65,12 +67,16 @@ interface GroovyMacroTransformationSupport {
   fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? = null
 
   /**
-   * Allows to add references during the heavyweight resolve (i.e. methods and non-static variables).
+   * Allows to add references during the heavyweight resolve (i.e. methods and non-static-referencable variables).
    */
   fun processResolve(macroCall: GrMethodCall, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean = true
 
   /**
-   * Used to mimic a synthetic variable declaration
+   * Allows to mimic a synthetic variable declaration. Usually reference expressions do not serve as variables, but everything can happen
+   * during the macro expansion.
+   *
+   * Please avoid the invocation of heavyweight algorithms (plain reference resolve and typechecking) in implementation.
+   * Consider using [processResolve] if you need to.
    *
    * @see [org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget]
    */

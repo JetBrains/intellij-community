@@ -14,7 +14,7 @@ interface GroovyMacroTransformationSupportEx : GroovyMacroTransformationSupport 
    * Allows to add custom completion within the macro-expandable code.
    *
    * By default, regular Groovy completion is used within the macro.
-   * Consider using [CompletionResultSet.stopHere] if you want to get rid of it.
+   * Use [CompletionResultSet.stopHere] if you want to get rid of it.
    */
   fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet)
 
@@ -22,7 +22,8 @@ interface GroovyMacroTransformationSupportEx : GroovyMacroTransformationSupport 
    * Allows to define custom formatting rules within the macro-expandable code.
    *
    * By default, the code in macro will be untouched by the formatting actions.
-   * **Node:** There may be parts of macro-expanded code within the plain Groovy one.
+   *
+   * **Note:** There may be parts of macro-expanded code within the plain Groovy one.
    * In that case, you can customize the behavior of [FormattingContext.createBlock]
    */
   fun computeFormattingBlock(macroCall: GrMethodCall,

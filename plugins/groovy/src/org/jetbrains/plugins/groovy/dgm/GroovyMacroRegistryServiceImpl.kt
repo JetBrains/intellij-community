@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm
 
+import com.intellij.ProjectTopics
 import com.intellij.lang.properties.psi.PropertiesFile
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -14,6 +15,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.castSafelyTo
+import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -21,49 +23,69 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroModuleListener
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService
 
-class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistryService, Disposable {
+class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistryService {
 
-  private val availableModules: MutableMap<Module, MacroRegistry> = mutableMapOf()
+  @Volatile
+  private var availableModules: Lazy<Map<Module, MacroRegistry>> = getInitializer()
+
+  init {
+    val connection = project.messageBus.connect()
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, GroovyMacroModuleListener())
+  }
 
   override fun resolveAsMacro(call: GrMethodCall): PsiMethod? {
     val module = ModuleUtilCore.findModuleForPsiElement(call) ?: return null
     val invokedName = call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName ?: return null
-    val candidates = availableModules[module]?.filter { it.name == invokedName } ?: return null
+    val candidates = availableModules.value[module]?.filter { it.name == invokedName } ?: return null
     return candidates.find { it.canBeAppliedTo(call) }
   }
 
   override fun getAllMacros(context: PsiElement): List<PsiMethod> {
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyList()
-    return availableModules[module]?.toList() ?: emptyList()
+    return availableModules.value[module]?.toList() ?: emptyList()
   }
 
-  override fun refreshModule(module: Module) = DumbService.getInstance(project).runWithAlternativeResolveEnabled<Throwable> {
-    val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-    val extensionFiles = FileTypeIndex.getFiles(DGMFileType, scope)
-    val macroRegistry = mutableSetOf<PsiMethod>()
-    for (extensionVirtualFile in extensionFiles) {
-      val psi = PsiUtilBase.getPsiFile(project, extensionVirtualFile)
-      val inst = (psi as PropertiesFile).findPropertyByKey("extensionClasses")
-      val extensionClassName = inst?.value ?: continue
-      val extensionClass = JavaPsiFacade.getInstance(project).findClass(extensionClassName, scope) ?: continue
-      val macroMethods = extensionClass.methods.filter {
-        it.hasAnnotation(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO) &&
-        it.parameterList.parameters[0].type.equalsToText("org.codehaus.groovy.macro.runtime.MacroContext")
+  override fun refreshModule(module: Module) {
+    println("Refresh for ${module.name}")
+    availableModules = getInitializer()
+  }
+
+  private fun collectModuleRegistry(): Map<Module, MacroRegistry> {
+    val modules = mutableMapOf<Module, MacroRegistry>()
+    DumbService.getInstance(project).runWithAlternativeResolveEnabled<Throwable> {
+      findMacros(modules)
+    }
+    return modules
+  }
+
+  private fun findMacros(modules: MutableMap<Module, MacroRegistry>) {
+    for (module in ModuleManager.getInstance(project).modules) {
+      val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+      val extensionFiles = FileTypeIndex.getFiles(DGMFileType, scope)
+      val macroRegistry = mutableSetOf<PsiMethod>()
+      for (extensionVirtualFile in extensionFiles) {
+        val psi = PsiUtilBase.getPsiFile(project, extensionVirtualFile)
+        val inst = psi.castSafelyTo<PropertiesFile>()?.findPropertyByKey("extensionClasses")
+        val extensionClassName = inst?.value ?: continue
+        val extensionClass = JavaPsiFacade.getInstance(project).findClass(extensionClassName, scope) ?: continue
+        val macroMethods = extensionClass.methods.filter {
+          it.hasAnnotation(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO) &&
+          it.parameterList.parameters[0].typeElement != null &&
+          it.parameterList.parameters[0].type.equalsToText("org.codehaus.groovy.macro.runtime.MacroContext")
+        }
+        macroRegistry.addAll(macroMethods)
       }
-      macroRegistry.addAll(macroMethods)
-    }
-    if (macroRegistry.isNotEmpty()) {
-      availableModules[module] = macroRegistry
-    }
-    else {
-      availableModules.remove(module)
+      if (macroRegistry.isNotEmpty()) {
+        modules[module] = macroRegistry
+      }
     }
   }
 
-  override fun dispose() {
-    availableModules.clear()
+  fun getInitializer(): Lazy<Map<Module, MacroRegistry>> {
+    return lazyPub { collectModuleRegistry() }
   }
 }
 
