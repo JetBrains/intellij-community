@@ -25,7 +25,6 @@ object TeamCityCIServer : CIServer {
   }
 
   override fun publishArtifact(source: Path, artifactPath: String, artifactName: String) {
-    if (!isBuildRunningOnCI) return
     TeamCityClient.publishTeamCityArtifacts(source = source, artifactPath = artifactPath, artifactName = artifactName)
   }
 
