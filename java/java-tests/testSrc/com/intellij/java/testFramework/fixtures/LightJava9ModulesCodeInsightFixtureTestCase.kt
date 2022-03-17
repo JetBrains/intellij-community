@@ -23,7 +23,7 @@ abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsigh
   }
 
   protected fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
-    VfsTestUtil.createFile(module.root()!!, path, text)
+    VfsTestUtil.createFile(module.sourceRoot()!!, path, text)
 
   @JvmOverloads
   protected fun addTestFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =

@@ -23,33 +23,27 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
  * Test dependencies: 'm.test' -> 'm2'
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
-  enum class ModuleDescriptor(internal val moduleName: String, 
-                              internal val rootName: String?, 
-                              internal val testRootName: String?,
-                              internal val resourceRootName : String?) {
-    MAIN(TEST_MODULE_NAME, null, "test_src", null),
-    M2("light_idea_test_m2", "src_m2", null, null),
-    M3("light_idea_test_m3", "src_m3", null, null),
-    M4("light_idea_test_m4", "src_m4", null, null),
-    M5("light_idea_test_m5", "src_m5", null, null),
-    M6("light_idea_test_m6", "src_m6", null, "res_m6"),
-    M7("light_idea_test_m7", "src_m7", null, null),
-    M8("light_idea_test_m8", "src_m8", null, null),
-    M_TEST("light_idea_test_m_test", null, "m_test_src", null);
+  enum class ModuleDescriptor(internal val moduleName: String,
+                              internal val sourceRootName: String? = null,
+                              internal val testRootName: String? = null,
+                              internal val resourceRootName : String? = null) {
+    MAIN(TEST_MODULE_NAME, testRootName = "test_src"),
+    M2("light_idea_test_m2", sourceRootName = "src_m2"),
+    M3("light_idea_test_m3", sourceRootName = "src_m3"),
+    M4("light_idea_test_m4", sourceRootName = "src_m4"),
+    M5("light_idea_test_m5", sourceRootName = "src_m5"),
+    M6("light_idea_test_m6", sourceRootName = "src_m6", resourceRootName = "res_m6"),
+    M7("light_idea_test_m7", sourceRootName = "src_m7"),
+    M8("light_idea_test_m8", sourceRootName = "src_m8"),
+    M_TEST("light_idea_test_m_test", testRootName = "m_test_src");
 
-    fun root(): VirtualFile? = when {
-      this === MAIN -> LightPlatformTestCase.getSourceRoot()
-      rootName != null -> TempFileSystem.getInstance().findFileByPath("/${rootName}") ?: throw IllegalStateException("Cannot find /${rootName}")
-      else -> null
-    }
+    fun sourceRoot(): VirtualFile? = if (this === MAIN) LightPlatformTestCase.getSourceRoot() else findRoot(sourceRootName)
+    fun testRoot(): VirtualFile? = findRoot(testRootName)
+    fun resourceRoot(): VirtualFile? = findRoot(resourceRootName)
 
-    fun testRoot(): VirtualFile? =
-      if (testRootName == null) null
-      else TempFileSystem.getInstance().findFileByPath("/${testRootName}") ?: throw IllegalStateException("Cannot find /${testRootName}")
-
-    fun resourceRoot(): VirtualFile? =
-      if (resourceRootName == null) null
-      else TempFileSystem.getInstance().findFileByPath("/${resourceRootName}") ?: throw IllegalStateException("Cannot find /${resourceRootName}")
+    private fun findRoot(rootName: String?): VirtualFile? =
+      if (rootName == null) null
+      else TempFileSystem.getInstance().findFileByPath("/${rootName}") ?: throw IllegalStateException("Cannot find temp:///${rootName}")
   }
 
   override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -123,8 +117,8 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     if (descriptor !== ModuleDescriptor.MAIN) {
       model.sdk = sdk
     }
-    if (descriptor.rootName != null) {
-      val sourceRoot = createSourceRoot(module, descriptor.rootName)
+    if (descriptor.sourceRootName != null) {
+      val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
       registerSourceRoot(module.project, sourceRoot)
       model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
     }
@@ -142,7 +136,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
   fun cleanupSourceRoots() = runWriteAction {
     ModuleDescriptor.values().asSequence()
-      .flatMap { sequenceOf(if (it !== ModuleDescriptor.MAIN) it.root() else null, it.testRoot(), it.resourceRoot()) }
+      .flatMap { sequenceOf(if (it !== ModuleDescriptor.MAIN) it.sourceRoot() else null, it.testRoot(), it.resourceRoot()) }
       .filterNotNull()
       .flatMap { it.children.asSequence() }
       .forEach { it.delete(this) }

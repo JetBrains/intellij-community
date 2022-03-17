@@ -93,11 +93,11 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         -Data flow
          -Unused assignment
           -${ModuleDescriptor.M2.moduleName}
-           -${ModuleDescriptor.M2.rootName}/xxx/yyy
+           -${ModuleDescriptor.M2.sourceRootName}/xxx/yyy
             -ZZZ.groovy
              Assignment is not used
           -${ModuleDescriptor.M3.moduleName}
-           -${ModuleDescriptor.M3.rootName}/foo/bar
+           -${ModuleDescriptor.M3.sourceRootName}/foo/bar
             -Baz.groovy
              Assignment is not used
       """.trimIndent().replace('/', File.separatorChar))
