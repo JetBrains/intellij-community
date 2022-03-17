@@ -102,16 +102,20 @@ class ActionsLoader {
     return Pair.create(defaultGroup, customizer);
   }
 
-  static @Nullable Pair<Map<Long, ActionGroup>, Customizer> getToolWindowActionGroup(@NotNull String id) {
-    final @Nullable Map<Long, ActionGroup> actions = getActionGroup(IdeActions.GROUP_TOUCHBAR + id);
+  static @Nullable Pair<Map<Long, ActionGroup>, Customizer> getToolWindowActionGroup(@NotNull String toolWindowId) {
+    if ("Services".equals(toolWindowId)) {
+      LOG.debug("Services tool-window will use action-group from debug tool window");
+      toolWindowId = "Debug";
+    }
+    final @Nullable Map<Long, ActionGroup> actions = getActionGroup(IdeActions.GROUP_TOUCHBAR + toolWindowId);
     if (actions == null || actions.get(0L) == null) {
-      LOG.debug("null action group (or it doesn't contain main-layout) for tool window: %s", id);
+      LOG.debug("null action group (or it doesn't contain main-layout) for tool window: %s", toolWindowId);
       return null;
     }
 
     final Customizer customizer = new Customizer(
       TOOLWINDOW_CROSS_ESC ? new TBPanel.CrossEscInfo(TOOLWINDOW_EMULATE_ESC, TOOLWINDOW_PERSISTENT) : null,
-      getAutoCloseActions(id)
+      getAutoCloseActions(toolWindowId)
     );
     return Pair.create(actions, customizer);
   }
