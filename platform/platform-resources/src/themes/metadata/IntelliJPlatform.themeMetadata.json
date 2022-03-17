@@ -76,6 +76,11 @@
       "description": "Uses Documentation popup color from editor color scheme instead"
     },
     {
+      "key": "CompletionPopup.Body.insets",
+      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then bottom inset is not applied",
+      "since": "2022.2"
+    },
+    {
       "key": "CompletionPopup.infoForeground",
       "description": "Uses Label.infoForeground instead",
       "deprecated": true
@@ -124,6 +129,11 @@
       "key": "CompletionPopup.selectionInfoForeground",
       "description": "Not used, selection foreground doesn't change",
       "deprecated": true
+    },
+    {
+      "key": "CompletionPopup.selectionInnerInsets",
+      "description": "Inner insets in selection line (experimental UI only)",
+      "since": "2022.2"
     },
     {
       "key": "ContextHelp.fontSizeOffset",

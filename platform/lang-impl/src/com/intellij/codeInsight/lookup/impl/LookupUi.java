@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.util.ui.Advertiser;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -26,6 +25,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
@@ -35,11 +35,13 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -114,6 +116,11 @@ class LookupUi {
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     ComponentUtil.putClientProperty(myScrollPane.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
+    if (ExperimentalUI.isNewUI()) {
+      Insets bodyInsets = LookupCellRenderer.bodyInsets();
+      //noinspection UseDPIAwareBorders
+      myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, showBottomPanel ? 0 : bodyInsets.bottom, 0));
+    }
 
     lookup.getComponent().add(layeredPane, BorderLayout.CENTER);
 
