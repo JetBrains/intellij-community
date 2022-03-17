@@ -18,6 +18,8 @@ interface GHPRReviewDataProvider {
 
   val submitReviewCommentDocument: Document
 
+  val suggestedChangeCommitMessageDocument: Document
+
   @RequiresEdt
   fun loadPendingReview(): CompletableFuture<GHPullRequestPendingReview?>
 

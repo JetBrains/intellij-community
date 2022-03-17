@@ -19,7 +19,7 @@ class GHPRSuggestedChangeHelper(
   private val reviewDataProvider: GHPRReviewDataProvider,
   private val detailsDataProvider: GHPRDetailsDataProvider
 ) {
-  val submitReviewCommentDocument = reviewDataProvider.submitReviewCommentDocument
+  val suggestedChangeCommitMessageDocument = reviewDataProvider.suggestedChangeCommitMessageDocument
   val isCorrectBranch by lazy { SingleValueModel(isCorrectBranchWithPullRequestSource()) }
 
   init {

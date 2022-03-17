@@ -20,7 +20,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
@@ -31,6 +30,8 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
   : GHPRReviewDataProvider, Disposable {
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
+
+  override val suggestedChangeCommitMessageDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
 
   private val pendingReviewRequestValue = LazyCancellableBackgroundProcessValue.create {
     reviewService.loadPendingReview(it, pullRequestId)
