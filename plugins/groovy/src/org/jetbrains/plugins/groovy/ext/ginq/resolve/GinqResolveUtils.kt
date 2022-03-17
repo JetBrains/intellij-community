@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.castSafelyTo
 import com.intellij.util.lazyPub
+import org.jetbrains.plugins.groovy.ext.ginq.GINQ_EXISTS
 import org.jetbrains.plugins.groovy.ext.ginq.GinqSupport
 import org.jetbrains.plugins.groovy.ext.ginq.OVER_ORIGIN_INFO
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
@@ -45,12 +46,12 @@ object GinqResolveUtils : GinqSupport {
   }
 
   fun resolveToExists(place: PsiElement): PsiMethod? {
-    if (place !is GrMethodCall || place.callRefName != EXISTS) {
+    if (place !is GrMethodCall || place.callRefName != GINQ_EXISTS) {
       return null
     }
-    val method = GrLightMethodBuilder(place.manager, EXISTS)
+    val method = GrLightMethodBuilder(place.manager, GINQ_EXISTS)
     method.setReturnType(CommonClassNames.JAVA_LANG_BOOLEAN, place.resolveScope)
-    findQueryableMethod(place, EXISTS)?.let(method::setNavigationElement)
+    findQueryableMethod(place, GINQ_EXISTS)?.let(method::setNavigationElement)
     return method
   }
 
@@ -178,8 +179,6 @@ private val aggregateFunctions: Map<String, Pair<String, String>> = mapOf(
 )
 
 private const val DISTINCT: String = "distinct"
-
-private const val EXISTS: String = "exists"
 
 private const val OVER: String = "over"
 

@@ -41,6 +41,13 @@ const val KW_ORDERBY: String  = "orderby"
 const val KW_LIMIT: String  = "limit"
 const val KW_SELECT = "select"
 
+const val KW_ASC: String = "asc"
+const val KW_DESC: String = "desc"
+const val KW_NULLSFIRST: String = "nullsfirst"
+const val KW_NULLSLAST: String = "nullslast"
+
+const val GINQ_EXISTS: String = "exists"
+
 const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
   "org.apache.groovy.ginq.provider.collection.runtime.Queryable"
 

@@ -3,13 +3,17 @@ package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValuesManager.getCachedValue
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.ext.ginq.JOINS
+import org.jetbrains.plugins.groovy.ext.ginq.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
@@ -21,13 +25,39 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
-fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
+fun getTopParsedGinqTree(macroCall: GrCall): GinqExpression? {
+  return getTopParsedGinqInfo(macroCall).second
+}
+
+fun PsiElement.getClosestGinqTree(macroCall: GrMethodCall): GinqExpression? {
+  val top = getTopParsedGinqTree(macroCall) ?: return null
+  return ginqParents(macroCall, top).firstOrNull()
+}
+
+fun getTopParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
+  return getTopParsedGinqInfo(macroCall).first
+}
+
+private fun getTopParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
+  return getCachedValue(macroCall, INJECTED_GINQ_KEY, CachedValueProvider {
+    Result(doGetTopParsedGinqInfo(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
+  })
+}
+
+private fun doGetTopParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
+  val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
+                ?: macroCall.closureArguments.singleOrNull()
+                ?: return emptyList<ParsingError>() to null
+  return parseGinq(closure)
+}
+
+private fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
   val parser = GinqParser()
   statementsOwner.statements.forEach { it.accept(parser) }
   return gatherGinqExpression(parser.errors, parser.incompleteFrom, parser.container)
 }
 
-fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
+private fun parseGinqAsExpr(psiGinq: GrExpression): Pair<List<ParsingError>, GinqExpression?> =
   GinqParser().also(psiGinq::accept).run { gatherGinqExpression(errors, incompleteFrom, container) }
 
 private fun gatherGinqExpression(errors: MutableList<ParsingError>,
@@ -107,7 +137,7 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
       return super.visitMethodCall(methodCall)
     }
     if (methodCall.getStoredGinq() != null) {
-      // was parsed as standalone ginq somewhere above
+      // was parsed as a standalone ginq somewhere above
       return
     }
     val callName = methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
@@ -116,189 +146,137 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
     }
     val callKw = methodCall.refCallIdentifier()
     when (callName) {
-      "from", in JOINS -> {
-        if (callName == "from") {
-          incompleteFrom = true
-        }
-        val argument = methodCall.getSingleArgument<GrBinaryExpression>()?.takeIf { it.operationTokenType == KW_IN }
-        if (argument == null) {
-          recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.in.operator"))
-          return
-        }
-        val alias = argument.leftOperand.castSafelyTo<GrReferenceExpression>()
-        if (alias == null) {
-          recordError(argument.leftOperand, GroovyBundle.message("ginq.error.message.expected.alias"))
-        }
-        else {
-          markAsReferenceResolveTarget(alias)
-        }
-        val dataSource = argument.rightOperand
-        if (dataSource == null) {
-          recordError(argument.operationToken, GroovyBundle.message("ginq.error.message.expected.data.source"))
-        } else {
-          dataSource.markAsGinqUntransformed()
-        }
-        if (alias == null || dataSource == null) {
-          return
-        }
-        val expr = if (callName == "from") {
-          GinqFromFragment(callKw, alias, dataSource)
-        }
-        else {
-          GinqJoinFragment(callKw, alias, dataSource, null)
-        }
-        container.add(expr)
-      }
-      "on", "where", "having" -> {
-        val argument = methodCall.getSingleArgument<GrExpression>()
-        if (argument == null) {
-          recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.a.boolean.expression"))
-          return
-        } else {
-          argument.markAsGinqUntransformed()
-        }
-        if (callName == "on") {
-          val last = container.lastOrNull()
-          if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
-            if (last.keyword.text == "crossjoin") {
-              recordError(methodCall, GroovyBundle.message("ginq.error.message.on.should.not.be.provided.after.crossjoin"))
-            }
-            val newJoin = last.copy(onCondition = GinqOnFragment(callKw, argument))
-            container.removeLast()
-            container.add(newJoin)
-          }
-          else {
-            recordError(methodCall, GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
-          }
-        }
-        else if (callName == "where") {
-          container.add(GinqWhereFragment(callKw, argument))
-        }
-        else {
-          val last = container.lastOrNull()
-          if (last is GinqGroupByFragment && last.having == null) {
-            val newGroupBy = last.copy(having = GinqHavingFragment(callKw, argument))
-            container.removeLast()
-            container.add(newGroupBy)
-          }
-        }
-      }
-      "groupby" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map {
-          if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.castSafelyTo<GrClassTypeElement>())
-          else AliasedExpression(it, null)
-        }
-        if (arguments == null) {
-          recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.groupby.expected.a.list.of.expressions"))
-          return
-        }
-        arguments.forEach {
-          it.expression.markAsGinqUntransformed()
-        }
-        container.add(GinqGroupByFragment(callKw, arguments, null))
-      }
-      "orderby" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map(::getOrdering)
-        if (arguments == null) {
-          recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.orderby.expected.a.list.of.ordering.fields"))
-          return
-        }
-        arguments.forEach {
-          it.sorter.markAsGinqUntransformed()
-        }
-        container.add(GinqOrderByFragment(callKw, arguments))
-      }
-      "limit" -> {
-        val arguments = methodCall.collectExpressionArguments<GrExpression>()
-        if (arguments == null || arguments.isEmpty() || arguments.size > 2) {
-          recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.one.or.two.arguments.for.limit"))
-          return
-        }
-        arguments.forEach(GrExpression::markAsGinqUntransformed)
-        container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
-      }
-      "select" -> {
-        val distinct = methodCall.getSingleArgument<GrMethodCallExpression>()
-          ?.takeIf { it.invokedExpression is GrReferenceExpression && (it.invokedExpression as GrReferenceExpression).referenceName == "distinct" }
-        val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>())
-                        ?: return
-        val parsedArguments = arguments.map { arg ->
-          val deep = arg.skipParenthesesDownOrNull()
-          val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.castSafelyTo<GrClassTypeElement>() else arg to null
-          val windows = mutableListOf<GinqWindowFragment>()
-          aliased.accept(object: GroovyRecursiveElementVisitor() {
-            override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
-              val invoked = methodCallExpression.invokedExpression.castSafelyTo<GrReferenceExpression>()?.takeIf { it.referenceName == "over" } ?: return super.visitMethodCallExpression(methodCallExpression)
-              val qualifier = invoked.qualifierExpression ?: return super.visitMethodCallExpression(methodCallExpression)
-              val argument = methodCallExpression.argumentList.allArguments.takeIf { it.size <= 1 } ?: return super.visitMethodCallExpression(methodCallExpression)
-              val overKw = invoked.referenceNameElement ?: return super.visitMethodCallExpression(methodCallExpression)
-              if (argument.isEmpty()) {
-                windows.add(GinqWindowFragment(qualifier, overKw, null, emptyList(), null, null, emptyList()))
-              } else {
-                var partitionKw: PsiElement? = null
-                var partitionArguments: List<GrExpression> = emptyList()
-                var orderBy: GinqOrderByFragment? = null
-                var rowsOrRangeKw: PsiElement? = null
-                var rowsOrRangeArguments: List<GrExpression> = emptyList()
-                var localQualifier = argument.single()
-                while (localQualifier != null) {
-                  val call = localQualifier.castSafelyTo<GrMethodCall>()
-                  if (call == null) {
-                    if (localQualifier is GrReferenceExpression) {
-                      localQualifier = localQualifier.qualifierExpression
-                      continue
-                    } else {
-                      break
-                    }
-                  }
-                  val invokedInner = call.invokedExpression.castSafelyTo<GrReferenceExpression>() ?: break
-                  when (invokedInner.referenceName) {
-                    "range", "rows" -> {
-                      rowsOrRangeKw = invokedInner.referenceNameElement
-                      rowsOrRangeArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
-                      rowsOrRangeArguments.forEach { it.markAsGinqUntransformed() }
-                      localQualifier = invokedInner.qualifier
-                    }
-                    "partitionby" -> {
-                      partitionKw = invokedInner.referenceNameElement
-                      partitionArguments = call.argumentList.allArguments.toList().mapNotNull(GroovyPsiElement?::castSafelyTo)
-                      partitionArguments.forEach { it.markAsGinqUntransformed() }
-                      localQualifier = invokedInner.qualifier
-                    }
-                    "orderby" -> {
-                      val orderByKw = invokedInner.referenceNameElement!!
-                      val fields = call.argumentList.allArguments.toList().mapNotNull { it.castSafelyTo<GrExpression>()?.let(::getOrdering) }
-                      orderBy = GinqOrderByFragment(orderByKw, fields)
-                      orderBy.sortingFields.forEach { it.sorter.markAsGinqUntransformed() }
-                      localQualifier = invokedInner.qualifier
-                    }
-                    else -> break
-                  }
-                }
-                windows.add(GinqWindowFragment(qualifier, overKw, partitionKw, partitionArguments, orderBy, rowsOrRangeKw, rowsOrRangeArguments))
-              }
-              qualifier.markAsGinqUntransformed()
-              super.visitMethodCallExpression(methodCallExpression)
-            }
-          })
-          AggregatableAliasedExpression(aliased, windows, alias)
-        }
-        parsedArguments.forEach {
-          it.aggregatedExpression.markAsGinqUntransformed()
-          it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
-        }
-        container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
-      }
-      "exists" -> { methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement?.markAsGinqUntransformed() }
+      KW_FROM, in JOINS -> parseAsDataSource(methodCall, callName == KW_FROM, callKw)
+      KW_ON, KW_WHERE, KW_HAVING -> parseAsFilteringFragment(methodCall, callName, callKw)
+      KW_GROUPBY -> parseAsGroupBy(methodCall, callKw)
+      KW_ORDERBY -> parseAsOrderBy(methodCall, callKw)
+      KW_LIMIT -> parseAsLimit(methodCall, callKw)
+      KW_SELECT -> parseAsSelect(methodCall, callKw)
+      GINQ_EXISTS -> { /* it's fine to have exists as a top-level call */ }
       else -> recordError(methodCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement ?: methodCall.invokedExpression,
                           GroovyBundle.message("ginq.error.message.unrecognized.query"))
     }
   }
 
+  fun parseAsDataSource(methodCall: GrMethodCall, isFrom: Boolean, callKw: PsiElement) {
+    if (isFrom) {
+      incompleteFrom = true
+    }
+    val argument = methodCall.getSingleArgument<GrBinaryExpression>()?.takeIf { it.operationTokenType == KW_IN }
+    if (argument == null) {
+      recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.in.operator"))
+      return
+    }
+    val alias = argument.leftOperand.castSafelyTo<GrReferenceExpression>()
+    if (alias == null) {
+      recordError(argument.leftOperand, GroovyBundle.message("ginq.error.message.expected.alias"))
+    }
+    else {
+      markAsReferenceResolveTarget(alias)
+    }
+    val dataSource = argument.rightOperand
+    if (dataSource == null) {
+      recordError(argument.operationToken, GroovyBundle.message("ginq.error.message.expected.data.source"))
+    } else {
+      dataSource.markAsGinqUntransformed()
+    }
+    if (alias == null || dataSource == null) {
+      return
+    }
+    container.add(if (isFrom) GinqFromFragment(callKw, alias, dataSource) else GinqJoinFragment(callKw, alias, dataSource, null))
+  }
+
+  fun parseAsFilteringFragment(methodCall: GrMethodCall, callName: String, callKw: PsiElement) {
+    val argument = methodCall.getSingleArgument<GrExpression>()
+    if (argument == null) {
+      recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.a.boolean.expression"))
+      return
+    } else {
+      argument.markAsGinqUntransformed()
+    }
+    if (callName == KW_ON) {
+      val last = container.lastOrNull()
+      if (last is GinqJoinFragment && last.onCondition == null && argument is GrBinaryExpression) {
+        if (last.keyword.text == KW_CROSSJOIN) {
+          recordError(methodCall, GroovyBundle.message("ginq.error.message.on.should.not.be.provided.after.crossjoin"))
+        }
+        container.removeLast()
+        container.add(last.copy(onCondition = GinqOnFragment(callKw, argument)))
+      }
+      else {
+        recordError(methodCall, GroovyBundle.message("ginq.error.message.on.is.expected.after.join"))
+      }
+    }
+    else if (callName == KW_WHERE) {
+      container.add(GinqWhereFragment(callKw, argument))
+    }
+    else {
+      val last = container.lastOrNull()
+      if (last is GinqGroupByFragment && last.having == null) {
+        container.removeLast()
+        container.add(last.copy(having = GinqHavingFragment(callKw, argument)))
+      }
+    }
+  }
+
+  private fun parseAsGroupBy(methodCall: GrMethodCall, callKw: PsiElement) {
+    val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map {
+      if (it is GrSafeCastExpression) AliasedExpression(it.operand, it.castTypeElement?.castSafelyTo<GrClassTypeElement>())
+      else AliasedExpression(it, null)
+    }
+    if (arguments == null) {
+      recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.groupby.expected.a.list.of.expressions"))
+      return
+    }
+    arguments.forEach {
+      it.expression.markAsGinqUntransformed()
+    }
+    container.add(GinqGroupByFragment(callKw, arguments, null))
+  }
+
+  private fun parseAsOrderBy(methodCall: GrMethodCall, callKw: PsiElement) {
+    val arguments = methodCall.collectExpressionArguments<GrExpression>()?.map(::getOrdering)
+    if (arguments == null) {
+      recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.orderby.expected.a.list.of.ordering.fields"))
+      return
+    }
+    arguments.forEach { it.sorter.markAsGinqUntransformed() }
+    container.add(GinqOrderByFragment(callKw, arguments))
+  }
+
+  private fun parseAsLimit(methodCall: GrMethodCall, callKw: PsiElement) {
+    val arguments = methodCall.collectExpressionArguments<GrExpression>()
+    if (arguments == null || arguments.isEmpty() || arguments.size > 2) {
+      recordError(methodCall.argumentList, GroovyBundle.message("ginq.error.message.expected.one.or.two.arguments.for.limit"))
+      return
+    }
+    arguments.forEach(GrExpression::markAsGinqUntransformed)
+    container.add(GinqLimitFragment(callKw, arguments[0], arguments.getOrNull(1)))
+  }
+
+  private fun parseAsSelect(methodCall: GrMethodCall, callKw: PsiElement) {
+    val distinct = methodCall.getSingleArgument<GrMethodCallExpression>()
+      ?.takeIf { it.invokedExpression is GrReferenceExpression && (it.invokedExpression as GrReferenceExpression).referenceName == "distinct" }
+    val arguments = (if (distinct != null) distinct.collectExpressionArguments() else methodCall.collectExpressionArguments<GrExpression>())
+                    ?: return
+    val parsedArguments = arguments.map { arg ->
+      val deep = arg.skipParenthesesDownOrNull()
+      val (aliased, alias) = if (deep is GrSafeCastExpression) deep.operand to deep.castTypeElement?.castSafelyTo<GrClassTypeElement>() else arg to null
+      val windows = GinqWindowCollector().also { aliased.accept(it) }.windows
+      AggregatableAliasedExpression(aliased, windows, alias)
+    }
+    parsedArguments.forEach {
+      it.aggregatedExpression.markAsGinqUntransformed()
+      it.alias?.referenceElement?.let(::markAsReferenceResolveTarget)
+    }
+    container.add(GinqSelectFragment(callKw, distinct?.invokedExpression?.castSafelyTo<GrReferenceExpression>(), parsedArguments))
+  }
+
   override fun visitExpression(expression: GrExpression) {
     if (!isTopLevel && isApproximatelyGinq(expression)) {
       val (innerErrors) =
-        CachedValuesManager.getCachedValue(expression, INJECTED_GINQ_KEY, CachedValueProvider { CachedValueProvider.Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
+        getCachedValue(expression, INJECTED_GINQ_KEY,
+                       CachedValueProvider { Result(parseGinqAsExpr(expression), PsiModificationTracker.MODIFICATION_COUNT) })
       errors.addAll(innerErrors)
     }
     else {
@@ -308,7 +286,6 @@ private class GinqParser : GroovyRecursiveElementVisitor() {
   private fun recordError(element: PsiElement, message: @Nls String) {
     errors.add(element to message)
   }
-
 }
 
 private inline fun <reified T : GrExpression> GrMethodCall.getSingleArgument(): T? =
@@ -321,7 +298,6 @@ internal fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.ca
                                                            ?: invokedExpression
 internal val GrMethodCall.callRefName: String? get() = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
 
-// e is not ginq --> false
 private fun isApproximatelyGinq(e: PsiElement): Boolean {
   val available = listOf("select", "from")
   val qualifiers = generateSequence({ e }) {
@@ -332,15 +308,15 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
 
 private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
 
-fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
+internal fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
 
-fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second
+internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second
 
 private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
 
-fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORMED_ELEMENT, Unit)
+internal fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORMED_ELEMENT, Unit)
 
-fun PsiElement.isGinqUntransformed() = getUserData(GINQ_UNTRANSFORMED_ELEMENT) != null
+internal fun PsiElement.isGinqUntransformed() = getUserData(GINQ_UNTRANSFORMED_ELEMENT) != null
 
 fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
@@ -363,42 +339,16 @@ fun getOrdering(expr: GrExpression): Ordering {
     }
     else if (rightOperand is GrMethodCall && rightOperand.invokedExpression is GrReferenceExpression) {
       rightOperand.invokedExpression as GrReferenceExpression to
-        rightOperand.argumentList.expressionArguments.singleOrNull()?.takeIf { it.text == "nullsfirst" || it.text == "nullslast" }
+        rightOperand.argumentList.expressionArguments.singleOrNull()?.takeIf { it.text == KW_NULLSFIRST || it.text == KW_NULLSLAST }
     }
     else null to null
     return when (orderKw?.referenceName) {
-      "asc" -> Ordering.Asc(orderKw, nullsKw, expr.leftOperand)
-      "desc" -> Ordering.Desc(orderKw, nullsKw, expr.leftOperand)
+      KW_ASC -> Ordering.Asc(orderKw, nullsKw, expr.leftOperand)
+      KW_DESC -> Ordering.Desc(orderKw, nullsKw, expr.leftOperand)
       else -> Ordering.Asc(null, null, expr.leftOperand)
     }
   }
   else {
     return Ordering.Asc(null, null, expr)
   }
-}
-
-fun getParsedGinqTree(macroCall: GrCall): GinqExpression? {
-  return getParsedGinqInfo(macroCall).second
-}
-
-fun PsiElement.getClosestGinqTree(macroCall: GrMethodCall): GinqExpression? {
-  val top = getParsedGinqTree(macroCall) ?: return null
-  return ginqParents(macroCall, top).firstOrNull()
-}
-
-fun getParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
-  return getParsedGinqInfo(macroCall).first
-}
-
-private fun getParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-  return CachedValuesManager.getCachedValue(macroCall, INJECTED_GINQ_KEY, CachedValueProvider {
-    CachedValueProvider.Result(doGetParsedGinqTree(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
-  })
-}
-
-private fun doGetParsedGinqTree(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-  val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
-                ?: macroCall.closureArguments.singleOrNull()
-                ?: return emptyList<ParsingError>() to null
-  return parseGinq(closure)
 }

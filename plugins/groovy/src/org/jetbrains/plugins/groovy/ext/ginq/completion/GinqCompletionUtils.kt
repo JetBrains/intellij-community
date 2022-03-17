@@ -114,12 +114,12 @@ object GinqCompletionUtils {
     val call = position.parentOfType<GrMethodCall>() ?: return
     val callText = call.callRefName
     if (callText == KW_ORDERBY) {
-      addElement(lookupElement(ASC))
-      addElement(lookupElement(DESC))
+      addElement(lookupElement(KW_ASC))
+      addElement(lookupElement(KW_DESC))
     }
-    if (callText == ASC || callText == DESC) {
-      addElement(lookupElement(NULLSFIRST, false))
-      addElement(lookupElement(NULLSLAST, false))
+    if (callText == KW_ASC || callText == KW_DESC) {
+      addElement(lookupElement(KW_NULLSFIRST, false))
+      addElement(lookupElement(KW_NULLSLAST, false))
     }
   }
 
@@ -162,7 +162,7 @@ private fun getDataSourceInsertHandler(position: PsiElement, macroCall: GrMethod
 }
 
 private fun gatherIdentifiers(position: PsiElement, macroCall: GrMethodCall) : List<String> {
-  val topGinq = getParsedGinqTree(macroCall) ?: return emptyList()
+  val topGinq = getTopParsedGinqTree(macroCall) ?: return emptyList()
   val parents = position.ginqParents(macroCall, topGinq)
   val parentGinqIdentifiers = parents.drop(1)
     .flatMap { ginq -> ginq.getDataSourceFragments().mapNotNull { it.alias.referenceName } }
@@ -204,8 +204,3 @@ private fun lookupElement(keyword: String, position: PsiElement, methodCall: GrM
 private fun lookupElement(keyword: String, addSpace: Boolean = true): LookupElementBuilder {
   return LookupElementBuilder.create("$keyword${if (addSpace) " " else ""}").bold()
 }
-
-private const val ASC: String = "asc"
-private const val DESC: String = "desc"
-private const val NULLSFIRST: String = "nullsfirst"
-private const val NULLSLAST: String = "nullslast"

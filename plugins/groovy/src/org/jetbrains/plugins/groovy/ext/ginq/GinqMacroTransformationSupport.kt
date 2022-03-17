@@ -40,7 +40,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeHighlighting(macroCall: GrCall): List<HighlightInfo> {
-    val errors = getParsedGinqErrors(macroCall).mapNotNull {
+    val errors = getTopParsedGinqErrors(macroCall).mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(it.first)
         .descriptionAndTooltip(it.second)
@@ -60,7 +60,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {
-    val ginq = if (expression == macroCall) getParsedGinqTree(macroCall) else expression.getStoredGinq()
+    val ginq = if (expression == macroCall) getTopParsedGinqTree(macroCall) else expression.getStoredGinq()
     if (ginq != null) {
       return inferGeneralGinqType(macroCall, ginq, expression, expression == macroCall)
     }
@@ -74,7 +74,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   }
 
   override fun isUntransformed(macroCall: GrMethodCall, element: PsiElement): Boolean {
-    val tree = getParsedGinqTree(macroCall) ?: return false
+    val tree = element.getClosestGinqTree(macroCall) ?: return false
     val localRoots = tree.select.projections.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
     for (parent in element.parents(true)) {
       if (parent.isGinqRoot() || localRoots.contains(parent)) {
@@ -92,8 +92,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
                               state: ResolveState,
                               place: PsiElement): Boolean = with(GinqResolveUtils) {
     val name = ResolveUtil.getNameHint(processor) ?: return true
-    val topTree = getParsedGinqTree(macroCall) ?: return true
-    val tree = place.ginqParents(macroCall, topTree).first()
+    val tree = place.getClosestGinqTree(macroCall) ?: return true
     if (processor.shouldProcessMethods()) {
       val syntheticFunction = resolveToAggregateFunction(place, name)
                               ?: resolveInOverClause(place, name)
@@ -109,8 +108,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     return true
   }
 
-  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet) = with(
-    GinqCompletionUtils) {
+  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet)
+  = with(GinqCompletionUtils) {
     val position = parameters.position
     val tree = position.getClosestGinqTree(macroCall)
     if (tree == null) {
@@ -134,14 +133,14 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     if (node !is GrClosableBlock) {
       return super.computeFormattingBlock(macroCall, node, context)
     }
-    val topTree = getParsedGinqTree(macroCall) ?: return super.computeFormattingBlock(macroCall, node, context)
+    val topTree = getTopParsedGinqTree(macroCall) ?: return super.computeFormattingBlock(macroCall, node, context)
     val newContext = FormattingContext(context.settings, context.alignmentProvider, context.groovySettings, context.isForbidWrapping,
                                        context.isForbidNewLineInSpacing, GINQ_AWARE_GROOVY_BLOCK_PRODUCER)
     return produceGinqFormattingBlock(topTree, newContext, node)
   }
 
   override fun computeStaticReference(macroCall: GrMethodCall, element: PsiElement): ElementResolveResult<PsiElement>? {
-    val tree = getParsedGinqTree(macroCall) ?: return null
+    val tree = getTopParsedGinqTree(macroCall) ?: return null
     val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
     val hierarchy = element.ginqParents(macroCall, tree)
     for (ginq in hierarchy) {
