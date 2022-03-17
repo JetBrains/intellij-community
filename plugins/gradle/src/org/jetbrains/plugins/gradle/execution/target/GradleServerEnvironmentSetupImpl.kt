@@ -164,11 +164,11 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     for (localPath in localPathsToMap) {
       if (targetPathMapper != null && targetPathMapper.canReplaceLocal(localPath)) {
         val targetPath = targetPathMapper.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
+        mapperInitScript.append("ext.pathMapper.put(${toGroovyString(localPath)}, ${toGroovyString(targetPath)})\n")
       }
       else if (pathMappingSettings.canReplaceLocal(localPath)) {
         val targetPath = pathMappingSettings.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
+        mapperInitScript.append("ext.pathMapper.put(${toGroovyString(localPath)}, ${toGroovyString(targetPath)})\n")
       }
     }
 
@@ -179,7 +179,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     if (javaRuntime != null) {
       val targetJavaExecutablePath = arrayOf(javaRuntime.homePath, "bin", java).joinToString(platform.fileSeparator.toString())
       mapperInitScript.append(
-        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${toGroovyString(targetJavaExecutablePath)}\")\n")
+        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", ${toGroovyString(targetJavaExecutablePath)})\n")
     }
     else {
       mapperInitScript.append("ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${java}\")\n")
