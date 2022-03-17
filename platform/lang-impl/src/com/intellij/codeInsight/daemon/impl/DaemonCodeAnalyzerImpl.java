@@ -372,7 +372,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     HighlightingSession session = queuePassesCreation(textEditors, passesToIgnore);
 
     DaemonProgressIndicator progress = getUpdateProgress();
-    progress.checkCanceled(); // there can be PCE in FJP during queuePassesCreation
+    // there can be PCE in FJP during queuePassesCreation
+    // no PCE guarantees session is not null
+    progress.checkCanceled();
 
     try {
       long start = System.currentTimeMillis();
@@ -898,7 +900,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
-  @NotNull
   private HighlightingSession queuePassesCreation(@NotNull Collection<? extends FileEditor> fileEditors, int @NotNull [] passesToIgnore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (fileEditors.isEmpty()) {
@@ -923,25 +924,38 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
 
       Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+      if (editor != null && editor.getDocument().isInBulkUpdate()) {
+        // avoid restarts until bulk mode is finished and daemon restarted in DaemonListeners
+        stopProcess(false, editor.getDocument() +" is in bulk state");
+        return null;
+      }
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
       session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
     }
     Map<Document, List<FileEditor>> preferredFileEditorMap = createPreferredFileEditorMap(fileEditors);
 
-    doSubmit(fileEditors, passesToIgnore, modificationCountBefore, highlighters, progress, preferredFileEditorMap);
-    assert session != null : fileEditors;
+    if (session == null) {
+      stopProcess(true, "Couldn't create session for "+fileEditors);
+    }
+    else {
+      doSubmit(fileEditors, passesToIgnore, modificationCountBefore, highlighters, progress, preferredFileEditorMap);
+    }
     return session;
   }
 
   private void doSubmit(@NotNull Collection<? extends FileEditor> fileEditors,
-                         int @NotNull [] passesToIgnore,
-                         int modificationCountBefore,
-                         Map<FileEditor, BackgroundEditorHighlighter> highlighters,
-                         DaemonProgressIndicator progress,
-                         Map<Document, List<FileEditor>> preferredFileEditorMap) {
+                        int @NotNull [] passesToIgnore,
+                        int modificationCountBefore,
+                        @NotNull Map<FileEditor, BackgroundEditorHighlighter> highlighters,
+                        @NotNull DaemonProgressIndicator progress,
+                        @NotNull Map<Document, List<FileEditor>> preferredFileEditorMap) {
     JobLauncher.getInstance().submitToJobThread(() -> {
-      if (progress.isCanceled() || myProject.isDisposed()) {
-        stopProcess(false, "disposed in queuePassesCreation");
+      if (myProject.isDisposed()) {
+        stopProcess(false, "project disposed");
+        return;
+      }
+      if (progress.isCanceled()) {
+        stopProcess(true, "canceled in queuePassesCreation: "+progress.getCancellationTrace());
         return;
       }
       try {
@@ -1113,7 +1127,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     Collection<FileEditor> result = new HashSet<>(activeTextEditors.size());
     Set<VirtualFile> files = new HashSet<>(activeTextEditors.size());
-    if (!application.isUnitTestMode() && !myProject.isDefault()) {
+    if (!application.isUnitTestMode()) {
       // editors in tabs
       for (FileEditor tabEditor : myFileEditorManager.getSelectedEditorWithRemotes()) {
         if (!tabEditor.isValid()) continue;

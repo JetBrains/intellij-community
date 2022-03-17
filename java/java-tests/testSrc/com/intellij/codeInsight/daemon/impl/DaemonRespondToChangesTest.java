@@ -1966,6 +1966,48 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testDaemonMustDisableItselfDuringDocumentBulkModification() {
+    runWithReparseDelay(0, () -> {
+      configureByText(PlainTextFileType.INSTANCE, "");
+      Editor editor = getEditor();
+
+      Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
+      Set<Editor> collected = Collections.synchronizedSet(new HashSet<>());
+      DocumentUtil.executeInBulk(editor.getDocument(), () -> {
+        registerFakePass(applied, collected);
+
+        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        assertTrue(editorTracker.getActiveEditors().contains(editor));
+        assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
+
+        applied.clear();
+        collected.clear();
+
+        myDaemonCodeAnalyzer.restart(); // try to restart daemon
+
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() < start + 5000) {
+          assertEmpty(applied);  // it must not restart
+          assertEmpty(collected);
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      });
+
+      applied.clear();
+      collected.clear();
+
+      myDaemonCodeAnalyzer.restart(); // try to restart daemon
+
+      long start = System.currentTimeMillis();
+      while (System.currentTimeMillis() < start + 5000 && applied.isEmpty()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      assertNotEmpty(applied);  // it must restart outside bulk
+      assertNotEmpty(collected);
+    });
+  }
+
   public void testModificationInsideCodeBlockDoesNotRehighlightWholeFile() {
     configureByText(JavaFileType.INSTANCE, "class X { int f = \"error\"; int f() { int gg<caret> = 11; return 0;} }");
     List<HighlightInfo> errors = highlightErrors();
