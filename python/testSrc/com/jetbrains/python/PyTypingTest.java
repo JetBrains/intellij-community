@@ -279,7 +279,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testQualifiedTypeInStringLiteral() {
-    doTest("str",
+    doTest("LiteralString",
            """
              import typing
 
@@ -1300,7 +1300,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericUserFunctionWithManyParamsAndNestedCall() {
-    doTest("tuple[bool, int, str]",
+    doTest("tuple[bool, int, LiteralString]",
            """
              from typing import TypeVar
 
@@ -2350,7 +2350,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testTypeVarsNotSpecializedOnInheritanceDistinctTypeVars() {
-    doTest("tuple[int, str]",
+    doTest("tuple[int, LiteralString]",
            """
              from typing import Generic, TypeVar
 
@@ -2375,7 +2375,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testTypeVarsNotSpecializedOnInheritanceReusedTypeVars() {
-    doTest("tuple[int, str]",
+    doTest("tuple[int, LiteralString]",
            """
              from typing import Generic, TypeVar
 
@@ -2546,7 +2546,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDecoratorWithArgumentCalledAsFunction() {
-    doTest("(str) -> int",
+    doTest("(LiteralString) -> int",
            """
              from typing import Callable, TypeVar
 
@@ -2589,7 +2589,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53522
   public void testGenericIteratorParameterizedWithAnotherGeneric() {
-    doTest("Entry[str]",
+    doTest("Entry[LiteralString]",
            """
              from typing import Iterator, Generic, TypeVar
 
@@ -2673,7 +2673,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-50542
   public void testReusedTypeVarsInOppositeOrderDoNotCauseRecursiveSubstitution() {
-    doTest("str",
+    doTest("LiteralString",
            """
              from typing import TypeVar
                           

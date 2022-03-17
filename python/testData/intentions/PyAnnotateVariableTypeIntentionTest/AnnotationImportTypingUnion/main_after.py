@@ -1,8 +1,8 @@
-from typing import Union
+from typing import Union, LiteralString
 
 from lib import foo
 
 
 def func():
-    var: [Union[str, int]] = foo
+    var: [Union[LiteralString, int]] = foo
     var
