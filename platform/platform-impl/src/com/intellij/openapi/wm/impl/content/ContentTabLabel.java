@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.EngravedTextGraphics;
@@ -89,12 +90,15 @@ public class ContentTabLabel extends ContentLabel {
 
       super.setText(myText);
     } finally {
-      new SingleAlarm(() -> {
+      //noinspection ConstantConditions
+      if (myContent != null && !Disposer.isDisposed(myContent)) {
+        new SingleAlarm(() -> {
           ObjectUtils.consumeIfNotNull(getParent(), c -> {
             c.revalidate();
             c.repaint();
           });
-      }, 50, myContent, Alarm.ThreadToUse.SWING_THREAD).request();
+        }, 50, myContent, Alarm.ThreadToUse.SWING_THREAD).request();
+      }
     }
   }
 
