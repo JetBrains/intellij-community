@@ -801,7 +801,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
             final String renderersMessage = SetUserTypeRenderersCommand.createMessage(renderers);
             return getPythonConsoleBackendClient().setUserTypeRenderers(renderersMessage);
           },
-          true,
+          false,
           createRuntimeMessage(PyBundle.message("console.setting.user.type.renderers")),
           "Error in setUserTypeRenderersSettings():"
         );
