@@ -8,9 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.docking.impl.DockManagerImpl
 
 class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
 
@@ -21,6 +24,10 @@ class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
       escapeHandler = DiffEditorEscapeDelegatingAction(escapeHandler)
     }
     escapeHandler.registerCustomShortcutSet(CommonShortcuts.ESCAPE, editor.component, editor)
+
+    editor.putUserData(EditorWindow.HIDE_TABS, true)
+    editor.putUserData(FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW, true)
+    editor.putUserData(DockManagerImpl.SHOW_NORTH_PANEL, false)
   }
 }
 

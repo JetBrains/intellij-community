@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,8 +32,6 @@ abstract class DiffRequestProcessorEditorBase(
   private val panel = MyPanel(component)
 
   init {
-    putUserData(EditorWindow.HIDE_TABS, true)
-
     Disposer.register(disposable, Disposable {
       firePropertyChange(FileEditor.PROP_VALID, true, false)
     })

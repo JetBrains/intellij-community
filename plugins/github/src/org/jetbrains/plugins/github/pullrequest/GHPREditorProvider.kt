@@ -5,7 +5,6 @@ import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -30,7 +29,6 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         when (file) {
           is GHPRDiffVirtualFile -> {
             GHPRDiffFileEditor(project, dataProvider.diffRequestModel, file).also { editor ->
-              editor.putUserData(EditorWindow.HIDE_TABS, true)
               DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor.context)
             }
           }
@@ -41,7 +39,6 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         }
       }
       is GHNewPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext.newPRDiffModel, file).also { editor ->
-        editor.putUserData(EditorWindow.HIDE_TABS, true)
         DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor.context)
       }
       else -> error("Unsupported file type")
