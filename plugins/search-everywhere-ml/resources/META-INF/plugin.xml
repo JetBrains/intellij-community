@@ -48,6 +48,8 @@
 
     <statistician key="searchEverywhere"
                   implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereFileStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereActionStatistician"/>
   </extensions>
 
   <extensionPoints>

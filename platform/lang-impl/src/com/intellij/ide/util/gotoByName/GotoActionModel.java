@@ -536,10 +536,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return getFirstGroupName();
     }
 
+    @Nullable
+    public List<ActionGroup> getFirstGroup() {
+      return ContainerUtil.getFirstItem(myPaths);
+    }
+
     @Nls
     @Nullable
     private String getFirstGroupName() {
-      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      List<ActionGroup> path = getFirstGroup();
       return path != null ? getPathName(path) : null;
     }
 
@@ -648,6 +653,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull
     public MatchMode getMode() {
       return myMode;
+    }
+
+    @Nullable
+    public GroupMapping getGroupMapping() {
+      return myGroupMapping;
     }
 
     public int compareWeights(@NotNull ActionWrapper o) {

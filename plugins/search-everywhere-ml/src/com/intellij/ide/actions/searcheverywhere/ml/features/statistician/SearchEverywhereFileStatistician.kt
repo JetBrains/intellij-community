@@ -31,6 +31,6 @@ internal class SearchEverywhereFileStatistician : SearchEverywhereStatistician<A
 
   override fun getContext(element: Any): String? {
     val module = getFile(element)?.let { getModule(it) } ?: return null
-    return "searchEverywhere#${module.name}"
+    return "$contextPrefix#${module.name}"
   }
 }
