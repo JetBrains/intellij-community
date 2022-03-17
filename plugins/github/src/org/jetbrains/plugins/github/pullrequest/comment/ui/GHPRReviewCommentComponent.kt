@@ -18,7 +18,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
@@ -121,13 +121,11 @@ object GHPRReviewCommentComponent {
 
     private fun update() {
       val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
-      val commentComponent = if (GHSuggestedChangeInfo.containsSuggestedChange(comment.body)) {
-        val suggestedChangeInfo = GHSuggestedChangeInfo.create(thread.diffHunk, thread.filePath,
-                                                               thread.startLine ?: thread.line, thread.line)
-        commentComponentFactory.createCommentWithSuggestedChangeComponent(comment.body,
-                                                                          thread,
-                                                                          suggestedChangeInfo,
-                                                                          suggestedChangeHelper)
+      val commentComponent = if (GHSuggestedChange.containsSuggestedChange(comment.body)) {
+        val suggestedChange = GHSuggestedChange.create(comment.body,
+                                                       thread.diffHunk, thread.filePath,
+                                                       thread.startLine ?: thread.line, thread.line)
+        commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper)
       }
       else {
         commentComponentFactory.createCommentComponent(comment.body)
@@ -145,6 +143,7 @@ object GHPRReviewCommentComponent {
           pendingLabel.isVisible = true
           titlePane.setBody(authorLink)
         }
+
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
           titlePane.setBody(GithubBundle.message("pull.request.review.commented", authorLink,

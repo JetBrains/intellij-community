@@ -23,24 +23,24 @@ import java.nio.file.Path
 class GHSuggestedChangeApplier(
   private val project: Project,
   private val repository: GitRepository,
-  private val suggestedChange: String,
-  private val suggestedChangeInfo: GHSuggestedChangeInfo
+  private val suggestedChange: GHSuggestedChange
 ) {
   private val virtualBaseDir = repository.root
 
   fun applySuggestedChange(): ApplyPatchStatus {
-    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
+    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange)
     val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
 
     return patchApplier.execute(true, false)
   }
 
-  private fun createSuggestedChangePatchHunk(suggestedChangeContent: List<String>, suggestedChangeInfo: GHSuggestedChangeInfo): PatchHunk {
-    val suggestedChangePatchHunk = PatchHunk(suggestedChangeInfo.startLine, suggestedChangeInfo.endLine,
-                                             suggestedChangeInfo.startLine, suggestedChangeInfo.startLine + suggestedChangeContent.size - 1)
+  private fun createSuggestedChangePatchHunk(suggestedChange: GHSuggestedChange): PatchHunk {
+    val suggestedChangeContent = suggestedChange.cutSuggestedChangeContent()
+    val suggestedChangePatchHunk = PatchHunk(suggestedChange.startLine, suggestedChange.endLine,
+                                             suggestedChange.startLine, suggestedChange.startLine + suggestedChangeContent.size - 1)
 
-    suggestedChangeInfo.cutContextContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.CONTEXT, it)) }
-    suggestedChangeInfo.cutChangedContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.REMOVE, it)) }
+    suggestedChange.cutContextContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.CONTEXT, it)) }
+    suggestedChange.cutChangedContent().forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.REMOVE, it)) }
     suggestedChangeContent.forEach { suggestedChangePatchHunk.addLine(PatchLine(PatchLine.Type.ADD, it)) }
 
     return suggestedChangePatchHunk
@@ -48,7 +48,7 @@ class GHSuggestedChangeApplier(
 
   fun commitSuggestedChanges(commitMessage: String): ApplyPatchStatus {
     // Apply patch
-    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange, suggestedChangeInfo)
+    val suggestedChangePatch = createSuggestedChangePatch(suggestedChange)
     val patchApplier = PatchApplier(project, virtualBaseDir, listOf(suggestedChangePatch), null, null)
     val patchStatus = patchApplier.execute(true, false)
     if (patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
@@ -87,23 +87,15 @@ class GHSuggestedChangeApplier(
     return ApplyPatchStatus.SUCCESS
   }
 
-  private fun createSuggestedChangePatch(suggestedChange: String, suggestedChangeInfo: GHSuggestedChangeInfo): TextFilePatch {
-    val suggestedChangeContent = getSuggestedChangeContent(suggestedChange)
-    val suggestedChangePatchHunk = createSuggestedChangePatchHunk(suggestedChangeContent, suggestedChangeInfo)
+  private fun createSuggestedChangePatch(suggestedChange: GHSuggestedChange): TextFilePatch {
+    val suggestedChangePatchHunk = createSuggestedChangePatchHunk(suggestedChange)
 
     return TextFilePatch(Charset.defaultCharset()).apply {
-      beforeName = suggestedChangeInfo.filePath
-      afterName = suggestedChangeInfo.filePath
+      beforeName = suggestedChange.filePath
+      afterName = suggestedChange.filePath
       addHunk(suggestedChangePatchHunk)
     }
   }
 
   private fun createLocalFilePath(filename: String): LocalFilePath = LocalFilePath(Path.of(virtualBaseDir.path, filename), false)
-
-  private fun getSuggestedChangeContent(comment: String): List<String> {
-    return comment.lines()
-      .dropWhile { !it.startsWith("```suggestion") }
-      .drop(1)
-      .takeWhile { !it.startsWith("```") }
-  }
 }
