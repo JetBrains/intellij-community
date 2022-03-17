@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -19,11 +19,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 
 final class LineMarkerInfoHelper {
+
   private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
     candidate -> ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement());
   private static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
@@ -49,8 +50,7 @@ final class LineMarkerInfoHelper {
       return getExtensionPointName(DomUtil.getDomElement(tag));
     });
 
-  @NotNull
-  private static String getExtensionPointName(DomElement element) {
+  private static @NotNull String getExtensionPointName(DomElement element) {
     if (!(element instanceof ExtensionPoint)) return "?";
     return ((ExtensionPoint)element).getEffectiveQualifiedName();
   }
@@ -58,29 +58,26 @@ final class LineMarkerInfoHelper {
   private LineMarkerInfoHelper() {
   }
 
-  @NotNull
-  static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                                                                             @NotNull PsiElement element) {
+  static @NotNull RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
+                                                                                      @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.extension"),
                                       EXTENSION_NAMER);
   }
 
-  @NotNull
-  static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                                                                                  @NotNull PsiElement element) {
+  static @NotNull RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
+                                                                                           @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
                                       EXTENSION_POINT_NAMER);
   }
 
-  @NotNull
-  private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                                                                                  @NotNull PsiElement element,
-                                                                                  @Nls(capitalization = Nls.Capitalization.Title) String popup,
-                                                                                  NullableFunction<PointableCandidate, String> namer) {
+  private static @NotNull RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
+                                                                                           @NotNull PsiElement element,
+                                                                                           @Nls(capitalization = Nls.Capitalization.Title) String popup,
+                                                                                           NullableFunction<PointableCandidate, String> namer) {
     return NavigationGutterIconBuilder
-      .create(DevkitIcons.Gutter.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevKitIcons.Gutter.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(targets)
       .setPopupTitle(popup)
       .setNamer(namer)
@@ -88,9 +85,8 @@ final class LineMarkerInfoHelper {
       .createLineMarkerInfo(element);
   }
 
-  @NotNull
-  private static NullableFunction<PointableCandidate, String> createNamer(@PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String tooltipPatternPropertyName,
-                                                                          NotNullFunction<? super XmlTag, String> nameProvider) {
+  private static @NotNull NullableFunction<PointableCandidate, String> createNamer(@PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String tooltipPatternPropertyName,
+                                                                                   NotNullFunction<? super XmlTag, String> nameProvider) {
     return target -> {
       XmlTag tag = target.pointer.getElement();
       if (tag == null) {
