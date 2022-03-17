@@ -6,7 +6,8 @@ import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-data class GHSuggestedChangeInfo(
+data class GHSuggestedChange(
+  val commentBody: String,
   val patchHunk: PatchHunk,
   val filePath: String,
   val startLine: Int,
@@ -23,11 +24,18 @@ data class GHSuggestedChangeInfo(
     .takeLast(endLine - startLine + 1)
     .map { it.text }
 
+  fun cutSuggestedChangeContent(): List<String> {
+    return commentBody.lines()
+      .dropWhile { !it.startsWith("```suggestion") }
+      .drop(1)
+      .takeWhile { !it.startsWith("```") }
+  }
+
   companion object {
-    fun create(diffHunk: String, filePath: String, startLine: Int, endLine: Int): GHSuggestedChangeInfo {
+    fun create(commentBody: String, diffHunk: String, filePath: String, startLine: Int, endLine: Int): GHSuggestedChange {
       val patchHunk = parseDiffHunk(diffHunk, filePath)
 
-      return GHSuggestedChangeInfo(patchHunk, filePath, startLine - 1, endLine - 1)
+      return GHSuggestedChange(commentBody, patchHunk, filePath, startLine - 1, endLine - 1)
     }
 
     fun containsSuggestedChange(markdownText: String): Boolean = markdownText.lines().any { it.startsWith("```suggestion") }
