@@ -6,33 +6,25 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerGoToAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.pom.Navigatable
 import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerContributor.Companion.MODULE_DATA
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
-class GradleDependencyAnalyzerGoToAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val dependency = getDeclaredDependency(e) ?: return
-    val psiElement = dependency.psiElement ?: return
-    val navigationSupport = PsiNavigationSupport.getInstance()
-    val navigatable = navigationSupport.getDescriptor(psiElement) ?: return
-    if (navigatable.canNavigate()) {
-      navigatable.navigate(true)
-    }
-  }
+class GradleDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction() {
 
-  override fun update(e: AnActionEvent) {
-    val systemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID)
-    e.presentation.isEnabledAndVisible =
-      systemId == GradleConstants.SYSTEM_ID &&
-      getDeclaredDependency(e) != null
+  override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
+
+  override fun getNavigatable(e: AnActionEvent): Navigatable? {
+    val dependency = getDeclaredDependency(e) ?: return null
+    val psiElement = dependency.psiElement ?: return null
+    val navigationSupport = PsiNavigationSupport.getInstance()
+    return navigationSupport.getDescriptor(psiElement)
   }
 
   private fun getDeclaredDependency(e: AnActionEvent): DeclaredDependency? {
@@ -70,10 +62,5 @@ class GradleDependencyAnalyzerGoToAction : DumbAwareAction() {
     val moduleData = data.getUserData(MODULE_DATA) ?: return null
     val moduleManager = ModuleManager.getInstance(project)
     return moduleManager.findModuleByName(moduleData.ideGrouping)
-  }
-
-  init {
-    templatePresentation.icon = null
-    templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.go.to", "build.gradle")
   }
 }
