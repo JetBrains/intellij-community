@@ -121,8 +121,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun serverStateCheckFinished(state: ServerState) {
     when (state) {
-      ServerState.FileNotExists, ServerState.UpdateNeeded -> showEnableSyncDialog(false)
-      ServerState.UpToDate -> showEnableSyncDialog(true)
+      ServerState.FileNotExists -> showEnableSyncDialog(false)
+      ServerState.UpToDate, ServerState.UpdateNeeded -> showEnableSyncDialog(true)
       is ServerState.Error -> {
         if (state != SettingsSyncEnabler.State.CANCELLED) {
           showError(enableButton.component, message("notification.title.update.error"), state.message)
