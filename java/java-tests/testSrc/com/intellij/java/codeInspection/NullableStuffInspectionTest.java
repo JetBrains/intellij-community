@@ -405,4 +405,9 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
                        "}");
     doTest();
   }
+
+  public void testMapComputeLambdaAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 }
