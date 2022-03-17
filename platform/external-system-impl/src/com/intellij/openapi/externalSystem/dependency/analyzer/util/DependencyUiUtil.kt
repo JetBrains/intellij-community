@@ -17,6 +17,7 @@ import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBList
 import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JList
 import javax.swing.JTree
@@ -122,6 +123,7 @@ internal class DependencyList(
   dataProvider: DataProvider
 ) : AbstractDependencyList(model, dataProvider) {
   init {
+    ListUiUtil.Selection.installSelectionOnRightClick(this)
     PopupHandler.installPopupMenu(this, "ExternalSystem.DependencyAnalyzer.DependencyListGroup", DependencyAnalyzerView.ACTION_PLACE)
     setCellRenderer(DependencyListRenderer(showGroupIdProperty))
   }

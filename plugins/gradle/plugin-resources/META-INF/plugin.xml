@@ -184,7 +184,13 @@
     <action id="Gradle.ProjectViewDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ProjectViewDependencyAnalyzerAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="UML.Group"/>
     </action>
+    <action id="Gradle.DependencyAnalyzer.OpenConfig" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerOpenConfigAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
     <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
     </action>

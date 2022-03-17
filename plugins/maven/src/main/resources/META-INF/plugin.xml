@@ -627,7 +627,13 @@
     <action id="Maven.ProjectViewDependencyAnalyzer" class="org.jetbrains.idea.maven.project.actions.ProjectViewDependencyAnalyzerAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="UML.Group"/>
     </action>
+    <action id="Maven.DependencyAnalyzer.OpenConfig" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerOpenConfigAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
     <action id="Maven.DependencyAnalyzer.GoTo" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
     </action>
