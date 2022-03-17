@@ -50,14 +50,16 @@ class AsyncFilterRunner {
                            int endLine) {
     if (endLine < 0) return;
 
-    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, myEditor.getDocument()));
+    Document document = myEditor.getDocument();
+    long startStamp = document.getModificationStamp();
+    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
       highlightAvailableResults();
       return;
     }
 
-    Promise<?> promise = ReadAction.nonBlocking(this::runTasks).submit(ourExecutor);
+    Promise<?> promise = ReadAction.nonBlocking(this::runTasks).expireWhen(() -> document.getModificationStamp() != startStamp).submit(ourExecutor);
 
     if (isQuick(promise)) {
       highlightAvailableResults();
