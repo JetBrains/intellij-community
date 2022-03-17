@@ -72,7 +72,7 @@ public final class CommandLineProcessor {
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
       // do not check for .ipr files in the specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
-      ProjectUtil.FORCE_CHECK_DIRECTORY_KEY.set(options, Boolean.TRUE);
+      ProjectUtil.PREVENT_IPR_LOOKUP_KEY.set(options, Boolean.TRUE);
       OpenResult openResult = ProjectUtil.tryOpenOrImport(file, options);
       if (openResult instanceof OpenResult.Success) {
         project = ((OpenResult.Success)openResult).getProject();
