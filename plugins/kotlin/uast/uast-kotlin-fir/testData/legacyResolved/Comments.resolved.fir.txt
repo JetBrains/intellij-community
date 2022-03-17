@@ -296,7 +296,7 @@ interface Pizza {
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UReturnExpression -> UQualifiedReferenceExpression -> null: null
+UReturnExpression -> UQualifiedReferenceExpression -> Decompiled_Method: String
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang

@@ -4,7 +4,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = A)
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = B) -> PsiPackage:A.B: B
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = C) -> PsiPackage:A.B.C: C
 UTypeReferenceExpression (name = A.B.C.Foo) -> USimpleNameReferenceExpression (identifier = Foo) -> Kotlin_Light_Class:internal class Foo: Foo
-    UReturnExpression -> UQualifiedReferenceExpression -> null: null
+    UReturnExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: Foo
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:A.B.C: C
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:A.B: B
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = A) -> PsiPackage:A: A
