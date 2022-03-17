@@ -21,8 +21,12 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -158,7 +162,7 @@ public final class EventLog {
     String content = truncateLongString(showMore, notification.getContent());
 
     RangeMarker afterTitle = null;
-    boolean hasHtml = parseHtmlContent(addIndents(title, indent), notification, logDoc, showMore, links, lineSeparators);
+    boolean hasHtml = parseHtmlContent(addIndents(title, indent), notification, logDoc, showMore, links, lineSeparators, null, null);
     if (StringUtil.isNotEmpty(title)) {
       if (StringUtil.isNotEmpty(content)) {
         appendText(logDoc, ": ");
@@ -167,7 +171,7 @@ public final class EventLog {
     }
     int titleLength = logDoc.getTextLength();
 
-    hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators);
+    hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators, null, null);
 
     List<AnAction> actions = notification.getActions();
     if (!actions.isEmpty()) {
@@ -198,7 +202,7 @@ public final class EventLog {
       if (title.length() > 0 || content.length() > 0) {
         lineSeparators.add(logDoc.createRangeMarker(TextRange.from(logDoc.getTextLength(), 0)));
       }
-      hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators);
+      hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators, null, null);
     }
 
     String status = getStatusText(logDoc, showMore, lineSeparators, indent, hasHtml);
@@ -231,9 +235,11 @@ public final class EventLog {
     DocumentImpl logDoc = new DocumentImpl("",true);
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<>();
     List<RangeMarker> lineSeparators = new ArrayList<>();
+    List<RangeMarker> boldMarkers = new ArrayList<>();
+    List<RangeMarker> italicMarkers = new ArrayList<>();
 
-    boolean hasHtml =
-      parseHtmlContent(addIndents(notification.getContent(), ""), notification, logDoc, new AtomicBoolean(false), links, lineSeparators);
+    boolean hasHtml = parseHtmlContent(addIndents(notification.getContent(), ""), notification, logDoc, new AtomicBoolean(false), links,
+                                       lineSeparators, boldMarkers, italicMarkers);
 
     indentNewLines(logDoc, lineSeparators, null, hasHtml, "");
 
@@ -264,6 +270,20 @@ public final class EventLog {
           }
         };
         rangeHighlighter.createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, hyperlinkInfo);
+      }
+    }
+    highlightTags(boldMarkers, editor, Font.BOLD);
+    highlightTags(italicMarkers, editor, Font.ITALIC);
+  }
+
+  private static void highlightTags(List<RangeMarker> markers, @NotNull EditorEx editor, int fontType) {
+    if (!markers.isEmpty()) {
+      MarkupModelEx model = editor.getMarkupModel();
+      TextAttributes attributes = new TextAttributes(null, null, null, null, fontType);
+
+      for (RangeMarker marker : markers) {
+        model.addRangeHighlighterAndChangeAttributes(marker.getStartOffset(), marker.getEndOffset(), HighlighterLayer.SYNTAX, attributes,
+                                                     HighlighterTargetArea.EXACT_RANGE, false, null);
       }
     }
   }
@@ -347,7 +367,10 @@ public final class EventLog {
   private static boolean parseHtmlContent(String text, Notification notification,
                                           Document document,
                                           AtomicBoolean showMore,
-                                          Map<RangeMarker, HyperlinkInfo> links, List<RangeMarker> lineSeparators) {
+                                          Map<RangeMarker, HyperlinkInfo> links,
+                                          List<RangeMarker> lineSeparators,
+                                          List<RangeMarker> boldMarkers,
+                                          List<RangeMarker> italicMarkers) {
     String content = StringUtil.convertLineSeparators(text);
 
     int initialLen = document.getTextLength();
@@ -375,6 +398,18 @@ public final class EventLog {
           continue;
         }
       }
+      else {
+        String boldResult = parseTag(boldMarkers, document, content, tagMatcher, "<b>", "</b>");
+        if (boldResult != null) {
+          content = boldResult;
+          continue;
+        }
+        String italicResult = parseTag(italicMarkers, document, content, tagMatcher, "<i>", "</i>");
+        if (italicResult != null) {
+          content = italicResult;
+          continue;
+        }
+      }
 
       if (isTag(HTML_TAGS, tagStart)) {
         hasHtml = true;
@@ -394,6 +429,33 @@ public final class EventLog {
     }
     lineSeparators.removeIf(next -> next.getEndOffset() == document.getTextLength());
     return hasHtml;
+  }
+
+  private static String parseTag(List<RangeMarker> markers,
+                                 Document document,
+                                 String content,
+                                 Matcher tagMatcher,
+                                 String parseStartTag,
+                                 String parseEndTag) {
+    if (markers == null) {
+      return null;
+    }
+
+    String tagStart = tagMatcher.group();
+    if (!parseStartTag.equalsIgnoreCase(tagStart)) {
+      return null;
+    }
+
+    int end = content.indexOf(parseEndTag, tagMatcher.end());
+    if (end > 0) {
+      String text = content.substring(tagMatcher.end(), end).replaceAll(TAG_PATTERN.pattern(), "");
+      int textStart = document.getTextLength();
+      appendText(document, text);
+      markers.add(document.createRangeMarker(textStart, document.getTextLength()));
+      return content.substring(end + parseEndTag.length());
+    }
+
+    return null;
   }
 
   @NonNls private static final String[] HTML_TAGS =
