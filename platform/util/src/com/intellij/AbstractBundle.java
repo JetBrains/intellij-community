@@ -3,7 +3,6 @@ package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DefaultBundleService;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -27,9 +26,6 @@ import java.util.function.Supplier;
  */
 public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
-
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
 
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
@@ -131,22 +127,7 @@ public class AbstractBundle {
     return bundle;
   }
 
-  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
-    if (pathToBundle.equals(myPathToBundle)) {
-      return getResourceBundle(loader);
-    }
-
-    Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
-      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
-    ResourceBundle result = cache.get(pathToBundle);
-    if (result == null) {
-      result = resolveResourceBundle(pathToBundle, loader);
-      cache.put(pathToBundle, result);
-    }
-    return result;
-  }
-
-  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  protected final @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     return resolveResourceBundleWithFallback(
       () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
       loader, pathToBundle
@@ -170,10 +151,6 @@ public class AbstractBundle {
 
   protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
-  }
-
-  protected static void clearGlobalLocaleCache() {
-    ourCache.clear();
   }
 
   public void clearLocaleCache() {

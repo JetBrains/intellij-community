@@ -14,6 +14,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,6 +156,23 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
+
+  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
+    if (pathToBundle.isEmpty()) {
+      return getResourceBundle(loader);
+    }
+    Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
+      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
+    ResourceBundle result = cache.get(pathToBundle);
+    if (result == null) {
+      result = resolveResourceBundle(pathToBundle, loader);
+      cache.put(pathToBundle, result);
+    }
+    return result;
+  }
+
   /**
    * @deprecated used only by GUI form builder
    */
@@ -194,7 +212,7 @@ public class DynamicBundle extends AbstractBundle {
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
     if (langBundle != null) {
       ourLangTag = langBundle.locale;
-      clearGlobalLocaleCache();
+      ourCache.clear();
       ourBundlesForForms.clear();
     }
   }
