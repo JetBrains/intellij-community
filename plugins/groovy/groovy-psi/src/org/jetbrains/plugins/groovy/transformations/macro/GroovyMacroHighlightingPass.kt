@@ -38,7 +38,6 @@ private class GroovyMacroHighlightingPass(val file: GroovyFileBase, document: Do
         if (customHighlighting == null) {
           return super.visitMethodCall(call)
         }
-        // todo: caching
         for (highlightingInfo in customHighlighting) {
           addInfo(highlightingInfo)
         }

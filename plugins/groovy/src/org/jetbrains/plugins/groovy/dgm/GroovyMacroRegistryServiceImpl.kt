@@ -49,7 +49,6 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
   }
 
   override fun refreshModule(module: Module) {
-    println("Refresh for ${module.name}")
     availableModules = getInitializer()
   }
 
