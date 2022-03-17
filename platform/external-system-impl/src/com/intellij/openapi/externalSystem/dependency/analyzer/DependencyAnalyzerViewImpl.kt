@@ -184,8 +184,9 @@ class DependencyAnalyzerViewImpl(
       onBackgroundThread = {
         externalProject?.path?.let(contributor::getDependencies) ?: emptyList()
       },
-      onUiThread = {
-        dependencyModel = it
+      onUiThread = { dependencies ->
+        dependencyModel = dependencies
+          .collectAllDependencies()
           .createDependencyGroups()
       }
     )
@@ -254,7 +255,7 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun buildTree(dependencies: Iterable<Dependency>): DefaultMutableTreeNode? {
-    val dependenciesForTree = dependencies.flatMap { getTreePath(it) }.toSet()
+    val dependenciesForTree = dependencies.collectAllDependencies()
 
     if (dependenciesForTree.isEmpty()) {
       return null
@@ -292,6 +293,10 @@ class DependencyAnalyzerViewImpl(
       }
     }
     return rootNode
+  }
+
+  private fun Iterable<Dependency>.collectAllDependencies(): Set<Dependency> {
+    return flatMap { getTreePath(it) }.toSet()
   }
 
   private fun getTreePath(dependency: Dependency): List<Dependency> {
