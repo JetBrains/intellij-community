@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock
 
 class GinqFragmentContainerBlock(blocks : List<Block>, context: FormattingContext) :
   SyntheticGroovyBlock(blocks,
-                       Wrap.createWrap(WrapType.NONE, false),
+                       Wrap.createWrap(WrapType.NORMAL, false),
                        Indent.getNoneIndent(),
                        Indent.getIndent(Indent.Type.NONE, true, true),
                        context) {
@@ -16,7 +16,7 @@ class GinqFragmentContainerBlock(blocks : List<Block>, context: FormattingContex
     return if (child1 is GinqFragmentBlock && child2 is GinqFragmentBlock) {
       getUncertainFragmentSpacing(context.groovySettings.GINQ_GENERAL_CLAUSE_WRAP_POLICY)
     } else {
-      super.getSpacing(child1, child2)
+      GinqSpaces.laxSpace
     }
   }
 }

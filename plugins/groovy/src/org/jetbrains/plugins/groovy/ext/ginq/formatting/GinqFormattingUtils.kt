@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.ext.ginq.formatting
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
 import org.jetbrains.plugins.groovy.ext.ginq.ast.getStoredGinq
@@ -18,14 +19,31 @@ internal fun produceGinqFormattingBlock(ginq: GinqExpression,
   val topFragments = listOf(ginq.from) + ginq.joins + listOfNotNull(ginq.where, ginq.orderBy, ginq.groupBy, ginq.limit, ginq.select)
   val commonAlignment = Alignment.createAlignment()
   val fragmentBlocks = topFragments.map { GinqFragmentBlock(it, commonAlignment, context) }
-  val fragmentContainer = GinqFragmentContainerBlock(fragmentBlocks, context)
-  val remainingChildren: List<ASTNode> =
+  val ranges = fragmentBlocks.map { it.textRange }
+  val minOffset = ranges.minOf { it.startOffset }
+  val maxOffset = ranges.maxOf { it.endOffset }
+  val remainingChildren: MutableSet<ASTNode> =
     GroovyBlockGenerator.flattenChildren(
-      visibleChildren.filter { child -> fragmentBlocks.all { !it.textRange.intersects(child.textRange) } })
+      visibleChildren.filter { child -> fragmentBlocks.all { !it.textRange.intersects(child.textRange) } }).toMutableSet()
+  for (rootNode in fragmentBlocks.map { it.node }) {
+    var currentNode = rootNode.treeParent
+    while (currentNode != null && currentNode != node) {
+      for (child in GroovyBlockGenerator.visibleChildren(currentNode)) {
+        val childRange = child.textRange
+        if (ranges.all { !it.intersects(childRange) }) {
+          remainingChildren.add(child)
+        }
+      }
+      currentNode = currentNode.treeParent
+    }
+  }
   val remainingSubBlocks = remainingChildren.map {
     context.createBlock(it, Indent.getNoneIndent(), null)
   }
-  val allBlocks = (remainingSubBlocks + fragmentContainer).sortedBy { it.textRange.startOffset }
+  val inFragment = remainingSubBlocks.filter { TextRange(minOffset, maxOffset).contains(it.textRange) }
+  val outOfFragment = remainingSubBlocks - inFragment.toSet()
+  val fragmentContainer = GinqFragmentContainerBlock((fragmentBlocks + inFragment).sortedBy { it.textRange.startOffset }, context)
+  val allBlocks = (outOfFragment + fragmentContainer).sortedBy { it.textRange.startOffset }
 
   return SyntheticGroovyBlock(allBlocks, Wrap.createWrap(WrapType.NORMAL, false), Indent.getNoneIndent(), Indent.getNormalIndent(), context)
 }
@@ -52,5 +70,5 @@ object GinqSpaces {
   val forcedNewline: Spacing = Spacing.createSpacing(0, 0, 1, true, 2)
   val oneStrictSpace: Spacing = Spacing.createSpacing(1, 1, 0, false, 0)
   val emptySpace: Spacing = Spacing.createSpacing(0, 0, 0, false, 0)
-  val laxSpace: Spacing = Spacing.createSpacing(1, 1, 0, true, 2)
+  val laxSpace: Spacing = Spacing.createSpacing(0, 1, 0, true, 2)
 }

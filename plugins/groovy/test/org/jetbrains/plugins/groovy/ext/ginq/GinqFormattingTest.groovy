@@ -417,4 +417,22 @@ GQ {
 }
 ''')
   }
+
+  void testIncorrectGinq() {
+    checkFormatting('''\
+GQ {
+    from x in [1]
+    orderby x in
+    limit 1, 2
+    select x
+}
+''', '''\
+GQ {
+  from x in [1]
+  orderby x in
+      limit 1, 2
+  select x
+}
+''')
+  }
 }
