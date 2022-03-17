@@ -440,7 +440,7 @@ abstract class CompletionSession(
 
     protected open fun createLookupElementFactory(contextVariablesProvider: ContextVariablesProvider): LookupElementFactory {
         return LookupElementFactory(
-            basicLookupElementFactory, receiverTypes,
+            basicLookupElementFactory, parameters.editor, receiverTypes,
             callTypeAndReceiver.callType, inDescriptor, contextVariablesProvider
         )
     }
