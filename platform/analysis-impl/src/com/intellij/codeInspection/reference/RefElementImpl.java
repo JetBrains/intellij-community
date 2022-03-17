@@ -262,7 +262,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   public final synchronized void waitForInitialized() {
-    getRefManager().initializeIfNecessary(this);
+    if (isInitialized()) {
+      return;
+    }
+    initialize();
+    setInitialized(true);
+    getRefManager().fireNodeInitialized(this);
   }
 
   @Override

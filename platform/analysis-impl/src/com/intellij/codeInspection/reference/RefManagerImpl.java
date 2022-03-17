@@ -87,7 +87,6 @@ public class RefManagerImpl extends RefManager {
 
   private volatile BlockingQueue<Runnable> myTasks;
   private volatile List<Future<?>> myFutures;
-  private volatile ProgressIndicator myIndicator;
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -155,7 +154,16 @@ public class RefManagerImpl extends RefManager {
     return myScope;
   }
 
-  private void fireNodeInitialized(RefElement refElement) {
+  void fireNodeInitialized(RefElement refElement) {
+    if (!myIsInProcess || !isDeclarationsFound()) {
+      return;
+    }
+    final PsiElement psi = refElement.getPsiElement();
+    if (psi != null) {
+      for (RefManagerExtension<?> each : myExtensions.values()) {
+        each.onEntityInitialized(refElement, psi);
+      }
+    }
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onInitialize(refElement);
     }
@@ -431,7 +439,7 @@ public class RefManagerImpl extends RefManager {
     myFutures = new ArrayList<>();
     final Application application = ApplicationManager.getApplication();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    myIndicator = progressManager.getProgressIndicator();
+    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
     for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
       final Future<?> future = application.executeOnPooledThread(() -> {
         while (myTasks != null) {
@@ -440,7 +448,7 @@ public class RefManagerImpl extends RefManager {
             final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
             if (task != null) {
               DumbService.getInstance(myProject).runReadActionInSmartMode(
-                () -> progressManager.executeProcessUnderProgress(task, myIndicator)
+                () -> progressManager.executeProcessUnderProgress(task, progressIndicator)
               );
             }
           }
@@ -463,7 +471,6 @@ public class RefManagerImpl extends RefManager {
     }
     finally {
       myTasks = null; // remove any pending tasks
-      myIndicator = null;
       waitForTasksToComplete();
       myIsInProcess = false;
       if (myScope != null) {
@@ -690,30 +697,7 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> initializeIfNecessary(element)));
-  }
-
-  public void initializeIfNecessary(RefElementImpl element) {
-    boolean notify = false;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (element) {
-      if (!element.isInitialized()) {
-        element.initialize();
-        element.setInitialized(true);
-        if (ProgressManager.getInstance().getProgressIndicator() != myIndicator) {
-          return;
-        }
-        notify = true;
-      }
-    }
-    if (!notify) return;
-    final PsiElement psi = element.getPsiElement();
-    if (psi != null) {
-      for (RefManagerExtension<?> each : myExtensions.values()) {
-        each.onEntityInitialized(element, psi);
-      }
-    }
-    fireNodeInitialized(element);
+      element -> ReadAction.run(() -> element.waitForInitialized()));
   }
 
   private RefManagerExtension<?> getExtension(final Language language) {
