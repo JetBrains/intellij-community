@@ -5,11 +5,9 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService
 
 @Singleton
 class GinqTestUtils {
@@ -23,7 +21,4 @@ class GinqTestUtils {
     }
   }
 
-  static void setUp(CodeInsightTestFixture fixture) throws Exception {
-    fixture.project.getService(GroovyMacroRegistryService).refreshModule(fixture.module)
-  }
 }

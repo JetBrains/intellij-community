@@ -114,8 +114,8 @@ object GinqCompletionUtils {
     val call = position.parentOfType<GrMethodCall>() ?: return
     val callText = call.callRefName
     if (callText == KW_ORDERBY) {
-      addElement(lookupElement(KW_ASC))
-      addElement(lookupElement(KW_DESC))
+      addElement(lookupElement(KW_ASC, false))
+      addElement(lookupElement(KW_DESC, false))
     }
     if (callText == KW_ASC || callText == KW_DESC) {
       addElement(lookupElement(KW_NULLSFIRST, false))

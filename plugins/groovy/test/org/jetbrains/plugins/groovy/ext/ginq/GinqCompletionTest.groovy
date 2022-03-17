@@ -13,7 +13,6 @@ class GinqCompletionTest extends GroovyCompletionTestBase {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    GinqTestUtils.setUp(myFixture)
     myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
@@ -36,7 +35,7 @@ from x in
   void testSelect() {
     completeGinq('''\
 from x in [1]
-sele<caret>
+selec<caret>
 ''', '''\
 from x in [1]
 select
@@ -62,7 +61,7 @@ whe<caret>
 select x
 ''', '''\
 from x in [1] 
-where
+where 
 select x
 ''')
   }
@@ -88,7 +87,7 @@ select x
 ''', '''\
 from x in [1] 
 crossjoin y in [1]
-where
+where 
 select x
 ''')
   }

@@ -12,7 +12,6 @@ class GinqFormattingTest extends GroovyFormatterTestCase {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    GinqTestUtils.setUp(myFixture)
   }
 
   void doEnterTest(String before, String after) throws Throwable {

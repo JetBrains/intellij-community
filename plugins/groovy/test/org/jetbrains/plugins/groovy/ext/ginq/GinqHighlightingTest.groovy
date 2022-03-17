@@ -15,7 +15,6 @@ class GinqHighlightingTest extends GrHighlightingTestBase {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    GinqTestUtils.setUp(fixture)
     myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
