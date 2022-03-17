@@ -34,8 +34,8 @@ object GinqCompletionUtils {
     closure.expression.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitMethodCall(call: GrMethodCall) {
         super.visitMethodCall(call)
-        if (call.refCallIdentifier().text == KW_FROM) hasFrom = true
-        if (call.refCallIdentifier().text == KW_SELECT) hasSelect = true
+        if (call.callRefName == KW_FROM) hasFrom = true
+        if (call.callRefName == KW_SELECT) hasSelect = true
       }
     })
     if (!hasFrom) addElement(lookupElement(KW_FROM, macroCall, macroCall))
@@ -80,12 +80,12 @@ object GinqCompletionUtils {
     }
     if (closestFragmentUp != null) {
       val joinStartCondition: (GinqQueryFragment) -> Boolean = {
-        it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == "crossjoin")
+        it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == KW_CROSSJOIN)
       }
       if (joinStartCondition(closestFragmentUp)) {
         addAllElements(JOINS.map { lookupElement(it, position, macroCall) })
       }
-      if (closestFragmentUp is GinqJoinFragment && closestFragmentUp.onCondition == null && closestFragmentUp.keyword.text != "crossjoin") {
+      if (closestFragmentUp is GinqJoinFragment && closestFragmentUp.onCondition == null && closestFragmentUp.keyword.text != KW_CROSSJOIN) {
         addElement(lookupElement(KW_ON))
       }
       if (joinStartCondition(closestFragmentUp) && ginq.where == null) {
@@ -112,14 +112,14 @@ object GinqCompletionUtils {
 
   fun CompletionResultSet.addOrderbyDependentKeywords(position: PsiElement) {
     val call = position.parentOfType<GrMethodCall>() ?: return
-    val callText = call.refCallIdentifier().text
+    val callText = call.callRefName
     if (callText == KW_ORDERBY) {
-      addElement(lookupElement("asc"))
-      addElement(lookupElement("desc"))
+      addElement(lookupElement(ASC))
+      addElement(lookupElement(DESC))
     }
-    if (callText == "asc" || callText == "desc") {
-      addElement(lookupElement("nullsfirst", false))
-      addElement(lookupElement("nullslast", false))
+    if (callText == ASC || callText == DESC) {
+      addElement(lookupElement(NULLSFIRST, false))
+      addElement(lookupElement(NULLSLAST, false))
     }
   }
 
@@ -132,14 +132,14 @@ object GinqCompletionUtils {
     }
     if (overRoot != null) {
       if (overRoot.partitionKw == null) {
-        addElement(LookupElementBuilder.create("partitionby ").bold())
+        addElement(lookupElement("partitionby"))
       }
       if (overRoot.orderBy?.keyword == null) {
-        addElement(LookupElementBuilder.create("orderby ").bold())
+        addElement(lookupElement(KW_ORDERBY))
       }
       if (overRoot.rowsOrRangeKw == null) {
-        addElement(LookupElementBuilder.create("rows ").bold())
-        addElement(LookupElementBuilder.create("range ").bold())
+        addElement(lookupElement("rows"))
+        addElement(lookupElement("range"))
       }
     }
   }
@@ -148,7 +148,7 @@ object GinqCompletionUtils {
 private fun getDataSourceInsertHandler(position: PsiElement, macroCall: GrMethodCall) = InsertHandler<LookupElement> { context, lookupItem ->
   val parentIdentifiers = gatherIdentifiers(position, macroCall)
   val item = lookupItem.lookupString
-  val requiresOn = !item.contains(KW_FROM) && item != "crossjoin"
+  val requiresOn = !item.contains(KW_FROM) && item != KW_CROSSJOIN
   val template = TemplateManager.getInstance(context.project)
     .createTemplate("ginq_data_source_$item", "ginq", "$item\$NAME$ in \$DATA_SOURCE$${if (requiresOn) " on \$COND$" else ""}\$END$")
   template.addVariable("NAME", ReferenceNameExpression(emptyArray(), generateName(parentIdentifiers)), true)
@@ -197,10 +197,15 @@ private val windowInsertHandler = InsertHandler<LookupElement> { context, lookup
 
 private fun lookupElement(keyword: String, position: PsiElement, methodCall: GrMethodCall): LookupElementBuilder {
   return lookupElement(keyword).let {
-    if (keyword == KW_FROM || (keyword in JOINS && keyword != "crossjoin")) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
+    if (keyword == KW_FROM || (keyword in JOINS && keyword != KW_CROSSJOIN)) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
   }
 }
 
 private fun lookupElement(keyword: String, addSpace: Boolean = true): LookupElementBuilder {
   return LookupElementBuilder.create("$keyword${if (addSpace) " " else ""}").bold()
 }
+
+private const val ASC: String = "asc"
+private const val DESC: String = "desc"
+private const val NULLSFIRST: String = "nullsfirst"
+private const val NULLSLAST: String = "nullslast"

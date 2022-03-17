@@ -30,6 +30,8 @@ val JOINS : Set<String> = setOf(
   "fullhashjoin",
 )
 
+const val KW_CROSSJOIN: String = "crossjoin"
+
 const val KW_FROM: String = "from"
 const val KW_ON: String  = "on"
 const val KW_WHERE: String  = "where"

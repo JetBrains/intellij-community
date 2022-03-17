@@ -11,25 +11,20 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.castSafelyTo
-import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.ext.ginq.completion.GinqCompletionUtils
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.GINQ_AWARE_GROOVY_BLOCK_PRODUCER
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.produceGinqFormattingBlock
+import org.jetbrains.plugins.groovy.ext.ginq.highlighting.GinqHighlightingVisitor
 import org.jetbrains.plugins.groovy.ext.ginq.resolve.GinqResolveUtils
-import org.jetbrains.plugins.groovy.ext.ginq.types.inferDataSourceComponentType
 import org.jetbrains.plugins.groovy.ext.ginq.types.inferGeneralGinqType
 import org.jetbrains.plugins.groovy.ext.ginq.types.inferLocalReferenceExpressionType
 import org.jetbrains.plugins.groovy.ext.ginq.types.inferOverType
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -51,65 +46,17 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
         .descriptionAndTooltip(it.second)
         .textAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).create()
     }
-    val keywords = mutableListOf<PsiElement>()
-    val softKeywords = mutableListOf<PsiElement>()
-    val warnings = mutableListOf<Pair<PsiElement, @Nls String>>()
-    macroCall.accept(object : GroovyRecursiveElementVisitor() {
-      override fun visitElement(element: GroovyPsiElement) {
-        val nestedGinq = element.getStoredGinq()
-        if (nestedGinq != null) {
-          keywords.addAll(nestedGinq.getQueryFragments().map { it.keyword })
-          keywords.addAll(nestedGinq.select.projections.flatMap { projection ->
-            projection.windows.flatMap { listOfNotNull(it.overKw, it.rowsOrRangeKw, it.partitionKw, it.orderBy?.keyword) }
-          })
-          warnings.addAll(getTypecheckingWarnings(nestedGinq))
-          softKeywords.addAll((nestedGinq.orderBy?.sortingFields?.mapNotNull { it.orderKw } ?: emptyList()) +
-                              (nestedGinq.orderBy?.sortingFields?.mapNotNull { it.nullsKw } ?: emptyList()) +
-                              (nestedGinq.select.projections.flatMap { projection ->
-                                projection.windows.flatMap { window ->
-                                  window.orderBy?.sortingFields?.flatMap {
-                                    listOfNotNull(it.orderKw, it.nullsKw)
-                                  } ?: emptyList()
-                                }
-                              }))
-        }
-        super.visitElement(element)
-      }
-    })
-    return keywords.mapNotNull {
+    val visitor = GinqHighlightingVisitor()
+    macroCall.accept(visitor)
+    return visitor.keywords.mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
-    } + softKeywords.mapNotNull {
+    } + visitor.softKeywords.mapNotNull {
       val key = if (it.parent is GrMethodCall) GroovySyntaxHighlighter.STATIC_METHOD_ACCESS else GroovySyntaxHighlighter.STATIC_FIELD
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(key).create()
-    } + warnings.mapNotNull {
+    } + visitor.warnings.mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(it.first)
         .severity(HighlightSeverity.WARNING).textAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).descriptionAndTooltip(it.second).create()
     } + errors
-  }
-
-  private fun getTypecheckingWarnings(ginq: GinqExpression): Collection<Pair<PsiElement, @Nls String>> {
-    val dataSourceFragments = ginq.getDataSourceFragments()
-    val filteringFragments = ginq.getFilterFragments()
-    val filterResults = filteringFragments.mapNotNull { fragment ->
-      val type = fragment.filter.type
-      val parentCall = fragment.filter.parentOfType<GrMethodCall>()?.parentOfType<GrMethodCall>()?.invokedExpression?.castSafelyTo<GrReferenceExpression>()?.takeIf { it.referenceName == "exists" }
-      if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true && parentCall == null) {
-        fragment.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
-      }
-      else {
-        null
-      }
-    }
-    val dataSourceResults = dataSourceFragments.mapNotNull {
-      val type = inferDataSourceComponentType(it.dataSource.type)
-      if (type == null) {
-        it.dataSource to GroovyBundle.message("ginq.error.message.container.expected")
-      }
-      else {
-        null
-      }
-    }
-    return filterResults + dataSourceResults
   }
 
   override fun computeType(macroCall: GrMethodCall, expression: GrExpression): PsiType? {

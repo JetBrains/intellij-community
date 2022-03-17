@@ -43,14 +43,14 @@ internal val GINQ_AWARE_GROOVY_BLOCK_PRODUCER: GroovyBlockProducer = GroovyBlock
 internal fun getUncertainFragmentSpacing(policy: Int): Spacing =
   when (policy) {
     CommonCodeStyleSettings.WRAP_ALWAYS -> GinqSpaces.forcedNewline
-    CommonCodeStyleSettings.WRAP_AS_NEEDED -> GinqSpaces.laxSpacing
+    CommonCodeStyleSettings.WRAP_AS_NEEDED -> GinqSpaces.laxSpace
     CommonCodeStyleSettings.DO_NOT_WRAP -> GinqSpaces.oneStrictSpace
-    else -> GinqSpaces.laxSpacing
+    else -> GinqSpaces.laxSpace
   }
 
 object GinqSpaces {
   val forcedNewline: Spacing = Spacing.createSpacing(0, 0, 1, true, 2)
   val oneStrictSpace: Spacing = Spacing.createSpacing(1, 1, 0, false, 0)
   val emptySpace: Spacing = Spacing.createSpacing(0, 0, 0, false, 0)
-  val laxSpacing: Spacing = Spacing.createSpacing(1, 1, 0, true, 2)
+  val laxSpace: Spacing = Spacing.createSpacing(1, 1, 0, true, 2)
 }
