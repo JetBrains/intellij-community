@@ -74,7 +74,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
       val languageLevel = LanguageLevel.forElement(element)
       val types = setOfNotNull(builtinCache.getStringType(languageLevel), builtinCache.getByteStringType(languageLevel),
                                builtinCache.getUnicodeType(languageLevel))
-      if (types.contains(type)) return true
+      if (types.contains(type) || type is PyLiteralStringType) return true
       return types.filterIsInstance<PyUnionType>().any { it.members.contains(type) }
     }
 

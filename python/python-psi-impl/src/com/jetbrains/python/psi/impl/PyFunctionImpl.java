@@ -304,6 +304,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                 PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
               return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
             }
+
+            if (receiverClassType.getPyClass() == returnClassType.getPyClass() &&
+                returnClassType instanceof PyLiteralStringType &&
+                "str".equals(receiverClassType.getName())) {
+              return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
+            }
           }
         }
         else if (allowCoroutineOrGenerator &&

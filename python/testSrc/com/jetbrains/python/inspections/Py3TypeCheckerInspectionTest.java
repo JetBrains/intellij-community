@@ -298,7 +298,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
              \s
-          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
+          Weak1(1, <warning descr="Expected type 'int', got 'LiteralString' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
 
 
           @attr.s
@@ -318,7 +318,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0, type=int)
               z = attr.ib(default=attr.Factory(list), type=typing.List[int])
              \s
-          Strong(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list[int]', got 'list[str]' instead">["str"]</warning>)"""
+          Strong(1, <warning descr="Expected type 'int', got 'LiteralString' instead">"str"</warning>, <warning descr="Expected type 'list[int]', got 'list[LiteralString]' instead">["str"]</warning>)"""
       )
     );
   }
@@ -425,9 +425,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import Annotated
                    A = Annotated[bool, 'Some constraint']
-                   a: A = <warning descr="Expected type 'bool', got 'str' instead">'str'</warning>
+                   a: A = <warning descr="Expected type 'bool', got 'LiteralString' instead">'str'</warning>
                    b: A = True
-                   c: Annotated[bool, 'Some constraint'] = <warning descr="Expected type 'bool', got 'str' instead">'str'</warning>
+                   c: Annotated[bool, 'Some constraint'] = <warning descr="Expected type 'bool', got 'LiteralString' instead">'str'</warning>
                    d: Annotated[str, 'Some constraint'] = 'str'
                    """);
   }
@@ -535,7 +535,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def a(q: int) -> str: ...
 
 
-                   expr = Y(a, '1').f(<warning descr="Expected type 'int', got 'str' instead">"42"</warning>)
+                   expr = Y(a, '1').f(<warning descr="Expected type 'int', got 'LiteralString' instead">"42"</warning>)
                    """);
   }
 
@@ -620,7 +620,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
 
 
-                   add(bar)("42", <warning descr="Expected type 'int', got 'str' instead">"42"</warning>, True)""");
+                   add(bar)("42", <warning descr="Expected type 'int', got 'LiteralString' instead">"42"</warning>, True)""");
   }
 
   // PY-49935
@@ -800,9 +800,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    res2 = twice(a_int_b_str, b="A", a=1)
 
-                   res3 = twice(a_int_b_str, <warning descr="Expected type 'int', got 'str' instead">"A"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+                   res3 = twice(a_int_b_str, <warning descr="Expected type 'int', got 'LiteralString' instead">"A"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
 
-                   res4 = twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'str' instead">a="A"</warning>)""");
+                   res4 = twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'LiteralString' instead">a="A"</warning>)""");
   }
 
   // PY-50403
@@ -1086,13 +1086,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    myClass.foo(subClass)
                    myClass.foo(42)
                    myClass.foo(None)
-                   myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)
+                   myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'LiteralString' instead">""</warning>)
 
                    subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'MyClass' instead">myClass</warning>)
                    subClass.foo(subClass)
                    subClass.foo(42)
                    subClass.foo(None)
-                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)""");
+                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'LiteralString' instead">""</warning>)""");
   }
 
   // PY-53104
@@ -1365,7 +1365,107 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-53612
-  public void testLiteralStringInPlaceOrStr() {
+  public void testLiteralStringInPlaceOfStr() {
     doTest();
+  }
+
+  // PY-53612
+  public void testLiteralStringEqualsToStr() {
+    doTestByText("""
+                   from typing_extensions import LiteralString
+                   literal_string: LiteralString
+                   s: str = literal_string
+                   literal_string: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">s</warning>
+                   literal_string: LiteralString = "hello"
+                   """);
+  }
+
+  // PY-53612
+  public void testLiteralStringAddition() {
+    doTestByText("""
+                   from typing_extensions import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+                                                                    
+                   expect_literal_string("foo" + "bar")
+                   literal_string: LiteralString
+                   expect_literal_string(literal_string + "bar")
+                             
+                   literal_string2: LiteralString
+                   expect_literal_string(literal_string + literal_string2)
+                             
+                   plain_string: str
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">literal_string + plain_string</warning>)
+                   """);
+  }
+
+  // PY-53612
+  public void testLiteralStringJoin() {
+    doTestByText("""
+                   from typing import List
+                   from typing_extensions import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+                   expect_literal_string(",".join(["foo", "bar"]))
+                   literal_string: LiteralString
+                   expect_literal_string(literal_string.join(["foo", "bar"]))
+                   literal_string2: LiteralString
+                   expect_literal_string(literal_string.join([literal_string, literal_string2]))
+                             
+                   xs: List[LiteralString]
+                   expect_literal_string(literal_string.join(xs))
+                   plain_string: str
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">plain_string.join([literal_string, literal_string2])</warning>)
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">literal_string.join([plain_string, literal_string2])</warning>)
+                   """);
+  }
+
+  // PY-38873
+  public void testTypedDictWithListField() {
+    doTestByText("""
+                   from typing import TypedDict, List, LiteralString
+                   Movie = TypedDict('Movie', {'address': List[str]}, total=False)
+                   class Movie2(TypedDict, total=False):
+                       address: List[str]
+                   movie = Movie()
+                   movie2 = Movie2()
+                   s1: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">movie['address'][0]</warning>
+                   s2: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">movie2['address'][0]</warning>
+                   """);
+  }
+
+  // PY-53612
+  public void testLiteralInPlaceOfLiteralString() {
+    doTestByText("""
+                   from typing import LiteralString, Literal
+                   def literal_identity(s: LiteralString) -> LiteralString:
+                       return s
+                   hello: Literal["hello"] = "hello"
+                   y1 = literal_identity(hello) # no warning expected
+                   """);
+  }
+
+  // PY-53612
+  public void testStrInPlaceOfLiteralStringWithFString() {
+    doTestByText("""
+                   from typing import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+                   plain_string: str
+                   literal_string: LiteralString
+                   expect_literal_string(f"hello {literal_string}")
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">f"hello {plain_string}"</warning>)
+                   """);
+  }
+
+  // PY-53612
+  public void testGenericSubstitutionWithLiteralString() {
+    doTestByText("""
+                   from typing import TypeVar, LiteralString
+                   T = TypeVar('T')
+                   def calc(a: T, b: T):
+                       pass
+                   plain_string: str
+                   literal_string: LiteralString
+                   calc('literal string', plain_string)
+                   #calc(literal_string, plain_string) # treat LiteralStrings as str in generic substitution todo lada uncomment
+                   """);
   }
 }

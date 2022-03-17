@@ -866,7 +866,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile libFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("mod.py"));
 
     final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
-    assertType("tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
+    assertType("tuple[int, None, LiteralString]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
     assertNotParsed(libFile);
   }
 
