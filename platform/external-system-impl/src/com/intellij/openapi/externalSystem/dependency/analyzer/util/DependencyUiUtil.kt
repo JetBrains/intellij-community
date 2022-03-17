@@ -213,5 +213,5 @@ internal class DependencyGroup(val variances: List<Dependency>) {
   val isOmitted by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Omitted>().isNotEmpty() }
   val hasWarnings by lazy { warnings.isNotEmpty() }
 
-  override fun toString() = "s${scopes.size} v${variances.size} $data"
+  override fun toString() = data.toString()
 }
