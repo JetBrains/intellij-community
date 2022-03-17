@@ -20,7 +20,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComm
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeInfo
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
@@ -38,7 +37,6 @@ object GHPRReviewCommentComponent {
              comment: GHPRReviewCommentModel,
              reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
-             repositoryDataService: GHPRRepositoryDataService,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
              showResolvedMarker: Boolean = true): JComponent {
 
@@ -67,8 +65,9 @@ object GHPRReviewCommentComponent {
       isOpaque = false
     }
 
-    Controller(project, thread, comment,
-               repositoryDataService, suggestedChangeHelper,
+    Controller(project,
+               thread, comment,
+               suggestedChangeHelper,
                titlePane, pendingLabel, resolvedLabel, commentPanel,
                showResolvedMarker)
 
@@ -107,7 +106,6 @@ object GHPRReviewCommentComponent {
   private class Controller(private val project: Project,
                            private val thread: GHPRReviewThreadModel,
                            private val comment: GHPRReviewCommentModel,
-                           private val repositoryDataService: GHPRRepositoryDataService,
                            private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
@@ -129,8 +127,7 @@ object GHPRReviewCommentComponent {
         commentComponentFactory.createCommentWithSuggestedChangeComponent(comment.body,
                                                                           thread,
                                                                           suggestedChangeInfo,
-                                                                          suggestedChangeHelper,
-                                                                          repositoryDataService)
+                                                                          suggestedChangeHelper)
       }
       else {
         commentComponentFactory.createCommentComponent(comment.body)
@@ -163,7 +160,6 @@ object GHPRReviewCommentComponent {
               thread: GHPRReviewThreadModel,
               reviewDataProvider: GHPRReviewDataProvider,
               avatarIconsProvider: GHAvatarIconsProvider,
-              repositoryDataService: GHPRRepositoryDataService,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
               showResolvedMarkerOnFirstComment: Boolean = true)
     : (GHPRReviewCommentModel) -> JComponent {
@@ -172,7 +168,6 @@ object GHPRReviewCommentComponent {
         project,
         thread, comment,
         reviewDataProvider, avatarIconsProvider,
-        repositoryDataService,
         suggestedChangeHelper,
         showResolvedMarkerOnFirstComment)
     }

@@ -41,7 +41,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCompo
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
@@ -60,7 +59,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
-                                       private val repositoryDataService: GHPRRepositoryDataService,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
@@ -171,7 +169,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(project, it,
                                                  reviewDataProvider, avatarIconsProvider,
-                                                 repositoryDataService,
                                                  reviewDiffComponentFactory,
                                                  selectInToolWindowHelper, suggestedChangeHelper,
                                                  currentUser)
