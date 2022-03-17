@@ -526,6 +526,15 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  fun testAutomaticModuleFromManifestHighlighting() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+    addFile("p/B.java", "package p; public class B {}", M7)
+    addFile("module-info.java", "module M4 { exports p; }", M7)
+    highlight("A.java", """
+        public class A extends p.B {}
+        """.trimIndent(), M6, false)
+  }
+
   fun testLightModuleDescriptorCaching() {
     val libClass = myFixture.javaFacade.findClass("pkg.lib2.LC2", ProjectScope.getLibrariesScope(project))!!
     val libModule = JavaModuleGraphUtil.findDescriptorByElement(libClass)!!

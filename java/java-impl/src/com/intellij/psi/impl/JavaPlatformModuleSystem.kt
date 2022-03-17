@@ -83,7 +83,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
+
+    var useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
+    if (useModule is LightJavaModule) {
+      useModule = null
+    }
 
     if (targetModule != null) {
       if (targetModule == useModule) {
