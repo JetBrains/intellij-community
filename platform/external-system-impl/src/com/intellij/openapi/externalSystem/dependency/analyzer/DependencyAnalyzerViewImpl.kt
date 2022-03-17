@@ -24,6 +24,7 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
@@ -302,7 +303,8 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun Iterable<Dependency>.createDependencyGroups(): List<DependencyGroup> =
-    groupBy { it.data.getGroup() }
+    sortedWith(Comparator.comparing({ it.data }, DependencyDataComparator(showDependencyGroupId)))
+      .groupBy { it.data.getGroup() }
       .map { DependencyGroup(it.value) }
 
   fun createComponent(): JComponent {
@@ -441,6 +443,24 @@ class DependencyAnalyzerViewImpl(
       ExternalSystemProjectNotificationAware.whenNotificationChanged(project, {
         listener(get())
       }, parentDisposable)
+  }
+
+  private class DependencyDataComparator(private val showDependencyGroupId: Boolean) : Comparator<Dependency.Data> {
+    override fun compare(o1: Dependency.Data, o2: Dependency.Data): Int {
+      val text1 = o1.getDisplayText(showDependencyGroupId)
+      val text2 = o2.getDisplayText(showDependencyGroupId)
+      return when (o1) {
+        is Dependency.Data.Module -> when (o2) {
+          is Dependency.Data.Module -> NaturalComparator.INSTANCE.compare(text1, text2)
+          is Dependency.Data.Artifact -> -1
+        }
+
+        is Dependency.Data.Artifact -> when (o2) {
+          is Dependency.Data.Module -> 1
+          is Dependency.Data.Artifact -> NaturalComparator.INSTANCE.compare(text1, text2)
+        }
+      }
+    }
   }
 
   companion object {
