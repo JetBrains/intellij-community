@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotif
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyGroup.Companion.hasWarnings
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -142,7 +143,7 @@ class DependencyAnalyzerViewImpl(
     val showDependencyWarnings = showDependencyWarnings
     return filter { dependency -> dependencyDataFilter in dependency.data.getDisplayText(showDependencyGroupId) }
       .filter { dependency -> dependency.scope in dependencyScopeFilter }
-      .filter { dependency -> if (showDependencyWarnings) dependency.status.any { it is Dependency.Status.Warning } else true }
+      .filter { dependency -> if (showDependencyWarnings) dependency.hasWarnings else true }
   }
 
   private fun updateExternalProjectsModel() {
@@ -187,9 +188,11 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun updateFilteredDependencyModel() {
-    val filteredDependencyGroups = dependencyModel
-      .map { DependencyGroup(it.variances.filterDependencies()) }
-      .filter { it.variances.isNotEmpty() }
+    val filteredDependencyGroups = dependencyModel.asSequence()
+      .map { it.variances.filterDependencies() }
+      .filter { it.isNotEmpty() }
+      .map { DependencyGroup(it) }
+      .toList()
     dependencyListModel.replaceAll(filteredDependencyGroups)
 
     val filteredDependencies = filteredDependencyGroups.flatMap { it.variances }
