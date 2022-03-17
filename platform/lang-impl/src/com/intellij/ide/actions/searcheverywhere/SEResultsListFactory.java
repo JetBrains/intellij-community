@@ -98,7 +98,6 @@ abstract class SEResultsListFactory {
     }
 
     AppUIUtil.targetToDevice(component, list);
-    component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
 
     if (ExperimentalUI.isNewUI()) {
       Color rowBackground = selected ? unselectedBackground : component.getBackground();
@@ -112,6 +111,8 @@ abstract class SEResultsListFactory {
       }
       UIUtil.setOpaqueRecursively(component, false);
       component = selectablePanel;
+    } else {
+      component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
     }
 
     return component;
