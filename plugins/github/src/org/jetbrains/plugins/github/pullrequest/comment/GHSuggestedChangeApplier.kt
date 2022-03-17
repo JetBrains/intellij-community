@@ -14,19 +14,18 @@ import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCommitOptions
 import git4idea.index.GitIndexUtil
+import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.nio.charset.Charset
 import java.nio.file.Path
 
 class GHSuggestedChangeApplier(
   private val project: Project,
+  private val repository: GitRepository,
   private val suggestedChange: String,
-  private val suggestedChangeInfo: GHSuggestedChangeInfo,
-  repositoryDataService: GHPRRepositoryDataService
+  private val suggestedChangeInfo: GHSuggestedChangeInfo
 ) {
-  private val repository = repositoryDataService.remoteCoordinates.repository
   private val virtualBaseDir = repository.root
 
   fun applySuggestedChange(): ApplyPatchStatus {

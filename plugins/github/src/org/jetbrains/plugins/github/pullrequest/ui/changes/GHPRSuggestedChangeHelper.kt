@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 class GHPRSuggestedChangeHelper(
   project: Project,
   parentDisposable: Disposable,
-  private val repository: GitRepository,
+  val repository: GitRepository,
   private val reviewDataProvider: GHPRReviewDataProvider,
   private val detailsDataProvider: GHPRDetailsDataProvider
 ) {

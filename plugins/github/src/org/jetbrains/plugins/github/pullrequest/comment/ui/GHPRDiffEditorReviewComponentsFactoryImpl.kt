@@ -14,7 +14,6 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewCom
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -24,7 +23,6 @@ class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
                      private val reviewDataProvider: GHPRReviewDataProvider,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
-                     private val repositoryDataService: GHPRRepositoryDataService,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                      private val currentUser: GHUser)
@@ -32,7 +30,7 @@ internal constructor(private val project: Project,
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
     GHPRReviewThreadComponent.create(project, thread,
-                                     reviewDataProvider, avatarIconsProvider, repositoryDataService,
+                                     reviewDataProvider, avatarIconsProvider,
                                      suggestedChangeHelper,
                                      currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
