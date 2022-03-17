@@ -208,21 +208,26 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
   private fun doRunExecuteAction(console: LanguageConsoleView) {
-  val doc = myConsoleView.editorDocument
-  val endMarker = doc.createRangeMarker(doc.textLength, doc.textLength)
-  endMarker.isGreedyToLeft = false
-  endMarker.isGreedyToRight = true
-  val isComplete = myEnterHandler.handleEnterPressed(console.consoleEditor)
-  if (isComplete || consoleCommunication.isWaitingForInput) {
-
-    deleteString(doc, endMarker)
-    if (shouldCopyToHistory(console)) {
-      copyToHistoryAndExecute(console)
+    val doc = myConsoleView.editorDocument
+    val endMarker = doc.createRangeMarker(doc.textLength, doc.textLength)
+    endMarker.isGreedyToLeft = false
+    endMarker.isGreedyToRight = true
+    val isComplete = myEnterHandler.handleEnterPressed(console.consoleEditor)
+    if (isComplete || consoleCommunication.isWaitingForInput) {
+      deleteString(doc, endMarker)
+      if (shouldCopyToHistory(console)) {
+        (console as? PythonConsoleView)?.let { pythonConsole ->
+          pythonConsole.flushDeferredText()
+          pythonConsole.storeExecutionCounterLineNumber(myIpythonInputPromptCount,
+                                                        pythonConsole.historyViewer.document.lineCount +
+                                                        console.consoleEditor.document.lineCount)
+        }
+        copyToHistoryAndExecute(console)
+      }
+      else {
+        processLine(myConsoleView.consoleEditor.document.text)
+      }
     }
-    else {
-      processLine(myConsoleView.consoleEditor.document.text)
-    }
-  }
   }
 
   private fun copyToHistoryAndExecute(console: LanguageConsoleView) = super.runExecuteAction(console)

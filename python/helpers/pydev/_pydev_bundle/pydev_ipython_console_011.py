@@ -126,7 +126,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
 
     def patch_stdout_if_needed(self):
         if INLINE_OUTPUT_SUPPORTED:
-            patch_stdout()
+            patch_stdout(self)
 
     # In the PyDev Console, GUI control is done via hookable XML-RPC server
     @staticmethod
