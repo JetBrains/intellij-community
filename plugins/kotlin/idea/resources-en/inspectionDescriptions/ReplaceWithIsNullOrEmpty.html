@@ -1,14 +1,14 @@
 <html>
 <body>
-<p>Reports null and empty checks can be simplified.</p>
-<p>The quick-fix replaces the null and empty check with the <code>isNullOrEmpty</code> call.</p>
+<p>Reports combination of <code>null</code> and emptiness checks that can be simplified into a single check.</p>
+<p>The quick-fix replaces highlighted checks with a combined check call, such as <code>isNullOrEmpty()</code>.</p>
 <p><b>Example:</b></p>
 <pre><code>
   fun test(list: List&lt;Int>?) {
       if (list == null || list.isEmpty()) {
-          println(1)
+          println("List is empty!")
       } else {
-          println(2)
+          println(list.joinToString())
       }
   }
 </code></pre>
@@ -16,9 +16,9 @@
 <pre><code>
   fun test(list: List&lt;Int>?) {
       if (list.isNullOrEmpty()) {
-          println(1)
+          println("List is empty!")
       } else {
-          println(2)
+          println(list.joinToString())
       }
   }
 </code></pre>
