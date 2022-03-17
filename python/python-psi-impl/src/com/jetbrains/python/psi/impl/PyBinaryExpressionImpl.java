@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -164,7 +165,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       final boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
       final List<PyType> resultTypes = !matchedTypes.isEmpty() ? matchedTypes : types;
       if (!resultTypes.isEmpty()) {
-        final PyType result = PyUnionType.union(resultTypes);
+        final PyType result = bothArgumentsAreLiteralStrings(matchedTypes, context) ? resultTypes.get(0) : PyUnionType.union(resultTypes);
         return bothOperandsAreKnown ? result : PyUnionType.createWeakType(result);
       }
     }
@@ -172,6 +173,16 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       return PyBuiltinCache.getInstance(this).getBoolType();
     }
     return null;
+  }
+
+  private boolean bothArgumentsAreLiteralStrings(List<PyType> matchedTypes, TypeEvalContext context) {
+    PyExpression left = getLeftExpression();
+    PyType leftType = left != null ? context.getType(left) : null;
+    PyExpression right = getRightExpression();
+    PyType rightType = right != null ? context.getType(right) : null;
+    return leftType instanceof PyLiteralStringType &&
+           rightType instanceof PyLiteralStringType &&
+           ContainerUtil.exists(matchedTypes, it -> it instanceof PyLiteralStringType);
   }
 
   @Override

@@ -449,6 +449,9 @@
                  key="enable.numpy.pyi.stubs"/>
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true"
                  description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
+    <registryKey key="python.type.hints.literal.string" defaultValue="true"
+                 description="When enabled, activates LiteralString inference for Python string literals" />
+
   </extensions>
 
   <extensionPoints>

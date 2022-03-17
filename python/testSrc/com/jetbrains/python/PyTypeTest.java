@@ -4283,7 +4283,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        doTest("int | str",
+        doTest("int | LiteralString",
                """
                  from typing import TypedDict
                  class A(TypedDict, total=False):
@@ -4418,7 +4418,7 @@ public class PyTypeTest extends PyTestCase {
   public void testFunctionReturnGeneric() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("(Any, str, T3) -> T3",
+      () -> doTest("(Any, LiteralString, T3) -> T3",
                    """
                      from typing import Callable, TypeVar
 
