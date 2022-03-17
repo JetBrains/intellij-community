@@ -2,14 +2,13 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
 
-abstract class DependencyAnalyzerAction : AnAction(), DumbAware {
+abstract class DependencyAnalyzerAction : DumbAwareAction() {
 
   abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
 
