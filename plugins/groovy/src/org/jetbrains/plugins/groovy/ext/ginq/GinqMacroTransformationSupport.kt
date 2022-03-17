@@ -20,8 +20,11 @@ import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.ext.ginq.completion.GinqCompletionUtils
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.GINQ_AWARE_GROOVY_BLOCK_PRODUCER
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.produceGinqFormattingBlock
-import org.jetbrains.plugins.groovy.ext.ginq.resolve.resolveToCustomMember
-import org.jetbrains.plugins.groovy.ext.ginq.types.*
+import org.jetbrains.plugins.groovy.ext.ginq.resolve.GinqResolveUtils
+import org.jetbrains.plugins.groovy.ext.ginq.types.inferDataSourceComponentType
+import org.jetbrains.plugins.groovy.ext.ginq.types.inferGeneralGinqType
+import org.jetbrains.plugins.groovy.ext.ginq.types.inferLocalReferenceExpressionType
+import org.jetbrains.plugins.groovy.ext.ginq.types.inferOverType
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -32,15 +35,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.*
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupportEx
 
 internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupportEx {
 
   override fun isApplicable(macro: PsiMethod): Boolean {
-    return macro.name in ginqMethods && macro.containingClass?.name == "GinqGroovyMethods"
+    return macro.name in GINQ_METHODS && macro.containingClass?.name == "GinqGroovyMethods"
   }
 
   override fun computeHighlighting(macroCall: GrCall): List<HighlightInfo> {
@@ -142,71 +143,27 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
   override fun processResolve(macroCall: GrMethodCall,
                               processor: PsiScopeProcessor,
                               state: ResolveState,
-                              place: PsiElement): Boolean {
+                              place: PsiElement): Boolean = with(GinqResolveUtils) {
     val name = ResolveUtil.getNameHint(processor) ?: return true
     val topTree = getParsedGinqTree(macroCall) ?: return true
     val tree = place.ginqParents(macroCall, topTree).first()
-    if (name == "distinct" && processor.shouldProcessMethods() && tree.select.distinct == place) {
-      val call = GrLightMethodBuilder(macroCall.manager, "distinct")
-      val method = JavaPsiFacade.getInstance(macroCall.project)
-        .findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, macroCall.resolveScope)
-        ?.findMethodsByName("distinct", false)?.singleOrNull()
-      if (method != null) {
-        call.navigationElement = method
-      }
-      val resultTypeCollector = LinkedHashMap<String, Lazy<PsiType>>()
-      val typeParameters = mutableListOf<PsiTypeParameter>()
-      for ((i, arg) in tree.select.projections.withIndex()) {
-        val typeParameter = call.addTypeParameter("T$i")
-        val typeParameterType = typeParameter.type()
-        call.addParameter("expr$i", typeParameterType)
-        if (arg.alias != null) {
-          typeParameters.add(typeParameter)
-          resultTypeCollector[arg.alias.text] = lazy(LazyThreadSafetyMode.NONE) { typeParameterType }
-        }
-      }
-      val clazz = JavaPsiFacade.getInstance(macroCall.project).findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD,
-                                                                         macroCall.resolveScope)
-      call.returnType = clazz?.let {
-        GrSyntheticNamedRecordClass(typeParameters, resultTypeCollector, resultTypeCollector.keys.toList(), it).type()
-      }
-
-      return processor.execute(call, state)
-    }
     if (processor.shouldProcessMethods()) {
-      val aggregate = resolveToAggregateFunction(place, name)
-                      ?: resolveInOverClause(place, name)
-                      ?: resolveToExists(place)
-      if (aggregate != null) {
-        return processor.execute(aggregate, state)
+      val syntheticFunction = resolveToAggregateFunction(place, name)
+                              ?: resolveInOverClause(place, name)
+                              ?: resolveToExists(place)
+                              ?: resolveToDistinct(place, name, tree)
+      if (syntheticFunction != null) {
+        return processor.execute(syntheticFunction, state)
       }
     }
     if (processor.shouldProcessProperties() || processor.shouldProcessFields()) {
-      val implicitVariable = resolveToCustomMember(place, name, tree)
-      if (implicitVariable != null) {
-        return processor.execute(implicitVariable, state)
-      }
+      resolveSyntheticVariable(place, name, tree)?.let { return processor.execute(it, state) }
     }
     return true
   }
 
-  private fun resolveToExists(place: PsiElement): PsiMethod? {
-    val facade = JavaPsiFacade.getInstance(place.project)
-    if (place is GrMethodCall && place.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName == "exists") {
-      val method = GrLightMethodBuilder(place.manager, "exists")
-      method.setReturnType(CommonClassNames.JAVA_LANG_BOOLEAN, place.resolveScope)
-      val navigationResult = facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE,
-                                              place.resolveScope)?.findMethodsByName("exists", false)?.singleOrNull()
-      if (navigationResult != null) {
-        method.navigationElement = navigationResult
-      }
-      return method
-    }
-    return null
-  }
-
-  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet)
-  = with(GinqCompletionUtils) {
+  override fun computeCompletionVariants(macroCall: GrMethodCall, parameters: CompletionParameters, result: CompletionResultSet) = with(
+    GinqCompletionUtils) {
     val position = parameters.position
     val tree = position.getClosestGinqTree(macroCall)
     if (tree == null) {
@@ -241,8 +198,8 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
     val referenceName = element.castSafelyTo<GrReferenceElement<*>>()?.referenceName ?: return null
     val hierarchy = element.ginqParents(macroCall, tree)
     for (ginq in hierarchy) {
-      val bindings = ginq.joins.map { it.alias } + listOf(ginq.from.alias) + (ginq.groupBy?.classifiers?.mapNotNull(
-        AliasedExpression::alias) ?: emptyList())
+      val bindings =
+        ginq.getDataSourceFragments().map { it.alias } + (ginq.groupBy?.classifiers?.mapNotNull(AliasedExpression::alias) ?: emptyList())
       val binding = bindings.find { it.text == referenceName }
       if (binding != null) {
         return ElementResolveResult(binding)

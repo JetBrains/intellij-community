@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.ext.ginq.ORG_APACHE_GROOVY_GINQ_PROVIDER_COL
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
 import org.jetbrains.plugins.groovy.ext.ginq.ast.getClosestGinqTree
 import org.jetbrains.plugins.groovy.ext.ginq.ast.ginqParents
-import org.jetbrains.plugins.groovy.ext.ginq.resolve.resolveToCustomMember
+import org.jetbrains.plugins.groovy.ext.ginq.resolve.GinqResolveUtils.resolveSyntheticVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -70,7 +70,7 @@ fun inferOverType(expression: GrMethodCall) : PsiType? {
 fun inferLocalReferenceExpressionType(macroCall: GrMethodCall, refExpr: GrReferenceExpression): PsiType? {
   val tree = refExpr.getClosestGinqTree(macroCall) ?: return null
   if (refExpr.referenceName == "_g") {
-    resolveToCustomMember(refExpr, "_g", tree)?.run { return type }
+    resolveSyntheticVariable(refExpr, "_g", tree)?.run { return type }
   }
   val resolved = refExpr.staticReference.resolve()
   val dataSourceFragment =

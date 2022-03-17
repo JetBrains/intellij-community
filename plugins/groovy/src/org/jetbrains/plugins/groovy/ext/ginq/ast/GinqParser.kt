@@ -319,6 +319,7 @@ private inline fun <reified T : GrExpression> GrMethodCall.collectExpressionArgu
 
 internal fun GrMethodCall.refCallIdentifier(): PsiElement = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceNameElement
                                                            ?: invokedExpression
+internal val GrMethodCall.callRefName: String? get() = invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
 
 // e is not ginq --> false
 private fun isApproximatelyGinq(e: PsiElement): Boolean {
