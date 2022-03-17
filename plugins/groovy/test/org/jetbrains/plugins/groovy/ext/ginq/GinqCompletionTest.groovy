@@ -108,6 +108,19 @@ select x
 ''', 'join', 'crossjoin')
   }
 
+
+  void testCompleteCrossjoin() {
+    completeGinq('''\
+from x in [1] 
+crossjo<caret>
+select x
+''', '''\
+from x in [1] 
+crossjoin x1 in 
+select x
+''')
+  }
+
   void testCompleteBindings() {
     completeGinq('''
 from xxxx in [1] 

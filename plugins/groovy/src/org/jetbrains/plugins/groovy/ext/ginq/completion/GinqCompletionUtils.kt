@@ -148,7 +148,7 @@ object GinqCompletionUtils {
 private fun getDataSourceInsertHandler(position: PsiElement, macroCall: GrMethodCall) = InsertHandler<LookupElement> { context, lookupItem ->
   val parentIdentifiers = gatherIdentifiers(position, macroCall)
   val item = lookupItem.lookupString
-  val requiresOn = !item.contains(KW_FROM) && item != KW_CROSSJOIN
+  val requiresOn = !item.contains(KW_FROM) && !item.contains(KW_CROSSJOIN)
   val template = TemplateManager.getInstance(context.project)
     .createTemplate("ginq_data_source_$item", "ginq", "$item\$NAME$ in \$DATA_SOURCE$${if (requiresOn) " on \$COND$" else ""}\$END$")
   template.addVariable("NAME", ReferenceNameExpression(emptyArray(), generateName(parentIdentifiers)), true)
@@ -197,7 +197,7 @@ private val windowInsertHandler = InsertHandler<LookupElement> { context, lookup
 
 private fun lookupElement(keyword: String, position: PsiElement, methodCall: GrMethodCall): LookupElementBuilder {
   return lookupElement(keyword).let {
-    if (keyword == KW_FROM || (keyword in JOINS && keyword != KW_CROSSJOIN)) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
+    if (keyword == KW_FROM || keyword in JOINS) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
   }
 }
 
