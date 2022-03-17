@@ -81,15 +81,12 @@ object LambdaSignatureItems {
 
         return LookupElementBuilder.create(lookupString)
             .withInsertHandler { context, _ ->
-                val offset = context.startOffset
-                val placeholder = "{}"
-                context.document.replaceString(offset, context.tailOffset, placeholder)
                 LambdaSignatureTemplates.insertTemplate(
                     context,
-                    TextRange(offset, offset + placeholder.length),
+                    TextRange(context.startOffset, context.tailOffset),
                     functionType,
                     explicitParameterTypes,
-                    signatureOnly = true
+                    signatureOnly = true,
                 )
             }
             .suppressAutoInsertion()
