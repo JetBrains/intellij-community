@@ -277,6 +277,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     ktExpression.getTargetLabel()?.mainReference?.resolveToSymbol()
                 }
             }
+            is KtCallExpression -> {
+                resolveCall(ktExpression)?.let { return it }
+            }
             is KtReferenceExpression -> {
                 analyseForUast(ktExpression) {
                     ktExpression.mainReference.resolveToSymbol()
