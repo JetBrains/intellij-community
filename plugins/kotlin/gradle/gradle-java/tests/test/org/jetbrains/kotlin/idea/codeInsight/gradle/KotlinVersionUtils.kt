@@ -7,33 +7,29 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.Kotlin
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinVersionRequirement
 
 val KotlinVersion.isSnapshot: Boolean
-    get() = this.classifier != null && this.classifier.toLowerCase() == "snapshot"
+    get() = this.classifier != null && this.classifier.lowercase() == "snapshot"
 
 val KotlinVersion.isDev: Boolean
-    get() = this.classifier != null && this.classifier.matches(Regex("""dev-?\d*"""))
+    get() = this.classifier != null && this.classifier.lowercase().contains("dev")
 
 val KotlinVersion.isMilestone: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""[mM]-?\d*"""))
+    get() = this.classifier != null && this.classifier.lowercase().contains("m")
 
 val KotlinVersion.isAlpha: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(alpha|ALPHA)-?\d*"""))
+    get() = this.classifier != null && this.classifier.lowercase().contains("alpha")
 
 val KotlinVersion.isBeta: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(beta|BETA)-?\d*"""))
+    get() = this.classifier != null && this.classifier.lowercase().contains("beta")
 
 val KotlinVersion.isRC: Boolean
-    get() = this.classifier != null &&
-            this.classifier.matches(Regex("""(rc|RC)-?\d*"""))
+    get() = this.classifier != null && this.classifier.lowercase().contains("rc")
 
 val KotlinVersion.isWildcard: Boolean
     get() = this.classifier != null &&
             this.classifier == WILDCARD_KOTLIN_VERSION_CLASSIFIER
 
 
-val KotlinVersion.isStable: Boolean get() = this.classifier == null
+val KotlinVersion.isStable: Boolean get() = this.classifier == null || this.classifier.matches(Regex("(release-)?\\d*"))
 
 val KotlinVersion.isPreRelease: Boolean get() = !isStable
 
