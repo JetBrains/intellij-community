@@ -5,19 +5,19 @@ import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerContributor.Companion.MODULE_DATA
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
-class GradleDependencyAnalyzerGoToAction : AnAction() {
+class GradleDependencyAnalyzerGoToAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dependency = getDeclaredDependency(e) ?: return
     val psiElement = dependency.psiElement ?: return
