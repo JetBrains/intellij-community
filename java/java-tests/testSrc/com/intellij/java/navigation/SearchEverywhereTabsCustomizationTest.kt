@@ -36,7 +36,7 @@ class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCas
   }
 
   fun testFixedTabsListStrategy() {
-    val strategy = FixedTabsListCustomizationStrategy(listOf("c1", "c3", "c5"))
+    val strategy = object : FixedTabsListCustomizationStrategy(listOf("c1", "c3", "c5")) {}
     ApplicationManager.getApplication().replaceService(TabsCustomizationStrategy::class.java, strategy, testRootDisposable)
     val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui)
     val tabIDs = header.tabs.map { it.id }

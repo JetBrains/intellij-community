@@ -23,7 +23,7 @@ class HeaderTabsTest {
 
   @Test
   fun fixedListDefinedStrategyTest() {
-    FixedTabsListCustomizationStrategy(listOf("c1", "c2", "c5")).doTest(
+    createFixedListStrategy(listOf("c1", "c2", "c5")).doTest(
       mapOf(
         emptyList<Pair<String, Boolean>>() to emptyList(),
         listOf("c1" to true, "c2" to true, "c3" to false, "c4" to true, "c5" to false) to listOf("c1", "c2"),
@@ -31,7 +31,7 @@ class HeaderTabsTest {
       )
     )
 
-    FixedTabsListCustomizationStrategy(emptyList()).doTest(
+    createFixedListStrategy(emptyList()).doTest(
       mapOf(
         emptyList<Pair<String, Boolean>>() to emptyList(),
         listOf("c1" to true, "c2" to true, "c3" to false, "c4" to true, "c5" to false) to emptyList(),
@@ -40,7 +40,9 @@ class HeaderTabsTest {
     )
   }
 
-  //private fun TabsCustomizationStrategy.doTest(contributors: List<Pair<String, Boolean>>, tabs: List<String>) {}
+  private fun createFixedListStrategy(ids: List<String>): TabsCustomizationStrategy {
+    return object : FixedTabsListCustomizationStrategy(ids) {}
+  }
 
   private fun TabsCustomizationStrategy.doTest(map: Map<List<Pair<String, Boolean>>, List<String>>) {
     map.forEach { (contributors, expected) ->
