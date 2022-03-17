@@ -11,52 +11,48 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.use
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("UsePropertyAccessSyntax")
-class ProjectOpeningTest {
-  companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
-  }
+class ProjectOpeningTest : BareTestFixtureTestCase() {
+  @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+  @Rule @JvmField val tempDir = TempDirectory()
 
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
+  @Test fun cancelOnRunPostStartUpActivities() {
+    class MyStartupActivity : StartupActivity.DumbAware {
+      val passed = AtomicBoolean()
 
-  @Rule
-  @JvmField
-  val inMemoryFs = InMemoryFsRule()
+      override fun runActivity(project: Project) {
+        passed.set(true)
+        ProgressManager.getInstance().progressIndicator!!.cancel()
+      }
+    }
 
-  @Rule
-  @JvmField
-  val tempDir = TempDirectory()
-
-  @Test
-  fun cancelOnRunPostStartUpActivities() {
     val activity = MyStartupActivity()
     val ep = ExtensionPointName<StartupActivity.DumbAware>("com.intellij.startupActivity")
-    ExtensionTestUtil.maskExtensions(ep, listOf(activity), disposableRule.disposable, fireEvents = false)
+    ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
     val isCancelled = doOpenProject()
     // 1 on maskExtensions call, second call our call
     assertThat(activity.passed.get()).isTrue()
     assertThat(isCancelled).isTrue()
   }
 
-  @Test
-  fun cancelOnLoadingModules() {
-    ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+  @Test fun cancelOnLoadingModules() {
+    ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+      @Suppress("OVERRIDE_DEPRECATION")
       override fun projectComponentsInitialized(project: Project) {
         val indicator = ProgressManager.getInstance().progressIndicator
         assertThat(indicator).isNotNull()
@@ -86,8 +82,7 @@ class ProjectOpeningTest {
     return cancelled
   }
 
-  @Test
-  fun isSameProjectForDirectoryBasedProject() {
+  @Test fun isSameProjectForDirectoryBasedProject() {
     val projectDir = inMemoryFs.fs.getPath("/p")
     projectDir.createDirectories()
 
@@ -104,8 +99,7 @@ class ProjectOpeningTest {
     }
   }
 
-  @Test
-  fun isSameProjectForFileBasedProject() {
+  @Test fun isSameProjectForFileBasedProject() {
     val projectDir = inMemoryFs.fs.getPath("/p")
     projectDir.createDirectories()
     val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
@@ -117,23 +111,12 @@ class ProjectOpeningTest {
     }
   }
 
-  @Test
-  fun projectFileLookup() {
+  @Test fun projectFileLookup() {
     val projectDir = tempDir.root.toPath()
-    val projectFile = Files.writeString(projectDir.resolve ("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
     val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
     assertThat(project).isNotNull()
     val projectFilePath = project!!.use { it.projectFilePath }
     assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
-  }
-}
-
-private class MyStartupActivity : StartupActivity.DumbAware {
-  val passed = AtomicBoolean()
-
-  override fun runActivity(project: Project) {
-    passed.set(true)
-
-    ProgressManager.getInstance().progressIndicator!!.cancel()
   }
 }
