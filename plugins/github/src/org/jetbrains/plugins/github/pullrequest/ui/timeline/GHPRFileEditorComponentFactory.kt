@@ -35,7 +35,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -107,7 +106,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
 
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
-                                                           uiDisposable, editor.repositoryDataService.remoteCoordinates.repository,
+                                                           uiDisposable,
+                                                           editor.repositoryDataService.remoteCoordinates.repository,
                                                            editor.reviewData,
                                                            editor.detailsData)
     val timeline = GHPRTimelineComponent(detailsModel,
@@ -116,7 +116,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                            project,
                                            editor.detailsData, editor.commentsData, editor.reviewData,
                                            reviewThreadsModelsProvider, editor.avatarIconsProvider,
-                                           editor.repositoryDataService,
                                            suggestedChangesHelper,
                                            editor.securityService.currentUser
                                          )).apply {
@@ -212,7 +211,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
-                                         repositoryDataService: GHPRRepositoryDataService,
                                          suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
@@ -223,10 +221,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     return GHPRTimelineItemComponentFactory(
       project,
       detailsDataProvider, commentsDataProvider, reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider,
-      repositoryDataService,
-      diffFactory, eventsFactory,
-      selectInToolWindowHelper, suggestedChangeHelper,
-      currentUser
+      diffFactory,
+      eventsFactory, selectInToolWindowHelper,
+      suggestedChangeHelper, currentUser
     )
   }
 }
