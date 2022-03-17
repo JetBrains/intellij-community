@@ -79,7 +79,7 @@ internal abstract class AbstractDependencyList(
           model.asSequence()
             .find { it.data == dependency?.data }
         },
-        { it?.variances?.firstOrNull() }
+        { it?.dependency }
       )
     )
   }
@@ -113,7 +113,7 @@ internal abstract class AbstractDependencyTree(
           .map { it.userObject as DependencyGroup }
           .find { it.data == dependency?.data && dependency.parent in it.parents }
       },
-      { it?.variances?.firstOrNull() }
+      { it?.dependency }
     ))
   }
 }
@@ -209,12 +209,24 @@ private class UsagesTreeRenderer(private val showGroupIdProperty: ObservableProp
 }
 
 internal class DependencyGroup(val variances: List<Dependency>) {
-  val data by lazy { variances.first().data }
+  val dependency by lazy { variances.find { !it.isOmitted } ?: variances.first() }
+  val data by lazy { dependency.data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
   val parents by lazy { variances.map { it.parent }.toSet() }
-  val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Warning>() }
-  val isOmitted by lazy { variances.flatMap { it.status }.filterIsInstance<Dependency.Status.Omitted>().isNotEmpty() }
-  val hasWarnings by lazy { warnings.isNotEmpty() }
+  val warnings by lazy { variances.flatMap { it.warnings } }
+  val isOmitted by lazy { variances.all { it.isOmitted } }
+  val hasWarnings by lazy { variances.any { it.hasWarnings } }
 
   override fun toString() = data.toString()
+
+  companion object {
+    internal val Dependency.isOmitted: Boolean
+      get() = status.any { it is Dependency.Status.Omitted }
+
+    internal val Dependency.warnings: List<Dependency.Status.Warning>
+      get() = status.filterIsInstance<Dependency.Status.Warning>()
+
+    internal val Dependency.hasWarnings: Boolean
+      get() = warnings.isNotEmpty()
+  }
 }
