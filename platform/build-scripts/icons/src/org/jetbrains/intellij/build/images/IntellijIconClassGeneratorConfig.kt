@@ -45,19 +45,28 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         className = "SpringApiIcons",
         packageName = "com.intellij.spring",
       )
+
       "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringMvcApiIcons",
         packageName = "com.intellij.spring.mvc",
       )
+
       "intellij.spring.persistence" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringPersistenceIntegrationIcons",
         packageName = "com.intellij.spring.persistence.integration",
       )
+
+      "intellij.spring.boot" -> IntellijIconClassGeneratorModuleConfig(
+        className = "SpringBootApiIcons",
+        packageName = "com.intellij.spring.boot",
+      )
+
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
       "intellij.go.impl" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
       "intellij.toml.core" -> IntellijIconClassGeneratorModuleConfig(className = "TomlIcons", packageName = "org.toml")
       "intellij.markdown.core" -> IntellijIconClassGeneratorModuleConfig(className = "MarkdownIcons",
                                                                          packageName = "org.intellij.plugins.markdown")
+
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
       else -> super.getConfigForModule(moduleName)
     }
