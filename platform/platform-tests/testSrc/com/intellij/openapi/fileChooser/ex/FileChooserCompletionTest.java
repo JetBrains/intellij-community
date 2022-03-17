@@ -4,6 +4,7 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.CompletionResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -19,8 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class FileChooserCompletionTest extends BareTestFixtureTestCase {
@@ -100,23 +99,18 @@ public class FileChooserCompletionTest extends BareTestFixtureTestCase {
 
   private static void assertComplete(String typed, String[] expected, Map<String, String> macros, String completionBase, String preselected) {
     LocalFsFinder finder = new LocalFsFinder(false).withBaseDir(null);
-    FileTextFieldImpl.CompletionResult result = new FileTextFieldImpl.CompletionResult();
-    result.myCompletionBase = completionBase + typed.replace("/", finder.getSeparator());
-    FileTextFieldUtil.processCompletion(result, finder, file -> true, new TreeMap<>(macros));
+    String input = completionBase + typed.replace("/", finder.getSeparator());
+    CompletionResult result = FileTextFieldUtil.processCompletion(input, finder, file -> true, new TreeMap<>(macros), null);
 
-    String[] actualVariants = result.myToComplete.stream().map(f -> toFileText(f, result, finder.getSeparator())).toArray(String[]::new);
+    String[] actualVariants = result.variants.stream().map(f -> FileTextFieldUtil.getLookupString(f, finder, result)).toArray(String[]::new);
     String[] expectedVariants = Stream.of(expected).map(s -> s.replace("/", finder.getSeparator())).toArray(String[]::new);
     assertThat(actualVariants).containsExactlyInAnyOrder(expectedVariants);
 
-    String preselectedText = preselected != null ? preselected.replace("/", finder.getSeparator()) : null;
-    assertEquals(preselectedText, toFileText(result.myPreselected, result, finder.getSeparator()));
+    String actualSelected = result.preselected != null ? FileTextFieldUtil.getLookupString(result.preselected, finder, result) : null;
+    String expectedSelected = preselected != null ? preselected.replace("/", finder.getSeparator()) : null;
+    assertThat(actualSelected).isEqualTo(expectedSelected);
     if (preselected != null) {
-      assertTrue(result.myToComplete.contains(result.myPreselected));
+      assertThat(result.variants).contains(result.preselected);
     }
-  }
-
-  private static String toFileText(FileLookup.LookupFile file, FileTextFieldImpl.CompletionResult completion, String separator) {
-    String text = file == null ? null : file.getMacro() != null ? file.getMacro() : file.getName();
-    return text == null ? null : (completion.myKidsAfterSeparator.contains(file) ? separator : "") + text;
   }
 }
