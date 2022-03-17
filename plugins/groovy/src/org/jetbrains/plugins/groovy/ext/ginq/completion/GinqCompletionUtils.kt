@@ -11,6 +11,7 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.castSafelyTo
@@ -38,7 +39,7 @@ object GinqCompletionUtils {
       }
     })
     if (!hasFrom) addElement(lookupElement(KW_FROM, macroCall, macroCall))
-    if (!hasSelect) addElement(lookupElement(KW_SELECT, macroCall, macroCall))
+    if (!hasSelect) addElement(lookupElement(KW_SELECT))
   }
 
   fun CompletionResultSet.addGeneralGroovyResults(position: PsiElement, offset: Int, ginq: GinqExpression, top: GrMethodCall) {
@@ -85,27 +86,40 @@ object GinqCompletionUtils {
         addAllElements(JOINS.map { lookupElement(it, position, macroCall) })
       }
       if (closestFragmentUp is GinqJoinFragment && closestFragmentUp.onCondition == null && closestFragmentUp.keyword.text != "crossjoin") {
-        addElement(lookupElement(KW_ON, position, macroCall))
+        addElement(lookupElement(KW_ON))
       }
       if (joinStartCondition(closestFragmentUp) && ginq.where == null) {
-        addElement(lookupElement(KW_WHERE, position, macroCall))
+        addElement(lookupElement(KW_WHERE))
       }
       val groupByCondition: (GinqQueryFragment) -> Boolean = { joinStartCondition(it) || it is GinqWhereFragment }
       if (groupByCondition(closestFragmentUp) && ginq.groupBy == null) {
-        addElement(lookupElement(KW_GROUPBY, position, macroCall))
+        addElement(lookupElement(KW_GROUPBY))
       }
       if (closestFragmentUp is GinqGroupByFragment && closestFragmentUp.having == null) {
-        addElement(lookupElement(KW_HAVING, position, macroCall))
+        addElement(lookupElement(KW_HAVING))
       }
       val orderByCondition: (GinqQueryFragment) -> Boolean = {
         groupByCondition(it) || it is GinqGroupByFragment || it is GinqHavingFragment
       }
       if (orderByCondition(closestFragmentUp) && ginq.orderBy == null) {
-        addElement(lookupElement(KW_ORDERBY, position, macroCall))
+        addElement(lookupElement(KW_ORDERBY))
       }
       if ((orderByCondition(closestFragmentUp) || closestFragmentUp is GinqOrderByFragment) && ginq.limit == null) {
-        addElement(lookupElement(KW_LIMIT, position, macroCall))
+        addElement(lookupElement(KW_LIMIT))
       }
+    }
+  }
+
+  fun CompletionResultSet.addOrderbyDependentKeywords(position: PsiElement) {
+    val call = position.parentOfType<GrMethodCall>() ?: return
+    val callText = call.refCallIdentifier().text
+    if (callText == KW_ORDERBY) {
+      addElement(lookupElement("asc"))
+      addElement(lookupElement("desc"))
+    }
+    if (callText == "asc" || callText == "desc") {
+      addElement(lookupElement("nullsfirst", false))
+      addElement(lookupElement("nullslast", false))
     }
   }
 
@@ -182,7 +196,11 @@ private val windowInsertHandler = InsertHandler<LookupElement> { context, lookup
 }
 
 private fun lookupElement(keyword: String, position: PsiElement, methodCall: GrMethodCall): LookupElementBuilder {
-  return LookupElementBuilder.create("$keyword ").bold().let {
-    if (keyword == KW_FROM || keyword in JOINS) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
+  return lookupElement(keyword).let {
+    if (keyword == KW_FROM || (keyword in JOINS && keyword != "crossjoin")) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
   }
+}
+
+private fun lookupElement(keyword: String, addSpace: Boolean = true): LookupElementBuilder {
+  return LookupElementBuilder.create("$keyword${if (addSpace) " " else ""}").bold()
 }

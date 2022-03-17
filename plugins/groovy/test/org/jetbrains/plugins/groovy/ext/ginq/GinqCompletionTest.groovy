@@ -191,4 +191,52 @@ select nnnn
 ''')
   }
 
+  void testCompleteAsc() {
+    completeGinq('''
+from x in [1]
+orderby x in as<caret>
+select x
+''', '''
+from x in [1]
+orderby x in asc
+select x
+''')
+  }
+
+  void testCompleteDesc() {
+    completeGinq('''
+from x in [1]
+orderby x in des<caret>
+select x
+''', '''
+from x in [1]
+orderby x in desc
+select x
+''')
+  }
+
+  void testCompleteAscNullsfirst() {
+    completeGinq('''
+from x in [1]
+orderby x in asc(nullsf<caret>)
+select x
+''', '''
+from x in [1]
+orderby x in asc(nullsfirst)
+select x
+''')
+  }
+
+  void testCompleteDescNullslast() {
+    completeGinq('''
+from x in [1]
+orderby x in desc(nullsla<caret>)
+select x
+''', '''
+from x in [1]
+orderby x in desc(nullslast)
+select x
+''')
+  }
+
 }

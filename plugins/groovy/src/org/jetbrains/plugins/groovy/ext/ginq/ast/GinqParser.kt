@@ -368,7 +368,7 @@ fun getOrdering(expr: GrExpression): Ordering {
     return when (orderKw?.referenceName) {
       "asc" -> Ordering.Asc(orderKw, nullsKw, expr.leftOperand)
       "desc" -> Ordering.Desc(orderKw, nullsKw, expr.leftOperand)
-      else -> Ordering.Asc(null, null, expr)
+      else -> Ordering.Asc(null, null, expr.leftOperand)
     }
   }
   else {

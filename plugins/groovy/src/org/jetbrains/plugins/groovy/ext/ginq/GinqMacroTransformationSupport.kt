@@ -222,6 +222,7 @@ internal class GinqMacroTransformationSupport : GroovyMacroTransformationSupport
       result.stopHere()
     }
     result.addGinqKeywords(tree, offset, macroCall, position)
+    result.addOrderbyDependentKeywords(position)
     result.addOverKeywords(tree, position)
   }
 
