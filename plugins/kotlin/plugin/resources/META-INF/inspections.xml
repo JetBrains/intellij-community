@@ -2963,13 +2963,13 @@
                      language="JAVA"
                      key="inspection.kotlin.jvm.annotation.in.java.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithIsNullOrEmptyInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.VerboseNullabilityAndEmptinessInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin"
-                     key="inspection.replace.with.is.null.or.empty.display.name" bundle="messages.KotlinBundle"/>
+                     key="inspection.verbose.nullability.and.emptiness.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 
 </idea-plugin>
