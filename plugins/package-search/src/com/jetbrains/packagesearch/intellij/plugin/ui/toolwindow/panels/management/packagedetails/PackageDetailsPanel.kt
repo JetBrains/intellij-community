@@ -12,7 +12,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +42,7 @@ internal class PackageDetailsPanel(
     }
 
     private val emptyStatePanel = PackageSearchUI.borderPanel {
-        border = scaledEmptyBorder(12)
+        border = emptyBorder(12)
         addToCenter(
             PackageSearchUI.createLabel().apply {
                 text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.emptyState")

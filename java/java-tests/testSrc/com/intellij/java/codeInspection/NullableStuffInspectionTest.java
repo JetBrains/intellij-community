@@ -32,7 +32,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    return JAVA_11_ANNOTATED;
   }
 
   @Override
@@ -68,6 +68,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testProblems() { doTest();}
 
   public void testAnnotatingPrimitivesTypeUse() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeParameterShouldNotWarn() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }

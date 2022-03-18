@@ -776,6 +776,11 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
             runTest("testData/handlers/basic/parameterNameAndType/TabReplace3.kt");
         }
 
+        @TestMetadata("TypeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/TypeAlias.kt");
+        }
+
         @TestMetadata("TypeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("testData/handlers/basic/parameterNameAndType/TypeParameter.kt");

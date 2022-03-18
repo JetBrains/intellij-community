@@ -872,7 +872,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           rightOffset += bounds.get(i).width;
           Rectangle r = bounds.get(bounds.size() - j);
           r.x = size2Fit.width - rightOffset;
-          r.y = insets.top + (getHeight() - insets.top - insets.bottom - bounds.get(i).height) / 2;
         }
       }
     }

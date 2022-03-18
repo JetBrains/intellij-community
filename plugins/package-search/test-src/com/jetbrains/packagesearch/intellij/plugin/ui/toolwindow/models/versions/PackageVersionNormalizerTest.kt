@@ -89,7 +89,7 @@ internal class PackageVersionNormalizerTest {
 
         @Test
         internal fun `should not return a Semantic version when the input has too many parts`() {
-            val aVersion = aNamedPackageVersion(versionName = "1.0.0.0.0")
+            val aVersion = aNamedPackageVersion(versionName = "1.0.0.0.0.1")
             assertThat(normalizer.parseBlocking(aVersion)).isNotInstanceOf(NormalizedPackageVersion.Semantic::class)
         }
 

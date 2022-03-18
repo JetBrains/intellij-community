@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
@@ -34,7 +34,7 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
   private val markup
     get() = document?.let { DocumentMarkupModel.forDocument(it, bookmark.provider.project, false) as? MarkupModelEx }
 
-  private val highlighter
+  internal val highlighter
     get() = reference?.get() ?: markup?.allHighlighters?.find { it.gutterIconRenderer == this }
 
   override fun getIcon() = type.gutterIcon

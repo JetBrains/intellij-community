@@ -159,7 +159,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       else return false;
     }
     DfReferenceType type = (DfReferenceType)other;
-    if (isLocal() && !type.isLocal()) return false;
+    if (isLocal() && !type.isLocal() && !getConstraint().isComparedByEquals()) return false;
     if (type.getNullability() != getNullability() && getNullability() != DfaNullability.UNKNOWN &&
         type.getNullability() != DfaNullability.NOT_NULL) return false;
     if (!getConstraint().isSuperConstraintOf(type.getConstraint())) return false;

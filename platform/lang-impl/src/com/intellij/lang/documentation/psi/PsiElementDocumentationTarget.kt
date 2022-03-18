@@ -74,7 +74,13 @@ class PsiElementDocumentationTarget private constructor(
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return DocumentationData(if (doc == null) fileDoc else doc + fileDoc, pointer.anchor, null, emptyList(), pointer.imageResolver)
+        return DocumentationData(
+          if (doc == null) fileDoc else doc + fileDoc,
+          pointer.anchor,
+          null,
+          emptyList(),
+          pointer.imageResolver
+        )
       }
     }
     if (doc != null) {

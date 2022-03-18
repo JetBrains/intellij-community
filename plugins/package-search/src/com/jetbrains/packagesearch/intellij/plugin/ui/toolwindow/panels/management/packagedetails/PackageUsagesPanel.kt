@@ -8,18 +8,18 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import javax.swing.BoxLayout
 
 internal class PackageUsagesPanel : HtmlEditorPane() {
 
     private val linkActionsMap = mutableMapOf<String, Navigatable?>()
 
-    init {
-        layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        border = scaledEmptyBorder(top = 8)
-        background = PackageSearchUI.UsualBackgroundColor
-    }
+  init {
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    border = emptyBorder(top = 8)
+    background = PackageSearchUI.UsualBackgroundColor
+  }
 
     override fun onLinkClicked(anchor: String) {
         val navigatable = linkActionsMap[anchor] ?: return

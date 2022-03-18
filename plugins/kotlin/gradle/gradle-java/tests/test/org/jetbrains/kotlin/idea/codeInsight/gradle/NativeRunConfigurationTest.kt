@@ -23,6 +23,12 @@ class NativeRunConfigurationTest : MultiplePluginVersionGradleImportingTestCase(
 
     @Test
     @TargetVersions("6.0+")
+    fun multiplatformWithoutHmppNativeRunGutter() {
+        doTest()
+    }
+
+    @Test
+    @TargetVersions("6.0+")
     fun customEntryPointWithoutRunGutter() {
         doTest()
     }

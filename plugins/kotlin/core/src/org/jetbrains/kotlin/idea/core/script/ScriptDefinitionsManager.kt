@@ -214,7 +214,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     private fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
-        assert(!definitionsLock.isWriteLocked) { "kotlinScriptingSettingsSafe should be called out if the write lock to avoid deadlocks" }
+        assert(!definitionsLock.isWriteLockedByCurrentThread) { "kotlinScriptingSettingsSafe should be called out if the write lock to avoid deadlocks" }
         return runReadAction {
             if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
         }
@@ -241,7 +241,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     private fun updateDefinitions(): UpdateDefinitionsResult? {
-        assert(!definitionsLock.isWriteLocked) { "updateDefinitions should be called out the write lock" }
+        assert(!definitionsLock.isWriteLockedByCurrentThread) { "updateDefinitions should be called out the write lock" }
         if (project.isDisposed) return null
 
         val fileTypeManager = FileTypeManager.getInstance()

@@ -7,10 +7,14 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScalableUnits
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import org.jetbrains.annotations.Nls
 import java.awt.CardLayout
 import java.awt.Color
@@ -45,8 +49,8 @@ internal object PackageSearchUI {
     internal val ListRowHighlightBackground = JBColor(0xF2F5F9, 0x4C5052)
     internal val InfoBannerBackground = JBColor(0xE6EEF7, 0x1C3956)
 
-    internal const val MediumHeaderHeight = 30
-    internal const val SmallHeaderHeight = 24
+    internal val MediumHeaderHeight = JBValue.Float(30f)
+    internal val SmallHeaderHeight = JBValue.Float(24f)
 
     @Suppress("MagicNumber") // Thanks, Swing
     internal fun headerPanel(init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
@@ -118,13 +122,13 @@ internal object PackageSearchUI {
     }
 
     internal fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
         if (text != null) this.text = text
         init()
     }
 
     internal fun createLabelWithLink(init: BrowsableLinkLabel.() -> Unit = {}) = BrowsableLinkLabel().apply {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
         init()
     }
 
@@ -138,13 +142,15 @@ internal object PackageSearchUI {
         else -> GRAY_COLOR
     }
 
-    internal fun setHeight(component: JComponent, height: Int, keepWidth: Boolean = false, scale: Boolean = true) {
-        val scaledHeight = if (scale) JBUI.scale(height) else height
+    internal fun setHeight(component: JComponent, @ScalableUnits height: Int, keepWidth: Boolean = false) {
+        setHeightPreScaled(component, height.scaled(), keepWidth)
+    }
 
+    internal fun setHeightPreScaled(component: JComponent, @ScaledPixels height: Int, keepWidth: Boolean = false) {
         component.apply {
-            preferredSize = Dimension(if (keepWidth) preferredSize.width else 0, scaledHeight)
-            minimumSize = Dimension(if (keepWidth) minimumSize.width else 0, scaledHeight)
-            maximumSize = Dimension(if (keepWidth) maximumSize.width else Int.MAX_VALUE, scaledHeight)
+            preferredSize = Dimension(if (keepWidth) preferredSize.width else 0, height)
+            minimumSize = Dimension(if (keepWidth) minimumSize.width else 0, height)
+            maximumSize = Dimension(if (keepWidth) maximumSize.width else Int.MAX_VALUE, height)
         }
     }
 

@@ -13,7 +13,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
 import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
@@ -26,13 +25,13 @@ internal class HeaderPanel(
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
-        border = scaledEmptyBorder(right = 20)
+        border = emptyBorder(right = 20)
         font = RelativeFont.BOLD.derive(font)
     }
 
     private val countLabel = JLabel().apply {
         foreground = PackageSearchUI.GRAY_COLOR
-        border = scaledEmptyBorder(right = 8)
+        border = emptyBorder(right = 8)
     }
 
     private val progressAnimation = AsyncProcessIcon("pkgs-header-progress").apply {
@@ -44,15 +43,15 @@ internal class HeaderPanel(
         PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.upgradeAll.text")
     ).apply {
         isVisible = false
-        border = scaledEmptyBorder(top = 4)
+        border = emptyBorder(top = 4)
         insets.top = 3.scaled()
     }
 
     private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     init {
-        PackageSearchUI.setHeight(this, PackageSearchUI.SmallHeaderHeight)
-        border = emptyBorder(top = 5.scaled(), left = 5.scaled(), right = 1.scaled() + scrollbarWidth())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.SmallHeaderHeight.get())
+        border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
         background = PackageSearchUI.SectionHeaderBackgroundColor
 
         add(
@@ -117,7 +116,7 @@ internal class HeaderPanel(
         val includeScrollbar = scrollbarVisible && (isAlwaysOpaque || scrollbarOpaque)
 
         @ScaledPixels val rightBorder = if (includeScrollbar) scrollbarWidth() else 1.scaled()
-        border = emptyBorder(top = 5.scaled(), left = 5.scaled(), right = rightBorder)
+        border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
 }

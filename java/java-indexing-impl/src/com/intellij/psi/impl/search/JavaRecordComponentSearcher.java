@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -37,7 +37,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
         PsiParameter parameter = info.myLightCompactConstructorParameter;
         if (parameter != null) {
           optimizer.searchWord(info.myName,
-                               new LocalSearchScope(parameter.getDeclarationScope()),
+                               new LocalSearchScope(ReadAction.compute(() -> parameter.getDeclarationScope())),
                                true,
                                parameter);
         }

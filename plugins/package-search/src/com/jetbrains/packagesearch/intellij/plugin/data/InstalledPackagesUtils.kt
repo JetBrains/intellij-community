@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.DigestUtil
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
@@ -130,14 +131,21 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     }
 
     val sha256 = sha256Deferred.await()
-    if (cache?.sha256 == sha256 && cache.fileHashCode == fileHashCode) {
+    if (
+        cache?.sha256 == sha256
+        && cache.fileHashCode == fileHashCode
+        && cache.cacheVersion == PluginEnvironment.Caches.version
+        // if dependencies are empty it could be because build APIs have previously failed
+        && (cache.dependencies.isNotEmpty() || cache.parsingAttempts >= PluginEnvironment.Caches.maxAttempts)
+    ) {
         return@coroutineScope cache.dependencies
     }
 
     val dependencies =
         readAction {
             runCatching {
-                ProjectModuleOperationProvider.forProjectModuleType(moduleType)?.listDependenciesInModule(this@installedDependencies)
+                ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+                    ?.listDependenciesInModule(this@installedDependencies)
             }
         }
             .onFailure { logDebug("installedDependencies", it) { "Unable to list dependencies in module $name" } }
@@ -146,14 +154,16 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(
             value = InstalledDependenciesCache(
+                cacheVersion = PluginEnvironment.Caches.version,
                 fileHashCode = fileHashCode,
                 sha256 = sha256,
+                parsingAttempts = cache?.parsingAttempts?.let { it + 1 } ?: 1,
                 projectName = name,
                 dependencies = dependencies
             )
         )
 
-        withContext(Dispatchers.IO) {
+        withContext(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
             cacheFile.writeText(jsonText)
         }
     }
@@ -163,8 +173,10 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
 
 @Serializable
 internal data class InstalledDependenciesCache(
+    val cacheVersion: Int,
     val fileHashCode: Int,
     val sha256: String,
+    val parsingAttempts: Int = 0,
     val projectName: String,
     val dependencies: List<@Serializable(with = UnifiedDependencySerializer::class) UnifiedDependency>
 )

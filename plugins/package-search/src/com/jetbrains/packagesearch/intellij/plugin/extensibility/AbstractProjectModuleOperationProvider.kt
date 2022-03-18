@@ -84,14 +84,14 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
             operationMetadata.newScope ?: operationMetadata.currentScope
         )
 
-        try {
+        return try {
             runWriteAction {
                 DependencyModifierService.getInstance(module.nativeModule.project)
                     .updateDependency(operationMetadata.module.nativeModule, oldDependency, newDependency)
             }
-            return emptyList()
+            emptyList()
         } catch (e: Exception) {
-            return listOf(OperationFailure(OperationType.REMOVE, oldDependency, e))
+            listOf(OperationFailure(OperationType.REMOVE, oldDependency, e))
         }
     }
 

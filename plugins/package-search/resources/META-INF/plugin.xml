@@ -26,6 +26,11 @@ Supports Maven and Gradle projects.
                         area="IDEA_PROJECT"
                         dynamic="true"/>
 
+        <extensionPoint qualifiedName="com.intellij.packagesearch.flowModuleChangesSignalProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
         <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
                         area="IDEA_PROJECT"
@@ -61,6 +66,9 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"/>
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>

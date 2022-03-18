@@ -14,7 +14,9 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -22,11 +24,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.min
 
 object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
-    HighPriorityAction {
+                                                                                                            HighPriorityAction {
     override fun compareTo(other: IntentionAction): Int {
       if (other is GrazieCustomFixWrapper) return -1
       return super.compareTo(other)
@@ -38,9 +41,8 @@ object GrazieReplaceTypoQuickFix {
     override val index: Int,
     @IntentionFamilyName private val family: String,
     @NlsSafe private val suggestion: String,
-    private val replacement: String,
-    private val underlineRanges: List<SmartPsiFileRange>,
-    private val replacementRange: SmartPsiFileRange,
+    private val replacements: List<Pair<SmartPsiFileRange, String>>,
+    private val underlineRanges: List<SmartPsiFileRange>
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String {
@@ -57,21 +59,20 @@ object GrazieReplaceTypoQuickFix {
 
     override fun getFamilyName(): String = family
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = replacementRange.range != null
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = replacements.all { it.first.range != null }
 
     override fun getFileModifierForPreview(target: PsiFile): FileModifier = this
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
       GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
 
-      val replacementRange = this.replacementRange.range ?: return
       val document = file.viewProvider.document ?: return
 
       underlineRanges.forEach { underline ->
         underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
       }
 
-      document.replaceString(replacementRange.startOffset, replacementRange.endOffset, replacement)
+      applyReplacements(document, replacements)
     }
 
     override fun startInWriteAction(): Boolean = true
@@ -90,23 +91,43 @@ object GrazieReplaceTypoQuickFix {
 
   @JvmStatic
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
-    val replacementRange = problem.replacementRange
-    val replacedText = replacementRange.subSequence(problem.text)
-    val file = problem.text.containingFile
-    val spm = SmartPointerManager.getInstance(file.project)
     @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
     problem.corrections.forEachIndexed { index, suggestion ->
-      val commonPrefix = commonPrefixLength(suggestion, replacedText)
-      val commonSuffix =
-        min(commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
-      val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
-      val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
-      result.add(ChangeToVariantAction(
-        problem.rule, index, familyName, suggestion, replacement, underlineRanges,
-        spm.createSmartPsiFileRangePointer(file, problem.text.textRangeToFile(localRange))))
+      val replacements = toFileReplacements(problem.replacementRange, suggestion, problem.text)
+      result.add(ChangeToVariantAction(problem.rule, index, familyName, suggestion, replacements, underlineRanges))
     }
     return result
+  }
+
+  @VisibleForTesting
+  @JvmStatic
+  fun toFileReplacements(replacementRange: TextRange, suggestion: String, text: TextContent): List<Pair<SmartPsiFileRange, String>> {
+    val replacedText = replacementRange.subSequence(text)
+    val commonPrefix = commonPrefixLength(suggestion, replacedText)
+    val commonSuffix =
+      min(commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
+    val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
+    val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
+
+    val file = text.containingFile
+    val spm = SmartPointerManager.getInstance(file.project)
+    val shreds = text.intersection(text.textRangeToFile(localRange))
+    if (shreds.isEmpty()) return emptyList()
+
+    val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()
+    return shreds.map { spm.createSmartPsiFileRangePointer(file, it) to (if (it === best) replacement else "") }
+  }
+
+  private fun isWordMiddle(text: CharSequence, index: Int) =
+    index > 0 && index < text.length && Character.isLetter(text[index]) && Character.isLetter(text[index - 1])
+
+  @VisibleForTesting
+  @JvmStatic
+  fun applyReplacements(document: Document, replacements: List<Pair<SmartPsiFileRange, String>>) {
+    replacements.forEach {
+      document.replaceString(it.first.range!!.startOffset, it.first.range!!.endOffset, it.second)
+    }
   }
 
   fun familyName(problem: TextProblem): @IntentionFamilyName String =

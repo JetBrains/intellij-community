@@ -20,8 +20,8 @@ internal object GraziePlugin {
   val group: String
     get() = GrazieBundle.message("grazie.group.name")
 
-  val name: String
-    get() = GrazieBundle.message("grazie.name")
+  val settingsPageName: String
+    get() = GrazieBundle.message("grazie.settings.page.name")
 
   val isBundled: Boolean
     get() = descriptor.isBundled

@@ -13,7 +13,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.event.KeyAdapter
@@ -33,50 +33,50 @@ internal class RepositoryTree(
         get() = (model as DefaultTreeModel).root as DefaultMutableTreeNode
 
     init {
-        setCellRenderer(RepositoryTreeItemRenderer())
-        selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+      setCellRenderer(RepositoryTreeItemRenderer())
+      selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
-        rootVisible = false
-        isRootVisible = false
-        showsRootHandles = true
+      rootVisible = false
+      isRootVisible = false
+      showsRootHandles = true
 
-        @Suppress("MagicNumber") // Swing dimension constants
-        border = scaledEmptyBorder(left = 8)
-        emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
+      @Suppress("MagicNumber") // Swing dimension constants
+      border = emptyBorder(left = 8)
+      emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
 
-        addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent?) {
-                if (e != null && e.clickCount >= 1) {
-                    val treePath = getPathForLocation(e.x, e.y) ?: return
-                    val item = getRepositoryItemFrom(treePath)
-                    if (item != null && item is RepositoryTreeItem.Module) {
-                        openFile(item)
-                    }
-                }
-            }
-        })
-
-        addTreeSelectionListener {
-            val item = getRepositoryItemFrom(it.newLeadSelectionPath)
+      addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          if (e != null && e.clickCount >= 1) {
+            val treePath = getPathForLocation(e.x, e.y) ?: return
+            val item = getRepositoryItemFrom(treePath)
             if (item != null && item is RepositoryTreeItem.Module) {
-                openFile(item)
+              openFile(item)
             }
+          }
         }
+      })
 
-        addKeyListener(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent?) {
-                if (e?.keyCode == KeyEvent.VK_ENTER) {
-                    val item = getRepositoryItemFrom(selectionPath)
-                    if (item != null && item is RepositoryTreeItem.Module) {
-                        openFile(item)
-                    }
-                }
+      addTreeSelectionListener {
+        val item = getRepositoryItemFrom(it.newLeadSelectionPath)
+        if (item != null && item is RepositoryTreeItem.Module) {
+          openFile(item)
+        }
+      }
+
+      addKeyListener(object : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent?) {
+          if (e?.keyCode == KeyEvent.VK_ENTER) {
+            val item = getRepositoryItemFrom(selectionPath)
+            if (item != null && item is RepositoryTreeItem.Module) {
+              openFile(item)
             }
-        })
+          }
+        }
+      })
 
-        TreeUIHelper.getInstance().installTreeSpeedSearch(this)
+      TreeUIHelper.getInstance().installTreeSpeedSearch(this)
 
-        TreeUtil.installActions(this)
+      TreeUtil.installActions(this)
 
     }
 

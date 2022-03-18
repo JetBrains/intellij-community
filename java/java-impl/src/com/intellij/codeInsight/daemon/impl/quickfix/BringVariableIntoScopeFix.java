@@ -123,6 +123,10 @@ public final class BringVariableIntoScopeFix implements IntentionAction, HighPri
     PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText("int i = 0", null);
     PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(outOfScopeVariable);
     if (variable.getInitializer() != null) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        PsiTypesUtil.replaceWithExplicitType(typeElement);
+      }
       variable.getInitializer().delete();
     }
 

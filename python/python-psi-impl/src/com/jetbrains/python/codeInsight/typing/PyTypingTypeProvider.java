@@ -1470,11 +1470,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
       final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
-      final PyType operandType = Ref.deref(getType(operand, context));
-      if (operandType instanceof PyClassType) {
-        final PyClass cls = ((PyClassType)operandType).getPyClass();
+      if (indexExpr != null) {
+        final PyType operandType = Ref.deref(getType(operand, context));
         final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
-        if (PyNames.TUPLE.equals(cls.getQualifiedName())) {
+        if (operandType instanceof PyClassType && !(operandType instanceof PyTupleType) &&
+            PyNames.TUPLE.equals(((PyClassType)operandType).getPyClass().getQualifiedName())) {
           if (indexExpr instanceof PyTupleExpression) {
             final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
             if (elements.length == 2 && isEllipsis(elements[1])) {
@@ -1483,8 +1483,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
           return PyTupleType.create(element, indexTypes);
         }
-        else if (indexExpr != null) {
-          return new PyCollectionTypeImpl(cls, false, indexTypes);
+        if (operandType != null) {
+          return PyTypeChecker.parameterizeType(operandType, indexTypes, context.getTypeContext());
         }
       }
     }

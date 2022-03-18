@@ -11,19 +11,16 @@ class GradleSettingScriptBuilder(projectName: String) {
 
   fun generate() = builder.toString()
 
-  fun withModule(name: String) = apply {
+  fun include(name: String) = apply {
     builder.add("include '$name'")
   }
 
-  fun withFlat(name: String) = apply {
-    builder.add("includeFlat '$name'")
-  }
-
-  fun withBuild(name: String) = apply {
+  fun includeBuild(name: String) = apply {
     builder.add("includeBuild '$name'")
   }
 
   companion object {
+    @JvmStatic
     fun settingsScript(projectName: String, configure: GradleSettingScriptBuilder.() -> Unit) =
       GradleSettingScriptBuilder(projectName).apply(configure).generate()
   }

@@ -54,7 +54,10 @@ open class LanguageToolChecker : TextChecker() {
             .map { Problem(it, lang, extracted, this is TestChecker) }
             .filterNot { isGitCherryPickedFrom(it.match, extracted) }
             .filterNot { isKnownLTBug(it.match, extracted) }
-            .filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
+            .filterNot {
+              val range = if (it.fitsGroup(RuleGroup.CASING)) includeSentenceBounds(extracted, it.patternRange) else it.patternRange
+              extracted.hasUnknownFragmentsIn(range)
+            }
             .toList()
         }
       }
@@ -67,6 +70,15 @@ open class LanguageToolChecker : TextChecker() {
       logger.warn("Got exception during check for typos by LanguageTool", e)
       emptyList()
     }
+  }
+
+  private fun includeSentenceBounds(text: CharSequence, range: TextRange): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+
+    while (start > 0 && text[start - 1].isWhitespace()) start--
+    while (end < text.length && text[end].isWhitespace()) end++
+    return TextRange(start, end)
   }
 
   private class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.java.JavaBundle;
@@ -57,27 +57,28 @@ final class IntroduceVariableTargetBlockChooser {
     }
     PsiElement lastItem = ContainerUtil.getLastItem(containers);
     LOG.assertTrue(lastItem instanceof PsiLambdaExpression);
-    PsiElement parent = PsiTreeUtil.getParentOfType(lastItem, PsiStatement.class, PsiField.class);
+    PsiElement parent = PsiTreeUtil.getParentOfType(lastItem, PsiStatement.class, PsiField.class, PsiLambdaExpression.class);
+    if (parent instanceof PsiLambdaExpression) return parent;
     return parent != null ? parent.getParent() : lastItem.getParent();
   }
 
    static List<PsiElement> getContainers(PsiElement anchor, PsiExpression expr) {
      List<PsiElement> containers = new ArrayList<>();
      containers.add(anchor);
-     PsiElement container = PsiTreeUtil.getParentOfType(anchor, PsiLambdaExpression.class, true, PsiCodeBlock.class);
+     PsiLambdaExpression container = PsiTreeUtil.getParentOfType(anchor, PsiLambdaExpression.class, true, PsiCodeBlock.class);
      if (container == null) return containers;
      Set<PsiElement> dependencies =
        PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class)
          .stream()
          .map(ref -> ref.resolve())
-         .filter(Objects::nonNull)
+         .filter(PsiParameter.class::isInstance)
          .collect(Collectors.toSet());
-    while (container instanceof PsiLambdaExpression) {
-      if (ContainerUtil.intersects(dependencies, Arrays.asList(((PsiLambdaExpression)container).getParameterList().getParameters()))) {
+    while (container != null) {
+      if (ContainerUtil.intersects(dependencies, Arrays.asList(container.getParameterList().getParameters()))) {
         break;
       }
       containers.add(container);
-      container = container.getParent();
+      container = PsiTreeUtil.getParentOfType(container, PsiLambdaExpression.class, true, PsiCodeBlock.class);
     }
     return containers;
   }

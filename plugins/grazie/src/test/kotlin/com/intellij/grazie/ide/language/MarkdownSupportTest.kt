@@ -2,11 +2,12 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 
 class MarkdownSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
   override fun setUp() {
     super.setUp()
     // IDEA-228789 markdown change PSI/document/model during highlighting
@@ -15,5 +16,12 @@ class MarkdownSupportTest : GrazieTestBase() {
 
   fun `test grammar check in file`() {
     runHighlightTestForFile("ide/language/markdown/Example.md")
+  }
+
+  fun `test replacement with markup inside`() {
+    myFixture.configureByText("a.md", "<warning>First </warning>[<warning>of all</warning>, it's a great](url) sentence.")
+    myFixture.checkHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention("First"))
+    myFixture.checkResult("First[, it's a great](url) sentence.") // the result could be different, but the markup should still be preserved
   }
 }

@@ -34,7 +34,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -56,7 +55,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -1852,49 +1850,43 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
-    return decorate(text, getLocationText(element), getExternalText(element, externalUrl, provider));
+    HtmlChunk locationInfo = getDefaultLocationInfo(element);
+    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider));
   }
 
   @RequiresReadLock
   @RequiresBackgroundThread
-  private static @Nullable HtmlChunk getLocationText(@Nullable PsiElement element) {
-    if (element != null) {
-      PsiFile file = element.getContainingFile();
-      VirtualFile vfile = file == null ? null : file.getVirtualFile();
+  private static @Nullable HtmlChunk getDefaultLocationInfo(@Nullable PsiElement element) {
+    if (element == null) return null;
 
-      if (vfile == null) return null;
+    PsiFile file = element.getContainingFile();
+    VirtualFile vfile = file == null ? null : file.getVirtualFile();
+    if (vfile == null) return null;
 
-      SearchScope scope = element.getUseScope();
-      if (scope instanceof LocalSearchScope) {
-        return null;
-      }
+    if (element.getUseScope() instanceof LocalSearchScope) return null;
 
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-      Module module = fileIndex.getModuleForFile(vfile);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    Module module = fileIndex.getModuleForFile(vfile);
 
-      if (module != null && !ModuleType.isInternal(module)) {
-        if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
-        return HtmlChunk.fragment(
-          HtmlChunk.tag("icon").attr("src", ModuleType.get(module).getId()),
-          HtmlChunk.nbsp(),
-          HtmlChunk.text(module.getName())
-        );
-      }
-      else {
-        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
-        for (OrderEntry order : entries) {
-          if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-            return HtmlChunk.fragment(
-              HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
-              HtmlChunk.nbsp(),
-              HtmlChunk.text(order.getPresentableName())
-            );
-          }
-        }
-      }
+    if (module != null) {
+      if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
+      return HtmlChunk.fragment(
+        HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Module"),
+        HtmlChunk.nbsp(),
+        HtmlChunk.text(module.getName())
+      );
     }
-
-    return null;
+    else {
+      return fileIndex.getOrderEntriesForFile(vfile).stream()
+        .filter(it -> it instanceof LibraryOrderEntry || it instanceof JdkOrderEntry)
+        .findFirst()
+        .map(it -> HtmlChunk.fragment(
+          HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
+          HtmlChunk.nbsp(),
+          HtmlChunk.text(it.getPresentableName())
+        ))
+        .orElse(null);
+    }
   }
 
   @Internal

@@ -4,8 +4,10 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
+import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 private val MAVEN_CENTRAL_UNIFIED_REPOSITORY = UnifiedDependencyRepository(
@@ -15,6 +17,16 @@ private val MAVEN_CENTRAL_UNIFIED_REPOSITORY = UnifiedDependencyRepository(
 )
 
 internal class MavenProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
+
+    override fun addDependencyToModule(
+        operationMetadata: DependencyOperationMetadata,
+        module: ProjectModule
+    ) = super.addDependencyToModule(
+        operationMetadata = operationMetadata.copy(
+            newScope = operationMetadata.newScope?.takeIf { it != PackageSearchMavenConfiguration.DEFAULT_MAVEN_SCOPE }
+        ),
+        module = module
+    )
 
     override fun usesSharedPackageUpdateInspection() = true
 

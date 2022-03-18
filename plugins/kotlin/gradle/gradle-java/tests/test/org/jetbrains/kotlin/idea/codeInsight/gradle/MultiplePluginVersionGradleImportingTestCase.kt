@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.Tested
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
+import org.junit.AssumptionViolatedException
 import org.junit.Rule
 import org.junit.runners.Parameterized
 import java.io.File
@@ -48,6 +49,11 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
 
     override fun setUp() {
+        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
+            assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        } else if (kotlinPluginVersionString == masterKotlinPluginVersion) {
+            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        }
         super.setUp()
         setupSystemProperties()
     }
@@ -78,7 +84,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = "1.6.20-dev-6372"
+        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: LAST_SNAPSHOT.toString()
         const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
         private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
 
@@ -108,6 +114,24 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         "build_tools_version" to "28.0.3",
     )
 
+    val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
+    fun hmppProperties(): Map<String, String> =
+        if (isHmppEnabledByDefault) {
+            mapOf(
+                "enable_hmpp_flags" to "",
+                "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
+            )
+        } else {
+            mapOf(
+                "enable_hmpp_flags" to """
+                    kotlin.mpp.enableGranularSourceSetsMetadata=true
+                    kotlin.native.enableDependencyPropagation=false
+                    kotlin.mpp.enableHierarchicalCommonization=true
+                """.trimIndent(),
+                "disable_hmpp_flags" to ""
+            )
+        }
+
     protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
 
     override val defaultProperties: Map<String, String>
@@ -116,6 +140,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             put("kotlin_plugin_version", kotlinPluginVersionString)
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
+            putAll(hmppProperties())
         }
 
     protected open fun checkProjectStructure(
@@ -169,4 +194,35 @@ private fun localKotlinGradlePluginExists(): Boolean {
         .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/${MultiplePluginVersionGradleImportingTestCase.masterKotlinPluginVersion}")
 
     return localKotlinGradlePlugin.exists()
+}
+
+/***
+ * KTIJ-21316 Some MPP tests are failing with KGP and currently bundled Kotlin IDE Plugin
+ * Such tests can be muted until new Kotlin IDE plugin is bundled
+ *
+ * This util function attempts to run failing test and in case it pass reports an error.
+ */
+fun MultiplePluginVersionGradleImportingTestCase.assumeFailsDueToKTIJ21316(code: () -> Unit) {
+    if (kotlinPluginParameter == "master") {
+        try {
+            code()
+        } catch (e: AssertionError) {
+            throw AssumptionViolatedException(
+                """
+                    KTIJ-21316: This test is expected to fail with latest Kotlin Gradle Plugin.
+                    Wait for upgrade of bundled Kotlin IDE Plugin to >=1.6.10
+                """.trimIndent(),
+                e
+            )
+        }
+
+        throw AssertionError(
+            """
+                KTIJ-21316: It seems like bundled Kotlin IDE Plugin was upgraded.
+                And this test is no longer failing. Please REMOVE function `assumeFailsDueToKTIJ21316`!
+            """.trimIndent()
+        )
+    } else {
+        code()
+    }
 }

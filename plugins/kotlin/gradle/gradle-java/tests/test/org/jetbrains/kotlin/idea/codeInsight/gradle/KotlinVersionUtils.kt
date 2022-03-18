@@ -162,3 +162,5 @@ fun KotlinVersion.toWildcard(): KotlinVersion {
         classifier = WILDCARD_KOTLIN_VERSION_CLASSIFIER
     )
 }
+
+val KotlinVersion.isHmppEnabledByDefault get() = this >= parseKotlinVersion("1.6.20-dev-6442")

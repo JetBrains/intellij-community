@@ -21,10 +21,19 @@ interface KotlinAutoImportsFilter {
     companion object {
         val EP_NAME = ExtensionPointName.create<KotlinAutoImportsFilter>("org.jetbrains.kotlin.idea.codeInsight.unambiguousImports")
 
-        fun findRelevantExtension(file: KtFile, suggestions: Collection<FqName>): KotlinAutoImportsFilter? =
+        private fun findRelevantExtension(file: KtFile, suggestions: Collection<FqName>): KotlinAutoImportsFilter? =
             EP_NAME.findFirstSafe { it.forceAutoImportForElement(file, suggestions) }
 
-        fun filterSuggestionsIfApplicable(context: KtFile, suggestions: Collection<FqName>): Collection<FqName>? =
-            findRelevantExtension(context, suggestions)?.filterSuggestions(suggestions)
+        fun filterSuggestionsIfApplicable(context: KtFile, suggestions: Collection<FqName>): Collection<FqName> {
+            val extension = findRelevantExtension(context, suggestions)
+
+            if (extension != null) return extension.filterSuggestions(suggestions)
+            
+            return if (KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly) {
+                suggestions
+            } else {
+                emptyList()
+            }
+        }
     }
 }

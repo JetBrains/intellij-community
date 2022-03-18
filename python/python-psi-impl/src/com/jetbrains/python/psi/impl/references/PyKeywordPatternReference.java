@@ -13,9 +13,8 @@ import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -90,15 +89,15 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     return true;
   }
 
-  @Nullable
-  private static PyType resolveToClassTypes(@NotNull PyClassPattern classPattern, @NotNull PyResolveContext resolveContext) {
+  @NotNull
+  private static List<PyClassLikeType> resolveToClassTypes(@NotNull PyClassPattern classPattern, @NotNull PyResolveContext resolveContext) {
     List<PsiElement> elements = PyUtil.multiResolveTopPriority(classPattern.getClassNameReference(), resolveContext);
     return StreamEx.of(elements)
       .select(PyClass.class)
       .map(e -> e.getType(resolveContext.getTypeEvalContext()))
       .nonNull()
       .map(PyInstantiableType::toInstance)
-      .collect(PyTypeUtil.toUnion());
+      .toList();
   }
 
   private static class KeywordAttributeLookupDecorator extends LookupElementDecorator<LookupElement> {

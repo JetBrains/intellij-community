@@ -1,11 +1,13 @@
 package com.intellij.grazie.text;
 
 import com.intellij.grazie.grammar.strategy.StrategyUtils;
+import com.intellij.grazie.utils.Text;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
@@ -161,7 +164,16 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
   @Override
   public @NotNull PsiElement findPsiElementAt(int textOffset) {
-    return Objects.requireNonNull(getContainingFile().findElementAt(textOffsetToFile(textOffset)));
+    int fileOffset = textOffsetToFile(textOffset);
+    PsiFile file = getContainingFile();
+    PsiElement leaf = file.findElementAt(fileOffset);
+    if (leaf == null) {
+      if (fileOffset == file.getTextLength()) {
+        return PsiTreeUtil.getDeepestLast(file);
+      }
+      throw new RuntimeException("Cannot find offset " + fileOffset + " in file of " + file.getClass() + ", length " + file.getTextLength());
+    }
+    return leaf;
   }
 
   @Override
@@ -321,6 +333,14 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
       })
       .toList();
     return excludeRanges(exclusions);
+  }
+
+  @Override
+  public TextContent removeLineSuffixes(Set<Character> suffixChars) {
+    if (suffixChars.isEmpty()) return this;
+
+    Pattern pattern = Pattern.compile("(" + Strings.join(suffixChars, c -> Pattern.quote(String.valueOf(c)), "|") + ")(?=\n)");
+    return excludeRanges(ContainerUtil.map(Text.allOccurrences(pattern, this), Exclusion::exclude));
   }
 
   private static boolean isSpace(String text, int start) {

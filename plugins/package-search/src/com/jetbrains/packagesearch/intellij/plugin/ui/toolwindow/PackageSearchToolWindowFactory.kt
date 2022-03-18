@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -21,8 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 
-class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
-
+internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
 
         private val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
@@ -52,7 +50,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
                     }
                     .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
                     .onEach { toolWindow -> toolWindow.initialize(project) }
-                    .flowOn(Dispatchers.EDT)
+                    .flowOn(Dispatchers.toolWindowManager(project))
                     .launchIn(project.lifecycleScope)
             }
             isAvailable

@@ -9,11 +9,15 @@ import kotlinx.html.style
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
+import org.languagetool.JLanguageTool
+import org.languagetool.rules.Categories
+import org.languagetool.rules.ITSIssueType
 import java.net.URL
+import java.util.*
 
 internal class LanguageToolRule(
   private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
-) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, ltRule.category.name) {
+) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
 
   override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
 
@@ -57,4 +61,25 @@ internal class LanguageToolRule(
   }
 
   override fun getSearchableDescription(): String = "LanguageTool"
+
+  private companion object {
+    private fun categoryName(kind: Categories, lang: Lang, orElse: String): String {
+      try {
+        return kind.getCategory(JLanguageTool.getMessageBundle(lang.jLanguage!!)).name
+      }
+      catch (e: MissingResourceException) {
+        return orElse
+      }
+    }
+
+    private fun categories(ltRule: org.languagetool.rules.Rule, lang: Lang): List<String> {
+      val ltCat = ltRule.category
+      val isStyleCat = ltCat.id == Categories.STYLE.id
+      if (ltRule.locQualityIssueType == ITSIssueType.Style || isStyleCat || ltCat.id == Categories.TYPOGRAPHY.id) {
+        val subCat = if (isStyleCat || ltCat.id == Categories.MISC.id) categoryName(Categories.MISC, lang, "Other") else ltCat.name
+        return listOf(categoryName(Categories.STYLE, lang, "Style"), subCat)
+      }
+      return listOf(ltCat.name)
+    }
+  }
 }

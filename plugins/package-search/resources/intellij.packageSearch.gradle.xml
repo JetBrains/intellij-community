@@ -13,7 +13,7 @@
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePackageUpdateInspection"
                 key="packagesearch.inspection.upgrade.key.gradle"
                 hasStaticDescription="true"
-                level="WARNING"/>
+                level="WEAK WARNING"/>
 
         <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
@@ -28,6 +28,12 @@
 
         <packagesearch.moduleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleLinkSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePropertiesChangedSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GlobalGradlePropertiesChangedSignalProvider"/>
 
         <packagesearch.configurableContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.ui.GradleConfigurableContributor"/>

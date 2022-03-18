@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.ui.BookmarksView
@@ -19,6 +19,7 @@ class BookmarksTreeStructure(val panel: BookmarksView) : AbstractTreeStructure()
   override fun getParentElement(element: Any): Any? = element.asAbstractTreeNode?.parent
   override fun getChildElements(element: Any): Array<Any> {
     val node = element as? AbstractTreeNode<*>
+    if (panel.isPopup && node !is RootNode && node !is GroupNode) return emptyArray()
     val children = node?.children?.ifEmpty { null } ?: return emptyArray()
     val parent = node.parentFolderNode ?: return children.toTypedArray()
     val provider = CompoundTreeStructureProvider.get(panel.project) ?: return children.toTypedArray()
