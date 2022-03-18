@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
@@ -42,15 +43,20 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.lang.reflect.UndeclaredThrowableException
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Supplier
 
+import static java.nio.file.attribute.PosixFilePermission.*
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 
 @CompileStatic
@@ -1032,6 +1038,7 @@ idea.fatal.error.notification=disabled
 
       List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       updateExecutablePermissions(targetDirectory, executableFilesPatterns)
+      buildContext.bundledRuntime.checkExecutablePermissions(targetDirectory, currentOs)
     }
     else {
       copyDistFiles(buildContext, targetDirectory)
@@ -1057,9 +1064,10 @@ idea.fatal.error.notification=disabled
       stream.filter { !Files.isDirectory(it) }.forEach { file ->
         if (SystemInfoRt.isUnix) {
           Path relativeFile = destinationDir.relativize(file)
-          boolean isExecutable = executableFilesMatchers.any {
-            it.matches(relativeFile)
-          }
+          boolean isExecutable = OWNER_EXECUTE in Files.getPosixFilePermissions(file) ||
+                                 executableFilesMatchers.any {
+                                   it.matches(relativeFile)
+                                 }
           Files.setPosixFilePermissions(file, isExecutable ? executable : regular)
         }
         else {

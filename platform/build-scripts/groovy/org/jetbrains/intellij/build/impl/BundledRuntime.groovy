@@ -3,10 +3,14 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.io.PosixFilePermissionsUtil
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
@@ -16,13 +20,16 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 
+import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
+import java.util.stream.Collectors
 import java.util.zip.GZIPInputStream
 
 import static java.nio.file.attribute.PosixFilePermission.*
@@ -239,6 +246,98 @@ final class BundledRuntime {
   static String rootDir(Path archive) {
     return createTarGzInputStream(archive).withCloseable {
       it.nextTarEntry?.name ?: { throw new IllegalStateException("Unable to read $archive") }()
+    }
+  }
+
+  /**
+   * When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
+   */
+  List<String> executableFilesPatterns(OsFamily os) {
+    def pathPrefix = os == OsFamily.MACOS ? "jbr/Contents/Home/" : "jbr/"
+    return [
+      pathPrefix + "bin/*",
+      pathPrefix + "lib/jexec",
+      pathPrefix + "lib/jcef_helper",
+      pathPrefix + "lib/jspawnhelper",
+      pathPrefix + "lib/chrome-sandbox"
+    ]
+  }
+
+  void checkExecutablePermissions(Path distribution, String root = "", OsFamily os) {
+    if (os == OsFamily.WINDOWS) return
+    List<PathMatcher> patterns = executableFilesPatterns(os).collect {
+      FileSystems.getDefault().getPathMatcher("glob:$it")
+    }
+    List<String> entries
+    if (Files.isDirectory(distribution)) {
+      distribution = distribution.resolve(root)
+      entries = Files.walk(distribution).withCloseable { files ->
+        List<Path> expectedExecutables = files.filter { file ->
+          def relativePath = distribution.relativize(file)
+          !Files.isDirectory(file) && patterns.any {
+            it.matches(relativePath)
+          }
+        }.collect(Collectors.toList())
+        if (expectedExecutables.size() < patterns.size()) {
+          context.messages.error("Executable files patterns:\n" +
+                                 executableFilesPatterns(os).join("\n") +
+                                 "\nFound files:\n" +
+                                 expectedExecutables.join("\n"))
+        }
+        expectedExecutables.stream()
+          .filter { !(OWNER_EXECUTE in Files.getPosixFilePermissions(it)) }
+          .map { distribution.relativize(it).toString() }
+          .collect(Collectors.toList())
+      }
+    }
+    else if ("$distribution".endsWith(".tar.gz")) {
+      entries = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(distribution))))
+        .withCloseable {
+          List<TarArchiveEntry> expectedExecutables = []
+          while (true) {
+            def entry = (TarArchiveEntry)it.getNextEntry()
+            if (entry === null) break
+            def entryPath = Path.of(entry.name)
+            if (!root.isEmpty()) entryPath = Path.of(root).relativize(entryPath)
+            if (!entry.directory && patterns.any {
+              it.matches(entryPath)
+            }) {
+              expectedExecutables += entry
+            }
+          }
+          if (expectedExecutables.size() < patterns.size()) {
+            context.messages.error("Executable files patterns:\n" +
+                                   executableFilesPatterns(os).join("\n") +
+                                   "\nFound files:\n" +
+                                   expectedExecutables.join("\n"))
+          }
+          expectedExecutables
+            .findAll {!(OWNER_EXECUTE in PosixFilePermissionsUtil.fromMode(it.mode)) }
+            .collect { "${it.name}: mode is ${it.mode}".toString() }
+        }
+    }
+    else {
+      entries = new ZipFile(Files.newByteChannel(distribution)).withCloseable {
+        def expectedExecutables = it.getEntries().toList().findAll { entry ->
+          def entryPath = Path.of(entry.name)
+          if (!root.isEmpty()) entryPath = Path.of(root).relativize(entryPath)
+          !entry.directory && patterns.any {
+            it.matches(entryPath)
+          }
+        }
+        if (expectedExecutables.size() < patterns.size()) {
+          context.messages.error("Executable files patterns:\n" +
+                                 executableFilesPatterns(os).join("\n") +
+                                 "\nFound files:\n" +
+                                 expectedExecutables.join("\n"))
+        }
+        expectedExecutables
+          .findAll {!(OWNER_EXECUTE in PosixFilePermissionsUtil.fromMode(it.unixMode)) }
+          .collect { "${it.name}: mode is ${it.unixMode}".toString() }
+      }
+    }
+    if (!entries.isEmpty()) {
+      context.messages.error("Missing executable permissons in $distribution for:\n" + entries.join("\n"))
     }
   }
 }

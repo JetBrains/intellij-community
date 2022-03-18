@@ -78,7 +78,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
                                .setAttribute("arch", arch.name()), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(null, osAndArchSpecificDistPath, NO_JBR_SUFFIX, buildContext)
+          buildTarGz(null, osAndArchSpecificDistPath, NO_JBR_SUFFIX)
         }
       }
 
@@ -87,7 +87,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, arch)
-      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "", buildContext)
+      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "")
+      buildContext.bundledRuntime.checkExecutablePermissions(tarGzPath, getRootDirectoryName(), OsFamily.LINUX)
 
       if (jreDirectoryPath != null) {
         buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
@@ -143,12 +144,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       "bin/remote-dev-server.sh",
     ] + customizer.extraExecutables
     if (includeJre) {
-      // When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
-      patterns += "jbr/bin/*"
-      patterns += "jbr/lib/jexec"
-      patterns += "jbr/lib/jcef_helper"
-      patterns += "jbr/lib/jspawnhelper"
-      patterns += "jbr/lib/chrome-sandbox"
+      patterns += buildContext.bundledRuntime.executableFilesPatterns(OsFamily.LINUX)
     }
     return patterns
   }
@@ -170,8 +166,12 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     return "${baseName}${suffix}.tar.gz"
   }
 
-  private Path buildTarGz(@Nullable String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
-    def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+  private String getRootDirectoryName() {
+    return customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+  }
+
+  private Path buildTarGz(@Nullable String jreDirectoryPath, Path unixDistPath, String suffix) {
+    def tarRoot = getRootDirectoryName()
     def tarName = artifactName(buildContext, suffix)
     Path tarPath = buildContext.paths.artifactDir.resolve(tarName)
     List<String> paths = [buildContext.paths.distAll, unixDistPath.toString()]

@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.intellij.build.tasks.SignKt
@@ -71,6 +72,9 @@ final class MacDmgBuilder {
     }
     else {
       buildAndSignWithMacBuilderHost(sitFile, jreArchivePath, macHostProperties, notarize, customizer, context)
+    }
+    if (jreArchivePath != null && Files.exists(sitFile)) {
+      context.bundledRuntime.checkExecutablePermissions(sitFile, zipRoot, OsFamily.MACOS)
     }
   }
 

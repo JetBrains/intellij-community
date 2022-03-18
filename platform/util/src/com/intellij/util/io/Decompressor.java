@@ -18,11 +18,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -401,7 +398,6 @@ public abstract class Decompressor {
     return FileUtilRt.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
   }
 
-  @SuppressWarnings("OctalInteger")
   private static void setAttributes(int mode, Path outputFile) throws IOException {
     if (SystemInfo.isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
@@ -413,17 +409,7 @@ public abstract class Decompressor {
     else {
       PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
       if (attrs != null) {
-        Set<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
-        if (isSet(mode, 0400)) permissions.add(PosixFilePermission.OWNER_READ);
-        if (isSet(mode, 0200)) permissions.add(PosixFilePermission.OWNER_WRITE);
-        if (isSet(mode, 0100)) permissions.add(PosixFilePermission.OWNER_EXECUTE);
-        if (isSet(mode, 040)) permissions.add(PosixFilePermission.GROUP_READ);
-        if (isSet(mode, 020)) permissions.add(PosixFilePermission.GROUP_WRITE);
-        if (isSet(mode, 010)) permissions.add(PosixFilePermission.GROUP_EXECUTE);
-        if (isSet(mode, 04)) permissions.add(PosixFilePermission.OTHERS_READ);
-        if (isSet(mode, 02)) permissions.add(PosixFilePermission.OTHERS_WRITE);
-        if (isSet(mode, 01)) permissions.add(PosixFilePermission.OTHERS_EXECUTE);
-        attrs.setPermissions(permissions);
+        attrs.setPermissions(PosixFilePermissionsUtil.fromMode(mode));
       }
     }
   }
