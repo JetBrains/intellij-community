@@ -31,8 +31,6 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
 
-  override val suggestedChangeCommitMessageDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
-
   private val pendingReviewRequestValue = LazyCancellableBackgroundProcessValue.create {
     reviewService.loadPendingReview(it, pullRequestId)
   }

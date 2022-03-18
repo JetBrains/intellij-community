@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import git4idea.branch.GitBranchUtil
@@ -19,8 +20,13 @@ class GHPRSuggestedChangeHelper(
   private val reviewDataProvider: GHPRReviewDataProvider,
   private val detailsDataProvider: GHPRDetailsDataProvider
 ) {
-  val suggestedChangeCommitMessageDocument = reviewDataProvider.suggestedChangeCommitMessageDocument
-  val isCorrectBranch by lazy { SingleValueModel(isCorrectBranchWithPullRequestSource()) }
+  val suggestedChangeCommitMessageDocument by lazy(LazyThreadSafetyMode.NONE) {
+    EditorFactory.getInstance().createDocument("")
+  }
+
+  val isCorrectBranch by lazy(LazyThreadSafetyMode.NONE) {
+    SingleValueModel(isCorrectBranchWithPullRequestSource())
+  }
 
   init {
     project.messageBus
