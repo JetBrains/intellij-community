@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.nio.file.Paths
+import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
 
 const val KOTLIN_BUNDLED = "KOTLIN_BUNDLED"
@@ -27,7 +28,7 @@ class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
                     else -> error("projectFilePath should be either misc.xml or *.ipr file")
                 }
             }
-            .takeIf { it.exists() }
+            .takeIf { path -> path.exists() && path.bufferedReader().use { it.readLine() != null } }
             ?.let { JDOMUtil.load(it) }
             ?.children
             ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }

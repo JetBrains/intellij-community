@@ -57,6 +57,12 @@ public class ProjectPathMacroManager extends PathMacroManager {
   protected @NotNull ReplacePathToMacroMap computeReplacePathMap() {
     ReplacePathToMacroMap result = super.computeReplacePathMap();
     addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myBasePathPointer.get(), null);
+    String projectFile = myProjectFilePathPointer.get();
+    if (projectFile != null) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
+        result.addMacroReplacement(entry.getValue(), entry.getKey());
+      }
+    }
     return result;
   }
 
