@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
 /**
  * Presents type argument info for class type references (e.g., property type in declaration, base class in super types list).
@@ -50,13 +51,11 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCall()`
         // will NOT return a KtCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
-        val parent = callElement.parent
-        val receiver = if (parent is KtQualifiedExpression && parent.selectorExpression == callElement) {
-            parent.receiverExpression
-        } else null
+        val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
         val fileSymbol = callElement.containingKtFile.getFileSymbol()
-        val symbols = reference.resolveToSymbols().filterIsInstance<KtSymbolWithTypeParameters>()
-            .filter { filterCandidate(it, callElement, fileSymbol, receiver) }
+        val symbols = reference.resolveToSymbols()
+            .filterIsInstance<KtSymbolWithTypeParameters>()
+            .filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
 
         // Multiple overloads may have the same type parameters (see Overloads.kt test), so we select the distinct ones.
         return symbols.distinctBy { buildPresentation(fetchCandidateInfo(it), -1).first }

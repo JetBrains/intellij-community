@@ -7,16 +7,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 internal fun KtAnalysisSession.collectCallCandidates(callElement: KtElement): List<CandidateWithMapping> {
-    val (candidates, receiver) = when (callElement) {
+    val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
-            val parent = callElement.parent
-            val receiver = if (parent is KtQualifiedExpression && parent.selectorExpression == callElement) {
-                parent.receiverExpression
-            } else null
-            callElement.collectCallCandidates() to receiver
+            val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
+            callElement.collectCallCandidates() to explicitReceiver
         }
         is KtArrayAccessExpression -> callElement.collectCallCandidates() to callElement.arrayExpression
         else -> return emptyList()
@@ -26,7 +24,7 @@ internal fun KtAnalysisSession.collectCallCandidates(callElement: KtElement): Li
     val fileSymbol = callElement.containingKtFile.getFileSymbol()
 
     return candidates.filter {
-        filterCandidate(it, callElement, fileSymbol, receiver)
+        filterCandidate(it, callElement, fileSymbol, explicitReceiver)
     }.map {
         val functionCall = it.candidate as KtFunctionCall<*>
         CandidateWithMapping(
@@ -41,19 +39,19 @@ private fun KtAnalysisSession.filterCandidate(
     candidateInfo: KtCallCandidateInfo,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
-    receiver: KtExpression?
+    explicitReceiver: KtExpression?
 ): Boolean {
     val candidateCall = candidateInfo.candidate
     if (candidateCall !is KtFunctionCall<*>) return false
     val candidateSymbol = candidateCall.partiallyAppliedSymbol.signature.symbol
-    return filterCandidate(candidateSymbol, callElement, fileSymbol, receiver)
+    return filterCandidate(candidateSymbol, callElement, fileSymbol, explicitReceiver)
 }
 
 internal fun KtAnalysisSession.filterCandidate(
     candidateSymbol: KtSymbol,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
-    receiver: KtExpression?
+    explicitReceiver: KtExpression?
 ): Boolean {
     if (callElement is KtConstructorDelegationCall) {
         // Exclude caller from candidates for `this(...)` delegated constructor calls.
@@ -65,7 +63,7 @@ internal fun KtAnalysisSession.filterCandidate(
         }
     }
 
-    if (receiver != null && candidateSymbol is KtCallableSymbol) {
+    if (explicitReceiver != null && candidateSymbol is KtCallableSymbol) {
         // We want only the candidates that match the receiver type. E.g., if you have code like this:
         // ```
         // fun String.foo() {}
@@ -77,15 +75,15 @@ internal fun KtAnalysisSession.filterCandidate(
         // The available candidates are `String.foo()` and `Int.foo()`. When checking the receiver types for safe calls, we want to compare
         // the non-nullable receiver type against the candidate receiver type. E.g., that `Int` (and not the type of `i` which is `Int?`)
         // is subtype of `Int` (the candidate receiver type).
-        val isSafeCall = receiver.parent is KtSafeQualifiedExpression
-        val receiverType = receiver.getKtType()?.let { if (isSafeCall) it.withNullability(KtTypeNullability.NON_NULLABLE) else it }
+        val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
+        val receiverType = explicitReceiver.getKtType()?.let { if (isSafeCall) it.withNullability(KtTypeNullability.NON_NULLABLE) else it }
             ?: error("Receiver should have a KtType")
         val candidateReceiverType = candidateSymbol.receiverType
         if (candidateReceiverType != null && receiverType.isNotSubTypeOf(candidateReceiverType)) return false
     }
 
     // Filter out candidates not visible from call site
-    if (candidateSymbol is KtSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, receiver, callElement)) return false
+    if (candidateSymbol is KtSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
 
     return true
 }
