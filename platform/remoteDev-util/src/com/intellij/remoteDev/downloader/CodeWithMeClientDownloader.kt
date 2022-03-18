@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
@@ -138,6 +139,10 @@ object CodeWithMeClientDownloader {
     val clientName = "$clientDistributionName-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast(jreDownloadUrl.downloadDelimiter()).removeSuffix(".tar.gz")
 
+    val pgpPublicKeyUrl = if (unattendedMode) {
+      RemoteDevSystemSettings.getPgpPublicKeyUrl().value
+    } else null
+
     val sessionInfo = object : CodeWithMeSessionInfoProvider {
       override val hostBuildNumber = hostBuildNumber
       override val compatibleClientName = clientName
@@ -147,7 +152,7 @@ object CodeWithMeClientDownloader {
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
       override val stunTurnServers: List<StunTurnServerInfo>? = null
-      override val downloadPgpPublicKeyUrl: String? = null
+      override val downloadPgpPublicKeyUrl: String? = pgpPublicKeyUrl
     }
 
     LOG.info("Generated session info: $sessionInfo")
