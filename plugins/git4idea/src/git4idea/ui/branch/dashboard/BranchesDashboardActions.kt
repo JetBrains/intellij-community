@@ -578,7 +578,7 @@ internal object BranchesDashboardActions {
       val controller = e.getData(BRANCHES_UI_CONTROLLER)
       val branches = e.getData(GIT_BRANCHES)
       val project = e.project
-      val enabled = project != null && controller != null && branches != null && branches.isNotEmpty()
+      val enabled = project != null && controller != null && !branches.isNullOrEmpty()
       e.presentation.isEnabled = enabled
       e.presentation.description = description()
       if (enabled) {
@@ -619,7 +619,7 @@ internal object BranchesDashboardActions {
       val branchFilters = e.getData(GIT_BRANCH_FILTERS)
       val uiController = e.getData(BRANCHES_UI_CONTROLLER)
       val project = e.project
-      val enabled = project != null && uiController != null && branchFilters != null && branchFilters.isNotEmpty()
+      val enabled = project != null && uiController != null && !branchFilters.isNullOrEmpty()
                     && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
       e.presentation.isEnabled = enabled
     }
