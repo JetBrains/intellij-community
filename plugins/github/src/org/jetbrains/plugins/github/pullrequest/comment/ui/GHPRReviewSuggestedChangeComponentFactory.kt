@@ -73,22 +73,22 @@ class GHPRReviewSuggestedChangeComponentFactory(
     add(topPanel, BorderLayout.NORTH)
     add(HtmlEditorPane(content), BorderLayout.CENTER)
 
-    suggestedChangeHelper.isCorrectBranch.addAndInvokeListener { updateUI(optionButton, it, thread.isOutdated) }
+    suggestedChangeHelper.isCorrectBranch.addAndInvokeListener { updateUI(optionButton, it, thread.isOutdated, thread.isResolved) }
   }
 
-  private fun updateUI(optionButton: JBOptionButton, isCorrectBranch: Boolean, isOutdated: Boolean) {
-    if (isCorrectBranch && !isOutdated) {
+  private fun updateUI(optionButton: JBOptionButton, isCorrectBranch: Boolean, isOutdated: Boolean, isResolved: Boolean) {
+    if (isCorrectBranch && !isOutdated && !isResolved) {
       optionButton.enableActions()
       return
     }
 
-    if (isOutdated) {
-      optionButton.disableActions()
-      optionButton.optionTooltipText = GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.outdated")
-    }
-    else {
-      optionButton.disableActions()
-      optionButton.optionTooltipText = GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.different.branch")
+    optionButton.apply {
+      disableActions()
+      optionTooltipText = when {
+        isOutdated -> GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.outdated")
+        isResolved -> GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.resolved")
+        else -> GithubBundle.message("pull.request.timeline.comment.suggested.changes.tooltip.different.branch")
+      }
     }
   }
 
