@@ -59,7 +59,8 @@ object KotlinPathsProvider {
         beforeDownload: () -> Unit,
         onError: (String) -> Unit,
     ): File? {
-        getExpectedMavenArtifactJarPath(artifactId, version).takeIf { it.exists() }?.let {
+        val expectedMavenArtifactJarPath = getExpectedMavenArtifactJarPath(artifactId, version)
+        expectedMavenArtifactJarPath.takeIf { it.exists() }?.let {
             return it
         }
         val prop = RepositoryLibraryProperties(
@@ -98,6 +99,11 @@ object KotlinPathsProvider {
         }
         return downloadedCompiler.singleOrNull().let { it ?: error("Expected to download only single artifact") }.file
             .toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl.let { File(it) }
+            .also {
+                check(it == expectedMavenArtifactJarPath) {
+                    "Expected maven artifact path ($expectedMavenArtifactJarPath) doesn't match actual artifact path ($it)"
+                }
+            }
     }
 
     fun resolveMavenArtifactInMavenRepo(mavenRepo: File, artifactId: String, version: String) =
