@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -121,7 +121,9 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
       content = formatContent(providersAndFiles, projectDirectory)
     }
 
-    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION).setListener(showFileInProjectViewListener)
+    val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
+      .setSuggestionType(true)
+      .setListener(showFileInProjectViewListener)
 
     if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
       val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)
