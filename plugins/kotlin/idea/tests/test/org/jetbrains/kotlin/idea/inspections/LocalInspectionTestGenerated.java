@@ -16382,6 +16382,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testNullOrIsEmpty4() throws Exception {
                 runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty4.kt");
             }
+
+            @TestMetadata("nullOrIsEmpty5.kt")
+            public void testNullOrIsEmpty5() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty5.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -23,10 +24,11 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.isError
 
 class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = binaryExpressionVisitor(fun(binaryExpression) {
-        val nullCheckExpression = binaryExpression.left?.deparenthesize() as? KtExpression ?: return
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = binaryExpressionVisitor(fun(unwrappedNullCheckExpression) {
+        val nullCheckExpression = findNullCheckExpression(unwrappedNullCheckExpression)
         val nullCheck = getNullCheck(nullCheckExpression) ?: return
 
+        val binaryExpression = findBinaryExpression(nullCheckExpression) ?: return
         val operationToken = binaryExpression.operationToken
 
         val isPositiveCheck = when {
@@ -35,7 +37,7 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
             else -> return
         }
 
-        val contentCheckExpression = binaryExpression.right?.deparenthesize() as? KtExpression ?: return
+        val contentCheckExpression = findContentCheckExpression(nullCheckExpression, binaryExpression) ?: return
         val contentCheck = getContentCheck(contentCheckExpression) ?: return
 
         if (isPositiveCheck != contentCheck.isPositiveCheck) return
@@ -58,8 +60,8 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
         val replacementName = contentCheck.data.replacementName
 
         holder.registerProblem(
-            binaryExpression,
-            KotlinBundle.message("replace.with.0.call", (if (isPositiveCheck) "!" else "") + replacementName),
+            nullCheckExpression,
+            KotlinBundle.message("inspection.verbose.nullability.and.emptiness.call", (if (isPositiveCheck) "!" else "") + replacementName),
             ReplaceFix(replacementName, hasExplicitReceiver, isPositiveCheck)
         )
     })
@@ -162,21 +164,36 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
         override fun getFamilyName() = KotlinBundle.message("replace.with.0.call", functionName)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val binaryExpression = descriptor.psiElement as? KtBinaryExpression ?: return
+            val nullCheckExpression = descriptor.psiElement as? KtExpression ?: return
+            val binaryExpression = findBinaryExpression(nullCheckExpression) ?: return
+
             val expressionText = buildString {
                 if (isPositiveCheck) append("!")
                 if (hasExplicitReceiver) {
-                    val nullCheckExpression = binaryExpression.left?.deparenthesize() as? KtExpression ?: return
                     val receiverExpression = getReceiver(nullCheckExpression) ?: return
                     append(receiverExpression.text).append(".")
                 }
                 append(functionName).append("()")
             }
-            binaryExpression.replace(KtPsiFactory(project).createExpression(expressionText))
+
+            val callExpression = KtPsiFactory(project).createExpression(expressionText)
+
+            when (nullCheckExpression.parenthesize()) {
+                binaryExpression.left -> binaryExpression.replace(callExpression)
+                binaryExpression.right -> {
+                    val outerBinaryExpression = binaryExpression.parent as? KtBinaryExpression ?: return
+                    val leftExpression = binaryExpression.left ?: return
+                    binaryExpression.replace(leftExpression) // flag && a != null && a.isNotEmpty() -> flag && a.isNotEmpty()
+                    outerBinaryExpression.right?.replace(callExpression) // flag && a.isNotEmpty() -> flag && !a.isNullOrEmpty()
+                }
+            }
         }
 
         private fun getReceiver(expression: KtExpression?): KtExpression? = when {
-            expression is KtPrefixExpression && expression.operationToken == KtTokens.EXCL -> getReceiver(expression.baseExpression)
+            expression is KtPrefixExpression && expression.operationToken == KtTokens.EXCL -> {
+                val baseExpression = expression.baseExpression?.deparenthesize()
+                if (baseExpression is KtExpression) getReceiver(baseExpression) else null
+            }
             expression is KtBinaryExpression -> when {
                 expression.left?.isNullLiteral() == true -> expression.right
                 expression.right?.isNullLiteral() == true -> expression.left
@@ -212,8 +229,45 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
             )
         )
 
-        private fun KtExpression.isNullLiteral(): Boolean =
-            (deparenthesize() as? KtConstantExpression)?.text == KtTokens.NULL_KEYWORD.value
+        private fun findNullCheckExpression(unwrappedNullCheckExpression: KtExpression): KtExpression {
+            // Find topmost binary negation (!a), skipping intermediate parentheses, annotations and other miscellaneous expressions
+
+            var result = unwrappedNullCheckExpression
+            for (parent in unwrappedNullCheckExpression.parents) {
+                when (parent) {
+                    !is KtExpression -> break
+                    is KtPrefixExpression -> if (parent.operationToken != KtTokens.EXCL) break
+                    else -> if (KtPsiUtil.deparenthesizeOnce(parent) === result) continue else break
+                }
+                result = parent
+            }
+            return result
+        }
+
+        private fun findBinaryExpression(nullCheckExpression: KtExpression): KtBinaryExpression? {
+            val parent = nullCheckExpression.parent as? KtExpression ?: return null
+            return (parent.getTopmostParenthesizedParent()?.parent ?: parent) as? KtBinaryExpression
+        }
+
+        private fun findContentCheckExpression(nullCheckExpression: KtExpression, binaryExpression: KtBinaryExpression): KtExpression? {
+            // There's no polyadic expression in Kotlin, so nullability and emptiness checks might be in different 'KtBinaryExpression's
+
+            when (nullCheckExpression.parenthesize()) {
+                binaryExpression.left -> {
+                    // [[a != null && a.isNotEmpty()] && flag] && flag2
+                    return binaryExpression.right?.deparenthesize() as? KtExpression
+                }
+                binaryExpression.right -> {
+                    // [[flag && flag2] && a != null] && a.isNotEmpty()
+                    val outerBinaryExpression = binaryExpression.parent as? KtBinaryExpression
+                    if (outerBinaryExpression != null && outerBinaryExpression.operationToken == binaryExpression.operationToken) {
+                        return outerBinaryExpression.right?.deparenthesize() as? KtExpression
+                    }
+                }
+            }
+
+            return null
+        }
     }
 }
 
@@ -257,8 +311,11 @@ private sealed class TargetChunk(val kind: Kind) {
         override fun resolve(bindingContext: BindingContext) = bindingContext[BindingContext.REFERENCE_TARGET, expression]
 
         override fun hasSmartCast(bindingContext: BindingContext): Boolean {
-            return expression.getQualifiedExpressionForSelectorOrThis().parenthesize()
-                .any { bindingContext[BindingContext.SMARTCAST, it] != null }
+            var current = expression.getQualifiedExpressionForSelectorOrThis()
+            while (true) {
+                if (bindingContext[BindingContext.SMARTCAST, current] != null) return true
+                current = current.getParenthesizedParent() ?: return false
+            }
         }
     }
 
@@ -276,10 +333,22 @@ private fun getSingleReceiver(dispatchReceiver: ReceiverValue?, extensionReceive
     return dispatchReceiver ?: extensionReceiver
 }
 
-private fun KtExpression.parenthesize(): Sequence<KtExpression> = sequence {
-    var current = this@parenthesize
+private fun KtExpression.isNullLiteral(): Boolean {
+    return (deparenthesize() as? KtConstantExpression)?.text == KtTokens.NULL_KEYWORD.value
+}
+
+private fun KtExpression.getParenthesizedParent(): KtExpression? {
+    return (parent as? KtExpression)?.takeIf { KtPsiUtil.deparenthesizeOnce(it) === this }
+}
+
+private fun KtExpression.getTopmostParenthesizedParent(): KtExpression? {
+    var current = getParenthesizedParent() ?: return null
     while (true) {
-        yield(current)
-        current = (current.parent as? KtExpression)?.takeIf { KtPsiUtil.deparenthesizeOnce(it) === current } ?: break
+        current = current.getParenthesizedParent() ?: break
     }
+    return current
+}
+
+private fun KtExpression.parenthesize(): KtExpression {
+    return getTopmostParenthesizedParent() ?: this
 }

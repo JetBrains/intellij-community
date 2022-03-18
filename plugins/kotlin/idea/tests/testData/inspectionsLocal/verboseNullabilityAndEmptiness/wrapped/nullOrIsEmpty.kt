@@ -9,5 +9,5 @@ annotation class Anno
 annotation class Anno2
 
 fun test(list: List<Int>?) {
-    if ((<caret>((@Anno label@ list) == null)) || (((@Anno2 label2@ list).isEmpty()))) println(0) else println(list.size)
+    if (((<caret>(@Anno label@ list) == null)) || (((@Anno2 label2@ list).isEmpty()))) println(0) else println(list.size)
 }
