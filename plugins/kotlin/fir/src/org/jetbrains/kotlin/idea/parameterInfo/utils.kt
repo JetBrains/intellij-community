@@ -63,7 +63,7 @@ internal fun KtAnalysisSession.filterCandidate(
         }
     }
 
-    if (explicitReceiver != null && candidateSymbol is KtCallableSymbol) {
+    if (candidateSymbol is KtCallableSymbol) {
         // We want only the candidates that match the receiver type. E.g., if you have code like this:
         // ```
         // fun String.foo() {}
@@ -75,11 +75,25 @@ internal fun KtAnalysisSession.filterCandidate(
         // The available candidates are `String.foo()` and `Int.foo()`. When checking the receiver types for safe calls, we want to compare
         // the non-nullable receiver type against the candidate receiver type. E.g., that `Int` (and not the type of `i` which is `Int?`)
         // is subtype of `Int` (the candidate receiver type).
-        val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
-        val receiverType = explicitReceiver.getKtType()?.let { if (isSafeCall) it.withNullability(KtTypeNullability.NON_NULLABLE) else it }
-            ?: error("Receiver should have a KtType")
+        val receiverTypes = if (explicitReceiver != null) {
+            val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
+
+            val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KtType")
+            val adjustedType = if (isSafeCall) {
+                explicitReceiverType.withNullability(KtTypeNullability.NON_NULLABLE)
+            } else {
+                explicitReceiverType
+            }
+
+            listOf(adjustedType)
+        } else {
+            val scopeContext = callElement.containingKtFile.getScopeContextForPosition(callElement)
+
+            scopeContext.implicitReceivers.map { it.type }
+        }
+
         val candidateReceiverType = candidateSymbol.receiverType
-        if (candidateReceiverType != null && receiverType.isNotSubTypeOf(candidateReceiverType)) return false
+        if (candidateReceiverType != null && receiverTypes.none { it.isSubTypeOf(candidateReceiverType) }) return false
     }
 
     // Filter out candidates not visible from call site
