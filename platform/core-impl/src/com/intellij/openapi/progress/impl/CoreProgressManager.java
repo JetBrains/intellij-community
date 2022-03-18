@@ -4,7 +4,6 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -40,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
@@ -960,19 +960,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Override
-  public @NotNull AccessToken silenceGlobalIndicator() {
+  public <X> X silenceGlobalIndicator(@NotNull Supplier<X> computable) {
     long id = Thread.currentThread().getId();
     ProgressIndicator indicator = currentIndicators.get(id);
     setCurrentIndicator(id, null);
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        if (currentIndicators.containsKey(id)) {
-          throw new IllegalStateException("Indicator was not reset correctly");
-        }
-        setCurrentIndicator(id, indicator);
-      }
-    };
+    try {
+      return computable.get();
+    }
+    finally {
+      setCurrentIndicator(id, indicator);
+    }
   }
 
   @FunctionalInterface

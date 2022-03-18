@@ -64,7 +64,7 @@ internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (current
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   return try {
-    ProgressManager.getInstance().silenceGlobalIndicator().use {
+    ProgressManager.getInstance().silenceGlobalIndicator {
       executeWithJobAndCompleteIt(currentJob) {
         action(currentJob)
       }
