@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -105,11 +106,16 @@ class ModuleRootComponentBridge(
    * This method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
    * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
    */
-  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
+  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel =
+    getModifiableModelForMultiCommit(accessor, true)
+
+  @ApiStatus.Internal
+  fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
                                                                ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
-    accessor)
+    accessor,
+    cacheStorageResult)
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder, accessor: RootConfigurationAccessor): ModifiableRootModel {
     return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)
