@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.psiView.formattingblocks;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.psiviewer.formatter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.formatting.*;
-import com.intellij.internal.psiView.PsiViewerDialog;
-import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -30,6 +28,8 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.psiviewer.PsiViewerDialog;
+import org.jetbrains.idea.devkit.psiviewer.ViewerPsiBasedTree;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
+import static org.jetbrains.idea.devkit.psiviewer.PsiViewerDialog.initTree;
 
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 

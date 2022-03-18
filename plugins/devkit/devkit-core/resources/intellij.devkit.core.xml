@@ -387,6 +387,8 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.devkit.psiviewer.extension" dynamic="true"
+                    interface="org.jetbrains.idea.devkit.psiviewer.PsiViewerExtension"/>
   </extensionPoints>
 
   <actions>
@@ -432,5 +434,13 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
+
+    <group id="Devkit.PsiViewerActions">
+      <separator/>
+      <action id="PsiViewer" class="org.jetbrains.idea.devkit.psiviewer.PsiViewerAction"/>
+      <action id="PsiViewerForContext" class="org.jetbrains.idea.devkit.psiviewer.PsiViewerAction$ForContext"/>
+      <separator/>
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
   </actions>
 </idea-plugin>

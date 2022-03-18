@@ -1,8 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.psiView.stubtree;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.psiviewer.stubs;
 
-import com.intellij.internal.psiView.PsiViewerDialog;
-import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -39,6 +37,8 @@ import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.psiviewer.PsiViewerDialog;
+import org.jetbrains.idea.devkit.psiviewer.ViewerPsiBasedTree;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -51,7 +51,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
+import static org.jetbrains.idea.devkit.psiviewer.PsiViewerDialog.initTree;
 
 public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
