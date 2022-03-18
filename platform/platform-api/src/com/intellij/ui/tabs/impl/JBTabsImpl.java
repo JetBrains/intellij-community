@@ -1125,6 +1125,7 @@ public class JBTabsImpl extends JComponent
                 Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
                 if (renderer instanceof JLabel) {
                   ObjectUtils.consumeIfCast(((JLabel)renderer).getClientProperty("info"), TabInfo.class, info -> {
+                    e.consume();
                     removeTab(info);
                     JBPopup popup = PopupUtil.getPopupContainerFor(list);
                     if (popup != null) {
