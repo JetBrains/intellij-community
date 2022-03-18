@@ -162,7 +162,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myAdComponent = new Advertiser();
       myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
     }
-    myAdComponent.setBorder(JBUI.Borders.empty());
 
     myOffsets = new LookupOffsets(myEditor);
 
@@ -1259,6 +1258,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private static class NewUILookupAdvertiser extends Advertiser {
 
     private NewUILookupAdvertiser() {
+      setBorder(JBUI.Borders.empty());
       setForeground(JBUI.CurrentTheme.CompletionPopup.Advertiser.foreground());
       setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
     }
