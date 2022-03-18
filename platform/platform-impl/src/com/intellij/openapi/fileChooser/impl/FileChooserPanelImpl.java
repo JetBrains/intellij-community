@@ -116,13 +116,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
-    myPath.addFocusListener(new FocusAdapter() {
+    var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
+    pathEditor.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         myPathBarActive = true;
       }
     });
-    var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
     var finder = new LocalFsFinder(false).withBaseDir(null);
     FileLookup.LookupFilter filter =
       f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
