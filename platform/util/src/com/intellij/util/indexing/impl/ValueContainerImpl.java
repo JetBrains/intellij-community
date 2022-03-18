@@ -24,19 +24,24 @@ import java.util.function.IntPredicate;
 @ApiStatus.Internal
 public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
+  private static final boolean DO_EXPENSIVE_CHECKS = IndexDebugProperties.IS_UNIT_TEST_MODE || IndexDebugProperties.EXTRA_SANITY_CHECKS;
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
   // when there are several value mapped, myInputIdMapping is ValueToInputMap<Value, Data> (it's actually just THashMap), myInputIdMappingValue = null
   private Object myInputIdMapping;
   private Object myInputIdMappingValue;
+  private Int2ObjectMap<Object> myPresentInputIds;
+  private List<UpdateOp> myUpdateOps;
 
-  private Int2ObjectMap<Object> myPresentInputIds = IndexDebugProperties.IS_UNIT_TEST_MODE || IndexDebugProperties.EXTRA_SANITY_CHECKS
-                                                    ? new Int2ObjectOpenHashMap<>()
-                                                    : null;
-  private List<UpdateOp> myUpdateOps = IndexDebugProperties.IS_UNIT_TEST_MODE || IndexDebugProperties.EXTRA_SANITY_CHECKS
-                                       ? new SmartList<>()
-                                       : null;
+  public ValueContainerImpl() {
+    this(DO_EXPENSIVE_CHECKS);
+  }
+
+  public ValueContainerImpl(boolean doExpensiveChecks) {
+    myPresentInputIds = doExpensiveChecks ? new Int2ObjectOpenHashMap<>() : null;
+    myUpdateOps = doExpensiveChecks ? new SmartList<>() : null;
+  }
 
   private static class UpdateOp {
     private UpdateOp(Type type, int id, Object value) {
@@ -174,7 +179,9 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     if (fileSet instanceof ChangeBufferingList) {
       ChangeBufferingList changesList = (ChangeBufferingList)fileSet;
       changesList.remove(inputId);
-      if (!changesList.isEmpty()) return;
+      if (!changesList.isEmpty()) {
+        return;
+      }
     }
     else if (fileSet instanceof Integer) {
       if (((Integer)fileSet).intValue() != inputId) {
@@ -191,12 +198,9 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     else {
       mapping.remove(value);
       if (mapping.size() == 1) {
-        Value mappingValue = mapping.keySet().iterator().next();
-        myInputIdMapping = mappingValue;
-        Object inputIdMappingValue = mapping.get(mappingValue);
-        // prevent NPEs on file set due to Value class being mutable or having inconsistent equals wrt disk persistence
-        // (instance that is serialized and new instance created with deserialization from the same bytes are expected to be equal)
-        myInputIdMappingValue = inputIdMappingValue != null ? inputIdMappingValue : Integer.valueOf(0);
+        Map.Entry<Value, Object> entry = mapping.entrySet().iterator().next();
+        myInputIdMapping = entry.getKey();
+        myInputIdMappingValue = entry.getValue();
       }
     }
   }
@@ -607,8 +611,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
 
   private void associateValueOptimizely(FileId2ValueMapping<Value> mapping, Value value, ChangeBufferingList changeBufferingList, int inputId) {
     if (changeBufferingList != null) {
-      changeBufferingList.add(inputId);
       ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
+      changeBufferingList.add(inputId);
       if (mapping != null) {
         mapping.associateFileIdToValueSkippingContainer(inputId, value);
       }

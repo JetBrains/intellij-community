@@ -29,7 +29,7 @@ final class FileId2ValueMapping<Value> {
     valueContainer.addValue(fileId, value);
   }
   Object associateFileIdToValueSkippingContainer(int fileId, Value value) {
-    return id2ValueMap.put(fileId, value);
+    return id2ValueMap.put(fileId, ValueContainerImpl.wrapValue(value));
   }
 
   @SuppressWarnings("unchecked")
