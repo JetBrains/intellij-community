@@ -38,6 +38,7 @@ internal fun findMainInClass(psiClass: PsiClass): KtNamedFunction? {
  */
 object EntryPointContainerFinder {
     fun find(locationElement: PsiElement): KtDeclarationContainer? {
+
         val psiFile = locationElement.containingFile
         if (!(psiFile is KtFile && ProjectRootsUtil.isInProjectOrLibSource(psiFile))) return null
 
@@ -54,24 +55,29 @@ object EntryPointContainerFinder {
             currentElement = (currentElement as PsiElement).declarationContainer(true)
         }
 
-        // if locationElement is KtFile (the most top element) and nothing is found - look up inside declarations
-        if (locationElement is KtFile) {
-            locationElement.declarations.filterIsInstance<KtClassOrObject>().forEach {classOrObject ->
-                classOrObject.lookupMainDeclarations(mainLocatingService)?.let { return it }
-            }
-        }
-
-        return null
+        return locationElement.safeAs<KtFile>()?.let(::findInFile)
     }
 
-    private fun KtClassOrObject.lookupMainDeclarations(mainLocatingService: KotlinMainFunctionLocatingService): KtDeclarationContainer? {
-        if (this.isLocal) return null
+    private fun findInFile(locationElement: KtFile): KtDeclarationContainer? {
+        val mainLocatingService = KotlinMainFunctionLocatingService.getInstance()
+        // look up inside declarations
+        fun KtClassOrObject.lookupDeepFirstMainDeclarations(): KtDeclarationContainer? {
+            if (this.isLocal) return null
 
-        if (mainLocatingService.hasMain(declarations)) return this
+            if (mainLocatingService.hasMain(declarations)) return this
 
-        for (declaration in declarations) {
-            declaration.safeAs<KtClassOrObject>()?.lookupMainDeclarations(mainLocatingService)?.let { return it }
+            for (declaration in declarations) {
+                declaration.safeAs<KtClassOrObject>()?.lookupDeepFirstMainDeclarations()?.let { return it }
+            }
+            return null
         }
+
+        val declarations = locationElement.declarations
+        for (declaration in declarations) {
+            val classOrObject = declaration as? KtClassOrObject ?: continue
+            classOrObject.lookupDeepFirstMainDeclarations()?.let { return it }
+        }
+
         return null
     }
 
