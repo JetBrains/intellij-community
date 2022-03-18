@@ -80,7 +80,6 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put(EXTRACT_METHOD, new ToolWindowInfo("Extract_Method"));
     ourToolwindowWhitelist.put(DOCUMENTATION, new ToolWindowInfo("Documentation"));
     ourToolwindowWhitelist.put(PREVIEW, new ToolWindowInfo("Preview"));
-    ourToolwindowWhitelist.put(RUN_DASHBOARD, new ToolWindowInfo("Run_Dashboard"));
     ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo("Services"));
     ourToolwindowWhitelist.put(ENDPOINTS, new ToolWindowInfo("Endpoints"));
   }
