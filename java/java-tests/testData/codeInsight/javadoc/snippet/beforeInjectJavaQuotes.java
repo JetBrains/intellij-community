@@ -1,4 +1,4 @@
-// "JAVA" "true"
+// "JShellLanguage" "true"
 
 /**
  * {@snippet<caret> lang = "java" :
