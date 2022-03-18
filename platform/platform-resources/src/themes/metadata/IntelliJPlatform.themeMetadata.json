@@ -71,6 +71,26 @@
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
     {
+      "key": "CompletionPopup.Advertiser.background",
+      "description": "CompletionPopup advertiser background (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.Advertiser.foreground",
+      "description": "CompletionPopup advertiser foreground (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.Advertiser.fontSizeOffset",
+      "description": "CompletionPopup advertiser font size offset (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.Advertiser.borderInsets",
+      "description": "CompletionPopup advertiser border insets (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
       "key": "CompletionPopup.background",
       "deprecated": true,
       "description": "Uses Documentation popup color from editor color scheme instead"

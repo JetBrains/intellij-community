@@ -88,9 +88,9 @@ public class Advertiser {
     updateAdvertisements();
   }
 
-  private static Font adFont() {
+  protected Font adFont() {
     Font font = StartupUiUtil.getLabelFont();
-    RelativeFont relativeFont = RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2);
+    RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get());
     return relativeFont.derive(font);
   }
 

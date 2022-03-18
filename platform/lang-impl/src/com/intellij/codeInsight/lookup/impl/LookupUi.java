@@ -31,12 +31,12 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +69,6 @@ class LookupUi {
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
 
-  LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list) {
-    this(lookup, advertiser, list, true);
-  }
-
   LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList list, boolean showBottomPanel) {
     myLookup = lookup;
     myAdvertiser = advertiser;
@@ -102,7 +98,7 @@ class LookupUi {
                                     ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     myHintButton.setVisible(false);
 
-    myBottomPanel = new NonOpaquePanel(new LookupBottomLayout());
+    myBottomPanel = new JPanel(new LookupBottomLayout());
     myBottomPanel.add(myAdvertiser.getAdComponent());
     myBottomPanel.add(myProcessIcon);
     myBottomPanel.add(myHintButton);
@@ -120,6 +116,10 @@ class LookupUi {
       Insets bodyInsets = LookupCellRenderer.bodyInsets();
       //noinspection UseDPIAwareBorders
       myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, showBottomPanel ? 0 : bodyInsets.bottom, 0));
+      myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
+      myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
+    } else {
+      myBottomPanel.setOpaque(false);
     }
 
     lookup.getComponent().add(layeredPane, BorderLayout.CENTER);
@@ -397,45 +397,49 @@ class LookupUi {
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
+      Insets insets = parent.getInsets();
       Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
       Dimension hintButtonSize = myHintButton.getPreferredSize();
       Dimension menuButtonSize = myMenuButton.getPreferredSize();
 
-      return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width,
-                           Math.max(adSize.height, menuButtonSize.height));
+      return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
+                           Math.max(adSize.height, menuButtonSize.height) + insets.top + insets.bottom);
     }
 
     @Override
     public Dimension minimumLayoutSize(Container parent) {
+      Insets insets = parent.getInsets();
       Dimension adSize = myAdvertiser.getAdComponent().getMinimumSize();
       Dimension hintButtonSize = myHintButton.getMinimumSize();
       Dimension menuButtonSize = myMenuButton.getMinimumSize();
 
-      return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width,
-                           Math.max(adSize.height, menuButtonSize.height));
+      return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
+                           Math.max(adSize.height, menuButtonSize.height)  + insets.top + insets.bottom);
     }
 
     @Override
     public void layoutContainer(Container parent) {
+      Insets insets = parent.getInsets();
       Dimension size = parent.getSize();
+      int innerHeight = size.height - insets.top - insets.bottom;
 
       Dimension menuButtonSize = myMenuButton.getPreferredSize();
-      int x = size.width - menuButtonSize.width;
-      int y = (size.height - menuButtonSize.height) / 2;
+      int x = size.width - menuButtonSize.width - insets.right;
+      int y = (innerHeight - menuButtonSize.height) / 2;
 
-      myMenuButton.setBounds(x, y, menuButtonSize.width, menuButtonSize.height);
+      myMenuButton.setBounds(x, y + insets.top, menuButtonSize.width, menuButtonSize.height);
 
       Dimension myHintButtonSize = myHintButton.getPreferredSize();
       if (myHintButton.isVisible() && !myProcessIcon.isVisible()) {
         x -= myHintButtonSize.width;
-        y = (size.height - myHintButtonSize.height) / 2;
-        myHintButton.setBounds(x, y, myHintButtonSize.width, myHintButtonSize.height);
+        y = (innerHeight - myHintButtonSize.height) / 2;
+        myHintButton.setBounds(x, y + insets.top, myHintButtonSize.width, myHintButtonSize.height);
       }
       else if (!myHintButton.isVisible() && myProcessIcon.isVisible()) {
         Dimension myProcessIconSize = myProcessIcon.getPreferredSize();
         x -= myProcessIconSize.width;
-        y = (size.height - myProcessIconSize.height) / 2;
-        myProcessIcon.setBounds(x, y, myProcessIconSize.width, myProcessIconSize.height);
+        y = (innerHeight - myProcessIconSize.height) / 2;
+        myProcessIcon.setBounds(x, y + insets.top, myProcessIconSize.width, myProcessIconSize.height);
       }
       else if (!myHintButton.isVisible() && !myProcessIcon.isVisible()) {
         x -= myHintButtonSize.width;
@@ -445,8 +449,8 @@ class LookupUi {
       }
 
       Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
-      y = (size.height - adSize.height) / 2;
-      myAdvertiser.getAdComponent().setBounds(0, y, x, adSize.height);
+      y = (innerHeight - adSize.height) / 2;
+      myAdvertiser.getAdComponent().setBounds(insets.left, y + insets.top, x - insets.left, adSize.height);
     }
   }
 }

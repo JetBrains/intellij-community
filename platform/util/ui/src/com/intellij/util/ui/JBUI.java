@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -819,6 +820,28 @@ public final class JBUI {
       }
     }
 
+    public static final class CompletionPopup {
+
+      public static final class Advertiser {
+
+        public static @NotNull Color background() {
+          return JBColor.namedColor("CompletionPopup.Advertiser.background", CurrentTheme.Advertiser.background());
+        }
+
+        public static @NotNull Color foreground() {
+          return JBColor.namedColor("CompletionPopup.Advertiser.foreground", CurrentTheme.Advertiser.foreground());
+        }
+
+        public static int fontSizeOffset() {
+          return getInt("CompletionPopup.Advertiser.fontSizeOffset", CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get());
+        }
+
+        public static @NotNull Border border() {
+          return new EmptyBorder(insets("CompletionPopup.Advertiser.borderInsets", CurrentTheme.Advertiser.borderInsets()));
+        }
+      }
+    }
+
     public static final class ComplexPopup {
 
       public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
@@ -1042,12 +1065,18 @@ public final class JBUI {
       }
 
       public static @NotNull Border border() {
-        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15)));
+        return new EmptyBorder(borderInsets());
+      }
+
+      private static @NotNull JBInsets borderInsets() {
+        return insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15));
       }
 
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("Popup.Advertiser.borderColor", Gray._135);
       }
+
+      public static final JBValue FONT_SIZE_OFFSET = new JBValue.UIInteger("Popup.Advertiser.fontSizeOffset", -2);
     }
 
     public static final class Validator {

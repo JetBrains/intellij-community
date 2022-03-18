@@ -207,7 +207,7 @@ public final class HintUtil {
     label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
     label.setBackground(JBUI.CurrentTheme.Advertiser.background());
     label.setOpaque(true);
-    label.setFont(RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
+    label.setFont(RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get(), JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
     if (bottomText != null) {
       label.setBorder(border);
     }

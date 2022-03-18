@@ -53,9 +53,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.Advertiser;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -71,8 +69,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -157,8 +155,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
-    myAdComponent = new Advertiser();
-    myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    if (ExperimentalUI.isNewUI()) {
+      myAdComponent = new NewUILookupAdvertiser();
+    }
+    else {
+      myAdComponent = new Advertiser();
+      myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    }
+    myAdComponent.setBorder(JBUI.Borders.empty());
 
     myOffsets = new LookupOffsets(myEditor);
 
@@ -1250,5 +1254,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   FontPreferences getFontPreferences() {
     return myFontPreferences;
+  }
+
+  private static class NewUILookupAdvertiser extends Advertiser {
+
+    private NewUILookupAdvertiser() {
+      setForeground(JBUI.CurrentTheme.CompletionPopup.Advertiser.foreground());
+      setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
+    }
+
+    @Override
+    protected Font adFont() {
+      Font font = StartupUiUtil.getLabelFont();
+      RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.CompletionPopup.Advertiser.fontSizeOffset());
+      return relativeFont.derive(font);
+    }
   }
 }
