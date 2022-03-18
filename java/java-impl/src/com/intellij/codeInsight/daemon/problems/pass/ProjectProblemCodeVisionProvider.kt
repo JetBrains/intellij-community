@@ -142,7 +142,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       val memberProblems = collect(
         prevMember,
         curMember)
-      if (memberProblems == null || memberProblems.isEmpty()) {
+      if (memberProblems.isNullOrEmpty()) {
         oldProblems.remove(curMember)
       }
       else {

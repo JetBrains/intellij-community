@@ -217,7 +217,7 @@ private class JBTreeTableRowSorter(private val model: ElementModel, private val 
   override fun getSortKeys() = mySortKey?.let { listOf(it) } ?: emptyList()
 
   override fun setSortKeys(keys: List<SortKey>?) {
-    if (keys == null || keys.isEmpty()) return
+    if (keys.isNullOrEmpty()) return
     val key = keys[0]
     if (key.sortOrder == SortOrder.UNSORTED) return
     mySortKey = key

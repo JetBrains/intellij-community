@@ -132,7 +132,7 @@ class AddAnnotationWithArgumentsFix(
             if (replaceWith != null) {
                 val expression = replaceWith.allValueArguments[EXPRESSION_ARGUMENT]?.safeAs<StringValue>()?.toString()
                 val imports = replaceWith.allValueArguments[IMPORTS_ARGUMENT]?.safeAs<ArrayValue>()?.value
-                val importsArg = if (imports == null || imports.isEmpty()) "" else (", " + imports.joinToString { it.toString() })
+                val importsArg = if (imports.isNullOrEmpty()) "" else (", " + imports.joinToString { it.toString() })
                 if (expression != null) {
                     arguments.add("replaceWith = ReplaceWith(${expression}${importsArg})")
                 }

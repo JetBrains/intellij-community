@@ -428,7 +428,7 @@ private fun getIntValue(text: String?, defaultValue: Int): Int {
 }
 
 private fun getFloatValue(text: String?, defaultValue: Float): Float {
-  if (text != null && text.isNotBlank()) {
+  if (!text.isNullOrBlank()) {
     val value = text.toFloatOrNull()
     if (value != null && value > 0) return value
   }
