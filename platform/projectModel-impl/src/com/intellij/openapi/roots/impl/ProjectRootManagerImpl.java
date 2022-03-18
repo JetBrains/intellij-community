@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.Application;
@@ -120,11 +120,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     protected abstract @NotNull ChangeList initiateChangelist(@NotNull Change change);
 
-    @NotNull
-    protected abstract ChangeList accumulate(@NotNull ChangeList current, @NotNull Change change);
+    protected abstract @NotNull ChangeList accumulate(@NotNull ChangeList current, @NotNull Change change);
 
-    @NotNull
-    protected abstract Change getGenericChange();
+    protected abstract @NotNull Change getGenericChange();
   }
 
   @ApiStatus.Internal
@@ -187,7 +185,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public ProjectRootManagerImpl(@NotNull Project project) {
     myProject = project;
     myRootsCache = getOrderRootsCache(project);
-    project.getMessageBus().connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+    project.getMessageBus().simpleConnect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
       @Override
       public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
         String currentName = getProjectSdkName();
@@ -201,14 +199,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  @NotNull
-  public ProjectFileIndex getFileIndex() {
+  public @NotNull ProjectFileIndex getFileIndex() {
     return ProjectFileIndex.getInstance(myProject);
   }
 
   @Override
-  @NotNull
-  public List<String> getContentRootUrls() {
+  public @NotNull List<String> getContentRootUrls() {
     Module[] modules = getModuleManager().getModules();
     List<String> result = new ArrayList<>(modules.length);
     for (Module module : modules) {
@@ -242,9 +238,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  public @NotNull List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     Module[] modules = getModuleManager().getModules();
     List<VirtualFile> roots = new ArrayList<>(modules.length);
     for (Module module : modules) {
@@ -253,15 +248,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return roots;
   }
 
-  @NotNull
   @Override
-  public OrderEnumerator orderEntries() {
+  public @NotNull OrderEnumerator orderEntries() {
     return new ProjectOrderEnumerator(myProject, myRootsCache);
   }
 
-  @NotNull
   @Override
-  public OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
+  public @NotNull OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
     return new ModulesOrderEnumerator(modules);
   }
 
@@ -291,15 +284,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  @Nullable
   @Override
-  public String getProjectSdkName() {
+  public @Nullable String getProjectSdkName() {
     return myProjectSdkName;
   }
 
-  @Nullable
   @Override
-  public String getProjectSdkTypeName() {
+  public @Nullable String getProjectSdkTypeName() {
     return myProjectSdkType;
   }
 
@@ -330,8 +321,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  @NotNull
-  protected Runnable getActionToRunWhenProjectJdkChanges() {
+  protected @NotNull Runnable getActionToRunWhenProjectJdkChanges() {
     return () -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
   }
 
@@ -427,14 +417,21 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed()) {
+      return;
+    }
+
     BatchSession<?, ?> session = fileTypes ? myFileTypesChanged : myRootsChanged;
     try {
-      if (fireEvents) session.beforeRootsChanged();
+      if (fireEvents) {
+        session.beforeRootsChanged();
+      }
       runnable.run();
     }
     finally {
-      if (fireEvents) session.rootsChanged();
+      if (fireEvents) {
+        session.rootsChanged();
+      }
     }
   }
 
@@ -475,20 +472,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return new OrderRootsCache(project);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public static String extractLocalPath(@NotNull String url) {
+  public static @NotNull String extractLocalPath(@NotNull String url) {
     String path = VfsUtilCore.urlToPath(url);
     int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
     return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
   }
 
-  @NotNull
-  private ModuleManager getModuleManager() {
+  private @NotNull ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
   }
 
@@ -497,8 +491,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   }
 
-  @NotNull
-  public VirtualFilePointerListener getRootsValidityChangedListener() {
+  public @NotNull VirtualFilePointerListener getRootsValidityChangedListener() {
     return myEmptyRootsValidityChangedListener;
   }
 }
