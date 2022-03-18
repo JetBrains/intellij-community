@@ -189,7 +189,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   @Override
   public @NotNull ValueContainer<Void> getData(@NotNull FileType type) throws StorageException {
     int fileTypeId = getFileTypeId(type);
-    ValueContainerImpl<Void> result = new ValueContainerImpl<>();
+    ValueContainerImpl<Void> result = new ValueContainerImpl<>(false);
 
     myLock.readLock().lock();
     try {
