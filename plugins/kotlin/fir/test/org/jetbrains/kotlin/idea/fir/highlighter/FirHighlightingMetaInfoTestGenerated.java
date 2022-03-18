@@ -103,11 +103,6 @@ public class FirHighlightingMetaInfoTestGenerated extends AbstractFirHighlightin
         runTest("../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
     }
 
-    @TestMetadata("SmartCast.kt")
-    public void testSmartCast() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfo/SmartCast.kt");
-    }
-
     @TestMetadata("Suspend.kt")
     public void testSuspend() throws Exception {
         runTest("../idea/tests/testData/highlighterMetaInfo/Suspend.kt");
@@ -141,5 +136,53 @@ public class FirHighlightingMetaInfoTestGenerated extends AbstractFirHighlightin
     @TestMetadata("VariablesAsFunctions.kt")
     public void testVariablesAsFunctions() throws Exception {
         runTest("../idea/tests/testData/highlighterMetaInfo/VariablesAsFunctions.kt");
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/smartCasts")
+    public static class SmartCasts extends AbstractFirHighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Explicit.kt")
+        public void testExplicit() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit.kt");
+        }
+
+        @TestMetadata("Explicit_qualifiedCalls.kt")
+        public void testExplicit_qualifiedCalls() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit_qualifiedCalls.kt");
+        }
+
+        @TestMetadata("Explicit_withInvokeCall.kt")
+        public void testExplicit_withInvokeCall() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit_withInvokeCall.kt");
+        }
+
+        @TestMetadata("ImplicitAndExplicit_functions.kt")
+        public void testImplicitAndExplicit_functions() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_functions.kt");
+        }
+
+        @TestMetadata("ImplicitAndExplicit_operators.kt")
+        public void testImplicitAndExplicit_operators() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_operators.kt");
+        }
+
+        @TestMetadata("ImplicitAndExplicit_properties.kt")
+        public void testImplicitAndExplicit_properties() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_properties.kt");
+        }
+
+        @TestMetadata("Implicit_stable.kt")
+        public void testImplicit_stable() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Implicit_stable.kt");
+        }
+
+        @TestMetadata("Invokes.kt")
+        public void testInvokes() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Invokes.kt");
+        }
     }
 }
