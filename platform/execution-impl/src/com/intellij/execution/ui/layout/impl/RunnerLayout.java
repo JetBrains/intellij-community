@@ -216,6 +216,11 @@ public class RunnerLayout  {
     return view;
   }
 
+  @Nullable
+  public ViewImpl getViewById(@NotNull String id) {
+    return myViews.get(id);
+  }
+
   @NotNull
   private ViewImpl.Default getOrCreateDefault(@NotNull String id) {
     if (myDefaultViews.containsKey(id)) {
