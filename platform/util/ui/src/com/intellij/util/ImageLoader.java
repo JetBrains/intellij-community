@@ -257,9 +257,6 @@ public final class ImageLoader {
     if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
       URLConnection connection = new URL(descriptor.path).openConnection();
       if (connection instanceof HttpURLConnection) {
-        if (!descriptor.original) {
-          return null;
-        }
         connection.addRequestProperty("User-Agent", "IntelliJ");
       }
 
