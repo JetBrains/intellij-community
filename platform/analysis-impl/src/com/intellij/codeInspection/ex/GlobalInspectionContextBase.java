@@ -61,6 +61,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private final List<JobDescriptor> myJobDescriptors = new ArrayList<>();
 
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
+  @NotNull
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
   private InspectionProfileImpl myExternalProfile;
@@ -160,7 +161,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     myJobDescriptors.clear();
   }
 
-  protected boolean areToolsInitialized() {
+  boolean areToolsInitialized() {
     return myTools != null;
   }
 
@@ -441,8 +442,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @Override
   public void incrementJobDoneAmount(@NotNull JobDescriptor job, @NotNull @NlsContexts.ProgressText String message) {
-    if (myProgressIndicator == null) return;
-
     ProgressManager.checkCanceled();
 
     int old = job.getDoneAmount();
