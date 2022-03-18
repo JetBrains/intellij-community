@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
@@ -402,7 +403,7 @@ public final class EditorWindow {
   }
 
   public void toFront() {
-    Window window = UIUtil.getWindow(myTabbedPane.getComponent());
+    Window window = ComponentUtil.getWindow(myTabbedPane.getComponent());
     UIUtil.toFront(window);
   }
 

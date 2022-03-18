@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.impl.JBTabsImpl
@@ -269,7 +270,7 @@ object LessonUtil {
    * @return location of window before adjustment
    */
   fun TaskRuntimeContext.adjustPopupPosition(windowKey: String): Point? {
-    val window = UIUtil.getWindow(previous.ui) ?: return null
+    val window = ComponentUtil.getWindow(previous.ui) ?: return null
     val previousWindowLocation = WindowStateService.getInstance(project).getLocation(windowKey)
     return if (adjustPopupPosition(project, window)) previousWindowLocation else null
   }

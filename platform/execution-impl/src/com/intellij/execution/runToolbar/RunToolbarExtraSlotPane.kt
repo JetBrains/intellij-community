@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
@@ -8,12 +8,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.Font
@@ -195,7 +195,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
     slotPane.repaint()
     pane.repaint()
-    UIUtil.getWindow(pane)?.let {
+    ComponentUtil.getWindow(pane)?.let {
       if (it.isShowing) {
         it.pack()
       }

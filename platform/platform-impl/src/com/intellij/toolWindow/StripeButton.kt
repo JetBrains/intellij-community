@@ -158,15 +158,10 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       if (pressedPoint == null || isWithinDeadZone(e)) {
         return
       }
-      dragPane = findLayeredPane(e)
-      if (dragPane == null) {
-        return
-      }
-      val image = ToolWindowDragHelper.createDragImage(this) ?: return
+      dragPane = findLayeredPane(e) ?: return
+      val image = ToolWindowDragHelper.createDragImage(this)
       val dragButtonImage = object : JLabel(IconUtil.createImageIcon((image as Image))) {
-        override fun toString(): String {
-          return "Image for: " + this@StripeButton
-        }
+        override fun toString() = "Image for: " + this@StripeButton
       }
       this.dragButtonImage = dragButtonImage
       dragButtonImage.addMouseListener(object : MouseAdapter() {

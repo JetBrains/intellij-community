@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
@@ -1492,7 +1491,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return toClose;
       })
       .setCancelOnMouseOutCallback(event -> {
-        Window window = UIUtil.getWindow(popupToolbar);
+        Window window = ComponentUtil.getWindow(popupToolbar);
         if (window != null && Window.Type.POPUP == window.getType()) {
           Component parent = UIUtil.uiParents(event.getComponent(), false).find(window::equals);
           if (parent != null) return false; // mouse over a child popup

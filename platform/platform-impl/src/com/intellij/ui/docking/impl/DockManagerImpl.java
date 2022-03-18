@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -217,7 +218,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JDialog(UIUtil.getWindow(me.getComponent()));
+      myWindow = new JDialog(ComponentUtil.getWindow(me.getComponent()));
       myWindow.setUndecorated(true);
       myContent = content;
       myStartDragContainer = getContainerFor(me.getComponent());

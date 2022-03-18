@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -35,7 +36,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -526,7 +526,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           myQuickFix = quickFix;
         }
         myValidationPanel.setVisible(true);
-        Window window = UIUtil.getWindow(myWholePanel);
+        Window window = ComponentUtil.getWindow(myWholePanel);
         if (!myWindowResizedOnce && window != null && window.isShowing()) {
           Dimension size = window.getSize();
           window.setSize(size.width, size.height + myValidationPanel.getPreferredSize().height);

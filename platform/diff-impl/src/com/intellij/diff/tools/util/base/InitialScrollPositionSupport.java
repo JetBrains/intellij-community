@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.requests.DiffRequest;
@@ -9,9 +9,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -245,7 +245,7 @@ public final class InitialScrollPositionSupport {
   }
 
   public static void ensureEditorSizeIsUpToDate(@NotNull List<? extends Editor> editors) {
-    Set<Window> windows = ContainerUtil.map2SetNotNull(editors, editor -> UIUtil.getWindow(editor.getComponent()));
+    Set<Window> windows = ContainerUtil.map2SetNotNull(editors, editor -> ComponentUtil.getWindow(editor.getComponent()));
     for (Window window : windows) {
       window.validate();
     }
