@@ -267,6 +267,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/functionCall/NoCandidatesSelfDelegatedConstructorCall.kt");
         }
 
+        @TestMetadata("NoCandidatesWrongImplicitReceiver.kt")
+        public void testNoCandidatesWrongImplicitReceiver() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/NoCandidatesWrongImplicitReceiver.kt");
+        }
+
         @TestMetadata("NoCandidatesWrongReceiver.kt")
         public void testNoCandidatesWrongReceiver() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
