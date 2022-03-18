@@ -12,6 +12,7 @@ import git4idea.actions.GitInit;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
+import git4idea.ignore.GitIgnoreInStoreDirGenerator;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,8 @@ public class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
 
     GitInit.refreshAndConfigureVcsMappings(project, root, root.getPath());
     GitUtil.generateGitignoreFileIfNeeded(project, root);
+    // make sure .idea/.gitignore is created before adding files
+    project.getService(GitIgnoreInStoreDirGenerator.class).generateGitignoreInStoreDirIfNeeded();
 
     if (addFilesToVcs) {
       project.save(); // ensure vcs.xml is up-to-date
