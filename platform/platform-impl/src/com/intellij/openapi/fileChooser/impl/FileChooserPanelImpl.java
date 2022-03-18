@@ -550,9 +550,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           name = name.substring(0, name.length() - 1);
         }
         if (SystemInfo.isWindows) {
-          var store = Files.getFileStore(root).name();
-          if (!store.isBlank()) {
-            name += " [" + store + ']';
+          try {
+            var store = Files.getFileStore(root).name();
+            if (!store.isBlank()) {
+              name += " [" + store + ']';
+            }
+          }
+          catch (IOException e) {
+            LOG.debug(e);
           }
         }
         var item = new FsItem(root, name, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
