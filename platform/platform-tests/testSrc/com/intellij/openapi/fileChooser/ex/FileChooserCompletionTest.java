@@ -2,27 +2,31 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WSLUtil;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslRule;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.CompletionResult;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-public class FileChooserCompletionTest extends BareTestFixtureTestCase {
+public class FileChooserCompletionTest {
+  private static final TestFixtureRule appRule = new TestFixtureRule();
+  private static final WslRule wslRule = new WslRule(false);
+  @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
+
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
@@ -76,10 +80,9 @@ public class FileChooserCompletionTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testWslMatching() throws Exception {
-    assumeTrue("No WSL", WSLUtil.isSystemCompatible());
-    List<WSLDistribution> vms = WslDistributionManager.getInstance().getInstalledDistributionsFuture().get(30, TimeUnit.SECONDS);
-    assumeTrue("No WSL distros", !vms.isEmpty());
+  public void testWslMatching() {
+    List<WSLDistribution> vms = wslRule.getVms();
+    assumeTrue("No WSL", !vms.isEmpty());
 
     String[] roots = vms.stream().map(d -> StringUtil.trimTrailing(d.getUNCRootPath().toString(), '\\')).toArray(String[]::new);
     String first = Stream.of(roots).sorted().findFirst().orElseThrow();
