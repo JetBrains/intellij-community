@@ -427,16 +427,12 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         while (true) {
           attemptComputation();
 
-          if (isCancelled()) {
-            throw new ProcessCanceledException();
-          }
           if (isDone()) {
+            if (isCancelled()) {
+              throw new ProcessCanceledException();
+            }
             try {
-              T value = blockingGet(0, TimeUnit.MILLISECONDS);
-              if (value == null && isCancelled()) {
-                throw new ProcessCanceledException();
-              }
-              return value;
+              return blockingGet(0, TimeUnit.MILLISECONDS);
             }
             catch (TimeoutException e) {
               throw new RuntimeException(e);
