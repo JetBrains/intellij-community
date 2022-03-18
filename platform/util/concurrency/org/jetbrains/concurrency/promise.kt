@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
@@ -324,7 +324,7 @@ private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, F
 
   override fun getState() = value.state
 
-  override fun isCancelled() = this.value.isCancelled
+  override fun isCancelled() = false
 
   override fun get() = blockingGet(-1)
 
