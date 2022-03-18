@@ -16,7 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ModuleRootManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
@@ -31,6 +31,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.toBuilder
@@ -199,8 +200,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
     val diffBuilder = WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()
     val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
-      val modifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(
-        ExternalSystemRootConfigurationAccessor(diffBuilder))
+      val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
+                                                                                           false)
       modifiableRootModel as ModifiableRootModelBridge
       modifier.invoke(modifiableRootModel)
       modifiableRootModel.prepareForCommit()
