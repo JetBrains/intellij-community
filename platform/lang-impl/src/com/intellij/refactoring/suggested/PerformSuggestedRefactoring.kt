@@ -96,7 +96,7 @@ internal fun performSuggestedRefactoring(
         popup, project, editor, popupAnchorComponent, popupAnchorPoint, rangeToHighlight,
         commandName = RefactoringBundle.message("suggested.refactoring.rename.command.name"),
         doRefactoring = { doRefactor() },
-        onEnter = ::doRefactor,
+        onEnter = { popup.onRefactor() },
         isEnterEnabled = { true },
         isEscapeEnabled = { true },
         onClosed = { isOk ->
