@@ -5,15 +5,10 @@ package org.jetbrains.kotlin.idea.artifacts
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
-import org.jetbrains.kotlin.utils.PathUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
-import kotlin.io.path.exists
-import kotlin.io.path.name
-import kotlin.io.path.notExists
 
-private const val KOTLINC_DIST_JPS_LIB_XML_NAME = "kotlinc_kotlin_dist.xml"
-
-abstract class KotlinArtifacts(val kotlincDirectory: File) {
+class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     companion object {
         const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
         const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
@@ -22,9 +17,7 @@ abstract class KotlinArtifacts(val kotlincDirectory: File) {
 
         @get:JvmStatic
         val instance: KotlinArtifacts by lazy {
-            val homePath = PathManager.getHomePath(false)
-            if (homePath != null && File(homePath, ".idea/libraries/$KOTLINC_DIST_JPS_LIB_XML_NAME").exists()) KotlinArtifactsFromSources
-            else ProductionKotlinArtifacts
+            KotlinArtifacts(KotlinPluginLayout.instance.kotlinc)
         }
     }
 
@@ -58,29 +51,6 @@ abstract class KotlinArtifacts(val kotlincDirectory: File) {
     val samWithReceiverCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN)
     val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
 }
-
-private object ProductionKotlinArtifacts : KotlinArtifacts(run {
-    val pluginJar = PathUtil.getResourcePathForClass(ProductionKotlinArtifacts::class.java).toPath()
-    if (pluginJar.notExists()) throw IllegalStateException("Plugin JAR not found for class ${ProductionKotlinArtifacts::class.java}")
-
-    val libFile = pluginJar.parent.takeIf { it.name == "lib" }
-    if (libFile == null || !libFile.exists()) {
-        // Don't throw exception because someone may want to just try to initialize
-        // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
-        File("\"<invalid_kotlinc_path>\"")
-    } else {
-        libFile.parent.resolve("kotlinc").toFile()
-    }
-})
-
-private object KotlinArtifactsFromSources : KotlinArtifacts(run {
-    val jar = findMavenLibrary(
-        KOTLINC_DIST_JPS_LIB_XML_NAME,
-        "org.jetbrains.kotlin",
-        "kotlin-dist-for-ide"
-    )
-    lazyUnpackJar(jar, File(PathManager.getSystemPath()).resolve("kotlinc-dist-for-ide-from-sources"))
-})
 
 fun lazyUnpackJar(jar: File, destination: File): File {
     val unpackedDistTimestamp = destination.lastModified()
