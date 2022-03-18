@@ -4,6 +4,7 @@ package training.dsl
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
+import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -41,6 +43,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
@@ -673,3 +676,23 @@ fun TaskContext.showBalloonOnHighlightingComponent(@Language("HTML") @Nls messag
     duplicateMessage = false)
   text(message, useBalloon)
 }
+
+fun LessonContext.showInvalidDebugLayoutWarning() = task {
+  val step = stateCheck {
+    val viewImpl = getDebugFramesView()
+    !(viewImpl?.isMinimizedInGrid ?: false)
+  }
+  val callbackId = LearningUiManager.addCallback {
+    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)?.contentManager?.removeAllContents(true)
+    val viewImpl = getDebugFramesView()
+    viewImpl?.let { it.isMinimizedInGrid = false }
+    step.complete(true)
+  }
+  val framesOptionName = strong(XDebuggerBundle.message("debugger.session.tab.frames.title"))
+  showWarning(LessonsBundle.message("debug.workflow.frames.disabled.warning", callbackId, framesOptionName)) {
+    val viewImpl = getDebugFramesView()
+    viewImpl?.isMinimizedInGrid ?: false
+  }
+}
+
+private fun getDebugFramesView() = RunnerLayoutSettings.getInstance().getLayout("Debug").getViewById("FrameContent")
