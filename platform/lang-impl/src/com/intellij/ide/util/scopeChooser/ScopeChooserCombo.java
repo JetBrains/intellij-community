@@ -106,7 +106,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     combo.setRenderer(createDefaultRenderer());
     combo.setSwingPopup(false);
 
-    return rebuildModelAndSelectScopeOnSuccess(selection);
+    return rebuildModelAndSelectScopeOnSuccessSync(selection);
   }
 
   @NotNull
@@ -222,6 +222,28 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return true;
   }
 
+  private @NotNull Promise<?> rebuildModelAndSelectScopeOnSuccessSync(@Nullable Object selection) {
+    DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
+    Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
+    return promise.onSuccess(c -> {
+      processScopesSync(model, c);
+      getComboBox().setModel(model);
+      selectItem(selection);
+    });
+  }
+
+  private void processScopesSync(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
+    List<ScopeDescriptor> descriptors = new ArrayList<>();
+    processScopes(myProject, c, myOptions, descriptor -> {
+      if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
+        descriptors.add(descriptor);
+      }
+      updateModel(model, descriptors);
+      return true;
+    });
+  }
+
+  @SuppressWarnings("UnusedReturnValue")
   private @NotNull Promise<?> rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
     return DataManager.getInstance()
