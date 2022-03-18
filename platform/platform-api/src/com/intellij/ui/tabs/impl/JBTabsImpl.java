@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -15,8 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1070,6 +1072,94 @@ public class JBTabsImpl extends JComponent
     if (rect == null) return;
 
     List<TabInfo> hiddenInfos = ContainerUtil.filter(getVisibleInfos(), tabInfo -> mySingleRowLayout.isTabHidden(tabInfo));
+    if (ExperimentalUI.isNewEditorTabs()) {
+      showListPopup(rect, hiddenInfos);
+    } else {
+      showTabLabelsPopup(rect, hiddenInfos);
+    }
+  }
+
+  private void showListPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
+    BaseListPopupStep<TabInfo> step = new BaseListPopupStep<TabInfo>(null, hiddenInfos) {
+      @Override
+      public @Nullable PopupStep<?> onChosen(TabInfo selectedValue, boolean finalChoice) {
+        select(selectedValue, true);
+        return FINAL_CHOICE;
+      }
+
+      @Override
+      public Icon getIconFor(TabInfo value) {
+        return value.getIcon();
+      }
+
+      @Override
+      public @Nullable Color getBackgroundFor(TabInfo value) {
+        return value.getComponent().getBackground();
+      }
+
+      @Override
+      public @Nullable Color getForegroundFor(TabInfo value) {
+        return value.getComponent().getForeground();
+      }
+
+      @Override
+      public @NotNull String getTextFor(TabInfo value) {
+        return value.getText();
+      }
+    };
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, renderer -> {
+
+      return new DefaultListCellRenderer() {
+        MouseListener listMouseListener = null;
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          @SuppressWarnings("unchecked")
+          Component rendererComponent = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+          JLabel label = new JLabel(isSelected ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close);
+          label.putClientProperty("info", value);
+          if (listMouseListener == null) {
+            listMouseListener = new MouseAdapter() {
+              @Override
+              public void mouseReleased(MouseEvent e) {
+                Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
+                if (renderer instanceof JLabel) {
+                  ObjectUtils.consumeIfCast(((JLabel)renderer).getClientProperty("info"), TabInfo.class, info -> {
+                    removeTab(info);
+                    JBPopup popup = PopupUtil.getPopupContainerFor(list);
+                    if (popup != null) {
+                      popup.cancel();
+                      myMorePopupState.isRecentlyHidden();
+                      if (list.getModel().getSize() > 0) showMorePopup();
+                    }
+                  });
+                }
+              }
+            };
+            MouseListener[] listeners = list.getMouseListeners();
+            Arrays.stream(listeners).forEach(list::removeMouseListener);
+            list.addMouseListener(listMouseListener);
+            Arrays.stream(listeners).forEach(list::addMouseListener);
+          }
+
+          Color background = UIUtil.getListBackground(isSelected, true);
+          JPanel wrapper = new JPanel(new BorderLayout());
+          wrapper.setBackground(background);
+          wrapper.add(rendererComponent, BorderLayout.CENTER);
+          wrapper.add(label, BorderLayout.EAST);
+          wrapper.setBorder(JBUI.Borders.emptyRight(5));
+          UIUtil.setBackgroundRecursively(wrapper, background);
+          return wrapper;
+        }
+      };
+    });
+    myMorePopupState.prepareToShow(popup);
+    popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
+    popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
+  }
+
+  private void showTabLabelsPopup(Rectangle rect, List<TabInfo> hiddenInfos) {
     JPanel gridPanel = new JPanel(new GridLayout(hiddenInfos.size(), 1));
     JScrollPane scrollPane = new JBScrollPane(gridPanel) {
       @Override
