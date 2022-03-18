@@ -59,9 +59,15 @@ object LambdaSignatureTemplates {
                             }
                         }
 
-                        context.editor.caretModel.moveToOffset(startOffset)
+                        context.editor.caretModel.currentCaret.moveToOffset(startOffset)
                         val template = buildTemplate(lambdaType, signatureOnly, explicitParameterTypes, context.project)
-                        TemplateManager.getInstance(context.project).startTemplate(context.editor, template)
+                        TemplateManager.getInstance(context.project).startTemplate(
+                            /* editor = */ context.editor,
+                            /* template = */ template,
+                            /* inSeparateCommand = */ false,
+                            /* predefinedVarValues = */ null,
+                            /* listener = */ null,
+                        )
                     }
                 } finally {
                     rangeMarker.dispose()
