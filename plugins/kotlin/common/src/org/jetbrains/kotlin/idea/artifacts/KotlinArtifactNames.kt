@@ -11,7 +11,6 @@ object KotlinArtifactNames {
     const val KOTLIN_STDLIB_JDK8_SOURCES = "kotlin-stdlib-jdk8-sources.jar"
     const val KOTLIN_REFLECT = "kotlin-reflect.jar"
     const val KOTLIN_STDLIB_JS = "kotlin-stdlib-js.jar"
-    const val KOTLIN_STDLIB_JS_SOURCES = "kotlin-stdlib-js-sources.jar"
     const val KOTLIN_TEST = "kotlin-test.jar"
     const val KOTLIN_TEST_JUNIT = "kotlin-test-junit.jar"
     const val KOTLIN_TEST_JS = "kotlin-test-js.jar"

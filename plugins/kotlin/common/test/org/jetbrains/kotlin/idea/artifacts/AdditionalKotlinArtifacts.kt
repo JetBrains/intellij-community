@@ -5,24 +5,12 @@ import com.intellij.openapi.application.PathManager
 import java.io.File
 
 object AdditionalKotlinArtifacts {
-    val jetbrainsAnnotations: File by lazy {
-        findMavenLibrary("jetbrains_annotations.xml", "org.jetbrains", "annotations")
-    }
-
     val kotlinStdlibCommon: File by lazy {
         findMavenLibrary("kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
     }
 
     val kotlinStdlibCommonSources: File by lazy {
         findMavenLibrary("kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
-    }
-
-    val kotlinStdlibMinimalForTest: File by lazy {
-        findMavenLibrary(
-            "kotlinc_kotlin_stdlib_minimal_for_test_for_ide.xml",
-            "org.jetbrains.kotlin",
-            "kotlin-stdlib-minimal-for-test-for-ide"
-        )
     }
 
     val jsr305: File by lazy {
