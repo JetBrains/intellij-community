@@ -59,19 +59,22 @@ public final class FilesScanExecutor {
     runOnAllThreads(() -> {
       runnersCount.incrementAndGet();
       boolean idle = false;
-      while (idleCount.get() != runnersCount.get() && !stopped.get()) {
+      while (!stopped.get()) {
         ProgressManager.checkCanceled();
         if (deque.peek() == null) {
           if (!idle) {
             idle = true;
             idleCount.incrementAndGet();
           }
-          TimeoutUtil.sleep(1L);
-          continue;
         }
         else if (idle) {
           idle = false;
           idleCount.decrementAndGet();
+        }
+        if (idle) {
+          if (idleCount.get() == runnersCount.get() && deque.isEmpty()) break;
+          TimeoutUtil.sleep(1L);
+          continue;
         }
 
         T item = deque.poll();
