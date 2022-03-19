@@ -25,30 +25,39 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
-fun getTopParsedGinqTree(macroCall: GrCall): GinqExpression? {
-  return getTopParsedGinqInfo(macroCall).second
+fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
+  return getTopParsedGinqInfo(root).second
 }
 
-fun PsiElement.getClosestGinqTree(macroCall: GrMethodCall): GinqExpression? {
-  val top = getTopParsedGinqTree(macroCall) ?: return null
-  return ginqParents(macroCall, top).firstOrNull()
+fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
+  val top = getTopParsedGinqTree(root) ?: return null
+  return ginqParents(root, top).firstOrNull()
 }
 
-fun getTopParsedGinqErrors(macroCall: GrCall): List<ParsingError> {
-  return getTopParsedGinqInfo(macroCall).first
+fun getTopParsedGinqErrors(root: GinqRootPsiElement): List<ParsingError> {
+  return getTopParsedGinqInfo(root).first
 }
 
-private fun getTopParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-  return getCachedValue(macroCall, INJECTED_GINQ_KEY, CachedValueProvider {
-    Result(doGetTopParsedGinqInfo(macroCall), PsiModificationTracker.MODIFICATION_COUNT)
+private fun getTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingError>, GinqExpression?> {
+  return getCachedValue(root.psi, INJECTED_GINQ_KEY, CachedValueProvider {
+    Result(doGetTopParsedGinqInfo(root), PsiModificationTracker.MODIFICATION_COUNT)
   })
 }
 
-private fun doGetTopParsedGinqInfo(macroCall: GrCall): Pair<List<ParsingError>, GinqExpression?> {
-  val closure = macroCall.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
-                ?: macroCall.closureArguments.singleOrNull()
-                ?: return emptyList<ParsingError>() to null
-  return parseGinq(closure)
+private fun doGetTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingError>, GinqExpression?> {
+  val owner = when (root) {
+    is GinqRootPsiElement.Call -> {
+      // macro case
+      root.psi.expressionArguments.filterIsInstance<GrClosableBlock>().singleOrNull()
+      ?: root.psi.closureArguments.singleOrNull()
+      ?: return emptyList<ParsingError>() to null
+    }
+    is GinqRootPsiElement.Method -> {
+      // method case
+      root.psi.block ?: return emptyList<ParsingError>() to null
+    }
+  }
+  return parseGinq(owner)
 }
 
 private fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
@@ -318,9 +327,9 @@ internal fun PsiElement.markAsGinqUntransformed() = putUserData(GINQ_UNTRANSFORM
 
 internal fun PsiElement.isGinqUntransformed() = getUserData(GINQ_UNTRANSFORMED_ELEMENT) != null
 
-fun PsiElement.ginqParents(top: PsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
+fun PsiElement.ginqParents(root: GinqRootPsiElement, topExpr: GinqExpression): Sequence<GinqExpression> = sequence {
   for (parent in parents(true)) {
-    if (parent == top) {
+    if (parent == root) {
       yield(topExpr)
       return@sequence
     }

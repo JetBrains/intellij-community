@@ -5,6 +5,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.ext.ginq.GinqRootPsiElement
 import org.jetbrains.plugins.groovy.ext.ginq.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD
 import org.jetbrains.plugins.groovy.ext.ginq.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE
 import org.jetbrains.plugins.groovy.ext.ginq.ast.GinqExpression
@@ -36,15 +37,15 @@ private fun extractComponent(type: PsiType, className: String): PsiType? {
   }
 }
 
-fun inferGeneralGinqType(macroCall: GrMethodCall, ginq: GinqExpression, psiGinq: GrExpression, isTop: Boolean): PsiType? {
-  val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
+fun inferGeneralGinqType(macroCall: GrMethodCall?, ginq: GinqExpression, psiGinq: GrExpression, isTop: Boolean): PsiType? {
+  val invokedCall = macroCall?.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
   val containerCanonicalType =
     if (invokedCall == "GQL" && isTop) CommonClassNames.JAVA_UTIL_LIST
     else ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE
 
-  val facade = JavaPsiFacade.getInstance(macroCall.project)
+  val facade = JavaPsiFacade.getInstance(psiGinq.project)
   val componentType = getComponentType(facade, psiGinq, ginq)
-  return facade.findClass(containerCanonicalType, macroCall.resolveScope)?.let {
+  return facade.findClass(containerCanonicalType, psiGinq.resolveScope)?.let {
     facade.elementFactory.createType(it, componentType)
   }
 }
@@ -67,14 +68,14 @@ fun inferOverType(expression: GrMethodCall) : PsiType? {
   return expression.invokedExpression.castSafelyTo<GrReferenceExpression>()?.qualifierExpression?.type
 }
 
-fun inferLocalReferenceExpressionType(macroCall: GrMethodCall, refExpr: GrReferenceExpression): PsiType? {
-  val tree = refExpr.getClosestGinqTree(macroCall) ?: return null
+fun inferLocalReferenceExpressionType(root: GinqRootPsiElement, refExpr: GrReferenceExpression): PsiType? {
+  val tree = refExpr.getClosestGinqTree(root) ?: return null
   if (refExpr.referenceName == "_g") {
     resolveSyntheticVariable(refExpr, "_g", tree)?.run { return type }
   }
   val resolved = refExpr.staticReference.resolve()
   val dataSourceFragment =
-    refExpr.ginqParents(macroCall, tree).firstNotNullOfOrNull { parentGinq -> parentGinq.getDataSourceFragments().find { it.alias == resolved } }
+    refExpr.ginqParents(root, tree).firstNotNullOfOrNull { parentGinq -> parentGinq.getDataSourceFragments().find { it.alias == resolved } }
   if (dataSourceFragment != null) {
     return inferDataSourceComponentType(dataSourceFragment.dataSource.type)
   }

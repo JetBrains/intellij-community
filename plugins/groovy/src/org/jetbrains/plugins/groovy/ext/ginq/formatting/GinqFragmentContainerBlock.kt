@@ -12,7 +12,7 @@ class GinqFragmentContainerBlock(blocks : List<Block>, context: FormattingContex
                        Indent.getIndent(Indent.Type.NONE, true, true),
                        context) {
 
-  override fun getSpacing(child1: Block?, child2: Block): Spacing? {
+  override fun getSpacing(child1: Block?, child2: Block): Spacing {
     return if (child1 is GinqFragmentBlock && child2 is GinqFragmentBlock) {
       getUncertainFragmentSpacing(context.groovySettings.GINQ_GENERAL_CLAUSE_WRAP_POLICY)
     } else {

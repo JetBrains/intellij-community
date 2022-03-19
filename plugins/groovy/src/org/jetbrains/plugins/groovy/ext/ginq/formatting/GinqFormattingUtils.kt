@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.formatter.FormattingContext
 import org.jetbrains.plugins.groovy.formatter.GroovyBlockProducer
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator
 import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 
 internal fun produceGinqFormattingBlock(ginq: GinqExpression,
                                         context: FormattingContext,
@@ -38,7 +39,12 @@ internal fun produceGinqFormattingBlock(ginq: GinqExpression,
     }
   }
   val remainingSubBlocks = remainingChildren.map {
-    context.createBlock(it, Indent.getNoneIndent(), null)
+    val indent = if (it.elementType == GroovyTokenTypes.mLCURLY || it.elementType == GroovyTokenTypes.mRCURLY) {
+      Indent.getNoneIndent()
+    } else {
+      Indent.getNormalIndent()
+    }
+    context.createBlock(it, indent, null)
   }
   val inFragment = remainingSubBlocks.filter { TextRange(minOffset, maxOffset).contains(it.textRange) }
   val outOfFragment = remainingSubBlocks - inFragment.toSet()

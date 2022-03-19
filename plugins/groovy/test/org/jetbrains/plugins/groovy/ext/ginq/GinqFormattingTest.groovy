@@ -434,4 +434,44 @@ GQ {
 }
 ''')
   }
+
+  void testNested() {
+    checkFormatting('''\
+def foo() {
+  GQ {
+    from x in [1]
+    select x
+  }
+}
+''', '''\
+def foo() {
+  GQ {
+    from x in [1]
+    select x
+  }
+}
+''')
+  }
+
+  void testNested2() {
+    checkFormatting('''\
+def baz() {
+  def foo() {
+    GQ {
+      from x in [1]
+      select x
+    }
+  }
+}
+''', '''\
+def baz() {
+  def foo() {
+    GQ {
+      from x in [1]
+      select x
+    }
+  }
+}
+''')
+  }
 }

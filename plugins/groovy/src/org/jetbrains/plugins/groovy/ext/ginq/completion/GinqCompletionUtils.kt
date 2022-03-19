@@ -27,26 +27,33 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 object GinqCompletionUtils {
 
-  fun CompletionResultSet.addFromAndSelect(macroCall: GrMethodCall) {
-    val closure = macroCall.getArguments()?.filterIsInstance<ExpressionArgument>()?.find { it.expression is GrClosableBlock } ?: return
+  fun CompletionResultSet.addFromAndSelect(root: GinqRootPsiElement) {
+    val ginqCodeContainer = when (root) {
+      is GinqRootPsiElement.Call -> {
+        root.psi.getArguments()?.filterIsInstance<ExpressionArgument>()?.find { it.expression is GrClosableBlock }?.expression ?: return
+      }
+      is GinqRootPsiElement.Method -> {
+        root.psi.block ?: return
+      }
+    }
     var hasFrom = false
     var hasSelect = false
-    closure.expression.accept(object : GroovyRecursiveElementVisitor() {
+    ginqCodeContainer.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitMethodCall(call: GrMethodCall) {
         super.visitMethodCall(call)
         if (call.callRefName == KW_FROM) hasFrom = true
         if (call.callRefName == KW_SELECT) hasSelect = true
       }
     })
-    if (!hasFrom) addElement(lookupElement(KW_FROM, macroCall, macroCall))
+    if (!hasFrom) addElement(lookupElement(KW_FROM, root.psi, root))
     if (!hasSelect) addElement(lookupElement(KW_SELECT))
   }
 
-  fun CompletionResultSet.addGeneralGroovyResults(position: PsiElement, offset: Int, ginq: GinqExpression, top: GrMethodCall) {
+  fun CompletionResultSet.addGeneralGroovyResults(position: PsiElement, offset: Int, ginq: GinqExpression, root: GinqRootPsiElement) {
     if (position.parent?.parent is GrParenthesizedExpression) {
-      addElement(lookupElement(KW_FROM, position, top))
+      addElement(lookupElement(KW_FROM, position, root))
     }
-    val bindings = position.ginqParents(top, top.getStoredGinq()!!)
+    val bindings = position.ginqParents(root, root.psi.getStoredGinq()!!)
       .flatMap { gq -> gq.getDataSourceFragments().map { it.alias }.filter { it.endOffset < offset } }
     for (binding in bindings) {
       val name = binding.referenceName ?: continue
@@ -68,7 +75,7 @@ object GinqCompletionUtils {
     }
   }
 
-  fun CompletionResultSet.addGinqKeywords(ginq: GinqExpression, offset: Int, macroCall: GrMethodCall, position: PsiElement) {
+  fun CompletionResultSet.addGinqKeywords(ginq: GinqExpression, offset: Int, root: GinqRootPsiElement, position: PsiElement) {
     val closestFragmentUp = ginq.getQueryFragments().minByOrNull {
       val endOffset = it.keyword.endOffset
       if (endOffset <= offset) {
@@ -83,7 +90,7 @@ object GinqCompletionUtils {
         it is GinqFromFragment || it is GinqOnFragment || (it is GinqJoinFragment && it.keyword.text == KW_CROSSJOIN)
       }
       if (joinStartCondition(closestFragmentUp)) {
-        addAllElements(JOINS.map { lookupElement(it, position, macroCall) })
+        addAllElements(JOINS.map { lookupElement(it, position, root) })
       }
       if (closestFragmentUp is GinqJoinFragment && closestFragmentUp.onCondition == null && closestFragmentUp.keyword.text != KW_CROSSJOIN) {
         addElement(lookupElement(KW_ON))
@@ -145,8 +152,8 @@ object GinqCompletionUtils {
   }
 }
 
-private fun getDataSourceInsertHandler(position: PsiElement, macroCall: GrMethodCall) = InsertHandler<LookupElement> { context, lookupItem ->
-  val parentIdentifiers = gatherIdentifiers(position, macroCall)
+private fun getDataSourceInsertHandler(position: PsiElement, root: GinqRootPsiElement) = InsertHandler<LookupElement> { context, lookupItem ->
+  val parentIdentifiers = gatherIdentifiers(position, root)
   val item = lookupItem.lookupString
   val requiresOn = !item.contains(KW_FROM) && !item.contains(KW_CROSSJOIN)
   val template = TemplateManager.getInstance(context.project)
@@ -161,9 +168,9 @@ private fun getDataSourceInsertHandler(position: PsiElement, macroCall: GrMethod
   TemplateManager.getInstance(context.project).startTemplate(editor, template)
 }
 
-private fun gatherIdentifiers(position: PsiElement, macroCall: GrMethodCall) : List<String> {
-  val topGinq = getTopParsedGinqTree(macroCall) ?: return emptyList()
-  val parents = position.ginqParents(macroCall, topGinq)
+private fun gatherIdentifiers(position: PsiElement, root: GinqRootPsiElement) : List<String> {
+  val topGinq = getTopParsedGinqTree(root) ?: return emptyList()
+  val parents = position.ginqParents(root, topGinq)
   val parentGinqIdentifiers = parents.drop(1)
     .flatMap { ginq -> ginq.getDataSourceFragments().mapNotNull { it.alias.referenceName } }
   val localIdentifiers = parents.firstOrNull()?.getDataSourceFragments()?.filter {
@@ -195,9 +202,9 @@ private val windowInsertHandler = InsertHandler<LookupElement> { context, lookup
   TemplateManager.getInstance(context.project).startTemplate(editor, template)
 }
 
-private fun lookupElement(keyword: String, position: PsiElement, methodCall: GrMethodCall): LookupElementBuilder {
+private fun lookupElement(keyword: String, position: PsiElement, root: GinqRootPsiElement): LookupElementBuilder {
   return lookupElement(keyword).let {
-    if (keyword == KW_FROM || keyword in JOINS) it.withInsertHandler(getDataSourceInsertHandler(position, methodCall)) else it
+    if (keyword == KW_FROM || keyword in JOINS) it.withInsertHandler(getDataSourceInsertHandler(position, root)) else it
   }
 }
 

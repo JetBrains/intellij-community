@@ -192,7 +192,8 @@
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
 
-    <macroTransformationSupport implementation="org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport"/>
+    <inlineASTTransformationSupport implementation="org.jetbrains.plugins.groovy.ext.ginq.GinqAnnotationTransformationSupport"/>
+    <inlineASTTransformationSupport implementation="org.jetbrains.plugins.groovy.ext.ginq.GinqMacroTransformationSupport"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
                       namedArgsProvider="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider"/>
@@ -216,11 +217,10 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureOwnerDelegateTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
-    <!--this duplication makes GroovyMacroTypeCalculator run before DefaultMethodCallTypeCalculator for methods-->
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
-                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator"/>
+                    implementationClass="org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression"
-                    implementationClass="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTypeCalculator"/>
+                    implementationClass="org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationTypeCalculator"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultNewExpressionTypeCalculator" order="last"/>
@@ -245,7 +245,7 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSwitchExpressionTypeCalculator"/>
 
-    <elementFilter implementation="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroElementFilter"/>
+    <elementFilter implementation="org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationElementFilter"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>

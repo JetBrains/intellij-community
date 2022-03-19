@@ -8,6 +8,9 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL
 
 const val GROOVY_GINQ_TRANSFORM_GQ = "groovy.ginq.transform.GQ"
@@ -90,4 +93,14 @@ val windowFunctions : Map<String, Signature> = mapOf(
   "lastValue" to Signature("T", listOf("expr" to "T")),
   "nthValue" to Signature("T", listOf("expr" to "T", "n" to JAVA_LANG_LONG)),
   )
+
+sealed interface GinqRootPsiElement {
+  val psi: GroovyPsiElement
+
+  @JvmInline
+  value class Call(override val psi: GrMethodCall) : GinqRootPsiElement
+
+  @JvmInline
+  value class Method(override val psi: GrMethod) : GinqRootPsiElement
+}
 

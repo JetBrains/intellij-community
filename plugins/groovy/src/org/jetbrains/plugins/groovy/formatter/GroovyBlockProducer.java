@@ -5,15 +5,29 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformerEx;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 @FunctionalInterface
 public interface GroovyBlockProducer {
 
   GroovyBlockProducer DEFAULT = (node, indent, wrap, context) -> {
-    return new GroovyBlock(node, indent, wrap, context);
+    PsiElement psi = node.getPsi();
+    if (!(psi instanceof GroovyPsiElement)) {
+      return new GroovyBlock(node, indent, wrap, context);
+    }
+    GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getRootInlineTransformationPerformer((GroovyPsiElement)psi);
+    if (performer instanceof GroovyInlineASTTransformationPerformerEx) {
+      return ((GroovyInlineASTTransformationPerformerEx)performer).computeFormattingBlock(node, context);
+    } else {
+      return new GroovyBlock(node, indent, wrap, context);
+    }
   };
 
   Block generateBlock(@NotNull final ASTNode node,
