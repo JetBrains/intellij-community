@@ -55,37 +55,38 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
   private fun collectModuleRegistry(): Map<Module, MacroRegistry> {
     val modules = mutableMapOf<Module, MacroRegistry>()
     DumbService.getInstance(project).runWithAlternativeResolveEnabled<Throwable> {
-      findMacros(modules)
+      for (module in ModuleManager.getInstance(project).modules) {
+        val registry = computeModuleRegistry(module)
+        if (registry.isNotEmpty()) {
+          modules[module] = registry
+        }
+      }
     }
     return modules
-  }
-
-  private fun findMacros(modules: MutableMap<Module, MacroRegistry>) {
-    for (module in ModuleManager.getInstance(project).modules) {
-      val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-      val extensionFiles = FileTypeIndex.getFiles(DGMFileType, scope)
-      val macroRegistry = mutableSetOf<PsiMethod>()
-      for (extensionVirtualFile in extensionFiles) {
-        val psi = PsiUtilBase.getPsiFile(project, extensionVirtualFile)
-        val inst = psi.castSafelyTo<PropertiesFile>()?.findPropertyByKey("extensionClasses")
-        val extensionClassName = inst?.value ?: continue
-        val extensionClass = JavaPsiFacade.getInstance(project).findClass(extensionClassName, scope) ?: continue
-        val macroMethods = extensionClass.methods.filter {
-          it.hasAnnotation(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO) &&
-          it.parameterList.parameters[0].typeElement != null &&
-          it.parameterList.parameters[0].type.equalsToText("org.codehaus.groovy.macro.runtime.MacroContext")
-        }
-        macroRegistry.addAll(macroMethods)
-      }
-      if (macroRegistry.isNotEmpty()) {
-        modules[module] = macroRegistry
-      }
-    }
   }
 
   fun getInitializer(): Lazy<Map<Module, MacroRegistry>> {
     return lazyPub { collectModuleRegistry() }
   }
+}
+
+private fun computeModuleRegistry(module : Module) : MacroRegistry {
+  val scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+  val extensionFiles = FileTypeIndex.getFiles(DGMFileType, scope)
+  val macroRegistry = mutableSetOf<PsiMethod>()
+  for (extensionVirtualFile in extensionFiles) {
+    val psi = PsiUtilBase.getPsiFile(module.project, extensionVirtualFile)
+    val inst = psi.castSafelyTo<PropertiesFile>()?.findPropertyByKey("extensionClasses")
+    val extensionClassName = inst?.value ?: continue
+    val extensionClass = JavaPsiFacade.getInstance(module.project).findClass(extensionClassName, scope) ?: continue
+    val macroMethods = extensionClass.methods.filter {
+      it.hasAnnotation(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO) &&
+      it.parameterList.parameters[0].typeElement != null &&
+      it.parameterList.parameters[0].type.equalsToText("org.codehaus.groovy.macro.runtime.MacroContext")
+    }
+    macroRegistry.addAll(macroMethods)
+  }
+  return macroRegistry
 }
 
 private fun PsiMethod.canBeAppliedTo(call: GrMethodCall): Boolean {
