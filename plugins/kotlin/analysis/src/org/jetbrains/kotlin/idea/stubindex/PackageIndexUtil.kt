@@ -30,7 +30,7 @@ object PackageIndexUtil {
         packageExists(fqName, GlobalSearchScope.allScope(project))
 
     /**
-     * Return true if package [fqName] exists or some subpackages of [fqName] exist in [scope]
+     * Return true if package [packageFqName] exists or some subpackages of [packageFqName] exist in [searchScope]
      */
     fun packageExists(
         packageFqName: FqName,
