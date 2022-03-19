@@ -17,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
 
@@ -52,58 +50,6 @@ public class ValueContainersTest extends TestCase {
     container.removeValue(294001, "com");
 
     assertEquals("Actual container: " + container, 0, container.size());
-  }
-
-  public void testTolerateHashcodeProblems() {
-    class MutableValue {
-      int id;
-      MutableValue(int _id) {
-        id = _id;
-      }
-
-      @Override
-      public int hashCode() {
-        return id;
-      }
-    }
-
-    ValueContainerImpl<MutableValue> container = new ValueContainerImpl<>();
-    MutableValue value1 = new MutableValue(1);
-    container.addValue(value1.id, value1);
-    MutableValue value2 = new MutableValue(2);
-    container.addValue(value2.id, value2);
-    value2.id = 1;
-    container.removeValue(value1.id, value1);
-
-    InvertedIndexValueIterator<MutableValue> iterator = container.getValueIterator();
-    assertTrue(iterator.hasNext());
-    MutableValue valueFromIterator = iterator.next();
-    assertEquals(value2, valueFromIterator);
-    assertEquals(Integer.valueOf(0), iterator.getFileSetObject());
-    assertFalse(iterator.hasNext());
-
-    container.addValue(value1.id, value1);
-    value1.id = 2;
-    value2.id = 1;
-
-    iterator = container.getValueIterator();
-    Set<MutableValue> processed = new HashSet<>();
-
-    for (int i = 0; i < 2; ++i) {
-      assertTrue(iterator.hasNext());
-      valueFromIterator = iterator.next();
-
-      assertTrue(processed.add(valueFromIterator));
-      if (value1 == valueFromIterator) {
-        assertEquals(Integer.valueOf(1), iterator.getFileSetObject());
-      }
-      else {
-        assertEquals(value2, valueFromIterator);
-        assertEquals(Integer.valueOf(0), iterator.getFileSetObject());
-      }
-    }
-
-    assertFalse(iterator.hasNext());
   }
 
   public void testValueContainerForTroveMap() throws IOException {
