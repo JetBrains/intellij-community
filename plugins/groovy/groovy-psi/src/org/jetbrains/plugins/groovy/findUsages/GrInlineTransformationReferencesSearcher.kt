@@ -13,16 +13,16 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Processor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
-import org.jetbrains.plugins.groovy.transformations.macro.getMacroHandler
+import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationData
 
-class GrMacroReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>() {
+class GrInlineTransformationReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>() {
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val target = queryParameters.elementToSearch
     runReadAction {
-      val (call, handler) = getMacroHandler(target) ?: return@runReadAction
+      val (call, performer) = getHierarchicalInlineTransformationData(target) ?: return@runReadAction
       call.accept(object : GroovyRecursiveElementVisitor() {
         override fun visitElement(element: GroovyPsiElement) {
-          val reference = handler.computeStaticReference(call, element) ?: return super.visitElement(element)
+          val reference = performer.computeStaticReference(element) ?: return super.visitElement(element)
           if (reference.element != target) {
             return super.visitElement(element)
           }

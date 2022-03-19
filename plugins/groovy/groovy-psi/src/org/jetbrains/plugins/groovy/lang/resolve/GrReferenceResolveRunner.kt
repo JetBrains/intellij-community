@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CO
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ReferenceExpressionClassProcessor
-import org.jetbrains.plugins.groovy.transformations.macro.getMacroHandler
+import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationPerformer
 
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
@@ -51,8 +51,8 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     if (processNonCode) {
       if (!ResolveUtil.processCategoryMembers(place, processor, initialState)) return false
-      val macroHandler = getMacroHandler(place)
-      if (macroHandler != null && !macroHandler.second.processResolve(macroHandler.first, processor, initialState, place)) return false
+      val macroPerformer = getHierarchicalInlineTransformationPerformer(place)
+      if (macroPerformer != null && !macroPerformer.processResolve(processor, initialState, place)) return false
     }
     return true
   }
@@ -153,7 +153,7 @@ internal fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
     if (localVariable != null) {
       return localVariable
     }
-    val macroResult = resolveInMacro(this)
+    val macroResult = resolveInInlineTransformation(this)
     if (macroResult != null) {
       return macroResult
     }
@@ -228,10 +228,7 @@ private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReference
   return processor.result
 }
 
-/**
- * Delegates resolve to an inheritor of [org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport]
- */
-private fun resolveInMacro(psiElement: PsiElement) : ElementResolveResult<PsiElement>? {
-  val (call, handler) = getMacroHandler(psiElement) ?: return null
-  return handler.computeStaticReference(call, psiElement)
+private fun resolveInInlineTransformation(psiElement: PsiElement) : ElementResolveResult<PsiElement>? {
+  val handler = getHierarchicalInlineTransformationPerformer(psiElement) ?: return null
+  return handler.computeStaticReference(psiElement)
 }

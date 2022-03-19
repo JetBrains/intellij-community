@@ -44,7 +44,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroUtilKt;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 
@@ -270,7 +270,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
-    PsiType macroType = GroovyMacroUtilKt.getTypeFromMacro(refExpr);
+    PsiType macroType = GroovyInlineTransformationUtilKt.getTypeFromInlineTransformation(refExpr);
     if (macroType != null) return macroType;
     final Collection<? extends GroovyResolveResult> results = refExpr.lrResolve(true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);

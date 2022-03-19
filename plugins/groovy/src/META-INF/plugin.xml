@@ -49,7 +49,7 @@
     <extensionPoint name="membersContributor" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="importContributor" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor"/>
     <extensionPoint name="astTransformationSupport" dynamic="true" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
-    <extensionPoint name="macroTransformationSupport" dynamic="true" interface="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport"/>
+    <extensionPoint name="inlineASTTransformationSupport" dynamic="true" interface="org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationSupport"/>
     <extensionPoint name="renameHelper" dynamic="true" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
     <extensionPoint name="closureMissingMethodContributor" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
@@ -359,7 +359,7 @@
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
-    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroHighlightingPassFactory"/>
+    <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationHighlightingPassFactory"/>
 
     <registryKey key="groovy.document.based.formatting" defaultValue="false"
                  description="Enables Document based formatting instead of PSI based"/>
@@ -469,7 +469,7 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedRenameFieldProcessor"
                                order="first, before groovyFieldRenameProcessor"/>
     <renamePsiElementProcessor id="groovyMacroElementRenamer"
-                               implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrMacroElementRenamer"
+                               implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrInlineTransformationElementRenamer"
                                order="last"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyAutomaticOverloadsRenamerFactory"/>
@@ -714,7 +714,7 @@
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex"/>
 
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrConstructorReferencesSearcher"/>
-    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrMacroReferencesSearcher"/>
+    <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrInlineTransformationReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrAliasedImportedElementSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyTraitFieldSearcher"/>

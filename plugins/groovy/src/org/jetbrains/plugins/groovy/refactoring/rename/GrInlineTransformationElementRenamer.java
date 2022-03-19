@@ -8,18 +8,13 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport;
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroUtilKt;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
-/**
- * @author Maxim.Medvedev
- */
-public class GrMacroElementRenamer extends RenamePsiElementProcessor {
+public class GrInlineTransformationElementRenamer extends RenamePsiElementProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
@@ -27,8 +22,8 @@ public class GrMacroElementRenamer extends RenamePsiElementProcessor {
     if (!GroovyLanguage.INSTANCE.equals(language)) {
       return false;
     }
-    Pair<GrMethodCall, GroovyMacroTransformationSupport> macroInfo = GroovyMacroUtilKt.getMacroHandler(element);
-    return macroInfo != null && macroInfo.getSecond().computeStaticReference(macroInfo.getFirst(), element) != null;
+    GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getHierarchicalInlineTransformationPerformer(element);
+    return performer != null && performer.computeStaticReference(element) != null;
   }
 
   @Override

@@ -62,8 +62,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroTransformationSupport;
-import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroUtilKt;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -194,8 +194,8 @@ public final class ResolveUtil {
 
     if (scope instanceof GrStatementOwner) {
       if (!GdkMethodUtil.processMixinToMetaclass((GrStatementOwner)scope, processor, state, lastParent, place)) return false;
-      kotlin.Pair<GrMethodCall, GroovyMacroTransformationSupport> support = GroovyMacroUtilKt.getMacroHandler(scope);
-      if (support != null && !support.getSecond().processResolve(support.getFirst(), processor, state, place)) return false;
+      GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getHierarchicalInlineTransformationPerformer(scope);
+      if (performer != null && !performer.processResolve(processor, state, place)) return false;
     }
 
     return true;
