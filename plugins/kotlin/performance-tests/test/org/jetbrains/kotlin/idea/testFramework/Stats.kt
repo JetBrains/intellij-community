@@ -26,7 +26,6 @@ class Stats(
     init {
         PerformanceCounter.setTimeCounterEnabled(true)
     }
-
     private fun calcAndProcessMetrics(id: String, statInfosArray: Array<StatInfos>, rawMetricChildren: MutableList<Metric>) {
         val timingsMs = toTimingsMs(statInfosArray)
 
@@ -198,7 +197,7 @@ class Stats(
         internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
 
         @JvmStatic
-        private val BENCHMARK_STUB = run {
+        private val BENCHMARK_STUB by lazy {
             val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
             simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
 
