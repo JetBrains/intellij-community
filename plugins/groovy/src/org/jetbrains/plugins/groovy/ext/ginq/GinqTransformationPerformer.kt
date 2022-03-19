@@ -46,6 +46,11 @@ import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransf
 class GinqTransformationPerformer(private val root: GinqRootPsiElement) : GroovyInlineASTTransformationPerformerEx {
 
   override fun computeHighlighting(): List<HighlightInfo> {
+    val shutdown = getTopShutdownGinq(root)
+    if (shutdown != null) {
+      return listOfNotNull(shutdown.shutdownKw, shutdown.optionKw)
+        .mapNotNull { HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(getSoftKeywordHighlighting(it)).create() }
+    }
     val errors = getTopParsedGinqErrors(root).mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(it.first)
@@ -57,13 +62,16 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
     return visitor.keywords.mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(GroovySyntaxHighlighter.KEYWORD).create()
     } + visitor.softKeywords.mapNotNull {
-      val key = if (it.parent is GrMethodCall) GroovySyntaxHighlighter.STATIC_METHOD_ACCESS else GroovySyntaxHighlighter.STATIC_FIELD
+      val key = getSoftKeywordHighlighting(it)
       HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(it).textAttributes(key).create()
     } + visitor.warnings.mapNotNull {
       HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(it.first)
         .severity(HighlightSeverity.WARNING).textAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).descriptionAndTooltip(it.second).create()
     } + errors
   }
+
+  private fun getSoftKeywordHighlighting(it: PsiElement) =
+    if (it.parent is GrMethodCall) GroovySyntaxHighlighter.STATIC_METHOD_ACCESS else GroovySyntaxHighlighter.STATIC_FIELD
 
   override fun computeType(expression: GrExpression): PsiType? {
     val topGinqExpression = getTopParsedGinqTree(root) ?: return null
@@ -84,6 +92,7 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
   }
 
   override fun isUntransformed(element: PsiElement): Boolean {
+    if (getTopShutdownGinq(root) != null) return false
     val tree = element.getClosestGinqTree(root) ?: return false
     val localRoots = tree.select.projections.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
     for (parent in element.parents(true)) {
@@ -121,7 +130,7 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
     val position = parameters.position
     val tree = position.getClosestGinqTree(root)
     if (tree == null) {
-      result.addFromAndSelect(root)
+      result.addFromSelectShutdown(root, position)
       return@with
     }
     val offset = parameters.offset

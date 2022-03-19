@@ -45,13 +45,20 @@ data class GinqExpression(
   val orderBy: GinqOrderByFragment?,
   val limit: GinqLimitFragment?,
   val select: GinqSelectFragment,
-) {
+) : GenericGinqExpression {
   fun getDataSourceFragments(): Iterable<GinqDataSourceFragment> = listOf(from) + joins
 
   fun getFilterFragments(): Iterable<GinqFilterFragment> = listOfNotNull(where, groupBy?.having) + joins.mapNotNull { it.onCondition }
 
   fun getQueryFragments(): Iterable<GinqQueryFragment> = listOfNotNull(from, where, groupBy, groupBy?.having, orderBy, limit, select) + joins + joins.mapNotNull { it.onCondition }
 }
+
+sealed interface GenericGinqExpression
+
+/**
+ * GQ { shutdown [immediate|abort] }
+ */
+data class GinqShutdown(val shutdownKw: PsiElement, val optionKw: PsiElement?) : GenericGinqExpression
 
 sealed interface GinqQueryFragment {
   val keyword: PsiElement

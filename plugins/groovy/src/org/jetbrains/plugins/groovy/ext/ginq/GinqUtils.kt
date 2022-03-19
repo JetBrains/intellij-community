@@ -51,6 +51,10 @@ const val KW_NULLSLAST: String = "nullslast"
 
 const val GINQ_EXISTS: String = "exists"
 
+const val KW_SHUTDOWN = "shutdown"
+const val KW_IMMEDIATE = "immediate"
+const val KW_ABORT = "abort"
+
 const val ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE : String =
   "org.apache.groovy.ginq.provider.collection.runtime.Queryable"
 

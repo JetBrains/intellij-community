@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.ext.ginq.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
@@ -26,7 +27,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 import org.jetbrains.plugins.groovy.lang.resolve.markAsReferenceResolveTarget
 
 fun getTopParsedGinqTree(root: GinqRootPsiElement): GinqExpression? {
-  return getTopParsedGinqInfo(root).second
+  return getTopParsedGinqInfo(root).second?.castSafelyTo<GinqExpression>()
+}
+
+fun getTopShutdownGinq(root: GinqRootPsiElement): GinqShutdown? {
+  return getTopParsedGinqInfo(root).second?.castSafelyTo<GinqShutdown>()
 }
 
 fun PsiElement.getClosestGinqTree(root: GinqRootPsiElement): GinqExpression? {
@@ -38,13 +43,13 @@ fun getTopParsedGinqErrors(root: GinqRootPsiElement): List<ParsingError> {
   return getTopParsedGinqInfo(root).first
 }
 
-private fun getTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingError>, GinqExpression?> {
+private fun getTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingError>, GenericGinqExpression?> {
   return getCachedValue(root.psi, INJECTED_GINQ_KEY, CachedValueProvider {
     Result(doGetTopParsedGinqInfo(root), PsiModificationTracker.MODIFICATION_COUNT)
   })
 }
 
-private fun doGetTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingError>, GinqExpression?> {
+private fun doGetTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingError>, GenericGinqExpression?> {
   val owner = when (root) {
     is GinqRootPsiElement.Call -> {
       // macro case
@@ -57,7 +62,20 @@ private fun doGetTopParsedGinqInfo(root: GinqRootPsiElement): Pair<List<ParsingE
       root.psi.block ?: return emptyList<ParsingError>() to null
     }
   }
+  val shutdown = getShutdown(owner)
+  if (shutdown != null) return emptyList<ParsingError>() to shutdown
   return parseGinq(owner)
+}
+
+private fun getShutdown(owner: GrCodeBlock): GinqShutdown? {
+  val statement = owner.statements.singleOrNull() ?: return null
+  if (statement is GrReferenceExpression && statement.referenceNameElement?.text == KW_SHUTDOWN) {
+    return GinqShutdown(statement.referenceNameElement!!, null)
+  } else if (statement is GrMethodCall && statement.callRefName == KW_SHUTDOWN &&
+             statement.expressionArguments.singleOrNull()?.text in listOf(KW_IMMEDIATE, KW_ABORT)) {
+    return GinqShutdown(statement.refCallIdentifier(), statement.expressionArguments.single())
+  }
+  return null
 }
 
 private fun parseGinq(statementsOwner: GrStatementOwner): Pair<List<ParsingError>, GinqExpression?> {
@@ -315,11 +333,11 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
   return qualifiers.any { (it is GrMethodCall && it.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName in available) || (it is GrReferenceExpression && it.referenceName in available)}
 }
 
-private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GinqExpression?>>> = Key.create("root ginq expression")
+private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GenericGinqExpression?>>> = Key.create("root ginq expression")
 
 internal fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
 
-internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second
+internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second?.castSafelyTo<GinqExpression>()
 
 private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
 

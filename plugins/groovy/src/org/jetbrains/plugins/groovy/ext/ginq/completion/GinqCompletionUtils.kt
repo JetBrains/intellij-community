@@ -27,7 +27,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 object GinqCompletionUtils {
 
-  fun CompletionResultSet.addFromAndSelect(root: GinqRootPsiElement) {
+  fun CompletionResultSet.addFromSelectShutdown(root: GinqRootPsiElement, position: PsiElement) {
+    if (position.parentOfType<GrMethodCall>()?.callRefName == KW_SHUTDOWN) {
+      addElement(lookupElement(KW_IMMEDIATE))
+      addElement(lookupElement(KW_ABORT))
+      stopHere()
+      return
+    }
     val ginqCodeContainer = when (root) {
       is GinqRootPsiElement.Call -> {
         root.psi.getArguments()?.filterIsInstance<ExpressionArgument>()?.find { it.expression is GrClosableBlock }?.expression ?: return
@@ -47,6 +53,7 @@ object GinqCompletionUtils {
     })
     if (!hasFrom) addElement(lookupElement(KW_FROM, root.psi, root))
     if (!hasSelect) addElement(lookupElement(KW_SELECT))
+    addElement(lookupElement(KW_SHUTDOWN))
   }
 
   fun CompletionResultSet.addGeneralGroovyResults(position: PsiElement, offset: Int, ginq: GinqExpression, root: GinqRootPsiElement) {

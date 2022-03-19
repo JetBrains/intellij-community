@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -295,6 +296,30 @@ select nnnn
 ''', '''
 from nnnn in (from a in [1] innerhashjoin x in  on  select b)
 select nnnn
+''')
+  }
+
+  void testShutdown() {
+    doVariantableTest('''
+GQ {
+  shut<caret>
+}
+''', '', CompletionType.BASIC, 'shutdown ', 'addShutdownHook')
+  }
+
+  void testImmediate() {
+    completeGinq('''
+shutdown immedi<caret>
+''', '''
+shutdown immediate
+''')
+  }
+
+  void testAbort() {
+    completeGinq('''
+shutdown abor<caret>
+''', '''
+shutdown abort
 ''')
   }
 
