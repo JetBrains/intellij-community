@@ -120,4 +120,18 @@ def aa = GQL {
     }
 a<caret>a""", "java.util.List<java.lang.Long>"
   }
+
+  void testMethodNestedGinq() {
+    doTest """
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  from v in (
+    from nn in [1, 2, 3]
+    select nn, Math.pow(n, 2) as powerOfN
+  )
+  select v.n<caret>n, v.powerOfN
+}""", JAVA_LANG_INTEGER
+  }
 }

@@ -20,6 +20,19 @@ class GinqCompletionTest extends GroovyCompletionTestBase {
     doBasicTest("GQ {\n$before\n}", "GQ {\n$after\n}")
   }
 
+  private void completeMethodGinq(String before, String after) {
+    def testCode = {
+      """
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  $it 
+}"""
+    }
+    doBasicTest(testCode(before), testCode(after))
+  }
+
   private void noCompleteGinq(String before, String... excluded) {
     doNoVariantsTest("GQ { \n $before \n }", excluded)
   }
@@ -248,6 +261,40 @@ select x
 from x in [1]
 orderby x in desc(nullslast)
 select x
+''')
+  }
+
+  void testMethodJoin() {
+    completeMethodGinq('''\
+from x in [1] 
+fullhashjoi<caret>
+select x
+''', '''\
+from x in [1] 
+fullhashjoin x1 in  on
+select x
+''')
+  }
+
+  void testMethodCompleteBindings() {
+    completeMethodGinq('''
+from xxxx in [1] 
+where xxx<caret>
+select xxxx
+''', '''
+from xxxx in [1] 
+where xxxx
+select xxxx
+''')
+  }
+
+  void testMethodCompleteInner() {
+    completeMethodGinq('''
+from nnnn in (from a in [1] innerhashjo<caret> select b)
+select nnnn
+''', '''
+from nnnn in (from a in [1] innerhashjoin x in  on  select b)
+select nnnn
 ''')
   }
 

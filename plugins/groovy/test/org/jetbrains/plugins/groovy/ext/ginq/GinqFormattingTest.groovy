@@ -474,4 +474,69 @@ def baz() {
 }
 ''')
   }
+
+  void testMethodGinq1() {
+    checkFormatting('''\
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+    from x in [1]
+    select x
+}
+''', '''\
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  from x in [1]
+  select x
+}
+''')
+  }
+
+  void testMethodFormatNestedGinq() {
+    checkFormatting('''\
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  from x in (from y in [2] select y)
+  select x
+}
+''', '''\
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  from x in (from y in [2]
+             select y)
+  select x
+}
+''')
+  }
+
+  void testMethodIncorrectGinq() {
+    checkFormatting('''\
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+    from x in [1]
+    orderby x in
+    limit 1, 2
+    select x
+}
+''', '''\
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  from x in [1]
+  orderby x in
+      limit 1, 2
+  select x
+}
+''')
+  }
 }

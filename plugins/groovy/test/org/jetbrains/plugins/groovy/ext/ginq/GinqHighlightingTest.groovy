@@ -22,6 +22,16 @@ class GinqHighlightingTest extends GrHighlightingTestBase {
     testHighlighting("GQ {\n $ginqContents \n}")
   }
 
+  private void testGinqMethodHighlighting(String ginqContents) {
+    testHighlighting("""
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  $ginqContents 
+}""")
+  }
+
   void testKeywordHighlighting() {
     testHighlighting """
 <info descr="null">GQ</info> {
@@ -846,6 +856,60 @@ from b in [1]
         from aa in [1]
         <error>crossjoin x in [2] on x == aa</error>
         select aa as e1
+"""
+  }
+
+  void testMethodJoin() {
+    testGinqMethodHighlighting """
+from n1 in [1, 2, 3]
+fulljoin n2 in [2, 3, 4] on n1 == n2
+select n1, n2
+"""
+  }
+
+  void testMethodGroupby() {
+    testGinqMethodHighlighting """
+from n in [1, 1, 3, 3, 6, 6, 6]
+groupby n
+select n, count(n)
+"""
+  }
+
+  void testMethodOrderby() {
+    testGinqMethodHighlighting """
+from s in ['a', 'b', 'ef', 'cd']
+orderby s.length() in desc, s
+select s
+"""
+  }
+
+  void testMethodWindows() {
+    testGinqMethodHighlighting """
+from s in ['a', 'b', 'aa', 'bb']
+select s, (min(s) over(partitionby s.length())), (max(s) over(partitionby s.length()))
+"""
+  }
+
+  void testMethod_rn() {
+    testGinqMethodHighlighting """
+from n in [1, 2, 3] 
+select _rn, n
+"""
+  }
+
+  void testMethodIncompleteJoinDataSource() {
+    testGinqMethodHighlighting """
+from a in [1]
+(join e <error>in</error><error>)</error>
+select a
+"""
+  }
+
+  void testMethodWhereTyped() {
+    testGinqMethodHighlighting """
+from aa in [1]
+where <warning>aa</warning>
+select aa as e1
 """
   }
 }
