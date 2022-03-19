@@ -95,11 +95,13 @@ private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Coll
 private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
 
-  val macroPerformer = getHierarchicalInlineTransformationPerformer(this)
-  if (macroPerformer != null) {
-    val reference = macroPerformer.computeStaticReference(this)
-    if (reference != null) {
-      return listOf(reference)
+  if (canDelegateToInlineTransformation()) {
+    val macroPerformer = getHierarchicalInlineTransformationPerformer(this)
+    if (macroPerformer != null) {
+      val reference = macroPerformer.computeStaticReference(this)
+      if (reference != null) {
+        return listOf(reference)
+      }
     }
   }
 
@@ -148,6 +150,13 @@ private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
     is GrNewExpression,
     is GrAnonymousClassDefinition,
     is GrCodeReferenceElement -> false
+    else -> true
+  }
+}
+
+private fun GrReferenceElement<*>.canDelegateToInlineTransformation(): Boolean {
+  return when(parent) {
+    is GrAnnotation -> false
     else -> true
   }
 }

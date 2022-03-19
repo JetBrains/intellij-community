@@ -21,8 +21,7 @@ fun getRootInlineTransformationPerformer(element: GroovyPsiElement): GroovyInlin
   return null
 }
 
-private val EP_NAME: ExtensionPointName<GroovyInlineASTTransformationSupport> = ExtensionPointName.create(
-  "org.intellij.groovy.inlineASTTransformationSupport")
+private val EP_NAME: ExtensionPointName<GroovyInlineASTTransformationSupport> = ExtensionPointName.create("org.intellij.groovy.inlineASTTransformationSupport")
 
 fun getHierarchicalInlineTransformationData(element: PsiElement): Pair<GroovyPsiElement, GroovyInlineASTTransformationPerformer>? {
   return element.parentsOfType<GroovyPsiElement>().firstNotNullOfOrNull { getRootInlineTransformationPerformer(it)?.let(it::to) }
