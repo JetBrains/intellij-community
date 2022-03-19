@@ -66,7 +66,11 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
   }
 
   override fun computeType(expression: GrExpression): PsiType? {
-    val ginq = if (expression is GrMethodCall && expression == root.psi) getTopParsedGinqTree(root) else expression.getStoredGinq()
+    val topGinqExpression = getTopParsedGinqTree(root) ?: return null
+    val ginq = if (expression is GrMethodCall && (expression == root.psi || expression.refCallIdentifier() == topGinqExpression.select.keyword))
+      topGinqExpression
+    else
+      expression.getStoredGinq()
     if (ginq != null) {
       return inferGeneralGinqType(root.castSafelyTo<GinqRootPsiElement.Call>()?.psi, ginq, expression, expression == root.psi)
     }

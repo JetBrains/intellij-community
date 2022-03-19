@@ -134,4 +134,55 @@ def foo() {
   select v.n<caret>n, v.powerOfN
 }""", JAVA_LANG_INTEGER
   }
+
+  void testMethodReturnType1() {
+    doTest """
+import groovy.ginq.transform.GQ
+
+@GQ
+def foo() {
+  from v in (
+    from nn in [1, 2, 3]
+    select nn, Math.pow(n, 2) as powerOfN
+  )
+  select v.nn, v.powerOfN
+}
+
+def zz = foo()
+z<caret>z""", "org.apache.groovy.ginq.provider.collection.runtime.Queryable<org.apache.groovy.ginq.provider.collection.runtime.NamedRecord>"
+  }
+
+  void testMethodReturnType2() {
+    doTest """
+import groovy.ginq.transform.GQ
+
+@GQ(List)
+def foo() {
+  from v in (
+    from nn in [1, 2, 3]
+    select nn, Math.pow(n, 2) as powerOfN
+  )
+  select v.nn, v.powerOfN
+}
+
+def zz = foo()
+z<caret>z""", "java.util.List<org.apache.groovy.ginq.provider.collection.runtime.NamedRecord>"
+  }
+
+  void testMethodReturnType3() {
+    doTest """
+import groovy.ginq.transform.GQ
+
+@GQ(List)
+def foo() {
+  from v in (
+    from nn in [1, 2, 3]
+    select nn, Math.pow(n, 2) as powerOfN
+  )
+  select v.nn as rr, v.powerOfN
+}
+
+def zz = foo()
+zz[0].r<caret>r""", JAVA_LANG_INTEGER
+  }
 }

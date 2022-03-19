@@ -4,7 +4,9 @@ package org.jetbrains.plugins.groovy.ext.ginq.types
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.groovy.ext.ginq.GROOVY_GINQ_TRANSFORM_GQ
 import org.jetbrains.plugins.groovy.ext.ginq.GinqRootPsiElement
 import org.jetbrains.plugins.groovy.ext.ginq.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_NAMED_RECORD
 import org.jetbrains.plugins.groovy.ext.ginq.ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE
@@ -15,6 +17,8 @@ import org.jetbrains.plugins.groovy.ext.ginq.resolve.GinqResolveUtils.resolveSyn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.typing.box
 
@@ -38,15 +42,24 @@ private fun extractComponent(type: PsiType, className: String): PsiType? {
 }
 
 fun inferGeneralGinqType(macroCall: GrMethodCall?, ginq: GinqExpression, psiGinq: GrExpression, isTop: Boolean): PsiType? {
-  val invokedCall = macroCall?.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
-  val containerCanonicalType =
-    if (invokedCall == "GQL" && isTop) CommonClassNames.JAVA_UTIL_LIST
-    else ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE
-
   val facade = JavaPsiFacade.getInstance(psiGinq.project)
+  val containerCanonicalType = getContainerType(macroCall, isTop, ginq, psiGinq, facade) ?: return null
   val componentType = getComponentType(facade, psiGinq, ginq)
-  return facade.findClass(containerCanonicalType, psiGinq.resolveScope)?.let {
-    facade.elementFactory.createType(it, componentType)
+  return facade.elementFactory.createType(containerCanonicalType, componentType)
+}
+
+private fun getContainerType(macroCall: GrMethodCall?, isTop: Boolean, ginq: GinqExpression, psiGinq: GrExpression, facade: JavaPsiFacade): PsiClass? {
+  return if (macroCall != null) {
+    val invokedCall = macroCall.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName
+    val containerCanonicalType =
+      if (invokedCall == "GQL" && isTop) CommonClassNames.JAVA_UTIL_LIST
+      else ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE
+    facade.findClass(containerCanonicalType, psiGinq.resolveScope)
+  } else {
+    // it is method
+    val method = ginq.from.keyword.parentOfType<GrMethod>()
+    val containerClass = method?.getAnnotation(GROOVY_GINQ_TRANSFORM_GQ)?.let { GrAnnotationUtil.inferClassAttribute(it, "value") }
+    containerClass ?: facade.findClass(ORG_APACHE_GROOVY_GINQ_PROVIDER_COLLECTION_RUNTIME_QUERYABLE, psiGinq.resolveScope)
   }
 }
 
