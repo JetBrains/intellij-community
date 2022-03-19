@@ -19,10 +19,10 @@ import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInline
 class GrInlineTransformationReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>() {
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val target = queryParameters.elementToSearch
-    if (target.containingFile !is GroovyFileBase) {
-      return
-    }
     runReadAction {
+      if (target.containingFile !is GroovyFileBase) {
+        return@runReadAction
+      }
       val (call, performer) = getHierarchicalInlineTransformationData(target) ?: return@runReadAction
       call.accept(object : GroovyRecursiveElementVisitor() {
         override fun visitElement(element: GroovyPsiElement) {
