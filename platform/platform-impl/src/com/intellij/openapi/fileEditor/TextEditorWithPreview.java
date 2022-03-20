@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -19,6 +19,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Alarm;
@@ -136,7 +138,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setSplitterProportionKey(getSplitterProportionKey());
     mySplitter.setFirstComponent(myEditor.getComponent());
     mySplitter.setSecondComponent(myPreview.getComponent());
-    mySplitter.setDividerWidth(2);
+    mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2);
+    if (ExperimentalUI.isNewUI()) {
+      mySplitter.getDivider().setBackground(JBColor.border());
+    }
 
     myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
 
