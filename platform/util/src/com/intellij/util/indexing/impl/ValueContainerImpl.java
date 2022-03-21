@@ -11,6 +11,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -617,8 +618,8 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     }
   }
 
-  // a class to distinguish a difference between user-value with THashMap type and internal value container
-  private static final class ValueToInputMap<Value> extends HashMap<Value, Object> {
+  // a class to distinguish a difference between user-value with Object2ObjectOpenHashMap type and internal value container
+  private static final class ValueToInputMap<Value> extends Object2ObjectOpenHashMap<Value, Object> {
     ValueToInputMap(int size) {
       super(size);
     }
