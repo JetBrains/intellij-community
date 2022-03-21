@@ -866,7 +866,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      TreeUtil.collapseAll(myTree, true, 0);
+      TreeUtil.collapseAll(myTree, 1);
     }
   }
 
