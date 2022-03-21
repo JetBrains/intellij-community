@@ -54,7 +54,7 @@ final class MacDmgBuilder {
     SignKt.prepareMacZip(macZip, sitFile, productJson, additionalDir, zipRoot)
 
     boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
-    if (macHostProperties.host == null && isMac()) {
+    if ((!signMacArtifacts || macHostProperties.host == null) && isMac()) {
       buildLocally(sitFile, targetName, jreArchivePath, signMacArtifacts, customizer, context)
     }
     else if (!signMacArtifacts) {
@@ -64,7 +64,8 @@ final class MacDmgBuilder {
              macHostProperties.userName == null ||
              macHostProperties.password == null ||
              macHostProperties.codesignString == null) {
-      throw new IllegalStateException("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but machost properties were not provided. Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
+      context.messages.error("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but machost properties were not provided. " +
+                             "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
     }
     else {
       buildAndSignWithMacBuilderHost(sitFile, jreArchivePath, macHostProperties, notarize, customizer, context)
