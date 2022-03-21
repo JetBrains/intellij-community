@@ -89,9 +89,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
       <library name="org.languagetool:languagetool-core:5.6" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.6.1-grz" />
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.6.2-grz" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.6.1-grz/languagetool-core-5.6.1-grz.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.6.2-grz/languagetool-core-5.6.2-grz.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
