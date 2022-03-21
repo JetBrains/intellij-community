@@ -67,7 +67,7 @@ final class BuildOptions {
   public static final String MAC_ARTIFACTS_STEP = "mac_artifacts"
   /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
   public static final String MAC_DMG_STEP = "mac_dmg"
-  /** Sign additional binary files in macOS distribution. */
+  /** Sign macOS distribution. */
   public static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
   public static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
