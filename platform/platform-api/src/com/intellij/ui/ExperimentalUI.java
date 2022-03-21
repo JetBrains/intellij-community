@@ -254,7 +254,8 @@ public final class ExperimentalUI {
     paths.put("icons/incoming.svg", "expui/vcs/changesUpdate@12x12.svg");
     paths.put("actions/commit.svg", "expui/vcs/commit.svg");
     paths.put("actions/diff.svg", "expui/vcs/diff.svg");
-    paths.put("icons/currentBranchLabel.svg", "expui/vcs/label.svg");
+    paths.put("icons/currentBranchFavoriteLabel.svg", "expui/vcs/currentBranchFavorite.svg");
+    paths.put("icons/currentBranchLabel.svg", "expui/vcs/currentBranch.svg");
     paths.put("vcs/push.svg", "expui/vcs/push.svg");
     paths.put("actions/rollback.svg", "expui/vcs/revert.svg");
     paths.put("vcs/shelve.svg", "expui/vcs/stash.svg");
