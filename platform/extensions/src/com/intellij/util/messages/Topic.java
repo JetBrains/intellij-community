@@ -51,7 +51,6 @@ public class Topic<L> {
     this(listenerClass.getSimpleName(), listenerClass, broadcastDirection);
   }
 
-  @ApiStatus.Experimental
   public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection, boolean immediateDelivery) {
     myDisplayName = listenerClass.getSimpleName();
     myListenerClass = listenerClass;

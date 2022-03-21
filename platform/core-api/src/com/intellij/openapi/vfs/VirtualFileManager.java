@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,7 @@ import java.nio.file.Path;
  */
 public abstract class VirtualFileManager implements ModificationTracker {
   @Topic.AppLevel
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
@@ -184,8 +184,6 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
-
-  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 

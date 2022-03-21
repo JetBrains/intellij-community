@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -178,12 +178,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.add(listener);
-  }
-
-  @Override
-  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
-    addVirtualFileManagerListener(listener);
-    Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
   }
 
   @Override
