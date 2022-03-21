@@ -31,13 +31,15 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> =
     checkDeclaration(method, manager, isOnTheFly,
                      modifierMessage ="jvm.inspections.junit.rule.problem.method.descriptor",
-                     typeMessage = "jvm.inspections.junit.rule.type.problem.method.descriptor"
+                     ruleTypeMessage = "jvm.inspections.junit.rule.type.problem.method.descriptor",
+                     classRuleTypeMessage = "jvm.inspections.junit.class.rule.type.problem.method.descriptor"
     )
 
   override fun checkField(field: UField, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> =
     checkDeclaration(field, manager, isOnTheFly,
                      modifierMessage = "jvm.inspections.junit.rule.problem.field.descriptor",
-                     typeMessage = "jvm.inspections.junit.rule.type.problem.field.descriptor"
+                     ruleTypeMessage = "jvm.inspections.junit.rule.type.problem.field.descriptor",
+                     classRuleTypeMessage = "jvm.inspections.junit.class.rule.type.problem.field.descriptor"
     )
 
   private fun checkDeclaration(
@@ -45,7 +47,8 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
     manager: InspectionManager,
     isOnTheFly: Boolean,
     modifierMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
-    typeMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
+    ruleTypeMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
+    classRuleTypeMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
   ): Array<ProblemDescriptor> {
     val sourcePsi = uDeclaration.sourcePsi ?: return emptyArray()
     val nameIdentifier = uDeclaration.uastAnchor.sourcePsiElement ?: return emptyArray()
@@ -86,8 +89,8 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
       val isTestRuleInheritor = InheritanceUtil.isInheritor(aClass, false, TEST_RULE)
       val typeErrorMessage = when {
         ruleAnnotated && !isTestRuleInheritor && !InheritanceUtil.isInheritor(aClass, false, METHOD_RULE) ->
-          JvmAnalysisBundle.message(typeMessage, "'$TEST_RULE' or '$METHOD_RULE'")
-        classRuleAnnotated && !isTestRuleInheritor -> JvmAnalysisBundle.message(typeMessage, "'${TEST_RULE}'")
+          JvmAnalysisBundle.message(classRuleTypeMessage, TEST_RULE, METHOD_RULE)
+        classRuleAnnotated && !isTestRuleInheritor -> JvmAnalysisBundle.message(ruleTypeMessage, TEST_RULE)
         else -> null
       }
       typeErrorMessage?.let { errorMessage ->
