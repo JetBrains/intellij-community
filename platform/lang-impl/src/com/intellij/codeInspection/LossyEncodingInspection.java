@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -18,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -49,8 +45,6 @@ import java.util.List;
 import java.util.Set;
 
 public class LossyEncodingInspection extends LocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(LossyEncodingInspection.class);
-
   @Override
   @Nls
   @NotNull
@@ -182,19 +176,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
 
-    boolean equals = Arrays.equals(bytesToSave, loadedBytes);
-    if (!equals && LOG.isDebugEnabled()) {
-      try {
-        String tempDir = FileUtil.getTempDirectory();
-        FileUtil.writeToFile(new File(tempDir, "lossy-bytes-to-save"), bytesToSave);
-        FileUtil.writeToFile(new File(tempDir, "lossy-loaded-bytes"), loadedBytes);
-        LOG.debug("lossy bytes dumped into " + tempDir);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return equals;
+    return Arrays.equals(bytesToSave, loadedBytes);
   }
 
   private static void checkIfCharactersWillBeLostAfterSave(@NotNull PsiFile file,
@@ -230,7 +212,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   }
 
   // returns null if OK
-  // range of the characters either failed to be encoded to bytes or failed to be decoded back or decoded to chars different from the original
+  // range of the characters either failed to be encoded to bytes or failed to be decoded back or decoded to the chars different from the original
   private static TextRange nextUnmappable(@NotNull CharBuffer in,
                                           int position,
                                           @NotNull Ref<ByteBuffer> outRef,
@@ -290,7 +272,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     back.rewind();
     int len = StringUtil.commonPrefixLength(in, back);
     if (len == textLength) return null;
-    return TextRange.from(len, 1);  // lets report only the first diff char
+    return TextRange.from(len, 1);  // let's report only the first diff char
   }
 
   private static class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
