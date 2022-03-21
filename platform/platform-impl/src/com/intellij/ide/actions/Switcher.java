@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -173,7 +173,7 @@ public final class Switcher extends BaseSwitcherAction {
       }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
-      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
+      registerAction(this::hideSpeedSearchOrPopup, ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE));
       if (pinned) {
         registerAction(this::closeTabOrToolWindow, ActionUtil.getShortcutSet("DeleteRecentFiles"));
         registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
