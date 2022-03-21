@@ -14,6 +14,7 @@ public class JShellParsingTest extends JavaParsingTestCase {
 
   public void testClass0() { doTest(true); }
   public void testStatement0() { doTest(true); }
+  public void testStatement1() { doTest(true); }
   public void testExpression0() { doTest(true); }
   public void testExpression1() { doTest(true); }
   public void testField0() { doTest(true); }
