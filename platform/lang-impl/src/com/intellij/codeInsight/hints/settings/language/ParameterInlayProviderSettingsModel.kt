@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
@@ -80,6 +79,7 @@ class ParameterInlayProviderSettingsModel(
                                                }
                                              }, DaemonProgressIndicator())
     return Runnable {
+      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
       pass.doApplyInformationToEditor()
     }
   }
