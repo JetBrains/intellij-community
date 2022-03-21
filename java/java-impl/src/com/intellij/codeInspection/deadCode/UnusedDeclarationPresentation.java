@@ -430,7 +430,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
               (myFixedElements.containsKey(refElement) ||
               isExcluded(refEntity) ||
               isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
-          if (refElement.getPsiElement().getLanguage() != JavaLanguage.INSTANCE) return;
+          PsiElement psiElement = refElement.getPsiElement();
+          if (psiElement != null && psiElement.getLanguage() != JavaLanguage.INSTANCE) return;
           if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
