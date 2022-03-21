@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.charset;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -13,7 +15,7 @@ final class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private StringBuilder myOutBuffer = new StringBuilder();
   private final Charset myBaseCharset;
 
-  Native2AsciiCharsetDecoder(final Native2AsciiCharset charset) {
+  Native2AsciiCharsetDecoder(@NotNull Native2AsciiCharset charset) {
     super(charset, 1, 6);
     myBaseCharset = charset.getBaseCharset();
   }
@@ -29,7 +31,8 @@ final class Native2AsciiCharsetDecoder extends CharsetDecoder {
     return doFlush(out);
   }
 
-  private CoderResult doFlush(final CharBuffer out) {
+  @NotNull
+  private CoderResult doFlush(@NotNull CharBuffer out) {
     if (myOutBuffer.length() != 0) {
       int remaining = out.remaining();
       int outLen = Math.min(remaining, myOutBuffer.length());
@@ -50,7 +53,7 @@ final class Native2AsciiCharsetDecoder extends CharsetDecoder {
       byte[] buf = new byte[4];
       while (in.position() < in.limit()) {
         in.mark();
-        final byte b = in.get();
+        byte b = in.get();
         if (b == '\\') {
           decodeArray(in.array(), start, in.position()-1);
           byte next = in.get();
@@ -86,14 +89,14 @@ final class Native2AsciiCharsetDecoder extends CharsetDecoder {
     return doFlush(out);
   }
 
-  private void decodeArray(final byte[] buf, int start, int end) {
+  private void decodeArray(byte @NotNull [] buf, int start, int end) {
     if (end <= start) return;
     ByteBuffer byteBuffer = ByteBuffer.wrap(buf, start, end-start);
     CharBuffer charBuffer = myBaseCharset.decode(byteBuffer);
     myOutBuffer.append(charBuffer);
   }
 
-  private static char unicode(byte[] ord) {
+  private static char unicode(byte @NotNull [] ord) {
     int d1 = Character.digit((char)ord[0], 16);
     if (d1 == -1) return INVALID_CHAR;
     int d2 = Character.digit((char)ord[1], 16);

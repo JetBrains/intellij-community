@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.charset;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -11,10 +13,10 @@ import java.nio.charset.CoderResult;
 
 final class Native2AsciiCharsetEncoder extends CharsetEncoder {
   private static final char ANCHOR = Boolean.getBoolean("idea.native2ascii.lowercase") ? 'a' : 'A';
-  
+  @NotNull
   private final Charset myBaseCharset;
 
-  Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
+  Native2AsciiCharsetEncoder(@NotNull Native2AsciiCharset charset) {
     super(charset, 1, 6);
     myBaseCharset = charset.getBaseCharset();
   }
