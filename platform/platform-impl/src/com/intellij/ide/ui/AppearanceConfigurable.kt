@@ -254,7 +254,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   contextHelp(message("checkbox.smooth.scrolling.description"))
                 })
           yield({ checkBox(cdDnDWithAlt) })
-          if (IdeFrameDecorator.isCustomDecorationAvailable()) {
+          if (SystemInfo.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()) {
             yield({
                     val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
                     checkBox(cdMergeMainMenuWithWindowTitle)
