@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -33,6 +37,29 @@ fun FeatureUsageData.addPythonSpecificInfo(sdk: Sdk) = addLanguage(PythonLanguag
   .addData("python_implementation", sdk.pythonImplementation)
   .addData("executionType", sdk.executionType)
   .addData("interpreterType", sdk.interpreterType)
+
+fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
+  val data = ArrayList<EventPair<*>>()
+  data.add(EventFields.Language.with(PythonLanguage.INSTANCE))
+  data.add(PYTHON_VERSION.with(sdk.version))
+  data.add(PYTHON_IMPLEMENTATION.with(sdk.pythonImplementation))
+  data.add(EXECUTION_TYPE.with(sdk.executionType))
+  data.add(INTERPRETER_TYPE.with(sdk.interpreterType))
+  return data
+}
+
+fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String): VarargEventId {
+  return group.registerVarargEvent(eventId, EventFields.Language,
+                            PYTHON_VERSION,
+                            PYTHON_IMPLEMENTATION,
+                            EXECUTION_TYPE,
+                            INTERPRETER_TYPE)
+}
+
+val PYTHON_VERSION = EventFields.StringValidatedByCustomRule("python_version", "version")
+val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
+val EXECUTION_TYPE = EventFields.String("executionType", listOf("local", "Remote_Docker", "Remote_Docker_Compose", "Remote_WSL", "Remote_null", "third_party", "Remote_SSH_Credentials", "Remote_Vagrant", "Remote_Web_Deployment", "Remote_Unknown"))
+val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf("pipenv", "condavenv", "virtualenv", "regular", "poetry"))
 
 
 private val Sdk.version get() = PythonSdkType.getLanguageLevelForSdk(this).toPythonVersion()
