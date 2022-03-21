@@ -17,7 +17,7 @@ import java.util.EventListener;
 public interface CaretListener extends EventListener {
   /**
    * Called when the caret position has changed.<p>
-   * Only explicit caret movements (caused by {@code move...()} methods in {@link Caret} and {@link CaretModel}) are reported, 'induced' changes of
+   * Only explicit caret movements (caused by {@code move*()} methods in {@link Caret} and {@link CaretModel}) are reported, 'induced' changes of
    * caret offset due to document modifications are not reported.
    *
    * @param event the event containing information about the caret movement.

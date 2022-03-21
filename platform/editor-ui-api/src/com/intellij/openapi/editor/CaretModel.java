@@ -189,7 +189,7 @@ public interface CaretModel {
   int getMaxCaretCount();
 
   /**
-   * Returns current caret - the one, query and update methods in the model operate at the moment.
+   * Returns current caret - the one query and update methods in the model operate at the moment.
    * In the current implementation this is either an iteration-current caret within the context of
    * {@link #runForEachCaret(CaretAction)} method, or the 'primary' caret without that context.
    * <p>
