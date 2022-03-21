@@ -3,7 +3,6 @@ package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -34,6 +33,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -144,15 +144,21 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
                                                     title, null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
     }
     else {
-      FileModificationService modificationService = FileModificationService.getInstance();
-      boolean canModifyFiles = toAnnotate.stream()
-        .map(e -> e.getContainingFile())
-        .allMatch(f -> modificationService.prepareFileForWrite(f));
-      if (!canModifyFiles) return;
+      PsiFile[] files = filesToAnnotate(toAnnotate);
       WriteCommandAction.runWriteCommandAction(project, title, null, () -> {
         annotateInCode(project, toAnnotate);
-      });
+      }, files);
     }
+  }
+
+  private static PsiFile[] filesToAnnotate(@NotNull Collection<PsiElement> elements) {
+    return elements.stream()
+      .map(e -> UastContextKt.toUElement(e))
+      .map(e -> e == null ? null : e.getSourcePsi())
+      .map(psi -> psi == null ? null : psi.getContainingFile())
+      .filter(Objects::nonNull)
+      .distinct()
+      .toArray(PsiFile[]::new);
   }
 
   private static void annotateExternally(@NotNull Project project, @NotNull Collection<PsiElement> toAnnotate) {
