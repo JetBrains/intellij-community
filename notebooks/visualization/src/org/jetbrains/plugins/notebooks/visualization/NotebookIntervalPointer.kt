@@ -26,7 +26,15 @@ interface NotebookIntervalPointerFactory {
    */
   fun <T> modifyingPointers(changes: Iterable<Change>, modifyDocumentAction: () -> T): T
 
-  interface ChangeListener: EventListener {
+  fun invalidateCell(cell: NotebookCellLines.Interval) {
+    modifyingPointers(listOf(Invalidate(create(cell)))) {}
+  }
+
+  fun moveCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>) {
+    modifyingPointers(newPositions.map { (interval, newOrdinal) -> Reuse(create(interval), newOrdinal) }) {}
+  }
+
+  interface ChangeListener : EventListener {
     fun onInserted(ordinal: Int)
 
     fun onEdited(ordinal: Int)
