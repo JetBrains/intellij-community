@@ -23,16 +23,11 @@ class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCas
     dumb("c5", false) to null
   )
 
-  private var ui : SearchEverywhereUI? = null
+  private lateinit var ui : SearchEverywhereUI
 
   override fun setUp() {
     super.setUp()
-    ui = SearchEverywhereUI(project, contributors)
-  }
-
-  override fun tearDown() {
-    super.tearDown()
-    ui?.let { Disposer.dispose(it) }
+    ui = SearchEverywhereUI(project, contributors).apply { Disposer.register(testRootDisposable, this) }
   }
 
   fun testFixedTabsListStrategy() {
