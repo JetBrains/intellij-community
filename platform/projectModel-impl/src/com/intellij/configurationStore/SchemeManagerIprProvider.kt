@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -9,12 +11,10 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.util.toByteArray
+import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import java.io.InputStream
-import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.LinkedHashMap
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -92,7 +92,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         continue
       }
 
-      nameToData.put(nameGenerator.generateUniqueName("${FileUtil.sanitizeFileName(name, false)}.xml"), child.toByteArray())
+      nameToData.put(nameGenerator.generateUniqueName("${FileUtil.sanitizeFileName(name, false)}.xml"), child.toBufferExposingByteArray().toByteArray())
     }
 
     lock.write {

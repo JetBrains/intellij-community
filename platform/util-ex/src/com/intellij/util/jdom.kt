@@ -83,7 +83,7 @@ private val cachedSpecialSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
 
 private fun getSpecialSaxBuilder(): SAXBuilder {
   val reference = cachedSpecialSaxBuilder.get()
-  var saxBuilder = SoftReference.dereference<SAXBuilder>(reference)
+  var saxBuilder = SoftReference.dereference(reference)
   if (saxBuilder == null) {
     saxBuilder = object : SAXBuilder() {
       override fun configureParser(parser: XMLReader, contentHandler: SAXHandler?) {
@@ -95,7 +95,7 @@ private fun getSpecialSaxBuilder(): SAXBuilder {
         }
       }
     }
-    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtilRt.EMPTY_CHAR_ARRAY)) }
+    saxBuilder.setEntityResolver(EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtilRt.EMPTY_CHAR_ARRAY)) })
     cachedSpecialSaxBuilder.set(SoftReference(saxBuilder))
   }
   return saxBuilder

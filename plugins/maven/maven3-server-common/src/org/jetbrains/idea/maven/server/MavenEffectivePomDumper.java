@@ -13,7 +13,7 @@ import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlWriterUtil;
 import org.jdom.*;
-import org.jdom.filter.ElementFilter;
+import org.jdom.filter2.ElementFilter;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.rmi.RemoteException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -46,9 +45,7 @@ public final class MavenEffectivePomDumper {
   public static String evaluateEffectivePom(final Maven3ServerEmbedder embedder,
                                             @NotNull final File file,
                                             @NotNull List<String> activeProfiles,
-                                            @NotNull List<String> inactiveProfiles)
-    throws RemoteException, MavenServerProcessCanceledException {
-
+                                            @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();
 
     try {

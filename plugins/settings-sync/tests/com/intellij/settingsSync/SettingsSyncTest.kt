@@ -17,7 +17,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.createDirectories
-import com.intellij.util.toByteArray
+import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.*
@@ -104,7 +104,7 @@ internal class SettingsSyncTest {
     runBlocking { componentStore.save() }
 
     assertSettingsPushed {
-      fileState("keymaps/$name.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
+      fileState("keymaps/$name.xml", String(keymap.writeScheme().toBufferExposingByteArray().toByteArray(), Charset.defaultCharset()))
     }
   }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -10,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.intellij.openapi.util.JDOMUtil.getAttributes;
 
 public final class JDOMInterner {
   @ApiStatus.Internal
@@ -31,7 +30,7 @@ public final class JDOMInterner {
   });
 
   private static int computeAttributesHashCode(Element e) {
-    List<Attribute> attributes = getAttributes(e);
+    List<Attribute> attributes = JDOMUtil.getAttributes(e);
     if (attributes instanceof ImmutableSameTypeAttributeList) {
       return attributes.hashCode();
     }
@@ -49,8 +48,8 @@ public final class JDOMInterner {
     if (o2 instanceof ImmutableElement)  {
       return ((ImmutableElement)o2).attributesEqual(o1);
     }
-    List<Attribute> a1 = getAttributes(o1);
-    List<Attribute> a2 = getAttributes(o2);
+    List<Attribute> a1 = JDOMUtil.getAttributes(o1);
+    List<Attribute> a2 = JDOMUtil.getAttributes(o2);
     if (a1.size() != a2.size()) return false;
     for (int i=0; i<a1.size(); i++) {
       Attribute attr1 = a1.get(i);

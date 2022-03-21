@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />

@@ -56,11 +56,11 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertThat(serializeLibraries(myProject)).isEqualTo(
       "<library name=\"junit\">\n" +
       "  <CLASSES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/jdom-2.0.6.jar\" />\n" +
+      "    <root url=\"file://$PROJECT_DIR$/intellij-deps-fastutil-8.5.8-11.jar\" />\n" +
       "  </CLASSES>\n" +
       "  <JAVADOC />\n" +
       "  <SOURCES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/jdom.zip\" />\n" +
+      "    <root url=\"file://$PROJECT_DIR$/intellij-deps-fastutil-8.5.8-11-sources.jar\" />\n" +
       "  </SOURCES>\n" +
       "</library>"
     );

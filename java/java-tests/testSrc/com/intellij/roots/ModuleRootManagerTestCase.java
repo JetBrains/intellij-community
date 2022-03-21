@@ -16,7 +16,6 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -24,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaModuleTestCase;
@@ -33,7 +31,6 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.IOException;
 
@@ -94,11 +91,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   }
 
   protected VirtualFile getJDomSources() {
-    //todo[nik] download sources of JDOM library and locate the JAR via IntelliJProjectConfiguration instead
-    String url = JpsPathUtil.getLibraryRootUrl(PathManagerEx.findFileUnderCommunityHome("lib/src/jdom.zip"));
-    VirtualFile jar = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
-    assertNotNull(jar);
-    return jar;
+    return IntelliJProjectConfiguration.getSourceJarFromSingleJarProjectLibrary("fastutil-min");
   }
 
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {

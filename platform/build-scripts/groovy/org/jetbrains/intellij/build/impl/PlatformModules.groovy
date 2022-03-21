@@ -215,6 +215,7 @@ final class PlatformModules {
       "intellij.platform.util.base",
       "intellij.platform.util.diff",
       "intellij.platform.util.xmlDom",
+      "intellij.platform.util.jdom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.boot",
@@ -293,10 +294,7 @@ final class PlatformModules {
       }
     }
 
-    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
-      "JDOM",
-      "Trove4j",
-      ))
+    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of("Trove4j"))
 
     for (ProjectLibraryData item in additionalProjectLevelLibraries) {
       String name = item.libraryName

@@ -5,7 +5,7 @@ import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.util.toByteArray
+import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
 import org.junit.Assert
@@ -39,7 +39,7 @@ internal fun PersistentStateComponent<*>.serialize(): ByteArray {
 
   val appElement = Element("application")
   appElement.addContent(compElement)
-  return appElement.toByteArray()
+  return appElement.toBufferExposingByteArray().toByteArray()
 }
 
 internal fun settingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {

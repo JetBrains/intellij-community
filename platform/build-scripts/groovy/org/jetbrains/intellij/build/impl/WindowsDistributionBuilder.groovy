@@ -263,7 +263,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: outputPath.toString())
         classpath {
           pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
-          ["Guava", "JDOM", "commons-imaging"].each {
+          ["Guava", "commons-imaging"].each {
             buildContext.project.libraryCollection.findLibrary(it).getFiles(JpsOrderRootType.COMPILED).each {
               pathelement(location: it.absolutePath)
             }
