@@ -1685,16 +1685,6 @@ public class JavaDocInfoGenerator {
       appendPlainText(buffer, snippetTag.getText());
       return;
     }
-    buffer.append("Snippet:");
-    PsiSnippetAttributeList attributes = value.getAttributeList();
-    for (PsiSnippetAttribute attribute : attributes.getAttributes()) {
-      buffer.append(BR_TAG);
-      String attributeName = attribute.getName();
-      PsiElement valueElement = attribute.getValue();
-      String attributeValue = valueElement != null ? valueElement.getText() : "";
-      buffer.append(attributeName).append(" = ").append(attributeValue);
-    }
-    buffer.append(BR_TAG);
     PsiSnippetDocTagBody body = value.getBody();
     if (body != null) {
       buffer.append("<pre>");
