@@ -452,8 +452,9 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
 
   public void setSelectedEditor(@NotNull String providerId) {
     FileEditorWithProvider newSelection = ContainerUtil.find(myEditorsWithProviders, it -> it.getProvider().getEditorTypeId().equals(providerId));
-    LOG.assertTrue(newSelection != null, "Unable to find providerId=" + providerId);
-    setSelectedEditor(newSelection);
+    if (newSelection != null) {
+      setSelectedEditor(newSelection);
+    }
   }
 
   public void setSelectedEditor(@NotNull FileEditor editor) {
