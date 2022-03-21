@@ -12,7 +12,7 @@ enum OsFamily {
   LINUX(BuildOptions.OS_LINUX, "Linux", "unix", "linux");
   static final List<OsFamily> ALL = List.of(values())
 
-  static final OsFamily currentOs;
+  public static final OsFamily currentOs
 
   static {
     currentOs = SystemInfoRt.isWindows ? WINDOWS :
