@@ -243,6 +243,7 @@ public class CustomizableActionsPanel {
     if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema();
     mySelectedSchema.copyFrom(source);
     updateLocalSchema(mySelectedSchema);
+    mySelectedSchema.initActionIcons();
     patchActionsTreeCorrespondingToSchema(root);
     if (needExpandAll()) {
       new DefaultTreeExpander(myActionsTree).expandAll();
