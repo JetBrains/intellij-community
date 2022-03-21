@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.TestOnlyInspectionTestBase
+import com.intellij.codeInspection.tests.ULanguage
 
 class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   fun `test @TestOnly not highlighting in javadoc`() {

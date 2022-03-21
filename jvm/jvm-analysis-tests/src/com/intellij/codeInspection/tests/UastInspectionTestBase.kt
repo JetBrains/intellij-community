@@ -29,8 +29,6 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(sdkLevel)
 
-  enum class ULanguage(val ext: String) { JAVA(".java"), KOTLIN(".kt") }
-
   protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
