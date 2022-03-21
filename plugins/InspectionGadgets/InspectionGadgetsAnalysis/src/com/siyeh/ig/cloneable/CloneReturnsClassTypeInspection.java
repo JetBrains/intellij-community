@@ -159,12 +159,12 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
   private static class ReturnChecker extends JavaRecursiveElementWalkingVisitor {
 
-    private final Predicate<PsiReturnStatement> myPredicate;
+    private final Predicate<? super PsiReturnStatement> myPredicate;
 
     private boolean myReturnFound = false;
     private boolean myallReturnsMatchPredicate = true;
 
-    ReturnChecker(Predicate<PsiReturnStatement> predicate) {
+    ReturnChecker(Predicate<? super PsiReturnStatement> predicate) {
       myPredicate = predicate;
     }
 

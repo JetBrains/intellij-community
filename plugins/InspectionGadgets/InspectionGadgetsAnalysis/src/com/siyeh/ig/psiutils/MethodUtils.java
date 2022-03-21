@@ -295,7 +295,7 @@ public final class MethodUtils {
    * @parameter considerTrivialPredicate  predicate to consider further statements as trivial.
    * For example, a predicate which returns {@code true} on {@link PsiThrowStatement}s could be used here.
    */
-  public static boolean isTrivial(PsiMethod method, @Nullable Predicate<PsiStatement> considerTrivialPredicate) {
+  public static boolean isTrivial(PsiMethod method, @Nullable Predicate<? super PsiStatement> considerTrivialPredicate) {
     if (method.hasModifierProperty(PsiModifier.NATIVE)) {
       return false;
     }
@@ -310,7 +310,7 @@ public final class MethodUtils {
     return isTrivial(initializer.getBody(), null);
   }
 
-  private static boolean isTrivial(PsiCodeBlock codeBlock, @Nullable Predicate<PsiStatement> trivialPredicate) {
+  private static boolean isTrivial(PsiCodeBlock codeBlock, @Nullable Predicate<? super PsiStatement> trivialPredicate) {
     if (codeBlock == null) {
       return true;
     }

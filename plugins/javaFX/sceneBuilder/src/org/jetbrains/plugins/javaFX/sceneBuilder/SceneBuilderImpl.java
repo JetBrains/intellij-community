@@ -409,7 +409,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @NotNull
-  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
+  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<? super String> psiClassExists) {
     final Map<String, BuiltinComponent> components = new HashMap<>();
     for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();
