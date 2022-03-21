@@ -316,8 +316,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     else {
       if (preselectedScope != null) {
         scopeName = preselectedScope.getDisplayName();
+      } else {
+        scopeName = null;
       }
-      scopeName = null;
     }
     return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
   }
