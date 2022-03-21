@@ -174,10 +174,13 @@ public final class ExperimentalUI {
     paths.put("nodes/favorite.svg", "/expui/nodes/favorite.svg");
     paths.put("nodes/notFavoriteOnHover.svg", "/expui/nodes/favoriteNot.svg");
     paths.put("nodes/field.svg", "/expui/nodes/field.svg");
+    paths.put("nodes/finalMark.svg", "/expui/empty.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/function.svg", "/expui/nodes/function.svg");
     paths.put("nodes/lambda.svg", "/expui/nodes/lambda.svg");
     paths.put("nodes/interface.svg", "/expui/nodes/interface.svg");
+    paths.put("nodes/junitTestMark.svg", "/expui/empty.svg");
+    paths.put("nodes/locked.svg", "/expui/empty.svg");
     paths.put("nodes/Module.svg", "/expui/nodes/module.svg");
     paths.put("nodes/moduleGroup.svg", "/expui/nodes/moduleGroup.svg");
     paths.put("nodes/ppLib.svg", "/expui/nodes/library.svg");
@@ -195,7 +198,12 @@ public final class ExperimentalUI {
     paths.put("nodes/propertyReadWriteStatic.svg", "/expui/nodes/property.svg");
     paths.put("nodes/propertyWrite.svg", "/expui/nodes/property.svg");
     paths.put("nodes/propertyWriteStatic.svg", "/expui/nodes/property.svg");
+    paths.put("nodes/runnableMark.svg", "/expui/empty.svg");
+    paths.put("nodes/shared.svg", "/expui/empty.svg");
     paths.put("nodes/static.svg", "/expui/nodes/static.svg");
+    paths.put("nodes/staticMark.svg", "/expui/empty.svg");
+    paths.put("nodes/symlink.svg", "/expui/empty.svg");
+    paths.put("nodes/tabAlert.svg", "/expui/empty.svg");
     paths.put("nodes/test.svg", "/expui/nodes/test.svg");
     paths.put("nodes/testIgnored.svg", "/expui/nodes/testIgnored.svg");
     paths.put("nodes/variable.svg", "/expui/nodes/variable.svg");
