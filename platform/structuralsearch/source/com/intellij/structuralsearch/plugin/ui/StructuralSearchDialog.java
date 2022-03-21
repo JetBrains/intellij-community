@@ -472,18 +472,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       myExistingTemplatesComponent.selectFileType(info.getText());
     });
 
-    // Other actions
-    final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
-    mySwitchAction = new SwitchAction();
-    templateActionGroup.add(
-      mySwitchAction
-    );
-
-    templateActionGroup.setPopup(true);
-    final Presentation presentation = templateActionGroup.getTemplatePresentation();
-    presentation.setIcon(AllIcons.General.Settings);
-    presentation.setText(SSRBundle.message("tools.button"));
-
     // Existing templates action
     final AnAction showTemplatesAction = new DumbAwareToggleAction(SSRBundle.message("templates.button"),
                                                                    SSRBundle.message("templates.button.description"),
@@ -543,8 +531,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       };
 
+    // Switch action
+    mySwitchAction = new SwitchAction();
+
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, pinAction, templateActionGroup);
+      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, pinAction, mySwitchAction);
     final ActionManager actionManager = ActionManager.getInstance();
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
@@ -1284,6 +1275,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     private void init() {
       getTemplatePresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+      getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
       final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
