@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -393,7 +392,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       ((CustomFrameDialogContent)contentPane).updateLayout();
     }
 
-    anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
+    if (ApplicationManager.getApplication() != null) {
+      ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE).getShortcutSet();
+      anCancelAction.registerCustomShortcutSet(shortcutSet, rootPane);
+    }
+    else {
+      anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
+    }
+
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
     if (!myCanBeParent) {
