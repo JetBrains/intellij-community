@@ -217,7 +217,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");
-    final InspectionProfileImpl profile = getCurrentProfile();
+    InspectionProfileImpl profile = getCurrentProfile();
     String title = profile.getSingleTool() == null
                    ? AnalysisBundle.message("inspection.progress.profile.title", profile.getName())
                    : AnalysisBundle.message("inspection.progress.single.inspection.title", profile.getName());
