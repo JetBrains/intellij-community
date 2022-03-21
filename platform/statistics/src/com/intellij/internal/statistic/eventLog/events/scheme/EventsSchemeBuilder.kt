@@ -107,19 +107,24 @@ object EventsSchemeBuilder {
   }
 
   fun collectGroupsFromExtensions(groupType: String,
-                                  collectors: Collection<FeatureUsagesCollector>): MutableList<GroupDescriptor> {
-    val result = mutableListOf<GroupDescriptor>()
+                                  collectors: Collection<FeatureUsagesCollector>): MutableCollection<GroupDescriptor> {
+    val result = HashMap<String, GroupDescriptor>()
     for (collector in collectors) {
       val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
       validateGroupId(collector)
       val group = collector.group ?: continue
-      val eventsDescriptors = group.events.groupBy { it.eventId }
+      val existingGroup = result[group.id]
+      if (existingGroup != null && group.version != existingGroup.version) {
+        throw IllegalStateException("If group is reused in multiple collectors classes (e.g Project and Application collector), " +
+                                    "it should have the same version (group=${group.id})")
+      }
+      val existingScheme = existingGroup?.schema ?: HashSet()
+      val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toSet()
-      val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
-      result.add(groupDescriptor)
+      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
     }
-    return result
+    return result.values
   }
 
   private fun validateGroupId(collector: FeatureUsagesCollector) {
