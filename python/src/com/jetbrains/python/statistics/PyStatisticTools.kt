@@ -3,6 +3,7 @@ package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
@@ -48,12 +49,14 @@ fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   return data
 }
 
-fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String): VarargEventId {
-  return group.registerVarargEvent(eventId, EventFields.Language,
-                            PYTHON_VERSION,
-                            PYTHON_IMPLEMENTATION,
-                            EXECUTION_TYPE,
-                            INTERPRETER_TYPE)
+fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+  return group.registerVarargEvent(eventId,
+                                   EventFields.Language,
+                                   PYTHON_VERSION,
+                                   PYTHON_IMPLEMENTATION,
+                                   EXECUTION_TYPE,
+                                   INTERPRETER_TYPE,
+                                   *extraFields)
 }
 
 val PYTHON_VERSION = EventFields.StringValidatedByCustomRule("python_version", "version")
