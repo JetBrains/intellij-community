@@ -251,7 +251,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 
 private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: CompositeMessageBus, private val childBuses: List<MessageBusImpl>)
   : MessagePublisher<L>(topic, bus), InvocationHandler {
-  override fun publish(method: Method, args: Array<Any?>?, jobQueue: MessageQueue?): Boolean {
+  override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
     var exceptions: MutableList<Throwable>? = null
     var hasHandlers = false
     var handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
@@ -260,8 +260,7 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
                                        method = method,
                                        args = args,
                                        handlers = handlers,
-                                       jobQueue = jobQueue,
-                                       messageDeliveryListener = bus.messageDeliveryListener,
+                                       jobQueue = queue,
                                        prevExceptions = null,
                                        bus = bus)
       hasHandlers = true
@@ -294,8 +293,7 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
                                        method = method,
                                        args = args,
                                        handlers = handlers,
-                                       jobQueue = jobQueue,
-                                       messageDeliveryListener = bus.messageDeliveryListener,
+                                       jobQueue = queue,
                                        prevExceptions = exceptions,
                                        bus = childBus)
     }

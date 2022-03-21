@@ -10,7 +10,7 @@ import java.util.function.Predicate
 
 internal abstract class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHolder {
   @JvmField
-  protected var bus: MessageBusImpl?
+  var bus: MessageBusImpl?
   @JvmField
   protected val subscriptions = AtomicReference(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
 

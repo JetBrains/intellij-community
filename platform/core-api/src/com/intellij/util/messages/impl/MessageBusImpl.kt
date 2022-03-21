@@ -423,7 +423,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
 
     if (topic.isImmediateDelivery) {
       bus.checkNotDisposed()
-      publish(method = method, args = args, jobQueue = null)
+      publish(method = method, args = args, queue = null)
       return NA
     }
 
@@ -432,7 +432,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
       pumpWaiting(queue)
     }
 
-    if (publish(method = method, args = args, jobQueue = queue)) {
+    if (publish(method = method, args = args, queue = queue)) {
       // we must deliver messages now even if currently processing message queue, because if published as part of handler invocation,
       // handler code expects that message will be delivered immediately after publishing
       pumpWaiting(queue)
@@ -440,7 +440,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
     return NA
   }
 
-  internal open fun publish(method: Method, args: Array<Any?>?, jobQueue: MessageQueue?): Boolean {
+  internal open fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
     val handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
     if (handlers.isEmpty()) {
       return false
@@ -450,8 +450,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
                         method = method,
                         args = args,
                         handlers = handlers,
-                        jobQueue = jobQueue,
-                        messageDeliveryListener = bus.messageDeliveryListener,
+                        jobQueue = queue,
                         prevExceptions = null,
                         bus = bus)?.let(::throwExceptions)
     return true
@@ -463,7 +462,6 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
                                  args: Array<Any?>?,
                                  handlers: Array<Any?>,
                                  jobQueue: MessageQueue?,
-                                 messageDeliveryListener: MessageDeliveryListener?,
                                  prevExceptions: MutableList<Throwable>?,
                                  bus: MessageBusImpl): MutableList<Throwable>? {
   val methodHandle = MethodHandleCache.compute(method, args)
@@ -475,8 +473,8 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
                                   args = args,
                                   topic = topic,
                                   handler = handler ?: continue,
-                                  messageDeliveryListener = messageDeliveryListener,
-                                  prevExceptions = prevExceptions)
+                                  messageDeliveryListener = bus.messageDeliveryListener,
+                                  prevExceptions = exceptions)
     }
     return exceptions
   }
@@ -487,13 +485,13 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
                                      args = args,
                                      handlers = handlers,
                                      bus = bus))
+    return prevExceptions
   }
-  return prevExceptions
 }
 
 internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl) : MessagePublisher<L>(topic, bus), InvocationHandler {
   // args not-null
-  override fun publish(method: Method, args: Array<Any?>?, jobQueue: MessageQueue?): Boolean {
+  override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
     var exceptions: MutableList<Throwable>? = null
     var parentBus = bus
     var hasHandlers = false
@@ -510,7 +508,7 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
 
       if (!handlers.isEmpty()) {
         hasHandlers = true
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, exceptions, bus)
+        exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, exceptions, bus)
       }
       parentBus = parentBus.parentBus ?: break
     }
@@ -581,7 +579,7 @@ private fun deliverImmediately(connection: MessageBusConnectionImpl, jobs: Deque
     val length = allHandlers.size
     while (i < length) {
       val handler = allHandlers[i]
-      if (handler != null && connection.isMyHandler(job.topic, handler)) {
+      if (handler != null && connection.bus === job.bus && connection.isMyHandler(job.topic, handler)) {
         allHandlers[i] = null
         if (connectionHandlers == null) {
           connectionHandlers = mutableListOf()
