@@ -51,7 +51,7 @@ class NewInlayProviderSettingsModel<T : Any>(
     try {
       cases.forEach { it.value = false }
       case?.let { it.value = true }
-      hintsBuffer = collectorWrapper.collectTraversing(editor, file, enabled)
+      hintsBuffer = collectorWrapper.collectTraversing(editor, file, true)
       if (!enabled) {
         val builder = strikeOutBuilder(editor)
         addStrikeout(hintsBuffer.inlineHints, builder) { root, constraints -> HorizontalConstrainedPresentation(root, constraints) }
