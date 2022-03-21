@@ -44,6 +44,7 @@ public class WizardContext extends UserDataHolderBase {
   private ModulesProvider myModulesProvider;
   private boolean myProjectFileDirectorySetExplicitly;
   private String myDefaultModuleName = "untitled";
+  private int myScreen = 1;
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
@@ -232,5 +233,13 @@ public class WizardContext extends UserDataHolderBase {
 
   public Session getSessionId() {
     return mySessionId;
+  }
+
+  public int getScreen() {
+    return myScreen;
+  }
+
+  public void setScreen(int screen) {
+    myScreen = screen;
   }
 }

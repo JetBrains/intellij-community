@@ -259,7 +259,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     super.doNextAction();
     if (isNewWizard()) {
       NewProjectWizardCollector.logNext(myWizardContext, -1);
-      NewProjectWizardCollector.logScreen(myWizardContext, 2);
+      myWizardContext.setScreen(2);
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -47,6 +48,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
 
   private inner class AdditionalStepsAction : DumbAwareAction(null, null, AllIcons.General.Add) {
     override fun actionPerformed(e: AnActionEvent) {
+      NewProjectWizardCollector.logAddPlugin(context)
       val additionalSteps = (additionalStepPlugins.keys - steps.keys).sorted().map { OpenMarketPlaceAction(it) }
       JBPopupFactory.getInstance().createActionGroupPopup(
         UIBundle.message("new.project.wizard.popup.title.install.plugin"), DefaultActionGroup(additionalSteps),
@@ -56,16 +58,17 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
     }
   }
 
-  private inner class OpenMarketPlaceAction(private val language: String) : DumbAwareAction(Supplier { language }) {
+  private inner class OpenMarketPlaceAction(private val step: String) : DumbAwareAction(Supplier { step }) {
     override fun actionPerformed(e: AnActionEvent) {
-      val pluginId = PluginId.getId(additionalStepPlugins[language]!!)
+      NewProjectWizardCollector.logPluginSelected(context, step)
+      val pluginId = PluginId.getId(additionalStepPlugins[step]!!)
       val component = e.dataContext.getData(CONTEXT_COMPONENT)!!
       if (Registry.`is`("new.project.wizard.modal.plugin.install", false)) {
         ProgressManager.getInstance().run(InstallPluginTask(setOf(pluginId), ModalityState.stateForComponent(component)))
       }
       else {
         ShowSettingsUtil.getInstance().editConfigurable(null, PluginManagerConfigurable(), Consumer {
-          it.openMarketplaceTab("/tag:Languages $language")
+          it.openMarketplaceTab("/tag:Languages $step")
         })
       }
     }
