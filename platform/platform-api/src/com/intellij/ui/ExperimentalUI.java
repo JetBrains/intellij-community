@@ -223,7 +223,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");
     paths.put("icons/OpenTerminal_13x13.svg", "/expui/toolwindow/terminal.svg");
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
-    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
+    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/changes.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     paths.put("toolwindows/toolWindowFind.svg", "/expui/toolwindow/find.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
@@ -252,6 +252,7 @@ public final class ExperimentalUI {
     paths.put("vcs/changelist.svg", "expui/vcs/changelist.svg");
     paths.put("icons/outgoing.svg", "expui/vcs/changesPush@12x12.svg");
     paths.put("icons/incoming.svg", "expui/vcs/changesUpdate@12x12.svg");
+    paths.put("actions/listChanges.svg", "expui/vcs/changes.svg");
     paths.put("actions/commit.svg", "expui/vcs/commit.svg");
     paths.put("actions/diff.svg", "expui/vcs/diff.svg");
     paths.put("icons/cherryPick.svg", "expui/vcs/cherryPick.svg");
