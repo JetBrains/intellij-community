@@ -47,7 +47,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
 
   private inner class AdditionalStepsAction : DumbAwareAction(null, null, AllIcons.General.Add) {
     override fun actionPerformed(e: AnActionEvent) {
-      val additionalSteps = (additionalStepPlugins.keys - steps.keys).map { OpenMarketPlaceAction(it) }
+      val additionalSteps = (additionalStepPlugins.keys - steps.keys).sorted().map { OpenMarketPlaceAction(it) }
       JBPopupFactory.getInstance().createActionGroupPopup(
         UIBundle.message("new.project.wizard.popup.title.install.plugin"), DefaultActionGroup(additionalSteps),
         e.dataContext,
