@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import com.intellij.testFramework.TemporaryDirectory
@@ -19,7 +19,7 @@ class RollingFileHandlerTest {
   @Test
   fun testRollingHandler() {
     val logPath = tempDir.newPath("RollingFileHandlerTest.log")
-    val handler = RollingFileHandler(logPath, 100, 2, false)
+    val handler = RollingFileHandler(logPath, 100, 10, false)
     handler.formatter = object : Formatter() {
       override fun format(record: LogRecord): String {
         return record.message

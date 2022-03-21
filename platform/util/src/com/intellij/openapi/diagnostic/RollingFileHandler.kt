@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import java.io.BufferedOutputStream
@@ -74,7 +74,7 @@ class RollingFileHandler @JvmOverloads constructor(
     onRotate?.run()
     try {
       Files.deleteIfExists(logPathWithIndex(count))
-      for (i in 1 until count) {
+      for (i in count-1 downTo 1) {
         val path = logPathWithIndex(i)
         if (Files.exists(path)) {
           Files.move(path, logPathWithIndex(i+1), StandardCopyOption.ATOMIC_MOVE)
