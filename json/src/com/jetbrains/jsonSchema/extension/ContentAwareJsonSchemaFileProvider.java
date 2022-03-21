@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
  * Provides a JSON schema depending on the contents of the file this schema is requested for.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 public interface ContentAwareJsonSchemaFileProvider {
   ExtensionPointName<ContentAwareJsonSchemaFileProvider> EP_NAME =
     ExtensionPointName.create("JavaScript.JsonSchema.ContentAwareSchemaFileProvider");
