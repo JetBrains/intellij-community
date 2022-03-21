@@ -923,4 +923,20 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       myContentType = contentType;
     }
   }
+
+  public void testTypingMustLeadToMergedUserInputTokensAtTheDocumentEnd() {
+    myConsole.type(myConsole.getEditor(), "/");
+    myConsole.flushDeferredText();
+    assertEquals("/", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
+      new ExpectedHighlighter(0, 1, ConsoleViewContentType.USER_INPUT)
+    );
+
+    myConsole.type(myConsole.getEditor(), "/");
+    myConsole.flushDeferredText();
+    assertEquals("//", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
+      new ExpectedHighlighter(0, 2, ConsoleViewContentType.USER_INPUT)
+    );
+  }
 }
