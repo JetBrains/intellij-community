@@ -60,7 +60,9 @@ public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager
     }
 
     // deal with width
-    if (myForceAdditionalColumnsUsage) {
+    if (myForceAdditionalColumnsUsage &&
+        !history.isDisposed() &&
+        !input.isDisposed()) {
       history.getSoftWrapModel().forceAdditionalColumnsUsage();
 
       int minAdditionalColumns = 2;
@@ -119,7 +121,7 @@ public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager
     }
   }
 
-  protected HeightOfComponents normalizeHeights(int newHistoryHeight, int newInputHeight){
+  protected HeightOfComponents normalizeHeights(int newHistoryHeight, int newInputHeight) {
     var history = myFirst;
     int delta = newHistoryHeight - ((newHistoryHeight / history.getLineHeight()) * history.getLineHeight());
     return new HeightOfComponents(newHistoryHeight - delta, newInputHeight + delta);
