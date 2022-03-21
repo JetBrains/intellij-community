@@ -104,6 +104,8 @@ public final class ExperimentalUI {
     paths.put("actions/expandall.svg", "/expui/general/expandAll.svg");
     paths.put("actions/back.svg", "/expui/general/left.svg");
     paths.put("actions/forward.svg", "/expui/general/right.svg");
+    paths.put("actions/gc.svg", "/expui/general/delete.svg");
+    paths.put("actions/help.svg", "/expui/general/help.svg");
     paths.put("actions/previousOccurence.svg", "/expui/general/up.svg");
     paths.put("actions/nextOccurence.svg", "/expui/general/down.svg");
     paths.put("actions/refresh.svg", "/expui/general/refresh.svg");
@@ -154,6 +156,7 @@ public final class ExperimentalUI {
     paths.put("images/updateFolders.svg", "/expui/build/updateFolders.svg");
     paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
+    paths.put("general/locate.svg", "/expui/general/locate.svg");
     paths.put("general/balloonError.svg", "/expui/status/error.svg");
     paths.put("general/balloonInformation.svg", "/expui/status/info.svg");
     paths.put("general/balloonWarning.svg", "/expui/status/warning.svg");
@@ -168,6 +171,8 @@ public final class ExperimentalUI {
     paths.put("nodes/enum.svg", "/expui/nodes/enum.svg");
     paths.put("nodes/errorIntroduction.svg", "/expui/nodes/errorIntroduction.svg");
     paths.put("nodes/exceptionClass.svg", "/expui/nodes/exception.svg");
+    paths.put("nodes/favorite.svg", "/expui/nodes/favorite.svg");
+    paths.put("nodes/notFavoriteOnHover.svg", "/expui/nodes/favoriteNot.svg");
     paths.put("nodes/field.svg", "/expui/nodes/field.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
     paths.put("nodes/function.svg", "/expui/nodes/function.svg");
@@ -179,8 +184,10 @@ public final class ExperimentalUI {
     paths.put("nodes/method.svg", "/expui/nodes/method.svg");
     paths.put("nodes/abstractMethod.svg", "/expui/nodes/methodAbstract.svg");
     paths.put("nodes/methodReference.svg", "/expui/nodes/methodReference.svg");
+    paths.put("nodes/package.svg", "/expui/nodes/package.svg");
     paths.put("nodes/parameter.svg", "/expui/nodes/parameter.svg");
     paths.put("nodes/newParameter.svg", "/expui/nodes/parameter.svg");
+    paths.put("nodes/plugin.svg", "/expui/nodes/plugin.svg");
     paths.put("nodes/property.svg", "/expui/nodes/property.svg");
     paths.put("nodes/propertyRead.svg", "/expui/nodes/property.svg");
     paths.put("nodes/propertyReadStatic.svg", "/expui/nodes/property.svg");
