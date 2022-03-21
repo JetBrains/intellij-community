@@ -47,6 +47,9 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
     doTest(introduce("Paths.get(fileName)"))
   }
+  fun testRandomUUIDIsNotReplaced() {
+    doNegativeTest(replace("s1", "String.valueOf(UUID.randomUUID().getMostSignificantBits())"))
+  }
 
   private fun doTest(message: String, threshold: Int = 50) =
     withThreshold(threshold) {
