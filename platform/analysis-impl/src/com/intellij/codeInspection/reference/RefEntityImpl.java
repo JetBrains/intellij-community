@@ -18,7 +18,7 @@ import java.util.List;
  * <table>
  *   <thead>
  *     <tr><th>Bits</th><th>Usage</th><th>User(s)</th></tr>
- *   <thead>
+ *   </thead>
  *   <tbody>
  *      <tr valign="top"><td>1</td><td><pre>access modifiers</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}</td></tr>
  *      <tr valign="top"><td>2</td><td><pre>access modifiers</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}</td></tr>
@@ -163,7 +163,6 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
   public synchronized void removeChild(@NotNull final RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
-      ((WritableRefEntity)child).setOwner(null);
     }
   }
 
