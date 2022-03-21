@@ -163,7 +163,7 @@ open class CodeVisionHost(val project: Project) {
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val settings = CodeVisionSettings.instance()
     for (provider in providers) {
-      if (!settings.isProviderEnabled(provider.id)) continue
+      if (!settings.isProviderEnabled(provider.groupId)) continue
       if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue
       val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
       if (placeholderCollector is BypassBasedPlaceholderCollector) {
