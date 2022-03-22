@@ -72,7 +72,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     val suggestedIdes: List<SuggestedIde>,
   ) : Function<FileEditor, EditorNotificationPanel?> {
 
-    private var disabledPlugin: IdeaPluginDescriptor? = null
+    private var installedPlugin: IdeaPluginDescriptor? = null
     private val jbProduced = mutableSetOf<PluginData>()
 
     @VisibleForTesting
@@ -83,11 +83,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       for (data in dataSet) {
         val pluginId = data.pluginId
 
-        val installedPlugin: IdeaPluginDescriptor? = descriptorsById[pluginId]
-        if (installedPlugin != null) {
-          if (!installedPlugin.isEnabled && disabledPlugin == null) {
-            disabledPlugin = installedPlugin
-          }
+        if (pluginId in descriptorsById) {
+          installedPlugin = descriptorsById[pluginId]
         }
         else if (!data.isBundled) {
           (if (jbPluginsIds.contains(pluginId.idString)) jbProduced else thirdParty) += data
@@ -120,12 +117,20 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
         }
       }
 
-      if (disabledPlugin != null) {
-        panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledPlugin!!.name)) {
-          pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
-          updateAllNotifications(project)
-          FUSEventSource.EDITOR.logEnablePlugins(listOf(disabledPlugin!!.pluginId.idString), project)
-          PluginManagerConfigurable.showPluginConfigurableAndEnable(project, setOf(disabledPlugin))
+      val installedPlugin = installedPlugin
+      if (installedPlugin != null) {
+        if (!installedPlugin.isEnabled) {
+          panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", installedPlugin.name)) {
+            pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
+            updateAllNotifications(project)
+            FUSEventSource.EDITOR.logEnablePlugins(listOf(installedPlugin.pluginId.idString), project)
+            PluginManagerConfigurable.showPluginConfigurableAndEnable(project, setOf(installedPlugin))
+          }
+        }
+        else {
+          // Plugin supporting the pattern is installed and enabled but the current file is reassigned to a different
+          // file type
+          return null
         }
       }
       else if (jbProduced.isNotEmpty()) {
