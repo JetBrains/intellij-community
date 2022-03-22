@@ -1,5 +1,5 @@
-UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
+UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: map
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Method: of
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Stream
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util.stream: stream
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.util: util
