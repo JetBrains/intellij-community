@@ -36,7 +36,7 @@ public final class DocumentationHtmlUtil {
     return (element, view) -> {
       if (view instanceof ImageView) {
         // we have to work with raw image, apply scaling manually
-        return new HiDpiScalingImageView(element, () -> {
+        return new HiDpiScalingImageView(element, (ImageView)view, () -> {
           return ScaleContext.create(component);
         });
       }
