@@ -15,16 +15,13 @@ import javax.swing.text.Position
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
 
-class HiDpiScalingImageView(elem: Element,
-                            private val originalView: ImageView,
-                            private val scaleContextSupplier: Supplier<out ScaleContext>) : View(elem) {
+class HiDpiScalingImageView(elem: Element, private val originalView: ImageView) : View(elem) {
 
-  //TODO: check if we can use getContainer to acquire context
-  private val scaleContext: ScaleContext
-    get() = scaleContextSupplier.get()
+  private val scaleContext: ScaleContext?
+    get() = container?.let(ScaleContext::create)
 
   private val sysScale: Float
-    get() = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+    get() = scaleContext?.getScale(ScaleType.SYS_SCALE)?.toFloat() ?: 1f
 
   override fun getMaximumSpan(axis: Int): Float = originalView.getMaximumSpan(axis) / sysScale
 
@@ -33,11 +30,17 @@ class HiDpiScalingImageView(elem: Element,
   override fun getPreferredSpan(axis: Int): Float = originalView.getPreferredSpan(axis) / sysScale
 
   override fun paint(g: Graphics, a: Shape) {
+    val scaleContext = scaleContext
+    if (scaleContext == null) {
+      originalView.paint(g, a)
+      return
+    }
+
     val bounds = a.bounds
     val width = originalView.getPreferredSpan(X_AXIS).toInt()
     val height = originalView.getPreferredSpan(Y_AXIS).toInt()
     if (width <= 0 || height <= 0) return
-    val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB)
     val graphics = image.createGraphics()
     originalView.paint(graphics, Rectangle(image.width, image.height))
     StartupUiUtil.drawImage(g, ImageUtil.ensureHiDPI(image, scaleContext), bounds.x, bounds.y, null)
