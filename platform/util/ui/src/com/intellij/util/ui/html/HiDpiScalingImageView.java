@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.documentation;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui.html;
 
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
@@ -14,11 +14,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 
-final class DocumentationScalingImageView extends ImageView {
+public final class HiDpiScalingImageView extends ImageView {
 
   private final @NotNull Supplier<? extends @NotNull ScaleContext> myScaleContextSupplier;
 
-  DocumentationScalingImageView(Element elem, @NotNull Supplier<? extends @NotNull ScaleContext> scaleContextSupplier) {
+  public HiDpiScalingImageView(Element elem, @NotNull Supplier<? extends @NotNull ScaleContext> scaleContextSupplier) {
     super(elem);
 
     myScaleContextSupplier = scaleContextSupplier;
