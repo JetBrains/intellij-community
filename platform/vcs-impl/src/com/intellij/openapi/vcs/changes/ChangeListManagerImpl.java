@@ -736,7 +736,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
-  public static boolean isUnder(final Change change, final VcsDirtyScope scope) {
+  public static boolean isUnder(@NotNull Change change, @NotNull VcsDirtyScope scope) {
     final ContentRevision before = change.getBeforeRevision();
     final ContentRevision after = change.getAfterRevision();
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());

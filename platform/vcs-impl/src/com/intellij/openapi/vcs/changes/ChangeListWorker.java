@@ -30,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** should work under _external_ lock
+/**
+ * should work under _external_ lock
  * just logic here: do modifications to group of change lists
  */
 public final class ChangeListWorker {
@@ -187,7 +188,8 @@ public final class ChangeListWorker {
       }
     }
     else {
-      Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(), it -> Comparing.equal(it.getValue(), tracker));
+      Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(),
+                                                                           it -> Comparing.equal(it.getValue(), tracker));
 
       if (entry != null) {
         LOG.error(String.format("Unregistered tracker with wrong path: tracker: %s", tracker));
@@ -931,8 +933,10 @@ public final class ChangeListWorker {
   @Override
   @NonNls
   public String toString() {
-    String lists = StringUtil.join(myLists, list -> String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", ")), "\n"); //NON-NLS
-    String trackers = StringUtil.join(myPartialChangeTrackers.entrySet(), (entry) -> entry.getKey() + " " + entry.getValue().getAffectedChangeListsIds(), ",");
+    String lists = StringUtil.join(myLists, list -> String.format("list: %s (%s) changes: %s", list.name, list.id,
+                                                                  StringUtil.join(getChangesIn(list), ", ")), "\n"); //NON-NLS
+    String trackers = StringUtil.join(myPartialChangeTrackers.entrySet(),
+                                      (entry) -> entry.getKey() + " " + entry.getValue().getAffectedChangeListsIds(), ",");
     return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
@@ -1289,7 +1293,7 @@ public final class ChangeListWorker {
 
     @Nullable
     @Override
-    public LocalChangeList findChangeList(final String name) {
+    public LocalChangeList findChangeList(@Nullable String name) {
       return myWorker.getChangeListByName(name);
     }
 
@@ -1301,14 +1305,14 @@ public final class ChangeListWorker {
 
     @NotNull
     @Override
-    public LocalChangeList findOrCreateList(@NotNull final String name, final String comment) {
+    public LocalChangeList findOrCreateList(@NotNull String name, @Nullable String comment) {
       LocalChangeList list = myWorker.getChangeListByName(name);
       if (list != null) return list;
       return addChangeList(name, comment);
     }
 
     @Override
-    public void editComment(@NotNull final String name, final String comment) {
+    public void editComment(@NotNull String name, @Nullable String comment) {
       myWorker.editComment(name, StringUtil.notNullize(comment));
     }
 
@@ -1344,7 +1348,7 @@ public final class ChangeListWorker {
     @NotNull private String myDefaultId;
 
     PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
-                                    @NotNull ListData defaultList) {
+                             @NotNull ListData defaultList) {
       myChangeListsIds = new HashSet<>(tracker.getAffectedChangeListsIds());
       myDefaultId = defaultList.id;
     }
