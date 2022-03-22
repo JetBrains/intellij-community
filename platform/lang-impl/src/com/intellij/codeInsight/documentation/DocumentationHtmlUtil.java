@@ -11,12 +11,10 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.html.HiDpiScalingImageView;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 
 import java.util.List;
@@ -27,17 +25,6 @@ import static com.intellij.codeInsight.documentation.DocumentationComponent.SECT
 public final class DocumentationHtmlUtil {
 
   private DocumentationHtmlUtil() {
-  }
-
-  //TODO: extract to common extensions
-  public static ExtendableHTMLViewFactory.Extension getHiDPIImagesExtension() {
-    return (element, view) -> {
-      if (view instanceof ImageView) {
-        // we have to work with raw image, apply scaling manually
-        return new HiDpiScalingImageView(element, (ImageView)view);
-      }
-      return null;
-    };
   }
 
   public static ExtendableHTMLViewFactory.Extension getModuleIconsExtension() {
