@@ -384,6 +384,7 @@ idea.fatal.error.notification=disabled
     toCompile.addAll(context.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.<String>emptyList())
     toCompile.addAll(productLayout.mainModules)
     toCompile.addAll(mavenArtifacts.additionalModules)
+    toCompile.addAll(mavenArtifacts.squashedModules)
     toCompile.addAll(mavenArtifacts.proprietaryModules)
     toCompile.addAll(productProperties.modulesToCompileTests)
     compileModules(toCompile)
@@ -454,7 +455,7 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("after compilation")
 
     MavenArtifactsProperties mavenArtifacts = context.productProperties.mavenArtifacts
-    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
+    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.squashedModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       context.executeStep("generate maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP, new Runnable() {
         @Override
         void run() {
@@ -699,6 +700,7 @@ idea.fatal.error.notification=disabled
     }
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
+    checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules")
     if (buildContext.productProperties.scrambleMainJar) {
       checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled,
                    "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")

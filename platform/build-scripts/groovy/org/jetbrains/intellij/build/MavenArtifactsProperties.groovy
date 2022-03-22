@@ -28,6 +28,13 @@ class MavenArtifactsProperties {
   List<String> additionalModules = []
 
   /**
+   * Names of modules for which Maven artifacts should be generated, that will create all its module-dependencies in a single jar.
+   *
+   * Initially, it's introduced for having `util-base` artifact which will include `util-rt` in it to avoid JPMS package-split.
+   */
+  List<String> squashedModules = []
+
+  /**
    * Names of proprietary modules for which Maven artifacts should be generated.
    *
    *  <p>

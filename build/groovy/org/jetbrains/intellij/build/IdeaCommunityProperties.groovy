@@ -47,6 +47,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework"
     ]
+    mavenArtifacts.squashedModules = ["intellij.platform.util.base"]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
   }
