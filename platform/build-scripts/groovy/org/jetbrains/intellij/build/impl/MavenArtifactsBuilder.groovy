@@ -13,10 +13,7 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -41,24 +38,28 @@ class MavenArtifactsBuilder {
   }
 
   void generateMavenArtifacts(List<String> namesOfModulesToPublish,
-                              Map<MavenCoordinates, Collection<String>> squashedModules,
+                              List<String> namesOfModulesToSquashAndPublish,
                               String outputDir) {
     Map<MavenArtifactData, List<JpsModule>> modulesToPublish = new HashMap<MavenArtifactData, List<JpsModule>>()
 
     Map<JpsModule, MavenArtifactData> regularModulesToPublish = generateMavenArtifactData(namesOfModulesToPublish)
     regularModulesToPublish.forEach { aModule, artifactData -> modulesToPublish[artifactData] = Collections.singletonList(aModule) }
 
-    Set<String> squashingModuleNames = squashedModules.values().collectMany { moduleNames -> moduleNames }.toSet()
-    Map<JpsModule, MavenArtifactData> squashingMavenArtifactsData = generateMavenArtifactData(squashingModuleNames)
-    squashedModules.forEach { coordinates, moduleNames ->
-      List<JpsModule> modules = moduleNames.collect { moduleName -> buildContext.findRequiredModule(moduleName) }
-      Set<MavenCoordinates> moduleCoordinates = modules.collect { module -> generateMavenCoordinatesForModule(module) }.toSet()
-      def dependencies = modules
-        .collectMany { module -> squashingMavenArtifactsData[module].dependencies }
+    Map<JpsModule, MavenArtifactData> squashingMavenArtifactsData = generateMavenArtifactData(namesOfModulesToSquashAndPublish)
+    namesOfModulesToSquashAndPublish.forEach { moduleName ->
+      JpsModule module = buildContext.findRequiredModule(moduleName)
+      Set<JpsModule> modules = JpsJavaExtensionService.dependencies(module)
+        .recursively().withoutSdk().includedIn(JpsJavaClasspathKind.runtime(false)).modules
+
+      Set<MavenCoordinates> moduleCoordinates = modules.collect { aModule -> generateMavenCoordinatesForModule(aModule) }.toSet()
+      List<MavenArtifactDependency> dependencies = modules
+        .collectMany { aModule -> squashingMavenArtifactsData[aModule].dependencies }
         .unique()
         .findAll { dependency -> !moduleCoordinates.contains(dependency.coordinates) }
-      MavenArtifactData artifactData = new MavenArtifactData(coordinates, dependencies)
-      modulesToPublish[artifactData] = modules
+
+      MavenCoordinates originCoordinates = generateMavenCoordinatesForModule(module)
+      MavenCoordinates coordinates = new MavenCoordinates(originCoordinates.groupId, "${originCoordinates.artifactId}-squashed", originCoordinates.version)
+      modulesToPublish[new MavenArtifactData(coordinates, dependencies)] = modules.toList()
     }
 
     buildContext.messages.progress("Generating Maven artifacts for ${modulesToPublish.size()} modules")

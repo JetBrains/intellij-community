@@ -467,10 +467,10 @@ idea.fatal.error.notification=disabled
           }
           moduleNames.addAll(mavenArtifacts.additionalModules)
           if (!moduleNames.isEmpty()) {
-            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, Collections.emptyMap(), 'maven-artifacts')
+            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, Collections.emptyList(), 'maven-artifacts')
           }
           if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, Collections.emptyMap(), 'proprietary-maven-artifacts')
+            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, Collections.emptyList(), 'proprietary-maven-artifacts')
           }
         }
       })
