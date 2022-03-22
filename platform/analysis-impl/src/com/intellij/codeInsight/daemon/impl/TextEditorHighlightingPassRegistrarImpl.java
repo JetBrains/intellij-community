@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
 public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
-  private final Int2ObjectMap<PassConfig> myRegisteredPassFactories = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<PassConfig> myRegisteredPassFactories = new Int2ObjectOpenHashMap<>(); // guarded by this
   private volatile PassConfig[] myFrozenPassConfigs; // passId -> PassConfig; contents is immutable, updated by COW
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = ContainerUtil.createConcurrentList();
   private final AtomicInteger nextAvailableId = new AtomicInteger();
@@ -74,7 +74,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   private synchronized PassConfig @NotNull [] freezeRegisteredPassFactories() {
     PassConfig[] configs = myFrozenPassConfigs;
     if (configs == null) {
-      int maxId = myRegisteredPassFactories.keySet().intStream().max().getAsInt();
+      int maxId = myRegisteredPassFactories.keySet().intStream().max().orElse(0);
       configs = new PassConfig[maxId + 1];
       for (Int2ObjectMap.Entry<PassConfig> entry : myRegisteredPassFactories.int2ObjectEntrySet()) {
         int id = entry.getIntKey();
