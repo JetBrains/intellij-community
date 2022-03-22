@@ -11,9 +11,13 @@ import java.awt.Shape
 import java.awt.image.BufferedImage
 import java.util.function.Supplier
 import javax.swing.text.Element
+import javax.swing.text.Position
+import javax.swing.text.View
 import javax.swing.text.html.ImageView
 
-class HiDpiScalingImageView(elem: Element, private val scaleContextSupplier: Supplier<out ScaleContext>) : ImageView(elem) {
+class HiDpiScalingImageView(elem: Element,
+                            private val originalView: ImageView,
+                            private val scaleContextSupplier: Supplier<out ScaleContext>) : View(elem) {
 
   //TODO: check if we can use getContainer to acquire context
   private val scaleContext: ScaleContext
@@ -22,20 +26,29 @@ class HiDpiScalingImageView(elem: Element, private val scaleContextSupplier: Sup
   private val sysScale: Float
     get() = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
 
-  override fun getMaximumSpan(axis: Int): Float = super.getMaximumSpan(axis) / sysScale
+  override fun getMaximumSpan(axis: Int): Float = originalView.getMaximumSpan(axis) / sysScale
 
-  override fun getMinimumSpan(axis: Int): Float = super.getMinimumSpan(axis) / sysScale
+  override fun getMinimumSpan(axis: Int): Float = originalView.getMinimumSpan(axis) / sysScale
 
-  override fun getPreferredSpan(axis: Int): Float = super.getPreferredSpan(axis) / sysScale
+  override fun getPreferredSpan(axis: Int): Float = originalView.getPreferredSpan(axis) / sysScale
 
   override fun paint(g: Graphics, a: Shape) {
     val bounds = a.bounds
-    val width = super.getPreferredSpan(X_AXIS).toInt()
-    val height = super.getPreferredSpan(Y_AXIS).toInt()
+    val width = originalView.getPreferredSpan(X_AXIS).toInt()
+    val height = originalView.getPreferredSpan(Y_AXIS).toInt()
     if (width <= 0 || height <= 0) return
     val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
     val graphics = image.createGraphics()
-    super.paint(graphics, Rectangle(image.width, image.height))
+    originalView.paint(graphics, Rectangle(image.width, image.height))
     StartupUiUtil.drawImage(g, ImageUtil.ensureHiDPI(image, scaleContext), bounds.x, bounds.y, null)
   }
+
+  override fun modelToView(pos: Int, a: Shape?, b: Position.Bias?): Shape =
+    originalView.modelToView(pos, a, b)
+
+  override fun viewToModel(x: Float, y: Float, a: Shape?, biasReturn: Array<out Position.Bias>?): Int =
+    originalView.viewToModel(x, y, a, biasReturn)
+
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String =
+    originalView.getToolTipText(x, y, allocation)
 }
