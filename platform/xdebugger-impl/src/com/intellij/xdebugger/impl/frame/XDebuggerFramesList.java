@@ -366,6 +366,13 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       return false;
     }
 
+    @Override
+    public @NotNull CharSequence getCharSequence(boolean mainOnly) {
+      // Copy action for JBList queries only "main" part of item, which is decided to be the first one.
+      // But for frame items full description is needed, so let's assume that all parts of entry are "main"
+      return super.getCharSequence(false);
+    }
+
     public boolean isIconHovered(@Nullable Point p, @Nullable Rectangle bounds) {
       if (p == null || bounds == null) {
         return false;
