@@ -584,6 +584,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addElseBranchToIf")
+    public static class AddElseBranchToIf extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("error.kt")
+        public void testError() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/error.kt");
+        }
+
+        @TestMetadata("errorWithBlock.kt")
+        public void testErrorWithBlock() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/errorWithBlock.kt");
+        }
+
+        @TestMetadata("inElvis.kt")
+        public void testInElvis() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/inElvis.kt");
+        }
+
+        @TestMetadata("inElvisBlock.kt")
+        public void testInElvisBlock() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/inElvisBlock.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addEmptyArgumentList")
     public static class AddEmptyArgumentList extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
