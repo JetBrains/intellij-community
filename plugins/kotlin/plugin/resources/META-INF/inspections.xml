@@ -446,7 +446,8 @@
 
     <intentionAction>
       <className>org.jetbrains.kotlin.idea.intentions.AddJvmInlineIntention</className>
-      <category>Kotlin</category>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
@@ -2418,7 +2419,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NonExhaustiveWhenStatementMigrationInspection"
                      groupPath="Kotlin"
-                     groupName="Migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
                      enabledByDefault="false"
                      level="WARNING"
                      language="kotlin"
@@ -2938,7 +2939,8 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnnecessaryOptInAnnotationInspection"
                      groupPath="Kotlin"
-                     groupName="Redundant constructs"
+                     groupBundle="messages.KotlinBundle"
+                     groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin"
