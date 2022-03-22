@@ -62,9 +62,9 @@ class MavenArtifactsBuilder {
     }
 
     buildContext.messages.progress("Generating Maven artifacts for ${modulesToPublish.size()} modules")
-    buildContext.messages.warning("Generate artifacts for the following modules:")
+    buildContext.messages.debug("Generate artifacts for the following modules:")
     modulesToPublish.each { data, modules ->
-      buildContext.messages.warning("  [${modules.collect { it.name }.join(",")}] -> $data.coordinates")
+      buildContext.messages.debug("  [${modules.collect { it.name }.join(",")}] -> $data.coordinates")
     }
     layoutMavenArtifacts(modulesToPublish, outputDir)
   }
@@ -85,21 +85,19 @@ class MavenArtifactsBuilder {
       modulesToPublish.each { artifactData, modules ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[artifactData])
-          def hasSourceRoots = modules.find { aModule -> !aModule.getSourceRoots(JavaSourceRootType.SOURCE).isEmpty() }
-          def hasResourceRoots = modules.find { aModule -> !aModule.getSourceRoots(JavaResourceRootType.RESOURCE).isEmpty() }
-          def hasSources = !(hasSourceRoots && hasResourceRoots)
+          List<JpsModule> modulesWithSources = modules.findAll { aModule ->
+            !aModule.getSourceRoots(JavaSourceRootType.SOURCE).isEmpty() || !aModule.getSourceRoots(JavaResourceRootType.RESOURCE).isEmpty()
+          }
 
           ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail",
                   filesetmanifest: "merge", whenmanifestonly: "create") {
-            if (hasSources) {
-              modules.forEach { aModule ->
-                module(aModule.name)
-              }
+            modulesWithSources.forEach { aModule ->
+              module(aModule.name)
             }
           }
 
-          def publishSourcesForModules = modules.findAll { aModule -> publishSourcesFilter.test(aModule, buildContext) }
-          if (!publishSourcesForModules.isEmpty() && hasSources) {
+          List<JpsModule> publishSourcesForModules = modules.findAll { aModule -> publishSourcesFilter.test(aModule, buildContext) }
+          if (!publishSourcesForModules.isEmpty() && !modulesWithSources.isEmpty()) {
             zip(artifactData.coordinates.getFileName("sources", "jar")) {
               publishSourcesForModules.forEach { aModule ->
                 aModule.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
