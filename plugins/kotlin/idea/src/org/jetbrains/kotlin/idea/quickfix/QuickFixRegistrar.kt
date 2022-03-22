@@ -295,6 +295,9 @@ class QuickFixRegistrar : QuickFixContributor {
         NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
         NON_EXHAUSTIVE_WHEN_STATEMENT.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
 
+        INVALID_IF_AS_EXPRESSION.registerFactory(AddIfElseBranchFix)
+        INVALID_IF_AS_EXPRESSION_WARNING.registerFactory(AddIfElseBranchFix)
+
         NO_TYPE_ARGUMENTS_ON_RHS.registerFactory(AddStarProjectionsFixFactory)
 
         TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER.registerFactory(RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory)
