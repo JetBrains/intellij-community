@@ -159,7 +159,8 @@ open class CodeVisionHost(val project: Project) {
                           psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val project = editor.project ?: return emptyList()
-    if (psiFile != null && !ProjectRootManager.getInstance(project).fileIndex.isInSourceContent(psiFile.virtualFile)) return emptyList()
+    if (psiFile != null && psiFile.virtualFile != null &&
+        !ProjectRootManager.getInstance(project).fileIndex.isInSourceContent(psiFile.virtualFile)) return emptyList()
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val settings = CodeVisionSettings.instance()
