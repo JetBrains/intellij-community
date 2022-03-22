@@ -2015,6 +2015,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("addElseBranchBooleanWarning.kt")
+        public void testAddElseBranchBooleanWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/when/addElseBranchBooleanWarning.kt");
+        }
+
         @TestMetadata("addElseBranchEnumStatement.kt")
         public void testAddElseBranchEnumStatement() throws Exception {
             runTest("../idea/tests/testData/quickfix/when/addElseBranchEnumStatement.kt");
@@ -2023,6 +2028,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("addElseBranchSealed.kt")
         public void testAddElseBranchSealed() throws Exception {
             runTest("../idea/tests/testData/quickfix/when/addElseBranchSealed.kt");
+        }
+
+        @TestMetadata("addElseBranchSealedWarning.kt")
+        public void testAddElseBranchSealedWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/when/addElseBranchSealedWarning.kt");
         }
 
         @TestMetadata("addRemainingBranchesBlankLine.kt")
@@ -2108,6 +2118,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("addRemainingBranchesSealedStatement.kt")
         public void testAddRemainingBranchesSealedStatement() throws Exception {
             runTest("../idea/tests/testData/quickfix/when/addRemainingBranchesSealedStatement.kt");
+        }
+
+        @TestMetadata("addRemainingBranchesSealedWarning.kt")
+        public void testAddRemainingBranchesSealedWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/when/addRemainingBranchesSealedWarning.kt");
         }
 
         @TestMetadata("breakInWhen.kt")
