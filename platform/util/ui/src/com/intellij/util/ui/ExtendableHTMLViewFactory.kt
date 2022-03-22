@@ -203,7 +203,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
 
         try {
           val image = ByteArrayInputStream(Base64.getDecoder().decode(encodedImage)).use(ImageIO::read) ?: return null
-          return BufferedImageView(elem, image)
+          return HiDpiScalingImageView(elem, BufferedImageView(elem, image))
         }
         catch (e: java.lang.IllegalArgumentException) {
           thisLogger().debug(e)
