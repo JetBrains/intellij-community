@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.*
-import org.jetbrains.kotlin.types.error.ErrorSimpleFunctionDescriptorImpl
+import org.jetbrains.kotlin.types.error.ErrorFunctionDescriptor
 
 class KotlinImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile) = file is KtFile
@@ -310,5 +310,5 @@ private fun hasResolvedDescriptor(element: KtElement, bindingContext: BindingCon
         element.getResolvedCall(bindingContext) != null
     else
         element.mainReference?.resolveToDescriptors(bindingContext)?.let { descriptors ->
-            descriptors.isNotEmpty() && descriptors.none { it is ErrorSimpleFunctionDescriptorImpl }
+            descriptors.isNotEmpty() && descriptors.none { it is ErrorFunctionDescriptor }
         } == true

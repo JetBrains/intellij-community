@@ -23,8 +23,10 @@ import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.declaresOrInheritsDefaultValue
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.ErrorUtils.UninferredParameterTypeConstructor
-import org.jetbrains.kotlin.types.TypeUtils.CANT_INFER_FUNCTION_PARAM_TYPE
+import org.jetbrains.kotlin.types.error.*
+import org.jetbrains.kotlin.types.TypeUtils.CANNOT_INFER_FUNCTION_PARAM_TYPE
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 
@@ -236,13 +238,13 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     private fun StringBuilder.appendSimpleType(type: SimpleType) {
-        if (type == CANT_INFER_FUNCTION_PARAM_TYPE || TypeUtils.isDontCarePlaceholder(type)) {
+        if (type == CANNOT_INFER_FUNCTION_PARAM_TYPE || TypeUtils.isDontCarePlaceholder(type)) {
             appendHighlighted("???") { asError }
             return
         }
-        if (ErrorUtils.isUninferredParameter(type)) {
+        if (ErrorUtils.isUninferredTypeVariable(type)) {
             if (uninferredTypeParameterAsName) {
-                append(renderError((type.constructor as UninferredParameterTypeConstructor).typeParameterDescriptor.name.toString()))
+                append(renderError((type.constructor as ErrorTypeConstructor).getParam(0)))
             } else {
                 appendHighlighted("???") { asError }
             }
@@ -334,11 +336,11 @@ open class KotlinIdeDescriptorRenderer(
         appendAnnotations(type)
 
         if (type.isError) {
-            if (type is UnresolvedType && presentableUnresolvedTypes) {
-                appendHighlighted(type.presentableName) { asError }
+            if (isUnresolvedType(type) && presentableUnresolvedTypes) {
+                appendHighlighted(type.debugMessage) { asError }
             } else {
                 if (type is ErrorType && !informativeErrorType) {
-                    appendHighlighted(type.presentableName) { asError }
+                    appendHighlighted(type.debugMessage) { asError }
                 } else {
                     appendHighlighted(type.constructor.toString()) { asError } // Debug name of an error type is more informative
                 }
