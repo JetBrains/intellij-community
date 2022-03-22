@@ -1,64 +1,41 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui.html;
+package com.intellij.util.ui.html
 
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
+import java.awt.Graphics
+import java.awt.Rectangle
+import java.awt.Shape
+import java.awt.image.BufferedImage
+import java.util.function.Supplier
+import javax.swing.text.Element
+import javax.swing.text.html.ImageView
 
-import javax.swing.text.Element;
-import javax.swing.text.View;
-import javax.swing.text.html.ImageView;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.util.function.Supplier;
-
-public final class HiDpiScalingImageView extends ImageView {
-
-  private final @NotNull Supplier<? extends @NotNull ScaleContext> myScaleContextSupplier;
-
-  public HiDpiScalingImageView(Element elem, @NotNull Supplier<? extends @NotNull ScaleContext> scaleContextSupplier) {
-    super(elem);
-
-    myScaleContextSupplier = scaleContextSupplier;
-  }
-
-  @Override
-  public float getMaximumSpan(int axis) {
-    return super.getMaximumSpan(axis) / getSysScale();
-  }
-
-  @Override
-  public float getMinimumSpan(int axis) {
-    return super.getMinimumSpan(axis) / getSysScale();
-  }
-
-  @Override
-  public float getPreferredSpan(int axis) {
-    return super.getPreferredSpan(axis) / getSysScale();
-  }
-
-  @Override
-  public void paint(Graphics g, Shape a) {
-    Rectangle bounds = a.getBounds();
-    int width = (int)super.getPreferredSpan(View.X_AXIS);
-    int height = (int)super.getPreferredSpan(View.Y_AXIS);
-    if (width <= 0 || height <= 0) return;
-    @SuppressWarnings("UndesirableClassUsage")
-    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D graphics = image.createGraphics();
-    super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
-    StartupUiUtil.drawImage(g, ImageUtil.ensureHiDPI(image, getScaleContext()), bounds.x, bounds.y, null);
-  }
+class HiDpiScalingImageView(elem: Element, private val scaleContextSupplier: Supplier<out ScaleContext>) : ImageView(elem) {
 
   //TODO: check if we can use getContainer to acquire context
-  @NotNull
-  private ScaleContext getScaleContext() {
-    return myScaleContextSupplier.get();
-  }
+  private val scaleContext: ScaleContext
+    get() = scaleContextSupplier.get()
 
-  private float getSysScale() {
-    return (float)getScaleContext().getScale(ScaleType.SYS_SCALE);
+  private val sysScale: Float
+    get() = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+
+  override fun getMaximumSpan(axis: Int): Float = super.getMaximumSpan(axis) / sysScale
+
+  override fun getMinimumSpan(axis: Int): Float = super.getMinimumSpan(axis) / sysScale
+
+  override fun getPreferredSpan(axis: Int): Float = super.getPreferredSpan(axis) / sysScale
+
+  override fun paint(g: Graphics, a: Shape) {
+    val bounds = a.bounds
+    val width = super.getPreferredSpan(X_AXIS).toInt()
+    val height = super.getPreferredSpan(Y_AXIS).toInt()
+    if (width <= 0 || height <= 0) return
+    val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    super.paint(graphics, Rectangle(image.width, image.height))
+    StartupUiUtil.drawImage(g, ImageUtil.ensureHiDPI(image, scaleContext), bounds.x, bounds.y, null)
   }
 }
