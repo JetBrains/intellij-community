@@ -6,11 +6,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import org.jetbrains.annotations.NotNull;
-import javax.swing.Icon;
 
 /**
  * Shows the popup of all tabs when single row editor tab layout is used and all tabs don't fit on the screen.
@@ -26,7 +25,7 @@ public class TabListAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setIcon(ExperimentalUI.isNewUI() ? LazyIcon.CHEVRON_DOWN_LARGE : AllIcons.Actions.FindAndShowNextMatches);
+    e.getPresentation().setIcon(ExperimentalUI.isNewUI() ? IconLoader.getIcon("expui/general/chevronDownLarge.svg", AllIcons.class) : AllIcons.Actions.FindAndShowNextMatches);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -38,10 +37,5 @@ public class TabListAction extends DumbAwareAction {
   private static boolean isTabListAvailable(@NotNull AnActionEvent e) {
     MorePopupAware morePopupAware = e.getData(MorePopupAware.KEY);
     return morePopupAware != null && morePopupAware.canShowMorePopup();
-  }
-
-  private static final class LazyIcon {
-    private static final Icon CHEVRON_DOWN_LARGE =
-      IconManager.getInstance().loadRasterizedIcon("expui/general/chevronDownLarge.svg", AllIcons.class.getClassLoader(), 2, 2);
   }
 }
