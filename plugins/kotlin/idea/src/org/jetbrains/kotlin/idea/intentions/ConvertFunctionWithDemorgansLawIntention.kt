@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -40,7 +39,6 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         val callee = element.calleeExpression ?: return null
         val (fromFunctionName, toFunctionName, _, _) = conversions[callee.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
-        if (element.getQualifiedExpressionForSelector()?.getStrictParentOfType<KtDotQualifiedExpression>() != null) return null
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull() !in fqNames) return null
 

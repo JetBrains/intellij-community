@@ -5240,6 +5240,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("inReceiver.kt")
+                public void testInReceiver() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/inReceiver.kt");
+                }
+
+                @TestMetadata("KTIJ-21370.kt")
+                public void testKTIJ_21370() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/KTIJ-21370.kt");
+                }
+
                 @TestMetadata("simple.kt")
                 public void testSimple() throws Exception {
                     runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/simple.kt");
