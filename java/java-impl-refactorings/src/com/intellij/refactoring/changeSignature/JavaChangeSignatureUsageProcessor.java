@@ -886,12 +886,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
       else {
-        String componentText = info.getTypeText() + " " + info.getName();
-        PsiRecordComponent[] dummyComponents = factory.createRecordHeaderFromText(componentText, header).getRecordComponents();
-        if (dummyComponents.length != 1) {
-          throw new IncorrectOperationException(componentText + " is not a valid component");
+        PsiType newType = info.createType(header);
+        if (newType != null) {
+          String componentText = newType.getCanonicalText() + " " + info.getName();
+          PsiRecordComponent[] dummyComponents = factory.createRecordHeaderFromText(componentText, header).getRecordComponents();
+          if (dummyComponents.length != 1) {
+            throw new IncorrectOperationException(componentText + " is not a valid component");
+          }
+          newComponents.add(dummyComponents[0]);
         }
-        newComponents.add(dummyComponents[0]);
       }
     }
     ChangeSignatureUtil.synchronizeList(header, newComponents, RecordHeader.INSTANCE, changeInfo.toRemoveParm());
