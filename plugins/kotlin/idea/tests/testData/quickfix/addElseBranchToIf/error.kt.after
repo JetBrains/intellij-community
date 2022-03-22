@@ -1,0 +1,5 @@
+// "Add else branch" "true"
+// ERROR: Unresolved reference: TODO
+fun foo(x: String?) {
+    val a = if (x == null) 4 else <selection><caret>TODO()</selection>
+}
