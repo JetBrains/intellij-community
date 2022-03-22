@@ -59,6 +59,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -789,13 +790,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    ScopeChooserCombo scopeChooserCombo = scopeChooser(project, actionHandler.getSelectedScope(), scope -> {
-      UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
-      cancel(popupRef.get());
-      showElementUsages(parameters, actionHandler.withScope(scope));
-    });
-    Disposer.register(contentDisposable, scopeChooserCombo);
-    northPanel.add(scopeChooserCombo, gc.next());
+    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
+      ScopeChooserCombo scopeChooserCombo = scopeChooser(project, actionHandler.getSelectedScope(), scope -> {
+        UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
+        cancel(popupRef.get());
+        showElementUsages(parameters, actionHandler.withScope(scope));
+      });
+      Disposer.register(contentDisposable, scopeChooserCombo);
+      northPanel.add(scopeChooserCombo, gc.next());
+    }
 
     northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
 
