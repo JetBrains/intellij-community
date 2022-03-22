@@ -4,7 +4,10 @@ package com.intellij.execution.wsl
 import com.intellij.execution.wsl.sync.WslSync
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.*
+import com.intellij.util.io.createFile
+import com.intellij.util.io.delete
+import com.intellij.util.io.lastModified
+import com.intellij.util.io.readText
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -19,7 +22,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
-import kotlin.io.path.writeBytes
+import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 @RunWith(Parameterized::class)
@@ -38,37 +41,50 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   companion object {
-    @Parameters(name = "linToWin={0}") @JvmStatic fun data(): Collection<Array<Boolean>> = listOf(arrayOf(true), arrayOf(false))
+    @Parameters(name = "linToWin={0}")
+    @JvmStatic
+    fun data(): Collection<Array<Boolean>> = listOf(arrayOf(true), arrayOf(false))
 
     private val appRule = TestFixtureRule()
     private val wslRule = WslRule()
-    @ClassRule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(appRule).around(wslRule)
+
+    @ClassRule
+    @JvmField
+    val ruleChain: RuleChain = RuleChain.outerRule(appRule).around(wslRule)
   }
 
-  @JvmField @Rule val winDirRule = TempDirectory()
-  @JvmField @Rule val linuxDirRule = WslTempDirectory(wslRule)
-  @JvmField @Rule val timeoutRule = Timeout(30, TimeUnit.SECONDS)
+  @JvmField
+  @Rule
+  val winDirRule = TempDirectory()
+
+  @JvmField
+  @Rule
+  val linuxDirRule = WslTempDirectory(wslRule)
+
+  @JvmField
+  @Rule
+  val timeoutRule = Timeout(30, TimeUnit.SECONDS)
 
   private val linuxDirAsPath: Path
     get() = wslRule.wsl.getUNCRootVirtualFile(true)!!.toNioPath().resolve(linuxDirRule.dir)
 
+  /**
+   * Create lowercase file on Linux and uppercase on Windows.
+   * Touch linux file, and see it is NOT copied since content is the same (although time differs)
+   */
   @Test
   fun syncDifferentRegister() {
     val win = winDirRule.newDirectoryPath()
-    val sourceDir = if (linToWin) linuxDirAsPath else win
-    val newFile = sourceDir.resolve("file.txt").createFile()
-    val lastModified = newFile.lastModified()
 
-    if (linToWin) {
-      wslRule.wsl.executeOnWsl(1000, "touch", "${linuxDirRule.dir}/File.txt")
-    }
-    else {
-      val file = sourceDir.resolve("file.txt")
-      val data = file.readBytes()
-      file.writeBytes(data)
-    }
-    WslSync.syncWslFolders(linuxDirRule.dir, win, wslRule.wsl, linToWin)
-    Assert.assertEquals(sourceDir.resolve(if (linToWin) "file.txt" else "File.txt").lastModified(), lastModified)
+    linuxDirAsPath.resolve("file.txt").createFile()
+    val destFile = win.resolve("File.txt").createFile()
+    val modTime = destFile.lastModified()
+
+    Thread.sleep(100)
+    wslRule.wsl.executeOnWsl(1000, "touch", "${linuxDirRule.dir}/${destFile.name}")
+
+    WslSync.syncWslFolders(linuxDirRule.dir, win, wslRule.wsl, true)
+    Assert.assertEquals(destFile.lastModified(), modTime)
   }
 
   @Test
