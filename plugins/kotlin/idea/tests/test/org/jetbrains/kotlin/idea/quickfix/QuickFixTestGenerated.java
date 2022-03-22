@@ -15114,6 +15114,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("addElseBranchBooleanWarning.kt")
+        public void testAddElseBranchBooleanWarning() throws Exception {
+            runTest("testData/quickfix/when/addElseBranchBooleanWarning.kt");
+        }
+
         @TestMetadata("addElseBranchEnumStatement.kt")
         public void testAddElseBranchEnumStatement() throws Exception {
             runTest("testData/quickfix/when/addElseBranchEnumStatement.kt");
@@ -15122,6 +15127,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("addElseBranchSealed.kt")
         public void testAddElseBranchSealed() throws Exception {
             runTest("testData/quickfix/when/addElseBranchSealed.kt");
+        }
+
+        @TestMetadata("addElseBranchSealedWarning.kt")
+        public void testAddElseBranchSealedWarning() throws Exception {
+            runTest("testData/quickfix/when/addElseBranchSealedWarning.kt");
         }
 
         @TestMetadata("addRemainingBranchesBlankLine.kt")
@@ -15207,6 +15217,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("addRemainingBranchesSealedStatement.kt")
         public void testAddRemainingBranchesSealedStatement() throws Exception {
             runTest("testData/quickfix/when/addRemainingBranchesSealedStatement.kt");
+        }
+
+        @TestMetadata("addRemainingBranchesSealedWarning.kt")
+        public void testAddRemainingBranchesSealedWarning() throws Exception {
+            runTest("testData/quickfix/when/addRemainingBranchesSealedWarning.kt");
         }
 
         @TestMetadata("breakInWhen.kt")
