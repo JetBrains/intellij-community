@@ -52,13 +52,16 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
     if (!project.isOpenedByPlatformProcessor()) {
       return
     }
+    val projectDir = project.baseDir
+    if (projectDir == null) {
+      return
+    }
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
     val title = JavaUiBundle.message("task.searching.for.project.sources")
     ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, true) {
       override fun run(indicator: ProgressIndicator) {
-        val projectDir = project.baseDir
         val importers = searchImporters(projectDir)
         if (!importers.isEmpty) {
           showNotificationToImport(project, projectDir, importers)
