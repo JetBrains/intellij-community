@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevSystemSettings
@@ -54,12 +53,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.math.min
-
-fun String.downloadDelimiter(): Char {
-  if (this.startsWith("http")) return '/'
-  if (SystemInfoRt.isUnix) return '/'
-  return '\\'
-}
 
 @ApiStatus.Experimental
 object CodeWithMeClientDownloader {
@@ -137,7 +130,7 @@ object CodeWithMeClientDownloader {
     val jreDownloadUrl = "${config.jreDownloadUrl}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
     val clientName = "$clientDistributionName-$hostBuildNumber"
-    val jreName = jreDownloadUrl.substringAfterLast(jreDownloadUrl.downloadDelimiter()).removeSuffix(".tar.gz")
+    val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
 
     val pgpPublicKeyUrl = if (unattendedMode) {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
@@ -335,7 +328,7 @@ object CodeWithMeClientDownloader {
                 file = data.archivePath,
                 detachedSignatureFile = signaturePath,
                 checksumFile = checksumPath,
-                expectedFileName = data.url.path.substringAfterLast(data.url.toString().downloadDelimiter()),
+                expectedFileName = data.url.path.substringAfterLast('/'),
                 untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(pgpKeyRingFile)),
                 trustedMasterKey = ByteArrayInputStream(JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY.toByteArray()),
               )
