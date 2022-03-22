@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.artifacts.getExpectedMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import java.io.File
 
-object KotlinPathsProvider {
+object KotlinArtifactsDownloader {
     fun getKotlinPaths(version: String) = KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
 
     fun getKotlinPaths(project: Project) =

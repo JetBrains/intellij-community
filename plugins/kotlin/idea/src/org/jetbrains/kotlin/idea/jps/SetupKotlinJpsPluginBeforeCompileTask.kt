@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.getExpectedMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
@@ -43,7 +43,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             return false
         }
 
-        val jpsPluginClassPathJar = KotlinPathsProvider.lazyDownloadMavenArtifact(
+        val jpsPluginClassPathJar = KotlinArtifactsDownloader.lazyDownloadMavenArtifact(
             context.project,
             KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             version,
@@ -55,7 +55,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             return false
         }
 
-        val unpackedKotlinc = KotlinPathsProvider.lazyDownloadAndUnpackKotlincDist(
+        val unpackedKotlinc = KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(
             context.project,
             version,
             context.progressIndicator,

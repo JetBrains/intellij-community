@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.nio.file.Paths
 import kotlin.io.path.extension
@@ -37,7 +37,7 @@ class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
                 }
             }
             ?.version
-            ?.let { KotlinPathsProvider.getKotlinPaths(it).canonicalPath }
+            ?.let { KotlinArtifactsDownloader.getKotlinPaths(it).canonicalPath }
             ?: KotlinPluginLayout.instance.kotlinc.canonicalPath
         return mapOf(KOTLIN_BUNDLED to path)
     }

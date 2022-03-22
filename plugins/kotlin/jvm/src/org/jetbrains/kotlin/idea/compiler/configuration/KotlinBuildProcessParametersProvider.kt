@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask
 import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
@@ -40,6 +39,6 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
 
     override fun getPathParameters(): List<Pair<String, Path>> =
         listOfNotNull(
-            Pair("-Djps.kotlin.home=", KotlinPathsProvider.getKotlinPaths(project).toPath()).takeIf { it.second.isDirectory() }
+            Pair("-Djps.kotlin.home=", KotlinArtifactsDownloader.getKotlinPaths(project).toPath()).takeIf { it.second.isDirectory() }
         )
 }
