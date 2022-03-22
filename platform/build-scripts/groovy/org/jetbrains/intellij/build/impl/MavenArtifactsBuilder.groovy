@@ -57,8 +57,7 @@ class MavenArtifactsBuilder {
         .unique()
         .findAll { dependency -> !moduleCoordinates.contains(dependency.coordinates) }
 
-      MavenCoordinates originCoordinates = generateMavenCoordinatesForModule(module)
-      MavenCoordinates coordinates = new MavenCoordinates(originCoordinates.groupId, "${originCoordinates.artifactId}-squashed", originCoordinates.version)
+      MavenCoordinates coordinates = generateMavenCoordinatesForSquashedModule(module)
       modulesToPublish[new MavenArtifactData(coordinates, dependencies)] = modules.toList()
     }
 
@@ -153,6 +152,10 @@ class MavenArtifactsBuilder {
       dependency.addExclusion(new Exclusion(groupId: "*", artifactId: "*"))
     }
     dependency
+  }
+
+  static MavenCoordinates generateMavenCoordinatesSquashed(String moduleName, BuildMessages messages, String version) {
+    return generateMavenCoordinates("${moduleName}.squashed", messages, version)
   }
 
   static MavenCoordinates generateMavenCoordinates(String moduleName, BuildMessages messages, String version) {
@@ -305,6 +308,10 @@ class MavenArtifactsBuilder {
 
   protected MavenCoordinates generateMavenCoordinatesForModule(JpsModule module) {
     return generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber)
+  }
+
+  private MavenCoordinates generateMavenCoordinatesForSquashedModule(JpsModule module) {
+    return generateMavenCoordinatesSquashed(module.name, buildContext.messages, buildContext.buildNumber)
   }
 
   static boolean isOptionalDependency(JpsLibrary library) {
