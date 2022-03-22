@@ -29,7 +29,7 @@ UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpr
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
 UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: setFoo
-    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> Kotlin_Light_Method: getFoo
+    UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
