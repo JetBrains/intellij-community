@@ -707,7 +707,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GeneratedFolder = load("modules/generatedFolder.svg", 105797316, 0);
     /** 16x16 */ public static final @NotNull Icon GeneratedSourceRoot = load("modules/generatedSourceRoot.svg", -2076359125, 0);
     /** 16x16 */ public static final @NotNull Icon GeneratedTestRoot = load("modules/generatedTestRoot.svg", 522368653, 0);
-    /** 16x16 */ public static final @NotNull Icon Output = load("modules/output.svg", 1974303945, 0);
     /** 16x16 */ public static final @NotNull Icon ResourcesRoot = load("modules/resourcesRoot.svg", 1285426194, 0);
     /** 16x16 */ public static final @NotNull Icon SourceRoot = load("modules/sourceRoot.svg", -810501043, 0);
     /** 16x16 */ public static final @NotNull Icon SourceRootFileLayer = load("modules/sourceRootFileLayer.svg", 1979775248, 0);
@@ -716,6 +715,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestRoot = load("modules/testRoot.svg", 455514743, 0);
     /** 16x16 */ public static final @NotNull Icon UnloadedModule = load("modules/unloadedModule.svg", 1661160062, 0);
     /** 16x16 */ public static final @NotNull Icon UnmarkWebroot = load("modules/unmarkWebroot.svg", -1891812686, 0);
+
+    /** @deprecated meaning is unclear, use other icons */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final @NotNull Icon Output = load("modules/output.png", 0, 0);
   }
 
   public static final class Nodes {
