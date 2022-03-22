@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -789,26 +789,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
-    scopeChooserCombo.initialize(project, false, false, actionHandler.getSelectedScope().getDisplayName(), null)
-      .onSuccess(__ -> {
-        var scopeComboBox = scopeChooserCombo.getComboBox();
-        scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
-        scopeComboBox.addItemListener(event -> {
-          if (event.getStateChange() == ItemEvent.SELECTED) {
-            SearchScope scope = scopeChooserCombo.getSelectedScope();
-            if (scope != null) {
-              UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
-                                                           actionHandler.getTargetClass());
-              cancel(popupRef.get());
-              showElementUsages(parameters, actionHandler.withScope(scope));
-            }
-          }
-        });
-        scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
-      });
+    ScopeChooserCombo scopeChooserCombo = scopeChooser(project, actionHandler.getSelectedScope(), scope -> {
+      UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
+      cancel(popupRef.get());
+      showElementUsages(parameters, actionHandler.withScope(scope));
+    });
     Disposer.register(contentDisposable, scopeChooserCombo);
-    scopeChooserCombo.setButtonVisible(false);
     northPanel.add(scopeChooserCombo, gc.next());
 
     northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
@@ -962,6 +948,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return popup;
   }
 
+
   @NotNull
   private static ActionToolbar createActionToolbar(@NotNull JTable table, @NotNull DefaultActionGroup group) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, group, true);
@@ -1012,6 +999,33 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (popup != null) {
       popup.cancel();
     }
+  }
+
+  private static @NotNull ScopeChooserCombo scopeChooser(
+    @NotNull Project project,
+    @NotNull SearchScope initialScope,
+    @NotNull Consumer<? super SearchScope> scopeConsumer
+  ) {
+    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
+    scopeChooserCombo
+      .initialize(project, false, false, initialScope.getDisplayName(), null)
+      .onSuccess(__ -> {
+        var scopeComboBox = scopeChooserCombo.getComboBox();
+        scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
+        scopeComboBox.addItemListener(event -> {
+          if (event.getStateChange() != ItemEvent.SELECTED) {
+            return;
+          }
+          SearchScope scope = scopeChooserCombo.getSelectedScope();
+          if (scope == null) {
+            return;
+          }
+          scopeConsumer.accept(scope);
+        });
+        scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
+      });
+    scopeChooserCombo.setButtonVisible(false);
+    return scopeChooserCombo;
   }
 
   private static @Nls @NotNull String getStatusString(boolean findUsagesInProgress, boolean hasMore, int visibleCount, int totalCount) {
