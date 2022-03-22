@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
@@ -74,10 +73,10 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
   ) : Function<FileEditor, EditorNotificationPanel?> {
 
     private var disabledPlugin: IdeaPluginDescriptor? = null
-    private val jbProduced = mutableSetOf<PluginId>()
+    private val jbProduced = mutableSetOf<PluginData>()
 
     @VisibleForTesting
-    val thirdParty = mutableSetOf<PluginId>()
+    val thirdParty = mutableSetOf<PluginData>()
 
     init {
       val descriptorsById = PluginManagerCore.buildPluginIdMap()
@@ -91,7 +90,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
           }
         }
         else if (!data.isBundled) {
-          (if (jbPluginsIds.contains(pluginId.idString)) jbProduced else thirdParty) += pluginId
+          (if (jbPluginsIds.contains(pluginId.idString)) jbProduced else thirdParty) += data
         }
       }
     }
@@ -107,10 +106,14 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       val pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsStateService.instance.createExtensionDataProvider(project)
       panel.text = IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName)
 
-      fun createInstallActionLabel(pluginIds: Set<PluginId>) {
-        panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins")) {
-          FUSEventSource.EDITOR.logInstallPlugins(pluginIds.map { it.idString })
-          installAndEnable(project, pluginIds, true) {
+      fun createInstallActionLabel(plugins: Set<PluginData>) {
+        val labelText = plugins.singleOrNull()?.nullablePluginName?.let {
+          IdeBundle.message("plugins.advertiser.action.install.plugin.name", it)
+        } ?: IdeBundle.message("plugins.advertiser.action.install.plugins")
+
+        panel.createActionLabel(labelText) {
+          FUSEventSource.EDITOR.logInstallPlugins(plugins.map { it.pluginIdString })
+          installAndEnable(project, plugins.mapTo(HashSet()) { it.pluginId }, true) {
             pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
             updateAllNotifications(project)
           }

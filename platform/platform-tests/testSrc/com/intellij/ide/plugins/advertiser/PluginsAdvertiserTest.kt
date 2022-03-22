@@ -98,7 +98,7 @@ class PluginsAdvertiserTest {
                                                                                   SupportedFileType())
 
     assertNotNull(suggestion)
-    assertEquals(listOf("Ant"), suggestion.thirdParty.map { it.idString })
+    assertEquals(listOf("Ant"), suggestion.thirdParty.map { it.pluginIdString })
   }
 
   @Test
@@ -122,7 +122,7 @@ class PluginsAdvertiserTest {
                                                                                   PlainTextFileType.INSTANCE)
 
     assertNotNull(suggestion)
-    assertEquals(listOf("Lua"), suggestion.thirdParty.map { it.idString })
+    assertEquals(listOf("Lua"), suggestion.thirdParty.map { it.pluginIdString })
   }
 
   private fun preparePluginCache(vararg ext: Pair<String, PluginData?>) {
