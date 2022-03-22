@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.progress.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -16,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private StatusBarEx myStatusBar;

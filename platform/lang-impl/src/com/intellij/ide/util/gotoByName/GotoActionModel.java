@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;

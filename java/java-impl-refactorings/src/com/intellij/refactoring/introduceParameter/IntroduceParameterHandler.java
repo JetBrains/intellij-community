@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -68,6 +67,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;

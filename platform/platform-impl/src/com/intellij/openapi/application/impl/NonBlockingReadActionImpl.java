@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
@@ -40,6 +39,7 @@ import kotlin.reflect.KClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;

@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
@@ -39,10 +38,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;

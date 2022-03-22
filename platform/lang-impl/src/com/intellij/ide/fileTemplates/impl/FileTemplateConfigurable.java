@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -50,6 +49,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
