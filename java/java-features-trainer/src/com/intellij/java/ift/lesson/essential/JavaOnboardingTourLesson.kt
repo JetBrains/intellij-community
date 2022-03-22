@@ -341,6 +341,8 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     hideToolStripesPreference = uiSettings.hideToolStripes
     showNavigationBarPreference = uiSettings.showNavigationBar
 
+    showInvalidDebugLayoutWarning()
+
     if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
       // a small hack to have same tasks count. It is needed to track statistics result.
       task { }
