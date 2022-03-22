@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -15,7 +14,5 @@ import java.util.List;
  * For example: for jars inside .m2 we'd like to remove user-s home part of path.
  */
 public interface RootSemanticAddressProvider {
-  default List<Pair<String, SemanticLabel>> getPredefinedSemanticRoots() {
-    return List.of();
-  }
+  @NotNull List<Pair<String, SemanticLabel>> getPredefinedSemanticRoots();
 }

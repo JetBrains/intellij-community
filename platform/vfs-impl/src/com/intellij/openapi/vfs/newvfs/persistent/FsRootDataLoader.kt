@@ -8,7 +8,6 @@ import java.nio.file.Path
 
 @Internal
 interface FsRootDataLoader {
-
   val name: String
 
   @Throws(IOException::class)
@@ -21,24 +20,22 @@ interface FsRootDataLoader {
   fun deleteDirectoryRecord(storage: Path, id: Int)
 
   @Throws(IOException::class)
-  fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) {
-  }
+  fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem)
 
   @Throws(IOException::class)
-  fun loadDirectoryData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) {
-  }
+  fun loadDirectoryData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem)
 }
 
 class EmptyFsRootDataLoader : FsRootDataLoader {
-
   override val name: String = "empty"
 
-  override fun ensureLoaded(storage: Path) {
-  }
+  override fun ensureLoaded(storage: Path) = Unit
 
-  override fun deleteRootRecord(storage: Path, rootId: Int) {
-  }
+  override fun deleteRootRecord(storage: Path, rootId: Int) = Unit
 
-  override fun deleteDirectoryRecord(storage: Path, id: Int) {
-  }
+  override fun deleteDirectoryRecord(storage: Path, id: Int) = Unit
+
+  override fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) = Unit
+
+  override fun loadDirectoryData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) = Unit
 }
