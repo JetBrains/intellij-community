@@ -206,7 +206,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
 
     if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-      LOG.info("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
+      LOG.debug("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
     }
   }
 
