@@ -2,44 +2,206 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.JUnit5AssertionsConverterInspectionTestBase
-import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
-import com.intellij.testFramework.TestDataPath
+import com.intellij.codeInspection.tests.ULanguage
 
-private const val inspectionPath = "/codeInspection/junit5assertionsconverter"
-
-@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverterInspectionTestBase() {
-  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
-
   fun `test AssertArrayEquals`() {
-    myFixture.testQuickFix("AssertArrayEquals.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              assert<caret>ArrayEquals(arrayOfNulls<Any>(0), null)
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Assertions
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              Assertions.assertArrayEquals(arrayOfNulls<Any>(0), null)
+          }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
   }
 
   fun `test AssertArrayEquals message`() {
-    myFixture.testQuickFix("AssertArrayEqualsMessage.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+            assert<caret>ArrayEquals("message", arrayOfNulls<Any>(0), null)
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Assertions
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              Assertions.assertArrayEquals(arrayOfNulls<Any>(0), null, "message")
+          }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
   }
 
   fun `test AssertEquals`() {
-    myFixture.testQuickFix("AssertEquals.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              assert<caret>Equals("message", "Expected", "actual")
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Assertions
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              Assertions.assertEquals("Expected", "actual", "message")
+          }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
   }
 
   fun `test AssertNotEqualsWithDelta`() {
-    myFixture.testQuickFixUnavailable("AssertNotEqualsWithDelta.kt")
+    myFixture.testQuickFixUnavailable(ULanguage.KOTLIN, """
+      import org.junit.Assert.*
+      import org.hamcrest.Matcher;
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              assertNotEquals(1.0, 1.0, 1.0);
+          }
+      }
+    """.trimIndent())
   }
 
   fun `test AssertThat`() {
-    myFixture.testQuickFix("AssertThat.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assert.*
+      import org.hamcrest.Matcher
+      import org.junit.jupiter.api.Test
+
+      internal class Test1 {
+          @Test
+          fun testFirst(matcher: Matcher<String>) {
+              assert<caret>That ("reason", "null", matcher)
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert.*
+      import org.hamcrest.Matcher
+      import org.hamcrest.MatcherAssert
+      import org.junit.jupiter.api.Test
+
+      internal class Test1 {
+          @Test
+          fun testFirst(matcher: Matcher<String>) {
+              MatcherAssert.assertThat("reason", "null", matcher)
+          }
+      }
+    """.trimIndent(), "Replace with 'org.hamcrest.MatcherAssert' method call")
   }
 
   fun `test AssertTrue`() {
-    myFixture.testQuickFix("AssertTrue.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              assert<caret>True ("message", false)
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert.*
+      import org.junit.jupiter.api.Assertions
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              Assertions.assertTrue(false, "message")
+          }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
   }
 
   fun `test AssertTrue method reference`() {
-    myFixture.testQuickFix("AssertTrueMethodRef.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assert
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              someFun(Assert::assert<caret>True)
+          }
+
+          fun someFun(param: (Boolean) -> Unit) {
+              param(false)
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert
+      import org.junit.jupiter.api.Assertions
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              someFun(Assertions::assert<caret>True)
+          }
+
+          fun someFun(param: (Boolean) -> Unit) {
+              param(false)
+          }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
   }
 
   fun `test AssumeTrue`() {
-    myFixture.testQuickFix("AssumeTrue.kt")
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.Assume.*
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              assume<caret>True ("message", false)
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assume.*
+      import org.junit.jupiter.api.Assumptions
+      import org.junit.jupiter.api.Test
+
+      class Test1 {
+          @Test
+          fun testFirst() {
+              Assumptions.assumeTrue(false, "message")
+          }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assumptions' method call")
   }
 }
