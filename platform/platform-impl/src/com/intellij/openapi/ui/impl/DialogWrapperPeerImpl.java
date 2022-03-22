@@ -7,6 +7,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -393,7 +394,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     if (ApplicationManager.getApplication() != null) {
-      ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE).getShortcutSet();
+      ShortcutSet shortcutSet = ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE);
       anCancelAction.registerCustomShortcutSet(shortcutSet, rootPane);
     }
     else {
