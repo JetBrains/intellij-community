@@ -892,6 +892,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     @Override
     public void setText(String text) {
+      if (text.equals(getText())) {
+        return;
+      }
+      super.setText(text);
       if (myVerboseLevel == 0) return;
 
       if (myVerboseLevel == 1) {
