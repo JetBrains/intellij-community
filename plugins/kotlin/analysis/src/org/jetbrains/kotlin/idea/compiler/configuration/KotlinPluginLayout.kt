@@ -8,6 +8,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
@@ -128,7 +129,7 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
                 "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion' in Maven Local"
             )
 
-        KotlinPathsProvider.lazyUnpackKotlincDist(packedDist, bundledJpsVersion)
+        lazyUnpackJar(packedDist, KotlinPathsProvider.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources"))
     }
 
     override val jpsPluginJar: File by lazy {

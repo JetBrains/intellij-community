@@ -74,23 +74,18 @@ private object KotlinArtifactsFromSources : KotlinArtifacts(run {
         "org.jetbrains.kotlin",
         "kotlin-dist-for-ide"
     )
-    lazyUnpackJar(jar, File(PathManager.getSystemPath()).resolve("kotlinc-dist-for-ide-from-sources"), "kotlinc")
+    lazyUnpackJar(jar, File(PathManager.getSystemPath()).resolve("kotlinc-dist-for-ide-from-sources"))
 })
 
-internal fun lazyUnpackJar(jar: File, holderDir: File, dirName: String): File {
-    val hashFile = holderDir.resolve("md5")
-    val hash = jar.md5()
-    val dirWhereToExtract = holderDir.resolve(dirName)
-    if (hashFile.exists() && hashFile.readText() == hash) {
-        return dirWhereToExtract
+fun lazyUnpackJar(jar: File, destination: File): File {
+    val unpackedDistTimestamp = destination.lastModified()
+    val packedDistTimestamp = jar.lastModified()
+    if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
+        return destination
     }
-    dirWhereToExtract.deleteRecursively()
-    dirWhereToExtract.mkdirs()
-    hashFile.writeText(hash)
-    Decompressor.Zip(jar).extract(dirWhereToExtract)
-    return dirWhereToExtract
-}
+    destination.deleteRecursively()
 
-private fun File.md5(): String {
-    return MessageDigest.getInstance("MD5").digest(readBytes()).joinToString("") { "%02x".format(it) }
+    Decompressor.Zip(jar).extract(destination)
+    check(destination.isDirectory)
+    return destination
 }

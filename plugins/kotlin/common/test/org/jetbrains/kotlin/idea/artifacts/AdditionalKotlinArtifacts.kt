@@ -36,11 +36,7 @@ object AdditionalKotlinArtifacts {
             "org.jetbrains.kotlin",
             "kotlin-compiler-testdata-for-ide"
         )
-        lazyUnpackJar(
-            testDataJar,
-            File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata"),
-            "testData"
-        )
+        lazyUnpackJar(testDataJar, File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata-2"))
     }
 
     @JvmStatic

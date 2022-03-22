@@ -18,10 +18,10 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses")
 public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/compilationErrors")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/compilationErrors")
     public static class CompilationErrors extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -130,7 +130,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/facades")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/facades")
     public static class Facades extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -164,7 +164,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/ideRegression")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/ideRegression")
     public static class IdeRegression extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -218,7 +218,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/nullabilityAnnotations")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/nullabilityAnnotations")
     public static class NullabilityAnnotations extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -322,7 +322,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/object")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/object")
     public static class Object extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -341,7 +341,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/publicField")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/publicField")
     public static class PublicField extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -365,7 +365,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses")
     public static class Uncategorized extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

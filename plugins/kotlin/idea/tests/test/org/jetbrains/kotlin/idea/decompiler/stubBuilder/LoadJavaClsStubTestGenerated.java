@@ -18,13 +18,13 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin")
 public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsStubTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations")
     public abstract static class Annotations extends AbstractLoadJavaClsStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/classMembers")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/classMembers")
         public static class ClassMembers extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -93,7 +93,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/classes")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/classes")
         public static class Classes extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -182,7 +182,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/packageMembers")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/packageMembers")
         public static class PackageMembers extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -236,7 +236,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/parameters")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/parameters")
         public static class Parameters extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -310,7 +310,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/propertiesWithoutBackingFields")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/propertiesWithoutBackingFields")
         public static class PropertiesWithoutBackingFields extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -364,7 +364,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/types")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/types")
         public static class Types extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -428,7 +428,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -486,7 +486,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget")
         public static class WithUseSiteTarget extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -521,10 +521,10 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/class")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/class")
     public abstract static class Class extends AbstractLoadJavaClsStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/class/javaBean")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/class/javaBean")
         public static class JavaBean extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -568,7 +568,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/class")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/class")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -762,7 +762,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/classFun")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/classFun")
     public static class ClassFun extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -801,7 +801,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/classObject")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/classObject")
     public static class ClassObject extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -880,10 +880,10 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/constructor")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/constructor")
     public abstract static class Constructor extends AbstractLoadJavaClsStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/constructor")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/constructor")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -971,7 +971,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/constructor/vararg")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/constructor/vararg")
         public static class Vararg extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -996,7 +996,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/coroutines")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/coroutines")
     public static class Coroutines extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1015,7 +1015,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/dataClass")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/dataClass")
     public static class DataClass extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1049,7 +1049,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/enum")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/enum")
     public static class Enum extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1093,13 +1093,13 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava")
     public abstract static class FromLoadJava extends AbstractLoadJavaClsStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature")
         public abstract static class KotlinSignature extends AbstractLoadJavaClsStubTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/error")
+            @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/error")
             public static class Error extends AbstractLoadJavaClsStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1248,10 +1248,10 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation")
+            @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation")
             public abstract static class Propagation extends AbstractLoadJavaClsStubTest {
                 @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/parameter")
+                @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/parameter")
                 public static class Parameter extends AbstractLoadJavaClsStubTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1395,7 +1395,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/return")
+                @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/return")
                 public static class Return extends AbstractLoadJavaClsStubTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1579,7 +1579,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/typeParameter")
+                @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/typeParameter")
                 public static class TypeParameter extends AbstractLoadJavaClsStubTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1638,7 +1638,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation")
+                @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation")
                 public static class Uncategorized extends AbstractLoadJavaClsStubTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1652,7 +1652,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature")
+            @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature")
             public static class Uncategorized extends AbstractLoadJavaClsStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1741,7 +1741,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/library")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/library")
         public static class Library extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1770,7 +1770,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/modality")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/modality")
         public static class Modality extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1789,7 +1789,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava/notNull")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/notNull")
         public static class NotNull extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -1828,7 +1828,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fromLoadJava")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2007,10 +2007,10 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fun")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun")
     public abstract static class Fun extends AbstractLoadJavaClsStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fun/genericWithTypeVariables")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/genericWithTypeVariables")
         public static class GenericWithTypeVariables extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2074,7 +2074,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fun/genericWithoutTypeVariables")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/genericWithoutTypeVariables")
         public static class GenericWithoutTypeVariables extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2113,7 +2113,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fun/nonGeneric")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/nonGeneric")
         public static class NonGeneric extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2207,7 +2207,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fun")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2270,7 +2270,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/fun/vararg")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/vararg")
         public static class Vararg extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2300,7 +2300,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/inline")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/inline")
     public static class Inline extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2319,7 +2319,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/memberOrder")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/memberOrder")
     public static class MemberOrder extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2363,7 +2363,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/nested")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/nested")
     public static class Nested extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2392,7 +2392,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/platformTypes")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/platformTypes")
     public static class PlatformTypes extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2416,10 +2416,10 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/prop")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/prop")
     public abstract static class Prop extends AbstractLoadJavaClsStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/prop/defaultAccessors")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/prop/defaultAccessors")
         public static class DefaultAccessors extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2483,7 +2483,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/prop")
+        @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/prop")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2662,7 +2662,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/type")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/type")
     public static class Type extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2831,7 +2831,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/typealias")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/typealias")
     public static class Typealias extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
@@ -2865,7 +2865,7 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/loadJava/compiledKotlin/visibility")
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/visibility")
     public static class Visibility extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
