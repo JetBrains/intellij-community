@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
@@ -51,15 +50,15 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  public boolean isReportClasses() {
+  private boolean isReportClasses() {
     return REPORT_CLASSES;
   }
 
-  public boolean isReportMethods() {
+  private boolean isReportMethods() {
     return REPORT_METHODS;
   }
 
-  public boolean isReportFields() {
+  private boolean isReportFields() {
     return REPORT_FIELDS;
   }
 
@@ -112,7 +111,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
         if (!isReportFields()) return null;
         psiIdentifier = ((PsiField)psiMember).getNameIdentifier();
       }
-
 
       if (psiIdentifier != null) {
         return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier, JavaAnalysisBundle.message(
@@ -172,7 +170,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
             });
           }
         });
-
       }
     });
 
