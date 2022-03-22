@@ -2,23 +2,27 @@
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.xml.dom.readXmlAsModel
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import java.io.File
+import java.nio.file.Paths
+import kotlin.io.path.inputStream
 
 object AdditionalKotlinArtifacts {
     val kotlinStdlibCommon: File by lazy {
-        findMavenLibrary("kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
+        getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, "kotlin-stdlib-common", getJpsLibraryVersion("kotlin_stdlib_jdk8.xml"))
     }
 
     val kotlinStdlibCommonSources: File by lazy {
-        findMavenLibrary("kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
+        getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, "kotlin-stdlib-common", getJpsLibraryVersion("kotlin_stdlib_jdk8.xml"))
     }
 
     val jsr305: File by lazy {
-        findMavenLibrary("jsr305.xml", "com.google.code.findbugs", "jsr305")
+        getMavenArtifactJarPath("com.google.code.findbugs", "jsr305", getJpsLibraryVersion("jsr305.xml"))
     }
 
     val junit3: File by lazy {
-        findMavenLibrary("JUnit3.xml", "junit", "junit")
+        getMavenArtifactJarPath("junit", "junit", getJpsLibraryVersion("JUnit3.xml"))
     }
 
     val parcelizeRuntime: File by lazy {
@@ -31,10 +35,10 @@ object AdditionalKotlinArtifacts {
 
     @JvmStatic
     val compilerTestDataDir = run {
-        val testDataJar = findMavenLibrary(
-            "kotlinc_kotlin_compiler_testdata.xml",
-            "org.jetbrains.kotlin",
-            "kotlin-compiler-testdata-for-ide"
+        val testDataJar = getMavenArtifactJarPath(
+            KOTLIN_MAVEN_GROUP_ID,
+            "kotlin-compiler-testdata-for-ide",
+            getJpsLibraryVersion("kotlinc_kotlin_compiler_testdata.xml")
         )
         lazyUnpackJar(testDataJar, File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata-2"))
     }
@@ -44,3 +48,11 @@ object AdditionalKotlinArtifacts {
         return compilerTestDataDir.resolve(compilerTestDataPath).canonicalPath
     }
 }
+
+private fun getJpsLibraryVersion(libXmlName: String): String =
+    Paths.get(PathManager.getHomePath()).resolve(".idea").resolve("libraries").resolve(libXmlName).inputStream().use(::readXmlAsModel)
+        .children.single()
+        .children.first()
+        .also { check(it.name == "properties") }
+        .let { it.getAttributeValue("maven-id") ?: error("Can't find 'maven-id' in '$it'") }
+        .substringAfterLast(":")

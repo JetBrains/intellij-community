@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.artifacts.getExpectedMavenArtifactJarPath
+import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import java.io.File
 
@@ -41,7 +41,7 @@ object KotlinArtifactsDownloader {
         beforeDownload: () -> Unit,
         onError: (String) -> Unit,
     ): File? {
-        val expectedMavenArtifactJarPath = getExpectedMavenArtifactJarPath(artifactId, version)
+        val expectedMavenArtifactJarPath = getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, artifactId, version)
         expectedMavenArtifactJarPath.takeIf { it.exists() }?.let {
             return it
         }

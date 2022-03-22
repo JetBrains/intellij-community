@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.artifacts.getExpectedMavenArtifactJarPath
+import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import org.jetbrains.kotlin.idea.artifacts.resolveMavenArtifactInMavenRepo
 import org.jetbrains.kotlin.psi.KtElement
@@ -123,7 +123,7 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
 
         // IDEA should have downloaded the library as a part of dependency resolution in the 'kotlin.util.compiler-dependencies' module
         val packedDist = generateSequence(stdlibFile) { it.parentFile }
-            .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
+            .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
             .firstOrNull { it.exists() }
             ?: error(
                 "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion' in Maven Local"
@@ -133,6 +133,10 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
     }
 
     override val jpsPluginJar: File by lazy {
-        getExpectedMavenArtifactJarPath(KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, bundledJpsVersion)
+        getMavenArtifactJarPath(
+            KOTLIN_MAVEN_GROUP_ID,
+            KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            bundledJpsVersion
+        )
     }
 }

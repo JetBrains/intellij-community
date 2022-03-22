@@ -65,11 +65,11 @@ fun lazyUnpackJar(jar: File, destination: File): File {
     return destination
 }
 
-fun resolveMavenArtifactInMavenRepo(mavenRepo: File, artifactId: String, version: String) =
-    mavenRepo.resolve(KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID.replace(".", "/"))
+fun resolveMavenArtifactInMavenRepo(mavenRepo: File, groupId: String, artifactId: String, version: String) =
+    mavenRepo.resolve(groupId.replace(".", "/"))
         .resolve(artifactId)
         .resolve(version)
         .resolve("$artifactId-$version.jar")
 
-fun getExpectedMavenArtifactJarPath(artifactId: String, version: String) =
-    resolveMavenArtifactInMavenRepo(JarRepositoryManager.getLocalRepositoryPath(), artifactId, version)
+fun getMavenArtifactJarPath(groupId: String, artifactId: String, version: String) =
+    resolveMavenArtifactInMavenRepo(JarRepositoryManager.getLocalRepositoryPath(), groupId, artifactId, version)
