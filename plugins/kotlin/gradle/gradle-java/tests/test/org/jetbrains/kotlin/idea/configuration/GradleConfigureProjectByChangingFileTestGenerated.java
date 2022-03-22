@@ -30,11 +30,6 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             runTest("../../../idea/tests/testData/configuration/gradle/default/");
         }
 
-        @TestMetadata("eapVersion")
-        public void testEapVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/eapVersion/");
-        }
-
         @TestMetadata("jreLib")
         public void testJreLib() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gradle/jreLib/");
@@ -45,9 +40,9 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             runTest("../../../idea/tests/testData/configuration/gradle/js/");
         }
 
-        @TestMetadata("m04Version")
-        public void testM04Version() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/m04Version/");
+        @TestMetadata("milestoneVersion")
+        public void testMilestoneVersion() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/milestoneVersion/");
         }
 
         @TestMetadata("missedLibrary")
@@ -78,19 +73,14 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
         }
 
-        @TestMetadata("eap11Version")
-        public void testEap11Version() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/eap11Version/");
-        }
-
-        @TestMetadata("eapVersion")
-        public void testEapVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/eapVersion/");
-        }
-
         @TestMetadata("helloWorld")
         public void testHelloWorld() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gsk/helloWorld/");
+        }
+
+        @TestMetadata("milestoneVersion")
+        public void testMilestoneVersion() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/milestoneVersion/");
         }
 
         @TestMetadata("missedLibrary")
