@@ -13,9 +13,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
 import java.net.URL;
@@ -123,8 +125,14 @@ public class MavenArchetypeManager {
 
   @NotNull
   private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
-    MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY, EMPTY);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    MavenEmbeddersManager manager = projectsManager.getEmbeddersManager();
+    String baseDir = EMPTY;
+    List<MavenProject> projects = projectsManager.getRootProjects();
+    if (!projects.isEmpty()) {
+      baseDir = MavenUtil.getBaseDir(projects.get(0).getDirectoryFile()).toString();
+    }
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, baseDir, baseDir);
     try {
       return function.apply(mavenEmbedderWrapper);
     }
