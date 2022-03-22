@@ -119,7 +119,7 @@ object VcsLogNavigationUtil {
       ui.refresher.setValid(true, false)
       predicate(ui) && ui.showCommit(hash, root, requestFocus)
     }?.let { ui ->
-      VcsLogContentUtil.selectLogUi(project, ui)
+      VcsLogContentUtil.selectLogUi(project, ui, requestFocus)
       return ui
     }
 
