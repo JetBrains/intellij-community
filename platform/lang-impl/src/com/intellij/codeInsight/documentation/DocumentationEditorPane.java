@@ -72,8 +72,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
     }
     setBackground(BACKGROUND_COLOR);
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions(DocumentationHtmlUtil.getHiDPIImagesExtension(),
-                                 ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
                                  DocumentationHtmlUtil.getModuleIconsExtension())
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     addDocumentationPaneDefaultCssRules(editorKit);
