@@ -1090,6 +1090,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AddRemoteDatasource = load("toolbarDecorator/addRemoteDatasource.svg", 175893248, 2);
     /** 16x16 */ public static final @NotNull Icon AddYouTrack = load("toolbarDecorator/addYouTrack.svg", -178809474, 2);
     /** 16x16 */ public static final @NotNull Icon Export = load("toolbarDecorator/export.svg", -1997817006, 2);
+    /** 16x16 */ public static final @NotNull Icon ExportSmall = load("toolbarDecorator/exportSmall.svg", 1616570485, 2);
     /** 16x16 */ public static final @NotNull Icon Import = load("toolbarDecorator/import.svg", 1687651157, 2);
   }
 
