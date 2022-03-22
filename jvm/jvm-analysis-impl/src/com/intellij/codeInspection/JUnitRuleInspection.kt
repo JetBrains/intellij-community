@@ -87,10 +87,11 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
       }
       val aClass = PsiUtil.resolveClassInClassTypeOnly(type)
       val isTestRuleInheritor = InheritanceUtil.isInheritor(aClass, false, TEST_RULE)
+      if (isTestRuleInheritor) return problems.toTypedArray()
+      val isMethodRuleInheritor = InheritanceUtil.isInheritor(aClass, false, METHOD_RULE)
       val typeErrorMessage = when {
-        ruleAnnotated && !isTestRuleInheritor && !InheritanceUtil.isInheritor(aClass, false, METHOD_RULE) ->
-          JvmAnalysisBundle.message(classRuleTypeMessage, TEST_RULE, METHOD_RULE)
-        classRuleAnnotated && !isTestRuleInheritor -> JvmAnalysisBundle.message(ruleTypeMessage, TEST_RULE)
+        ruleAnnotated && !isMethodRuleInheritor -> JvmAnalysisBundle.message(classRuleTypeMessage, TEST_RULE, METHOD_RULE)
+        classRuleAnnotated-> JvmAnalysisBundle.message(ruleTypeMessage, TEST_RULE)
         else -> null
       }
       typeErrorMessage?.let { errorMessage ->
