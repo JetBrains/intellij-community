@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -118,9 +119,21 @@ public class MavenArchetypeManager {
   @Nullable
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version, @Nullable String url) {
-    return executeWithMavenEmbedderWrapperNullable(
+    Map<String, String> map = executeWithMavenEmbedderWrapperNullable(
       wrapper -> wrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url)
     );
+    if (map != null) addToLocalIndex(groupId, artifactId, version);
+    return map;
+  }
+
+  private void addToLocalIndex(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
+    MavenId mavenId = new MavenId(groupId, artifactId, version);
+    MavenIndex localIndex = MavenIndicesManager.getInstance(myProject).getIndex().getLocalIndex();
+    if (localIndex == null) return;
+    Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), mavenId, "jar", null);
+    if (artifactPath != null && artifactPath.toFile().exists()) {
+      MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(mavenId, artifactPath.toFile());
+    }
   }
 
   @NotNull
