@@ -12,6 +12,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.html.HiDpiScalingImageView;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public final class DocumentationHtmlUtil {
     return (element, view) -> {
       if (view instanceof ImageView) {
         // we have to work with raw image, apply scaling manually
-        return new DocumentationScalingImageView(element, () -> {
+        return new HiDpiScalingImageView(element, () -> {
           return ScaleContext.create(component);
         });
       }
