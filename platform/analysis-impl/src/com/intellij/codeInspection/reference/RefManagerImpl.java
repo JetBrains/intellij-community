@@ -380,17 +380,20 @@ public class RefManagerImpl extends RefManager {
   public void findAllDeclarations() {
     if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
-      startTaskRunners();
-      final AnalysisScope scope = getScope();
-      if (scope != null) {
-        scope.accept(myProjectIterator);
+      startTaskWorkers();
+      try {
+        final AnalysisScope scope = getScope();
+        if (scope != null) {
+          scope.accept(myProjectIterator);
+        }
+      } finally {
+        waitForWorkersToFinish();
       }
-      waitForTasksToComplete();
       LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
     }
   }
 
-  private void waitForTasksToComplete() {
+  private void waitForWorkersToFinish() {
     final List<Future<?>> futures = myFutures;
     if (futures == null) return;
     myFutures = null;
@@ -398,6 +401,7 @@ public class RefManagerImpl extends RefManager {
       for (Future<?> future : futures) {
         future.get();
       }
+      myTasks = null;
     }
     catch (ExecutionException | InterruptedException e) {
       throw new RuntimeException(e);
@@ -424,7 +428,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  private void startTaskRunners() {
+  private void startTaskWorkers() {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
@@ -442,18 +446,17 @@ public class RefManagerImpl extends RefManager {
     final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
     for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
       final Future<?> future = application.executeOnPooledThread(() -> {
-        while (myTasks != null) {
-          if (myFutures == null && myTasks.isEmpty()) return;
+        while (myFutures != null || !myTasks.isEmpty()) {
           try {
             final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
+            ProgressManager.checkCanceled();
             if (task != null) {
               DumbService.getInstance(myProject).runReadActionInSmartMode(
                 () -> progressManager.executeProcessUnderProgress(task, progressIndicator)
               );
             }
           }
-          catch (InterruptedException ignore) {
-          }
+          catch (InterruptedException ignore) {}
         }
       });
       myFutures.add(future);
@@ -470,8 +473,6 @@ public class RefManagerImpl extends RefManager {
       runnable.run();
     }
     finally {
-      myTasks = null; // remove any pending tasks
-      waitForTasksToComplete();
       myIsInProcess = false;
       if (myScope != null) {
         myScope.invalidate();
