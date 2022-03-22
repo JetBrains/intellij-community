@@ -32,8 +32,7 @@ internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
     }
 
     override fun getKtLibraryModules(): Collection<KtLibraryModule> {
-        // TODO: but what about uncached library modules?
-        return cache.values.filterIsInstance<KtLibraryModule>()
+        TODO("This is a temporary function used for Android LINT, and should not be called in the IDE")
     }
 
     companion object {
