@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import java.io.File
 
 object KotlinArtifactsDownloader {
-    fun getKotlinPaths(version: String) = KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
+    fun getUnpackedKotlinDistPath(version: String) = KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
 
-    fun getKotlinPaths(project: Project) =
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getKotlinPaths(it) }
+    fun getUnpackedKotlinDistPath(project: Project) =
+        KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getUnpackedKotlinDistPath(it) }
             ?: KotlinPluginLayout.instance.kotlinc
 
     fun lazyDownloadAndUnpackKotlincDist(
@@ -31,7 +31,7 @@ object KotlinArtifactsDownloader {
         beforeDownload: () -> Unit,
         onError: (String) -> Unit,
     ): File? = lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, beforeDownload, onError)
-        ?.let { lazyUnpackJar(it, getKotlinPaths(version)) }
+        ?.let { lazyUnpackJar(it, getUnpackedKotlinDistPath(version)) }
 
     fun lazyDownloadMavenArtifact(
         project: Project,

@@ -39,6 +39,6 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
 
     override fun getPathParameters(): List<Pair<String, Path>> =
         listOfNotNull(
-            Pair("-Djps.kotlin.home=", KotlinArtifactsDownloader.getKotlinPaths(project).toPath()).takeIf { it.second.isDirectory() }
+            Pair("-Djps.kotlin.home=", KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project).toPath()).takeIf { it.second.isDirectory() }
         )
 }
