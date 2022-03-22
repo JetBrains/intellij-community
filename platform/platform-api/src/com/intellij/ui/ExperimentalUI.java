@@ -171,8 +171,8 @@ public final class ExperimentalUI {
     paths.put("nodes/enum.svg", "/expui/nodes/enum.svg");
     paths.put("nodes/errorIntroduction.svg", "/expui/nodes/errorIntroduction.svg");
     paths.put("nodes/exceptionClass.svg", "/expui/nodes/exception.svg");
-    paths.put("nodes/favorite.svg", "/expui/nodes/favorite.svg");
-    paths.put("nodes/notFavoriteOnHover.svg", "/expui/nodes/favoriteNot.svg");
+    paths.put("nodes/favorite.svg", "/expui/nodes/star.svg");
+    paths.put("nodes/notFavoriteOnHover.svg", "/expui/nodes/starEmpty.svg");
     paths.put("nodes/field.svg", "/expui/nodes/field.svg");
     paths.put("nodes/finalMark.svg", "/expui/empty.svg");
     paths.put("nodes/folder.svg", "/expui/nodes/folder.svg");
