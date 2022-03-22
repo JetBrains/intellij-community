@@ -181,6 +181,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
+  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
+    addVirtualFileManagerListener(listener);
+    Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
+  }
+
+  @Override
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.remove(listener);
   }

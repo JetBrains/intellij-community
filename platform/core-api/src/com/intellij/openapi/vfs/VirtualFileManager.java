@@ -183,8 +183,18 @@ public abstract class VirtualFileManager implements ModificationTracker {
     return URLUtil.extractPath(url);
   }
 
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
+  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
+
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
