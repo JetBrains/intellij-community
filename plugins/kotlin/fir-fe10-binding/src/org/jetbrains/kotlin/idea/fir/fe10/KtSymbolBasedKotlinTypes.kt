@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -110,7 +112,7 @@ fun KtType.toKotlinType(context: FE10BindingContext, annotations: Annotations = 
             is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(classLikeSymbol, context).typeConstructor
             is KtAnonymousObjectSymbol -> context.implementationPostponed()
         }
-        is KtClassErrorType -> ErrorUtils.createErrorTypeConstructorWithCustomDebugName(error)
+        is KtClassErrorType -> ErrorUtils.createErrorTypeConstructor(ErrorTypeKind.TYPE_FOR_ERROR_TYPE_CONSTRUCTOR, error)
         is KtFlexibleType -> {
             return KotlinTypeFactory.flexibleType(
                 lowerBound.toKotlinType(context, annotations) as SimpleType,
