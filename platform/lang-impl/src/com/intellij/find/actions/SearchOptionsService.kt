@@ -10,6 +10,7 @@ import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.components.*
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 
 // TODO persist custom options with the same mechanism as in PersistentStateComponent
@@ -98,8 +99,10 @@ internal fun <O> getSearchOptions(
   selectedScope: SearchScope,
 ): AllSearchOptions<O> {
   val persistedOptions: PersistedSearchOptions = searchOptionsService().getSearchOptions(variant, target.targetKey())
+  val scopeToUse = target.maximalSearchScope as? LocalSearchScope
+                   ?: selectedScope
   return AllSearchOptions(
-    options = UsageOptions.createOptions(persistedOptions.usages, selectedScope),
+    options = UsageOptions.createOptions(persistedOptions.usages, scopeToUse),
     textSearch = if (target.hasTextSearchStrings()) persistedOptions.textSearch else null,
     customOptions = handler.getCustomOptions(variant.toUsageAction())
   )
