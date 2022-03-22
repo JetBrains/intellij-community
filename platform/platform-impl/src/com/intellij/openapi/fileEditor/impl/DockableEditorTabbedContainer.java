@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
@@ -156,7 +157,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     Boolean dropInBetweenPinnedTabs = null;
     boolean dropInPinnedRow = false;
     int index;
-    if (myCurrentOver != null) {
+    if (myCurrentOver != null && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
       if (index >= 0 && index <= myCurrentOver.getTabCount()) {
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
