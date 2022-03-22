@@ -474,9 +474,16 @@ public final class ChangeListWorker {
   @NotNull
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String description, @Nullable String id,
                                        @Nullable ChangeListData data) {
-    if (!assertChangeListsEnabled()) return toChangeList(myDefault);
+    ListData listData = addChangeListEntry(name, description, id, data);
+    return toChangeList(listData);
+  }
 
-    LocalChangeList existingList = getChangeListByName(name);
+  @NotNull
+  private ListData addChangeListEntry(@NotNull String name, @Nullable String description, @Nullable String id,
+                                      @Nullable ChangeListData data) {
+    if (!assertChangeListsEnabled()) return myDefault;
+
+    ListData existingList = getDataByName(name);
     if (existingList != null) {
       LOG.error("Attempt to create duplicate changelist " + name);
       return existingList;
@@ -492,7 +499,7 @@ public final class ChangeListWorker {
       LOG.debug(String.format("[addChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, list.id));
     }
 
-    return toChangeList(list);
+    return list;
   }
 
   @Nullable
@@ -878,14 +885,30 @@ public final class ChangeListWorker {
     Set<Change> cachedChanges = myReadOnlyChangesCache.get(data);
     Set<Change> changes = cachedChanges != null ? Collections.unmodifiableSet(cachedChanges) : Collections.emptySet();
 
+    return buildChangeListFrom(data)
+      .setChangesCollection(changes)
+      .build();
+  }
+
+  /**
+   * Unlike {@link #toChangeList(ListData)}, will not populate {@link LocalChangeList#getChanges()}.
+   */
+  @Contract("!null -> !null; null -> null")
+  private LocalChangeListImpl toLightChangeList(@Nullable ListData data) {
+    if (data == null) return null;
+
+    return buildChangeListFrom(data)
+      .build();
+  }
+
+  @NotNull
+  private LocalChangeListImpl.Builder buildChangeListFrom(@NotNull ListData data) {
     return new LocalChangeListImpl.Builder(myProject, data.name)
       .setId(data.id)
       .setComment(data.comment)
-      .setChangesCollection(changes)
       .setData(data.data)
       .setDefault(data.isDefault)
-      .setReadOnly(data.isReadOnly)
-      .build();
+      .setReadOnly(data.isReadOnly);
   }
 
   @NotNull
@@ -1294,19 +1317,27 @@ public final class ChangeListWorker {
     @Nullable
     @Override
     public LocalChangeList findChangeList(@Nullable String name) {
-      return myWorker.getChangeListByName(name);
+      if (name == null) return null;
+      ListData data = myWorker.getDataByName(name);
+      if (data == null) return null;
+      // Skip changes for performance reasons.
+      // We're in the middle of filling lists with changes from VCS,
+      // while each 'addChangeToList' call clears 'myReadOnlyChangesCache' cache.
+      // Thus, a populating list with changes will re-build 'myReadOnlyChangesCache' for each invocation.
+      return myWorker.toLightChangeList(data);
     }
 
     @NotNull
     @Override
     public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-      return myWorker.addChangeList(name, comment, null, null);
+      ListData data = myWorker.addChangeListEntry(name, comment, null, null);
+      return myWorker.toLightChangeList(data);
     }
 
     @NotNull
     @Override
     public LocalChangeList findOrCreateList(@NotNull String name, @Nullable String comment) {
-      LocalChangeList list = myWorker.getChangeListByName(name);
+      LocalChangeList list = findChangeList(name);
       if (list != null) return list;
       return addChangeList(name, comment);
     }
