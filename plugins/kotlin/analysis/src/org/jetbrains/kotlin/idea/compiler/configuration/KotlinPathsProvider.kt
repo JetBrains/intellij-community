@@ -12,23 +12,20 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.utils.KotlinPaths
-import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
 import java.io.File
 
 object KotlinPathsProvider {
     const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
     const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
 
-    fun getKotlinPaths(version: String): KotlinPaths =
-        KotlinPathsFromHomeDir(File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID).resolve(version))
+    fun getKotlinPaths(version: String) = File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID).resolve(version)
 
     fun getKotlinPaths(project: Project) =
         KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getKotlinPaths(it) }
-            ?: KotlinPathsFromHomeDir(KotlinPluginLayout.instance.kotlinc)
+            ?: KotlinPluginLayout.instance.kotlinc
 
     fun lazyUnpackKotlincDist(packedDist: File, version: String): File {
-        val destination = getKotlinPaths(version).homePath
+        val destination = getKotlinPaths(version)
 
         val unpackedDistTimestamp = destination.lastModified()
         val packedDistTimestamp = packedDist.lastModified()

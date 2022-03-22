@@ -37,7 +37,7 @@ class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
                 }
             }
             ?.version
-            ?.let { KotlinPathsProvider.getKotlinPaths(it).homePath.canonicalPath }
+            ?.let { KotlinPathsProvider.getKotlinPaths(it).canonicalPath }
             ?: KotlinPluginLayout.instance.kotlinc.canonicalPath
         return mapOf(KOTLIN_BUNDLED to path)
     }
