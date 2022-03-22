@@ -4,6 +4,7 @@ package com.intellij.compiler.artifacts.workspaceModel
 import com.intellij.compiler.artifacts.ArtifactsTestCase
 import com.intellij.compiler.artifacts.MockArtifactProperties
 import com.intellij.compiler.artifacts.MockArtifactPropertiesProvider
+import com.intellij.compiler.artifacts.TestPackagingElementBuilder
 import com.intellij.compiler.artifacts.propertybased.*
 import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.openapi.Disposable
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.elements.CompositePackagingElement
@@ -25,15 +27,20 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
+import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
+import org.junit.runner.RunWith
 import java.util.concurrent.Callable
 
+@RunWith(JUnit38AssumeSupportRunner::class)
 class ArtifactTest : ArtifactsTestCase() {
 
   override fun tearDown() {
@@ -116,6 +123,30 @@ class ArtifactTest : ArtifactsTestCase() {
     TestCase.assertEquals(2, artifacts.size)
     TestCase.assertTrue(artifacts.any { it.name == "AnotherName" })
     TestCase.assertTrue(artifacts.any { it.name == "NameThree" })
+  }
+
+  /**
+   * Currently this test fails since we cache PackagingElement's tree and don't update it when corresponding entities are modified via workspace model
+   */
+  fun `todo fix me _ test edit artifact layout via model`() {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    val file1 = createTempFile("file1.txt", null)
+    val file2 = createTempFile("file2.txt", null)
+    addArtifact("a", TestPackagingElementBuilder.root(project).file(file1.systemIndependentPath).build())
+    runWriteAction {
+      WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+        val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
+        val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
+        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity::class.java, elementEntity) {
+          filePath = VirtualFileUrlManager.getInstance(project).fromPath(file2.systemIndependentPath)
+        }
+      }
+    }
+    
+    val artifact = artifactManager.artifacts.single()
+    val element = artifact.rootElement.children.single() as FileCopyPackagingElement
+    assertEquals(file2.systemIndependentPath, element.filePath)
   }
 
   fun `test add artifact mix bridge and model rename via model same name`() = runWriteAction {
