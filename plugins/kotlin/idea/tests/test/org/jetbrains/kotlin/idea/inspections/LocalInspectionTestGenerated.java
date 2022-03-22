@@ -7680,6 +7680,39 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/overrideDeprecatedMigration")
+    public static class OverrideDeprecatedMigration extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("copyDeprecation1.kt")
+        public void testCopyDeprecation1() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation1.kt");
+        }
+
+        @TestMetadata("copyDeprecation2.kt")
+        public void testCopyDeprecation2() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation2.kt");
+        }
+
+        @TestMetadata("copyDeprecation3.kt")
+        public void testCopyDeprecation3() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation3.kt");
+        }
+
+        @TestMetadata("copyDeprecation4.kt")
+        public void testCopyDeprecation4() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecation4.kt");
+        }
+
+        @TestMetadata("copyDeprecationProperty.kt")
+        public void testCopyDeprecationProperty() throws Exception {
+            runTest("testData/inspectionsLocal/overrideDeprecatedMigration/copyDeprecationProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration")
     public static class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

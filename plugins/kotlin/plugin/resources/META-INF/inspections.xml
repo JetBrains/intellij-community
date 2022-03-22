@@ -2416,6 +2416,14 @@
                      language="kotlin"
                      key="inspection.prohibit.repeated.use.site.target.annotations.migration.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.OverrideDeprecatedMigrationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="false"
+                     level="ERROR"
+                     language="kotlin"
+                     key="inspection.do.not.propagate.method.deprecation.through.overrides" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NonExhaustiveWhenStatementMigrationInspection"
                      groupPath="Kotlin"
                      groupName="Migration"
