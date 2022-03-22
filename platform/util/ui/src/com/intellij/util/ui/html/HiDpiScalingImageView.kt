@@ -15,7 +15,7 @@ import javax.swing.text.Position
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
 
-class HiDpiScalingImageView(elem: Element, private val originalView: ImageView) : View(elem) {
+class HiDpiScalingImageView(elem: Element, private val originalView: View) : View(elem) {
 
   private val scaleContext: ScaleContext?
     get() = container?.let(ScaleContext::create)
