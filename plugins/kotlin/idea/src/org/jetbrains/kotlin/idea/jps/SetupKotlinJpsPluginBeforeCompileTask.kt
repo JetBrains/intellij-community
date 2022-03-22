@@ -82,12 +82,5 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
         @JvmStatic
         val jpsMinimumSupportedVersion
             get() = KotlinVersionVerbose.parse("1.5.10").let { it ?: error("JPS Minimum version is not valid") }.plainVersion
-
-        fun getKotlinJpsClasspathLocation(version: String) =
-            getMavenArtifactJarPath(
-                KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID,
-                KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-                version
-            )
     }
 }

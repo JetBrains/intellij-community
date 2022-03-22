@@ -10,19 +10,34 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import java.io.File
 
 object KotlinArtifactsDownloader {
-    fun getUnpackedKotlinDistPath(version: String) = KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
+    fun getUnpackedKotlinDistPath(version: String): File =
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) KotlinPluginLayout.instance.kotlinc
+        else KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
 
     fun getUnpackedKotlinDistPath(project: Project) =
         KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getUnpackedKotlinDistPath(it) }
             ?: KotlinPluginLayout.instance.kotlinc
+
+    fun getKotlinJpsPluginJarPath(version: String): File {
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+            return KotlinPluginLayout.instance.jpsPluginJar
+        }
+        return getMavenArtifactJarPath(
+            KOTLIN_MAVEN_GROUP_ID,
+            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            version
+        )
+    }
 
     fun lazyDownloadAndUnpackKotlincDist(
         project: Project,
@@ -41,6 +56,14 @@ object KotlinArtifactsDownloader {
         beforeDownload: () -> Unit,
         onError: (String) -> Unit,
     ): File? {
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+            if (artifactId == KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID) {
+                return KotlinPluginLayout.instance.jpsPluginJar
+            }
+            if (artifactId == KOTLIN_DIST_ARTIFACT_ID) {
+                return KotlinPluginLayout.instance.kotlinc
+            }
+        }
         val expectedMavenArtifactJarPath = getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, artifactId, version)
         expectedMavenArtifactJarPath.takeIf { it.exists() }?.let {
             return it
