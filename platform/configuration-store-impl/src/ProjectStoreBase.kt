@@ -16,7 +16,6 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -199,7 +198,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
-        result!!.sortWith(deprecatedComparator)
+        result.sortWith(deprecatedComparator)
         if (isDirectoryBased) {
           for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
             LOG.runAndLogException {
@@ -238,9 +237,9 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
       else {
         if (hasOnlyDeprecatedStorages) {
-          result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
+          result.add(PROJECT_FILE_STORAGE_ANNOTATION)
         }
-        result!!.sortWith(deprecatedComparator)
+        result.sortWith(deprecatedComparator)
         return result
       }
     }

@@ -4,6 +4,7 @@ package com.intellij.util.containers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
@@ -26,6 +27,11 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   }
 }
 
+@Deprecated(
+  message = "Use 'isNullOrEmpty()' from Kotlin standard library.",
+  level = DeprecationLevel.WARNING,
+  replaceWith = ReplaceWith("isNullOrEmpty()", imports = ["kotlin.collections.isNullOrEmpty"])
+)
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
 @Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
@@ -66,7 +72,10 @@ fun <T> List<T>.init(): List<T> {
   return subList(0, size - 1)
 }
 
-fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
+fun <T> List<T>?.nullize(): List<T>? {
+  @Suppress("DEPRECATION")
+  return if (isNullOrEmpty()) null else this
+}
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
   return iterator().forEachGuaranteed(operation)
