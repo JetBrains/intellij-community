@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -29,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import static com.siyeh.InspectionGadgetsBundle.message;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -49,10 +48,10 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     final PsiVariable variable = (PsiVariable)infos[0];
     final String variableName = variable.getName();
     if (variable instanceof PsiParameter) {
-      return message("unnecessary.final.on.parameter.problem.descriptor", variableName);
+      return InspectionGadgetsBundle.message("unnecessary.final.on.parameter.problem.descriptor", variableName);
     }
     else {
-      return message("unnecessary.final.on.local.variable.problem.descriptor", variableName);
+      return InspectionGadgetsBundle.message("unnecessary.final.on.local.variable.problem.descriptor", variableName);
     }
   }
 
@@ -60,9 +59,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box1 = panel.addCheckboxEx(message("unnecessary.final.report.local.variables.option"), "reportLocalVariables");
-    final JCheckBox box2 = panel.addCheckboxEx(message("unnecessary.final.report.parameters.option"), "reportParameters");
-    panel.addDependentCheckBox(message("unnecessary.final.on.parameter.only.interface.option"), "onlyWarnOnAbstractMethods", box2);
+    final JCheckBox box1 = panel.addCheckboxEx(InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option"), "reportLocalVariables");
+    final JCheckBox box2 = panel.addCheckboxEx(InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"), "reportParameters");
+    panel.addDependentCheckBox(InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"), "onlyWarnOnAbstractMethods", box2);
 
     box1.addChangeListener(e -> {
       if (!box1.isSelected()) box2.setSelected(true);
@@ -146,11 +145,8 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     @Override
     public void visitTryStatement(PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (onlyWarnOnAbstractMethods || !reportParameters) {
-        return;
-      }
       final PsiResourceList resourceList = statement.getResourceList();
-      if (resourceList != null) {
+      if (resourceList != null && reportLocalVariables) {
         for (PsiResourceListElement element : resourceList) {
           if (element instanceof PsiResourceVariable) {
             final PsiResourceVariable variable = (PsiResourceVariable)element;
@@ -159,6 +155,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
             }
           }
         }
+      }
+      if (onlyWarnOnAbstractMethods || !reportParameters) {
+        return;
       }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (PsiCatchSection catchSection : catchSections) {
