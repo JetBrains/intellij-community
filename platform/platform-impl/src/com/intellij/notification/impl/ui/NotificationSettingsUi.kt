@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
@@ -6,10 +6,10 @@ import com.intellij.notification.ActionCenter
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.notification.impl.isReadAloudEnabled
 import com.intellij.notification.impl.isSoundEnabled
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
@@ -92,3 +92,5 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper, val 
     return DefaultComboBoxModel(items)
   }
 }
+
+private fun isReadAloudEnabled() = SystemInfo.isMac

@@ -1,16 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.coverage.CoverageLogger;
-import com.intellij.coverage.CoverageRunner;
-import com.intellij.coverage.IDEACoverageRunner;
-import com.intellij.coverage.JavaCoverageEngine;
-import com.intellij.coverage.JavaCoverageRunner;
+import com.intellij.coverage.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -35,9 +30,7 @@ import java.util.List;
  * Base class for java run configurations with enabled code coverage
  * @author ven
  */
-public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
-  private static final Logger LOG = Logger.getInstance(JavaCoverageEnabledConfiguration.class);
-
+public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
   private ClassFilter[] myCoveragePatterns;
 
   private boolean myIsMergeWithPreviousResults = false;

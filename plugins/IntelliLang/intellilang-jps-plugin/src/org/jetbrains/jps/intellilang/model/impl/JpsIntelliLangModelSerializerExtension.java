@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.intellilang.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +11,9 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class JpsIntelliLangModelSerializerExtension extends JpsModelSerializerExtension{
-  @NotNull
+public final class JpsIntelliLangModelSerializerExtension extends JpsModelSerializerExtension{
   @Override
-  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.singletonList(new JpsIntelliLangConfigurationSerializer());
   }
 }
