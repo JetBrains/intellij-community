@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
@@ -62,7 +60,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -80,9 +77,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
-  static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+  private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
@@ -92,9 +88,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public String myProfileName;
   public String myProfilePath;
   public boolean myRunWithEditorSettings;
-  public boolean myRunGlobalToolsOnly;
+  boolean myRunGlobalToolsOnly;
   public boolean myAnalyzeChanges;
-  public boolean myPathProfiling;
+  private boolean myPathProfiling;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -102,11 +98,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public String myOutputFormat;
   public InspectionProfileImpl myInspectionProfile;
 
-  public String myTargets;
+  String myTargets;
   public boolean myErrorCodeRequired = true;
-  public String myScopePattern;
-  Map<Path, Long> myCompleteProfile;
-
+  String myScopePattern;
   public void startup() {
     if (myProjectPath == null) {
       reportError("Project to inspect is not defined");
@@ -142,12 +136,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   public void header(){}
 
-  public Map<Path, Long> getPathProfile() {
-    return myCompleteProfile;
-  }
-
   public void execute() throws Exception {
-    final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                           appInfo.getFullApplicationName() +
                                                           " (build " +
@@ -196,12 +186,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public @NotNull Predicate<Path> getFilesFilter() {
-        return Predicates.alwaysTrue();
+        return __->true;
       }
 
       @Override
       public @NotNull Predicate<VirtualFile> getVirtualFilesFilter() {
-        return Predicates.alwaysTrue();
+        return __->true;
       }
     };
   }
@@ -256,9 +246,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     AtomicReference<Project> projectRef = new AtomicReference<>();
     ProgressManager.getInstance().runProcess(
-      () -> {
-        projectRef.set(ProjectUtil.openOrImport(projectPath));
-      },
+      () -> projectRef.set(ProjectUtil.openOrImport(projectPath)),
       createProcessIndicator()
     );
     Project project = projectRef.get();
@@ -310,8 +298,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         }
       }
       else if (mySourceDirectory == null) {
-        final String scopeName = System.getProperty("idea.analyze.scope");
-        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+        String scopeName = System.getProperty("idea.analyze.scope");
+        NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
         scope = namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
       }
       else {
@@ -353,15 +341,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
-                         new AdditionalLibraryRootsListener() {
-                           @Override
-                           public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
-                                                           @NotNull Collection<? extends VirtualFile> oldRoots,
-                                                           @NotNull Collection<? extends VirtualFile> newRoots,
-                                                           @NotNull String libraryNameForDebug) {
-                             updateProjectStructure(counter, reportConverter, project, rootLogDir);
-                           }
-                         });
+                         (__, __1, __2, __3) -> updateProjectStructure(counter, reportConverter, project, rootLogDir));
   }
 
   private static void updateProjectStructure(AtomicInteger counter,
@@ -408,8 +388,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  public @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
-    final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
+  @NotNull
+  private GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
+    InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
     if (myPathProfiling) {
@@ -419,10 +400,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return context;
   }
 
-  public void runAnalysisOnScope(Path projectPath,
-                                 @NotNull Disposable parentDisposable,
-                                 Project project,
-                                 InspectionProfileImpl inspectionProfile, AnalysisScope scope)
+  private void runAnalysisOnScope(Path projectPath,
+                                  @NotNull Disposable parentDisposable,
+                                  Project project,
+                                  InspectionProfileImpl inspectionProfile, AnalysisScope scope)
     throws IOException {
     reportMessage(1, InspectionsBundle.message("inspection.done"));
 
@@ -436,7 +417,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       reportConverter = new XSLTReportConverter(myOutputFormat);
     }
 
-    final Path resultsDataPath;
+    Path resultsDataPath;
     try {
       resultsDataPath = ReportConverterUtil.getResultsDataPath(parentDisposable, reportConverter, myOutPath);
     }
@@ -501,7 +482,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       throw new IOException(e);
     }
     inspectionsResults.add(descriptionsFile);
-    saveProfile(context);
     // convert report
     if (reportConverter != null) {
       try {
@@ -518,19 +498,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         printHelp();
       }
     }
-  }
-
-  private void saveProfile(GlobalInspectionContextEx context) {
-    if (!myPathProfiling) return;
-    Map<Path, Long> profile = context.getPathProfile();
-    Map<Path, Long> completeProfile = new HashMap<>();
-    profile.forEach((path, millis) -> {
-      while (path != null) {
-        completeProfile.merge(path, millis, Long::sum);
-        path = path.getParent();
-      }
-    });
-    myCompleteProfile = completeProfile;
   }
 
   public @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,
@@ -849,7 +816,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     };
   }
 
-  public static @NotNull String getPrefix(final @NotNull String text) {
+  public static @NotNull String getPrefix(@NotNull String text) {
     int idx = text.indexOf(" in ");
     if (idx == -1) {
       idx = text.indexOf(" of ");
@@ -905,7 +872,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       String oldContent = revision.getContent();
       if (oldContent == null) return Collections.emptyList();
       String newContent = VfsUtilCore.loadText(virtualFile);
-      return Lists.newArrayList(
+      return ContainerUtil.newArrayList(
         RangesBuilder.compareLines(newContent, oldContent, LineOffsetsUtil.create(newContent), LineOffsetsUtil.create(oldContent))
           .iterateUnchanged());
     }
@@ -928,9 +895,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       if (myVerboseLevel == 0) return;
 
       if (myVerboseLevel == 1) {
-        if (text == null) {
-          return;
-        }
         String prefix = getPrefix(text);
         if (prefix.equals(lastPrefix)) {
           reportMessageNoLineBreak(1, ".");
@@ -943,11 +907,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
 
       if (myVerboseLevel == 3) {
-        if (text == null) {
-          return;
-        }
         if (!isIndeterminate() && getFraction() > 0) {
-          final int percent = (int)(getFraction() * 100);
+          int percent = (int)(getFraction() * 100);
           if (myLastPercent == percent) return;
           String prefix = getPrefix(text);
           myLastPercent = percent;
