@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -166,38 +165,13 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
                                @NotNull RefEntity refEntity,
                                @NotNull Consumer<? super Element> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
-    CommonProblemDescriptor[] sorted;
-    if (descriptors.length == 1) {
-      sorted = descriptors;
-    }
-    else {
-      sorted = descriptors.clone();
-      Arrays.sort(sorted, (desc1, desc2)-> {
-        VirtualFile file1 = desc1 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc1).getContainingFile() : null;
-        VirtualFile file2 = desc2 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc2).getContainingFile() : null;
-        if (file1 != null && file1.equals(file2)) {
-          int diff = Integer.compare(((ProblemDescriptor)desc1).getLineNumber(), ((ProblemDescriptor)desc2).getLineNumber());
-          if (diff != 0) {
-            return diff;
-          }
-          diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)desc1).getPsiElement(), ((ProblemDescriptor)desc2).getPsiElement());
-          if (diff != 0) {
-            return diff;
-          }
-          return desc1.getDescriptionTemplate().compareTo(desc2.getDescriptionTemplate());
-        }
-        if (file1 == null && file2 == null) return 0;
-        if (file1 == null) return 1;
-        if (file2 == null) return -1;
-        return file1.getPath().compareTo(file2.getPath());
-      });
-    }
-    for (CommonProblemDescriptor descriptor : sorted) {
+    final var keys = Arrays.stream(descriptors).map(desc -> new ProblemDescriptorKey(desc));
+    for (ProblemDescriptorKey key : keys.sorted().collect(Collectors.toList())) {
+      final var descriptor = key.descriptor;
       if (isDescriptorExcluded.test(descriptor)) continue;
-      int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
       Element element = null;
       try {
-        element = refEntity.getRefManager().export(refEntity, line);
+        element = refEntity.getRefManager().export(refEntity, key.lineNumber);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -551,5 +525,37 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   @Override
   public synchronized Map<String, Set<RefEntity>> getContent() {
     return Collections.synchronizedMap(myContents == null ? new HashMap<>(1) : myContents);
+  }
+
+  private static class ProblemDescriptorKey implements Comparable<ProblemDescriptorKey> {
+    CommonProblemDescriptor descriptor;
+    VirtualFile file;
+    int lineNumber = -1;
+    int position;
+    String descriptionTemplate;
+
+    private ProblemDescriptorKey(CommonProblemDescriptor desc) {
+      descriptor = desc;
+      if (desc instanceof ProblemDescriptorBase) {
+        final ProblemDescriptorBase descriptorBase = (ProblemDescriptorBase)desc;
+        file = descriptorBase.getContainingFile();
+        lineNumber = descriptorBase.getLineNumber();
+        position = descriptorBase.getLineStartOffset();
+        descriptionTemplate = desc.getDescriptionTemplate();
+      }
+    }
+
+    @Override
+    public int compareTo(@NotNull ProblemDescriptorKey o) {
+      if (file == null && o.file == null) return 0;
+      if (file == null) return 1;
+      if (o.file == null) return -1;
+
+      int comparison = file.getPath().compareTo(o.file.getPath());
+      if (comparison == 0) comparison = Integer.compare(lineNumber, o.lineNumber);
+      if (comparison == 0) comparison = Integer.compare(position, o.position);
+      if (comparison == 0) comparison = descriptionTemplate.compareTo(o.descriptionTemplate);
+      return comparison;
+    }
   }
 }
