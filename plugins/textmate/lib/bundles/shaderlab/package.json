@@ -1,16 +1,8 @@
 {
   "name": "shaderlab",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "*"
-  },
-  "scripts": {
-    "update-grammar": "node ../node_modules/vscode-grammar-updater/bin tgjones/shaders-tmLanguage grammars/shaderlab.json ./syntaxes/shaderlab.tmLanguage.json"
-  },
   "contributes": {
     "languages": [
       {
@@ -32,9 +24,5 @@
         "scopeName": "source.shaderlab"
       }
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
   }
 }

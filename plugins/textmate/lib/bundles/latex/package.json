@@ -1,16 +1,8 @@
 {
   "name": "latex",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "*"
-  },
-  "scripts": {
-    "update-grammar": "node ./build/update-grammars.js"
-  },
   "contributes": {
     "languages": [
       {
@@ -103,9 +95,5 @@
         "path": "./syntaxes/cpp-grammar-bailout.tmLanguage.json"
       }
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
   }
 }
