@@ -7,6 +7,12 @@ import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Caches the marketplace plugins that support given filenames/extensions or dependencies. This data
+ * is persisted between IDE restarts and refreshed on startup if the cached data is more than 1 day old
+ * (see PluginsAdvertiserStartupActivity.checkSuggestedPlugins). The cached data potentially includes plugins
+ * that are incompatible with the current IDE build.
+ */
 @Service(Service.Level.APP)
 @State(name = "PluginFeatureCacheService", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
 @ApiStatus.Internal
