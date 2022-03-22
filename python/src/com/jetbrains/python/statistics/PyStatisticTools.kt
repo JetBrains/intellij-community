@@ -27,21 +27,12 @@ val Project.sdks get() = modules.mapNotNull(Module::getSdk)
 /**
  * Adds python language and interpreter version if module has sdk
  */
-fun FeatureUsageData.addPythonSpecificInfo(module: Module) =
-  module.getSdk()?.let { sdk -> addPythonSpecificInfo(sdk) } ?: this
-
 fun getPythonSpecificInfo(module: Module) =
   module.getSdk()?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
 
 /**
  * Adds python language and interpreter version
  */
-fun FeatureUsageData.addPythonSpecificInfo(sdk: Sdk) = addLanguage(PythonLanguage.INSTANCE)
-  .addData("python_version", sdk.version)
-  .addData("python_implementation", sdk.pythonImplementation)
-  .addData("executionType", sdk.executionType)
-  .addData("interpreterType", sdk.interpreterType)
-
 fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   val data = ArrayList<EventPair<*>>()
   data.add(EventFields.Language.with(PythonLanguage.INSTANCE))
@@ -62,7 +53,7 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
                                    *extraFields)
 }
 
-val PYTHON_VERSION = EventFields.StringValidatedByCustomRule("python_version", "version")
+val PYTHON_VERSION = EventFields.StringValidatedByRegexp("python_version", "version")
 val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
 val EXECUTION_TYPE = EventFields.String("executionType", listOf("local", "Remote_Docker", "Remote_Docker_Compose", "Remote_WSL", "Remote_null", "third_party", "Remote_SSH_Credentials", "Remote_Vagrant", "Remote_Web_Deployment", "Remote_Unknown"))
 val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf("pipenv", "condavenv", "virtualenv", "regular", "poetry"))
