@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
@@ -40,15 +39,15 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.lang.reflect.UndeclaredThrowableException
-import java.nio.file.*
-import java.nio.file.attribute.DosFileAttributeView
-import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Supplier
 
-import static java.nio.file.attribute.PosixFilePermission.*
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 
 @CompileStatic
@@ -468,10 +467,10 @@ idea.fatal.error.notification=disabled
           }
           moduleNames.addAll(mavenArtifacts.additionalModules)
           if (!moduleNames.isEmpty()) {
-            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
+            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, Collections.emptyMap(), 'maven-artifacts')
           }
           if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
+            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, Collections.emptyMap(), 'proprietary-maven-artifacts')
           }
         }
       })

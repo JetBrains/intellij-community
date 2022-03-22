@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+
 /**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depends on non-repository libraries.
  * @see org.jetbrains.intellij.build.ProductProperties#mavenArtifacts
@@ -39,46 +40,74 @@ class MavenArtifactsBuilder {
     this.buildContext = buildContext
   }
 
-  void generateMavenArtifacts(List<String> namesOfModulesToPublish, String outputDir) {
-    Map<JpsModule, MavenArtifactData> modulesToPublish = generateMavenArtifactData(namesOfModulesToPublish)
+  void generateMavenArtifacts(List<String> namesOfModulesToPublish,
+                              Map<MavenCoordinates, Collection<String>> squashedModules,
+                              String outputDir) {
+    Map<MavenArtifactData, List<JpsModule>> modulesToPublish = new HashMap<MavenArtifactData, List<JpsModule>>()
+
+    Map<JpsModule, MavenArtifactData> regularModulesToPublish = generateMavenArtifactData(namesOfModulesToPublish)
+    regularModulesToPublish.forEach { aModule, artifactData -> modulesToPublish[artifactData] = Collections.singletonList(aModule) }
+
+    Set<String> squashingModuleNames = squashedModules.values().collectMany { moduleNames -> moduleNames }.toSet()
+    Map<JpsModule, MavenArtifactData> squashingMavenArtifactsData = generateMavenArtifactData(squashingModuleNames)
+    squashedModules.forEach { coordinates, moduleNames ->
+      List<JpsModule> modules = moduleNames.collect { moduleName -> buildContext.findRequiredModule(moduleName) }
+      Set<MavenCoordinates> moduleCoordinates = modules.collect { module -> generateMavenCoordinatesForModule(module) }.toSet()
+      def dependencies = modules
+        .collectMany { module -> squashingMavenArtifactsData[module].dependencies }
+        .unique()
+        .findAll { dependency -> !moduleCoordinates.contains(dependency.coordinates) }
+      MavenArtifactData artifactData = new MavenArtifactData(coordinates, dependencies)
+      modulesToPublish[artifactData] = modules
+    }
+
     buildContext.messages.progress("Generating Maven artifacts for ${modulesToPublish.size()} modules")
-    buildContext.messages.debug("Generate artifacts for the following modules:")
-    modulesToPublish.each {module, data -> buildContext.messages.debug("  $module.name -> $data.coordinates")}
+    buildContext.messages.warning("Generate artifacts for the following modules:")
+    modulesToPublish.each { data, modules ->
+      buildContext.messages.warning("  [${modules.collect { it.name }.join(",")}] -> $data.coordinates")
+    }
     layoutMavenArtifacts(modulesToPublish, outputDir)
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  private void layoutMavenArtifacts(Map<JpsModule, MavenArtifactData> modulesToPublish, String outputDir) {
+  private void layoutMavenArtifacts(Map<MavenArtifactData, List<JpsModule>> modulesToPublish, String outputDir) {
     def ant = buildContext.ant
     def publishSourcesFilter = buildContext.productProperties.mavenArtifacts.publishSourcesFilter
     def buildContext = this.buildContext
-    Map<JpsModule, String> pomXmlFiles = [:]
-    modulesToPublish.each { module, artifactData ->
+    Map<MavenArtifactData, String> pomXmlFiles = [:]
+    modulesToPublish.each { artifactData, modules ->
       String filePath = "$buildContext.paths.temp/pom-files/${artifactData.coordinates.getDirectoryPath()}/${artifactData.coordinates.getFileName("", "pom")}"
-      pomXmlFiles[module] = filePath
+      pomXmlFiles[artifactData] = filePath
       generatePomXmlFile(filePath, artifactData)
     }
     new LayoutBuilder(buildContext).layout("$buildContext.paths.artifacts/$outputDir") {
-      modulesToPublish.each { aModule, artifactData ->
+      modulesToPublish.each { artifactData, modules ->
         dir(artifactData.coordinates.directoryPath) {
-          ant.fileset(file: pomXmlFiles[aModule])
-          def javaSourceRoots = aModule.getSourceRoots(JavaSourceRootType.SOURCE).toList()
-          def javaResourceRoots = aModule.getSourceRoots(JavaResourceRootType.RESOURCE).toList()
-          def hasSources = !(javaSourceRoots.isEmpty() && javaResourceRoots.isEmpty())
+          ant.fileset(file: pomXmlFiles[artifactData])
+          def hasSourceRoots = modules.find { aModule -> !aModule.getSourceRoots(JavaSourceRootType.SOURCE).isEmpty() }
+          def hasResourceRoots = modules.find { aModule -> !aModule.getSourceRoots(JavaResourceRootType.RESOURCE).isEmpty() }
+          def hasSources = !(hasSourceRoots && hasResourceRoots)
+
           ant.jar(name: artifactData.coordinates.getFileName("", "jar"), duplicate: "fail",
                   filesetmanifest: "merge", whenmanifestonly: "create") {
             if (hasSources) {
-              module(aModule.name)
+              modules.forEach { aModule ->
+                module(aModule.name)
+              }
             }
           }
-          if (publishSourcesFilter.test(aModule, buildContext) && hasSources) {
+
+          def publishSourcesForModules = modules.findAll { aModule -> publishSourcesFilter.test(aModule, buildContext) }
+          if (!publishSourcesForModules.isEmpty() && hasSources) {
             zip(artifactData.coordinates.getFileName("sources", "jar")) {
-              javaSourceRoots.each { root ->
-                ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'))
-              }
-              javaResourceRoots.each { root ->
-                ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath)
+              publishSourcesForModules.forEach { aModule ->
+                aModule.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
+                  ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'))
+                }
+                aModule.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
+                  ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath)
+                }
               }
             }
           }
@@ -133,7 +162,7 @@ class MavenArtifactsBuilder {
     String groupId = "com.jetbrains.${names.take(2).join(".")}"
     def firstMeaningful = names.size() > 2 && COMMON_GROUP_NAMES.contains(names[1]) ? 2 : 1
     String artifactId = names.drop(firstMeaningful).collectMany {
-      splitByCamelHumpsMergingNumbers(it).collect {it.toLowerCase(Locale.US)}
+      splitByCamelHumpsMergingNumbers(it).collect { it.toLowerCase(Locale.US) }
     }.join("-")
     return new MavenCoordinates(groupId, artifactId, version)
   }
@@ -145,7 +174,7 @@ class MavenArtifactsBuilder {
     for (int i = 0; i < words.length; i++) {
       String next
       if (i < words.length - 1 && Character.isDigit(words[i + 1].charAt(0))) {
-        next = words[i] + words[i+1]
+        next = words[i] + words[i + 1]
         i++
       }
       else {
@@ -156,7 +185,7 @@ class MavenArtifactsBuilder {
     return result
   }
 
-  private Map<JpsModule, MavenArtifactData> generateMavenArtifactData(List<String> moduleNames) {
+  private Map<JpsModule, MavenArtifactData> generateMavenArtifactData(Collection<String> moduleNames) {
     buildContext.messages.debug("Collecting platform modules which can be published as Maven artifacts")
     List<JpsModule> allPlatformModules = moduleNames.collect {
       buildContext.findRequiredModule(it)
@@ -171,7 +200,9 @@ class MavenArtifactsBuilder {
     return results
   }
 
-  enum DependencyScope { COMPILE, RUNTIME }
+  enum DependencyScope {
+    COMPILE, RUNTIME
+  }
 
   static Map<JpsDependencyElement, DependencyScope> scopedDependencies(JpsModule module) {
     Map<JpsDependencyElement, DependencyScope> result = [:]
@@ -200,7 +231,9 @@ class MavenArtifactsBuilder {
     return result
   }
 
-  private MavenArtifactData generateMavenArtifactData(JpsModule module, Map<JpsModule, MavenArtifactData> results, Set<JpsModule> nonMavenizableModules,
+  private MavenArtifactData generateMavenArtifactData(JpsModule module,
+                                                      Map<JpsModule, MavenArtifactData> results,
+                                                      Set<JpsModule> nonMavenizableModules,
                                                       Set<JpsModule> computationInProgress) {
     if (results.containsKey(module)) return results[module]
     if (nonMavenizableModules.contains(module)) return null
@@ -233,7 +266,8 @@ class MavenArtifactsBuilder {
         else {
           MavenArtifactData depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
           if (depArtifact == null) {
-            buildContext.messages.warning(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
+            buildContext.messages.warning(
+              " module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
             mavenizable = false
             return
           }
@@ -247,7 +281,8 @@ class MavenArtifactsBuilder {
           dependencies << createArtifactDependencyByLibrary(typed.properties.data, scope)
         }
         else if (!isOptionalDependency(library)) {
-          buildContext.messages.warning(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
+          buildContext.messages.warning(
+            " module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
           mavenizable = false
         }
       }
@@ -279,7 +314,8 @@ class MavenArtifactsBuilder {
     library.name == "microba" || library.name == "jshell-frontend"
   }
 
-  private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {
+  private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                                           DependencyScope scope) {
     new MavenArtifactDependency(new MavenCoordinates(descriptor.groupId, descriptor.artifactId, descriptor.version),
                                 descriptor.includeTransitiveDependencies, descriptor.excludedDependencies, scope)
   }
@@ -300,6 +336,29 @@ class MavenArtifactsBuilder {
     boolean includeTransitiveDeps
     List<String> excludedDependencies
     DependencyScope scope
+
+    boolean equals(o) {
+      if (this.is(o)) return true
+      if (getClass() != o.class) return false
+
+      MavenArtifactDependency that = (MavenArtifactDependency)o
+
+      if (includeTransitiveDeps != that.includeTransitiveDeps) return false
+      if (coordinates != that.coordinates) return false
+      if (excludedDependencies != that.excludedDependencies) return false
+      if (scope != that.scope) return false
+
+      return true
+    }
+
+    int hashCode() {
+      int result
+      result = (coordinates != null ? coordinates.hashCode() : 0)
+      result = 31 * result + (includeTransitiveDeps ? 1 : 0)
+      result = 31 * result + (excludedDependencies != null ? excludedDependencies.hashCode() : 0)
+      result = 31 * result + (scope != null ? scope.hashCode() : 0)
+      return result
+    }
   }
 
   @Immutable
@@ -319,6 +378,27 @@ class MavenArtifactsBuilder {
 
     String getFileName(String classifier, String packaging) {
       "$artifactId-$version${classifier.isEmpty() ? "" : "-$classifier"}.$packaging"
+    }
+
+    boolean equals(o) {
+      if (this.is(o)) return true
+      if (getClass() != o.class) return false
+
+      MavenCoordinates that = (MavenCoordinates)o
+
+      if (artifactId != that.artifactId) return false
+      if (groupId != that.groupId) return false
+      if (version != that.version) return false
+
+      return true
+    }
+
+    int hashCode() {
+      int result
+      result = (groupId != null ? groupId.hashCode() : 0)
+      result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0)
+      result = 31 * result + (version != null ? version.hashCode() : 0)
+      return result
     }
   }
 }
