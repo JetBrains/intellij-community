@@ -30,6 +30,9 @@ val Project.sdks get() = modules.mapNotNull(Module::getSdk)
 fun FeatureUsageData.addPythonSpecificInfo(module: Module) =
   module.getSdk()?.let { sdk -> addPythonSpecificInfo(sdk) } ?: this
 
+fun getPythonSpecificInfo(module: Module) =
+  module.getSdk()?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
+
 /**
  * Adds python language and interpreter version
  */
