@@ -1,5 +1,5 @@
 /**
- * {<warning descr="'@snippet' tag is not available at this language level">@snippet</warning> lang=JAVA :
+ * {@snippet lang=JAVA :
  *   public class ShowOptional {
  *     void show(Optional<String> v) {
  *         // @start region="example"
