@@ -173,6 +173,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       .collect(Collectors.toList());
 
     for (ProblemDescriptorKey key : keys) {
+      LOG.info("" + key.position);
       final var descriptor = key.descriptor;
       Element element = null;
       try {
@@ -545,7 +546,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         final ProblemDescriptorBase descriptorBase = (ProblemDescriptorBase)desc;
         file = descriptorBase.getContainingFile();
         lineNumber = descriptorBase.getLineNumber();
-        position = descriptorBase.getLineStartOffset();
+        final TextRange textRange = descriptorBase.getTextRange();
+        position = textRange != null ? textRange.getStartOffset() : 0;
         descriptionTemplate = desc.getDescriptionTemplate();
       }
     }
