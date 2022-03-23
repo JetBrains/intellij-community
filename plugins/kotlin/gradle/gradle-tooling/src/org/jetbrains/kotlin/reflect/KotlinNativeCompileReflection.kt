@@ -4,7 +4,9 @@
  */
 package org.jetbrains.kotlin.reflect
 
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
+import org.jetbrains.kotlin.gradle.getMethodOrNull
 import java.io.File
 
 fun KotlinNativeCompileReflection(compileKotlinTask: Any): KotlinNativeCompileReflection =
@@ -16,8 +18,11 @@ interface KotlinNativeCompileReflection {
 
 private class KotlinNativeCompileReflectionImpl(private val instance: Any) : KotlinNativeCompileReflection {
     override val destinationDir: File? by lazy {
-        instance.callReflectiveGetter("getDestinationDir", logger)
-            ?: when(val outputFile = instance.callReflective("getOutputFile", parameters(), returnType<Any>(), logger)) {
+        val instanceClazz = instance::class.java
+        if (instanceClazz.getMethodOrNull("getDestinationDirectory") != null)
+            instance.callReflectiveGetter<DirectoryProperty>("getDestinationDirectory", logger)?.asFile?.get()
+        else instance.callReflectiveGetter("getDestinationDir", logger)
+            ?: when (val outputFile = instance.callReflectiveAnyGetter("getOutputFile", logger)) {
                 is Provider<*> -> outputFile.orNull as? File
                 is File -> outputFile
                 else -> null
