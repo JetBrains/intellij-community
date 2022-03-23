@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.ide.DataManager
@@ -20,12 +20,12 @@ internal open class DefaultPopupContext(
   private val editor: Editor?,
 ) : PopupContext {
 
-  private var myComponentReference: WeakReference<Component>? = null
-
   override fun preparePopup(builder: ComponentPopupBuilder) {
     builder.setRequestFocus(true)
     builder.setCancelOnClickOutside(true)
   }
+
+  private var myComponentReference: WeakReference<Component>? = null
 
   private fun dataContext(popup: AbstractPopup): DataContext {
     EDT.assertIsEdt()
@@ -46,6 +46,10 @@ internal open class DefaultPopupContext(
     return DataManager.getInstance().getDataContext(component)
   }
 
+  override fun showPopup(popup: AbstractPopup) {
+    popup.showInBestPositionFor(dataContext(popup))
+  }
+
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     val resized = popupUI.useStoredSize()
     popupUI.updatePopup {
@@ -55,9 +59,5 @@ internal open class DefaultPopupContext(
       }
       popup.setLocation(popup.getBestPositionFor(dataContext(popup)))
     }
-  }
-
-  override fun showPopup(popup: AbstractPopup) {
-    popup.showInBestPositionFor(dataContext(popup))
   }
 }

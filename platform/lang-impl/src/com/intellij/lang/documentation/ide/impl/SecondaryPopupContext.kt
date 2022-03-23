@@ -38,7 +38,7 @@ internal abstract class SecondaryPopupContext : PopupContext {
     popupUI.updateFromRequests(requestFlow())
   }
 
-  abstract fun requestFlow(): Flow<DocumentationRequest?>
+  protected abstract fun requestFlow(): Flow<DocumentationRequest?>
 
   override fun showPopup(popup: AbstractPopup) {
     val component = referenceComponent

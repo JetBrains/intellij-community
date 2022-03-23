@@ -36,7 +36,7 @@ internal class QuickSearchPopupContext(
 
   private val items = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override val referenceComponent: Component get() = searchComponent as Component
+  override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
 
   override fun preparePopup(builder: ComponentPopupBuilder) {
     super.preparePopup(builder)
@@ -55,7 +55,7 @@ internal class QuickSearchPopupContext(
     }
   }
 
-  override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
+  override val referenceComponent: Component get() = searchComponent as Component
 }
 
 private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {

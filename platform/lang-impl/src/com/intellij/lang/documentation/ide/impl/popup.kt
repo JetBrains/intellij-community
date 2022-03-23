@@ -19,7 +19,7 @@ import kotlinx.coroutines.*
 internal fun createDocumentationPopup(
   project: Project,
   browser: DocumentationBrowser,
-  popupContext: PopupContext
+  popupContext: PopupContext,
 ): AbstractPopup {
   EDT.assertIsEdt()
   val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
@@ -38,7 +38,11 @@ internal fun createDocumentationPopup(
   return popup
 }
 
-internal fun CoroutineScope.showPopupLater(popup: AbstractPopup, browser: DocumentationBrowser, popupContext: PopupContext) {
+internal fun CoroutineScope.showPopupLater(
+  popup: AbstractPopup,
+  browser: DocumentationBrowser,
+  popupContext: PopupContext,
+) {
   EDT.assertIsEdt()
   val showJob = launch(ModalityState.current().asContextElement()) {
     // to avoid flickering: show popup immediately after the request is loaded OR after a timeout

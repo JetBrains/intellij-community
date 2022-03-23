@@ -66,7 +66,6 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
     val lookup = LookupManager.getActiveLookup(editor)
     val quickSearchComponent = quickSearchComponent(project)
-
     if (lookup == null && quickSearchComponent == null) {
       // no popups
       if (toolWindowManager.focusVisibleReusableTab()) {
@@ -89,7 +88,6 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
-
     val popupContext = when {
       lookup != null -> LookupPopupContext(lookup)
       quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
@@ -146,7 +144,6 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     val browser = DocumentationBrowser.createBrowser(project, request)
     val popup = createDocumentationPopup(project, browser, popupContext)
     setPopup(popup)
-
     showPopupLater(popup, browser, popupContext)
   }
 
