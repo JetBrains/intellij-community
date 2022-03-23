@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
 import java.util.*
@@ -54,7 +55,7 @@ object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
         val result = ArrayList<IntentionAction>()
         val userDeclaration = diagnostic.psiElement.getParentOfType<KtDeclaration>(true)
         val protectedAllowed = exposedDeclaration.parent == userDeclaration?.parent
-        if (userDeclaration != null) {
+        if (userDeclaration != null && !userDeclaration.isPrivate()) {
             val userDescriptor = userDeclaration.toDescriptor() as? DeclarationDescriptorWithVisibility
             if (userDescriptor != null && DescriptorVisibilityUtils.isVisibleIgnoringReceiver(exposedDescriptor, userDescriptor, exposedDeclaration.getResolutionFacade().getLanguageVersionSettings())) {
                 addFixToTargetVisibility(
