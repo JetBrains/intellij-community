@@ -27,7 +27,7 @@ internal open class DefaultPopupContext(
 
   private var myComponentReference: WeakReference<Component>? = null
 
-  private fun dataContext(popup: AbstractPopup): DataContext {
+  private fun dataContext(): DataContext? {
     EDT.assertIsEdt()
     if (editor is EditorEx && editor.component.isShowing) {
       return editor.dataContext
@@ -41,9 +41,17 @@ internal open class DefaultPopupContext(
     else {
       componentReference.get()?.takeIf {
         it.isShowing
-      } ?: popup.component
+      }
+    }
+    if (component == null) {
+      return null
     }
     return DataManager.getInstance().getDataContext(component)
+  }
+
+  private fun dataContext(popup: AbstractPopup): DataContext {
+    return dataContext()
+           ?: DataManager.getInstance().getDataContext(popup.component)
   }
 
   override fun showPopup(popup: AbstractPopup) {
