@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.*
-import org.jetbrains.kotlin.descriptors.EffectiveVisibility.Permissiveness.LESS
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory3
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
 
 object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
 
@@ -49,13 +47,13 @@ object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
         val exposedDeclaration = DescriptorToSourceUtils.getSourceFromDescriptor(exposedDescriptor) as? KtModifierListOwner
             ?: return emptyList()
 
-        val exposedVisibility = exposedDiagnostic.c
-        val userVisibility = exposedDiagnostic.a
+        val exposedVisibility = exposedDiagnostic.c.toDescriptorVisibility()
+        val userVisibility = exposedDiagnostic.a.toDescriptorVisibility()
         val (targetUserVisibility, targetExposedVisibility) =
-            when (exposedVisibility.relation(userVisibility, SimpleClassicTypeSystemContext)) {
-                LESS -> Pair(exposedVisibility.toDescriptorVisibility(), userVisibility.toDescriptorVisibility())
-                else -> Pair(PRIVATE, PUBLIC)
-            }
+            if (exposedVisibility.compareTo(userVisibility)?.let { it < 0 } == true)
+                Pair(exposedVisibility, userVisibility)
+            else
+                Pair(PRIVATE, PUBLIC)
 
         val result = ArrayList<IntentionAction>()
         val userDeclaration = diagnostic.psiElement.getParentOfType<KtDeclaration>(true)
