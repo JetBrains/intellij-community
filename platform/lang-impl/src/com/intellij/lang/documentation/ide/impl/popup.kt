@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
-import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -18,11 +17,10 @@ import kotlinx.coroutines.*
 
 internal fun createDocumentationPopup(
   project: Project,
-  browser: DocumentationBrowser,
+  popupUI: DocumentationPopupUI,
   popupContext: PopupContext,
 ): AbstractPopup {
   EDT.assertIsEdt()
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
   val builder = JBPopupFactory.getInstance()
     .createComponentPopupBuilder(popupUI.component, popupUI.preferableFocusComponent)
     .setProject(project)
@@ -40,14 +38,14 @@ internal fun createDocumentationPopup(
 
 internal fun CoroutineScope.showPopupLater(
   popup: AbstractPopup,
-  browser: DocumentationBrowser,
+  popupUI: DocumentationPopupUI,
   popupContext: PopupContext,
 ) {
   EDT.assertIsEdt()
   val showJob = launch(ModalityState.current().asContextElement()) {
     // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
     withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
-      browser.waitForContent()
+      popupUI.browser.waitForContent()
     }
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed) // popup disposal should've cancelled this coroutine

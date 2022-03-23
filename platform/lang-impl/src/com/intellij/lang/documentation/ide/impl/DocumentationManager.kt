@@ -12,6 +12,8 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.actions.documentationTargets
+import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalResolveLinkResult
@@ -141,7 +143,8 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       return
     }
     val browser = DocumentationBrowser.createBrowser(project, request)
-    val popup = createDocumentationPopup(project, browser, popupContext)
+    val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
+    val popup = createDocumentationPopup(project, popupUI, popupContext)
     setPopup(popup)
     showPopupLater(popup, browser, popupContext)
   }
