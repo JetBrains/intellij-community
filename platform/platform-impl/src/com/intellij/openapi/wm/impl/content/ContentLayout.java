@@ -10,11 +10,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Objects;
 
 abstract class ContentLayout {
   ToolWindowContentUi ui;
@@ -59,7 +59,12 @@ abstract class ContentLayout {
                ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
                : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets());
     }
-    UIUtil.setBorder(label, border);
+    Border oldBorder = label.getBorder();
+    // Don't update component border (with following revalidation and repainting) if existing border is exactly the same we're going to set
+    if (oldBorder == null || !Objects.equals(oldBorder.getClass(), border.getClass())
+        || !oldBorder.getBorderInsets(label).equals(border.getBorderInsets(label))) {
+      label.setBorder(border);
+    }
     label.setVisible(shouldShowId());
   }
 
