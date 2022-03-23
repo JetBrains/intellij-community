@@ -46,7 +46,6 @@ class CodeVisionRichTextPainter<T>(
     var xOffset = x
 
     var underlineColor: Color? = null
-    val size = size(editor, state, value)
     richSegments.forEach {
       if (it.attributes.bgColor != null) logger.error("Rich text renderer doesn't support background colors currently")
       if (it.attributes.waveColor != null) logger.error("Rich text renderer doesn't support effect colors currently")
@@ -60,15 +59,16 @@ class CodeVisionRichTextPainter<T>(
         g.drawString(it.text, xOffset, y)
       }
       val metrics = g.fontMetrics
-      xOffset += metrics.stringWidth(it.text)
       if (it.attributes.isStrikeout) {
         withColor(g, foregroundColor) {
-          EffectPainter2D.STRIKE_THROUGH.paint(g, x.toDouble(), (y + JBUI.scale(1)).toDouble(), size.width.toDouble(), 5.0, g.font)
+          EffectPainter2D.STRIKE_THROUGH.paint(g, xOffset.toDouble(), (y + JBUI.scale(1)).toDouble(), metrics.stringWidth(it.text).toDouble(), 5.0, g.font)
         }
       }
+      xOffset += metrics.stringWidth(it.text)
     }
 
     if (hovered) {
+      val size = size(editor, state, value)
       withColor(g, underlineColor) {
         EffectPainter2D.LINE_UNDERSCORE.paint(g, x.toDouble(), (y + JBUI.scale(1)).toDouble(), size.width.toDouble(), 5.0, g.font)
       }
