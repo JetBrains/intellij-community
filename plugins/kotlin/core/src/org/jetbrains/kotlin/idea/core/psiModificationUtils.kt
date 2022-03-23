@@ -395,12 +395,9 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
 
     if (this is KtDeclaration) {
         if (hasActualModifier() || isExpectDeclaration()) return false
-        val containingClassOrObject = containingClassOrObject ?: return true
-        if (containingClassOrObject is KtClass &&
-            (containingClassOrObject.isInterface() || containingClassOrObject.isAnnotation())
-        ) {
-            return false
-        }
+        val containingClassOrObject = containingClassOrObject as? KtClass ?: return true
+        if (containingClassOrObject.isAnnotation()) return false
+        if (containingClassOrObject.isInterface() && !hasBody()) return false
     }
 
     return true
