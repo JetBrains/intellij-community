@@ -2,19 +2,13 @@
 package com.intellij.notification.impl
 
 import com.intellij.UtilBundle
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
-import com.intellij.notification.ActionCenter
-import com.intellij.notification.EventLog
-import com.intellij.notification.EventLogConsole
-import com.intellij.notification.LogModel
-import com.intellij.notification.Notification
+import com.intellij.notification.*
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
@@ -24,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -35,7 +28,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.NullableComponent
 import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -63,16 +55,13 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.function.Consumer
-import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.CaretEvent
 import javax.swing.event.DocumentEvent
-import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
 import kotlin.streams.toList
@@ -483,8 +472,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   private val myTimeComponents = ArrayList<JLabel>()
   private val myTimeAlarm = Alarm(myProject)
 
-  private val mySuggestionGotItPanel = JPanel(BorderLayout())
-
   private lateinit var myClearCallback: (List<Notification>) -> Unit
   private lateinit var myRemoveCallback: Consumer<Notification>
 
@@ -500,28 +487,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
-      mySuggestionGotItPanel.background = JBColor.lazy {
-        EditorColorsManager.getInstance().globalScheme.getColor(HintUtil.PROMOTION_PANE_KEY)
-      }
-      mySuggestionGotItPanel.isVisible = false
-      mySuggestionGotItPanel.border = JBUI.Borders.customLineBottom(JBColor.border())
-      add(mySuggestionGotItPanel, BorderLayout.NORTH)
-
-      val gotItTitle = MultiLineLabel(IdeBundle.message("notifications.toolwindow.suggestion.gotit.title"))
-      gotItTitle.mediumFontFunction()
-      gotItTitle.border = JBUI.Borders.empty(7, 12, 7, 0)
-      mySuggestionGotItPanel.add(gotItTitle, BorderLayout.WEST)
-
-      val panel = JPanel(BorderLayout())
-      panel.isOpaque = false
-      panel.border = JBUI.Borders.empty(7, 0, 0, 12)
-      mySuggestionGotItPanel.add(panel, BorderLayout.EAST)
-      panel.add(LinkLabel<Any>(IdeBundle.message("notifications.toolwindow.suggestion.gotit.link"), null) { _, _ ->
-        mySuggestionGotItPanel.isVisible = false
-        myTitle.isVisible = true
-        myMainContent.fullRepaint()
-      }, BorderLayout.NORTH)
-
       myTitle.border = JBUI.Borders.emptyLeft(10)
       mainPanel.add(myTitle, BorderLayout.NORTH)
     }
@@ -584,12 +549,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myList.add(component, 0)
     updateLayout()
     myEventHandler.add(component)
-
-    if (mySuggestionType && !PropertiesComponent.getInstance().getBoolean("notification.suggestion.dont.show.gotit")) {
-      PropertiesComponent.getInstance().setValue("notification.suggestion.dont.show.gotit", true)
-      mySuggestionGotItPanel.isVisible = true
-      myTitle.isVisible = false
-    }
 
     updateContent()
 
