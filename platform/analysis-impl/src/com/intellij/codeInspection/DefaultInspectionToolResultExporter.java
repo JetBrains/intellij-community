@@ -547,9 +547,9 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     @Override
     public int compareTo(@NotNull ProblemDescriptorKey o) {
-      if (file == null && o.file == null) return 0;
-      if (file == null) return 1;
-      if (o.file == null) return -1;
+      if (file == null || o.file == null) {
+        return Boolean.compare(file == null, o.file == null);
+      }
 
       int comparison = file.getPath().compareTo(o.file.getPath());
       if (comparison == 0) comparison = Integer.compare(lineNumber, o.lineNumber);
