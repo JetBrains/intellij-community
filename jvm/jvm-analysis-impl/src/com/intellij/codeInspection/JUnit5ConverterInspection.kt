@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -26,8 +26,6 @@ import com.intellij.util.containers.MultiMap
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.*
-import org.jetbrains.uast.generate.getUastElementFactory
-import org.jetbrains.uast.generate.replace
 
 class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::class.java) {
   private fun shouldInspect(file: PsiFile): Boolean {
@@ -147,33 +145,6 @@ class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::cl
           JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix::class.java,
           false
         )
-      }
-
-      override fun doMigration(
-        elementToBind: PsiElement,
-        newQName: String,
-        usages: Array<out UsageInfo>,
-        refsToShorten: ArrayList<in SmartPsiElementPointer<PsiElement>>
-      ) {
-        val shortName = StringUtil.getShortName(newQName)
-        val project = elementToBind.project
-        for (usage in usages) {
-          if (usage is MigrationUsageInfo) {
-            if (newQName == usage.mapEntry.newName) {
-              val element = usage.getElement()
-              if (element == null || !element.isValid) continue
-              val uElement = element.getUastParentOfType<UQualifiedReferenceExpression>()
-              if (uElement == null) {
-                val simpleExpr = element.getUastParentOfType<USimpleNameReferenceExpression>()
-                val uFactory = simpleExpr?.getUastElementFactory(project) ?: continue
-                simpleExpr.replace(uFactory.createSimpleReference(shortName, element)!!)
-                continue
-              }
-              val qualifiedExpression = uElement.getUastElementFactory(project)?.createQualifiedReference(newQName, element) ?: continue
-              uElement.replace(qualifiedExpression)
-            }
-          }
-        }
       }
     }
   }
