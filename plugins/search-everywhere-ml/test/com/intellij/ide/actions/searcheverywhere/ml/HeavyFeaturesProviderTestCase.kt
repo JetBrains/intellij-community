@@ -105,8 +105,10 @@ abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeatures
       inner class Package(private val packageName: String) {
         private val packageDirectory = File(contentDirectory, packageName.replace('.', File.separatorChar)).apply { mkdirs() }
 
-        fun file(filename: String) {
+        fun file(filename: String, afterCreate: ((file: VirtualFile) -> Unit)? = null) {
           File(packageDirectory, filename).apply { createNewFile() }
+            .run { this.toVirtualFile() }
+            .also { file -> afterCreate?.let { callback -> callback(file) }}
         }
 
         fun directory(name: String) {
