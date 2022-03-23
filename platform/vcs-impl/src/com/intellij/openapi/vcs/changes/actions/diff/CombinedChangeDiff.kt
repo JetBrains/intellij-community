@@ -9,19 +9,21 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
+import org.jetbrains.annotations.Nls
 
-internal class CombinedChangeDiffVirtualFile(requestProducer: CombinedChangeDiffRequestProducer) :
+class CombinedChangeDiffVirtualFile(requestProducer: CombinedChangeDiffRequestProducer) :
   CombinedDiffVirtualFile<CombinedChangeDiffRequestProducer>(requestProducer) {
 
   override fun createProcessor(project: Project) = CombinedChangeDiffRequestProcessor(project, requestProducer)
 }
 
-internal class CombinedChangeDiffRequestProducer(val producers: List<ChangeDiffRequestProducer>) : CombinedDiffRequestProducer {
+class CombinedChangeDiffRequestProducer(internal val producers: List<ChangeDiffRequestChain.Producer>,
+                                        private val title: @Nls String? = null) : CombinedDiffRequestProducer {
   override fun getFilesSize(): Int = producers.size
 
-  override fun getName(): String = VcsBundle.message("changes.combined.diff")
+  override fun getName(): String = title ?: VcsBundle.message("changes.combined.diff")
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     val filePathComparator = ChangesComparator.getFilePathComparator(true)
@@ -41,21 +43,20 @@ internal class CombinedChangeDiffRequestProducer(val producers: List<ChangeDiffR
     return CombinedDiffRequest(name, requests)
   }
 
-  private fun createChildRequest(producer: ChangeDiffRequestProducer): CombinedDiffRequest.ChildDiffRequest {
-    val change = producer.change
-    val blockId = CombinedPathBlockId(ChangesUtil.getFilePath(change), change.fileStatus)
+  private fun createChildRequest(producer: ChangeDiffRequestChain.Producer): CombinedDiffRequest.ChildDiffRequest {
+    val blockId = CombinedPathBlockId(producer.filePath, producer.fileStatus)
     return CombinedDiffRequest.ChildDiffRequest(producer, blockId)
   }
 }
 
-internal class CombinedChangeDiffRequestProcessor(project: Project?,
-                                                  private val requestProducer: CombinedChangeDiffRequestProducer) :
+class CombinedChangeDiffRequestProcessor(project: Project?,
+                                         private val requestProducer: CombinedChangeDiffRequestProducer) :
   CombinedDiffRequestProcessor(project, requestProducer) {
 
   override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
 
-  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestProducer>() {
-    override fun getChanges(): ListSelection<out ChangeDiffRequestProducer> {
+  private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestChain.Producer>() {
+    override fun getChanges(): ListSelection<out ChangeDiffRequestChain.Producer> {
       val changes = requestProducer.producers
       val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
       val selectedIndex = when {
@@ -65,7 +66,7 @@ internal class CombinedChangeDiffRequestProcessor(project: Project?,
       return ListSelection.createAt(changes, selectedIndex)
     }
 
-    override fun onSelected(change: ChangeDiffRequestProducer) {
+    override fun onSelected(change: ChangeDiffRequestChain.Producer) {
       viewer?.selectDiffBlock(change.filePath, change.fileStatus, ScrollPolicy.DIFF_BLOCK)
     }
   }
