@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.openapi.command.CommandProcessor
@@ -26,12 +25,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchTh
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinRoot
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
-import java.io.IOException
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -44,26 +40,24 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         const val PRIORITY_DIRECTIVE = "PRIORITY"
 
         private val quickFixesAllowedToResolveInWriteAction = AllowedToResolveUnderWriteActionData(
-                IDEA_TEST_DATA_DIR.resolve("quickfix/allowResolveInWriteAction.txt").path,
-                """
+            IDEA_TEST_DATA_DIR.resolve("quickfix/allowResolveInWriteAction.txt").path,
+            """
                     # Actions that are allowed to resolve in write action. Normally this list shouldn't be extended and eventually should
                     # be dropped. Please consider rewriting a quick-fix and remove resolve from it before adding a new entry to this list.
-                """.trimIndent()
+            """.trimIndent(),
         )
 
         private fun unwrapIntention(action: Any): Any = when (action) {
             is IntentionActionDelegate -> unwrapIntention(action.delegate)
-            is IntentionActionWrapper -> unwrapIntention(action.delegate)
             is QuickFixWrapper -> unwrapIntention(action.fix)
             else -> action
         }
     }
 
-    @Throws(Exception::class)
     protected open fun doTest(beforeFileName: String) {
         val beforeFileText = FileUtil.loadFile(File(beforeFileName))
-        InTextDirectivesUtils.checkIfMuted(beforeFileText);
-        withCustomCompilerOptions<Unit>(beforeFileText, project, module) {
+        InTextDirectivesUtils.checkIfMuted(beforeFileText)
+        withCustomCompilerOptions(beforeFileText, project, module) {
             val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
             try {
                 myFixture.enableInspections(*inspections)
@@ -122,7 +116,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 expectedErrorMessage = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $SHOULD_FAIL_WITH_DIRECTIVE: ")
                 val contents = StringUtil.convertLineSeparators(fileText)
                 var fileName = testFile.canonicalFile.name
-                val putIntoPackageFolder = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $FORCE_PACKAGE_FOLDER_DIRECTIVE") != null
+                val putIntoPackageFolder =
+                    InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $FORCE_PACKAGE_FOLDER_DIRECTIVE") != null
                 if (putIntoPackageFolder) {
                     fileName = getPathAccordingToPackage(fileName, contents)
                     myFixture.addFileToProject(fileName, contents)
@@ -169,7 +164,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val intention = findActionWithText(actionHint.expectedText)
         if (actionHint.shouldPresent()) {
             if (intention == null) {
-                    fail(
+                fail(
                     "Action with text '" + actionHint.expectedText + "' not found\nAvailable actions:\n" +
                             myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
                 return
@@ -184,8 +179,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
                 val actualPriority = (unwrappedIntention as? PriorityAction)?.priority
                 assertTrue(
-                        "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
-                        expectedPriority == actualPriority
+                    "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
+                    expectedPriority == actualPriority
                 )
             }
 
@@ -205,8 +200,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                         myFixture.launchAction(intention)
                     }
                     null
-                }
-                catch (comparisonFailure: ComparisonFailure) {
+                } catch (comparisonFailure: ComparisonFailure) {
                     comparisonFailure
                 }
 
@@ -288,7 +282,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 val group = highlight.problemGroup
                 if (group is SuppressableProblemGroup) {
                     val at = myFixture.file.findElementAt(highlight.actualStartOffset) ?: continue
-                    val actions = highlight.quickFixActionRanges[0].first.getOptions(at, null) ?: continue
+                    val actions = highlight.quickFixActionRanges[0].first.getOptions(at, null)
                     for (action in actions) {
                         if (action.text == text) {
                             return action
@@ -297,6 +291,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 }
             }
         }
+
         return null
     }
 
