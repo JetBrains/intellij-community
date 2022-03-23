@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslRule;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.CompletionResult;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -14,13 +14,15 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 import java.io.File;
-import java.util.List;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class FileChooserCompletionTest {
   private static final TestFixtureRule appRule = new TestFixtureRule();
@@ -31,7 +33,10 @@ public class FileChooserCompletionTest {
 
   @Test
   public void testEmpty() {
-    assertComplete("", ArrayUtil.EMPTY_STRING_ARRAY, Map.of(), "", null);
+    if (!SystemInfo.isWindows) {
+      assertComplete("", ArrayUtil.EMPTY_STRING_ARRAY, Map.of(), "", null);
+    }
+
     assertComplete("1", ArrayUtil.EMPTY_STRING_ARRAY, Map.of(), "", null);
   }
 
@@ -80,20 +85,32 @@ public class FileChooserCompletionTest {
   }
 
   @Test
-  public void testWslMatching() {
-    List<WSLDistribution> vms = wslRule.getVms();
-    assumeTrue("No WSL", !vms.isEmpty());
+  public void testWindowsRoots() {
+    assumeWindows();
 
-    String[] roots = vms.stream().map(d -> StringUtil.trimTrailing(d.getUNCRootPath().toString(), '\\')).toArray(String[]::new);
-    String first = Stream.of(roots).sorted().findFirst().orElseThrow();
-    int p = first.indexOf('\\', 2);
-    assertThat(p).withFailMessage("Malformed name: '%s'", first).isGreaterThan(2);
+    String[] fsRoots = StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false).map(Path::toString).toArray(String[]::new);
+    String[] wslRoots = wslRule.getVms().stream().map(d -> StringUtil.trimTrailing(d.getUNCRootPath().toString(), '\\')).toArray(String[]::new);
+    String[] allRoots = ArrayUtil.mergeArrays(fsRoots, wslRoots, String[]::new);
+    String firstRoot = Stream.of(allRoots).sorted().findFirst().orElseThrow();
+    assertComplete("", allRoots, Map.of(), "", firstRoot);
 
-    assertComplete("\\\\", roots, Map.of(), "", first);
-    assertComplete(first.substring(0, 3), roots, Map.of(), "", first);  // '\\w'
-    assertComplete(first.substring(0, p + 1), roots, Map.of(), "", first);  // '\\wsl$\'
-    assertComplete(first, new String[]{first}, Map.of(), "", first);  // '\\wsl$\xxx'
-    assertComplete(first + "\\ho", new String[]{"home"}, Map.of(), "", "home");  // '\\wsl$\xxx\ho'
+    String sysDrive = System.getenv("SystemDrive");
+    assertThat(sysDrive).isNotBlank();
+    String[] expected = {sysDrive + '\\'};
+    assertComplete(sysDrive.substring(0, 1), expected, Map.of(), "", expected[0]);
+    assertComplete(sysDrive, expected, Map.of(), "", expected[0]);
+
+    if (wslRoots.length != 0) {
+      String firstWsl = Stream.of(wslRoots).sorted().findFirst().orElseThrow();
+      int p = firstWsl.indexOf('\\', 2);
+      assertThat(p).withFailMessage("Malformed name: '%s'", firstWsl).isGreaterThan(2);
+
+      assertComplete("\\\\", wslRoots, Map.of(), "", firstWsl);
+      assertComplete(firstWsl.substring(0, 3), wslRoots, Map.of(), "", firstWsl);  // '\\w'
+      assertComplete(firstWsl.substring(0, p + 1), wslRoots, Map.of(), "", firstWsl);  // '\\wsl$\'
+      assertComplete(firstWsl, new String[]{firstWsl}, Map.of(), "", firstWsl);  // '\\wsl$\xxx'
+      assertComplete(firstWsl + "\\ho", new String[]{"home"}, Map.of(), "", "home");  // '\\wsl$\xxx\ho'
+    }
   }
 
   private void assertComplete(String typed, String[] expected, String preselected) {

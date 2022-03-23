@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +59,12 @@ public class LocalFsFinder implements Finder {
 
     String toFind = normalize(path);
     if (toFind.isEmpty()) {
-      toFind = FileSystems.getDefault().getRootDirectories().iterator().next().toString();
+      if (myUseVfs) {
+        toFind = FileSystems.getDefault().getRootDirectories().iterator().next().toString();
+      }
+      else  {
+        return SystemInfo.isWindows ? WindowsRootsFile.TOP_ALL : null;
+      }
     }
 
     if (myUseVfs) {
@@ -74,10 +80,13 @@ public class LocalFsFinder implements Finder {
       if (file.isAbsolute()) {
         return new IoFile(file);
       }
+      else if (isIncompleteDrive(toFind) && SystemInfo.isWindows) {
+        return WindowsRootsFile.INCOMPLETE_DRIVES;
+      }
     }
     catch (InvalidPathException ignored) {
       if (isIncompleteUnc(toFind) && WSLUtil.isSystemCompatible()) {
-        return toFind.equals("\\\\") ? WslTopFile.TOP : WslTopFile.INCOMPLETE;
+        return toFind.equals("\\\\") ? WindowsRootsFile.TOP_WSL : WindowsRootsFile.INCOMPLETE_WSL;
       }
     }
 
@@ -110,13 +119,19 @@ public class LocalFsFinder implements Finder {
     try {
       Path pathObj = Path.of(normalize(path));
       List<String> result = new ArrayList<>(pathObj.getNameCount() + 1);
-      result.add(trimUncRoot(pathObj.getRoot().toString()));
+      Path root = pathObj.getRoot();
+      if (root != null) result.add(trimUncRoot(root.toString()));
       for (Path part : pathObj) result.add(part.toString());
       return result;
     }
     catch (InvalidPathException e) {
       return isIncompleteUnc(path) ? List.of(trimUncRoot(path)) : Finder.super.split(path);
     }
+  }
+
+  private static boolean isIncompleteDrive(String path) {
+    return OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) &&
+           (path.length() == 1 || path.length() == 2 && path.charAt(1) == ':');
   }
 
   private static boolean isIncompleteUnc(String path) {
@@ -284,7 +299,7 @@ public class LocalFsFinder implements Finder {
         return new IoFile(parent);
       }
       else if (myFile.toString().startsWith("\\\\")) {
-        return WslTopFile.TOP;
+        return WindowsRootsFile.TOP_ALL;
       }
       else {
         return null;
@@ -332,15 +347,13 @@ public class LocalFsFinder implements Finder {
     }
   }
 
-  private static final class WslTopFile extends LookupFileWithMacro {
-    private static final WslTopFile TOP = new WslTopFile(true);
-    private static final WslTopFile INCOMPLETE = new WslTopFile(false);
+  private static final class WindowsRootsFile extends LookupFileWithMacro {
+    private static final WindowsRootsFile TOP_ALL = new WindowsRootsFile();
+    private static final WindowsRootsFile TOP_WSL = new WindowsRootsFile();
+    private static final WindowsRootsFile INCOMPLETE_DRIVES = new WindowsRootsFile();
+    private static final WindowsRootsFile INCOMPLETE_WSL = new WindowsRootsFile();
 
-    private final boolean myExists;
-
-    private WslTopFile(boolean exists) {
-      myExists = exists;
-    }
+    private WindowsRootsFile() { }
 
     @Override
     public String getName() {
@@ -360,15 +373,31 @@ public class LocalFsFinder implements Finder {
     @Override
     public List<LookupFile> getChildren(LookupFilter filter) {
       try {
-        List<WSLDistribution> vms = WslDistributionManager.getInstance().getInstalledDistributionsFuture().get(200, TimeUnit.MILLISECONDS);
-        List<LookupFile> result = new ArrayList<>(vms.size());
-        for (WSLDistribution vm : vms) {
-          IoFile file = new IoFile(vm.getUNCRootPath());
-          if (filter.isAccepted(file)) {
-            result.add(file);
+        List<LookupFile> result = new ArrayList<>();
+
+        if (this == TOP_ALL || this == INCOMPLETE_DRIVES) {
+          for (Path root : FileSystems.getDefault().getRootDirectories()) {
+            IoFile file = new IoFile(root);
+            if (filter.isAccepted(file)) {
+              result.add(file);
+            }
           }
         }
+
+        if (this != INCOMPLETE_DRIVES) {
+          if (WSLUtil.isSystemCompatible()) {
+            List<WSLDistribution> vms = WslDistributionManager.getInstance().getInstalledDistributionsFuture().get(200, TimeUnit.MILLISECONDS);
+            for (WSLDistribution vm : vms) {
+              IoFile file = new IoFile(vm.getUNCRootPath());
+              if (filter.isAccepted(file)) {
+                result.add(file);
+              }
+            }
+          }
+        }
+
         result.sort((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), false));
+
         return result;
       }
       catch (Exception ignore) {
@@ -383,7 +412,7 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public boolean exists() {
-      return myExists;
+      return this == TOP_ALL || this == TOP_WSL;
     }
 
     @Override
