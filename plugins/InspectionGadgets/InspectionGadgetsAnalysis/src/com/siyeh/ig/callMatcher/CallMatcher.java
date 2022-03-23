@@ -347,7 +347,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
     @Override
     @Contract(value = "null -> false", pure = true)
-    public boolean methodMatches(PsiMethod method) {
+    public boolean methodMatches(@Nullable PsiMethod method) {
       if (method == null) return false;
       if (!myNames.contains(method.getName())) return false;
       PsiClass aClass = method.getContainingClass();
@@ -357,6 +357,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     }
 
     @Override
+    @Contract(value = "null -> false", pure = true)
     public boolean uCallMatches(@Nullable UCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodName();
@@ -365,14 +366,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     }
 
     @Override
+    @Contract(value = "null -> false", pure = true)
     public boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference) {
       if (reference == null) return false;
       String name = reference.getCallableName();
       if (!myNames.contains(name)) return false;
       PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
-      if (!methodMatches(method)) return false;
-      PsiParameterList parameterList = method.getParameterList();
-      return parametersMatch(parameterList);
+      return methodMatches(method);
     }
 
     @Override
