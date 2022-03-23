@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
 import org.jetbrains.kotlin.idea.inspections.SimplifyNegatedBinaryExpressionInspection
+import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -82,16 +83,30 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         }
 
         val callOrQualified = element.getQualifiedExpressionForSelector() ?: element
-        val parentExclPrefixExpression =
-            callOrQualified.parents.dropWhile { it is KtParenthesizedExpression }.firstOrNull()?.asExclPrefixExpression()
+        val parentNegatedExpression = callOrQualified.parentNegatedExpression()
         psiFactory.buildExpression {
-            appendFixedText(if (negateCall && parentExclPrefixExpression == null) "!" else "")
+            val addNegation = negateCall && parentNegatedExpression == null
+            if (addNegation && callOrQualified !is KtSafeQualifiedExpression) {
+                appendFixedText("!")
+            }
             appendCallOrQualifiedExpression(element, toFunctionName)
-        }.let { (parentExclPrefixExpression ?: callOrQualified).replaced(it) }
+            if (addNegation && callOrQualified is KtSafeQualifiedExpression) {
+                appendFixedText("?.not()")
+            }
+        }.let { (parentNegatedExpression ?: callOrQualified).replaced(it) }
+    }
+
+    private fun KtExpression.parentNegatedExpression(): KtExpression? {
+        val parent = parents.dropWhile { it is KtParenthesizedExpression }.firstOrNull() ?: return null
+        return parent.asExclPrefixExpression() ?: parent.asQualifiedExpressionWithNotCall()
     }
 
     private fun PsiElement.asExclPrefixExpression(): KtPrefixExpression? {
         return safeAs<KtPrefixExpression>()?.takeIf { it.operationToken == KtTokens.EXCL && it.baseExpression != null }
+    }
+
+    private fun PsiElement.asQualifiedExpressionWithNotCall(): KtQualifiedExpression? {
+        return safeAs<KtQualifiedExpression>()?.takeIf { it.callExpression?.isCalling(FqName("kotlin.Boolean.not")) == true }
     }
 
     private fun KtExpression?.removeUnnecessaryParentheses() {
