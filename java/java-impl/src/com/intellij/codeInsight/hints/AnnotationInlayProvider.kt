@@ -180,11 +180,9 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     val psiMethod = (file as PsiJavaFile).classes[0].methods[0]
     val factory = PsiElementFactory.getInstance(file.project)
     if (psiMethod.parameterList.isEmpty) {
-      if (settings.showExternal) {
-        PREVIEW_ANNOTATION_KEY.set(psiMethod, factory.createAnnotationFromText("@Deprecated", psiMethod))
-      }
+      PREVIEW_ANNOTATION_KEY.set(psiMethod, factory.createAnnotationFromText("@Deprecated", psiMethod))
     }
-    else if (settings.showInferred)
+    else
       PREVIEW_ANNOTATION_KEY.set(psiMethod.parameterList.getParameter(0), factory.createAnnotationFromText("@NotNull", psiMethod))
   }
 
