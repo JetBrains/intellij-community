@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -41,7 +41,8 @@ object DirectiveBasedActionUtils {
         diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
     ) {
         if (disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ENABLE_WARNINGS_DIRECTIVE).isEmpty() ||
-                !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()) {
+            !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()
+        ) {
             return
         }
 
@@ -53,7 +54,7 @@ object DirectiveBasedActionUtils {
         diagnosticsProvider: (KtFile) -> Diagnostics,
         directive: String,
         name: String,
-        severity: Severity
+        severity: Severity,
     ) {
         val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive)
             .sorted()
@@ -71,45 +72,49 @@ object DirectiveBasedActionUtils {
             "All actual $name should be mentioned in test data with '$directive' directive. " +
                     "But no unnecessary $name should be me mentioned, file:\n${file.text}",
             actual,
-            expected
+            expected,
         )
     }
 
     fun inspectionChecks(name: String, file: PsiFile) {
-        InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// INSPECTION-CLASS:").takeIf { it.isNotEmpty() }?.let { inspectionNames ->
-            val inspectionManager = InspectionManager.getInstance(file.project)
-            val inspections = inspectionNames.map { Class.forName(it).getDeclaredConstructor().newInstance() as AbstractKotlinInspection }
+        val inspectionNames = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+            /* fileText = */ file.text,
+            /* ...prefixes = */ "// INSPECTION-CLASS:",
+        ).ifEmpty { return }
 
-            val problems = mutableListOf<ProblemDescriptor>()
-            ProgressManager.getInstance().executeProcessUnderProgress(
-                {
-                    for (inspection in inspections) {
-                        problems += inspection.processFile(
-                            file,
-                            inspectionManager
-                        )
-                    }
-                }, DaemonProgressIndicator()
-            )
-            val directive = "// INSPECTION:"
-            val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive)
-                .sorted()
-                .map { "$directive $it" }
+        val inspectionManager = InspectionManager.getInstance(file.project)
+        val inspections = inspectionNames.map { Class.forName(it).getDeclaredConstructor().newInstance() as AbstractKotlinInspection }
+        val problems = mutableListOf<ProblemDescriptor>()
+        ProgressManager.getInstance().executeProcessUnderProgress(
+            /* process = */ {
+                for (inspection in inspections) {
+                    problems += inspection.processFile(
+                        file,
+                        inspectionManager
+                    )
+                }
+            },
+            /* progress = */ DaemonProgressIndicator(),
+        )
 
-            val actual = problems
-                // lineNumber is 0-based
-                .map { "$directive [${it.highlightType.name}:${it.lineNumber + 1}] $it" }
-                .sorted()
+        val directive = "// INSPECTION:"
+        val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive)
+            .sorted()
+            .map { "$directive $it" }
 
-            if (actual.isEmpty() && expected.isEmpty()) return
+        val actual = problems
+            // lineNumber is 0-based
+            .map { "$directive [${it.highlightType.name}:${it.lineNumber + 1}] $it" }
+            .sorted()
 
-            KotlinLightCodeInsightFixtureTestCaseBase.assertOrderedEquals(
-                "All actual $name should be mentioned in test data with '$directive' directive. " +
-                        "But no unnecessary $name should be me mentioned, file:\n${file.text}",
-                actual,
-                expected
-            )
-        }
+        if (actual.isEmpty() && expected.isEmpty()) return
+
+        KotlinLightCodeInsightFixtureTestCaseBase.assertOrderedEquals(
+            "All actual $name should be mentioned in test data with '$directive' directive. " +
+                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
+            actual,
+            expected,
+        )
     }
 
     fun checkAvailableActionsAreExpected(file: File, availableActions: Collection<IntentionAction>) {
@@ -152,7 +157,7 @@ object DirectiveBasedActionUtils {
     private fun checkAvailableActionsAreExpected(
         fileText: String,
         availableActions: Collection<IntentionAction>,
-        assertion: (expectedDirectives : List<String>, actualActionsDirectives: List<String>) -> Unit,
+        assertion: (expectedDirectives: List<String>, actualActionsDirectives: List<String>) -> Unit,
     ) {
         val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, ACTION_DIRECTIVE).sorted()
 
