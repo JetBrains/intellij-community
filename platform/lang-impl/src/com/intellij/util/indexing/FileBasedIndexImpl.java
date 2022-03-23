@@ -426,6 +426,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Path versionFile = IndexInfrastructure.getVersionFile(name);
 
     IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
+    if (Registry.is("indexing.filename.over.vfs")) {
+      diff = IndexVersion.IndexVersionDiff.UP_TO_DATE;
+    }
     versionRegistrationStatusSink.setIndexVersionDiff(name, diff);
     if (diff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
       final boolean versionFileExisted = Files.exists(versionFile);
@@ -811,9 +814,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
             forceUpdate(project, filter, restrictedFile);
           }
-          if (!areUnsavedDocumentsIndexed(indexId)) { // todo: check scope ?
-            indexUnsavedDocuments(indexId, project, filter, restrictedFile);
-          }
+          indexUnsavedDocuments(indexId, project, filter, restrictedFile);
         }
         catch (RuntimeException e) {
           final Throwable cause = e.getCause();
@@ -840,10 +841,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Boolean scanResult = FileBasedIndexScanUtil.processAllKeys(indexId, processor, scope, idFilter);
     if (scanResult != null) return scanResult;
     return super.processAllKeys(indexId, processor, scope, idFilter);
-  }
-
-  private boolean areUnsavedDocumentsIndexed(@NotNull ID<?, ?> indexId) {
-    return myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId);
   }
 
   private static void handleDumbMode(@Nullable Project project) throws IndexNotReadyException {
