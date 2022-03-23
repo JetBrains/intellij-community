@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 interface KotlinTestFrameworkProvider {
     companion object {
@@ -21,16 +22,15 @@ interface KotlinTestFrameworkProvider {
             var found: KtLightClass? = null
 
             for (declaration in file.declarations) {
-                if (declaration is KtClass) {
-                    val javaClass = declaration.toLightClass()
-                    if (javaClass != null && predicate(javaClass)) {
-                        if (found != null) {
-                            // There should be exactly one class
-                            return null
-                        }
-
-                        found = javaClass
+                val classOrObject = declaration.safeAs<KtClassOrObject>() ?: continue
+                val javaClass = classOrObject.toLightClass()
+                if (javaClass != null && predicate(javaClass)) {
+                    if (found != null) {
+                        // There should be exactly one class
+                        return null
                     }
+
+                    found = javaClass
                 }
             }
 
