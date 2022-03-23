@@ -34,6 +34,8 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
           module("intellij.platform.tracing.rt")
+          module("intellij.platform.util.diff")
+          module("intellij.platform.util.rt.java8")
         }
 
         jar("jps-launcher.jar") {
