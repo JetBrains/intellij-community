@@ -24,12 +24,19 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import java.awt.Component
 
-internal fun quickSearchComponent(project: Project): QuickSearchComponent? {
-  val focusedComponent: Component? = WindowManagerEx.getInstanceEx().getFocusedComponent(project)
-  return ComponentUtil.getParentOfType(QuickSearchComponent::class.java, focusedComponent)
+internal fun quickSearchPopupContext(project: Project): PopupContext? {
+  val focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project)
+                         ?: return null
+  return quickSearchPopupContext(project, focusedComponent)
 }
 
-internal class QuickSearchPopupContext(
+private fun quickSearchPopupContext(project: Project, focusedComponent: Component): PopupContext? {
+  val quickSearchComponent = ComponentUtil.getParentOfType(QuickSearchComponent::class.java, focusedComponent)
+                             ?: return null
+  return QuickSearchPopupContext(project, quickSearchComponent)
+}
+
+private class QuickSearchPopupContext(
   private val project: Project,
   private val searchComponent: QuickSearchComponent,
 ) : SecondaryPopupContext() {

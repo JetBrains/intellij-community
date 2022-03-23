@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.lookup.*
@@ -7,6 +7,7 @@ import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.popup.AbstractPopup
@@ -17,6 +18,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import java.awt.Component
+
+internal fun lookupPopupContext(editor: Editor?): PopupContext? {
+  val lookup = LookupManager.getActiveLookup(editor)
+               ?: return null
+  return LookupPopupContext(lookup)
+}
 
 internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext() {
 
