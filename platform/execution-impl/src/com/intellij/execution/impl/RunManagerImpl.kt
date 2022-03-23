@@ -3,7 +3,6 @@
 
 package com.intellij.execution.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
@@ -27,8 +26,6 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
@@ -41,6 +38,11 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.util.*
 import com.intellij.util.containers.*
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -207,11 +209,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   init {
     val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) {
-        clearSelectedConfigurationIcon()
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+          clearSelectedConfigurationIcon()
 
-        deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+        }
       }
     })
 
