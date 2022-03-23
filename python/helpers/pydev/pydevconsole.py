@@ -390,7 +390,7 @@ def start_server(port):
     # 1. Start Python console server
 
     # `InterpreterInterface` implements all methods required for `server_handler`
-    interpreter = InterpreterInterface(threading.current_thread())
+    interpreter = InterpreterInterface(threading.currentThread())
 
     # Tell UMD the proper default namespace
     _set_globals_function(interpreter.get_namespace)
@@ -420,7 +420,7 @@ def start_client(host, port):
 
     client, server_transport = make_rpc_client(client_service, host, port)
 
-    interpreter = InterpreterInterface(threading.current_thread(), rpc_client=client)
+    interpreter = InterpreterInterface(threading.currentThread(), rpc_client=client)
 
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
 
@@ -454,7 +454,7 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        interpreterInterface = InterpreterInterface(None, None, threading.current_thread())
+        interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         __builtin__.interpreter = interpreterInterface
         print(interpreterInterface.get_greeting_msg())
 
