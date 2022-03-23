@@ -105,7 +105,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final StringBuilder myTextBeforeStart = new StringBuilder();
 
-  enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
+  protected enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
 
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
 
