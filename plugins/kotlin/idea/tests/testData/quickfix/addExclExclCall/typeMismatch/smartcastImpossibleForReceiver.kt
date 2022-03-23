@@ -1,5 +1,9 @@
 // "Add non-null asserted (!!) call" "true"
-// ACTION: Cast expression 'a' to 'Foo'
+// ACTION: Add non-null asserted (!!) call
+// ACTION: Convert to run
+// ACTION: Convert to with
+// ACTION: Remove braces from 'if' statement
+// ACTION: Replace 'if' expression with safe access expression
 
 interface Foo {
     fun bar()
