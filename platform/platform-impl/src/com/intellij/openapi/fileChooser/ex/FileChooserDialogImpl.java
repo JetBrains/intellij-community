@@ -525,8 +525,16 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         return myPasteProvider;
       }
 
+      if (FileChooserKeys.DELETE_ACTION_AVAILABLE.is(dataId)) {
+        return !deleteActionDisabled();
+      }
+
       return myChooserDescriptor.getUserData(dataId);
     }
+  }
+
+  protected boolean deleteActionDisabled() {
+    return myPathTextField.getField().hasFocus();
   }
 
   public void toggleShowTextField() {
