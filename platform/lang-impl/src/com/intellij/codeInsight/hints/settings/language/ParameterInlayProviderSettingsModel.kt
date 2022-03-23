@@ -64,7 +64,6 @@ class ParameterInlayProviderSettingsModel(
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
-    pass.doApplyInformationToEditor()
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                backup.reset()
