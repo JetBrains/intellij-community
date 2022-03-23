@@ -24,7 +24,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         private val defaultBeans = HashMap<Class<*>, Any>()
 
         private fun createDefaultBean(beanClass: Class<Any>): Any {
-            return ReflectionUtil.newInstance<Any>(beanClass).apply {
+            return ReflectionUtil.newInstance(beanClass).apply {
                 if (this is K2JSCompilerArguments) {
                     sourceMapPrefix = ""
                 }
@@ -74,7 +74,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 
     protected fun validateInheritedFieldsUnchanged(settings: T) {
         @Suppress("UNCHECKED_CAST")
-        val inheritedProperties = collectProperties<T>(settings::class as KClass<T>, true)
+        val inheritedProperties = collectProperties(settings::class as KClass<T>, true)
         val defaultInstance = createSettings()
         val invalidFields = inheritedProperties.filter { it.get(settings) != it.get(defaultInstance) }
         if (invalidFields.isNotEmpty()) {
