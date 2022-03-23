@@ -15,7 +15,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -108,7 +108,7 @@ open class CodeVisionHost(val project: Project) {
             }
           }
 
-          val viewService = ServiceManager.getService(project, CodeVisionView::class.java)
+          val viewService = project.service<CodeVisionView>()
           viewService.setPerAnchorLimits(
             CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
 
@@ -256,7 +256,7 @@ open class CodeVisionHost(val project: Project) {
   }
 
   private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind{
-    return lifeSettingModel.codeVisionGroupToPosition[provider.name].nullIfDefault() ?: lifeSettingModel.defaultPosition.value
+    return lifeSettingModel.codeVisionGroupToPosition[provider.groupId].nullIfDefault() ?: lifeSettingModel.defaultPosition.value
   }
 
   private fun getPriorityForId(id: String): Int {
