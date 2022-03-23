@@ -4,6 +4,8 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
+import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -15,6 +17,7 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -103,6 +106,15 @@ class CodeVisionPass(
       ApplicationManager.getApplication().assertIsDispatchThread()
       saveToCache(project, editor, providerIdToLenses)
       updateProviders(project, editor, providerIdToLenses)
+    }
+
+    fun addStrikeout(enabled: Boolean): CodeVisionData {
+      return if (enabled) this
+      else CodeVisionData(providerIdToLenses.mapValues { entry -> DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(entry.value.codeVisionEntries.map {
+        val richText = RichText()
+        richText.append(it.second.longPresentation, SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null))
+        Pair(it.first, RichTextCodeVisionEntry(it.second.providerId, richText))}, entry.value.modificationStamp)
+      })
     }
 
     override fun toString(): String {
