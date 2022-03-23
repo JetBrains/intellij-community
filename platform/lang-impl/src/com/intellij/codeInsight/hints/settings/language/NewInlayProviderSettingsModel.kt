@@ -83,7 +83,7 @@ class NewInlayProviderSettingsModel<T : Any>(
 
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     val key = "inlay." + providerWithSettings.provider.key.id + "." + case.id
-    return providerWithSettings.provider.getProperty(key)
+    return providerWithSettings.provider.getCaseDescription(case)
   }
 
   override fun apply() {
