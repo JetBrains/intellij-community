@@ -6501,6 +6501,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testExposedTypeParameterBound() throws Exception {
             runTest("testData/quickfix/decreaseVisibility/exposedTypeParameterBound.kt");
         }
+
+        @TestMetadata("exposedTypeParameterBoundNested.kt")
+        public void testExposedTypeParameterBoundNested() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedTypeParameterBoundNested.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
