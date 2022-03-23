@@ -3,6 +3,8 @@ package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
 import com.intellij.codeInsight.daemon.impl.HintUtil
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -21,7 +23,13 @@ open class CodeVisionThemeInfoProvider {
 
   open fun font(editor: Editor, style: Int = Font.PLAIN): Font {
     val size = lensFontSize(editor)
-    return UIUtil.getLabelFont().deriveFont(style, size)
+    return if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+      val editorFont = EditorUtil.getEditorFont()
+      editorFont.deriveFont(style, size)
+    }
+    else {
+      UIUtil.getLabelFont().deriveFont(style, size)
+    }
   }
 
   open fun lensFontSize(editor: Editor) = HintUtil.getSize(editor)
