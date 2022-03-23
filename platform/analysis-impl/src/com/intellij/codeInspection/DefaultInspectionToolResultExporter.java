@@ -165,10 +165,15 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
                                @NotNull RefEntity refEntity,
                                @NotNull Consumer<? super Element> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
-    final var keys = Arrays.stream(descriptors).map(desc -> new ProblemDescriptorKey(desc));
-    for (ProblemDescriptorKey key : keys.sorted().collect(Collectors.toList())) {
+    final List<ProblemDescriptorKey> keys = Arrays
+      .stream(descriptors)
+      .filter(desc -> !isDescriptorExcluded.test(desc))
+      .map(desc -> new ProblemDescriptorKey(desc))
+      .sorted()
+      .collect(Collectors.toList());
+
+    for (ProblemDescriptorKey key : keys) {
       final var descriptor = key.descriptor;
-      if (isDescriptorExcluded.test(descriptor)) continue;
       Element element = null;
       try {
         element = refEntity.getRefManager().export(refEntity, key.lineNumber);
