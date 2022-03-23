@@ -177,7 +177,7 @@ class KotlinImportOptimizer : ImportOptimizer {
 
                     if (!reference.canBeResolvedViaImport(target, bindingContext)) continue
 
-                    if (isAccessibleAsMember(importableDescriptor, element, bindingContext)) continue
+                    if (isAccessibleAsMember(importableDescriptor, names, element, bindingContext)) continue
 
                     val descriptorNames = (aliases[importableFqName].orEmpty() + importableFqName.shortName()).intersect(names)
                     namesToImport.getOrPut(importableFqName) { hashSetOf() } += descriptorNames
@@ -186,8 +186,13 @@ class KotlinImportOptimizer : ImportOptimizer {
             }
         }
 
-        private fun isAccessibleAsMember(target: DeclarationDescriptor, place: KtElement, bindingContext: BindingContext): Boolean {
-            if (target.containingDeclaration !is ClassDescriptor) return false
+        private fun isAccessibleAsMember(
+            target: DeclarationDescriptor,
+            referenceNames: Collection<Name>,
+            place: KtElement,
+            bindingContext: BindingContext
+        ): Boolean {
+            if (target.name !in referenceNames || target.containingDeclaration !is ClassDescriptor) return false
 
             fun isInScope(scope: HierarchicalScope): Boolean {
                 return when (target) {
