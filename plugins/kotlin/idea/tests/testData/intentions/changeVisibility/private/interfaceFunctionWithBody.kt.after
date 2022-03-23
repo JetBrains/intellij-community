@@ -1,0 +1,5 @@
+interface Interface {
+    <caret>private fun f(): String {
+        return ""
+    }
+}
