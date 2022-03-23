@@ -2,10 +2,13 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.CommonBundle
-import com.intellij.execution.*
+import com.intellij.execution.IS_RUN_MANAGER_INITIALIZED
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunManagerListener
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
-import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.runToolbar.data.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
@@ -28,79 +31,25 @@ class RunToolbarSlotManager(val project: Project) {
     @JvmField
     @Topic.ProjectLevel
     val RUN_TOOLBAR_SLOT_CONFIGURATION_MAP_TOPIC = Topic("RunToolbarWidgetSlotConfigurationMapChanged",
-                                                         RunToolbarSlotsConfigurationListener::class.java)
+                                                         RWSlotsConfigurationListener::class.java)
   }
 
   private val runToolbarSettings = RunToolbarSettings.getInstance(project)
 
-  private val slotListeners = mutableListOf<SlotListener>()
+  internal val slotListeners = RWSlotController()
+  internal val activeListener = RWAddedController()
+  internal val stateListeners = RWStateController()
 
   internal var mainSlotData = SlotDate(UUID.randomUUID().toString())
 
-  val activeProcesses = ActiveProcesses()
+  val activeProcesses = RWActiveProcesses()
   private val dataIds = mutableListOf<String>()
 
   private val slotsData = mutableMapOf<String, SlotDate>()
 
-  internal fun addListener(listener: SlotListener) {
-    slotListeners.add(listener)
-  }
-
-  internal fun removeListener(listener: SlotListener) {
-    slotListeners.remove(listener)
-  }
-
-  private val listeners = mutableListOf<ActiveListener>()
-  fun addListener(listener: ActiveListener) {
-    listeners.add(listener)
-  }
-
-  fun removeListener(listener: ActiveListener) {
-    listeners.remove(listener)
-  }
-
-  private val stateListeners = mutableListOf<StateListener>()
-  internal fun addListener(listener: StateListener) {
-    stateListeners.add(listener)
-  }
-
-  internal fun removeListener(listener: StateListener) {
-    stateListeners.remove(listener)
-  }
-
-  enum class State {
-    MULTIPLE,
-    MULTIPLE_WITH_MAIN,
-    SINGLE_MAIN,
-    SINGLE_PLAIN,
-    INACTIVE;
-
-    fun isSingleProcess(): Boolean {
-      return this == SINGLE_PLAIN || this == SINGLE_MAIN
-    }
-
-    fun isSingleMain(): Boolean {
-      return this == SINGLE_MAIN
-    }
-
-    fun isSinglePlain(): Boolean {
-      return this == SINGLE_PLAIN
-    }
-
-    fun isMultipleProcesses(): Boolean {
-      return this == MULTIPLE || this == MULTIPLE_WITH_MAIN
-    }
-
-    fun isMainActive(): Boolean {
-      return this == MULTIPLE_WITH_MAIN || this == SINGLE_MAIN
-    }
-
-    fun isActive(): Boolean {
-      return this != INACTIVE
-    }
-  }
-
   private var activeDisposable: CheckedDisposable? = null
+
+  private val processController = RWProcessController(project)
 
   internal var active: Boolean = false
     set(value) {
@@ -117,24 +66,19 @@ class RunToolbarSlotManager(val project: Project) {
         Disposer.register(project, disp)
         activeDisposable = disp
 
-        val settingsData = runToolbarSettings.getConfigurations()
+        val settingsData =  runToolbarSettings.getConfigurations()
         val slotOrder = settingsData.first
         val configurations = settingsData.second
 
         slotOrder.filter { configurations[it] != null }.forEachIndexed { index, s ->
           if (index == 0) {
-            mainSlotData = SlotDate(s)
+            mainSlotData.updateId(s)
             mainSlotData.configuration = configurations[s]
             slotsData[mainSlotData.id] = mainSlotData
           }
           else {
             addSlot(s).configuration = configurations[s]
           }
-        }
-
-        if(slotsData.isEmpty()) {
-          mainSlotData = SlotDate(UUID.randomUUID().toString())
-          slotsData[mainSlotData.id] = mainSlotData
         }
 
         if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: ${configurations.values} RunToolbar")
@@ -169,7 +113,15 @@ class RunToolbarSlotManager(val project: Project) {
           }
         })
 
-        listeners.forEach { it.enabled() }
+        val executions = processController.getActiveExecutions()
+        executions.filter { it.isRunning() == true }.forEach { addNewProcess(it) }
+        activeListener.enabled()
+
+        update()
+
+        SwingUtilities.invokeLater {
+          ActivityTracker.getInstance().inc()
+        }
       }
       else {
         activeDisposable?.let {
@@ -178,14 +130,13 @@ class RunToolbarSlotManager(val project: Project) {
           activeDisposable = null
         }
 
-        listeners.forEach { it.disabled() }
+        activeListener.disabled()
         clear()
         if (RunToolbarProcess.logNeeded) LOG.info(
           "INACTIVE SM RunToolbar")
 
       }
-
-      slotListeners.forEach { it.rebuildPopup() }
+      slotListeners.rebuildPopup()
       publishConfigurations(getConfigurationMap())
     }
 
@@ -205,6 +156,7 @@ class RunToolbarSlotManager(val project: Project) {
     slotsData.clear()
 
     activeProcesses.clear()
+    state = RWSlotManagerState.INACTIVE
   }
 
 
@@ -225,10 +177,10 @@ class RunToolbarSlotManager(val project: Project) {
 
       slotsData[mainSlotData.id] = mainSlotData
 
-      addListener(RunToolbarShortcutHelper(project))
+      activeListener.addListener(RunToolbarShortcutHelper(project))
 
       Disposer.register(project) {
-        listeners.clear()
+        activeListener.clear()
         stateListeners.clear()
         slotListeners.clear()
       }
@@ -238,6 +190,8 @@ class RunToolbarSlotManager(val project: Project) {
   private fun update() {
     saveSlotsConfiguration()
     updateState()
+
+    LOG.trace("!!!!!UPDATE RunToolbar")
   }
 
   internal fun startWaitingForAProcess(slotDate: RunToolbarData, settings: RunnerAndConfigurationSettings, executorId: String) {
@@ -262,31 +216,31 @@ class RunToolbarSlotManager(val project: Project) {
     return dataIds.size
   }
 
-  private var state: State = State.INACTIVE
+  private var state: RWSlotManagerState = RWSlotManagerState.INACTIVE
     set(value) {
       if (value == field) return
       field = value
       traceState()
-      stateListeners.forEach { it.stateChanged(value) }
+      stateListeners.stateChanged(value)
     }
 
   private fun updateState() {
     state = when (activeProcesses.getActiveCount()) {
-      0 -> State.INACTIVE
+      0 -> RWSlotManagerState.INACTIVE
       1 -> {
         mainSlotData.environment?.let {
-          State.SINGLE_MAIN
-        } ?: State.SINGLE_PLAIN
+          RWSlotManagerState.SINGLE_MAIN
+        } ?: RWSlotManagerState.SINGLE_PLAIN
       }
       else -> {
         mainSlotData.environment?.let {
-          State.MULTIPLE_WITH_MAIN
-        } ?: State.MULTIPLE
+          RWSlotManagerState.MULTIPLE_WITH_MAIN
+        } ?: RWSlotManagerState.MULTIPLE
       }
     }
   }
 
-  internal fun getState(): State {
+  internal fun getState(): RWSlotManagerState {
     return state
   }
 
@@ -315,6 +269,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   internal fun processStarted(env: ExecutionEnvironment) {
     addNewProcess(env)
+    update()
     SwingUtilities.invokeLater {
       ActivityTracker.getInstance().inc()
     }
@@ -353,7 +308,6 @@ class RunToolbarSlotManager(val project: Project) {
         }
       }
     }
-    update()
   }
 
   fun processTerminating(env: ExecutionEnvironment) {
@@ -396,10 +350,6 @@ class RunToolbarSlotManager(val project: Project) {
     }
   }
 
-  fun extraSlotCount(): Int {
-    return dataIds.size
-  }
-
   internal fun addAndSaveSlot(): SlotDate {
     val slot = addSlot()
     saveSlotsConfiguration()
@@ -411,7 +361,7 @@ class RunToolbarSlotManager(val project: Project) {
     dataIds.add(slot.id)
     slotsData[slot.id] = slot
 
-    slotListeners.forEach { it.slotAdded() }
+    slotListeners.slotAdded()
 
     return slot
   }
@@ -460,7 +410,7 @@ class RunToolbarSlotManager(val project: Project) {
       }
 
       SwingUtilities.invokeLater {
-        slotListeners.forEach { it.slotRemoved(index) }
+        slotListeners.slotRemoved(index)
         ActivityTracker.getInstance().inc()
       }
     }
@@ -490,7 +440,7 @@ class RunToolbarSlotManager(val project: Project) {
       } ?: run {
         remove()
       }
-    } ?: slotListeners.forEach { it.rebuildPopup() }
+    } ?: slotListeners.rebuildPopup()
 
     update()
   }
@@ -546,53 +496,13 @@ class RunToolbarSlotManager(val project: Project) {
   }
 }
 
-class ActiveProcesses {
-  internal var activeSlots = mutableListOf<SlotDate>()
-  val processes = mutableMapOf<RunToolbarProcess, MutableList<ExecutionEnvironment>>()
-  private var activeCount = 0
-
-  fun getActiveCount(): Int = activeCount
-
-  fun getText(): String? {
-    return when {
-      activeCount == 1 -> {
-        processes.entries.firstOrNull()?.let { entry ->
-          entry.value.firstOrNull()?.contentToReuse?.let {
-            ExecutionBundle.message("run.toolbar.started", entry.key.name, it.displayName)
-          }
-        }
-      }
-      activeCount > 1 -> {
-        processes.map { ExecutionBundle.message("run.toolbar.started", it.key.name, it.value.size) }.joinToString("  ")
-      }
-
-      else -> null
-    }
-
-  }
-
-  internal fun updateActiveProcesses(slotsData: MutableMap<String, SlotDate>) {
-    processes.clear()
-    val list = slotsData.values.filter { it.environment != null }.toMutableList()
-    activeSlots = list
-    list.mapNotNull { it.environment }.forEach { environment ->
-      environment.getRunToolbarProcess()?.let {
-        processes.computeIfAbsent(it) { mutableListOf() }.add(environment)
-      }
-    }
-
-    activeCount = processes.values.map { it.size }.sum()
-  }
-
-  internal fun clear() {
-    activeCount = 0
-    processes.clear()
-  }
-}
-
-internal open class SlotDate(override val id: String) : RunToolbarData {
+internal open class SlotDate(override var id: String) : RunToolbarData {
   companion object {
     var index = 0
+  }
+
+  fun updateId(value: String) {
+    id = value
   }
 
   override var configuration: RunnerAndConfigurationSettings? = null
@@ -609,7 +519,7 @@ internal open class SlotDate(override val id: String) : RunToolbarData {
       }
     }
 
-  override val waitingForAProcesses = WaitingForAProcesses()
+  override val waitingForAProcesses = RWWaitingForAProcesses()
 
   override fun clear() {
     environment = null
@@ -619,78 +529,4 @@ internal open class SlotDate(override val id: String) : RunToolbarData {
   override fun toString(): String {
     return "$id-${environment?.let { "$it [${it.executor.actionName} ${it.executionId}]" } ?: configuration?.configuration?.name ?: "configuration null"}"
   }
-}
-
-interface RunToolbarSlotsConfigurationListener {
-  fun slotsConfigurationChanged(slotConfigurations: Map<String, RunnerAndConfigurationSettings?>)
-
-  fun configurationChanged(slotId: String, configuration: RunnerAndConfigurationSettings?)
-}
-
-class WaitingForAProcesses {
-  private var executorId: String? = null
-  private var settings: RunnerAndConfigurationSettings? = null
-  private val subSettingsList: MutableList<RunnerAndConfigurationSettings> = mutableListOf()
-
-  internal fun isWaitingForASingleProcess(settings: RunnerAndConfigurationSettings, executorId: String): Boolean {
-    return executorId == this.executorId && settings == this.settings && subSettingsList.isEmpty()
-  }
-
-  internal fun isWaitingForASubProcess(settings: RunnerAndConfigurationSettings, executorId: String): Boolean {
-    return subSettingsList.contains(settings) && executorId == this.executorId
-  }
-
-  internal fun start(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
-    clear()
-    this.executorId = executorId
-    this.settings = settings
-    if (settings.configuration is CompoundRunConfiguration) {
-      collect(project, settings.configuration, settings)
-    }
-  }
-
-  internal fun clear() {
-    settings = null
-    executorId = null
-    subSettingsList.clear()
-  }
-
-  internal fun checkAndUpdate(settings: RunnerAndConfigurationSettings, executorId: String): Boolean {
-    if (executorId != this.executorId) return false
-    if (subSettingsList.remove(settings)) {
-      if (subSettingsList.isEmpty()) clear()
-      return true
-    }
-    return false
-  }
-
-  private fun collect(project: Project, configuration: RunConfiguration, settings: RunnerAndConfigurationSettings) {
-    if (configuration is CompoundRunConfiguration) {
-      val runManager = RunManager.getInstance(project)
-      for (settingsAndEffectiveTarget in configuration.getConfigurationsWithEffectiveRunTargets()) {
-        val subConfiguration: RunConfiguration = settingsAndEffectiveTarget.configuration
-        runManager.findSettings(subConfiguration)?.let {
-          collect(project, subConfiguration, it)
-        }
-      }
-    }
-    else {
-      subSettingsList.add(settings)
-    }
-  }
-}
-
-internal interface SlotListener {
-  fun slotAdded()
-  fun slotRemoved(index: Int)
-  fun rebuildPopup()
-}
-
-interface ActiveListener {
-  fun enabled()
-  fun disabled() {}
-}
-
-internal interface StateListener {
-  fun stateChanged(state: RunToolbarSlotManager.State)
 }

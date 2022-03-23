@@ -53,7 +53,11 @@ class RunToolbarPopupController(val project: Project,
     }
 
     mainWidgetComponent.isOpened = true
-    val slotPane = (if (pane.project == project) pane else null) ?: RunToolbarExtraSlotPane(project, { mainWidgetComponent.width })
+    val slotPane = (if (pane.project == project) pane else null) ?:
+                   run {
+                     pane.clear()
+                     RunToolbarExtraSlotPane(project, { mainWidgetComponent.width })
+                   }
     pane = slotPane
 
     fun getTrackerRelativePoint(): RelativePoint {
@@ -168,6 +172,7 @@ class RunToolbarPopupController(val project: Project,
       mainWidgetComponent.removeComponentListener(adapterListener)
       Toolkit.getDefaultToolkit().removeAWTEventListener(awtEventListener)
       canClose = false
+      pane.clear()
       this.popup = null
     }
     getPopupControllers().forEach { it.updateIconImmediately(mainWidgetComponent.isOpened) }
@@ -185,6 +190,7 @@ class RunToolbarPopupController(val project: Project,
   internal fun cancel() {
     componentPressed = false
     canClose = true
+    pane.clear()
     popup?.cancel()
   }
 

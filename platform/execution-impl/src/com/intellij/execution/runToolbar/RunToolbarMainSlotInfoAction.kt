@@ -3,6 +3,7 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.ProcessesByType
+import com.intellij.execution.runToolbar.data.RWActiveProcesses
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -25,7 +26,7 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
     private val LOG = Logger.getInstance(RunToolbarMainSlotInfoAction::class.java)
     private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
     private val PROP_ACTIVE_PROCESSES_COUNT = Key<Int>("PROP_ACTIVE_PROCESSES_COUNT")
-    private val PROP_ACTIVE_PROCESSES = Key<ActiveProcesses>("PROP_ACTIVE_PROCESSES")
+    private val PROP_ACTIVE_PROCESSES = Key<RWActiveProcesses>("PROP_ACTIVE_PROCESSES")
   }
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE

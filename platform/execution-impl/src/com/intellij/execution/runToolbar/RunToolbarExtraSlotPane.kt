@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.runToolbar.data.RWActiveListener
+import com.intellij.execution.runToolbar.data.RWSlotListener
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
@@ -24,7 +26,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): ActiveListener {
+class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): RWActiveListener {
   private val manager = RunToolbarSlotManager.getInstance(project)
   val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {
     isOpaque = false
@@ -33,7 +35,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private val components = mutableListOf<SlotComponent>()
 
-  private val managerListener = object : SlotListener {
+  private val managerListener = object : RWSlotListener {
     override fun slotAdded() {
       addSingleSlot()
     }
@@ -53,15 +55,19 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
   }
 
   init {
-    manager.addListener(this)
+    manager.activeListener.addListener(this)
+  }
+
+  fun clear() {
+    manager.activeListener.removeListener(this)
   }
 
   override fun enabled() {
-    manager.addListener(managerListener)
+    manager.slotListeners.addListener(managerListener)
   }
 
   override fun disabled() {
-    manager.removeListener(managerListener)
+    manager.slotListeners.removeListener(managerListener)
   }
 
   private var added = false

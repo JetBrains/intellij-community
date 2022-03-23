@@ -203,10 +203,14 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
     val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
 
-    if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    traceState(lastIds, filteredIds, ides)
     lastIds = filteredIds
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
+  }
+
+  protected open fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
+   // if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
