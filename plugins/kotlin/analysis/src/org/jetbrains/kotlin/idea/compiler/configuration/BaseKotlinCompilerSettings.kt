@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
@@ -63,6 +63,8 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
             validateNewSettings(value)
             _settings = value
 
+            KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+
             ApplicationManager.getApplication().invokeLater {
                 project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(value)
             }
@@ -99,6 +101,8 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
             XmlSerializer.deserializeInto(this, state)
         }
 
+        KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+
         ApplicationManager.getApplication().invokeLater {
             project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(settings)
         }
@@ -111,6 +115,7 @@ interface KotlinCompilerSettingsListener {
     fun <T> settingsChanged(newSettings: T)
 
     companion object {
+        @Topic.ProjectLevel
         val TOPIC = Topic.create("KotlinCompilerSettingsListener", KotlinCompilerSettingsListener::class.java)
     }
 }

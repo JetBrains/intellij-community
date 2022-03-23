@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
@@ -21,10 +20,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
-import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
 import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
@@ -141,40 +137,24 @@ fun Project.getLanguageVersionSettings(
     )
 }
 
-private val LANGUAGE_VERSION_SETTINGS = Key.create<CachedValue<LanguageVersionSettings>>("LANGUAGE_VERSION_SETTINGS")
+private val LANGUAGE_VERSION_SETTINGS = Key.create<LanguageVersionSettings>("LANGUAGE_VERSION_SETTINGS")
 
 val Module.languageVersionSettings: LanguageVersionSettings
-    get() {
-        val cachedValue =
-            getUserData(LANGUAGE_VERSION_SETTINGS)
-                ?: createCachedValueForLanguageVersionSettings().also { putUserData(LANGUAGE_VERSION_SETTINGS, it) }
-
-        return cachedValue.value
+    get() = getUserData(LANGUAGE_VERSION_SETTINGS) ?: CachedValuesManager.getManager(project).getCachedValue(this) {
+        CachedValueProvider.Result.create(
+            computeLanguageVersionSettings(),
+            KotlinCompilerSettingsTracker.getInstance(project),
+            ProjectRootModificationTracker.getInstance(project),
+        )
     }
 
 @TestOnly
-fun <T> Module.withLanguageVersionSettings(value: LanguageVersionSettings, body: () -> T): T {
-    val previousLanguageVersionSettings = getUserData(LANGUAGE_VERSION_SETTINGS)
-    try {
-        putUserData(
-            LANGUAGE_VERSION_SETTINGS,
-            CachedValuesManager.getManager(project).createCachedValue(
-                { CachedValueProvider.Result(value, ProjectRootModificationTracker.getInstance(project)) },
-                false,
-            )
-        )
-
-        return body()
-    } finally {
-        putUserData(LANGUAGE_VERSION_SETTINGS, previousLanguageVersionSettings)
-    }
+fun <T> Module.withLanguageVersionSettings(value: LanguageVersionSettings, body: () -> T): T = try {
+    putUserData(LANGUAGE_VERSION_SETTINGS, value)
+    body()
+} finally {
+    putUserData(LANGUAGE_VERSION_SETTINGS, null)
 }
-
-private fun Module.createCachedValueForLanguageVersionSettings(): CachedValue<LanguageVersionSettings> =
-    CachedValuesManager.getManager(project).createCachedValue(
-        { CachedValueProvider.Result(computeLanguageVersionSettings(), ProjectRootModificationTracker.getInstance(project)) },
-        false,
-    )
 
 private fun Module.shouldUseProjectLanguageVersionSettings(): Boolean {
     val facetSettingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return true
