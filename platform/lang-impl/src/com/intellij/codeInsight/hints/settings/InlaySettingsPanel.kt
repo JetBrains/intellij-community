@@ -191,7 +191,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         rightPanel.add(item.component)
       }
       is InlayProviderSettingsModel -> {
-        if (treeNode.isLeaf) {
+        if (item.description != null) {
           addDescription(item.description)
         }
         item.component.border = JBUI.Borders.empty()
