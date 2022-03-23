@@ -10,13 +10,14 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-
+import java.io.File
 
 
 object DirectiveBasedActionUtils {
@@ -111,23 +112,63 @@ object DirectiveBasedActionUtils {
         }
     }
 
+    fun checkAvailableActionsAreExpected(file: File, availableActions: Collection<IntentionAction>) {
+        val fileText = file.readText()
+        checkAvailableActionsAreExpected(
+            fileText,
+            availableActions,
+        ) { expectedActionsDirectives, actualActionsDirectives ->
+            if (expectedActionsDirectives != actualActionsDirectives) {
+                assertEqualsToFile(
+                    description = "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
+                    expected = file,
+                    actual = fileText.let { text ->
+                        val lines = text.split('\n')
+                        val firstActionIndex = lines.indexOfFirst { it.startsWith(ACTION_DIRECTIVE) }.takeIf { it != -1 }
+                        val textWithoutActions = lines.filterNot { it.startsWith(ACTION_DIRECTIVE) }
+                        textWithoutActions.subList(0, firstActionIndex ?: 1)
+                            .plus(actualActionsDirectives)
+                            .plus(textWithoutActions.drop(firstActionIndex ?: 1))
+                            .joinToString("\n")
+                    }
+                )
+            }
+        }
+    }
+
     fun checkAvailableActionsAreExpected(file: PsiFile, availableActions: Collection<IntentionAction>) {
-        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ACTION_DIRECTIVE).sorted()
+        checkAvailableActionsAreExpected(
+            file.text,
+            availableActions,
+        ) { expectedDirectives, actualActionsDirectives ->
+            UsefulTestCase.assertOrderedEquals(
+                "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
+                actualActionsDirectives,
+                expectedDirectives
+            )
+        }
+    }
 
-        UsefulTestCase.assertEmpty("Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
-                                   expectedActions.filter { isIrrelevantAction(it) })
+    private fun checkAvailableActionsAreExpected(
+        fileText: String,
+        availableActions: Collection<IntentionAction>,
+        assertion: (expectedDirectives : List<String>, actualActionsDirectives: List<String>) -> Unit,
+    ) {
+        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, ACTION_DIRECTIVE).sorted()
 
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// IGNORE_IRRELEVANT_ACTIONS").isNotEmpty()) {
+        UsefulTestCase.assertEmpty(
+            "Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
+            expectedActions.filter(::isIrrelevantAction),
+        )
+
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// IGNORE_IRRELEVANT_ACTIONS").isNotEmpty()) {
             return
         }
 
         val actualActions = availableActions.map { it.text }.sorted()
-
-        UsefulTestCase.assertOrderedEquals(
-            "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
-            filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" },
-            expectedActions.map { "$ACTION_DIRECTIVE $it" }
-        )
+        val actualActionsDirectives = filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" }
+        val expectedActionsDirectives = expectedActions.map { "$ACTION_DIRECTIVE $it" }
+        assertion(expectedActionsDirectives, actualActionsDirectives)
     }
 
     //TODO: hack, implemented because irrelevant actions behave in different ways on build server and locally

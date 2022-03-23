@@ -237,37 +237,39 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         // For FE 1.0, many quickfixes are implemented as IntentionActions, which may or may not be used as regular IDE intentions as well
         get() = false
 
-    @Throws(ClassNotFoundException::class)
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
         val actionHint = ActionHint.parse(myFixture.file, text)
-        if (!actionHint.shouldPresent()) {
-            myFixture.doHighlighting()
-            val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
-            val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
-            cachedIntentions.wrapAndUpdateGutters()
-            val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
+        if (actionHint.shouldPresent() && !InTextDirectivesUtils.isDirectiveDefined(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE)) {
+            return
+        }
 
-            val prefix = "class "
-            if (actionHint.expectedText.startsWith(prefix)) {
-                val className = actionHint.expectedText.substring(prefix.length)
-                val aClass = Class.forName(className)
-                assert(IntentionAction::class.java.isAssignableFrom(aClass)) { "$className should be inheritor of IntentionAction" }
+        myFixture.doHighlighting()
+        val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
+        val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
+        cachedIntentions.wrapAndUpdateGutters()
+        val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
 
-                val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, "// $ACTION_DIRECTIVE:"))
+        val prefix = "class "
+        if (actionHint.expectedText.startsWith(prefix)) {
+            val className = actionHint.expectedText.substring(prefix.length)
+            val aClass = Class.forName(className)
+            assert(IntentionAction::class.java.isAssignableFrom(aClass)) { "$className should be inheritor of IntentionAction" }
 
-                actions.removeAll { action -> !aClass.isAssignableFrom(action.javaClass) || validActions.contains(action.text) }
+            val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE))
 
-                if (actions.isNotEmpty()) {
-                    Assert.fail("Unexpected intention actions present\n " + actions.map { action ->
+            actions.removeAll { action -> !aClass.isAssignableFrom(action.javaClass) || validActions.contains(action.text) }
+
+            if (actions.isNotEmpty()) {
+                Assert.fail(
+                    "Unexpected intention actions present\n " + actions.map { action ->
                         action.javaClass.toString() + " " + action.toString() + "\n"
                     }
-                    )
-                }
-            } else {
-                // Action shouldn't be found. Check that other actions are expected and thus tested action isn't there under another name.
-                checkAvailableActionsAreExpected(actions)
+                )
             }
+        } else {
+            // Action shouldn't be found. Check that other actions are expected and thus tested action isn't there under another name.
+            checkAvailableActionsAreExpected(actions)
         }
     }
 
@@ -296,7 +298,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
-        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(myFixture.file, actions)
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(testDataFile(), actions)
     }
 
     protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
