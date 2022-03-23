@@ -236,4 +236,9 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     storeSelection(myFileSystemTree.getSelectedFile());
     super.doOKAction();
   }
+
+  @Override
+  protected boolean deleteActionDisabled() {
+    return super.deleteActionDisabled() || myFileName.hasFocus();
+  }
 }
