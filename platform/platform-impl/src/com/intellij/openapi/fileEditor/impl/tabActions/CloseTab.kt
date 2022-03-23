@@ -16,9 +16,11 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.tabs.impl.MorePopupAware
+import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
 import com.intellij.util.ObjectUtils
 import java.awt.event.InputEvent
@@ -64,6 +66,7 @@ class CloseTab(c: JComponent,
     if (isPinned() && e.place == ActionPlaces.EDITOR_TAB) {
       if (Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
         editorWindow.setFilePinned(file, false)
+        ComponentUtil.getParentOfType(TabLabel::class.java, e.inputEvent?.component)?.updateTabActions()
       }
       return
     }
