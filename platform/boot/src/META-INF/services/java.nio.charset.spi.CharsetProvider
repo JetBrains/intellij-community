@@ -1,2 +1,2 @@
 # charset intended for editing properties files with native2ascii on-the-fly
-com.intellij.charset.Native2AsciiCharsetProvider
+com.intellij.lang.properties.charset.Native2AsciiCharsetProvider
