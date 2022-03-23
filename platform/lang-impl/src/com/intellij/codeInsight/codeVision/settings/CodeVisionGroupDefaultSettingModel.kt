@@ -47,17 +47,17 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
-            || positionComboBox.item != (settings.getPositionForGroup(name) ?: settings.defaultPosition))
+            || positionComboBox.item != (settings.getPositionForGroup(id) ?: settings.defaultPosition))
   }
 
   override fun apply() {
     settings.setProviderEnabled(id, isEnabled)
-    settings.setPositionForGroup(name, positionComboBox.item)
+    settings.setPositionForGroup(id, positionComboBox.item)
   }
 
   override fun reset() {
     isEnabled = settings.isProviderEnabled(id) && settings.codeVisionEnabled
-    positionComboBox.item = settings.getPositionForGroup(name) ?: CodeVisionAnchorKind.Default
+    positionComboBox.item = settings.getPositionForGroup(id) ?: CodeVisionAnchorKind.Default
   }
 
   private fun getCasePreview(): String? {
