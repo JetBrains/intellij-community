@@ -108,6 +108,7 @@ interface InlayHintsProvider<T : Any> {
 
   @JvmDefault
   val description: String?
+    @Nls
     get() {
       return getProperty("inlay." + key.id + ".description")
     }
@@ -139,6 +140,12 @@ interface InlayHintsProvider<T : Any> {
 
   @JvmDefault
   fun preparePreview(editor: Editor, file: PsiFile, settings: T) {
+  }
+
+  @Nls
+  @JvmDefault
+  fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
+    return getProperty("inlay." + this.key.id + "." + case.id)
   }
 
   val isVisibleInSettings: Boolean
