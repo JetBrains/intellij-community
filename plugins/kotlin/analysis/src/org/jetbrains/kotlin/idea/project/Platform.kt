@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.project
 
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
 import org.jetbrains.kotlin.idea.util.application.getService
+import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -34,21 +35,17 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import java.io.File
 
-val KtElement.platform: TargetPlatform
-    get() = TargetPlatformDetector.getPlatform(containingKtFile)
+val KtElement.platform: TargetPlatform get() = TargetPlatformDetector.getPlatform(containingKtFile)
 
-val KtElement.builtIns: KotlinBuiltIns
-    get() = getResolutionFacade().moduleDescriptor.builtIns
+val KtElement.builtIns: KotlinBuiltIns get() = getResolutionFacade().moduleDescriptor.builtIns
 
 var KtFile.forcedTargetPlatform: TargetPlatform? by UserDataProperty(Key.create("FORCED_TARGET_PLATFORM"))
 
-fun Project.isKotlinLanguageVersionConfigured(): Boolean =
-    KotlinCommonCompilerArgumentsHolder.getInstance(this).settings.run {
-        this.languageVersion != null && apiVersion != null
-    }
+fun Project.isKotlinLanguageVersionConfigured(): Boolean = KotlinCommonCompilerArgumentsHolder.getInstance(this).settings.run {
+    this.languageVersion != null && apiVersion != null
+}
 
 fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
     val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)
@@ -60,6 +57,7 @@ fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
             if (languageVersion == null) {
                 languageVersion = languageLevel.versionString
             }
+
             if (apiVersion == null) {
                 apiVersion = languageLevel.versionString
             }
@@ -69,6 +67,7 @@ fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
             if (this.languageLevel == null) {
                 this.languageLevel = languageLevel
             }
+
             if (this.apiLevel == null) {
                 this.apiLevel = languageLevel
             }
@@ -90,8 +89,7 @@ fun Module.getStableName(): Name {
     // Here we check ideal situation: we have a facet, and it has 'moduleName' argument.
     // This should be the case for the most environments
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(project)
-    val arguments = settingsProvider?.getInitializedSettings(this)?.mergedCompilerArguments
-    val explicitNameFromArguments = when (arguments) {
+    val explicitNameFromArguments = when (val arguments = settingsProvider?.getInitializedSettings(this)?.mergedCompilerArguments) {
         is K2JVMCompilerArguments -> arguments.moduleName
         is K2JSCompilerArguments -> arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
         is K2MetadataCompilerArguments -> arguments.moduleName
@@ -115,16 +113,17 @@ fun Project.getLanguageVersionSettings(
     }
 
     val arguments = kotlinFacetSettings?.compilerArguments ?: KotlinCommonCompilerArgumentsHolder.getInstance(this).settings
-    val languageVersion =
-        kotlinFacetSettings?.languageLevel ?: LanguageVersion.fromVersionString(arguments.languageVersion)
+    val languageVersion = kotlinFacetSettings?.languageLevel
+        ?: LanguageVersion.fromVersionString(arguments.languageVersion)
         ?: contextModule?.getAndCacheLanguageLevelByDependencies()
         ?: KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+
     val apiVersion = ApiVersion.createByLanguageVersion(LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion)
     val compilerSettings = KotlinCompilerSettings.getInstance(this).settings
 
     val additionalArguments: CommonCompilerArguments = parseArguments(
         DefaultIdeTargetPlatformKindProvider.defaultPlatform,
-        compilerSettings.additionalArgumentsAsList
+        compilerSettings.additionalArgumentsAsList,
     )
 
     val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE)
@@ -135,9 +134,10 @@ fun Project.getLanguageVersionSettings(
     }
 
     return LanguageVersionSettingsImpl(
-        languageVersion, apiVersion,
-        arguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion) + extraAnalysisFlags,
-        arguments.configureLanguageFeatures(MessageCollector.NONE) + extraLanguageFeatures
+        languageVersion = languageVersion,
+        apiVersion = apiVersion,
+        analysisFlags = arguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion) + extraAnalysisFlags,
+        specificFeatures = arguments.configureLanguageFeatures(MessageCollector.NONE) + extraLanguageFeatures,
     )
 }
 
@@ -159,12 +159,8 @@ fun <T> Module.withLanguageVersionSettings(value: LanguageVersionSettings, body:
         putUserData(
             LANGUAGE_VERSION_SETTINGS,
             CachedValuesManager.getManager(project).createCachedValue(
-                {
-                    CachedValueProvider.Result(
-                        value, ProjectRootModificationTracker.getInstance(project)
-                    )
-                },
-                false
+                { CachedValueProvider.Result(value, ProjectRootModificationTracker.getInstance(project)) },
+                false,
             )
         )
 
@@ -174,16 +170,11 @@ fun <T> Module.withLanguageVersionSettings(value: LanguageVersionSettings, body:
     }
 }
 
-private fun Module.createCachedValueForLanguageVersionSettings(): CachedValue<LanguageVersionSettings> {
-    return CachedValuesManager.getManager(project).createCachedValue({
-                                                                         CachedValueProvider.Result(
-                                                                             computeLanguageVersionSettings(),
-                                                                             ProjectRootModificationTracker.getInstance(
-                                                                                 project
-                                                                             )
-                                                                         )
-                                                                     }, false)
-}
+private fun Module.createCachedValueForLanguageVersionSettings(): CachedValue<LanguageVersionSettings> =
+    CachedValuesManager.getManager(project).createCachedValue(
+        { CachedValueProvider.Result(computeLanguageVersionSettings(), ProjectRootModificationTracker.getInstance(project)) },
+        false,
+    )
 
 private fun Module.shouldUseProjectLanguageVersionSettings(): Boolean {
     val facetSettingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return true
@@ -229,6 +220,7 @@ private fun MutableMap<AnalysisFlag<*>, Any>.initIDESpecificAnalysisSettings(pro
     if (KotlinLibraryToSourceAnalysisComponent.isEnabled(project)) {
         put(AnalysisFlags.libraryToSourceAnalysis, true)
     }
+
     put(AnalysisFlags.ideMode, true)
 }
 
