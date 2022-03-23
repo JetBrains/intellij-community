@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.application.options.RegistryManager;
@@ -186,7 +186,7 @@ public final class ListPluginComponent extends JPanel {
       myInstallButton.setButtonColors(false);
       myInstallButton.setEnabled(true, IdeBundle.message("plugin.status.not.allowed.but.enabled"));
       myInstallButton.setText(IdeBundle.message("plugin.status.not.allowed.but.enabled"));
-      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
+      myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip.but.enabled"));
       myInstallButton.setBorderColor(JBColor.red);
       myInstallButton.setTextColor(JBColor.red);
       myInstallButton.addActionListener(e -> {
