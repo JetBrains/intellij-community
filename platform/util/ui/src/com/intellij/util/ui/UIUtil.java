@@ -3007,6 +3007,18 @@ public final class UIUtil {
     }
   }
 
+  // Don't update component border (with following revalidation and repainting) if existing border is exactly the same we're going to set
+  public static void setBorder(@NotNull JComponent component, @Nullable Border border) {
+    Border oldBorder = component.getBorder();
+    if (oldBorder == null && border == null) return;
+    if (oldBorder != null && border != null
+        && Objects.equals(oldBorder.getClass(), border.getClass())
+        && oldBorder.getBorderInsets(component).equals(border.getBorderInsets(component))) {
+      return;
+    }
+    component.setBorder(border);
+  }
+
   public static boolean haveCommonOwner(Component c1, Component c2) {
     if (c1 == null || c2 == null) return false;
     Window c1Ancestor = findWindowAncestor(c1);

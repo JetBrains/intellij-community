@@ -10,8 +10,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.border.Border;
 import java.awt.*;
 
 abstract class ContentLayout {
@@ -51,12 +53,13 @@ abstract class ContentLayout {
     if (suffix != null) title += suffix;
 
     label.setText(title);
-    label.setBorder(JBUI.Borders.empty(0, 2, 0, 7));
+    Border border = JBUI.Borders.empty(0, 2, 0, 7);
     if (ExperimentalUI.isNewUI()) {
-      label.setBorder(shouldShowId()
-                      ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
-                      : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
+      border = shouldShowId()
+               ? JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets())
+               : JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets());
     }
+    UIUtil.setBorder(label, border);
     label.setVisible(shouldShowId());
   }
 

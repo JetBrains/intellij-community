@@ -596,6 +596,7 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun reshape(x: Int, y: Int, w: Int, h: Int) {
+    val rectangle = bounds
     super.reshape(x, y, w, h)
     val topLevelDecorator = findTopLevelDecorator(this)
     if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
@@ -615,7 +616,9 @@ class InternalDecoratorImpl internal constructor(
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons)
       putClientProperty(INACTIVE_LOOK, hideActivity)
     }
-    contentUi.update()
+    if (!rectangle.equals(bounds)) {
+      contentUi.update()
+    }
   }
 
   fun setDropInfoIndex(index: Int, width: Int) {
