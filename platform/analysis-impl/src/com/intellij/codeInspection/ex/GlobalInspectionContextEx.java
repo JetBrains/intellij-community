@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
-import com.google.common.collect.Lists;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionEP;
@@ -235,7 +234,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
-      Lists.partition(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES).forEach(inspections ->
+      ContainerUtil.splitListToChunks(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES).forEach(inspections ->
                                                                                                       exportResults(inspectionsResults,
                                                                                                                     inspections, outputDir,
                                                                                                                     xmlOutputFactory));
