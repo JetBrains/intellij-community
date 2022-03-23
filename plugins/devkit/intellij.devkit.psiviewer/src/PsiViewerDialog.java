@@ -65,7 +65,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.psiviewer.formatter.BlockViewerPsiBasedTree;
 import org.jetbrains.idea.devkit.psiviewer.stubs.StubViewerPsiBasedTree;
 
@@ -772,7 +771,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     DefaultListModel<String> model = (DefaultListModel<String>)myRefs.getModel();
     model.clear();
 
-    String progressTitle = DevKitBundle.message("psi.viewer.progress.dialog.update.refs");
+    String progressTitle = DevKitPsiViewerBundle.message("psi.viewer.progress.dialog.update.refs");
     Callable<List<PsiReference>> updater =
       () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> doUpdateReferences(element));
 
@@ -975,7 +974,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       PsiElement rootElement = getTreeStructure().getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       int offset = myEditor.getCaretModel().getOffset() + baseOffset;
-      String progressDialogTitle = DevKitBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
+      String progressDialogTitle = DevKitPsiViewerBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
       Callable<PsiElement> finder = () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
 
       PsiElement element = computeSlowOperationsSafeInBgThread(myProject, progressDialogTitle, finder);
@@ -997,7 +996,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       int start = selection.getSelectionStart() + baseOffset;
       int end = selection.getSelectionEnd() + baseOffset - 1;
 
-      String progressDialogTitle = DevKitBundle.message("psi.viewer.progress.dialog.get.common.parent");
+      String progressDialogTitle = DevKitPsiViewerBundle.message("psi.viewer.progress.dialog.get.common.parent");
       Callable<PsiElement> finder =
         () -> findCommonParent(InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), start),
                                InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), end));
