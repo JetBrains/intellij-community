@@ -177,7 +177,9 @@ class KotlinImportOptimizer : ImportOptimizer {
 
                     if (!reference.canBeResolvedViaImport(target, bindingContext)) continue
 
-                    if (isAccessibleAsMember(importableDescriptor, element, bindingContext)) continue
+                    if (importableDescriptor.name in names && isAccessibleAsMember(importableDescriptor, element, bindingContext)) {
+                        continue
+                    }
 
                     val descriptorNames = (aliases[importableFqName].orEmpty() + importableFqName.shortName()).intersect(names)
                     namesToImport.getOrPut(importableFqName) { hashSetOf() } += descriptorNames
