@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -37,11 +37,11 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.OverridingUtil
+import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import org.jetbrains.kotlin.resolve.calls.util.isFakeElement
-import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -274,7 +274,7 @@ fun PsiElement.deleteElementAndCleanParent() {
 
 // Delete element if it doesn't contain children of a given type
 private fun <T : PsiElement> deleteChildlessElement(element: PsiElement, childClass: Class<T>) {
-    if (PsiTreeUtil.getChildrenOfType<T>(element, childClass) == null) {
+    if (PsiTreeUtil.getChildrenOfType(element, childClass) == null) {
         element.delete()
     }
 }
@@ -312,7 +312,12 @@ fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
 inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
     val body = getOrCreateBody()
     val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
-    val newDeclaration = if (anchor?.nextSibling is PsiErrorElement) body.addBefore(declaration, anchor) else body.addAfter(declaration, anchor)
+    val newDeclaration =
+        if (anchor?.nextSibling is PsiErrorElement)
+            body.addBefore(declaration, anchor)
+        else
+            body.addAfter(declaration, anchor)
+
     return newDeclaration as T
 }
 
@@ -331,8 +336,9 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
         if (visibilityModifier == defaultVisibilityKeyword) {
             // Fake elements do not have ModuleInfo and languageVersionSettings because they can't be analysed
             // Effectively, this leads to J2K not respecting explicit api mode, but this case seems to be rare anyway.
-            val explicitVisibilityRequired = !this.isFakeElement && this.languageVersionSettings.explicitApiEnabled
-                    && this.resolveToDescriptorIfAny()?.let { !ExplicitApiDeclarationChecker.explicitVisibilityIsNotRequired(it) } == true
+            val explicitVisibilityRequired = !this.isFakeElement &&
+                    this.languageVersionSettings.explicitApiEnabled &&
+                    this.resolveToDescriptorIfAny()?.let { !ExplicitApiDeclarationChecker.explicitVisibilityIsNotRequired(it) } == true
 
             if (!explicitVisibilityRequired) {
                 this.visibilityModifierType()?.let { removeModifier(it) }
@@ -347,12 +353,16 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
 fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
     return when {
         this is KtPropertyAccessor && isSetter && property.hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
-            (property.resolveToDescriptorIfAny() as? PropertyDescriptor)?.overriddenDescriptors?.forEach {
-                val visibility = it.setter?.visibility?.toKeywordToken()
-                if (visibility != null) return visibility
-            }
+            property.resolveToDescriptorIfAny()
+                ?.safeAs<PropertyDescriptor>()
+                ?.overriddenDescriptors?.forEach {
+                    val visibility = it.setter?.visibility?.toKeywordToken()
+                    if (visibility != null) return visibility
+                }
+
             KtTokens.DEFAULT_VISIBILITY_KEYWORD
         }
+
         this is KtConstructor<*> -> {
             // constructors cannot be declared in objects
             val klass = getContainingClassOrObject() as? KtClass ?: return KtTokens.DEFAULT_VISIBILITY_KEYWORD
@@ -362,18 +372,19 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
                 klass.isSealed() ->
                     if (klass.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) KtTokens.PROTECTED_KEYWORD
                     else KtTokens.PRIVATE_KEYWORD
+
                 else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
             }
         }
+
         hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
-            (resolveToDescriptorIfAny() as? CallableMemberDescriptor)
+            resolveToDescriptorIfAny()?.safeAs<CallableMemberDescriptor>()
                 ?.overriddenDescriptors
                 ?.let { OverridingUtil.findMaxVisibility(it) }
                 ?.toKeywordToken()
         }
-        else -> {
-            KtTokens.DEFAULT_VISIBILITY_KEYWORD
-        }
+
+        else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
     }
 }
 
@@ -398,15 +409,12 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
 fun KtModifierListOwner.canBePublic(): Boolean = !isSealedClassConstructor()
 
 fun KtModifierListOwner.canBeProtected(): Boolean {
-    val parent = when (this) {
-        is KtPropertyAccessor -> this.property.parent
-        else -> this.parent
-    }
-    return when (parent) {
+    return when (val parent = if (this is KtPropertyAccessor) this.property.parent else this.parent) {
         is KtClassBody -> {
             val parentClass = parent.parent as? KtClass
             parentClass != null && !parentClass.isInterface() && !this.isFinalClassConstructor()
         }
+
         is KtParameterList -> parent.parent is KtPrimaryConstructor
         is KtClass -> !this.isAnnotationClassPrimaryConstructor() && !this.isFinalClassConstructor()
         else -> false
@@ -418,6 +426,7 @@ fun KtModifierListOwner.canBeInternal(): Boolean {
         val objectDeclaration = getStrictParentOfType<KtObjectDeclaration>() ?: return false
         if (objectDeclaration.isCompanion() && hasJvmFieldAnnotation()) return false
     }
+
     return !isAnnotationClassPrimaryConstructor() && !isSealedClassConstructor()
 }
 
@@ -489,6 +498,7 @@ fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? =
     if (descriptor is MemberDescriptor) {
         return mapModality(descriptor.modality)
     }
+
     return null
 }
 
