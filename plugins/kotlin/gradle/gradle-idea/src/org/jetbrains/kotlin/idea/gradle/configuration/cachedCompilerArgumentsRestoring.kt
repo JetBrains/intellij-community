@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.projectModel.ArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheAware
 import org.jetbrains.kotlin.idea.projectModel.KotlinCachedCompilerArgument
 import org.jetbrains.kotlin.idea.projectModel.KotlinRawCompilerArgument
+import org.jetbrains.kotlin.platform.impl.FakeK2NativeCompilerArguments
 import java.io.File
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -48,6 +49,7 @@ class EmptyFlatArgsInfo : FlatSerializedArgsInfo {
 
 object CachedArgumentsRestoring {
     private val LOGGER = Logger.getInstance(CachedArgumentsRestoring.javaClass)
+    private const val STUB_K_2_NATIVE_COMPILER_ARGUMENTS_CLASS = "org.jetbrains.kotlin.gradle.tasks.StubK2NativeCompilerArguments"
     fun restoreSerializedArgsInfo(
         cachedSerializedArgsInfo: CachedSerializedArgsInfo,
         compilerArgumentsCacheHolder: CompilerArgumentsCacheHolder
@@ -102,7 +104,12 @@ object CachedArgumentsRestoring {
                 LOGGER.error("Failed to restore name of compiler arguments class from id $it! 'CommonCompilerArguments' instance was created instead")
             }
         }
-        val compilerArgumentsClass = Class.forName(compilerArgumentsClassName) as Class<out CommonCompilerArguments>
+        //TODO: Fixup. Remove it once actual K2NativeCompilerArguments will be available without 'kotlin.native.enabled = true' flag
+        val compilerArgumentsClass = if (compilerArgumentsClassName == STUB_K_2_NATIVE_COMPILER_ARGUMENTS_CLASS)
+            FakeK2NativeCompilerArguments::class.java
+        else
+            Class.forName(compilerArgumentsClassName) as Class<out CommonCompilerArguments>
+
         val newCompilerArgumentsBean = compilerArgumentsClass.getConstructor().newInstance()
         val propertiesByName = compilerArgumentsClass.kotlin.memberProperties.associateBy { it.name }
         cachedBucket.singleArguments.entries.mapNotNull {
