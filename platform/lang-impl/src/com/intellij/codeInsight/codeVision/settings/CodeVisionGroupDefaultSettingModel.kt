@@ -25,7 +25,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val visionProviders = providers.filterIsInstance<CodeVisionProviderAdapter>().map { it.delegate }
-    val codeVisionData = CodeVisionPass.collectData(editor, file, visionProviders)
+    val codeVisionData = CodeVisionPass.collectData(editor, file, visionProviders).addStrikeout(isEnabled)
     return Runnable {
       val project = editor.project ?: return@Runnable
       codeVisionData.applyTo(editor, project)
