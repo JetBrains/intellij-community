@@ -146,7 +146,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
     val popup = createDocumentationPopup(project, popupUI, popupContext)
     setPopup(popup)
-    showPopupLater(popup, browser, popupContext)
+    showPopupLater(popup, popupUI, popupContext.boundsHandler())
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {

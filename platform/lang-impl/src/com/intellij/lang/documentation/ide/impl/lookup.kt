@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
-import java.awt.Component
 
 internal fun lookupPopupContext(editor: Editor?): PopupContext? {
   val lookup = LookupManager.getActiveLookup(editor)
@@ -27,14 +26,16 @@ internal fun lookupPopupContext(editor: Editor?): PopupContext? {
 
 internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext() {
 
-  override val referenceComponent: Component get() = lookup.component
-
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
     cancelPopupWhenLookupIsClosed(lookup, popup)
   }
 
   override fun requestFlow(): Flow<DocumentationRequest?> = lookup.elementFlow().map(lookupElementToRequestMapper(lookup))
+
+  override fun baseBoundsHandler(): PopupBoundsHandler {
+    return AdjusterPopupBoundsHandler(lookup.component)
+  }
 }
 
 private fun cancelPopupWhenLookupIsClosed(lookup: Lookup, popup: AbstractPopup) {

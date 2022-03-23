@@ -39,9 +39,13 @@ internal fun createDocumentationPopup(
 internal fun CoroutineScope.showPopupLater(
   popup: AbstractPopup,
   popupUI: DocumentationPopupUI,
-  popupContext: PopupContext,
+  boundsHandler: PopupBoundsHandler,
 ) {
   EDT.assertIsEdt()
+  val resized = popupUI.useStoredSize()
+  popupUI.updatePopup {
+    boundsHandler.updatePopup(popup, resized.get())
+  }
   val showJob = launch(ModalityState.current().asContextElement()) {
     // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
     withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
@@ -50,7 +54,7 @@ internal fun CoroutineScope.showPopupLater(
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
       check(popup.canShow()) // sanity check
-      popupContext.showPopup(popup)
+      boundsHandler.showPopup(popup)
     }
   }
   Disposer.register(popup, showJob::cancel)

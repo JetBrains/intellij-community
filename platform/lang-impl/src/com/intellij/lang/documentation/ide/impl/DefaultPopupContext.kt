@@ -25,6 +25,12 @@ internal open class DefaultPopupContext(
     builder.setCancelOnClickOutside(true)
   }
 
+  override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {}
+
+  override fun boundsHandler(): PopupBoundsHandler {
+    return DataContextPopupBoundsHandler(::dataContext)
+  }
+
   private var myComponentReference: WeakReference<Component>? = null
 
   private fun dataContext(): DataContext? {
@@ -48,6 +54,11 @@ internal open class DefaultPopupContext(
     }
     return DataManager.getInstance().getDataContext(component)
   }
+}
+
+internal class DataContextPopupBoundsHandler(
+  private val dataContext: () -> DataContext?,
+) : PopupBoundsHandler {
 
   private fun dataContext(popup: AbstractPopup): DataContext {
     return dataContext()
@@ -58,14 +69,11 @@ internal open class DefaultPopupContext(
     popup.showInBestPositionFor(dataContext(popup))
   }
 
-  override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
-    val resized = popupUI.useStoredSize()
-    popupUI.updatePopup {
-      if (!resized.get()) {
-        resizePopup(popup)
-        yield()
-      }
-      popup.setLocation(popup.getBestPositionFor(dataContext(popup)))
+  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
+    if (!resized) {
+      resizePopup(popup)
+      yield()
     }
+    popup.setLocation(popup.getBestPositionFor(dataContext(popup)))
   }
 }

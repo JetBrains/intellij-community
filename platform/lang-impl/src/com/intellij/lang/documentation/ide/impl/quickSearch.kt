@@ -62,7 +62,9 @@ private class QuickSearchPopupContext(
     }
   }
 
-  override val referenceComponent: Component get() = searchComponent as Component
+  override fun baseBoundsHandler(): PopupBoundsHandler {
+    return AdjusterPopupBoundsHandler(searchComponent as Component)
+  }
 }
 
 private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {

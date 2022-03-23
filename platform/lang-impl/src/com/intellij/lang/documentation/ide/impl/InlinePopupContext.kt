@@ -14,11 +14,24 @@ internal class InlinePopupContext(
   private val point: Point,
 ) : DefaultPopupContext(project, editor) {
 
-  override fun showPopup(popup: AbstractPopup) {
-    editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, point)
-    Disposer.register(popup) {
-      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null)
+  override fun boundsHandler(): PopupBoundsHandler {
+    return InlinePopupBoundsHandler(super.boundsHandler())
+  }
+
+  private inner class InlinePopupBoundsHandler(
+    private val original: PopupBoundsHandler,
+  ) : PopupBoundsHandler {
+
+    override fun showPopup(popup: AbstractPopup) {
+      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, point)
+      Disposer.register(popup) {
+        editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null)
+      }
+      original.showPopup(popup)
     }
-    super.showPopup(popup)
+
+    override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
+      original.updatePopup(popup, resized)
+    }
   }
 }
