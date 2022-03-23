@@ -7948,6 +7948,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/increaseVisibility/exposedTypeParameterBound.kt");
         }
 
+        @TestMetadata("exposedTypeParameterBoundNested.kt")
+        public void testExposedTypeParameterBoundNested() throws Exception {
+            runTest("testData/quickfix/increaseVisibility/exposedTypeParameterBoundNested.kt");
+        }
+
         @TestMetadata("invalidSealedClassInheritance.kt")
         public void testInvalidSealedClassInheritance() throws Exception {
             runTest("testData/quickfix/increaseVisibility/invalidSealedClassInheritance.kt");
@@ -7956,6 +7961,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("overriddenProtectedMemberToPublicSingleFile.kt")
         public void testOverriddenProtectedMemberToPublicSingleFile() throws Exception {
             runTest("testData/quickfix/increaseVisibility/overriddenProtectedMemberToPublicSingleFile.kt");
+        }
+
+        @TestMetadata("privateInFileExposesPrivateInFile.kt")
+        public void testPrivateInFileExposesPrivateInFile() throws Exception {
+            runTest("testData/quickfix/increaseVisibility/privateInFileExposesPrivateInFile.kt");
         }
 
         @TestMetadata("privateMemberToInternalSingleFile.kt")
