@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 class UrlParameterKeys {
   companion object {
     const val projectPath = "projectPath"
+    const val downloadLocation = "downloadLocation"
     const val idePath = "idePath"
     const val host = "host"
     const val user = "user"
