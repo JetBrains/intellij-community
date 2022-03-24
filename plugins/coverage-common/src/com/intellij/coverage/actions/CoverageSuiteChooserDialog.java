@@ -285,17 +285,15 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       Set<VirtualFile> validFiles = new HashSet<>();
       for (VirtualFile file : selectedFiles) {
         VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-          @Override
-          public boolean isFileSelectable(@Nullable VirtualFile file) {
-            return file != null && getCoverageRunner(file) != null;
-          }
 
           @Override
           public boolean visitFile(@NotNull VirtualFile child) {
             if (getCoverageRunner(child) != null) {
               validFiles.add(child);
+              return true;
+            } else {
+              return false;
             }
-            return true;
           }
         });
       }
