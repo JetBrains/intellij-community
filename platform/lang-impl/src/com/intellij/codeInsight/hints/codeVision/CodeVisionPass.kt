@@ -116,15 +116,6 @@ class CodeVisionPass(
       updateProviders(project, editor, providerIdToLenses)
     }
 
-    fun addStrikeout(enabled: Boolean): CodeVisionData {
-      return if (enabled) this
-      else CodeVisionData(providerIdToLenses.mapValues { entry -> DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(entry.value.codeVisionEntries.map {
-        val richText = RichText()
-        richText.append(it.second.longPresentation, SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null))
-        Pair(it.first, RichTextCodeVisionEntry(it.second.providerId, richText))}, entry.value.modificationStamp)
-      })
-    }
-
     override fun toString(): String {
       return providerIdToLenses.toString()
     }
