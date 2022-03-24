@@ -42,7 +42,7 @@ internal abstract class SecondaryPopupContext : PopupContext {
 
   override fun showPopup(popup: AbstractPopup) {
     val component = referenceComponent
-    showPopup(popup, component, popup.size)
+    showPopup(popup, component, popup.component.preferredSize)
     installPositionAdjuster(popup, component) // move popup when reference component changes its width
     // this is needed so that unfocused popup could still become focused
     popup.popupWindow.focusableWindowState = true
