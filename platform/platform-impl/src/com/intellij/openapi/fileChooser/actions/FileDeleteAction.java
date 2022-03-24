@@ -4,6 +4,7 @@ package com.intellij.openapi.fileChooser.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -19,6 +20,8 @@ import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JTextField;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 
 public class FileDeleteAction extends FileChooserAction {
@@ -72,7 +75,10 @@ public class FileDeleteAction extends FileChooserAction {
   protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
     boolean visible = !isDisabled(e);
     e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(visible && new VirtualFileDeleteProvider().canDeleteElement(e.getDataContext()));
+    e.getPresentation().setEnabled(
+      visible &&
+      !(e.getInputEvent() instanceof KeyEvent && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof JTextField) &&  // do not override text deletion
+      new VirtualFileDeleteProvider().canDeleteElement(e.getDataContext()));
   }
 
   @Override
