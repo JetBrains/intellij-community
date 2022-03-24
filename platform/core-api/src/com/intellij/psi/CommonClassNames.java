@@ -28,6 +28,7 @@ public interface CommonClassNames {
 
   String JAVA_LANG_ITERABLE = "java.lang.Iterable";
   String JAVA_UTIL_ITERATOR = "java.util.Iterator";
+  String JAVA_UTIL_LIST_ITERATOR = "java.util.ListIterator";
 
   String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
 
@@ -49,6 +50,8 @@ public interface CommonClassNames {
   String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
   String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
+  String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
+  String JAVA_UTIL_NAVIGABLE_MAP = "java.util.NavigableMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
   String JAVA_UTIL_LINKED_LIST = "java.util.LinkedList";
@@ -56,6 +59,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
   String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
   String JAVA_UTIL_QUEUE = "java.util.Queue";
   String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";
@@ -115,6 +119,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_CONCURRENT_COMPLETION_STAGE = "java.util.concurrent.CompletionStage";
 
   String JAVA_UTIL_FORMATTER = "java.util.Formatter";
+  String JAVA_UTIL_ENUMERATION = "java.util.Enumeration";
 
   String JAVA_UTIL_STREAM_BASE_STREAM = "java.util.stream.BaseStream";
   String JAVA_UTIL_STREAM_STREAM = "java.util.stream.Stream";
