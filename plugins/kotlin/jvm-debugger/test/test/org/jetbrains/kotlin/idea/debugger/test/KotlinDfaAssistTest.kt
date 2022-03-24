@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.dfaassist.DfaAssistTest
 import com.intellij.debugger.mockJDI.MockStackFrame
 import com.intellij.debugger.mockJDI.MockVirtualMachine
+import com.intellij.debugger.mockJDI.values.MockBooleanValue
 import com.intellij.debugger.mockJDI.values.MockIntegerValue
 import com.intellij.debugger.mockJDI.values.MockValue
 import com.intellij.testFramework.LightProjectDescriptor
@@ -29,6 +30,16 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                 fun main() {
                     test(5)
                 }""".trimIndent()) { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+
+    fun testSuppression() {
+        doTest("""fun test(x: Boolean, y: Boolean) {
+               <caret>if(!x/*FALSE*/) {}
+               if (x/*TRUE*/ || y) {}
+               if (y || x/*TRUE*/) {}
+               var z: Boolean
+               z = x/*TRUE*/
+            }""") { vm, frame -> frame.addVariable("x", MockBooleanValue(vm, true)) }
     }
 
     fun testWhen() {

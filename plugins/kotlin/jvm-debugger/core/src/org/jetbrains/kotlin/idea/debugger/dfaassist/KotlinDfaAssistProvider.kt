@@ -17,6 +17,7 @@ import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 class KotlinDfaAssistProvider : DfaAssistProvider {
@@ -84,7 +85,10 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
 
             override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
                 val psi = when (anchor) {
-                    is KotlinAnchor.KotlinExpressionAnchor -> anchor.expression
+                    is KotlinAnchor.KotlinExpressionAnchor -> {
+                        if (shouldTrackExpressionValue(anchor.expression)) anchor.expression
+                        else return
+                    }
                     is KotlinAnchor.KotlinWhenConditionAnchor -> anchor.condition
                     else -> return
                 }
@@ -96,6 +100,25 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                     hint = DfaHint.FALSE
                 }
                 hints.merge(psi, hint, DfaHint::merge)
+            }
+
+            private fun shouldTrackExpressionValue(expr: KtExpression): Boolean {
+                if (expr is KtBinaryExpression) {
+                    val token = expr.operationToken
+                    // Report right hand of assignment only
+                    if (token == KtTokens.EQ) return false
+                    // For boolean expression, report individual operands only, to avoid clutter
+                    if (token == KtTokens.ANDAND || token == KtTokens.OROR) return false
+                }
+                var parent = expr.parent
+                while (parent is KtParenthesizedExpression) {
+                    parent = parent.parent
+                }
+                if ((parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL) {
+                    // It's enough to report for parent only
+                    return false
+                }
+                return true
             }
 
             override fun computeHints(): Map<PsiElement, DfaHint> {
