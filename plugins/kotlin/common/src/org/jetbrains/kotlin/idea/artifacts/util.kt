@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.xml.dom.readXmlAsModel
 import org.eclipse.aether.repository.RemoteRepository
-import org.jdom.input.SAXBuilder
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -21,7 +21,7 @@ internal fun findMavenLibrary(library: String, groupId: String, artifactId: Stri
         throw IllegalStateException("Can't find library $library")
     }
 
-    val document = libraryFile.inputStream().use { stream -> SAXBuilder().build(stream) }
+    val element = libraryFile.inputStream().use(::readXmlAsModel)
 
     val urlScheme = "jar://"
     val allowedJarLocations = listOf(
@@ -29,10 +29,10 @@ internal fun findMavenLibrary(library: String, groupId: String, artifactId: Stri
         "$urlScheme\$MAVEN_REPOSITORY\$"
     )
 
-    val roots = document.rootElement
+    val roots = element
         .getChild("library")
         ?.getChild(kind.name)
-        ?.getChildren("root")
+        ?.children("root")
         .orEmpty()
 
     val pathInRepository = groupId.replace('.', '/') + '/' + artifactId
@@ -80,21 +80,19 @@ internal enum class LibraryFileKind(val classifierSuffix: String, val artifactKi
 
 private val remoteMavenRepositories: List<RemoteRepository> by lazy {
     val jarRepositoriesFile = File(PathManager.getHomePath(), ".idea/jarRepositories.xml")
-    val document = jarRepositoriesFile.inputStream().use { stream -> SAXBuilder().build(stream) }
+    val element = jarRepositoriesFile.inputStream().use(::readXmlAsModel)
 
     val repositories = mutableListOf<RemoteRepository>()
 
-    for (remoteRepo in document.rootElement.getChild("component")?.getChildren("remote-repository").orEmpty()) {
-        val options = remoteRepo.getChildren("option") ?: continue
-
+    for (remoteRepo in element.getChild("component")?.children("remote-repository").orEmpty()) {
         fun getOptionValue(key: String): String? {
-            val option = options.find { it.getAttributeValue("name") == key } ?: return null
+            val option = remoteRepo.children.find { it.getAttributeValue("name") == key && it.name == "option" } ?: return null
             return option.getAttributeValue("value")?.takeIf { it.isNotEmpty() }
         }
 
         val id = getOptionValue("id") ?: continue
         val url = getOptionValue("url") ?: continue
-        repositories += ArtifactRepositoryManager.createRemoteRepository(id, url)
+        repositories.add(ArtifactRepositoryManager.createRemoteRepository(id, url))
     }
 
     return@lazy repositories
@@ -107,9 +105,12 @@ private fun substitutePathVariables(path: String): String {
     } else if (path.startsWith("${RepoLocation.MAVEN_REPOSITORY}/")) {
         val homeDir = System.getProperty("user.home", null)?.let { File(it) }
 
-        fun File.extractLocalRepository() = inputStream()
-            .use { stream -> SAXBuilder().build(stream) }?.rootElement?.children
-            ?.firstOrNull { it.name == "localRepository" }?.value?.let { File(it) }
+        fun File.extractLocalRepository(): File? {
+            return inputStream()
+                .use(::readXmlAsModel).children
+                .firstOrNull { it.name == "localRepository" }
+                ?.content?.let { File(it) }
+        }
 
         // https://maven.apache.org/settings.html
         val customM2Repo = homeDir?.resolve(".m2")?.resolve("settings.xml")?.takeIf { it.exists() }?.extractLocalRepository()
