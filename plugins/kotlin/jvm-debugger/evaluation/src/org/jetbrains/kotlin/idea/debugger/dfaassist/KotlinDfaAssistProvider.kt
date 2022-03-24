@@ -14,9 +14,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.sun.jdi.Location
-import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.ClassNameCalculator
+import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -74,16 +74,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
     }
 
     private fun postprocess(value: Value?): Value {
-        if (value is ObjectReference) {
-            val type = value.referenceType()
-            if (type.name().startsWith("kotlin.jvm.internal.Ref$")) {
-                val field = type.fieldByName("element")
-                if (field != null) {
-                    return DfaAssistProvider.wrap(value.getValue(field))
-                }
-            }
-        }
-        return DfaAssistProvider.wrap(value)
+        return DfaAssistProvider.wrap(EvaluatorValueConverter.unref(value))
     }
 
     override fun createListener(): DebuggerDfaListener {
