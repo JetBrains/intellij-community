@@ -3,6 +3,7 @@ package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionBundle
+import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
@@ -24,11 +25,16 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
   private lateinit var positionComboBox: ComboBox<CodeVisionAnchorKind>
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    val visionProviders = providers.filterIsInstance<CodeVisionProviderAdapter>().map { it.delegate }
-    val codeVisionData = CodeVisionPass.collectData(editor, file, visionProviders).addStrikeout(isEnabled)
+    for (provider in providers) {
+      provider.preparePreview(editor, file)
+    }
+    val daemonBoundProviders = providers.filterIsInstance<CodeVisionProviderAdapter>().map { it.delegate }
+    val codeVisionData = CodeVisionPass.collectData(editor, file, daemonBoundProviders).addStrikeout(isEnabled)
     return Runnable {
       val project = editor.project ?: return@Runnable
       codeVisionData.applyTo(editor, project)
+      CodeVisionHost.getInstance(project).invalidateProviderSignal
+        .fire(CodeVisionHost.LensInvalidateSignal(editor))
     }
   }
 

@@ -52,6 +52,9 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
   }
 
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    addPreviewInfo(editor)
+  }
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     return runReadAction {
@@ -75,7 +78,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
             val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
             val length = editor.document.textLength
             val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-            val codeAuthorInfo = getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
+            val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
@@ -187,7 +190,7 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
 }
 
 private fun getAspect(file: PsiFile, editor: Editor): Result<LineAnnotationAspect?> {
-  if (hasPreviewInfo(file)) return Result.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
+  if (hasPreviewInfo(editor)) return Result.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
   val virtualFile = file.virtualFile ?: return SUCCESS_EMPTY
   val annotationResult = getAnnotation(file.project, virtualFile, editor)
   if (annotationResult.isSuccess.not()) return Result.Failure()
@@ -255,3 +258,11 @@ private sealed class Result<out T>(val isSuccess: Boolean, val result: T?){
   class Success<T>(result: T) : Result<T>(true, result)
   class Failure<T> : Result<T>(false, null)
 }
+
+private val PREVIEW_INFO_KEY = Key.create<VcsCodeAuthorInfo>("preview.author.info")
+
+private fun addPreviewInfo(editor: Editor) {
+  editor.putUserData(PREVIEW_INFO_KEY, VcsCodeAuthorInfo("John Smith", 2, false))
+}
+
+private fun hasPreviewInfo(editor: Editor) = PREVIEW_INFO_KEY.get(editor) != null
