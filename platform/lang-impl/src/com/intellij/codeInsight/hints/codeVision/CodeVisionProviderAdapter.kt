@@ -18,6 +18,10 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     // nothing
   }
 
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    delegate.preparePreview(editor, file)
+  }
+
   override fun collectPlaceholders(editor: Editor): List<TextRange> {
     return delegate.collectPlaceholders(editor)
   }
