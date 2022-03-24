@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -53,12 +52,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.math.min
-
-fun String.downloadDelimiter(): Char {
-  if (this.startsWith("http")) return '/'
-  if (SystemInfoRt.isUnix) return '/'
-  return '\\'
-}
 
 @ApiStatus.Experimental
 object CodeWithMeClientDownloader {
@@ -136,7 +129,7 @@ object CodeWithMeClientDownloader {
     val jreDownloadUrl = "${config.jreDownloadLocation}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
     val clientName = "$clientDistributionName-$hostBuildNumber"
-    val jreName = jreDownloadUrl.substringAfterLast(jreDownloadUrl.downloadDelimiter()).removeSuffix(".tar.gz")
+    val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
 
     val sessionInfo = object : CodeWithMeSessionInfoProvider {
       override val hostBuildNumber = hostBuildNumber
@@ -330,7 +323,7 @@ object CodeWithMeClientDownloader {
                 file = data.archivePath,
                 detachedSignatureFile = signaturePath,
                 checksumFile = checksumPath,
-                expectedFileName = data.url.path.substringAfterLast(data.url.toString().downloadDelimiter()),
+                expectedFileName = data.url.path.substringAfterLast('/'),
                 untrustedPublicKeyRing = ByteArrayInputStream(Files.readAllBytes(pgpKeyRingFile)),
                 trustedMasterKey = ByteArrayInputStream(JETBRAINS_DOWNLOADS_PGP_MASTER_PUBLIC_KEY.toByteArray()),
               )
@@ -423,11 +416,7 @@ object CodeWithMeClientDownloader {
       try {
         LOG.info("Downloading from $url to ${path.absolutePathString()}, attempt $i of $MAX_ATTEMPTS")
 
-        if (url.toString().startsWith("http")) {
-          HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
-        } else {
-          Files.copy(url.toPath(), path)
-        }
+        HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
 
         LOG.info("Download from $url to ${path.absolutePathString()} succeeded on attempt $i of $MAX_ATTEMPTS")
         return
