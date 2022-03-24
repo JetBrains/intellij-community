@@ -127,6 +127,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
       useDelay = true
+      invokeActionForFocusContext(getActionById("Stop"))
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectUtils.getCurrentLearningProjectRoot()

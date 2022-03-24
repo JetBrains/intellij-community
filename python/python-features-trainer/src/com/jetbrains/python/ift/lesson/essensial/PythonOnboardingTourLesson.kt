@@ -107,6 +107,7 @@ class PythonOnboardingTourLesson :
     prepareRuntimeTask {
       usedInterpreterAtStart = project.pythonSdk?.versionString ?: "none"
       useDelay = true
+      invokeActionForFocusContext(getActionById("Stop"))
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectUtils.getCurrentLearningProjectRoot()
