@@ -201,94 +201,102 @@ final class FindInProjectTask {
 
     StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ? null :
                               new StringSearcher(myFindModel.getStringToFind(), myFindModel.isCaseSensitive(), true);
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
-    //noinspection UnnecessaryLocalVariable
-    Processor<VirtualFile> processor = virtualFile -> {
-      if (!virtualFile.isValid()) return true;
+    return virtualFile -> processFindInFilesUsagesInFile(processPresentation, usageConsumer, occurrenceCount,
+                                                         usagesBeingProcessed, reportedFirst, searcher,
+                                                         virtualFile);
+  }
 
-      long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
-      if (fileLength == -1) return true; // Binary or invalid
+  private boolean processFindInFilesUsagesInFile(@NotNull FindUsagesProcessPresentation processPresentation,
+                                                 @NotNull Processor<? super UsageInfo> usageConsumer,
+                                                 @NotNull AtomicInteger occurrenceCount,
+                                                 @NotNull Map<? super VirtualFile, Set<UsageInfo>> usagesBeingProcessed,
+                                                 @NotNull AtomicBoolean reportedFirst,
+                                                 @Nullable StringSearcher searcher,
+                                                 @NotNull VirtualFile virtualFile) {
+    if (!virtualFile.isValid()) return true;
 
-      boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
-      if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
+    long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
+    if (fileLength == -1) return true;
 
-      if (fileLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
-        myLargeFiles.add(virtualFile);
-        return true;
-      }
+    boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
+    if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
-      myProgress.checkCanceled();
-      String text = FindBundle.message("find.searching.for.string.in.file.progress",
-                                       myFindModel.getStringToFind(), virtualFile.getPresentableUrl());
-      myProgress.setText(text);
-      myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", occurrenceCount));
-
-      Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
-      if (pair == null) return true;
-
-      Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ContainerUtil.newConcurrentSet());
-      PsiFile psiFile = pair.first;
-      VirtualFile sourceVirtualFile = pair.second;
-
-      if (searcher != null) {
-        Document document = fileDocumentManager.getCachedDocument(sourceVirtualFile);
-        CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(sourceVirtualFile, -1);
-        if (s.length() == 0 || searcher.scan(s) < 0) {
-          return true;
-        }
-      }
-      AtomicBoolean projectFileUsagesFound = new AtomicBoolean();
-      if (!FindInProjectUtil.processUsagesInFile(psiFile, sourceVirtualFile, myFindModel, info -> {
-        if (skipProjectFile) {
-          projectFileUsagesFound.set(true);
-          return true;
-        }
-        if (reportedFirst.compareAndSet(false, true) && LOG.isDebugEnabled()) {
-          LOG.debug("First usage found in " + TimeoutUtil.getDurationMillis(mySearchStartedAt) + " ms");
-        }
-        if (processedUsages.contains(info)) {
-          return true;
-        }
-        boolean success = usageConsumer.process(info);
-        processedUsages.add(info);
-        return success;
-      })) {
-        return false;
-      }
-      usagesBeingProcessed.remove(virtualFile); // after the whole virtualFile processed successfully, remove mapping to save memory
-
-      if (projectFileUsagesFound.get()) {
-        processPresentation.projectFileUsagesFound(() -> {
-          FindModel model = myFindModel.clone();
-          model.setSearchInProjectFiles(true);
-          FindInProjectManager.getInstance(myProject).startFindInProject(model);
-        });
-        return true;
-      }
-
-      long totalSize;
-      if (processedUsages.isEmpty()) {
-        totalSize = myTotalFilesSize.get();
-      }
-      else {
-        occurrenceCount.addAndGet(processedUsages.size());
-        totalSize = myTotalFilesSize.addAndGet(fileLength);
-      }
-
-      if (totalSize > FILES_SIZE_LIMIT) {
-        TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(myProgress);
-        if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, myProgress, null, () -> FindBundle.message("find.excessive.total.size.prompt",
-                                                          UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
-                                                          ApplicationNamesInfo.getInstance().getProductName()), null);
-        }
-        tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
-        myProgress.checkCanceled();
-      }
+    if (fileLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      myLargeFiles.add(virtualFile);
       return true;
-    };
-    return processor;
+    }
+
+    myProgress.checkCanceled();
+    String text = FindBundle.message("find.searching.for.string.in.file.progress",
+                                     myFindModel.getStringToFind(), virtualFile.getPresentableUrl());
+    myProgress.setText(text);
+    myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", occurrenceCount));
+
+    Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
+    if (pair == null) return true;
+
+    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ContainerUtil.newConcurrentSet());
+    PsiFile psiFile = pair.first;
+    VirtualFile sourceVirtualFile = pair.second;
+
+    if (searcher != null) {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(sourceVirtualFile);
+      CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(sourceVirtualFile, -1);
+      if (s.length() == 0 || searcher.scan(s) < 0) {
+        return true;
+      }
+    }
+    AtomicBoolean projectFileUsagesFound = new AtomicBoolean();
+    boolean processedSuccessfully = FindInProjectUtil.processUsagesInFile(psiFile, sourceVirtualFile, myFindModel, info -> {
+      if (skipProjectFile) {
+        projectFileUsagesFound.set(true);
+        return true;
+      }
+      if (reportedFirst.compareAndSet(false, true) && LOG.isDebugEnabled()) {
+        LOG.debug("First usage found in " + TimeoutUtil.getDurationMillis(mySearchStartedAt) + " ms");
+      }
+      if (processedUsages.contains(info)) {
+        return true;
+      }
+      boolean success = usageConsumer.process(info);
+      processedUsages.add(info);
+      return success;
+    });
+    if (!processedSuccessfully) {
+      return false;
+    }
+    usagesBeingProcessed.remove(virtualFile); // after the whole virtualFile processed successfully, remove mapping to save memory
+
+    if (projectFileUsagesFound.get()) {
+      processPresentation.projectFileUsagesFound(() -> {
+        FindModel model = myFindModel.clone();
+        model.setSearchInProjectFiles(true);
+        FindInProjectManager.getInstance(myProject).startFindInProject(model);
+      });
+      return true;
+    }
+
+    long totalSize;
+    if (processedUsages.isEmpty()) {
+      totalSize = myTotalFilesSize.get();
+    }
+    else {
+      occurrenceCount.addAndGet(processedUsages.size());
+      totalSize = myTotalFilesSize.addAndGet(fileLength);
+    }
+
+    if (totalSize > FILES_SIZE_LIMIT) {
+      TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(myProgress);
+      if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+        UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, myProgress, null, () -> FindBundle.message("find.excessive.total.size.prompt",
+                                                        UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
+                                                        ApplicationNamesInfo.getInstance().getProductName()), null);
+      }
+      tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
+      myProgress.checkCanceled();
+    }
+    return true;
   }
 
   // must return non-binary files

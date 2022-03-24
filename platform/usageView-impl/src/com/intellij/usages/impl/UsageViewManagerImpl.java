@@ -252,9 +252,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull ProgressIndicator indicator,
                                                    @Nullable UsageViewEx usageView,
                                                    @NotNull Supplier<String> messageSupplier,
-                                                   @Nullable Consumer<UsageLimitUtil.Result> onUserClicked) {
+                                                   @Nullable Consumer<? super UsageLimitUtil.Result> onUserClicked) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
+      if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) {
+        return;
+      }
       UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, messageSupplier.get());
       if (ret == UsageLimitUtil.Result.ABORT) {
         if (usageView != null) {
@@ -271,12 +273,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public static long getFileLength(@NotNull VirtualFile virtualFile) {
-    long[] length = {-1L};
-    ApplicationManager.getApplication().runReadAction(() -> {
-      if (!virtualFile.isValid()) return;
-      length[0] = virtualFile.getLength();
-    });
-    return length[0];
+    return ReadAction.compute(() -> virtualFile.isValid() ? virtualFile.getLength() : -1L);
   }
 
   @NotNull

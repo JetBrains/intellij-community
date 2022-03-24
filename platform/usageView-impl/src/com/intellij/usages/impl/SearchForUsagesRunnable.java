@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 final class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
@@ -407,11 +408,13 @@ final class SearchForUsagesRunnable implements Runnable {
           String scopeText = myPresentation.getScopeText();
           Language language = element == null ? null : element.getLanguage();
 
-          UsageViewManagerImpl.showTooManyUsagesWarningLater(
-            myProject, tooManyUsagesStatus, originalIndicator, usageView,
-            () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), r -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
-                r == UsageLimitUtil.Result.ABORT ? TooManyUsagesUserAction.Aborted : TooManyUsagesUserAction.Continued,
-                                                                                                                                   elementClass, scopeText, language));
+          Consumer<UsageLimitUtil.Result> onUserClicked = result -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
+                            result == UsageLimitUtil.Result.ABORT
+                            ? TooManyUsagesUserAction.Aborted
+                            : TooManyUsagesUserAction.Continued,
+                           elementClass, scopeText, language);
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, usageView,
+            () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), onUserClicked);
 
           UsageViewStatisticsCollector.logTooManyDialog(myProject, TooManyUsagesUserAction.Shown,
                                                         elementClass, scopeText, language);
