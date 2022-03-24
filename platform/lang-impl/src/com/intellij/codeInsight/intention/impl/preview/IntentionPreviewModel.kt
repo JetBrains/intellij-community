@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -39,9 +38,7 @@ internal class IntentionPreviewModel {
       val document = FileDocumentManager.getInstance().getDocument(psiFileCopy.viewProvider.virtualFile)
       if (document != null) PsiDocumentManager.getInstance(project).commitDocument(document)
 
-      WriteCommandAction.runWriteCommandAction(project, Runnable {
-        CodeStyleManager.getInstance(project).reformatRange(psiFileCopy, start, end, true)
-      })
+      CodeStyleManager.getInstance(project).reformatRange(psiFileCopy, start, end, true)
     }
 
     fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
