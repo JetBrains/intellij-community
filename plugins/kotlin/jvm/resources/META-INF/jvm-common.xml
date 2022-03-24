@@ -230,14 +230,15 @@
         <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
         <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
 
-        <lightTestFramework id="junit3LightTestFramework" order="before junit4LightTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit3LightTestFramework"/>
-        <lightTestFramework id="junit4LightTestFramework" order="before lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit4LightTestFramework"/>
-        <lightTestFramework id="lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.LightClassDelegateTestFramework"/>
+        <kotlinTestFramework id="junit5PsiFramework" order="before junit4PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit5KotlinTestFramework"/>
+        <kotlinTestFramework id="junit4PsiFramework" order="before junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit4KotlinTestFramework"/>
+        <kotlinTestFramework id="junit3PsiFramework" order="before delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit3KotlinTestFramework"/>
+        <kotlinTestFramework id="delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinDelegatingTestFramework"/>
     </extensions>
 
     <extensionPoints>
-      <extensionPoint qualifiedName="org.jetbrains.kotlin.lightTestFramework"
-                      interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>
+      <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
+                      interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework" dynamic="true"/>
     </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>

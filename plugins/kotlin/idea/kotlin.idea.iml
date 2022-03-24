@@ -71,5 +71,6 @@
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
   </component>
 </module>

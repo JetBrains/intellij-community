@@ -9,9 +9,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -29,6 +31,14 @@ import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
+
+        private fun KtNamedDeclaration.getTestFramework(): KotlinTestFramework? =
+            KotlinTestFramework.getApplicableFor(this)
+
+        private fun KtNamedFunction.isIgnored(): Boolean {
+            return getTestFramework()?.isIgnoredMethod(this) ?: false
+        }
+
         fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
             val testStateStorage = TestStateStorage.getInstance(declaration.project)
             val isClass = declaration is KtClass
@@ -76,8 +86,8 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
         if (declaration is KtNamedFunction) {
             if (declaration.containingClassOrObject == null ||
-                targetPlatform.isMultiPlatform() && declaration.containingClass() == null
-            ) return null
+                targetPlatform.isMultiPlatform() && declaration.containingClass() == null) return null
+            if (declaration.isIgnored() && declaration.module?.isGradleModule() == true) return null
         } else {
             if (declaration !is KtClassOrObject ||
                 targetPlatform.isMultiPlatform() && declaration !is KtClass
