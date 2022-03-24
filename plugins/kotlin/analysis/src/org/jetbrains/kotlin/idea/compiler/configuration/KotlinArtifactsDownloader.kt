@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
+import java.awt.EventQueue
 import java.io.File
 
 object KotlinArtifactsDownloader {
@@ -27,6 +29,15 @@ object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(project: Project) =
         KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getUnpackedKotlinDistPath(it) }
             ?: KotlinPluginLayout.instance.kotlinc
+
+    fun isKotlinDistInitialized(version: String): Boolean {
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+            return true
+        }
+        val unpackedTimestamp = getUnpackedKotlinDistPath(version).lastModified()
+        val mavenJarTimestamp = getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version).lastModified()
+        return unpackedTimestamp != 0L && mavenJarTimestamp != 0L && unpackedTimestamp >= mavenJarTimestamp
+    }
 
     fun getKotlinJpsPluginJarPath(version: String): File {
         if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
@@ -43,17 +54,23 @@ object KotlinArtifactsDownloader {
         project: Project,
         version: String,
         indicator: ProgressIndicator,
-        beforeDownload: () -> Unit,
         onError: (String) -> Unit,
-    ): File? = lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, beforeDownload, onError)
-        ?.let { lazyUnpackJar(it, getUnpackedKotlinDistPath(version)) }
+    ): File? = lazyDownloadMavenArtifact(
+        project,
+        KOTLIN_DIST_ARTIFACT_ID,
+        version,
+        indicator,
+        KotlinBundle.message("progress.text.downloading.kotlinc.dist"),
+        onError
+    )?.let { lazyUnpackJar(it, getUnpackedKotlinDistPath(version)) }
 
+    @Synchronized // Avoid manipulations with the same files from different threads
     fun lazyDownloadMavenArtifact(
         project: Project,
         artifactId: String,
         version: String,
         indicator: ProgressIndicator,
-        beforeDownload: () -> Unit,
+        @Nls indicatorDownloadText: String,
         onError: (String) -> Unit,
     ): File? {
         if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
@@ -67,6 +84,21 @@ object KotlinArtifactsDownloader {
         val expectedMavenArtifactJarPath = getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, artifactId, version)
         expectedMavenArtifactJarPath.takeIf { it.exists() }?.let {
             return it
+        }
+        indicator.text = indicatorDownloadText
+        return downloadMavenArtifact(artifactId, version, project, indicator, onError, expectedMavenArtifactJarPath)
+    }
+
+    private fun downloadMavenArtifact(
+        artifactId: String,
+        version: String,
+        project: Project,
+        indicator: ProgressIndicator,
+        onError: (String) -> Unit,
+        expectedMavenArtifactJarPath: File
+    ): File? {
+        check(!EventQueue.isDispatchThread()) {
+            "Don't call downloadMavenArtifact on UI thread"
         }
         val prop = RepositoryLibraryProperties(
             KOTLIN_MAVEN_GROUP_ID,
@@ -84,7 +116,6 @@ object KotlinArtifactsDownloader {
                         "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
                     )
                 )
-        beforeDownload()
         val downloadedCompiler = JarRepositoryManager.loadDependenciesSync(
             project,
             prop,

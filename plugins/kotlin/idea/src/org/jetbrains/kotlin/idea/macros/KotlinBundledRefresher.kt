@@ -12,8 +12,12 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.listDirectoryEntries
 
 /**
  * Component forces update for built-in libraries in plugin directory. They are ignored because of
@@ -32,26 +36,29 @@ internal class KotlinBundledRefresher : StartupActivity.DumbAware {
 
         if (KotlinIdePlugin.version != installedKotlinVersion) {
             // Force refresh jar handlers
-            KotlinArtifacts.instance.kotlincLibDirectory.listFiles()
-                ?.filter { it.extension == "jar" }
-                ?.forEach {
-                    requestFullJarUpdate(it.toPath())
-                }
+            requestKotlinDistRefresh(KotlinPluginLayout.instance.kotlinc.toPath())
 
             propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinIdePlugin.version)
         }
     }
 
-    private fun requestFullJarUpdate(jarFilePath: Path) {
-        val localVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(jarFilePath) ?: return
-
-        // Build and update JarHandler
-        val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localVirtualFile) ?: return
-        VfsUtilCore.visitChildrenRecursively(jarFile, object : VirtualFileVisitor<Any?>() {})
-        (jarFile as NewVirtualFile).markDirtyRecursively()
-    }
-
     companion object {
         private const val INSTALLED_KOTLIN_VERSION = "installed.kotlin.plugin.version"
+
+        private fun requestFullJarUpdate(jarFilePath: Path) {
+            val localVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(jarFilePath) ?: return
+
+            // Build and update JarHandler
+            val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localVirtualFile) ?: return
+            VfsUtilCore.visitChildrenRecursively(jarFile, object : VirtualFileVisitor<Any?>() {})
+            (jarFile as NewVirtualFile).markDirtyRecursively()
+        }
+
+        fun requestKotlinDistRefresh(kotlinBundledPath: Path) {
+            kotlinBundledPath.resolve("lib").also { require(it.exists()) { "kotlin-dist invalid dir layout" } }
+                .listDirectoryEntries()
+                .filter { it.extension == "jar" }
+                .forEach { requestFullJarUpdate(it) }
+        }
     }
 }

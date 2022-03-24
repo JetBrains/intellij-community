@@ -48,7 +48,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             version,
             context.progressIndicator,
-            beforeDownload = { context.progressIndicator.text = KotlinBundle.message("progress.text.downloading.kotlin.jps.plugin") },
+            KotlinBundle.message("progress.text.downloading.kotlin.jps.plugin"),
             onError = { context.addError(it) }
         )
         if (jpsPluginClassPathJar == null) {
@@ -59,7 +59,6 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             context.project,
             version,
             context.progressIndicator,
-            beforeDownload = { context.progressIndicator.text = KotlinBundle.message("progress.text.downloading.kotlinc.dist") },
             onError = { context.addError(it) },
         )
         if (unpackedKotlinc == null) {

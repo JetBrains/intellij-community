@@ -100,6 +100,8 @@
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
 
     <lang.importOptimizer
@@ -399,6 +401,11 @@
             id="Update Kotlin code style"
             displayType="STICKY_BALLOON"
             key="configuration.kotlin.code.style.group.name"
+    />
+    <notificationGroup
+            id="Kotlin dist downloading failed"
+            displayType="STICKY_BALLOON"
+            key="kotlin.dist.downloading.failed.group.name"
     />
   </extensions>
 
