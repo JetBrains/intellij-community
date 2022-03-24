@@ -31,6 +31,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import java.awt.BorderLayout
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -134,6 +135,16 @@ internal class DocumentationPopupUI(
     val editorPane = ui.editorPane
     editorPane.setHint(popup)
     PopupDragListener.dragPopupByComponent(popup, toolbarComponent)
+  }
+
+  /**
+   * Waits until UI has something to show. One of possible results:
+   * - content was not loaded after [DEFAULT_UI_RESPONSE_TIMEOUT] => "Fetching..." is shown;
+   * - content was loaded and it's empty => "No documentation" is shown;
+   * - content was loaded => content is shown.
+   */
+  suspend fun waitForContentUpdate() {
+    ui.contentUpdates.first()
   }
 
   fun updatePopup(updater: suspend () -> Unit) {
