@@ -443,7 +443,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue value = memState.pop();
     if (getContext() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)getContext();
-      value = CheckNotNullInstruction.dereference(interpreter, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
+      if (MethodReferenceInstruction.isQualifierDereferenced(context)) {
+        value = CheckNotNullInstruction.dereference(interpreter, memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
+      }
     }
     DfType dfType = memState.getDfType(value);
     if (getMutationSignature().mutatesThis() && !Mutability.fromDfType(dfType).canBeModified()) {
