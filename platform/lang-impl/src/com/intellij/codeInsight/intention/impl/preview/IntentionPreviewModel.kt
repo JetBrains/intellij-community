@@ -10,10 +10,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -25,7 +23,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.ui.JBUI
 import java.awt.Color
-import java.awt.Font
 
 internal class IntentionPreviewModel {
   companion object {
@@ -70,10 +67,11 @@ internal class IntentionPreviewModel {
         val deleted = newText.isBlank()
         if (deleted) {
           if (oldText.isBlank()) return@mapNotNull null
-          return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true)
+          return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, HighlightingType.DELETED)
         }
 
         var highlightRange: TextRange? = null
+        var highlightingType = HighlightingType.UPDATED
         if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1) {
           val prefix = StringUtil.commonPrefixLength(oldText, newText)
           val suffix = StringUtil.commonSuffixLength(oldText, newText)
@@ -81,23 +79,27 @@ internal class IntentionPreviewModel {
             var endPos = newText.length - suffix
             if (endPos > prefix) {
               highlightRange = TextRange.create(prefix, endPos)
+              if (oldText.length - suffix == prefix) {
+                highlightingType = HighlightingType.ADDED
+              }
             } else {
               endPos = oldText.length - suffix
               if (endPos > prefix) {
                 val deletedLength = oldText.length - newText.length
                 endPos = deletedLength.coerceAtLeast(prefix + deletedLength)
                 highlightRange = TextRange.create(prefix, endPos)
-                return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, true, highlightRange)
+                highlightingType = HighlightingType.DELETED
+                return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1, highlightingType, highlightRange)
               }
             }
           }
         }
 
-        return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2, updatedRange = highlightRange)
+        return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2, highlightingType, highlightRange)
       }
-      if (diffs.any { info -> !info.deleted || info.updatedRange != null }) {
+      if (diffs.any { info -> info.highlightingType != HighlightingType.DELETED || info.updatedRange != null }) {
         // Do not display deleted fragments if anything is added
-        diffs = diffs.filter { info -> !info.deleted || info.updatedRange != null }
+        diffs = diffs.filter { info -> info.highlightingType != HighlightingType.DELETED || info.updatedRange != null }
       }
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
@@ -107,39 +109,38 @@ internal class IntentionPreviewModel {
       return emptyList()
     }
 
+    private enum class HighlightingType { ADDED, UPDATED, DELETED }
+
     private data class DiffInfo(val fileText: String,
                                 val startLine: Int,
                                 val length: Int,
-                                val deleted: Boolean = false,
+                                val highlightingType: HighlightingType = HighlightingType.UPDATED,
                                 val updatedRange: TextRange? = null) {
       fun createEditor(project: Project,
                        fileType: FileType,
                        maxLine: Int): EditorEx {
         val editor = createEditor(project, fileType, fileText, startLine, maxLine)
-        if (deleted) {
-          val colorsScheme = editor.colorsScheme
-          val attributes = TextAttributes(null, null, colorsScheme.defaultForeground, EffectType.STRIKEOUT, Font.PLAIN)
-          if (updatedRange != null) {
-            editor.markupModel.addRangeHighlighter(updatedRange.startOffset, updatedRange.endOffset, HighlighterLayer.ERROR + 1, attributes,
-              HighlighterTargetArea.EXACT_RANGE)
-          } else {
-            val document = editor.document
-            val lineCount = document.lineCount
-            for (line in 0 until lineCount) {
-              var start = document.getLineStartOffset(line)
-              var end = document.getLineEndOffset(line) - 1
-              while (start <= end && Character.isWhitespace(fileText[start])) start++
-              while (start <= end && Character.isWhitespace(fileText[end])) end--
-              if (start <= end) {
-                editor.markupModel.addRangeHighlighter(start, end + 1, HighlighterLayer.ERROR + 1, attributes,
-                                                       HighlighterTargetArea.EXACT_RANGE)
-              }
+        if (updatedRange != null) {
+          val attr = when (highlightingType) {
+            HighlightingType.UPDATED -> DiffColors.DIFF_MODIFIED
+            HighlightingType.ADDED -> DiffColors.DIFF_INSERTED
+            HighlightingType.DELETED -> DiffColors.DIFF_DELETED
+          }
+          editor.markupModel.addRangeHighlighter(attr, updatedRange.startOffset, updatedRange.endOffset, HighlighterLayer.ERROR + 1,
+                                                 HighlighterTargetArea.EXACT_RANGE)
+        } else if (highlightingType == HighlightingType.DELETED) {
+          val document = editor.document
+          val lineCount = document.lineCount
+          for (line in 0 until lineCount) {
+            var start = document.getLineStartOffset(line)
+            var end = document.getLineEndOffset(line) - 1
+            while (start <= end && Character.isWhitespace(fileText[start])) start++
+            while (start <= end && Character.isWhitespace(fileText[end])) end--
+            if (start <= end) {
+              editor.markupModel.addRangeHighlighter(DiffColors.DIFF_DELETED, start, end + 1, HighlighterLayer.ERROR + 1,
+                                                     HighlighterTargetArea.EXACT_RANGE)
             }
           }
-        }
-        else if (updatedRange != null) {
-          editor.markupModel.addRangeHighlighter(DiffColors.DIFF_MODIFIED, updatedRange.startOffset, updatedRange.endOffset,
-            HighlighterLayer.ERROR + 1, HighlighterTargetArea.EXACT_RANGE)
         }
         return editor
       }
