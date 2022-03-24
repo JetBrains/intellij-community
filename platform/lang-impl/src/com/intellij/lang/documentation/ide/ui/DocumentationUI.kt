@@ -26,13 +26,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
-import com.intellij.util.SmartList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
@@ -52,7 +51,8 @@ internal class DocumentationUI(
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
-  private val contentListeners: MutableList<() -> Unit> = SmartList()
+  private val myContentUpdates = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
 
   init {
     scrollPane = DocumentationScrollPane()
@@ -110,21 +110,6 @@ internal class DocumentationUI(
     editorPane.background = color
     return Disposable {
       editorPane.background = editorBG
-    }
-  }
-
-  fun addContentListener(listener: () -> Unit): Disposable {
-    EDT.assertIsEdt()
-    contentListeners.add(listener)
-    return Disposable {
-      EDT.assertIsEdt()
-      contentListeners.remove(listener)
-    }
-  }
-
-  private fun fireContentChanged() {
-    for (listener in contentListeners) {
-      listener.invoke()
     }
   }
 
@@ -202,7 +187,7 @@ internal class DocumentationUI(
       return
     }
     editorPane.text = text
-    fireContentChanged()
+    myContentUpdates.emit(Unit)
     if (uiState == null) {
       return
     }
