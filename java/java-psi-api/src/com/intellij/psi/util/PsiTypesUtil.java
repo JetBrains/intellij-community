@@ -27,7 +27,7 @@ public final class PsiTypesUtil {
   private static final Logger LOG = Logger.getInstance(PsiTypesUtil.class);
   @NonNls private static final Map<String, String> ourUnboxedTypes = new HashMap<>();
   @NonNls private static final Map<String, String> ourBoxedTypes = new HashMap<>();
-  @NonNls private static final Map<String, String> defaultValueCandidates = new HashMap<>();
+  @NonNls private static final Map<String, String> ourCustomTypes = new HashMap<>();
 
   static {
     ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
@@ -48,20 +48,20 @@ public final class PsiTypesUtil {
     ourBoxedTypes.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
     ourBoxedTypes.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
 
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_OPTIONAL, CommonClassNames.JAVA_UTIL_OPTIONAL + ".empty()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_STREAM_STREAM, CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".empty()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyList()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyList()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_ENUMERATION, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyEnumeration()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_ITERATOR, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyIterator()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_LIST_ITERATOR, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyListIterator()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyMap()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_SORTED_MAP, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptySortedMap()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_NAVIGABLE_MAP, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyNavigableMap()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_SET, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptySet()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_NAVIGABLE_SET, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyNavigableSet()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_UTIL_SORTED_SET, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptySortedSet()");
-    defaultValueCandidates.put(CommonClassNames.JAVA_LANG_STRING, "\"\"");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_OPTIONAL, CommonClassNames.JAVA_UTIL_OPTIONAL + ".empty()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_STREAM_STREAM, CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".empty()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyList()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyList()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_ENUMERATION, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyEnumeration()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_ITERATOR, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyIterator()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_LIST_ITERATOR, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyListIterator()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyMap()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_SORTED_MAP, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptySortedMap()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_NAVIGABLE_MAP, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyNavigableMap()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_SET, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptySet()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_NAVIGABLE_SET, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptyNavigableSet()");
+    ourCustomTypes.put(CommonClassNames.JAVA_UTIL_SORTED_SET, CommonClassNames.JAVA_UTIL_COLLECTIONS + ".emptySortedSet()");
+    ourCustomTypes.put(CommonClassNames.JAVA_LANG_STRING, "\"\"");
   }
 
   @NonNls private static final String GET_CLASS_METHOD = "getClass";
@@ -111,10 +111,10 @@ public final class PsiTypesUtil {
       case CommonClassNames.JAVA_UTIL_NAVIGABLE_SET:
       case CommonClassNames.JAVA_UTIL_SORTED_SET:
       case CommonClassNames.JAVA_LANG_STRING:
-        return defaultValueCandidates.get(text);
+        return ourCustomTypes.get(text);
       default:
         // case if `equalsToText` true is exists? if not, remove this case
-        return defaultValueCandidates.entrySet().stream()
+        return ourCustomTypes.entrySet().stream()
           .flatMap(pair -> type.equalsToText(pair.getKey()) ? Stream.of(pair.getValue()) : Stream.empty())
           .findFirst()
           .orElse(null);
