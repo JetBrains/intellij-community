@@ -394,7 +394,9 @@ final class RefreshWorker {
     boolean currentIsSymlink = child.is(VFileProperty.SYMLINK), upToDateIsSymlink = childAttributes.isSymLink();
     boolean currentIsSpecial = child.is(VFileProperty.SPECIAL), upToDateIsSpecial = childAttributes.isSpecial();
 
-    if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
+    boolean isFileTypeChanged = currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial;
+    if (currentIsDirectory != upToDateIsDirectory ||
+        (isFileTypeChanged && !Boolean.getBoolean("refresh.ignore.file.type.changes"))) {
       myHelper.scheduleDeletion(child);
       if (parent != null) {
         String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
