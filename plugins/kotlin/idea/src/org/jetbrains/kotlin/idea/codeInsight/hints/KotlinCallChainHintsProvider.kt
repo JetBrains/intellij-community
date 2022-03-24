@@ -33,8 +33,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
 
     override val previewText: String
         get() = """
-            fun main() {
-                (1..100).filter { it % 2 == 0 }
+            fun doSomething(list: List<Int>) {
+                list.filter { it % 2 == 0 }
                     .map { it * 2 }
                     .takeIf { list ->
                         list.all { it % 2 == 0 }
@@ -42,6 +42,14 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
                     ?.map { "item: ${'$'}it" }
                     ?.forEach { println(it) }
             }
+            
+            class List<T> {
+                fun filter(pred: (T) -> Boolean) : List<T> = TODO()
+                fun <R> map(op: (T) -> R) : List<R> = TODO()
+                fun all(op: (T) -> Boolean) : Boolean = TODO()
+                fun forEach(op: (T) -> Unit) : Unit = TODO()
+            }
+            fun <T> T.takeIf(predicate: (T) -> Boolean): T? = TODO()
         """.trimIndent()
 
     override val description: String
