@@ -258,7 +258,7 @@ public final class EnvironmentUtil {
         readerCmd.append(SHELL_SOURCE_COMMAND).append(" \"").append(file).append("\" && ");
       }
 
-      readerCmd.append("'").append(reader).append("' > '").append(envDataFile.toAbsolutePath()).append("'");
+      readerCmd.append("'").append(reader).append("' >| '").append(envDataFile.toAbsolutePath()).append("'");
 
       List<String> command = getShellProcessCommand();
       int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
