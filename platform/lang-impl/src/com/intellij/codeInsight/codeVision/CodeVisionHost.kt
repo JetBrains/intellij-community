@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupDefaultSettingModel
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsLiveModel
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
 import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
@@ -35,6 +38,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -358,7 +362,7 @@ open class CodeVisionHost(val project: Project) {
     }
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
-      val results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
+      var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
       val providerWhoWantToUpdate = mutableListOf<String>()
 
       var everyProviderReadyToUpdate = true
@@ -396,6 +400,16 @@ open class CodeVisionHost(val project: Project) {
 
           logger.error("Exception during computeForEditor for ${it.id}", e)
         }
+      }
+
+      val previewData = CodeVisionGroupDefaultSettingModel.isEnabledInPreview(editor)
+      if (previewData == false) {
+        results = results.map {
+          val richText = RichText()
+          richText.append(it.second.longPresentation, SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null))
+          val entry = RichTextCodeVisionEntry(it.second.providerId, richText)
+          it.first to entry
+        }.toMutableList()
       }
 
       if (!everyProviderReadyToUpdate) {
