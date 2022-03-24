@@ -13,5 +13,9 @@
         <toolWindow id="JewelDemo" anchor="bottom" secondary="false"
                     canCloseContents="true"
                     factoryClass="org.jetbrains.jewel.theme.idea.demo.JewelDemoToolWindow"/>
+
+        <toolWindow id="PKGS Demo" anchor="bottom" secondary="false"
+                    canCloseContents="true"
+                    factoryClass="org.jetbrains.jewel.theme.idea.demo.PKGSDemo"/>
     </extensions>
 </idea-plugin>

@@ -17,9 +17,11 @@ import org.jetbrains.jewel.theme.intellij.styles.LocalFrameStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalIconButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalSeparatorStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalTextFieldStyle
+import org.jetbrains.jewel.theme.intellij.styles.LocalTreeViewStyle
 import org.jetbrains.jewel.theme.intellij.styles.ScrollbarStyle
 import org.jetbrains.jewel.theme.intellij.styles.SeparatorStyle
 import org.jetbrains.jewel.theme.intellij.styles.TextFieldStyle
+import org.jetbrains.jewel.theme.intellij.styles.TreeViewStyle
 
 val LocalTypography = compositionLocalOf<IntelliJTypography> { localNotProvided() }
 val LocalMetrics = compositionLocalOf<IntelliJMetrics> { localNotProvided() }
@@ -42,6 +44,7 @@ fun IntelliJTheme(
     LocalTextFieldStyle provides TextFieldStyle(palette, metrics, typography.textField),
     LocalSeparatorStyle provides SeparatorStyle(palette, metrics),
     LocalScrollbarStyle provides ScrollbarStyle(palette, metrics),
+    LocalTreeViewStyle provides TreeViewStyle(palette, metrics, painters),
     LocalIndication provides NoIndication,
     LocalTypography provides typography,
     LocalMetrics provides metrics,

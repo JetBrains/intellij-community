@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Insets
 import org.jetbrains.jewel.ShapeStroke
 import org.jetbrains.jewel.animateShapeStroke
-import org.jetbrains.jewel.components.state.AppearanceTransitionState
+import org.jetbrains.jewel.components.state.ButtonAppearanceTransitionState
 import org.jetbrains.jewel.components.state.ButtonMouseState
 import org.jetbrains.jewel.components.state.ButtonState
 import org.jetbrains.jewel.styles.ControlStyle
@@ -29,13 +29,20 @@ import org.jetbrains.jewel.toBrush
 
 @Immutable
 data class ButtonAppearance(
-    val textStyle: TextStyle = TextStyle.Default, val background: Brush? = null, val shapeStroke: ShapeStroke? = null, val shape: Shape,
+    val textStyle: TextStyle = TextStyle.Default,
+    val background: Brush? = null,
+    val shapeStroke: ShapeStroke? = null,
+    val shape: Shape,
 
-    val contentPadding: PaddingValues, val minWidth: Dp, val minHeight: Dp,
+    val contentPadding: PaddingValues,
+    val minWidth: Dp,
+    val minHeight: Dp,
 
-    val haloStroke: ShapeStroke? = null, val haloShape: Shape = shape,
+    val haloStroke: ShapeStroke? = null,
+    val haloShape: Shape = shape,
 
-    val shadowColor: Color? = null, val shadowElevation: Dp? = null
+    val shadowColor: Color? = null,
+    val shadowElevation: Dp? = null
 )
 
 typealias ButtonStyle = ControlStyle<ButtonAppearance, ButtonState>
@@ -45,16 +52,17 @@ val Styles.button: ButtonStyle
     @Composable @ReadOnlyComposable get() = LocalButtonStyle.current
 
 val LocalIconButtonStyle = compositionLocalOf<ButtonStyle> { localNotProvided() }
+
 val Styles.iconButton: ButtonStyle
     @Composable @ReadOnlyComposable get() = LocalIconButtonStyle.current
 
 @Composable
-fun updateButtonAppearanceTransition(appearance: ButtonAppearance): AppearanceTransitionState {
+fun updateButtonAppearanceTransition(appearance: ButtonAppearance): ButtonAppearanceTransitionState {
     val transition = updateTransition(appearance)
     val background = mutableStateOf(appearance.background)
     val shapeStroke = transition.animateShapeStroke(label = "AnimateShapeStroke") { it.shapeStroke }
     val haloStroke = transition.animateShapeStroke(label = "AnimateHaloStroke") { it.haloStroke }
-    return AppearanceTransitionState(background, shapeStroke, haloStroke)
+    return ButtonAppearanceTransitionState(background, shapeStroke, haloStroke)
 }
 
 enum class IntelliJButtonStyleVariations {
@@ -62,7 +70,9 @@ enum class IntelliJButtonStyleVariations {
 }
 
 fun ButtonStyle(
-    palette: IntelliJPalette, metrics: IntelliJMetrics, controlTextStyle: TextStyle
+    palette: IntelliJPalette,
+    metrics: IntelliJMetrics,
+    controlTextStyle: TextStyle
 ) = ButtonStyle {
     val focusHaloStroke = ShapeStroke(metrics.controlFocusHaloWidth, palette.controlFocusHalo.toBrush())
     val default = ButtonAppearance(

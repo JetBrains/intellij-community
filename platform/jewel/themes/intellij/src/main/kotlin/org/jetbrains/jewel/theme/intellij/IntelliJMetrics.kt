@@ -14,7 +14,16 @@ class IntelliJMetrics(
     val button: Button,
     val separator: Separator,
     val scrollbar: Scrollbar,
+    val treeView: TreeView
 ) {
+
+    data class TreeView(
+        val indentWidth: Dp,
+        val arrowEndPadding: Dp
+    ) {
+
+        companion object
+    }
 
     data class Button(
         val strokeWidth: Dp, // N/A in Swing

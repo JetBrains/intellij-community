@@ -9,6 +9,7 @@ data class IntelliJPalette(
     val radioButton: RadioButton,
     val textField: TextField,
     val separator: Separator,
+    val treeView: TreeView,
 
     val background: Color, // Panel.background
 
@@ -26,6 +27,14 @@ data class IntelliJPalette(
     val controlHaloWarning: Color, // Component.warningFocusColor
     val scrollbar: Scrollbar,
 ) {
+
+    data class TreeView(
+        val focusedSelectedElementBackground: Color,
+        val background: Color
+    ) {
+
+        companion object
+    }
 
     data class RadioButton(
         val background: Color,

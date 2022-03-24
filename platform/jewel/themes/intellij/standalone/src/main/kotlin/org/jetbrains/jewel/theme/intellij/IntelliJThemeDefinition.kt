@@ -8,9 +8,13 @@ fun IntelliJThemeLight(content: @Composable () -> Unit) =
         IntelliJPalette.light,
         IntelliJMetrics.default,
         IntelliJPainters.light,
-        IntelliJTypography.default,
+        IntelliJTypography.light,
         content
     )
+
+@Composable
+fun IntelliJTheme(isDark: Boolean, content: @Composable () -> Unit) =
+    if (isDark) IntelliJThemeDark(content) else IntelliJThemeLight(content)
 
 @Composable
 fun IntelliJThemeDark(content: @Composable () -> Unit) =
@@ -18,6 +22,6 @@ fun IntelliJThemeDark(content: @Composable () -> Unit) =
         IntelliJPalette.darcula,
         IntelliJMetrics.default,
         IntelliJPainters.darcula,
-        IntelliJTypography.default,
+        IntelliJTypography.darcula,
         content
     )

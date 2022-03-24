@@ -17,7 +17,7 @@ data class ButtonState(
     val focused: Boolean = false,
 )
 
-class AppearanceTransitionState(
+class ButtonAppearanceTransitionState(
     background: State<Brush?>,
     shapeStroke: State<ShapeStroke?>,
     haloStroke: State<ShapeStroke?>,

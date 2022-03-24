@@ -38,7 +38,7 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
     @OptIn(ExperimentalComposeUiApi::class)
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         toolWindow.addComposePanel("Compose Demo") {
-            IntelliJTheme {
+            IntelliJTheme(this) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -86,7 +86,7 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
             }
         }
         toolWindow.addComposePanel("Compose Demo 2") {
-            IntelliJTheme {
+            IntelliJTheme(this) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center

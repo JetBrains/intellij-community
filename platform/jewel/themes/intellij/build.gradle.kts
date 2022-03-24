@@ -8,8 +8,13 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 jvmTarget = "11"
-                freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
             }
+        }
+    }
+    sourceSets {
+        all {
+            languageSettings.optIn("androidx.compose.foundation.ExperimentalFoundationApi")
+            languageSettings.optIn("kotlin.RequiresOptIn")
         }
     }
 }
@@ -19,4 +24,5 @@ dependencies {
         exclude(group = "org.jetbrains.compose.material")
     }
     api(projects.library)
+
 }

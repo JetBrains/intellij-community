@@ -22,7 +22,14 @@ val IntelliJMetrics.Companion.default
         controlArc = 3.dp,
         button = IntelliJMetrics.Button.default,
         separator = IntelliJMetrics.Separator.default,
-        scrollbar = if (isMacOs()) IntelliJMetrics.Scrollbar.macOs else IntelliJMetrics.Scrollbar.default
+        scrollbar = if (isMacOs()) IntelliJMetrics.Scrollbar.macOs else IntelliJMetrics.Scrollbar.default,
+        treeView = IntelliJMetrics.TreeView.default
+    )
+
+val IntelliJMetrics.TreeView.Companion.default
+    get() = IntelliJMetrics.TreeView(
+        indentWidth = 24.dp,
+        arrowEndPadding = 4.dp
     )
 
 val IntelliJMetrics.Scrollbar.Companion.default

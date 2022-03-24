@@ -5,30 +5,44 @@ import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.isMacOs
 import org.jetbrains.jewel.toBrush
 
+@Suppress("unused")
+val Color.Companion.IntelliJWhite
+    get() = Color(0xFFF2F2F2)
+
+@Suppress("unused")
+val Color.Companion.IntelliJGrey
+    get() = Color(0xFF3C3F41)
+
+val Color.Companion.IntelliJDarculaSelection
+    get() = Color(0xFF4B6EAF)
+
+val Color.Companion.IntelliJLightSelection
+    get() = Color(0xFF2675BF)
+
 val IntelliJPalette.Checkbox.Companion.light
     get() = IntelliJPalette.Checkbox(
-        background = Color(0xFFF2F2F2),
+        background = Color.IntelliJWhite,
         foreground = Color(0xFF000000),
         foregroundDisabled = Color(0xFF8C8C8C),
     )
 
 val IntelliJPalette.Checkbox.Companion.darcula
     get() = IntelliJPalette.Checkbox(
-        background = Color(0xFF3C3F41),
+        background = Color.IntelliJGrey,
         foreground = Color(0xFFBBBBBB),
         foregroundDisabled = Color(0xFF999999),
     )
 
 val IntelliJPalette.RadioButton.Companion.light
     get() = IntelliJPalette.RadioButton(
-        background = Color(0xFFF2F2F2),
+        background = Color.IntelliJWhite,
         foreground = Color(0xFF000000),
         foregroundDisabled = Color(0xFF8C8C8C),
     )
 
 val IntelliJPalette.RadioButton.Companion.darcula
     get() = IntelliJPalette.RadioButton(
-        background = Color(0xFF3C3F41),
+        background = Color.IntelliJGrey,
         foreground = Color(0xFFBBBBBB),
         foregroundDisabled = Color(0xFF999999),
     )
@@ -36,7 +50,7 @@ val IntelliJPalette.RadioButton.Companion.darcula
 val IntelliJPalette.TextField.Companion.light
     get() = IntelliJPalette.TextField(
         background = Color(0xFFFFFFFF),
-        backgroundDisabled = Color(0xFFF2F2F2),
+        backgroundDisabled = Color.IntelliJWhite,
         foreground = Color(0xFF000000),
         foregroundDisabled = Color(0xFF8C8C8C)
     )
@@ -44,7 +58,7 @@ val IntelliJPalette.TextField.Companion.light
 val IntelliJPalette.TextField.Companion.darcula
     get() = IntelliJPalette.TextField(
         background = Color(0xFF45494A),
-        backgroundDisabled = Color(0xFF3C3F41),
+        backgroundDisabled = Color.IntelliJGrey,
         foreground = Color(0xFFBBBBBB),
         foregroundDisabled = Color(0xFF777777)
     )
@@ -89,7 +103,7 @@ val IntelliJPalette.Separator.Companion.light
 
 val IntelliJPalette.Separator.Companion.darcula
     get() = IntelliJPalette.Separator(
-        color = Color(0xFF3C3F41),
+        color = Color.IntelliJGrey,
         background = Color.Unspecified,
     )
 
@@ -111,7 +125,7 @@ val IntelliJPalette.Companion.light
         checkbox = IntelliJPalette.Checkbox.light,
         radioButton = IntelliJPalette.RadioButton.light,
         textField = IntelliJPalette.TextField.light,
-        background = Color(0xFFF2F2F2),
+        background = Color.IntelliJWhite,
         text = Color.Black,
         textDisabled = Color(0xFF8C8C8C),
         controlStroke = Color(0xFFC4C4C4),
@@ -123,7 +137,8 @@ val IntelliJPalette.Companion.light
         controlHaloError = Color(0XFFE53E4D),
         controlHaloWarning = Color(0XFFE2A53A),
         separator = IntelliJPalette.Separator.light,
-        scrollbar = IntelliJPalette.Scrollbar.light
+        scrollbar = IntelliJPalette.Scrollbar.light,
+        treeView = IntelliJPalette.TreeView.Companion.light
     )
 
 val IntelliJPalette.Companion.darcula
@@ -132,7 +147,7 @@ val IntelliJPalette.Companion.darcula
         checkbox = IntelliJPalette.Checkbox.darcula,
         textField = IntelliJPalette.TextField.darcula,
         radioButton = IntelliJPalette.RadioButton.darcula,
-        background = Color(0xFF3C3F41),
+        background = Color.IntelliJGrey,
         text = Color(0xFFBBBBBB),
         textDisabled = Color(0xFF777777),
         controlStroke = Color(0xFF646464),
@@ -145,4 +160,17 @@ val IntelliJPalette.Companion.darcula
         controlHaloWarning = Color(0XFFAC7920),
         separator = IntelliJPalette.Separator.darcula,
         scrollbar = IntelliJPalette.Scrollbar.darcula,
+        treeView = IntelliJPalette.TreeView.darcula
+    )
+
+val IntelliJPalette.TreeView.Companion.light
+    get() = IntelliJPalette.TreeView(
+        focusedSelectedElementBackground = Color.IntelliJLightSelection,
+        background = Color.White
+    )
+
+val IntelliJPalette.TreeView.Companion.darcula
+    get() = IntelliJPalette.TreeView(
+        focusedSelectedElementBackground = Color.IntelliJDarculaSelection,
+        background = Color.IntelliJGrey
     )

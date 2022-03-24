@@ -25,6 +25,7 @@ import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.skiko.toSkikoTypeface
 import javax.swing.UIManager
 import java.awt.Color as AwtColor
@@ -48,7 +49,15 @@ internal val Application.lookAndFeelFlow: Flow<LafManager>
         LafManagerListener { trySend(it) }
     }
 
-internal fun AwtColor.toColor() = Color(red, green, blue, alpha)
+internal val Application.intellijThemeFlow
+    get() = lookAndFeelFlow.map { CurrentIntelliJThemeDefinition() }
+
+internal fun AwtColor.toColor() = Color(
+    red = red,
+    green = green,
+    blue = blue,
+    alpha = alpha
+)
 
 internal fun retrieveColorOrNull(key: String) =
     UIManager.getColor(key)?.toColor()
@@ -65,9 +74,9 @@ internal fun retrieveColorsOrUnspecified(vararg keys: String) = keys.map { retri
 
 internal val logger = Logger.getInstance("#org.jetbrains.compose.desktop.ide.theme")
 
-private val dirProvider = DirProvider()
+internal val dirProvider = DirProvider()
 
-internal fun lookupSvgIcon(
+internal fun lookupIJSvgIcon(
     name: String,
     selected: Boolean = false,
     focused: Boolean = false,
@@ -109,13 +118,19 @@ suspend fun retrieveFont(
     key: String,
     color: Color = Color.Unspecified,
     lineHeight: TextUnit = TextUnit.Unspecified
-) = with(UIManager.getFont(key)) {
-    TextStyle(
-        color = color,
-        fontSize = size.sp,
-        fontWeight = FontWeight.Normal,
-        fontFamily = FontFamily(Typeface(toSkikoTypeface() ?: org.jetbrains.skia.Typeface.makeDefault())),
-        // todo textDecoration might be defined in the awt theme
-        lineHeight = lineHeight
-    )
+): TextStyle {
+    val font = UIManager.getFont(key) ?: error("Font with key \"$key\" not found, fallback to 'Typeface.makeDefault()'")
+    return with(font) {
+        val typeface = toSkikoTypeface() ?: org.jetbrains.skia.Typeface.makeDefault().also {
+            logger.warn("Unable to convert font ${font.fontName} into a Skiko typeface, fallback to 'Typeface.makeDefault()'")
+        }
+        TextStyle(
+            color = color,
+            fontSize = size.sp,
+            fontWeight = FontWeight.Normal,
+            fontFamily = FontFamily(Typeface(typeface)),
+            // todo textDecoration might be defined in the awt theme
+            lineHeight = lineHeight
+        )
+    }
 }

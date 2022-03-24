@@ -15,7 +15,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.ShapeStroke
 import org.jetbrains.jewel.animateShapeStroke
-import org.jetbrains.jewel.components.state.AppearanceTransitionState
+import org.jetbrains.jewel.components.state.ButtonAppearanceTransitionState
 import org.jetbrains.jewel.components.state.ButtonMouseState
 import org.jetbrains.jewel.components.state.ButtonState
 import org.jetbrains.jewel.styles.ControlStyle
@@ -45,12 +45,12 @@ data class ButtonAppearance(
 )
 
 @Composable
-fun updateButtonAppearanceTransition(appearance: ButtonAppearance): AppearanceTransitionState {
+fun updateButtonAppearanceTransition(appearance: ButtonAppearance): ButtonAppearanceTransitionState {
     val transition = updateTransition(appearance)
     val background = mutableStateOf(appearance.background)
     val shapeStroke = transition.animateShapeStroke(label = "AnimateShapeStroke") { it.shapeStroke }
     val haloStroke = transition.animateShapeStroke(label = "AnimateHaloStroke") { it.haloStroke }
-    return AppearanceTransitionState(background, shapeStroke, haloStroke)
+    return ButtonAppearanceTransitionState(background, shapeStroke, haloStroke)
 }
 
 typealias ButtonStyle = ControlStyle<ButtonAppearance, ButtonState>
