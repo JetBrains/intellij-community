@@ -2,12 +2,10 @@
 package com.intellij.notification.impl
 
 import com.intellij.UtilBundle
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.EventLog
@@ -20,7 +18,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -28,7 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.NullableComponent
 import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -464,8 +460,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   private val myTimeComponents = ArrayList<JLabel>()
   private val myTimeAlarm = Alarm(myProject)
 
-  private val mySuggestionGotItPanel = JPanel(BorderLayout())
-
   private lateinit var myClearCallback: (List<Notification>) -> Unit
   private lateinit var myRemoveCallback: Consumer<Notification>
 
@@ -481,28 +475,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
-      mySuggestionGotItPanel.background = JBColor.lazy {
-        EditorColorsManager.getInstance().globalScheme.getColor(HintUtil.PROMOTION_PANE_KEY)
-      }
-      mySuggestionGotItPanel.isVisible = false
-      mySuggestionGotItPanel.border = JBUI.Borders.customLineBottom(JBColor.border())
-      add(mySuggestionGotItPanel, BorderLayout.NORTH)
-
-      val gotItTitle = MultiLineLabel(IdeBundle.message("notifications.toolwindow.suggestion.gotit.title"))
-      gotItTitle.mediumFontFunction()
-      gotItTitle.border = JBUI.Borders.empty(7, 12, 7, 0)
-      mySuggestionGotItPanel.add(gotItTitle, BorderLayout.WEST)
-
-      val panel = JPanel(BorderLayout())
-      panel.isOpaque = false
-      panel.border = JBUI.Borders.empty(7, 0, 0, 12)
-      mySuggestionGotItPanel.add(panel, BorderLayout.EAST)
-      panel.add(LinkLabel<Any>(IdeBundle.message("notifications.toolwindow.suggestion.gotit.link"), null) { _, _ ->
-        mySuggestionGotItPanel.isVisible = false
-        myTitle.isVisible = true
-        myMainContent.fullRepaint()
-      }, BorderLayout.NORTH)
-
       myTitle.border = JBUI.Borders.emptyLeft(10)
       mainPanel.add(myTitle, BorderLayout.NORTH)
     }
@@ -565,12 +537,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myList.add(component, 0)
     updateLayout()
     myEventHandler.add(component)
-
-    if (mySuggestionType && !PropertiesComponent.getInstance().getBoolean("notification.suggestion.dont.show.gotit")) {
-      PropertiesComponent.getInstance().setValue("notification.suggestion.dont.show.gotit", true)
-      mySuggestionGotItPanel.isVisible = true
-      myTitle.isVisible = false
-    }
 
     updateContent()
 
