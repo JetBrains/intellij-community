@@ -337,7 +337,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         else {
           myCurrentOverContainer.add(myContent, point);
           ObjectUtils.consumeIfCast(myCurrentOverContainer, DockableEditorTabbedContainer.class, container -> {
-            //Marker to DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
+            //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
             if (container.getCurrentDropSide() == CENTER) e.consume();
           });
         }
