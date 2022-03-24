@@ -16,15 +16,22 @@ import com.intellij.psi.PsiWhiteSpace
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
+import org.jetbrains.kotlin.idea.debugger.ClassNameCalculator
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class KotlinDfaAssistProvider : DfaAssistProvider {
     override fun locationMatches(element: PsiElement, location: Location): Boolean {
-        // TODO: more precise check
-        return true
+        val jdiClassName = location.method().declaringType().name()
+        val file = element.containingFile
+        if (file !is KtFile) return false
+        val classNames = ClassNameCalculator.getClassNames(file)
+        val psiClassName = element.parentsWithSelf.firstNotNullOfOrNull { e -> classNames[e] }
+        return psiClassName == jdiClassName
     }
+
     override fun getAnchor(element: PsiElement): KtExpression? {
         var cur = element
         while (cur is PsiWhiteSpace || cur is PsiComment) {
