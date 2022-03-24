@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION_ERROR", "DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION")
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -81,30 +80,12 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
     override fun getTargetDataKey() = ProjectKeys.PROJECT
 
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<ProjectData>>,
+        toImport: Collection<DataNode<ProjectData>>,
         projectData: ProjectData?,
         project: Project,
-        modelsProvider: IdeModifiableModelsProvider
+        modelsProvider: IdeModifiableModelsProvider,
     ) {
-        val allSettings = modelsProvider.modules.mapNotNull { module ->
-            if (module.isDisposed) return@mapNotNull null
-            val settings = modelsProvider
-                .getModifiableFacetModel(module)
-                .findFacet(KotlinFacetType.TYPE_ID, KotlinFacetType.INSTANCE.defaultFacetName)
-                ?.configuration
-                ?.settings ?: return@mapNotNull null
-            if (settings.useProjectSettings) null else settings
-        }
-        val languageVersion = allSettings.mapNotNullTo(LinkedHashSet()) { it.languageLevel }.singleOrNull()
-        val apiVersion = allSettings.mapNotNullTo(LinkedHashSet()) { it.apiLevel }.singleOrNull()
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
-            if (languageVersion != null) {
-                this.languageVersion = languageVersion.versionString
-            }
-            if (apiVersion != null) {
-                this.apiVersion = apiVersion.versionString
-            }
-        }
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project, modelsProvider.modules)
     }
 }
 

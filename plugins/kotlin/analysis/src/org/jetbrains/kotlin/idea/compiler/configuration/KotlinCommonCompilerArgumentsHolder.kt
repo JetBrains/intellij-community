@@ -1,17 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.setApiVersionToLanguageVersionIfNeeded
-import org.jetbrains.kotlin.config.SettingConstants
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_COMMON_COMPILER_ARGUMENTS_SECTION
-import org.jetbrains.kotlin.config.detectVersionAutoAdvance
-import org.jetbrains.kotlin.config.dropVersionsIfNecessary
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @State(name = KOTLIN_COMMON_COMPILER_ARGUMENTS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
@@ -29,6 +29,31 @@ class KotlinCommonCompilerArgumentsHolder(project: Project) : BaseKotlinCompiler
             // To fix earlier configurations with incorrect combination of language and API version
             setApiVersionToLanguageVersionIfNeeded()
             detectVersionAutoAdvance()
+        }
+    }
+
+    fun updateLanguageAndApi(project: Project, modules: Array<Module>? = null) {
+        val kotlinFacetSettingsProvider = KotlinFacetSettingsProvider.getInstance(project)
+        val languageVersions = linkedSetOf<LanguageVersion>()
+        val apiVersions = linkedSetOf<LanguageVersion>()
+        for (module in modules ?: ModuleManager.getInstance(project).modules) {
+            if (module.isDisposed) continue
+            val settings = kotlinFacetSettingsProvider?.getSettings(module) ?: continue
+            if (settings.useProjectSettings) continue
+            settings.languageLevel?.let(languageVersions::add)
+            settings.apiLevel?.let(apiVersions::add)
+        }
+
+        val languageVersion = languageVersions.singleOrNull()
+        val apiVersion = apiVersions.singleOrNull()
+        update {
+            if (languageVersion != null) {
+                this.languageVersion = languageVersion.versionString
+            }
+
+            if (apiVersion != null) {
+                this.apiVersion = apiVersion.versionString
+            }
         }
     }
 
