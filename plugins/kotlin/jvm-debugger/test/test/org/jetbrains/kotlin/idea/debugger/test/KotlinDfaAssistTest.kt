@@ -18,11 +18,30 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                     <caret>if (x > 0/*TRUE*/) {
                         
                     }
+                    if (x in 1..6/*TRUE*/) {
+                
+                    }
+                    if (1 in x..10/*FALSE*/) {
+                
+                    }
                 }
                 
                 fun main() {
                     test(5)
                 }""".trimIndent()) { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+
+    fun testWhen() {
+        doTest("""fun obj(x: Any) {
+                    <caret>when(x) {
+                        is String/*FALSE*/ -> {}
+                        is Int/*TRUE*/ -> {}
+                    }
+                }
+
+                fun main() {
+                    obj(5)
+                }""".trimIndent()) { vm, frame -> frame.addVariable("x", MockValue.createValue(1, Integer::class.java, vm)) }
     }
 
     fun testWrapped() {
