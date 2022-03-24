@@ -41,7 +41,7 @@ internal class VcsCodeAuthorInlayHintsCollector(
     if (!filter.invoke(element)) return true
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-    val info = PREVIEW_INFO_KEY.get(element.containingFile) ?: getCodeAuthorInfo(element.project, range, editor)
+    val info = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, range, editor)
     val presentation = buildPresentation(element, info, editor).addContextMenu(element.project)
 
     sink.addCodeVisionElement(editor, range.startOffset, BlockInlayPriority.CODE_AUTHOR, presentation)
