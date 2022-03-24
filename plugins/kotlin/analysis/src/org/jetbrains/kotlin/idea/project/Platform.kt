@@ -39,8 +39,11 @@ val KtElement.builtIns: KotlinBuiltIns get() = getResolutionFacade().moduleDescr
 
 var KtFile.forcedTargetPlatform: TargetPlatform? by UserDataProperty(Key.create("FORCED_TARGET_PLATFORM"))
 
-fun Project.isKotlinLanguageVersionConfigured(): Boolean = KotlinCommonCompilerArgumentsHolder.getInstance(this).settings.run {
-    this.languageVersion != null && apiVersion != null
+fun Project.isKotlinLanguageVersionConfigured(): Boolean =
+    KotlinCommonCompilerArgumentsHolder.getInstance(this).isKotlinLanguageVersionConfigured()
+
+private fun KotlinCommonCompilerArgumentsHolder.isKotlinLanguageVersionConfigured(): Boolean = with(settings) {
+    languageVersion != null && apiVersion != null
 }
 
 fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
@@ -49,7 +52,7 @@ fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
 
     // Preserve inferred version in facet/project settings
     if (facetSettings == null || facetSettings.useProjectSettings) {
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).takeUnless { it.isKotlinLanguageVersionConfigured() }?.update {
             if (languageVersion == null) {
                 languageVersion = languageLevel.versionString
             }
