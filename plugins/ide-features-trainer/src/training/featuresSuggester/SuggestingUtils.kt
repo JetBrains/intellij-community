@@ -28,7 +28,7 @@ internal object SuggestingUtils {
     set(value) = Registry.get("feature.suggester.force.show.suggestions").setValue(value)
 
   fun isActionsProcessingEnabled(project: Project): Boolean {
-    return !DumbService.isDumb(project) && FeatureSuggesterSettings.instance().isAnySuggesterEnabled
+    return !project.isDisposed && !DumbService.isDumb(project) && FeatureSuggesterSettings.instance().isAnySuggesterEnabled
   }
 
   fun handleAction(project: Project, action: Action) {
