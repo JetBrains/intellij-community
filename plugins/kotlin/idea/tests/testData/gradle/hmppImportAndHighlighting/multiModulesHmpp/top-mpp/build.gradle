@@ -6,12 +6,20 @@ version publishing_version
 
 buildscript {
     repositories {
-        {{kotlin_plugin_repositories}}
+        {
+            {
+                kotlin_plugin_repositories
+            }
+        }
     }
 }
 
 repositories {
-    {{kotlin_plugin_repositories}}
+    {
+        {
+            kotlin_plugin_repositories
+        }
+    }
 }
 
 def complexLibAttribute = Attribute.of('org.jetbrains.qa.complexlib', String)
@@ -35,7 +43,12 @@ kotlin {
             // Creating static library with a custom name.
             staticLib('customNameForLinuxLib') {
                 outputDirectory = file("customNameForLinuxLib") // outputDir is a `val` property.
-                linkTask.destinationDir = file("customNameForLinuxLib")
+                if (linkTask.metaClass.hasProperty(linkTask, "destinationDirectory")) {
+                    linkTask.destinationDirectory = project.getObjects().directoryProperty().fileValue(file("customNameForLinuxLib"))
+                }
+                else {
+                    linkTask.destinationDir = file("customNameForLinuxLib")
+                }
             }
         }
     }
@@ -46,7 +59,12 @@ kotlin {
             // Creating static library with a custom name.
             staticLib('customNameForMacosLib') {
                 outputDirectory = file("customNameForMacosLib") // outputDir is a `val` property.
-                linkTask.destinationDir = file("customNameForMacosLib")
+                if (linkTask.metaClass.hasProperty(linkTask, "destinationDirectory")) {
+                    linkTask.destinationDirectory = project.getObjects().directoryProperty().fileValue(file("customNameForMacosLib"))
+                }
+                else {
+                    linkTask.destinationDir = file("customNameForMacosLib")
+                }
             }
         }
     }
@@ -56,7 +74,12 @@ kotlin {
             // KT-29395 fix
             framework {
                 outputDirectory = file("fooDummyiOS") // outputDir is a `val` property.
-                linkTask.destinationDir = file("fooDummyiOS")
+                if (linkTask.metaClass.hasProperty(linkTask, "destinationDirectory")) {
+                    linkTask.destinationDirectory = project.getObjects().directoryProperty().fileValue(file("fooDummyiOS"))
+                }
+                else {
+                    linkTask.destinationDir = file("fooDummyiOS")
+                }
             }
         }
     }
@@ -65,7 +88,8 @@ kotlin {
     targets.all {
         compilations.all {
             kotlinOptions {
-                freeCompilerArgs += ["-Xprogressive", "-XXLanguage:+NewInference", "-XXLanguage:+SamConversionForKotlinFunctions", "-Xuse-experimental=kotlin.ExperimentalMultiplatform"]
+                freeCompilerArgs +=
+                        ["-Xprogressive", "-XXLanguage:+NewInference", "-XXLanguage:+SamConversionForKotlinFunctions", "-Xuse-experimental=kotlin.ExperimentalMultiplatform"]
             }
         }
     }
@@ -73,10 +97,10 @@ kotlin {
     sourceSets {
 
         commonMain {
-            dependencies { }
+            dependencies {}
         }
         commonTest {
-            dependencies { }
+            dependencies {}
         }
 
         // intermediate between commonMain and jsJvm18Main
@@ -97,7 +121,7 @@ kotlin {
 
         jsJvm18iOSTest {
             dependsOn commonTest
-            dependencies { }
+            dependencies {}
         }
         jsLinuxMain {
             dependsOn commonMain
@@ -120,7 +144,7 @@ kotlin {
             dependsOn jsJvm18iOSMain
         }
         jvm18Test {
-            dependencies { }
+            dependencies {}
 
             // connecting to the diamond
             dependsOn jsJvm18iOSTest
@@ -145,32 +169,32 @@ kotlin {
             dependsOn jsLinuxTest
         }
         linuxMain {
-            dependencies { }
+            dependencies {}
 
             // connecting to the diamond
             dependsOn jsLinuxMain
         }
         linuxTest {
-            dependencies { }
+            dependencies {}
 
             // connecting to the diamond
             dependsOn jsLinuxTest
         }
         macosMain {
-            dependencies { }
+            dependencies {}
         }
         macosTest {
-            dependencies { }
+            dependencies {}
         }
         dummyiOSMain {
             // connecting to the diamond
             dependsOn jsJvm18iOSMain
-            dependencies { }
+            dependencies {}
         }
         dummyiOSTest {
             dependsOn jsJvm18iOSTest
 
-            dependencies { }
+            dependencies {}
         }
     }
 }
