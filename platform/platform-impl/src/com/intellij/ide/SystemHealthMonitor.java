@@ -36,8 +36,8 @@ import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -261,7 +261,15 @@ final class SystemHealthMonitor extends PreloadingActivity {
       return;
     }
 
-    final File file = new File(PathManager.getSystemPath());
+    FileStore store;
+    try {
+      store = Files.getFileStore(Path.of(PathManager.getSystemPath()));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return;
+    }
+
     final AtomicBoolean reported = new AtomicBoolean();
     final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<>();
 
@@ -277,10 +285,10 @@ final class SystemHealthMonitor extends PreloadingActivity {
             ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
               // file.getUsableSpace() can fail and return 0 (e.g. after macOS restart or awakening from sleep)
               // so several times try to recalculate usable space on receiving 0 to be sure
-              long fileUsableSpace = file.getUsableSpace();
+              long fileUsableSpace = store.getUsableSpace();
               while (fileUsableSpace == 0) {
                 TimeoutUtil.sleep(5000);  // hopefully we are not hammering the disk too much
-                fileUsableSpace = file.getUsableSpace();
+                fileUsableSpace = store.getUsableSpace();
               }
               return fileUsableSpace;
             }));
@@ -306,17 +314,16 @@ final class SystemHealthMonitor extends PreloadingActivity {
               reported.compareAndSet(false, true);
 
               SwingUtilities.invokeLater(() -> {
-                String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-                String message = IdeBundle.message("low.disk.space.message", productName);
+                String message = IdeBundle.message("low.disk.space.message", store.name());
                 if (usableSpace < 100 * 1024) {
                   LOG.warn(message + " (" + usableSpace + ")");
-                  Messages.showErrorDialog(message, IdeBundle.message("dialog.title.fatal.configuration.problem"));
+                  Messages.showErrorDialog(message, IdeBundle.message("low.disk.space.dialog"));
                   reported.compareAndSet(true, false);
                   restart(delaySeconds);
                 }
                 else {
-                  new MyNotification(file.getPath(), NotificationType.ERROR, "low.disk")
-                    .setTitle(message)
+                  new MyNotification(message, NotificationType.ERROR, "low.disk")
+                    .setTitle(IdeBundle.message("low.disk.space.notification"))
                     .whenExpired(() -> {
                       reported.compareAndSet(true, false);
                       restart(delaySeconds);
