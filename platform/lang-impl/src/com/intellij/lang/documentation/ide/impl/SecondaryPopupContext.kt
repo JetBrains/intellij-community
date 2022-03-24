@@ -78,8 +78,7 @@ internal class AdjusterPopupBoundsHandler(
   }
 
   override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
-    val newSize = if (resized) popup.size else popup.component.preferredSize
-    repositionPopup(popup, referenceComponent, newSize)
+    repositionPopup(popup, referenceComponent, popupSize(popup, resized))
   }
 }
 
@@ -92,6 +91,20 @@ private fun installPositionAdjuster(popup: AbstractPopup, anchor: Component) {
   anchor.addComponentListener(listener)
   Disposer.register(popup) {
     anchor.removeComponentListener(listener)
+  }
+}
+
+private fun popupSize(popup: AbstractPopup, resized: Boolean): Dimension {
+  return if (resized) {
+    // popup was resized manually
+    // => persisted size was restored
+    popup.size
+  }
+  else {
+    // popup was not resized manually
+    // => no size was saved
+    // => size should be computed by the popup content
+    popup.component.preferredSize
   }
 }
 
