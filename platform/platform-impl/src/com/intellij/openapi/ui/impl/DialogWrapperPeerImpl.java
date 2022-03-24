@@ -393,7 +393,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       ((CustomFrameDialogContent)contentPane).updateLayout();
     }
 
-    if (ApplicationManager.getApplication() != null) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null && application.getServiceIfCreated(ActionManager.class) != null) {
       ShortcutSet shortcutSet = ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE);
       anCancelAction.registerCustomShortcutSet(shortcutSet, rootPane);
     }
@@ -411,7 +412,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     final CommandProcessorEx commandProcessor =
-      ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
+      application != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
 
     boolean changeModalityState = appStarted && myDialog.isModal()
