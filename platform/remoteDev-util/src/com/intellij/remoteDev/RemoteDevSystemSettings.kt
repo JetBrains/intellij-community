@@ -22,8 +22,6 @@ object RemoteDevSystemSettings {
   private const val productsInfoUrlKey = "productsInfoUrl"
   private const val clientDownloadUrlKey = "clientDownloadUrl"
   private const val jreDownloadUrlKey = "jreDownloadUrl"
-  private const val pgpPublicKeyUrlKey = "pgpPublicKeyUrlKey"
-
   private fun defaultProductsUrl(productCode: String) = "https://data.services.jetbrains.com/products?code=$productCode"
   private const val defaultClientUrlLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
   private const val defaultJreUrlLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/"
@@ -34,14 +32,6 @@ object RemoteDevSystemSettings {
       return RemoteDevSystemSetting(systemValue.value.replace(productCodePlaceholder, productCode), systemValue.osOriginLocation)
     }
     return RemoteDevSystemSetting(defaultProductsUrl(productCode), null)
-  }
-
-  fun getPgpPublicKeyUrl(): RemoteDevSystemSetting<String?> {
-    val systemValue = getFromOs(pgpPublicKeyUrlKey)
-    if (systemValue != null) {
-      return RemoteDevSystemSetting(systemValue.value, systemValue.osOriginLocation)
-    }
-    return RemoteDevSystemSetting(null, null)
   }
 
   fun getClientDownloadUrl(): RemoteDevSystemSetting<URI> {
