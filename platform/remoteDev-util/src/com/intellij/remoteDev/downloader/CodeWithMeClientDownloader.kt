@@ -47,7 +47,6 @@ import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -427,7 +426,7 @@ object CodeWithMeClientDownloader {
             HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
           }
           "file" -> {
-            Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
+            Files.copy(url.toPath(), path)
           }
           else -> {
             error("scheme ${url.scheme} is not supported")
