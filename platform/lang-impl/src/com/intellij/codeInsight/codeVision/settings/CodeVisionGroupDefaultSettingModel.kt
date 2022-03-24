@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ResourceUtil
@@ -20,6 +21,14 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
                                               override val description: String?,
                                               isEnabled: Boolean,
                                               val providers: List<CodeVisionProvider<*>>) : CodeVisionGroupSettingModel(isEnabled, id = groupId) {
+  companion object {
+    private val CODE_VISION_PREVIEW_ENABLED = Key<Boolean>("code.vision.preview.data")
+
+    internal fun isEnabledInPreview(editor: Editor) : Boolean? {
+      return editor.getUserData(CODE_VISION_PREVIEW_ENABLED)
+    }
+  }
+
 
   private val settings = CodeVisionSettings.instance()
   private lateinit var positionComboBox: ComboBox<CodeVisionAnchorKind>
@@ -29,8 +38,9 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
       provider.preparePreview(editor, file)
     }
     val daemonBoundProviders = providers.filterIsInstance<CodeVisionProviderAdapter>().map { it.delegate }
-    val codeVisionData = CodeVisionPass.collectData(editor, file, daemonBoundProviders).addStrikeout(isEnabled)
+    val codeVisionData = CodeVisionPass.collectData(editor, file, daemonBoundProviders)
     return Runnable {
+      editor.putUserData(CODE_VISION_PREVIEW_ENABLED, isEnabled)
       val project = editor.project ?: return@Runnable
       codeVisionData.applyTo(editor, project)
       CodeVisionHost.getInstance(project).invalidateProviderSignal
