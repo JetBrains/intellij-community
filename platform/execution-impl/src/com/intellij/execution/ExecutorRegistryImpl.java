@@ -366,7 +366,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return Pair.create(false, ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable"));
       }
 
-      List<RunnerAndConfigurationSettings> runConfigs = getRunConfigsForCurrentFile(psiFile);
+      List<RunnerAndConfigurationSettings> runConfigs = getRunConfigsForCurrentFile(psiFile, false);
       if (runConfigs.isEmpty()) {
         return Pair.create(false, ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable"));
       }
@@ -375,7 +375,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return Pair.create(enabled, myExecutor.getStartActionText(psiFile.getName()));
     }
 
-    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile) {
+    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
+      if (resetCache) {
+        psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
+      }
+
       // Without this cache, an expensive method `ConfigurationContext.getConfigurationsFromContext()` is called too often for 2 reasons:
       // - there are several buttons on the toolbar (Run, Debug, Profile, etc.), each runs ExecutorAction.update() during each action update session
       // - the state of the buttons on the toolbar is updated several times a second, even if no files are being edited
@@ -481,7 +485,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       Project project = e.getProject();
       Editor editor = project != null ? e.getData(CommonDataKeys.EDITOR) : null;
       PsiFile psiFile = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
-      List<RunnerAndConfigurationSettings> runConfigs = psiFile != null ? getRunConfigsForCurrentFile(psiFile) : Collections.emptyList();
+      List<RunnerAndConfigurationSettings> runConfigs = psiFile != null ? getRunConfigsForCurrentFile(psiFile, true)
+                                                                        : Collections.emptyList();
       runConfigs = filterConfigsThatHaveRunner(runConfigs);
 
       if (runConfigs.isEmpty()) {
