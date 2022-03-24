@@ -95,30 +95,13 @@ public final class PsiTypesUtil {
   // Please make this public if needed from outer
   @Nullable
   private static String getDefaultOfTypeFromCustom(PsiType type) {
-    String text = type.getCanonicalText();
-    switch (text) {
-      case CommonClassNames.JAVA_UTIL_OPTIONAL:
-      case CommonClassNames.JAVA_UTIL_STREAM_STREAM:
-      case CommonClassNames.JAVA_UTIL_COLLECTION:
-      case CommonClassNames.JAVA_UTIL_LIST:
-      case CommonClassNames.JAVA_UTIL_ENUMERATION:
-      case CommonClassNames.JAVA_UTIL_ITERATOR:
-      case CommonClassNames.JAVA_UTIL_LIST_ITERATOR:
-      case CommonClassNames.JAVA_UTIL_MAP:
-      case CommonClassNames.JAVA_UTIL_SORTED_MAP:
-      case CommonClassNames.JAVA_UTIL_NAVIGABLE_MAP:
-      case CommonClassNames.JAVA_UTIL_SET:
-      case CommonClassNames.JAVA_UTIL_NAVIGABLE_SET:
-      case CommonClassNames.JAVA_UTIL_SORTED_SET:
-      case CommonClassNames.JAVA_LANG_STRING:
-        return ourCustomTypes.get(text);
-      default:
-        // case if `equalsToText` true is exists? if not, remove this case
-        return ourCustomTypes.entrySet().stream()
-          .flatMap(pair -> type.equalsToText(pair.getKey()) ? Stream.of(pair.getValue()) : Stream.empty())
-          .findFirst()
-          .orElse(null);
-    }
+    String customType = ourCustomTypes.get(type.getCanonicalText());
+    return customType == null
+           ? ourCustomTypes.entrySet().stream()
+             .flatMap(pair -> type.equalsToText(pair.getKey()) ? Stream.of(pair.getValue()) : Stream.empty())
+             .findFirst()
+             .orElse(null)
+           : customType;
   }
 
   @NotNull
@@ -155,9 +138,7 @@ public final class PsiTypesUtil {
     }
     if (customDefaultValues) {
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
-      String result = rawType != null
-                      ? getDefaultOfTypeFromCustom(rawType)
-                      : null;
+      String result = rawType != null ? getDefaultOfTypeFromCustom(rawType) : null;
       if (result != null) {
         return result;
       }
