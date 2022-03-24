@@ -542,10 +542,12 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     private ProblemDescriptorKey(CommonProblemDescriptor desc) {
       descriptor = desc;
+      if (desc instanceof ProblemDescriptor) {
+        lineNumber = ((ProblemDescriptor)desc).getLineNumber();
+      }
       if (desc instanceof ProblemDescriptorBase) {
         final ProblemDescriptorBase descriptorBase = (ProblemDescriptorBase)desc;
         file = descriptorBase.getContainingFile();
-        lineNumber = descriptorBase.getLineNumber();
         final TextRange textRange = descriptorBase.getTextRange();
         position = textRange != null ? textRange.getStartOffset() : 0;
         descriptionTemplate = desc.getDescriptionTemplate();
