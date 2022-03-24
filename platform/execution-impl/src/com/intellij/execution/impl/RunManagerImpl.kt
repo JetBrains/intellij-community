@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.*
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
@@ -45,6 +47,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -358,9 +361,17 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
-    val deletedConfigs = lock.write { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
-    // don't delete file just because it has become excluded
-    removeConfigurations(deletedConfigs, deleteFileIfStoredInArbitraryFile = false)
+    ReadAction
+      .nonBlocking(Callable {
+        lock.read { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
+      })
+      .coalesceBy(this)
+      .expireWith(project)
+      .finishOnUiThread(ModalityState.defaultModalityState()) {
+        // don't delete file just because it has become excluded
+        removeConfigurations(it, deleteFileIfStoredInArbitraryFile = false)
+      }
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed

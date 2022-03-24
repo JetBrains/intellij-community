@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution
 
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -29,6 +31,7 @@ class UpdateRCInArbitraryFilesAfterProjectModelChangesTest {
     ModuleRootModificationUtil.addContentRoot(module, file.parentFile.systemIndependentPath)
     assertThat(runConfigurations.single().name).isEqualTo("a")
     projectModel.removeModule(module)
+    runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
     assertThat(runConfigurations).isEmpty()
   }
   @Test
@@ -45,6 +48,7 @@ class UpdateRCInArbitraryFilesAfterProjectModelChangesTest {
     assertThat(runConfigurations.single().name).isEqualTo("b")
     
     PsiTestUtil.removeSourceRoot(module, srcRoot)
+    runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
     assertThat(runConfigurations).isEmpty()
   }
   
