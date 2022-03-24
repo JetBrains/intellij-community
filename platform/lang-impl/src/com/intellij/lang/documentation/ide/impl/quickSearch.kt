@@ -36,16 +36,15 @@ private fun quickSearchPopupContext(project: Project, focusedComponent: Componen
   return QuickSearchPopupContext(project, quickSearchComponent)
 }
 
-private class QuickSearchPopupContext(
+private abstract class UpdatingPopupContext(
   private val project: Project,
-  private val searchComponent: QuickSearchComponent,
 ) : SecondaryPopupContext() {
 
   private val items = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
+  final override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
 
-  override fun preparePopup(builder: ComponentPopupBuilder) {
+  final override fun preparePopup(builder: ComponentPopupBuilder) {
     super.preparePopup(builder)
     builder.addUserData(object : PopupUpdateProcessor(project) {
       override fun updatePopup(lookupItemObject: Any?) {
@@ -53,6 +52,12 @@ private class QuickSearchPopupContext(
       }
     })
   }
+}
+
+private class QuickSearchPopupContext(
+  project: Project,
+  private val searchComponent: QuickSearchComponent,
+) : UpdatingPopupContext(project) {
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
