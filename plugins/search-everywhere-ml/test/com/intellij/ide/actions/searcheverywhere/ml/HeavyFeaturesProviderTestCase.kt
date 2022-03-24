@@ -94,12 +94,16 @@ abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeatures
         pack.init()
       }
 
-      fun file(filename: String) {
+      fun file(filename: String, afterCreate: ((file: VirtualFile) -> Unit)? = null) {
         File(contentDirectory, filename).apply { createNewFile() }
+          .run { this.toVirtualFile() }
+          .also { file -> afterCreate?.let { callback -> callback(file) } }
       }
 
-      fun directory(filename: String) {
+      fun directory(filename: String, afterCreate: ((file: VirtualFile) -> Unit)?) {
         File(contentDirectory, filename).apply { mkdir() }
+          .run { this.toVirtualFile() }
+          .also { file -> afterCreate?.let { callback -> callback(file) } }
       }
 
       inner class Package(private val packageName: String) {
@@ -108,11 +112,13 @@ abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeatures
         fun file(filename: String, afterCreate: ((file: VirtualFile) -> Unit)? = null) {
           File(packageDirectory, filename).apply { createNewFile() }
             .run { this.toVirtualFile() }
-            .also { file -> afterCreate?.let { callback -> callback(file) }}
+            .also { file -> afterCreate?.let { callback -> callback(file) } }
         }
 
-        fun directory(name: String) {
-          File(packageDirectory, name).apply { mkdir() }
+        fun directory(filename: String, afterCreate: ((file: VirtualFile) -> Unit)?) {
+          File(packageDirectory, filename).apply { mkdir() }
+            .run { this.toVirtualFile() }
+            .also { file -> afterCreate?.let { callback -> callback(file) } }
         }
 
         fun createPackage(packageName: String, init: Package.() -> Unit) {
