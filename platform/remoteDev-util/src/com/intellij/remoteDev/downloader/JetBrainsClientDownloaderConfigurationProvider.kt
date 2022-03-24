@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.io.exists
@@ -16,9 +15,7 @@ import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import org.jetbrains.annotations.ApiStatus
-import java.net.Inet4Address
-import java.net.InetSocketAddress
-import java.net.URI
+import java.net.*
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -45,8 +42,8 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
-  override val clientDownloadLocation: URI = RemoteDevSystemSettings.getClientDownloadLocation().value
-  override val jreDownloadLocation: URI = RemoteDevSystemSettings.getJreDownloadLocation().value
+  override val clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
+  override val jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
   override val clientCachesDir: Path = getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
   override val verifySignature: Boolean = true
 

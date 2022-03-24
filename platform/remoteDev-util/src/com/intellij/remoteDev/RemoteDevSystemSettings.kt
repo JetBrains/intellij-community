@@ -9,7 +9,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.io.File
-import java.net.URI
 
 @Suppress("DuplicatedCode")
 object RemoteDevSystemSettings {
@@ -20,11 +19,7 @@ object RemoteDevSystemSettings {
   //val DEFAULT_LOBBY_URL get() = URI("https://code-with-me.jetbrains.com")
   private const val productCodePlaceholder = "<PRODUCT_CODE>"
   private const val productsInfoUrlKey = "productsInfoUrl"
-  private const val clientDownloadLocationKey = "clientDownloadLocation"
-  private const val jreDownloadLocationKey = "jreDownloadLocation"
   private fun defaultProductsUrl(productCode: String) = "https://data.services.jetbrains.com/products?code=$productCode"
-  private val defaultClientDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
-  private val defaultJreDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/"
 
   fun getProductsUrl(productCode: String): RemoteDevSystemSetting<String> {
     val systemValue = getFromOs(productsInfoUrlKey)
@@ -32,22 +27,6 @@ object RemoteDevSystemSettings {
       return RemoteDevSystemSetting(systemValue.value.replace(productCodePlaceholder, productCode), systemValue.osOriginLocation)
     }
     return RemoteDevSystemSetting(defaultProductsUrl(productCode), null)
-  }
-
-  fun getClientDownloadLocation(): RemoteDevSystemSetting<URI> {
-    val systemValue = getFromOs(clientDownloadLocationKey)
-    if (systemValue != null) {
-      return RemoteDevSystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
-    }
-    return RemoteDevSystemSetting(URI(defaultClientDownloadLocation), null)
-  }
-
-  fun getJreDownloadLocation(): RemoteDevSystemSetting<URI> {
-    val systemValue = getFromOs(jreDownloadLocationKey)
-    if (systemValue != null) {
-      return RemoteDevSystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
-    }
-    return RemoteDevSystemSetting(URI(defaultJreDownloadLocation), null)
   }
 
   private fun getFromOs(key: String): RemoteDevSystemSetting<String>? {
