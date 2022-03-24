@@ -22,7 +22,7 @@ object RemoteDevSystemSettings {
   private const val productsInfoUrlKey = "productsInfoUrl"
   private const val clientDownloadUrlKey = "clientDownloadUrl"
   private const val jreDownloadUrlKey = "jreDownloadUrl"
-  private const val pgpPublicKeyUrlKey = "pgpPublicKeyUrl"
+  private const val pgpPublicKeyUrlKey = "pgpPublicKeyUrlKey"
 
   private fun defaultProductsUrl(productCode: String) = "https://data.services.jetbrains.com/products?code=$productCode"
   private const val defaultClientUrlLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
