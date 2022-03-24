@@ -29,6 +29,9 @@ module ${context.rootPackage} {
     #if ($context.hasLibrary("tilesfx"))
     requires eu.hansolo.tilesfx;
     #end
+    #if ($context.hasLibrary("fxgl"))
+    requires com.almasb.fxgl.all;
+    #end
 
     opens ${context.rootPackage} to javafx.fxml;
     exports ${context.rootPackage};

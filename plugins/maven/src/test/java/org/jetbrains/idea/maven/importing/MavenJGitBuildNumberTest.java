@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.dom.MavenDomTestCase;
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import org.junit.Test;
 
 import java.util.List;

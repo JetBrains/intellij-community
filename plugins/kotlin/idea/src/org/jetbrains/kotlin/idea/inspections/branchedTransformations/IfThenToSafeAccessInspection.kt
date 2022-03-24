@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.replaced
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 
 class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineWithPrompt: Boolean = true) :
     AbstractApplicabilityBasedInspection<KtIfExpression>(KtIfExpression::class.java) {
@@ -45,6 +46,7 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
     }
 
     companion object {
+        @Nls
         fun fixTextFor(element: KtIfExpression): String {
             val ifThenToSelectData = element.buildSelectTransformationData()
             return if (ifThenToSelectData?.baseClauseEvaluatesToReceiver() == true) {

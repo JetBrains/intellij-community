@@ -20,11 +20,11 @@ import com.intellij.testFramework.MapDataContext
 import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.checkers.languageVersionSettingsFromText
+import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.withLanguageVersionSettings
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration.Companion.findMainClassFile
 import org.jetbrains.kotlin.idea.search.allScope
@@ -52,8 +52,8 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
         configureProject()
         val configuredModule = defaultConfiguredModule
 
-        val languageVersion = LanguageVersionSettingsImpl.DEFAULT.languageVersion
-        withCustomLanguageAndApiVersion(project, module, languageVersion.versionString, apiVersion = null) {
+        val languageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        withCustomLanguageAndApiVersion(project, module, languageVersion, apiVersion = null) {
             val runConfiguration = createConfigurationFromMain(project, "some.main")
             val javaParameters = getJavaRunParameters(runConfiguration)
 
@@ -80,10 +80,26 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                             }
                         }
                     )
+                    val foundMainCandidates = functionCandidates?.isNotEmpty() ?: false
                     TestCase.assertTrue(
                         "function candidates expected to be found for $file",
-                        functionCandidates?.isNotEmpty() ?: false
+                        foundMainCandidates
                     )
+
+                    val foundMainFileContainer = EntryPointContainerFinder.find(ktFile)
+
+                    if (functionCandidates?.any { it.isMainFunction(languageVersionSettings) } == true) {
+                        assertNotNull(
+                            "$file: Kotlin configuration producer should produce configuration for $file",
+                            foundMainFileContainer
+                        )
+                    } else {
+                        assertNull(
+                            "$file: Kotlin configuration producer shouldn't produce configuration for $file",
+                            foundMainFileContainer
+                        )
+                    }
+
                 }
             }
         }
@@ -237,6 +253,9 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
     }
 
     companion object {
+        fun KtNamedFunction.isMainFunction(languageSettings: LanguageVersionSettings) =
+            MainFunctionDetector(languageSettings) { it.resolveToDescriptorIfAny() }.isMain(this)
+
         private fun functionVisitor(fileLanguageSettings: LanguageVersionSettings, function: KtNamedFunction): List<KtNamedFunction> {
             val project = function.project
             val file = function.containingKtFile
@@ -254,11 +273,8 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                 val assertIsMain = "yes" in options
                 val assertIsNotMain = "no" in options
 
-                fun isMainFunction(f: KtNamedFunction) =
-                    MainFunctionDetector(fileLanguageSettings) { it.resolveToDescriptorIfAny() }.isMain(f)
-
-                val isMainFunction = isMainFunction(function)
-                val functionCandidatesAreMain = functionCandidates.map(::isMainFunction)
+                val isMainFunction = function.isMainFunction(fileLanguageSettings)
+                val functionCandidatesAreMain = functionCandidates.map { it.isMainFunction(fileLanguageSettings) }
                 val anyFunctionCandidatesAreMain = functionCandidatesAreMain.any { it }
                 val allFunctionCandidatesAreNotMain = functionCandidatesAreMain.none { it }
 
@@ -296,12 +312,14 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
 
+                val foundMainContainer = EntryPointContainerFinder.find(function)
+
                 if (isMainFunction) {
                     createConfigurationFromMain(project, function.fqName?.asString()!!).checkConfiguration()
 
                     assertNotNull(
                         "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                        KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                        foundMainContainer
                     )
                 } else {
                     try {
@@ -315,16 +333,17 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     if (text.startsWith("// entryPointExists")) {
                         assertNotNull(
                             "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                            KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                            foundMainContainer,
                         )
                     } else {
                         assertNull(
                             "Kotlin configuration producer shouldn't produce configuration for ${function.fqName?.asString()}",
-                            KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                            foundMainContainer,
                         )
                     }
                 }
             }
+
             return functionCandidates
         }
 

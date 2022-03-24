@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ProjectTopics;
@@ -9,6 +9,8 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
@@ -21,9 +23,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.JdomKt;
+import com.intellij.util.*;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -187,23 +187,35 @@ public class GradleResourceCompilerConfigurationGenerator {
         ExternalSystemApiUtil.getExternalProjectId(module),
         ExternalSystemApiUtil.getExternalProjectVersion(module));
 
-      for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
-        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE),
-                     sourceSet.getSources().get(ExternalSystemSourceType.SOURCE));
-        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE),
-                     sourceSet.getSources().get(ExternalSystemSourceType.TEST));
+      PathMapper pathMapper = null;
+      for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
+        TargetEnvironmentConfigurationProvider provider = executionAware
+          .getEnvironmentConfigurationProvider(gradleProjectPath, false, context.getProject());
+        if (provider != null) {
+          pathMapper = provider.getPathMapper();
+          break;
+        }
       }
 
+      for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
+        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE),
+                     sourceSet.getSources().get(ExternalSystemSourceType.SOURCE), pathMapper);
+        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE),
+                     sourceSet.getSources().get(ExternalSystemSourceType.TEST), pathMapper);
+      }
+
+      boolean useCompilerOutputForResources = PlatformUtils.isFleetBackend();
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) {
+      if (compilerModuleExtension != null &&
+          (useCompilerOutputForResources || compilerModuleExtension.isCompilerOutputPathInherited())) {
         String outputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl());
         for (ResourceRootConfiguration resource : resourceConfig.resources) {
-          resource.targetPath = outputPath;
+          resource.targetPath = toRemote(pathMapper, outputPath);
         }
 
         String testOutputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrlForTests());
         for (ResourceRootConfiguration resource : resourceConfig.testResources) {
-          resource.targetPath = testOutputPath;
+          resource.targetPath = toRemote(pathMapper, testOutputPath);
         }
       }
 
@@ -211,6 +223,10 @@ public class GradleResourceCompilerConfigurationGenerator {
     }
 
     return affectedGradleModuleConfigurations;
+  }
+
+  private static String toRemote(PathMapper pathMapper, String outputPath) {
+    return pathMapper != null ? pathMapper.convertToRemote(outputPath) : outputPath;
   }
 
   private static boolean shouldBeBuiltByExternalSystem(@NotNull Project project) {
@@ -222,7 +238,7 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private static boolean shouldBeBuiltByExternalSystem(@NotNull Module module) {
-    for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+    for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
       if (ArrayUtil.contains(facet.getName(), "Android", "Android-Gradle", "Java-Gradle")) return true;
     }
     return false;
@@ -237,15 +253,16 @@ public class GradleResourceCompilerConfigurationGenerator {
 
   private static void addResources(@NotNull List<ResourceRootConfiguration> container,
                                    final @Nullable ExternalSourceDirectorySet directorySet,
-                                   final @Nullable ExternalSourceDirectorySet sourcesDirectorySet) {
+                                   final @Nullable ExternalSourceDirectorySet sourcesDirectorySet,
+                                   @Nullable PathMapper pathMapper) {
     if (directorySet == null) return;
 
     for (File file : directorySet.getSrcDirs()) {
       final String dir = file.getPath();
       final ResourceRootConfiguration rootConfiguration = new ResourceRootConfiguration();
-      rootConfiguration.directory = FileUtil.toSystemIndependentName(dir);
+      rootConfiguration.directory = toRemote(pathMapper, FileUtil.toSystemIndependentName(dir));
       final String target = directorySet.getOutputDir().getPath();
-      rootConfiguration.targetPath = FileUtil.toSystemIndependentName(target);
+      rootConfiguration.targetPath = toRemote(pathMapper, FileUtil.toSystemIndependentName(target));
 
       rootConfiguration.includes.clear();
       for (String include : directorySet.getPatterns().getIncludes()) {

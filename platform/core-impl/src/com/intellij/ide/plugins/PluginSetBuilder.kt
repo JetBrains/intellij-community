@@ -1,44 +1,36 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet", "ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.lang.Java11Shim
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
-import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.function.Supplier
 
 @ApiStatus.Internal
 class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
-  private val graph = CachingSemiGraph.createModuleGraph(unsortedPlugins)
-  private val sortedModules = graph.nodes.toTypedArray()
-  // useIdentityStrategy - performance, avoid equals
-  private val topologicalSorter = DFSTBuilder(sortedModules.clone(), null, true, graph)
-
-  private val topologicalComparator = CachingSemiGraph.getTopologicalComparator(topologicalSorter)
+  private val _moduleGraph = createModuleGraph(unsortedPlugins)
+  private val builder = _moduleGraph.builder()
+  val moduleGraph: SortedModuleGraph = _moduleGraph.sorted(builder)
 
   private val enabledPluginIds = HashMap<PluginId, IdeaPluginDescriptorImpl>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<String, IdeaPluginDescriptorImpl>(unsortedPlugins.size * 2)
 
-  init {
-    Arrays.sort(sortedModules, topologicalComparator)
-  }
-
   fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
-    if (topologicalSorter.isAcyclic) {
+    if (builder.isAcyclic) {
       return
     }
 
-    for (component in topologicalSorter.components) {
+    for (component in builder.components) {
       if (component.size < 2) {
         continue
       }
@@ -58,7 +50,7 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
         .sortedWith(Comparator.comparing({ it.second }, String.CASE_INSENSITIVE_ORDER))
         .forEach {
           detailedMessage.append("  ").append(it.second).append(" depends on:\n")
-          graph.getIn(it.first).asSequence()
+          moduleGraph.getDependencies(it.first).asSequence()
             .filter { o: IdeaPluginDescriptorImpl -> component.contains(o) }
             .map(pluginToString)
             .sortedWith(java.lang.String.CASE_INSENSITIVE_ORDER)
@@ -75,7 +67,7 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
     val pluginToNumber = Object2IntOpenHashMap<PluginId>(unsortedPlugins.size)
     pluginToNumber.put(PluginManagerCore.CORE_ID, 0)
     var number = 0
-    for (module in sortedModules) {
+    for (module in moduleGraph.nodes) {
       // no content, so will be no modules, add it
       if (module.descriptorPath != null || module.content.modules.isEmpty()) {
         pluginToNumber.putIfAbsent(module.pluginId, number++)
@@ -89,8 +81,8 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
   }
 
   private fun getEnabledModules(): List<IdeaPluginDescriptorImpl> {
-    val result = ArrayList<IdeaPluginDescriptorImpl>(sortedModules.size)
-    for (module in sortedModules) {
+    val result = ArrayList<IdeaPluginDescriptorImpl>(moduleGraph.nodes.size)
+    for (module in moduleGraph.nodes) {
       if (if (module.moduleName == null) module.isEnabled else enabledModuleV2Ids.containsKey(module.moduleName)) {
         result.add(module)
       }
@@ -101,7 +93,7 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
   fun computeEnabledModuleMap(disabler: Predicate<IdeaPluginDescriptorImpl>? = null): PluginSetBuilder {
     val logMessages = ArrayList<String>()
 
-    m@ for (module in sortedModules) {
+    m@ for (module in moduleGraph.nodes) {
       if (module.moduleName == null) {
         if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isEnabled || (disabler != null && disabler.test(module)))) {
           continue
@@ -161,21 +153,13 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
 
     val enabledPlugins = java11Shim.copyOfCollection(sortedPlugins.filterTo(ArrayList(sortedPlugins.size)) { it.isEnabled })
 
-    val moduleToSortedDirectDependencies =
-      IdentityHashMap<IdeaPluginDescriptorImpl, Array<IdeaPluginDescriptorImpl>>(graph.moduleToDirectDependencies.size)
-    graph.moduleToDirectDependencies.forEach(BiConsumer { k, v ->
-      val list = v.toTypedArray()
-      Arrays.sort(list, topologicalComparator)
-      moduleToSortedDirectDependencies.put(k, list)
-    })
-
     return PluginSet(
+      moduleGraph = moduleGraph,
       allPlugins = allPlugins,
       enabledPlugins = enabledPlugins,
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = java11Shim.copyOfCollection(getEnabledModules()),
-      moduleToDirectDependencies = java11Shim.copyOf(moduleToSortedDirectDependencies),
     )
   }
 

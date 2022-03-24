@@ -25,18 +25,16 @@ class ComposeJvmDesktopTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
         module.configurator.moduleType == ModuleType.jvm && projectKind == ProjectKind.COMPOSE
+                && (module.kind == ModuleKind.singlePlatformJvm || module.kind == ModuleKind.target)
 
-    override fun isApplicableTo(reader: Reader, module: Module): Boolean =
-        module.kind == ModuleKind.singlePlatformJvm
-                || module.kind == ModuleKind.target
 
     override fun Writer.getIrsToAddToBuildFile(
         module: ModuleIR
     ) = irsList {
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
-        +RepositoryIR(DefaultRepository.JCENTER)
+        +RepositoryIR(DefaultRepository.GOOGLE)
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
 
         +GradleImportIR("org.jetbrains.compose.desktop.application.dsl.TargetFormat")
@@ -60,7 +58,7 @@ class ComposeJvmDesktopTemplate : Template() {
     )
 
     override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> =
-        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV)
+        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV, DefaultRepository.GOOGLE)
 
     override fun Reader.getFileTemplates(module: ModuleIR) = buildList<FileTemplateDescriptorWithPath> {
         val dependsOnMppModule: Module? =
@@ -75,4 +73,15 @@ class ComposeJvmDesktopTemplate : Template() {
                     )
         }
     }
+}
+
+class ComposeCommonDesktopTemplate : Template() {
+    @NonNls
+    override val id: String = "composeCommonDesktopTemplate"
+
+    override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.title")
+    override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
+
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
+        module.configurator.moduleType == ModuleType.jvm && projectKind == ProjectKind.COMPOSE
 }

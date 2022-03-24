@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -18,26 +18,29 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
   }
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
-    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
-                            getHumanReadableErrorFor(exception),
-                            ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
-        errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), true) {
-          val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }
-          if (installer != null) {
-            val fileName = installer.fileName
-            val exeFile = File(PathManager.getTempPath(), fileName)
-            try {
-              if (downloadGit(installer, exeFile, project, errorNotifier)) {
-                errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
-                installGit(exeFile, errorNotifier, onErrorResolved)
-              }
-            }
-            finally {
-              FileUtil.delete(exeFile)
-            }
+    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"), getHumanReadableErrorFor(exception),
+      ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
+        downloadAndInstall(errorNotifier, onErrorResolved)
+      })
+  }
+
+  internal fun downloadAndInstall(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), true) {
+      val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }
+      if (installer != null) {
+        val fileName = installer.fileName
+        val exeFile = File(PathManager.getTempPath(), fileName)
+        try {
+          if (downloadGit(installer, exeFile, project, errorNotifier)) {
+            errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
+            installGit(exeFile, errorNotifier, onErrorResolved)
           }
         }
-      })
+        finally {
+          FileUtil.delete(exeFile)
+        }
+      }
+    }
   }
 
   private fun archMatches(arch: String) = when (CpuArch.CURRENT) {

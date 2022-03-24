@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.psi.PsiElement
@@ -100,6 +101,10 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
         }.executeSynchronously()
 
     private fun checkIfInlineInReadAction(declaration: KtDeclaration): Boolean {
+        if (DumbService.isDumb(project)) {
+            return false
+        }
+
         val bindingContext = declaration.analyze(BodyResolveMode.PARTIAL)
         val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration) ?: return false
         return when (descriptor) {

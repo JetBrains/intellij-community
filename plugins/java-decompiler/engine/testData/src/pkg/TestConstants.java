@@ -40,25 +40,15 @@ public class TestConstants {
   static final float FPos = Float.POSITIVE_INFINITY;
   static final float FMin = Float.MIN_VALUE;
   static final float FMax = Float.MAX_VALUE;
+  static final float FMinNormal = Float.MIN_NORMAL;
 
   static final double DNan = Double.NaN;
   static final double DNeg = Double.NEGATIVE_INFINITY;
   static final double DPos = Double.POSITIVE_INFINITY;
   static final double DMin = Double.MIN_VALUE;
   static final double DMax = Double.MAX_VALUE;
+  static final double FDoubleNormal = Double.MIN_NORMAL;
 
-  static @interface A {
-    Class<?> value();
-  }
-
-  @A(byte.class) void m1() { }
-  @A(char.class) void m2() { }
-  @A(double.class) void m3() { }
-  @A(float.class) void m4() { }
-  @A(int.class) void m5() { }
-  @A(long.class) void m6() { }
-  @A(short.class) void m7() { }
-  @A(boolean.class) void m8() { }
-  @A(void.class) void m9() { }
-  @A(java.util.Date.class) void m10() { }
+  static final double PI = Math.PI;
+  static final double E = Math.E;
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -39,6 +39,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.*;
 import kotlin.sequences.SequencesKt;
@@ -72,7 +73,8 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFac
 import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public abstract class CommitChangeListDialog extends DialogWrapper implements SingleChangeListCommitWorkflowUi, ComponentContainer {
   public static final @NlsContexts.DialogTitle String DIALOG_TITLE = message("commit.dialog.title");
@@ -117,7 +119,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Nullable private final String myHelpId;
 
-  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm();
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
     updateLegend();
@@ -191,7 +193,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       boolean cancelIfNoChanges) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     LocalChangeList defaultList = manager.getDefaultChangeList();
-    List<LocalChangeList> changeLists = manager.getChangeListsCopy();
+    List<LocalChangeList> changeLists = manager.getChangeLists();
 
     Set<AbstractVcs> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
@@ -434,7 +436,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
           String message = message("changes.warning.not.all.local.changes.may.be.shown.due.to.an.error", messages[0]);
-          String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
+          String htmlMessage = buildHtml(getCssFontDeclaration(StartupUiUtil.getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
 
           myWarningLabel.setText(htmlMessage);
           myWarningLabel.setVisible(true);
@@ -543,12 +545,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setCommitMessage(@Nullable String commitMessage) {}
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public String getCommitMessage() {
     return myCommitMessageArea.getText();

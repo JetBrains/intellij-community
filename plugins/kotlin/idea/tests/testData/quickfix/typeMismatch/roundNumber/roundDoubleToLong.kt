@@ -1,5 +1,5 @@
 // "Round using roundToLong()" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(d: Double) {
     bar(d<caret>)
 }

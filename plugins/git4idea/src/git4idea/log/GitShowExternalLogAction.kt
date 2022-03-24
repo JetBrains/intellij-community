@@ -31,6 +31,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
@@ -67,7 +68,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val showContent = {
       val cm = window.contentManager
-      if (!selectProjectLog(project, vcs, cm, roots) && !selectAlreadyOpened(cm, roots)) {
+      if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(cm, roots)) {
         val component = createManagerAndContent(project, vcs, roots, true)
         val content = ContentFactory.SERVICE.getInstance().createContent(component, calcTabName(cm, roots), false)
         content.setDisposer(component.disposable)
@@ -88,9 +89,9 @@ class GitShowExternalLogAction : DumbAwareAction() {
   }
 }
 
-private class MyContentComponent internal constructor(actualComponent: JComponent,
-                                                      val roots: Collection<VirtualFile>,
-                                                      val disposable: Disposable) : JPanel(BorderLayout()) {
+private class MyContentComponent(actualComponent: JComponent,
+                                 val roots: Collection<VirtualFile>,
+                                 val disposable: Disposable) : JPanel(BorderLayout()) {
 
   init {
     add(actualComponent)
@@ -98,8 +99,7 @@ private class MyContentComponent internal constructor(actualComponent: JComponen
 }
 
 private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
-  Backgroundable(project, GitBundle.message(
-    "git.log.external.loading.process"), true) {
+  Backgroundable(project, @Suppress("DialogTitleCapitalization") GitBundle.message("git.log.external.loading.process"), true) {
   override fun run(indicator: ProgressIndicator) {
     if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
       throw ProcessCanceledException()
@@ -131,13 +131,13 @@ private fun createManagerAndContent(project: Project,
   val disposable = Disposer.newDisposable()
   val repositoryManager = GitRepositoryManager.getInstance(project)
   for (root in roots) {
-    repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable, true))
+    repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable))
   }
   val manager = VcsLogManager(project, ApplicationManager.getApplication().getService(GitExternalLogTabsProperties::class.java),
                               roots.map { VcsRoot(vcs, it) })
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   val ui = manager.createLogUi(calcLogId(roots),
-                               if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE)
+                               if (isToolWindowTab) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE)
   Disposer.register(disposable, ui)
   return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
 }
@@ -166,12 +166,11 @@ private fun getGitRootsFromUser(project: Project): List<VirtualFile> {
 
 private fun selectProjectLog(project: Project,
                              vcs: GitVcs,
-                             cm: ContentManager,
                              requestedRoots: List<VirtualFile>): Boolean {
   val projectRoots = listOf(*ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs))
   if (!projectRoots.containsAll(requestedRoots)) return false
 
-  if (requestedRoots.containsAll(projectRoots)) return VcsLogContentUtil.selectMainLog(cm)
+  if (requestedRoots.containsAll(projectRoots)) return VcsLogContentUtil.selectMainLog(project)
   val filters = collection(fromRoots(requestedRoots))
   return VcsProjectLog.getInstance(project).openLogTab(filters) != null
 }

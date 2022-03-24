@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
@@ -53,6 +53,10 @@ public class ModuleUtilCore {
     return module == null ? !projectFileIndex.isInLibraryClasses(vFile) : module.isDisposed();
   }
 
+  /**
+   * @return module where {@code containingFile} is located, 
+   *         null for project files outside module content roots or library files
+   */
   @Nullable
   public static Module findModuleForFile(@Nullable PsiFile containingFile) {
     if (containingFile != null) {
@@ -64,6 +68,10 @@ public class ModuleUtilCore {
     return null;
   }
 
+    /**
+   * @return module where {@code file} is located, 
+   *         null for project files outside module content roots or library files
+   */
   @Nullable
   public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
@@ -72,6 +80,12 @@ public class ModuleUtilCore {
     return ProjectFileIndex.getInstance(project).getModuleForFile(file);
   }
 
+  /**
+   * @return module where containing file of the {@code element} is located. 
+   * 
+   * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
+   * If this virtual file belongs to a library and this library is attached to the exactly one module, then this module will be returned.
+   */
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();

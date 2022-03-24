@@ -11,15 +11,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
 import java.io.File
-import java.nio.file.Paths
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class LibraryTraceExecutionTestCase(jarName: String) : TraceExecutionTestCase() {
-  private val libraryDirectory = File(PluginPathManager.getPluginHomePath("stream-debugger") + "/lib").absolutePath
-  private val jarPath = Paths.get(libraryDirectory, jarName).toAbsolutePath().toString()
-
+abstract class LibraryTraceExecutionTestCase(private val jarPath: String) : TraceExecutionTestCase() {
   private companion object {
     fun String.replaceLibraryPath(libraryPath: String): String {
       val caseSensitive = SystemInfo.isFileSystemCaseSensitive
@@ -31,7 +29,7 @@ abstract class LibraryTraceExecutionTestCase(jarName: String) : TraceExecutionTe
   override fun setUpModule() {
     super.setUpModule()
     ApplicationManager.getApplication().runWriteAction {
-      VfsRootAccess.allowRootAccess(testRootDisposable, libraryDirectory)
+      VfsRootAccess.allowRootAccess(testRootDisposable, Path(jarPath).parent.pathString)
       PsiTestUtil.addLibrary(myModule, jarPath)
     }
   }

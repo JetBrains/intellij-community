@@ -353,7 +353,7 @@ public final class PathManagerEx {
     try {
       Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), JpsProjectLoader.MODULE_MANAGER_COMPONENT);
       assert element != null;
-      for (ModulePath file : ModuleManagerBridgeImpl.Companion.getPathsToModuleFiles(element)) {
+      for (ModulePath file : ModuleManagerBridgeImpl.getPathsToModuleFiles(element)) {
         ourCommunityModules.add(file.getModuleName());
       }
       return ourCommunityModules;

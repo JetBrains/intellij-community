@@ -1,3 +1,0 @@
-_?curses.A_ITALIC
-ctypes.wintypes
-pwd.getpwnam

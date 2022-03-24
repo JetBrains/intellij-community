@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -21,7 +22,7 @@ import java.util.Objects;
  * @author Eugene Zhuravlev
  */
 @State(name = "RemoteRepositoriesConfiguration", storages = @Storage("jarRepositories.xml"))
-public class RemoteRepositoriesConfiguration implements PersistentStateComponent<RemoteRepositoriesConfiguration.State> {
+public class RemoteRepositoriesConfiguration implements PersistentStateComponent<RemoteRepositoriesConfiguration.State>, Disposable {
   private final List<RemoteRepositoryDescription> myRepositories = new SmartList<>();
 
   public RemoteRepositoriesConfiguration() {
@@ -150,5 +151,9 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     public int hashCode() {
       return data.hashCode();
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 }

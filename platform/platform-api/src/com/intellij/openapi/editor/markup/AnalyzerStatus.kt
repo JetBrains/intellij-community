@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup
 
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.util.NlsSafe
@@ -16,13 +17,19 @@ import kotlin.math.roundToInt
 /**
  * Inspection highlight level with string representations bound to resources for i18n.
  */
-enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val bundleKey: String) {
-  NONE("iw.level.none"),
-  SYNTAX("iw.level.syntax"),
-  ALL("iw.level.all");
+enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val nameKey: String,
+                            @PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val descriptionKey: String,
+) {
+  NONE("iw.level.none.name","iw.level.none.description"),
+  SYNTAX("iw.level.syntax.name", "iw.level.syntax.description"),
+  ESSENTIAL("iw.level.essential.name", "iw.level.essential.description"),
+  ALL("iw.level.all.name", "iw.level.all.description");
 
   @Nls
-  override fun toString(): String = EditorBundle.message(bundleKey)
+  override fun toString(): String = EditorBundle.message(nameKey)
+
+  val description: @Nls String
+    get() = EditorBundle.message(descriptionKey)
 }
 
 /*
@@ -50,9 +57,13 @@ enum class AnalyzingType {
   EMPTY     // Analyzing in progress but no information is available
 }
 /**
- * Severity status item containing text (not necessarily a number) possible icon and details text for popup
+ * Status item to be displayed in the top-right corner of the editor,
+ * containing a text (not necessarily a number), possible icon and details text for popup
  */
 data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val detailsText: String? = null)
+
+/** The data necessary for creating severity-based [StatusItem]s */
+data class SeverityStatusItem constructor(val severity: HighlightSeverity, val icon: Icon, val problemCount: Int, val countMessage: String)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -86,7 +97,7 @@ interface UIController {
   /**
    * Saves the <code>LanguageHighlightLevel</code> for the file.
    */
-  fun setHighLightLevel(newLevels: LanguageHighlightLevel)
+  fun setHighLightLevel(newLevel: LanguageHighlightLevel)
 
   /**
    * Adds panels coming from <code>com.intellij.hectorComponentProvider</code> EP providers to
@@ -180,11 +191,12 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
      * Default instance for classes that don't implement <code>ErrorStripeRenderer.getStatus</code>
      */
     @JvmStatic
-    val DEFAULT by lazy(LazyThreadSafetyMode.NONE) {
-      AnalyzerStatus(EmptyIcon.ICON_0, "", "") {
-        EmptyController
-      }
+    val EMPTY by lazy(LazyThreadSafetyMode.NONE) {
+      AnalyzerStatus(EmptyIcon.ICON_0, "", "") { EmptyController }
     }
+
+    @JvmStatic
+    fun isEmpty(status: AnalyzerStatus) = status == EMPTY
 
     @JvmStatic
     val EmptyController = object : UIController {
@@ -192,7 +204,7 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
       override fun getActions(): List<AnAction> = emptyList()
       override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
       override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
-      override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
+      override fun setHighLightLevel(newLevel: LanguageHighlightLevel) {}
       override fun fillHectorPanels(container: Container, gc: GridBag) {}
       override fun canClosePopup(): Boolean = true
       override fun onClosePopup() {}

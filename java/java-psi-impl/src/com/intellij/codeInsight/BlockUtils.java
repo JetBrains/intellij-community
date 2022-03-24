@@ -199,22 +199,28 @@ public final class BlockUtils {
     return false;
   }
 
-  public static void inlineCodeBlock(@NotNull PsiStatement orig, PsiCodeBlock codeBlock) {
+  /**
+   * Method inlines the statements inside <code>codeBlock</code> replacing <code>statement</code>.
+   *
+   * @param statement statement to delete
+   * @param codeBlock a block with statements to inline
+   * @return a first inlined statement, or null if <code>codeBlock</code> doesn't contain any statements.
+   */
+  @Nullable
+  public static PsiElement inlineCodeBlock(@NotNull PsiStatement statement, @NotNull PsiCodeBlock codeBlock) {
     PsiJavaToken lBrace = codeBlock.getLBrace();
     PsiJavaToken rBrace = codeBlock.getRBrace();
-    if (lBrace == null || rBrace == null) return;
+    if (lBrace == null || rBrace == null) return null;
 
     final PsiElement[] children = codeBlock.getChildren();
+    PsiElement added = null;
     if (children.length > 2) {
-      final PsiElement added =
-        orig.getParent().addRangeBefore(
-          children[1],
-          children[children.length - 2],
-          orig);
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+      added = statement.getParent().addRangeBefore(children[1], children[children.length - 2], statement);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(statement.getManager());
       codeStyleManager.reformat(added);
     }
-    orig.delete();
+    statement.delete();
+    return added;
   }
 
   public static PsiBlockStatement createBlockStatement(Project project) {

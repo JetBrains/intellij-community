@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +45,7 @@ public class Splitter extends JPanel implements Splittable {
   private boolean myVerticalSplit;
   private boolean myHonorMinimumSize;
   private boolean myHonorPreferredSize;
+  private boolean myUseViewportViewSizes;
   private final float myMinProp;
   private final float myMaxProp;
 
@@ -55,7 +56,6 @@ public class Splitter extends JPanel implements Splittable {
   protected final Divider myDivider;
   private JComponent mySecondComponent;
   private JComponent myFirstComponent;
-  private final FocusWatcher myFocusWatcher;
   private boolean myShowDividerIcon;
   private boolean myShowDividerControls;
   private boolean mySkipNextLayout;
@@ -120,8 +120,6 @@ public class Splitter extends JPanel implements Splittable {
     setProportion(proportion);
     myDividerWidth = 7;
     super.add(myDivider);
-    myFocusWatcher = new FocusWatcher();
-    myFocusWatcher.install(this);
     setOpaque(false);
   }
 
@@ -161,6 +159,14 @@ public class Splitter extends JPanel implements Splittable {
 
   public boolean isHonorPreferredSize() {
     return myHonorPreferredSize;
+  }
+
+  public boolean isUseViewportViewSizes() {
+    return myUseViewportViewSizes;
+  }
+
+  public void setUseViewportViewSizes(boolean useViewportViewSizes) {
+    myUseViewportViewSizes = useViewportViewSizes;
   }
 
   public void setHonorComponentsPreferredSize(boolean honorPreferredSize) {
@@ -206,7 +212,6 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   public void dispose() {
-    myFocusWatcher.deinstall(this);
   }
 
   protected Divider createDivider() {
@@ -249,8 +254,16 @@ public class Splitter extends JPanel implements Splittable {
 
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
-      final Dimension firstPrefSize = myFirstComponent.getPreferredSize();
-      final Dimension secondPrefSize = mySecondComponent.getPreferredSize();
+      final Dimension firstPrefSize = unwrap(myFirstComponent).getPreferredSize();
+      final Dimension secondPrefSize = unwrap(mySecondComponent).getPreferredSize();
+      if (myDividerPositionStrategy == DividerPositionStrategy.DISTRIBUTE) {
+        Dimension firstMinSize = unwrap(myFirstComponent).getMinimumSize();
+        Dimension secondMinSize = unwrap(mySecondComponent).getMinimumSize();
+        firstPrefSize.width = Math.max(firstMinSize.width, firstPrefSize.width);
+        firstPrefSize.height = Math.max(firstMinSize.height, firstPrefSize.height);
+        secondPrefSize.width = Math.max(secondMinSize.width, secondPrefSize.width);
+        secondPrefSize.height = Math.max(secondMinSize.height, secondPrefSize.height);
+      }
       return isVertical()
              ? new Dimension(Math.max(firstPrefSize.width, secondPrefSize.width),
                              firstPrefSize.height + dividerWidth + secondPrefSize.height)
@@ -286,13 +299,17 @@ public class Splitter extends JPanel implements Splittable {
       }
       else if (myDividerPositionStrategy == DividerPositionStrategy.DISTRIBUTE) {
         if (myLagProportion == null) myLagProportion = myProportion;
+        Component first = unwrap(myFirstComponent);
+        Component second = unwrap(mySecondComponent);
         myProportion = getDistributeSizeChange(
           (int)getDimension(myFirstComponent.getSize()),
-          (int)getDimension(myFirstComponent.getMinimumSize()),
-          (int)getDimension(myFirstComponent.getPreferredSize()),
+          (int)getDimension(first.getMinimumSize()),
+          (int)getDimension(first.getPreferredSize()),
+          (int)getDimension(first.getMaximumSize()),
           (int)getDimension(mySecondComponent.getSize()),
-          (int)getDimension(mySecondComponent.getMinimumSize()),
-          (int)getDimension(mySecondComponent.getPreferredSize()),
+          (int)getDimension(second.getMinimumSize()),
+          (int)getDimension(second.getPreferredSize()),
+          (int)getDimension(second.getMaximumSize()),
           total - getDividerWidth(),
           myLagProportion,
           myLackOfSpaceStrategy == LackOfSpaceStrategy.SIMPLE_RATIO ? null :
@@ -306,18 +323,28 @@ public class Splitter extends JPanel implements Splittable {
     return !isNull(component) && component.isVisible() && !component.getBounds().isEmpty();
   }
 
-  private static float getDistributeSizeChange(int size1, int mSize1, int pSize1,
-                                               int size2, int mSize2, int pSize2,
+  private static float getDistributeSizeChange(int size1, int mSize1, int pSize1, int mxSize1,
+                                               int size2, int mSize2, int pSize2, int mxSize2,
                                                int totalSize, float oldProportion,
                                                @Nullable Boolean stretchFirst) {
     //clamp
-    if (pSize1 < mSize1) pSize1 = mSize1;
-    if (pSize2 < mSize2) pSize2 = mSize2;
+    mSize1 = Math.min(mSize1, mxSize1);
+    mSize2 = Math.min(mSize2, mxSize2);
+    pSize1 = MathUtil.clamp(pSize1, mSize1, mxSize1);
+    pSize2 = MathUtil.clamp(pSize2, mSize2, mxSize2);
     int delta = totalSize - (size1 + size2);
 
     int[] size = {size1, size2};
-    delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
-    delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
+    if (delta >= 0) {
+      delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
+      delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
+      delta = stretchTo(size, mxSize1, mxSize2, delta, oldProportion);
+    }
+    else {
+      delta = stretchTo(size, mxSize1, mxSize2, delta, oldProportion);
+      delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
+      delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
+    }
     if (delta != 0) {
       if (stretchFirst == null) {
         int p0 = computePortion(size, delta, oldProportion);
@@ -477,11 +504,9 @@ public class Splitter extends JPanel implements Splittable {
     }
     double mSize1 = getDimension(myFirstComponent.getMinimumSize());
     double mSize2 = getDimension(mySecondComponent.getMinimumSize());
-    double pSize1 = getDimension(myFirstComponent.getPreferredSize());
-    double pSize2 = getDimension(mySecondComponent.getPreferredSize());
     if (myHonorPreferredSize && size1 > mSize1 && size2 > mSize2) {
-      mSize1 = pSize1;
-      mSize2 = pSize2;
+      mSize1 = getDimension(myFirstComponent.getPreferredSize());
+      mSize2 = getDimension(mySecondComponent.getPreferredSize());
     }
 
     if (total < mSize1 + mSize2) {
@@ -552,6 +577,16 @@ public class Splitter extends JPanel implements Splittable {
 
   public float getMaximumProportion() {
     return myMaxProp;
+  }
+
+  public void setDefaultProportion() {
+    Component first = unwrap(myFirstComponent);
+    Component second = unwrap(mySecondComponent);
+    if (first != null && second != null) {
+      double p1 = Math.max(getDimension(first.getPreferredSize()), getDimension(first.getMinimumSize()));
+      double p2 = Math.max(getDimension(second.getPreferredSize()), getDimension(second.getMinimumSize()));
+      setProportion((float)(p1 / (p1 + p2)));
+    }
   }
 
   @Override
@@ -663,19 +698,32 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public float getMinProportion(boolean first) {
-    JComponent component = first? myFirstComponent : mySecondComponent;
+    Component component = first ? myFirstComponent : mySecondComponent;
+    Component other = first ? mySecondComponent : myFirstComponent;
     if (isHonorMinimumSize()) {
-      if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null &&
-          mySecondComponent.isVisible()) {
-        if (isVertical()) {
-          return (float)component.getMinimumSize().height / (float)(getHeight() - getDividerWidth());
-        }
-        else {
-          return (float)component.getMinimumSize().width / (float)(getWidth() - getDividerWidth());
-        }
+      boolean bothVisible = component != null && component.isVisible()
+                            && other != null && other.isVisible();
+      if (bothVisible) {
+        double size = getDimension(component.getSize());
+        component = unwrap(component);
+        other = unwrap(other);
+        double min = getDimension(component.getMinimumSize());
+        double oMax = getDimension(other.getMaximumSize());
+        double total = getDimension(getSize()) - getDividerWidth();
+        double oMaxP = (total - oMax) / total;
+        double minP = size < min ? 0 : min / total;
+        return (float)Math.max(oMaxP, minP);
       }
     }
     return 0.0f;
+  }
+
+  private Component unwrap(Component c) {
+    if (!myUseViewportViewSizes) return c;
+    JScrollPane scrollPane = ObjectUtils.tryCast(c, JScrollPane.class);
+    JViewport viewport = scrollPane == null ? null : scrollPane.getViewport();
+    Component view = viewport == null ? null : viewport.getView();
+    return view == null ? c : view;
   }
 
   @NotNull
@@ -722,7 +770,7 @@ public class Splitter extends JPanel implements Splittable {
 
       Icon glueIcon = isVerticalSplit ? SplitGlueV : SplitGlueH;
       add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                       JBUI.emptyInsets(), 0, 0));
+                                                       JBInsets.emptyInsets(), 0, 0));
 
       revalidate();
       repaint();

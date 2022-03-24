@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -156,7 +155,6 @@ public class DeclarationParser {
 
   private void parseEnumConstants(final PsiBuilder builder) {
     boolean first = true;
-    boolean seenCommaBefore = false;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
@@ -431,19 +429,19 @@ public class DeclarationParser {
     if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
         builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       LanguageLevel level = getLanguageLevel(builder);
-      return level.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
+      return level.isAtLeast(LanguageLevel.JDK_16);
     }
     return false;
   }
 
   private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
-    return JavaLexer.isSealedAvailable(getLanguageLevel(builder)) &&
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) &&
            tokenType == JavaTokenType.IDENTIFIER &&
            PsiKeyword.SEALED.equals(builder.getTokenText());
   }
 
   private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
-    if (!JavaLexer.isSealedAvailable(getLanguageLevel(builder)) ||
+    if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) ||
         tokenType != JavaTokenType.IDENTIFIER ||
         !"non".equals(builder.getTokenText()) ||
         builder.lookAhead(1) != JavaTokenType.MINUS ||
@@ -1036,7 +1034,7 @@ public class DeclarationParser {
         builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
-      result = myParser.getExpressionParser().parseConditional(builder);
+      result = myParser.getExpressionParser().parseConditional(builder, 0);
     }
 
     return result;

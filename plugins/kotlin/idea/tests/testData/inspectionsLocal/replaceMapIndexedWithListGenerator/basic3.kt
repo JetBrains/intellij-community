@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(list: List<String>) {
     Foo().bar().<caret>mapIndexed { index, _ ->
         index + 42

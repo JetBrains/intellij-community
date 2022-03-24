@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
@@ -265,14 +265,14 @@ static trait T {}
 import groovy.transform.CompileStatic
 
 interface I {
-    <error descr="Modifier 'default' is available with Groovy 3.0 or later">default</error> int bar() {
+    <error>default</error> int bar() {
         2
     }
 }
 
 @CompileStatic
 interface I2 {
-    <error descr="Modifier 'default' is available with Groovy 3.0 or later">default</error> int bar() {
+    <error>default</error> int bar() {
         2
     }
 }
@@ -281,17 +281,17 @@ interface I2 {
 
   void 'test default modifier'() {
     testHighlighting '''
-<error descr="Modifier 'default' is available with Groovy 3.0 or later">default</error> interface I {
+<error>default</error> interface I {
 }
 
 trait T {
-    <error descr="Modifier 'default' is available with Groovy 3.0 or later">default</error> int bar() {
+    <error>default</error> int bar() {
         2
     }
 }
 
 class C {
-    <error descr="Modifier 'default' is available with Groovy 3.0 or later">default</error> int bar() {
+    <error>default</error> int bar() {
         2
     }
 }

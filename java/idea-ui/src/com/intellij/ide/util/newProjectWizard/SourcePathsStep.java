@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
@@ -28,9 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,9 +288,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
 
   @Override
   protected void onFinished(final List<JavaModuleSourceRoot> foundPaths, final boolean canceled) {
-    if (!foundPaths.isEmpty()) {
+    List<JavaModuleSourceRoot> paths = ContainerUtil.notNullize(foundPaths);
+    if (!paths.isEmpty()) {
       myCurrentMode = CHOOSE_SOURCE_PANEL;
-      mySourcePathsChooser.setElements(foundPaths, true);
+      mySourcePathsChooser.setElements(paths, true);
     }
     else {
       myCurrentMode = CREATE_SOURCE_PANEL;
@@ -297,7 +299,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     }
     updateStepUI(canceled ? null : getContentRootPath());
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
-      mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
+      mySourcePathsChooser.selectElements(paths.subList(0, 1));
     }
     else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
       myTfSourceDirectoryName.selectAll();
@@ -341,7 +343,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
 
   public static FieldPanel createFieldPanel(final JTextField field, final @NlsContexts.Label String labelText, final BrowseFilesListener browseButtonActionListener) {
     final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
-    fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    fieldPanel.getFieldLabel().setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     return fieldPanel;
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.ShSuppressInspectionIntention;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -23,6 +24,8 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     ShShellcheckTestUtil.downloadShellcheck();
+    assertTrue("Failed to download proper shellcheck executable",
+               ShShellcheckUtil.isExecutionValidPath(ShSettings.getShellcheckPath()));
   }
 
   @Override

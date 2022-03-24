@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 
 data class XY(var x: String, val y: String)
 fun test(xys: Array<XY>) {

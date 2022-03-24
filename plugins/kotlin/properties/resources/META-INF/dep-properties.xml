@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <completionExtension implementation="org.jetbrains.kotlin.idea.properties.PropertyKeyCompletion"/>
-  </extensions>
-</idea-plugin>

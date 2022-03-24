@@ -147,12 +147,14 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
                                              ProblemHighlightType.INFORMATION;
-        if (startTagName.getTextLength() > 0) {
-          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-        }
+        if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+          if (startTagName.getTextLength() > 0) {
+            holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
 
-        if (endTagName != null) {
-          holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          if (endTagName != null) {
+            holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
         }
       }
     }

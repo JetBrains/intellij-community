@@ -1,7 +1,7 @@
 <problems>
     <problem>
         <file>simple.kt</file>
-        <line>2</line>
+        <line>3</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="simple.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation that can be converted to string template</problem_class>
@@ -9,7 +9,7 @@
     </problem>
     <problem>
         <file>noBracesSimpleFollowedByDot.kt</file>
-        <line>3</line>
+        <line>5</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="noBracesSimpleFollowedByDot.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation that can be converted to string template</problem_class>
@@ -17,7 +17,7 @@
     </problem>
     <problem>
         <file>specialCharsInCharLiteral.kt</file>
-        <line>2</line>
+        <line>3</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="specialCharsInCharLiteral.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation that can be converted to string template</problem_class>
@@ -25,7 +25,7 @@
     </problem>
     <problem>
         <file>doesNotCorruptExistingTemplate.kt</file>
-        <line>4</line>
+        <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="doesNotCorruptExistingTemplate.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation that can be converted to string template</problem_class>
@@ -41,7 +41,7 @@
     </problem>
     <problem>
         <file>noBracesForLastSimpleExpression.kt</file>
-        <line>3</line>
+        <line>5</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="noBracesForLastSimpleExpression.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation that can be converted to string template</problem_class>

@@ -136,8 +136,8 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
       }
 
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return !file.isDirectory();
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && !file.isDirectory();
       }
     }.withRoots(rootDir);
     descriptor.setForcedToUseIdeaFileChooser(true);

@@ -314,7 +314,7 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   @Override
   protected void doTest() {
-    myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
+    myFixture.copyDirectoryToProject("packages/attr", "attr");
     super.doTest();
     assertProjectFilesNotParsed(myFixture.getFile());
   }

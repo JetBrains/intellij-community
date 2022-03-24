@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -13,7 +13,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import java.awt.Component
 import java.io.File
@@ -22,7 +21,6 @@ import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-
 
 open class HeapDumpAnalysisSupport {
   companion object {
@@ -76,7 +74,7 @@ internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
       return
     }
 
-    val jsonPath = Paths.get(PathManager.getSystemPath(), "pending-snapshot.json")
+    val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
     if (!Files.isRegularFile(jsonPath)) {
       return
     }
@@ -98,10 +96,9 @@ internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
         it.endObject()
       }
 
-      FileUtil.delete(jsonPath)
+      Files.deleteIfExists(jsonPath)
     }
-    catch (e: Exception) {
-      // ignore
+    catch (ignore: Exception) {
     }
 
     path?.let {

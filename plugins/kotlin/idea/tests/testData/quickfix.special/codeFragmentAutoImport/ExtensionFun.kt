@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import java.util.concurrent.locks.*
 
 fun foo(lock: ReentrantReadWriteLock) {

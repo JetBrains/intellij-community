@@ -9,6 +9,12 @@ public abstract class AtomicClearableLazyValue<T> extends ClearableLazyValue<T> 
     return super.getValue();
   }
 
+  /** Not synchronized on purpose to avoid freezes. */
+  @Override
+  public final boolean isCached() {
+    return super.isCached();
+  }
+
   @Override
   public final synchronized void drop() {
     super.drop();

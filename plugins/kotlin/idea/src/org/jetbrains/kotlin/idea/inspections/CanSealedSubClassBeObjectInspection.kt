@@ -2,17 +2,23 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getModalityFromDescriptor
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSubClassToObjectFix
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.GenerateIdentityEqualsFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.isEffectivelyActual
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
@@ -20,15 +26,19 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-
         fun reportPossibleObject(klass: KtClass) {
             val keyword = klass.getClassOrInterfaceKeyword() ?: return
+            val isExpectClass = klass.isExpectDeclaration()
+            val fixes = listOfNotNull(
+                createFixIfPossible(!isExpectClass && !klass.isEffectivelyActual(), ::ConvertSealedSubClassToObjectFix),
+                createFixIfPossible(!isExpectClass && klass.module?.platform?.isJvm() == true, ::GenerateIdentityEqualsFix),
+            ).toTypedArray()
+
             holder.registerProblem(
                 keyword,
                 KotlinBundle.message("sealed.sub.class.has.no.state.and.no.overridden.equals"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                ConvertSealedSubClassToObjectFix(),
-                GenerateIdentityEqualsFix()
+                *fixes,
             )
         }
 
@@ -67,10 +77,9 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
 
         private fun KtClass.isSubclassOfStatelessSealed(): Boolean {
             fun KtSuperTypeListEntry.asKtClass(): KtClass? = typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass
-            return superTypeListEntries
-                .mapNotNull { it.asKtClass() }
-                .filter { it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals() }
-                .any()
+            return superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
+                it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
+            }
         }
 
         private fun KtClass.withEmptyConstructors(): Boolean =
@@ -123,3 +132,8 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 }
+
+private fun <T : LocalQuickFix> createFixIfPossible(
+    flag: Boolean,
+    quickFixFactory: () -> T,
+): T? = quickFixFactory.takeIf { flag }?.invoke()

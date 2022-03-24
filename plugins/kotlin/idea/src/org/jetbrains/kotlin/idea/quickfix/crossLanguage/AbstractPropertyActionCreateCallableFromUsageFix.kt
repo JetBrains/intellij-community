@@ -24,6 +24,8 @@ abstract class AbstractPropertyActionCreateCallableFromUsageFix(
                 append(KotlinBundle.message("text.add"))
                 if (propertyInfo.isLateinitPreferred || propertyInfo.modifierList?.hasModifier(KtTokens.LATEINIT_KEYWORD) == true) {
                     append("lateinit ")
+                } else if (propertyInfo.isConst) {
+                    append("const ")
                 }
                 append(if (propertyInfo.writable) "var" else "val")
                 append(KotlinBundle.message("property.0.to.1", propertyInfo.name, classOrFileName.toString()))

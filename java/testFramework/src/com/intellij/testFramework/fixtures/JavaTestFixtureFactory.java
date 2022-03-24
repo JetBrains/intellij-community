@@ -12,7 +12,7 @@ public abstract class JavaTestFixtureFactory {
     return ourInstance;
   }
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String name);
 
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 

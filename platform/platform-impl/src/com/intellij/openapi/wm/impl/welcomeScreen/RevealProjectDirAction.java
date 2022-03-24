@@ -5,7 +5,7 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class RevealProjectDirAction extends DumbAwareAction implements LightEdit
 
   @Nullable
   private static ReopenProjectAction getReopenAction(AnActionEvent e) {
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JBList) {
       JBList list = (JBList)component;
       Object value = list.getSelectedValue();

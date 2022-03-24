@@ -23,10 +23,7 @@ class RedundantModalityModifierInspection : AbstractKotlinInspection(), CleanupL
                 modalityModifier,
                 KotlinBundle.message("redundant.modality.modifier"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                IntentionWrapper(
-                    RemoveModifierFix(declaration, implicitModality, isRedundant = true),
-                    declaration.containingFile
-                )
+                IntentionWrapper(RemoveModifierFix(declaration, implicitModality, isRedundant = true))
             )
         }
     }

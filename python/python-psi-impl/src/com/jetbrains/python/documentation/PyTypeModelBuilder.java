@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -264,8 +263,8 @@ public class PyTypeModelBuilder {
         result = NamedType.nameOrAny(type);
       }
     }
-    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+    else if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType<?>)type).toInstance();
       // Special case: render Type[type] as just type
       if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
         result = NamedType.nameOrAny(type);
@@ -383,7 +382,13 @@ public class PyTypeModelBuilder {
     if (parameters != null) {
       parameterModels = new ArrayList<>();
       for (PyCallableParameter parameter : parameters) {
-        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
+        final var paramType = parameter.getType(myContext);
+        if (paramType instanceof PyParamSpecType || paramType instanceof PyConcatenateType) {
+          parameterModels.add(new ParamType(null, build(parameter.getType(myContext), true)));
+        }
+        else {
+          parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
+        }
       }
     }
     final PyType ret = type.getReturnType(myContext);

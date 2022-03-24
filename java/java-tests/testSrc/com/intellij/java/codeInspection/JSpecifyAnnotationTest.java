@@ -59,7 +59,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }; 
   
-  private static final String PACKAGE_NAME = "org.jspecify.annotations";
+  private static final String PACKAGE_NAME = "org.jspecify.nullness";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
   @Parameterized.Parameter
   public String myFileName;
@@ -89,7 +89,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NullnessUnspecified"));
-    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE, ElementType.PACKAGE", "DefaultNonNull"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE, ElementType.PACKAGE", "NullMarked"));
   }
 
   @Test
@@ -162,7 +162,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     @Override
     protected void reportProblem(@NotNull ProblemsHolder holder,
                                  @NotNull PsiElement anchor,
-                                 @Nullable LocalQuickFix fix,
+                                 LocalQuickFix @NotNull [] fixes,
                                  @NotNull String messageKey, Object... args) {
       switch (messageKey) {
         case "inspection.nullable.problems.primitive.type.annotation":

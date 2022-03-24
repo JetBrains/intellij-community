@@ -7,7 +7,7 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpdateQuickFix
+import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.
@@ -16,24 +16,25 @@ interface ProjectModuleOperationProvider {
 
     companion object {
 
-        private val extensionPointName: ExtensionPointName<ProjectModuleOperationProvider> =
-            ExtensionPointName.create("com.intellij.packagesearch.projectModuleOperationProvider")
+        private val extensions: Array<ProjectModuleOperationProvider>
+            get() = runCatching {
+                ExtensionPointName.create<ProjectModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
+                    .extensions
+            }.getOrDefault(emptyArray())
 
         /**
          * Retrieves the first provider for given [project] and [psiFile].
          * @return The first compatible provider or `null` if none is found.
          */
         fun forProjectPsiFileOrNull(project: Project, psiFile: PsiFile?): ProjectModuleOperationProvider? =
-            extensionPointName.extensions
-                .firstOrNull { it.hasSupportFor(project, psiFile) }
+            extensions.firstOrNull { it.hasSupportFor(project, psiFile) }
 
         /**
          * Retrieves the first provider for given the [projectModuleType].
          * @return The first compatible provider or `null` if none is found.
          */
         fun forProjectModuleType(projectModuleType: ProjectModuleType): ProjectModuleOperationProvider? =
-            extensionPointName.extensions
-                .firstOrNull { it.hasSupportFor(projectModuleType) }
+            extensions.firstOrNull { it.hasSupportFor(projectModuleType) }
     }
 
     /**
@@ -43,7 +44,7 @@ interface ProjectModuleOperationProvider {
      *
      * @return `true` opt in to [PackageUpdateInspection], false otherwise.
      * @see PackageUpdateInspection
-     * @see PackageSearchDependencyUpdateQuickFix
+     * @see PackageSearchDependencyUpgradeQuickFix
      */
     fun usesSharedPackageUpdateInspection(): Boolean = false
 

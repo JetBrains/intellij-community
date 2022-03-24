@@ -3,7 +3,7 @@ import os.path
 import sys
 
 from _pydev_bundle._pydev_tipper_common import do_find
-from _pydevd_bundle.pydevd_constants import IS_PY2
+from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_resolver import suppress_warnings
 
 if IS_PY2:
@@ -212,7 +212,10 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
         try:
             with suppress_warnings():
                 try:
-                    obj = getattr(obj_to_complete.__class__, d)
+                    if IS_PY39_OR_GREATER:
+                        obj = getattr(obj_to_complete, d)
+                    else:
+                        obj = getattr(obj_to_complete.__class__, d)
                 except:
                     obj = getattr(obj_to_complete, d)
         except: #just ignore and get it without additional info

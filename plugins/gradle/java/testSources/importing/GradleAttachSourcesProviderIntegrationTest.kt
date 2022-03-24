@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.application.runReadAction
@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider
 import org.junit.Test
+import java.util.function.Consumer
 
 class GradleAttachSourcesProviderIntegrationTest : GradleImportingTestCase() {
   @Test
@@ -27,7 +28,7 @@ class GradleAttachSourcesProviderIntegrationTest : GradleImportingTestCase() {
     val junitLib: LibraryOrderEntry = getModuleLibDeps("project.test", "Gradle: junit:junit:4.12").single()
     assertThat(junitLib.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
-      .allSatisfy { assertEquals("junit-4.12.jar", it.name) }
+      .allSatisfy(Consumer { assertEquals("junit-4.12.jar", it.name) })
 
     val psiFile = runReadAction {
       JavaPsiFacade.getInstance(myProject).findClass("junit.framework.Test", GlobalSearchScope.allScope(myProject))!!.containingFile
@@ -54,11 +55,11 @@ class GradleAttachSourcesProviderIntegrationTest : GradleImportingTestCase() {
     assertThat(output)
       .filteredOn{ it.startsWith("Sources were downloaded to") }
       .hasSize(1)
-      .allSatisfy { assertThat(it).endsWith("junit-4.12-sources.jar") }
+      .allSatisfy(Consumer { assertThat(it).endsWith("junit-4.12-sources.jar") })
 
     assertThat(junitLib.getRootFiles(OrderRootType.SOURCES))
       .hasSize(1)
-      .allSatisfy { assertEquals("junit-4.12-sources.jar", it.name) }
+      .allSatisfy(Consumer { assertEquals("junit-4.12-sources.jar", it.name) })
 
   }
 }

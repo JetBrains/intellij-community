@@ -61,7 +61,7 @@ public abstract class SmartPointerManager {
    * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element);

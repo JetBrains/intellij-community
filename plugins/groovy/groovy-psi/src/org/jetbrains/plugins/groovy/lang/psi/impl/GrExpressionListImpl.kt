@@ -4,10 +4,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiListLikeElement
+import com.intellij.psi.util.childrenOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
 class GrExpressionListImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrExpressionList, PsiListLikeElement {
 

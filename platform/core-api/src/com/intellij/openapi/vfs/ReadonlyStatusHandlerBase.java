@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,6 +74,9 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
       }
       if (file instanceof VirtualFileWindow) {
         file = ((VirtualFileWindow)file).getDelegate();
+      }
+      if (file instanceof BackedVirtualFile) {
+        file = ((BackedVirtualFile)file).getOriginFile();
       }
       if (file != null) {
         realFiles.add(file);

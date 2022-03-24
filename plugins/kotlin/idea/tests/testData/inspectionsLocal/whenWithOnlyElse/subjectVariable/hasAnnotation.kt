@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun hasAnnotation() {
     when<caret> (@Bar val a = create()) {
         else -> use(a)

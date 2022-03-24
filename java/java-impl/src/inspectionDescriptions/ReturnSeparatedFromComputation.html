@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports the <code>return</code> statements that return a local variable in which the value of the variable is computed
-somewhere else within the same code block with the <code>return</code> statement.
+Reports <code>return</code> statements that return a local variable where the value of the variable is computed
+somewhere else within the same method.
 <p>The quick-fix inlines the returned variable by moving the return statement to the location in which the value
   of the variable is computed.
   When the returned value can't be inlined into the <code>return</code> statement, 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -18,7 +18,6 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
                 else -> null
             } ?: element
         )
-
     }
 
     private fun convertCreationOfBoxedType(newExpression: JKNewExpression): JKExpression? {
@@ -40,12 +39,15 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
         val shouldConvertToIntFirst =
             primitiveTypeName in floatingPointPrimitiveTypeNames && operationType in typeNameOfIntegersLesserThanInt
 
-        val conversionType = if (shouldConvertToIntFirst) "Int" else operationType.capitalize(Locale.US)
+        val conversionType = if (shouldConvertToIntFirst) {
+            "Int"
+        } else {
+            operationType.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+        }
 
+        val typeName = primitiveTypeName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
         return JKCallExpressionImpl(
-            symbolProvider.provideMethodSymbol(
-                "kotlin.${primitiveTypeName.capitalize(Locale.US)}.to$conversionType"
-            ),
+            symbolProvider.provideMethodSymbol("kotlin.$typeName.to$conversionType"),
             JKArgumentList()
         ).withFormattingFrom(methodCallExpression)
     }

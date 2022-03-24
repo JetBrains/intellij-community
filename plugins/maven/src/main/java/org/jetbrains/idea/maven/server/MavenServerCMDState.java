@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -12,15 +12,12 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
-import gnu.trove.TIntHashSet;
-import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
-import org.slf4j.impl.Log4jLoggerFactory;
+import org.slf4j.impl.JDK14LoggerFactory;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -115,11 +112,12 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
+    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
+
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
     for (String s : classPath) {
       params.getClassPath().add(s);
     }
-    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
     if (embedderXmx != null) {
@@ -174,26 +172,19 @@ public class MavenServerCMDState extends CommandLineState {
 
   protected @NotNull Collection<String> collectRTLibraries(String mavenVersion) {
     Set<String> classPath = new LinkedHashSet<>();
-    classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
       classPath.add(PathUtil.getJarPathForClass(Logger.class));
-      classPath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
+      classPath.add(PathUtil.getJarPathForClass(JDK14LoggerFactory.class));
     }
 
     classPath.add(PathUtil.getJarPathForClass(StringUtilRt.class));//util-rt
     classPath.add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
     classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
-    classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
-
-    String element = PathManager.getJarPathForClass(Query.class);
-    if (element != null) {
-      (classPath).add(element);
-    }
     return classPath;
   }
 
   private static void setupMainClass(SimpleJavaParameters params, String mavenVersion) {
-    if (setupThrowMainClass && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
       setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
     }
@@ -268,7 +259,7 @@ public class MavenServerCMDState extends CommandLineState {
       if (value == null) return null;
       Matcher matcher = MEMORY_PROPERTY_PATTERN.matcher(value);
       if (matcher.find()) {
-        return new MemoryProperty(matcher.group(1), Long.valueOf(matcher.group(2)), matcher.group(3));
+        return new MemoryProperty(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3));
       }
       LOG.warn(value + " not match " + MEMORY_PROPERTY_PATTERN);
       return null;
@@ -286,6 +277,7 @@ public class MavenServerCMDState extends CommandLineState {
     private enum MemoryUnit {
       B(1), K(B.ratio * 1024), M(K.ratio * 1024), G(M.ratio * 1024);
       final int ratio;
+
       MemoryUnit(int ratio) {
         this.ratio = ratio;
       }
@@ -294,6 +286,7 @@ public class MavenServerCMDState extends CommandLineState {
     private enum MemoryPropertyType {
       XMX("-Xmx"), XMS("-Xms");
       private final String type;
+
       MemoryPropertyType(String type) {
         this.type = type;
       }

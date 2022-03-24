@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
@@ -10,7 +11,7 @@ import javax.swing.JComponent
 
 class CheckboxComponent(
     context: Context,
-    labelText: String? = null,
+    @NlsContexts.Checkbox labelText: String? = null,
     description: String? = null,
     initialValue: Boolean? = null,
     validator: SettingValidator<Boolean>? = null,

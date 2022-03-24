@@ -50,6 +50,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -61,13 +62,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    boolean runInCommand = isRunInCommand();
-    boolean runInWriteAction = isRunInWriteAction();
+    boolean runInWriteAction = false;
 
-    if (runInCommand && runInWriteAction) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
-    }
-    else if (runInCommand) {
+    if (isRunInCommand()) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
         try {
@@ -81,16 +78,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         throw e.get();
       }
     }
-    else if (runInWriteAction) {
-      WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
-    }
     else {
       super.runTestRunnable(testRunnable);
     }
-  }
-
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 
   protected boolean isRunInCommand() {
@@ -705,7 +695,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
   public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable{
-    final LightPlatformCodeInsightTestCase testCase = (LightPlatformCodeInsightTestCase)klass.newInstance();
+    final Object testCase = klass.newInstance();
     if (!(testCase instanceof FileBasedTestCaseHelper)) {
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
@@ -718,7 +708,21 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
 
     final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
-    String testDataPath = testCase.getTestDataPath();
+
+    String testDataPath;
+    if (testCase instanceof LightPlatformCodeInsightTestCase) {
+      testDataPath = ((LightPlatformCodeInsightTestCase)testCase).getTestDataPath();
+    }
+    else {
+      try {
+        Method dataPath = klass.getDeclaredMethod("getTestDataPath");
+        dataPath.setAccessible(true);
+        testDataPath = (String)dataPath.invoke(fileBasedTestCase);
+      }
+      catch (Throwable e) {
+        testDataPath = PathManagerEx.getTestDataPath();
+      }
+    }
 
     File testDir = null;
     if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {

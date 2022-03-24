@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.*
@@ -19,7 +18,6 @@ import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
@@ -44,9 +42,9 @@ class PyDataclassInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder, session)
+    holder,PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
@@ -180,30 +178,27 @@ class PyDataclassInspection : PyInspection() {
     }
 
     override fun visitPyCallExpression(node: PyCallExpression) {
-      super.visitPyCallExpression(node)
+      val callees = node.multiResolveCallee(resolveContext)
+      val calleeQName = callees.mapNotNullTo(mutableSetOf()) { it.callable?.qualifiedName }.singleOrNull()
 
-      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
-      val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
-      val callee = callableType?.callable
-      val calleeQName = callee?.qualifiedName
-
-      if (callableType != null && callee != null) {
+      if (calleeQName != null) {
         val dataclassType = when {
           DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
           ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
           else -> return
         }
 
+        val callableType = callees.first()
         val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
-        val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
+        val dataclassParameter = callableType.getParameters(myTypeEvalContext)?.firstOrNull()
         val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
         if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-          processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+          processHelperDataclassArgument(dataclassArgument, calleeQName)
         }
         else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-          processHelperAttrsArgument(dataclassArgument, calleeQName!!)
+          processHelperAttrsArgument(dataclassArgument, calleeQName)
         }
       }
     }
@@ -415,6 +410,22 @@ class PyDataclassInspection : PyInspection() {
       if (field.annotationValue == null) return
 
       val value = field.findAssignedValue()
+
+      if (value is PyCallExpression) {
+        val fieldWithDefaultFactory = value
+          .multiResolveCallee(resolveContext)
+          .filter { it.callable?.qualifiedName == "dataclasses.field" }
+          .any {
+            PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
+              p.name == "default_factory"
+            }
+          }
+
+        if (fieldWithDefaultFactory) {
+          return
+        }
+      }
+
       if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
         registerProblem(value,
                         PyPsiBundle.message("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),

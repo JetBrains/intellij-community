@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -23,7 +23,7 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk(JavaVersion.compose(15));
+    return IdeaTestUtil.getMockJdk(JavaVersion.compose(17));
   }
 
   @Override
@@ -40,19 +40,19 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testRecordTopLevel() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest(LanguageLevel.JDK_15_PREVIEW));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest(LanguageLevel.JDK_16));
   }
 
   public void testRecordInClass() {
-    doTest(LanguageLevel.JDK_15_PREVIEW);
+    doTest(LanguageLevel.JDK_16);
   }
 
   public void testRecordInMethod() {
-    doTest(LanguageLevel.JDK_15_PREVIEW);
+    doTest(LanguageLevel.JDK_16);
   }
 
   public void testSealedClasses() {
-    doTest(LanguageLevel.JDK_15_PREVIEW);
+    doTest(LanguageLevel.JDK_17);
   }
 
   private void doTest(LanguageLevel level) {

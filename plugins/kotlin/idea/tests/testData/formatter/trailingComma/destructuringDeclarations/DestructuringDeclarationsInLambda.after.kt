@@ -40,9 +40,10 @@ val x: (Pair<Int, Int>, Int) -> Unit = {
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
     (
-            x, /* val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z, ->
-    println(x)
-}*/
+            x,
+            /* val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z, ->
+               println(x)
+           }*/
     ),
     z,
     ->
@@ -59,9 +60,9 @@ val x: (Pair<Int, Int>, Int) -> Unit = { (x, y/**/), z ->
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
     (
-            x,
-            y,/*
-*/
+            x, y,
+            /*
+            */
     ),
     z,
     ->
@@ -70,11 +71,12 @@ val x: (Pair<Int, Int>, Int) -> Unit = {
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
     (
-/**/
-            x, /**/  /*
-*/ // awdawd
-            y,/*
-*/
+            /**/x, /**/
+            /*
+          */ // awdawd
+            y,
+            /*
+            */
     ),
     z,
     ->
@@ -83,11 +85,12 @@ val x: (Pair<Int, Int>, Int) -> Unit = {
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
     (
-/**/
-            x, /**/  /*
-*/ // awdawd
-            y,/*
-*/
+            /**/x, /**/
+            /*
+          */ // awdawd
+            y,
+            /*
+            */
     ),
     z,
     ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace;
 
 import com.intellij.ide.plugins.PluginManager;
@@ -20,7 +20,7 @@ import java.util.List;
  * Plugin repository XML parser.
  * Supports both updates.xml and plugins.jetbrains.com formats.
  */
-class RepositoryContentHandler extends DefaultHandler {
+final class RepositoryContentHandler extends DefaultHandler {
   @NonNls private static final String CATEGORY = "category";
   @NonNls private static final String PLUGIN = "plugin";
   @NonNls private static final String IDEA_PLUGIN = "idea-plugin";
@@ -54,7 +54,7 @@ class RepositoryContentHandler extends DefaultHandler {
 
   @NotNull
   List<PluginNode> getPluginsList() {
-    return plugins != null ? plugins : Collections.emptyList();
+    return plugins == null ? Collections.emptyList() : plugins;
   }
 
   @Override

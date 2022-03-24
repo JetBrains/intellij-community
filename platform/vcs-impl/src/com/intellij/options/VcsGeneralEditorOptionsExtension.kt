@@ -5,10 +5,13 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.options.UiDslConfigurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
-import com.intellij.ui.layout.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.selected
 
 private val vcsSettings get() = VcsApplicationSettings.getInstance()
 
@@ -22,26 +25,28 @@ private val cdShowWhitespacesInLSTGutterCheckBox
   get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.whitespace.line.color"),
                              vcsSettings::SHOW_WHITESPACES_IN_LST)
 
-class VcsGeneralEditorOptionsExtension : UiDslConfigurable.Simple() {
-  override fun RowBuilder.createComponentRow() {
-    titledRow(ApplicationBundle.message("editor.options.gutter.group")) {
+class VcsGeneralEditorOptionsExtension : UiDslUnnamedConfigurable.Simple() {
+  override fun Panel.createContent() {
+    group(ApplicationBundle.message("editor.options.gutter.group")) {
       fun fireLSTSettingsChanged() {
         ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
       }
+      lateinit var showLstGutter: Cell<JBCheckBox>
       row {
-        val showLstGutter = checkBox(cdShowLSTInGutterCheckBox)
+        showLstGutter = checkBox(cdShowLSTInGutterCheckBox)
           .onApply(::fireLSTSettingsChanged)
+      }
+
+      indent {
         row {
           checkBox(cdShowLSTInErrorStripesCheckBox)
-            .enableIf(showLstGutter.selected)
             .onApply(::fireLSTSettingsChanged)
         }
         row {
           checkBox(cdShowWhitespacesInLSTGutterCheckBox)
-            .enableIf(showLstGutter.selected)
             .onApply(::fireLSTSettingsChanged)
         }
-      }
+      }.enabledIf(showLstGutter.selected)
     }
   }
 }

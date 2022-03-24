@@ -1,8 +1,7 @@
 from email.mime.nonmultipart import MIMENonMultipart
 from email.policy import Policy
-from typing import Optional
+
+__all__ = ["MIMEText"]
 
 class MIMEText(MIMENonMultipart):
-    def __init__(
-        self, _text: str, _subtype: str = ..., _charset: Optional[str] = ..., *, policy: Optional[Policy] = ...
-    ) -> None: ...
+    def __init__(self, _text: str, _subtype: str = ..., _charset: str | None = ..., *, policy: Policy | None = ...) -> None: ...

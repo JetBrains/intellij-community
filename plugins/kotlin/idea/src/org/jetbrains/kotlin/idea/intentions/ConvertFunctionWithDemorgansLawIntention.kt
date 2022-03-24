@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -15,11 +16,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi2ir.deparenthesize
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
@@ -32,13 +32,13 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
     KtCallExpression::class.java,
     intentionName
 ) {
+    @SafeFieldForPreview
     private val conversions = conversions.associateBy { it.fromFunctionName }
 
     override fun applicabilityRange(element: KtCallExpression): TextRange? {
         val callee = element.calleeExpression ?: return null
         val (fromFunctionName, toFunctionName, _, _) = conversions[callee.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
-        if (element.getQualifiedExpressionForSelector()?.getStrictParentOfType<KtDotQualifiedExpression>() != null) return null
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull() !in fqNames) return null
 

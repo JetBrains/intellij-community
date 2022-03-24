@@ -383,7 +383,7 @@ public final class DataUtil {
     return (x + blockSizePowerOf2 - 1) & (-blockSizePowerOf2);
   }
 
-  static ByteBuffer getNioBuffer(ByteBuf buf, int index, int length) {
+  public static ByteBuffer getNioBuffer(ByteBuf buf, int index, int length) {
     int nioBufferCount = buf.nioBufferCount();
     assert nioBufferCount > 0;
     return nioBufferCount == 1 ? buf.internalNioBuffer(index, length)

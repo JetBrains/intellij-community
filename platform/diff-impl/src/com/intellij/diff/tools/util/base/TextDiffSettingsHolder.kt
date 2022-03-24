@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
@@ -15,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = ComponentCategory.CODE)
+@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
@@ -27,7 +27,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var CONTEXT_RANGE: Int = 4,
 
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
-    var MERGE_LST_GUTTER_MARKERS: Boolean = true
+    var MERGE_LST_GUTTER_MARKERS: Boolean = true,
+    var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
   )
 
   data class PlaceSettings(
@@ -63,6 +64,10 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     // Presentation settings
 
     var isEnableSyncScroll: Boolean = true
+
+    var isEnableAligningChangesMode: Boolean
+      get() = SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE
+      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value }
 
     // Diff settings
 

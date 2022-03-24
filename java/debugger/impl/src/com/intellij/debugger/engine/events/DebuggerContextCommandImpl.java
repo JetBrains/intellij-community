@@ -9,7 +9,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,17 +83,5 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     }
   }
 
-  /**
-   * @deprecated override {@link #threadAction(SuspendContextImpl)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void threadAction() {
-    throw new AbstractMethodError();
-  }
-
-  public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-    //noinspection deprecation
-    threadAction();
-  }
+  public abstract void threadAction(@NotNull SuspendContextImpl suspendContext);
 }

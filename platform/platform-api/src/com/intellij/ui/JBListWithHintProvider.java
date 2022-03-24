@@ -28,7 +28,7 @@ import java.util.Collection;
  * @deprecated use HintUpdateSupply directly
  * @see HintUpdateSupply
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class JBListWithHintProvider extends JBList {
   {
     HintUpdateSupply.installHintUpdateSupply(this, o -> getPsiElementForHint(o));

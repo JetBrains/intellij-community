@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.openapi.compiler.CompilerPaths
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.apache.log4j.Logger
 import org.jetbrains.kotlin.idea.caches.project.implementingModules
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
@@ -19,7 +19,7 @@ import java.io.IOException
 
 class ClassBytecodeFinder(private val project: Project, private val jvmName: JvmClassName, private val file: VirtualFile) {
     private companion object {
-        private val LOG = Logger.getLogger(ClassBytecodeFinder::class.java)!!
+        private val LOG = Logger.getInstance(ClassBytecodeFinder::class.java)
     }
 
     private val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(file)

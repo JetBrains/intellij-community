@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -6,12 +6,12 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.NoOpXmlInterner
+import com.intellij.util.xml.dom.NoOpXmlInterner
+import com.intellij.util.io.directoryContent
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Function
 import java.util.function.Supplier
+import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
@@ -50,7 +51,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins
 }
 
 private fun loadAndInitDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): PluginManagerState {
-  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber, disabledPlugins), UrlClassLoader.build().get(), false)
+  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber, disabledPlugins), UrlClassLoader.build().get(), false, null)
 }
 
 class PluginDescriptorTest {
@@ -160,6 +161,55 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest("noId")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
+  }
+
+  @Test
+  fun testMetaInfInClasses() {
+    val tempDir = directoryContent {
+      dir("lib") {
+        zip("empty.jar") {}
+      }
+      dir("classes") {
+        dir("META-INF") {
+          file("plugin.xml",
+               """<idea-plugin>
+               |  <id>foo.bar</id>
+               |</idea-plugin>""")
+        }
+      }
+    }.generateInTempDir()
+
+    val descriptor = loadDescriptorInTest(tempDir)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
+
+    assertThat(descriptor.jarFiles).isNotNull()
+    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
+  }
+
+  @Test
+  fun testStandaloneMetaInf() {
+    val tempDir = directoryContent {
+      dir("classes") {
+        file("Empty.class", "") // `com.intellij.util.io.java.classFile` requires dependency on `intellij.java.testFramework`
+      }
+      dir("lib") {
+        zip("empty.jar") {}
+      }
+      dir("META-INF") {
+        file("plugin.xml",
+             """<idea-plugin>
+               |  <id>foo.bar</id>
+               |</idea-plugin>""")
+      }
+    }.generateInTempDir()
+
+    val descriptor = loadDescriptorInTest(tempDir)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
+
+    assertThat(descriptor.jarFiles).isNotNull()
+    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
@@ -489,7 +539,7 @@ private val testDataPath: String
   get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
 
 private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
-  return loadDescriptorInTest(Path.of(testDataPath, dirName), disabledPlugins)
+  return loadDescriptorInTest(Path.of(testDataPath, dirName), disabledPlugins = disabledPlugins)
 }
 
 fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {

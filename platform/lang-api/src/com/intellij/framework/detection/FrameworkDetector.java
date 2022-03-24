@@ -67,7 +67,7 @@ public abstract class FrameworkDetector {
    * @param context provides
    * @return list of detected framework descriptions (it may be empty)
    */
-  public abstract List<? extends DetectedFrameworkDescription> detect(@NotNull Collection<VirtualFile> newFiles,
+  public abstract List<? extends DetectedFrameworkDescription> detect(@NotNull Collection<? extends VirtualFile> newFiles,
                                                                       @NotNull FrameworkDetectionContext context);
 
   /**

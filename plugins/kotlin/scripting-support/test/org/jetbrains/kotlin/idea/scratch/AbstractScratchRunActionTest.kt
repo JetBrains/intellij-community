@@ -6,7 +6,6 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
@@ -15,10 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.FileEditorManagerTestCase
-import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.*
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -38,9 +34,9 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -260,7 +256,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
     }
 
     protected fun launchAction(action: AnAction) {
-        val e = getActionEvent(myFixture.file.virtualFile, action)
+        val e = getActionEvent(action)
         Assert.assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true))
         Assert.assertTrue(e.presentation.isEnabled && e.presentation.isVisible)
         ActionUtil.performActionDumbAwareWithCallbacks(action, e);
@@ -295,11 +291,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         UIUtil.dispatchAllInvocationEvents()
     }
 
-    private fun getActionEvent(virtualFile: VirtualFile, action: AnAction): TestActionEvent {
-        val context = MapDataContext()
-        context.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayOf(virtualFile))
-        context.put(CommonDataKeys.PROJECT, project)
-        context.put(CommonDataKeys.EDITOR, myFixture.editor)
+    private fun getActionEvent(action: AnAction): TestActionEvent {
+        val context = TestDataProvider(project)
         return TestActionEvent(context, action)
     }
 

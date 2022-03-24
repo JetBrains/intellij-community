@@ -46,6 +46,18 @@ class ValueSourcesTest {
   @org.junit.jupiter.api.<warning descr="Suspicious combination '@Test' and parameterized source">Test</warning>
   void testWithTestAnnotationNoParameterized(int i) { }
 
+  @ParameterizedTest
+  @NullSource
+  void testWithNullSrc(Object o) {}
+  
+  @ParameterizedTest
+  <warning descr="'@NullSource' cannot provide an argument to method because method doesn't have parameters">@NullSource</warning>
+  void testWithNullSrcNoParam() {}
+
+  @ParameterizedTest
+  <warning descr="'@NullSource' cannot provide an argument to method because method doesn't have parameters">@NullSource</warning>
+  void testWithNullSrcTooManyParams() {}
+  
 }
 
 @ExtendWith( String.class ) //fake extension
@@ -98,4 +110,15 @@ class ArgSources {
   @<warning descr="No sources are provided, the suite would be empty">ParameterizedTest</warning>
   @org.junit.jupiter.params.provider.ArgumentsSources({})
   void emptyArgs(String param) { }
+}
+
+class ExampleTest {
+  public enum TestEnum {
+    first,
+    second,
+    third,
+  }
+  @ParameterizedTest
+  @EnumSource(names = "first")
+  void runTest(TestEnum value) {}
 }

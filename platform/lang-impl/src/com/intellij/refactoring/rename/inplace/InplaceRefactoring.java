@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -41,6 +42,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -179,11 +181,18 @@ public abstract class InplaceRefactoring {
 
     SearchScope referencesSearchScope = getReferencesSearchScope(file);
 
-    final Collection<PsiReference> refs = collectRefs(referencesSearchScope);
+    Collection<PsiReference> references = ProgressManager.getInstance().runProcessWithProgressSynchronously(() ->
+      ReadAction.compute(() -> {
+        final Collection<PsiReference> refs = collectRefs(referencesSearchScope);
 
-    addReferenceAtCaret(refs);
+        addReferenceAtCaret(refs);
+        return refs;
+      })
+    , RefactoringBundle.message("progress.title.collecting.references"), true, myProject);
 
-    for (PsiReference ref : refs) {
+    if (references == null) return false;
+
+    for (PsiReference ref : references) {
       final PsiFile containingFile = ref.getElement().getContainingFile();
 
       if (notSameFile(file, containingFile)) {
@@ -209,7 +218,7 @@ public abstract class InplaceRefactoring {
     final List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
     try {
-      return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+      return buildTemplateAndStart(references, stringUsages, scope, containingFile);
     }
     catch (Throwable e) {
       myEditor.putUserData(INPLACE_RENAMER, null);
@@ -281,6 +290,7 @@ public abstract class InplaceRefactoring {
     final CommonProcessors.CollectProcessor<PsiReference> processor = new CommonProcessors.CollectProcessor<>() {
       @Override
       protected boolean accept(PsiReference reference) {
+        ProgressManager.checkCanceled();
         return acceptReference(reference);
       }
     };

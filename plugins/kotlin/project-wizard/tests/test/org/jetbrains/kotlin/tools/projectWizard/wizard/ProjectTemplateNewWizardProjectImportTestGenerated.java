@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -55,11 +55,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
         }
 
-        @TestMetadata("multiplatformMobileApplication")
-        public void testMultiplatformMobileApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
-        }
-
         @TestMetadata("nativeApplication")
         public void testNativeApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
@@ -103,11 +98,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
         }
 
-        @TestMetadata("multiplatformMobileApplication")
-        public void testMultiplatformMobileApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
-        }
-
         @TestMetadata("nativeApplication")
         public void testNativeApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
@@ -149,11 +139,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("multiplatformLibrary")
         public void testMultiplatformLibrary() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
-        }
-
-        @TestMetadata("multiplatformMobileApplication")
-        public void testMultiplatformMobileApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
         }
 
         @TestMetadata("nativeApplication")

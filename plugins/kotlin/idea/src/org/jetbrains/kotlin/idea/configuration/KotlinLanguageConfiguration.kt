@@ -6,10 +6,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.PluginUpdateStatus
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinLanguageConfigurationForm
 import javax.swing.JComponent
 
@@ -21,7 +23,7 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
             val hosts = UpdateSettings.getInstance().storedPluginHosts
             hosts.removeIf {
                 it.startsWith("https://plugins.jetbrains.com/plugins/") &&
-                        (it.endsWith("/6954") || it.endsWith(KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString))
+                        (it.endsWith("/6954") || it.endsWith(KotlinIdePlugin.id.idString))
             }
 
             UpdateChannel.values().find { it.ordinal == channelOrdinal }?.let { eapChannel ->
@@ -34,12 +36,8 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
         enum class UpdateChannel(val url: String?, val title: String) {
             STABLE(null, KotlinBundle.message("configuration.title.stable")),
             EAP(
-                "https://plugins.jetbrains.com/plugins/eap/${KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString}",
-                KotlinBundle.message("configuration.title.early.access.preview.1.5.x")
-            ),
-            EAP_NEXT(
-                "https://plugins.jetbrains.com/plugins/eap-next/${KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString}",
-                KotlinBundle.message("configuration.title.early.access.preview.1.6.x")
+                "https://plugins.jetbrains.com/plugins/eap/${KotlinIdePlugin.id.idString}",
+                KotlinBundle.message("configuration.title.early.access.preview.version")
             );
 
             fun isInHosts(): Boolean {
@@ -57,6 +55,7 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
     private var versionForInstallation: String? = null
 
     private var installedVersion: String? = null
+    @Nls
     private var installingStatus: String? = null
 
     override fun getId(): String = ID
@@ -72,7 +71,7 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
         form.experimentalFeaturesPanel.applySelectedChanges()
     }
 
-    private fun setInstalledVersion(installedVersion: String?, installingStatus: String?) {
+    private fun setInstalledVersion(@NlsSafe installedVersion: String?, @Nls installingStatus: String?) {
         this.installedVersion = installedVersion
         this.installingStatus = installingStatus
     }

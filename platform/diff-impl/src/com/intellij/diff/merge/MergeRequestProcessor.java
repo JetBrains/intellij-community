@@ -343,7 +343,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.warn(e);
-      new Notification("Merge", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
+      new Notification("Merge Internal Error", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
     }
   }
 
@@ -535,7 +535,7 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         if (myRequest != null && myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
           return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
         }

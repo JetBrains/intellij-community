@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.util.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
@@ -38,7 +40,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.ConcurrentMap
 
@@ -50,9 +51,6 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
 
         override val languageVersionSettings: LanguageVersionSettings
             get() = module?.languageVersionSettings ?: KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT
-
-        override val isReleasedCoroutine
-            get() = languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines) ?: true
 
         private val resolutionFacade get() = element.getResolutionFacade()
 
@@ -141,17 +139,12 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
     private fun KtElement.getDiagnosticsHolder() =
         getResolutionFacade().frontendService<LazyLightClassDataHolder.DiagnosticsHolder>()
 
-    override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? {
-        return try {
-            declaration.resolveToDescriptorIfAny(BodyResolveMode.FULL)
-        } catch (e: NoDescriptorForDeclarationException) {
-            null
-        }
-    }
+    override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? =
+        declaration.resolveToDescriptorIfAny(BodyResolveMode.FULL)
 
-    override fun analyze(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL)
+    override fun analyze(element: KtElement) = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
 
     override fun analyzeAnnotation(element: KtAnnotationEntry): AnnotationDescriptor? = element.resolveToDescriptorIfAny()
 
-    override fun analyzeWithContent(element: KtClassOrObject) = element.analyzeWithContent()
+    override fun analyzeWithContent(element: KtClassOrObject) = element.safeAnalyzeWithContentNonSourceRootCode()
 }

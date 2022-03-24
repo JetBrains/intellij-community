@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -9,7 +9,7 @@ public class JUnit5TestFrameworkSetupUtil {
                         "public @interface MethodSource {String[] value() default \"\";}");
     fixture.addClass( "package org.junit.jupiter.params;\n" +
                         "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface ParameterizedTest {}");
+                        "public @interface ParameterizedTest {String name() default  \"\";}");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public interface Arguments {static Arguments of(Object... arguments){}}\n");
     fixture.addClass("package org.junit.platform.commons.annotation;\n" +
@@ -34,6 +34,8 @@ public class JUnit5TestFrameworkSetupUtil {
                         "  MATCH_ALL," +
                         "  MATCH_ANY }" +
                         "}");
+    fixture.addClass("package org.junit.jupiter.params.provider;\n" +
+                     "public @interface NullSource {}\n");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "@ArgumentsSource(ValueArgumentsProvider.class)\n" +
                         "public @interface ValueSource {\n" +
@@ -49,6 +51,8 @@ public class JUnit5TestFrameworkSetupUtil {
                         "}\n");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface CsvSource {String[] value();}");
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+                        "public @interface CsvFileSource {String[] value();}");
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface ArgumentsSource {}");
     fixture.addClass("package org.junit.jupiter.params.provider;\n" +
@@ -70,6 +74,13 @@ public class JUnit5TestFrameworkSetupUtil {
                         "public @interface BeforeEach {}");
     fixture.addClass("package org.junit.jupiter.api;\n" +
                         "public interface RepetitionInfo {}");
+    fixture.addClass("package org.junit.jupiter.api.extension;\n" +
+                     "public @interface RegisterExtension {\n" +
+                     "}\n");
+    fixture.addClass("package org.junit.jupiter.api.extension;\n" +
+                     "public interface Extension {\n" +
+                     "}\n");
+    fixture.addClass("package org.junit.jupiter.api; public @interface Nested{}");
     return fixture;
   }
 }

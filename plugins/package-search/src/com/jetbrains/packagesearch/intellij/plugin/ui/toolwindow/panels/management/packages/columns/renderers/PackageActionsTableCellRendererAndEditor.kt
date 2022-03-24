@@ -6,11 +6,10 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn.ActionsViewModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn.ActionViewModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.setUnderlined
 import java.util.EventObject
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -21,10 +20,10 @@ import javax.swing.table.TableCellRenderer
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageActionsTableCellRendererAndEditor(
-    private val actionPerformedCallback: (ActionsViewModel) -> Unit
+    private val actionPerformedCallback: (ActionViewModel) -> Unit
 ) : AbstractTableCellEditor(), TableCellRenderer {
 
-    private var lastEditorValue: ActionsViewModel? = null
+    private var lastEditorValue: ActionViewModel? = null
 
     override fun getTableCellRendererComponent(
         table: JTable,
@@ -33,10 +32,10 @@ internal class PackageActionsTableCellRendererAndEditor(
         hasFocus: Boolean,
         row: Int,
         column: Int
-    ) = createComponent(table, isSelected, value as? ActionsViewModel)
+    ) = createComponent(table, isSelected, value as? ActionViewModel)
 
     override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): JComponent? {
-        check(value is ActionsViewModel) { "The Actions column value must be an ActionsViewModel, but was ${value::class.simpleName}" }
+        check(value is ActionViewModel) { "The Actions column value must be an ActionsViewModel, but was ${value::class.simpleName}" }
         actionPerformedCallback(value)
         lastEditorValue = value
         table.cellEditor?.stopCellEditing()
@@ -48,7 +47,7 @@ internal class PackageActionsTableCellRendererAndEditor(
     private fun createComponent(
         table: JTable,
         isSelected: Boolean,
-        viewModel: ActionsViewModel?
+        viewModel: ActionViewModel?
     ): JComponent {
         val isSearchResult = viewModel?.isSearchResult ?: false
         val colors = when {
@@ -63,33 +62,30 @@ internal class PackageActionsTableCellRendererAndEditor(
         }
 
         return JLabel().apply {
-            colors.applyTo(this, isSelected)
-            isOpaque = true
-            horizontalAlignment = SwingConstants.RIGHT
-            border = scaledEmptyBorder(right = 10)
+          colors.applyTo(this, isSelected)
+          isOpaque = true
+          horizontalAlignment = SwingConstants.RIGHT
+          border = emptyBorder(right = 10)
 
-            if (viewModel.isHover) {
-                setUnderlined()
-            }
+          foreground = if (isSelected) {
+            table.colors.selectionForeground
+          }
+          else {
+            JBUI.CurrentTheme.Link.Foreground.ENABLED
+          }
 
-            foreground = if (isSelected) {
-                table.colors.selectionForeground
-            } else {
-                JBUI.CurrentTheme.Link.Foreground.ENABLED
-            }
+          if (viewModel.infoMessage != null) {
+            icon = AllIcons.General.BalloonInformation
+            iconTextGap = 4.scaled()
 
-            if (viewModel.infoMessage != null) {
-                icon = AllIcons.General.BalloonInformation
-                iconTextGap = 4.scaled()
+            toolTipText = viewModel.infoMessage
+          }
 
-                toolTipText = viewModel.infoMessage
-            }
-
-            text = when (viewModel.operationType) {
-                PackageOperationType.SET -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
-                PackageOperationType.INSTALL -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.install")
-                PackageOperationType.UPGRADE -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.upgrade")
-            }
+          text = when (viewModel.operationType) {
+            PackageOperationType.SET -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
+            PackageOperationType.INSTALL -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.install")
+            PackageOperationType.UPGRADE -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.upgrade")
+          }
         }
     }
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -23,8 +24,12 @@ import java.util.concurrent.TimeUnit;
  * See <a href="https://plugins.jetbrains.com/docs/intellij/notifications.html#top-level-notifications">Notifications</a>.
  */
 public interface Notifications {
-  Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
+  Topic<Notifications> TOPIC = new Topic<>("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
+  /**
+   * @deprecated Please use dedicated notification groups for your notifications
+   */
+  @Deprecated
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   default void notify(@NotNull Notification notification) { }
@@ -46,8 +51,7 @@ public interface Notifications {
      *
      * @deprecated use {@link NotificationGroup}
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public static void register(@NotNull String groupId, @NotNull NotificationDisplayType defaultDisplayType) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       SwingUtilities.invokeLater(() -> {
@@ -79,7 +83,9 @@ public interface Notifications {
     private static void doNotify(Notification notification, @Nullable Project project) {
       if (project != null && !project.isDisposed() && !project.isDefault()) {
         project.getMessageBus().syncPublisher(TOPIC).notify(notification);
-        Disposer.register(project, () -> notification.expire());
+        Disposable notificationDisposable = () -> notification.expire();
+        Disposer.register(project, notificationDisposable);
+        notification.whenExpired(() -> Disposer.dispose(notificationDisposable));
       }
       else {
         Application app = ApplicationManager.getApplication();

@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class FindSettings {
 
@@ -66,31 +66,15 @@ public abstract class FindSettings {
   public abstract void setLocalRegularExpressions(boolean regularExpressions);
 
   /**
-   * @deprecated use {@link FindInProjectSettings#addStringToFind(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void addStringToFind(@NotNull String s);
-
-  /**
-   * @deprecated use {@link FindInProjectSettings#addStringToReplace(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void addStringToReplace(@NotNull String s);
-
-  /**
    * @deprecated use {@link FindInProjectSettings#getRecentFindStrings()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract String @NotNull [] getRecentFindStrings();
 
   /**
    * @deprecated use {@link FindInProjectSettings#getRecentReplaceStrings()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract String @NotNull [] getRecentReplaceStrings();
 
   /**
@@ -105,9 +89,9 @@ public abstract class FindSettings {
 
   public abstract void initModelBySetings(@NotNull FindModel model);
 
-  public abstract String getFileMask();
+  public abstract @Nullable @NlsSafe String getFileMask();
 
-  public abstract void setFileMask(String fileMask);
+  public abstract void setFileMask(@Nullable @NlsSafe String fileMask);
 
   public abstract void setCustomScope(String scopeName);
 

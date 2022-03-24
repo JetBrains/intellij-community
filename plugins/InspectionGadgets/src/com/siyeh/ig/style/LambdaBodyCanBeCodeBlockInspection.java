@@ -22,7 +22,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -70,7 +70,7 @@ public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)element);
+        CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)element);
       }
     }
 

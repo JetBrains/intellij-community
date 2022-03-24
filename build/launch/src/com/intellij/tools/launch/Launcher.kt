@@ -1,16 +1,17 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
-import org.apache.log4j.Logger
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Files
+import java.util.logging.Logger
 
 object Launcher {
 
   private const val defaultDebugPort = 5050
-  private val logger = Logger.getLogger(Launcher::class.java)
+  private val logger = Logger.getLogger(Launcher::class.java.name)
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
@@ -41,7 +42,7 @@ object Launcher {
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",
       "-Duse.linux.keychain=false",
-      "-Didea.initially.ask.config=force-not",
+      "-Didea.initially.ask.config=never",
       "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
@@ -52,6 +53,7 @@ object Launcher {
       "-Didea.fix.mac.env=true",
       "-Djdk.attach.allowAttachSelf",
       "-Djdk.module.illegalAccess.silent=true",
+      "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
       "-Dkotlinx.coroutines.debug=off",
       "-Dsun.awt.disablegrab=true",
       "-Dsun.io.useCanonCaches=false",

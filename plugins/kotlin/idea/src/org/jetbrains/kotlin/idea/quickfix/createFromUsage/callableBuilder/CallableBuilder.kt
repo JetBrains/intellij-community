@@ -44,7 +44,9 @@ import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -360,7 +362,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val memberScope = receiverClassDescriptor.getMemberScope(projections)
 
             return LexicalScopeImpl(
-                memberScope.memberScopeAsImportingScope(), receiverClassDescriptor, false, null,
+                memberScope.memberScopeAsImportingScope(), receiverClassDescriptor, false, null, emptyList(),
                 LexicalScopeKind.SYNTHETIC
             ) {
                 receiverClassDescriptor.typeConstructor.parameters.forEach { addClassifierDescriptor(it) }
@@ -415,7 +417,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             }
 
             return fakeFunction.initialize(
-                null, null, typeParameters, Collections.emptyList(), null,
+                null, null, emptyList(), typeParameters, Collections.emptyList(), null,
                 null, DescriptorVisibilities.INTERNAL
             )
         }
@@ -540,7 +542,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                     val targetParent = applicableParents.singleOrNull()
                                     if (!(targetParent is KtClass && targetParent.isEnum())) {
                                         throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
-                                            .withAttachment("targetParent", targetParent?.text)
+                                            .withPsiAttachment("targetParent", targetParent)
                                     }
                                     val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
                                     psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
@@ -563,6 +565,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     }
                     CallableKind.PROPERTY -> {
                         val isVar = (callableInfo as PropertyInfo).writable
+                        val const = if (callableInfo.isConst) "const " else ""
                         val valVar = if (isVar) "var" else "val"
                         val accessors = if (isExtension && !isExpectClassMember) {
                             buildString {
@@ -572,8 +575,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 }
                             }
                         } else ""
-                        psiFactory.createProperty("$modifiers$valVar<> $header$accessors")
+                        psiFactory.createProperty("$modifiers$const$valVar<> $header$accessors")
                     }
+                }
+
+                if (callableInfo is PropertyInfo) {
+                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
                 }
 
                 val newInitializer = pointerOfAssignmentToReplace?.element
@@ -737,7 +744,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     TypeExpression.ForDelegationSpecifier(candidates)
                 }
                 else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                    .withAttachment("declaration", declaration.text)
+                    .withPsiAttachment("declaration", declaration)
             }
             if (elementToReplace == null) return null
 
@@ -764,7 +771,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 is KtObjectDeclaration -> return null
                 !is KtTypeParameterListOwner -> {
                     throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
-                        .withAttachment("declaration", declaration.text)
+                        .withPsiAttachment("declaration", declaration)
                 }
             }
 
@@ -938,15 +945,17 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val declarationPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationSkeleton)
 
             // build templates
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(containingFileEditor.document)
+            val documentManager = PsiDocumentManager.getInstance(project)
+            val document = containingFileEditor.document
+            documentManager.commitDocument(document)
+            documentManager.doPostponedOperationsAndUnblockDocument(document)
 
             val caretModel = containingFileEditor.caretModel
             caretModel.moveToOffset(ktFileToEdit.node.startOffset)
 
             val declaration = declarationPointer.element ?: return
 
-            val declarationMarker = containingFileEditor.document.createRangeMarker(declaration.textRange)
+            val declarationMarker = document.createRangeMarker(declaration.textRange)
 
             val builder = TemplateBuilderImpl(ktFileToEdit)
             if (declaration is KtProperty) {
@@ -965,7 +974,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             // it.
             val expression = setupTypeParameterListTemplate(builder, declaration)
 
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(containingFileEditor.document)
+            documentManager.doPostponedOperationsAndUnblockDocument(document)
             // the template built by TemplateBuilderImpl is ordered by element position, but we want types to be first, so hack it
             val templateImpl = builder.buildInlineTemplate() as TemplateImpl
             val variables = templateImpl.variables!!
@@ -984,10 +993,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             TemplateManager.getInstance(project).startTemplate(containingFileEditor, templateImpl, object : TemplateEditingAdapter() {
                 private fun finishTemplate(brokenOff: Boolean) {
                     try {
-                        PsiDocumentManager.getInstance(project).commitDocument(containingFileEditor.document)
+                        documentManager.commitDocument(document)
 
                         dialogWithEditor?.close(DialogWrapper.OK_EXIT_CODE)
-                        if (brokenOff && !ApplicationManager.getApplication().isUnitTestMode) return
+                        if (brokenOff && !isUnitTestMode()) return
 
                         // file templates
                         val newDeclaration = PsiTreeUtil.findElementOfClassAtOffset(
@@ -1008,13 +1017,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             if (newDeclaration is KtProperty) {
                                 newDeclaration.getter?.let { setupDeclarationBody(it) }
 
-                                if (newDeclaration.getter == null
-                                    && newDeclaration.initializer == null
-                                    && callableInfo is PropertyInfo
-                                    && callableInfo.withInitializer
-                                    && !callableInfo.isLateinitPreferred
-                                ) {
-                                    newDeclaration.initializer = KtPsiFactory(newDeclaration).createExpression("TODO(\"initialize me\")")
+                                if (callableInfo is PropertyInfo && callableInfo.initializer != null) {
+                                    newDeclaration.initializer = callableInfo.initializer
                                 }
                             }
 
@@ -1052,7 +1056,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         }
 
         fun showDialogIfNeeded() {
-            if (!ApplicationManager.getApplication().isUnitTestMode && dialogWithEditor != null && !finished) {
+            if (!isUnitTestMode() && dialogWithEditor != null && !finished) {
                 dialogWithEditor.show()
             }
         }
@@ -1114,7 +1118,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
 
     fun addNextToOriginalElementContainer(addBefore: Boolean): D {
         val sibling = anchor.parentsWithSelf.first { it.parent == actualContainer }
-        return if (addBefore) {
+        return if (addBefore || PsiTreeUtil.hasErrorElements(sibling)) {
             actualContainer.addBefore(declaration, sibling)
         } else {
             actualContainer.addAfter(declaration, sibling)
@@ -1167,10 +1171,10 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
                 sibling = container.body?.lBrace
             }
 
-            insertMember(null, container, declaration, sibling)
+            insertMembersAfterAndReformat(null, container, declaration, sibling)
         }
         else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
-            .withAttachment("container", container.text)
+            .withPsiAttachment("container", container)
     }
 
     when (declaration) {

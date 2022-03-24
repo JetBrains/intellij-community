@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runners.model.TestClass;
+import org.opentest4j.MultipleFailuresError;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -19,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
 
 public class JUnitTreeByDescriptionHierarchyTest {
   @Test
@@ -493,7 +493,39 @@ public class JUnitTreeByDescriptionHierarchyTest {
     final String startMessage = "##teamcity[enteredTheMatrix]\n" +
 
                                 "##teamcity[testFailed name='A.a' ";
-    assertEquals(startMessage, StringUtil.convertLineSeparators(output.toString()).substring(0, startMessage.length()));
+    Assert.assertEquals(startMessage, StringUtil.convertLineSeparators(output.toString()).substring(0, startMessage.length()));
+  }
+
+  @Test
+  public void testMultipleFailures() {
+    final Description root = Description.createSuiteDescription("root");
+    Description testA = Description.createTestDescription("TestA", "test1");
+    root.addChild(testA);
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = createListener(buf);
+    sender.testRunStarted(root);
+    sender.testStarted(testA);
+
+    final Exception ex1 = new Exception();
+    ex1.setStackTrace(new StackTraceElement[0]);
+    final Exception ex2 = new Exception();
+    ex2.setStackTrace(new StackTraceElement[0]);
+    final Throwable exception = new MultipleFailuresError("Multiple errors", List.of(ex1, ex2));
+    
+    exception.setStackTrace(new StackTraceElement[0]);
+    sender.testFailure(new Failure(testA, exception));
+    sender.testFinished(testA);
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testSuiteStarted name='TestA' locationHint='java:suite://TestA']\n" +
+                                          "##teamcity[testStarted name='TestA.test1' locationHint='java:test://TestA/test1']\n" +
+                                          "##teamcity[testFailed name='TestA.test1' error='true' message='' details='java.lang.Exception|n']\n" +
+                                          "##teamcity[testFailed name='TestA.test1' error='true' message='' details='java.lang.Exception|n']\n" +
+                                          "##teamcity[testFinished name='TestA.test1']\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+  
   }
 
   @Test

@@ -32,7 +32,7 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
     if (!(node instanceof PsiTreeElementBase)) {
       return Collections.emptyList();
     }
-    PsiElement element = ((PsiTreeElementBase)node).getElement();
+    PsiElement element = ((PsiTreeElementBase<?>)node).getElement();
     return SyntaxTraverser.psiTraverser(element)
       .expand(o -> o == element || !(o instanceof PsiMember || o instanceof PsiLambdaExpression))
       .filter(PsiLambdaExpression.class)

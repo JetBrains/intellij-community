@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compiler
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -13,12 +14,14 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.project.*
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -26,7 +29,44 @@ import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.utils.JavaTypeEnhancementState
+import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
+
+class IDELanguageSettingsProviderHelper(private val project: Project) {
+    internal val languageVersionSettings: LanguageVersionSettings
+        get() = project.cacheInvalidatingOnRootModifications {
+            project.getLanguageVersionSettings()
+        }
+
+    internal val languageVersionSettingsWithJavaTypeEnhancementState: LanguageVersionSettings
+        get() = project.cacheInvalidatingOnRootModifications {
+            project.getLanguageVersionSettings(
+                javaTypeEnhancementState = computeJavaTypeEnhancementState(project)
+            )
+        }
+
+    private fun computeJavaTypeEnhancementState(project: Project): JavaTypeEnhancementState? {
+        var result: JavaTypeEnhancementState? = null
+        for (module in ModuleManager.getInstance(project).modules) {
+            val settings = KotlinFacetSettingsProvider.getInstance(project)?.getSettings(module) ?: continue
+            val compilerArguments = settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: continue
+            val kotlinVersion = LanguageVersion.fromVersionString(compilerArguments.languageVersion)?.toKotlinVersion()
+                ?: KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion
+
+            result = JavaTypeEnhancementStateParser(MessageCollector.NONE, kotlinVersion).parse(
+                compilerArguments.jsr305,
+                compilerArguments.supportCompatqualCheckerFrameworkAnnotations,
+                compilerArguments.jspecifyAnnotations,
+                compilerArguments.nullabilityAnnotations
+            )
+
+        }
+        return result
+    }
+
+    companion object {
+        fun getInstance(project: Project): IDELanguageSettingsProviderHelper = project.service()
+    }
+}
 
 object IDELanguageSettingsProvider : LanguageSettingsProvider {
     override fun getLanguageVersionSettings(
@@ -35,9 +75,7 @@ object IDELanguageSettingsProvider : LanguageSettingsProvider {
     ): LanguageVersionSettings =
         when (moduleInfo) {
             is ModuleSourceInfo -> moduleInfo.module.languageVersionSettings
-            is LibraryInfo -> project.getLanguageVersionSettings(
-                javaTypeEnhancementState = computeJavaTypeEnhancementState(project)
-            )
+            is LibraryInfo -> IDELanguageSettingsProviderHelper.getInstance(project).languageVersionSettingsWithJavaTypeEnhancementState
             is ScriptModuleInfo -> {
                 getLanguageSettingsForScripts(
                     project,
@@ -53,24 +91,8 @@ object IDELanguageSettingsProvider : LanguageSettingsProvider {
                     moduleInfo.scriptDefinition
                 ).languageVersionSettings
             is PlatformModuleInfo -> moduleInfo.platformModule.module.languageVersionSettings
-            else -> project.getLanguageVersionSettings()
+            else -> IDELanguageSettingsProviderHelper.getInstance(project).languageVersionSettings
         }
-
-    private fun computeJavaTypeEnhancementState(project: Project): JavaTypeEnhancementState? {
-        var result: JavaTypeEnhancementState? = null
-        for (module in ModuleManager.getInstance(project).modules) {
-            val settings = KotlinFacetSettingsProvider.getInstance(project)?.getSettings(module) ?: continue
-            val compilerArguments = settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: continue
-
-            result = JavaTypeEnhancementStateParser(MessageCollector.NONE).parse(
-                compilerArguments.jsr305,
-                compilerArguments.supportCompatqualCheckerFrameworkAnnotations,
-                compilerArguments.jspecifyAnnotations
-            )
-
-        }
-        return result
-    }
 
     // TODO(dsavvinov): get rid of this method; instead store proper instance of TargetPlatformVersion in platform-instance
     override fun getTargetPlatform(moduleInfo: ModuleInfo, project: Project): TargetPlatformVersion =
@@ -118,29 +140,14 @@ private fun getLanguageSettingsForScripts(project: Project, file: VirtualFile, s
             parseCommandLineArguments(environmentCompilerOptions.toList(), compilerArguments)
             parseCommandLineArguments(args.toList(), compilerArguments)
             // TODO: reporting
-            val verSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
+            val versionSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
             val jvmTarget =
                 compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) } ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
-
-            val languageVersionSettings = project.getLanguageVersionSettings(contextModule = scriptModule)
-            val versionSettings = if (languageVersionSettings.languageVersion.isLess(verSettings.languageVersion)) {
-                languageVersionSettings
-            } else {
-                verSettings
-            }
-
             ScriptLanguageSettings(versionSettings, jvmTarget)
         }.also { scriptDefinition.putUserData(SCRIPT_LANGUAGE_SETTINGS, it) }
         settings.value
     }
 }
-
-private fun LanguageVersion.isLess(languageVersion: LanguageVersion): Boolean =
-    if (major < languageVersion.major) {
-        true
-    } else {
-        minor < languageVersion.minor
-    }
 
 private inline fun createCachedValue(
     project: Project,

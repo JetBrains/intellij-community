@@ -14,13 +14,12 @@ Groovy script
       PsiElement(,)(',')
       Parenthesized expression
         PsiElement(()('(')
-        Reference expression
-          PsiElement(identifier)('doSomething')
-        PsiErrorElement:')' or ',' expected, got '2'
-          <empty list>
-      PsiWhiteSpace(' ')
-      Literal
-        PsiElement(Integer)('2')
+        Call expression
+          Reference expression
+            PsiElement(identifier)('doSomething')
+          PsiWhiteSpace(' ')
+          Command arguments
+            Literal
+              PsiElement(Integer)('2')
+        PsiElement())(')')
       PsiElement())(')')
-  PsiErrorElement:')' unexpected
-    PsiElement())(')')

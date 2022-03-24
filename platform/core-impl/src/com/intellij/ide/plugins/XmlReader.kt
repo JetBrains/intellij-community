@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.ComponentConfig
@@ -10,14 +10,12 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
-import com.intellij.platform.util.plugins.DataLoader
-import com.intellij.util.NoOpXmlInterner
-import com.intellij.util.XmlInterner
-import com.intellij.util.lang.Java11Shim
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import com.intellij.util.xml.dom.NoOpXmlInterner
+import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
-import com.intellij.util.readXmlAsModel
+import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
 import org.jetbrains.annotations.TestOnly
@@ -67,12 +65,12 @@ fun readModuleDescriptor(input: ByteArray,
                               readInto = readInto)
 }
 
-private fun readModuleDescriptor(reader: XMLStreamReader2,
-                                 readContext: ReadModuleContext,
-                                 pathResolver: PathResolver,
-                                 dataLoader: DataLoader,
-                                 includeBase: String?,
-                                 readInto: RawPluginDescriptor?): RawPluginDescriptor {
+internal fun readModuleDescriptor(reader: XMLStreamReader2,
+                                  readContext: ReadModuleContext,
+                                  pathResolver: PathResolver,
+                                  dataLoader: DataLoader,
+                                  includeBase: String?,
+                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
       throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, " +
@@ -177,7 +175,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
       if (descriptor.id == null) {
         descriptor.id = getNullifiedContent(reader)
       }
-      else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
+      else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id) && descriptor.id != "com.intellij") {
         // no warn and no redefinition for kotlin - compiler.xml is a known issue
         LOG.warn("id redefinition (${reader.locationInfo.location})")
         descriptor.id = getNullifiedContent(reader)
@@ -354,6 +352,8 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
     var qualifiedExtensionPointName: String? = null
     var order = LoadingOrder.ANY
     var orderId: String? = null
+
+    var hasExtraAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "implementation" -> implementation = reader.getAttributeValue(i)
@@ -365,6 +365,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
         "id" -> orderId = getNullifiedAttributeValue(reader, i)
         "order" -> order = readOrder(reader.getAttributeValue(i))
         "point" -> qualifiedExtensionPointName = getNullifiedAttributeValue(reader, i)
+        else -> hasExtraAttributes = true
       }
     }
 
@@ -396,7 +397,7 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           descriptor.epNameToExtensions = map
         }
 
-        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element)
+        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element, hasExtraAttributes)
 
         val list = map.get(qualifiedExtensionPointName)
         if (list == null) {
@@ -440,6 +441,7 @@ private fun checkXInclude(elementName: String, reader: XMLStreamReader2): Boolea
   return false
 }
 
+@Suppress("DuplicatedCode")
 private fun readExtensionPoints(reader: XMLStreamReader2,
                                 descriptor: RawPluginDescriptor,
                                 readContext: ReadModuleContext,
@@ -538,6 +540,7 @@ private inline fun applyPartialContainer(from: RawPluginDescriptor,
   }
 }
 
+@Suppress("DuplicatedCode")
 private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescriptor.Os?): ServiceDescriptor {
   var serviceInterface: String? = null
   var serviceImplementation: String? = null
@@ -667,7 +670,12 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 private fun readContent(reader: XMLStreamReader2,
                         descriptor: RawPluginDescriptor,
                         readContext: ReadModuleContext) {
-  val items = ArrayList<PluginContentDescriptor.ModuleItem>()
+  var items = descriptor.contentModules
+  if (items == null) {
+    items = ArrayList()
+    descriptor.contentModules = items
+  }
+
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
@@ -694,7 +702,6 @@ private fun readContent(reader: XMLStreamReader2,
     }
     reader.skipElement()
   }
-  descriptor.content = PluginContentDescriptor(Java11Shim.INSTANCE.copyOfCollection(items))
   assert(reader.isEndElement)
 }
 

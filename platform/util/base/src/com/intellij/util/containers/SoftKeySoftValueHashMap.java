@@ -8,7 +8,6 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
-  @SuppressWarnings("deprecation")
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = new SoftHashMap<>(4);
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -28,7 +27,7 @@ final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   private boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
-      @SuppressWarnings("unchecked")
+      //noinspection unchecked
       ValueReference<K,V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       RefHashMap.Key<K> key = ref.key;

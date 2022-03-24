@@ -33,8 +33,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   PersistentHashMap(@NotNull PersistentMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
-      builder.withReadonly(isReadOnly());
-      builder.inlineValues(inlineValues());
+      builder.withReadonly(false);
+      builder.inlineValues(false);
     }
     myImpl = builder.build().myImpl;
   }
@@ -84,51 +84,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     this(newBuilder(file, keyDescriptor, valueExternalizer).withInitialSize(initialSize).withVersion(version).withStorageLockContext(lockContext), true);
   }
 
-  /**
-   * @deprecated Please use {@link PersistentMapBuilder} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean inlineValues() {
-    return false;
-  }
-
-  /**
-   * @deprecated Please use {@link PersistentMapBuilder} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean isReadOnly() {
-    return false;
-  }
-
   public final void dropMemoryCaches() {
     force();
-  }
-
-  /**
-   * @deprecated Please use an utility function directly, not this method
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    IOUtil.deleteAllFilesStartingWith(prefixFile);
-  }
-
-  /**
-   * Deletes {@param map} files and trying to close it before.
-   * @deprecated use {@link #closeAndClean()}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
-    try {
-      map.closeAndClean();
-    } catch (IOException e) {
-      //NOP
-    }
   }
 
   @Override
@@ -139,7 +96,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
@@ -148,7 +105,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender} as the second parameter
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {

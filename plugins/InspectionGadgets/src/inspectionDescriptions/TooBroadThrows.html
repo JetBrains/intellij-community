@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports a <code>throws</code> clause with an exception that is more generic than the
-exception that the method actually throws.
+Reports <code>throws</code> clauses with exceptions that are more generic than the
+exceptions that the method actually throws.
 <p><b>Example:</b></p>
 <pre><code>
   public void createFile() throws Exception { // warning: 'throws Exception' is too broad, masking exception 'IOException'
@@ -14,6 +14,7 @@ exception that the method actually throws.
   public void createFile() throws IOException {
     File file = new File("pathToFile");
     file.createNewFile();
+  }
 </code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>

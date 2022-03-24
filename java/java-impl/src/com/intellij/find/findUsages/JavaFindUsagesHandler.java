@@ -5,7 +5,6 @@ import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -92,17 +92,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
       }
     }
 
-    final PsiClass aClass = ReadAction.compute(method::getContainingClass);
-    if (aClass != null) {
-      FunctionalExpressionSearch.search(aClass).forEach(element -> {
-        if (element instanceof PsiLambdaExpression) {
-          PsiParameter[] parameters = ((PsiLambdaExpression)element).getParameterList().getParameters();
-          if (idx < parameters.length) {
-            elementsToSearch.add(parameters[idx]);
-          }
+    FunctionalExpressionSearch.search(method).forEach(element -> {
+      if (element instanceof PsiLambdaExpression) {
+        PsiParameter[] parameters = ReadAction.compute(() -> ((PsiLambdaExpression)element).getParameterList().getParameters());
+        if (idx < parameters.length) {
+          elementsToSearch.add(parameters[idx]);
         }
-      });
-    }
+      }
+    });
 
     return PsiUtilCore.toPsiElementArray(elementsToSearch);
   }
@@ -122,7 +119,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
 
           ProgressManager pm = ProgressManager.getInstance();
           boolean hasOverriden = pm.runProcessWithProgressSynchronously(() ->
-              OverridingMethodsSearch.search(method).findFirst() != null || FunctionalExpressionSearch.search(aClass).findFirst() != null,
+              OverridingMethodsSearch.search(method).findFirst() != null || FunctionalExpressionSearch.search(method).findFirst() != null,
             JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject()) == Boolean.TRUE;
 
           if (hasOverriden && myFactory.getFindVariableOptions().isSearchInOverridingMethods) {
@@ -141,7 +138,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   @Override
   public PsiElement @NotNull [] getSecondaryElements() {
     PsiElement element = getPsiElement();
-    if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
     if (element instanceof PsiField) {
       Set<PsiMethod> accessors = getFieldAccessors((PsiField)element);
       if (!accessors.isEmpty()) {
@@ -149,14 +145,20 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
         boolean doSearch = !containsPhysical || myFactory.getFindVariableOptions().isSearchForAccessors;
         if (doSearch) {
           Set<PsiElement> elements = new HashSet<>();
-          if (myFactory.getFindVariableOptions().isSearchForBaseAccessors) {
-            for (PsiMethod accessor : accessors) {
-                ContainerUtil.addAll(elements, SuperMethodWarningUtil.getTargetMethodCandidates(accessor, Collections.emptyList()));
+          for (PsiMethod accessor : accessors) {
+            if (myFactory.getFindVariableOptions().isSearchForBaseAccessors) {
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.getTargetMethodCandidates(accessor, Collections.emptyList()));
+            }
+            else {
+              elements.add(accessor);
             }
           }
           return PsiUtilCore.toPsiElementArray(elements);
         }
       }
+    }
+    else if (element instanceof PsiClass && ((PsiClass)element).isRecord()) {
+      return ContainerUtil.findAllAsArray(((PsiClass)element).getConstructors(), LightRecordCanonicalConstructor.class);
     }
     return super.getSecondaryElements();
   }

@@ -45,7 +45,7 @@ public abstract class BasicFileInfoFunction extends FunctionImplementation imple
             arg = context.getNodeSet().get(0);
         } else {
             final Object o = list.get(0);
-            arg = o instanceof List ? ((List)o).get(0) : o;
+            arg = o instanceof List ? ((List<?>)o).get(0) : o;
         }
         if (!(arg instanceof PsiElement)) {
             throw new FunctionCallException("NodeSet expected");

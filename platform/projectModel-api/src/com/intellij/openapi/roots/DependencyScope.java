@@ -26,8 +26,9 @@ import java.util.function.Supplier;
  * </table>
  * <br>
  * 
- * In order to check whether a dependency should be included in a classpath use one of {@code isFor}
- * methods instead of direct comparison with the enum constants
+ * Note that the way dependencies are processed may be changed by plugins if the project is imported from a build system. So values from
+ * this enum are supposed to be used only to edit dependencies (via {@link ExportableOrderEntry#setScope}). If you need to determine which
+ * dependencies are included into a classpath, use {@link OrderEnumerator}.
  */
 public enum DependencyScope {
   COMPILE(ProjectModelBundle.messagePointer("dependency.scope.compile"), true, true, true, true),

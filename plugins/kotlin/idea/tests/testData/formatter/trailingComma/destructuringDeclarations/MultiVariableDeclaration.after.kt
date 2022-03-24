@@ -91,13 +91,11 @@ fun test() {
 
     val (
             a, // ad
-            /**/
-            b,
+            /**/b,
     ) = 1 to 2
 
     val (
-            a,
-            b, // fe
+            a, b, // fe
             /**/
     )/**/ = 1 to 2
 
@@ -107,8 +105,7 @@ fun test() {
 
     val (
             a, b, c,
-            d,
-            f, // awd
+            d, f, // awd
             /*
         */
     ) = 1 to 2

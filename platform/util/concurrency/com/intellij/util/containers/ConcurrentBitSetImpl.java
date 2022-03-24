@@ -277,14 +277,19 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
 
   @Override
   public int @NotNull [] toIntArray() {
+    int[] array = readArrayUnderReadLock();
+    return array.clone();
+  }
+
+  private int[] readArrayUnderReadLock() {
     long stamp;
     int[] array;
     do {
       stamp = lock.tryOptimisticRead();
       array = this.array;
-    } while (!lock.validate(stamp));
-
-    return array.clone();
+    }
+    while (!lock.validate(stamp));
+    return array;
   }
 
   public void writeTo(@NotNull File file) throws IOException {

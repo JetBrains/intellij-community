@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -34,7 +37,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
             isOnTheFly,
             inspectionHighlightType(element),
             inspectionHighlightRangeInElement(element),
-            LocalFix(fixText(element))
+            LocalFix(this, fixText(element))
         )
     }
 
@@ -42,10 +45,12 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 
     open fun inspectionHighlightType(element: TElement): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
+    @InspectionMessage
     abstract fun inspectionText(element: TElement): String
 
     abstract val defaultFixText: String
 
+    @IntentionName
     open fun fixText(element: TElement) = defaultFixText
 
     abstract fun isApplicable(element: TElement): Boolean
@@ -54,16 +59,19 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 
     open val startFixInWriteAction = true
 
-    private inner class LocalFix(val text: String) : LocalQuickFix {
-        override fun startInWriteAction() = startFixInWriteAction
+    private class LocalFix<TElement : KtElement>(
+        @SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,
+        @IntentionName val text: String
+    ) : LocalQuickFix {
+        override fun startInWriteAction() = inspection.startFixInWriteAction
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             @Suppress("UNCHECKED_CAST")
             val element = descriptor.psiElement as TElement
-            applyTo(element, project, element.findExistingEditor())
+            inspection.applyTo(element, project, element.findExistingEditor())
         }
 
-        override fun getFamilyName() = defaultFixText
+        override fun getFamilyName() = inspection.defaultFixText
 
         override fun getName() = text
     }

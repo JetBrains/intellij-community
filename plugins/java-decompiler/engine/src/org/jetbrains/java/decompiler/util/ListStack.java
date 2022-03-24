@@ -1,22 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.ArrayList;
 
 public class ListStack<T> extends ArrayList<T> {
-  protected int pointer = 0;
+  private int pointer = 0;
 
   public ListStack() {
     super();
   }
 
-  public ListStack(ArrayList<? extends T> list) {
+  public ListStack(int initialCapacity) {
+    super(initialCapacity);
+  }
+
+  private ListStack(ArrayList<? extends T> list) {
     super(list);
   }
 
-  @Override
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
-  public ListStack<T> clone() {
+  public ListStack<T> copy() {
     ListStack<T> copy = new ListStack<>(this);
     copy.pointer = this.pointer;
     return copy;
@@ -48,10 +50,6 @@ public class ListStack<T> extends ArrayList<T> {
       this.remove(pointer);
       count--;
     }
-  }
-
-  public int getPointer() {
-    return pointer;
   }
 
   public T getByOffset(int offset) {

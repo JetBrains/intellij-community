@@ -209,14 +209,14 @@ public class ManifestBuilder {
     final Manifest manifest = new Manifest();
 
     boolean isAddDefaultSpecificationEntries =
-      Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultSpecificationEntries", "false"));
+      Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultSpecificationEntries", "false"));
     if (isAddDefaultSpecificationEntries) {
       addManifestAttribute(manifest, entries, "Specification-Title", mavenProject.getName());
       addManifestAttribute(manifest, entries, "Specification-Version", mavenProject.getMavenId().getVersion());
     }
 
     boolean isAddDefaultImplementationEntries =
-      Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultImplementationEntries", "false"));
+      Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultImplementationEntries", "false"));
     if (isAddDefaultImplementationEntries) {
       addManifestAttribute(manifest, entries, "Implementation-Title", mavenProject.getName());
       addManifestAttribute(manifest, entries, "Implementation-Version", mavenProject.getMavenId().getVersion());
@@ -233,7 +233,7 @@ public class ManifestBuilder {
       addManifestAttribute(manifest, entries, "Main-Class", mainClass);
     }
 
-    boolean isAddClasspath = Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addClasspath", "false"));
+    boolean isAddClasspath = Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addClasspath", "false"));
     if (isAddClasspath) {
       final ManifestImporter manifestImporter = ManifestImporter.getManifestImporter(mavenProject.getPackaging());
       String classpath = manifestImporter.getClasspath(mavenProject, manifestConfiguration);

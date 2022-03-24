@@ -1,54 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.*;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import java.io.File;
-import java.util.List;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWslPresence;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
-public class WSLUtilTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+public final class WSLUtilTest {
+  private static final TestFixtureRule appRule = new TestFixtureRule();
+  private static final WslRule wslRule = new WslRule();
+  @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
 
-  private static NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
-    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
-    if (distributions.isEmpty()) return null;
-    WSLDistribution distribution = distributions.get(0);
-    if (distribution instanceof WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.getId())) return null;
-    return distribution;
-  });
-
-  private WSLDistribution wsl;
-
-  @BeforeClass
-  public static void checkEnvironment() {
-    assumeWindows();
-    assumeWslPresence();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    WSL = null;
-  }
-
-  @Before
-  public void setUp() {
-    assumeTrue("No WSL distributions available", (wsl = WSL.getValue()) != null);
-  }
+  @Rule public final TempDirectory tempDirectory = new TempDirectory();
 
   @Test
   public void testWslToWinPath() {
+    var wsl = wslRule.getWsl();
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
     assertEquals("\\\\wsl$\\" + wsl.getMsId(), wsl.getWindowsPath(""));
@@ -56,7 +32,11 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\", wsl.getWindowsPath("/mnt/"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\", wsl.getWindowsPath("/"));
     assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
+    assertEquals("C:", wsl.getWindowsPath("/mnt/C"));
 
     assertEquals("C:\\temp\\foo", wsl.getWindowsPath("/mnt/c/temp/foo"));
     assertEquals("C:\\temp\\KeepCase", wsl.getWindowsPath("/mnt/c/temp/KeepCase"));
@@ -67,6 +47,7 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWinToWslPath() {
+    var wsl = wslRule.getWsl();
     assertEquals("/mnt/c/foo", wsl.getWslPath("C:\\foo"));
     assertEquals("/mnt/c/temp/KeepCase", wsl.getWslPath("C:\\temp\\KeepCase"));
     assertNull(wsl.getWslPath("?:\\temp\\KeepCase"));
@@ -75,6 +56,7 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testPaths() {
+    var wsl = wslRule.getWsl();
     String originalWinPath = "C:\\usr\\something\\bin\\gcc";
     assertEquals(originalWinPath, wsl.getWindowsPath(wsl.getWslPath(originalWinPath)));
 
@@ -84,8 +66,9 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testResolveSymlink() throws Exception {
-    File winFile = tempDir.newFile("the_file.txt");
-    File winSymlink = new File(tempDir.getRoot(), "sym_link");
+    var wsl = wslRule.getWsl();
+    File winFile = tempDirectory.newFile("the_file.txt");
+    File winSymlink = new File(tempDirectory.getRoot(), "sym_link");
 
     String file = wsl.getWslPath(winFile.getPath());
     String symlink = wsl.getWslPath(winSymlink.getPath());
@@ -97,7 +80,8 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
     assertTrue(winFile.getPath().equalsIgnoreCase(resolved));
   }
 
-  private void mkSymlink(String file, String symlink) throws Exception {
+  private static void mkSymlink(String file, String symlink) throws Exception {
+    var wsl = wslRule.getWsl();
     GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine("ln", "-s", file, symlink), null, new WSLCommandLineOptions());
     ProcessOutput output = new CapturingProcessHandler(cmd).runProcess(10_000);
     assertEquals(0, output.getExitCode());

@@ -6,7 +6,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +43,7 @@ public abstract class ExecutionTargetManager {
   /**
    * @deprecated use {@link #canRun(RunConfiguration, ExecutionTarget)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean canRun(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget target) {
     return canRun(settings != null ? settings.getConfiguration() : null, target);
   }
@@ -82,8 +80,7 @@ public abstract class ExecutionTargetManager {
    * @deprecated Use {@link #getTargetsFor(RunConfiguration)}
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public List<ExecutionTarget> getTargetsFor(@Nullable RunnerAndConfigurationSettings settings) {
     return getTargetsFor(settings == null ? null : settings.getConfiguration());
   }

@@ -1,5 +1,5 @@
 // "Add getter" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class Test {
     var x: Int<caret>
         set(value) {}

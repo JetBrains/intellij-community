@@ -190,8 +190,8 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
   }
 
-  private final class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
-    ProjectViewPaneTreeStructure() {
+  protected class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
+    protected ProjectViewPaneTreeStructure() {
       super(ProjectViewPane.this.myProject, ID);
     }
 

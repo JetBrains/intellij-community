@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.CompilerEnvironment
 import java.io.File
 import java.lang.reflect.Field
 
@@ -25,7 +26,7 @@ abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest()
             this.languageVersionSettings = languageVersionSettings
         }
 
-        return analyzeFiles(listOf(file), JsConfig(project, configuration))
+        return analyzeFiles(listOf(file), JsConfig(project, configuration, CompilerEnvironment))
     }
 
     override val testDataDirectory: File

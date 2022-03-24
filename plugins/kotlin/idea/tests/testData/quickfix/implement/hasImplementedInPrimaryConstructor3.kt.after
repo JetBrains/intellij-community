@@ -1,5 +1,5 @@
 // "Implement members" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class C {
     abstract val p: String?
     abstract val q: Int

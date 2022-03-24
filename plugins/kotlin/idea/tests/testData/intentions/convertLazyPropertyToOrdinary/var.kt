@@ -1,3 +1,3 @@
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 <caret>var x: Int by lazy { 1 }

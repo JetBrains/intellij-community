@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.template.actions;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
@@ -20,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -147,11 +148,6 @@ public class SaveAsTemplateAction extends AnAction {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
-    if (file == null || editor == null) {
-      e.getPresentation().setEnabled(false);
-    }
-    else {
-      e.getPresentation().setEnabled(editor.getSelectionModel().hasSelection());
-    }
+    e.getPresentation().setEnabled(file != null && editor != null && editor.getSelectionModel().hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e));
   }
 }

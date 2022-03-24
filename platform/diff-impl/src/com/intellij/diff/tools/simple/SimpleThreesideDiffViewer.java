@@ -49,7 +49,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
-  @NotNull private final SimpleThreesideTextDiffProvider myTextDiffProvider;
+  @NotNull protected final SimpleThreesideTextDiffProvider myTextDiffProvider;
 
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<>();
@@ -157,7 +157,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
-  private Runnable apply(@NotNull final List<FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
+  protected Runnable apply(@NotNull final List<FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
@@ -240,7 +240,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @NotNull
   @Override
   public List<SimpleThreesideDiffChange> getChanges() {
-    return myDiffChanges;
+    return Collections.unmodifiableList(myDiffChanges);
   }
 
   @NotNull

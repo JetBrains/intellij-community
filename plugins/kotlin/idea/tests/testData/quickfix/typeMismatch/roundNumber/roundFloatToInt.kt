@@ -1,5 +1,5 @@
 // "Round using roundToInt()" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(f: Float) {
     foo(f<caret>)
 }

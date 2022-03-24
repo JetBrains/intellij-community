@@ -5,14 +5,14 @@ Reports attempts to reflectively check for the presence of a non-runtime annotat
   whose retention policy is set to <code>SOURCE</code> or <code>CLASS</code>
   (the default) will always have a negative result. This mistake is easy to overlook.</p>
 <p><b>Example:</b></p>
-<pre>
-  { 
+<pre><code>
+  {
     getClass().isAnnotationPresent(SourceAnnotation.class); //always false
   }
-  
+
   @Retention(RetentionPolicy.SOURCE)
   @interface SourceAnnotation {}
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

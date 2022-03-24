@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
+@NlsSafe
 fun escapeXml(text: String): String = StringUtil.escapeXmlEntities(text)

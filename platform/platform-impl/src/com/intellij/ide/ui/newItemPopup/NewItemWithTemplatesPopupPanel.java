@@ -28,6 +28,11 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
   private final Collection<TemplatesListVisibilityListener> myVisibilityListeners = new ArrayList<>();
 
   public NewItemWithTemplatesPopupPanel(List<T> templatesList, ListCellRenderer<T> renderer) {
+    this(templatesList, renderer, false);
+  }
+
+  public NewItemWithTemplatesPopupPanel(List<T> templatesList, ListCellRenderer<T> renderer, boolean liveErrorValidation) {
+    super(liveErrorValidation);
     setBackground(JBUI.CurrentTheme.NewClassDialog.panelBackground());
 
     myTemplatesListModel = new MyListModel(templatesList);

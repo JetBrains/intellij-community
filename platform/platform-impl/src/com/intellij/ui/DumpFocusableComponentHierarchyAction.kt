@@ -5,84 +5,82 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
-import java.awt.*
+import com.intellij.ui.components.JBTextArea
+import com.intellij.util.ReflectionUtil
+import java.awt.BorderLayout
+import java.awt.KeyboardFocusManager
+import java.awt.Toolkit
+import java.awt.Window
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
-import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JWindow
 
 class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
+    val dump = createDump()
+
+    val panel = JBPanel<Nothing>(BorderLayout())
+    panel.add(JBScrollPane(JBTextArea(dump)), BorderLayout.CENTER)
+
     val visibleFrame = WindowManager.getInstance().findVisibleFrame()
-    val activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-    val focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-    val focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-    val dump = CopyOnWriteArrayList<String>()
-
-    dump.add("Active Window: " + if (activeWindow == null) "null" else activeWindow.javaClass.name)
-    dump.add("Focused Window: " + if (focusedWindow == null) "null" else focusedWindow.javaClass.name)
-    dump.add("Focused Component: " + if (focusedComponent == null) "null" else focusedComponent.javaClass.name)
-
-    val componentTrace = ArrayList<Component>()
-    var c = focusedComponent
-
-    while (c != null) {
-      componentTrace.add(c)
-      c = c.parent
-    }
-
-    for (i in componentTrace.indices.reversed()) {
-      dump.add(componentTrace[i].javaClass.name)
-      if (i != 0) {
-        dump.add("^")
-      }
-    }
-
-    (focusedComponent as? JComponent?)?.let {
-      dump.add("Children count in focused component: ${it.componentCount}")
-    }
-
-    val fontHeight = 30
-
-    val contentPanel:JPanel = JPanel(BorderLayout())
-
-    val jPanel: JPanel = object : JPanel(BorderLayout()) {
-      override fun paintComponent(g: Graphics) {
-        super.paintComponent(g)
-        g.color = JBColor.BLACK
-        g.fillRect(0, 0, bounds.width, bounds.height)
-        g.color = JBColor.WHITE
-        for (i in dump.indices.reversed()) {
-          g.drawString(dump[i], 20, 50 + i * fontHeight)
-        }
-      }
-    }
-    contentPanel.preferredSize = Dimension(visibleFrame!!.width, dump.size * fontHeight)
-    contentPanel.add(jPanel)
-
-    val scrollPane: JScrollPane = JBScrollPane(contentPanel)
-
-    scrollPane.preferredSize = visibleFrame.size
-
-    val popup = PopupFactory.getSharedInstance().
-                  getPopup(visibleFrame, scrollPane, visibleFrame.x, visibleFrame.y)
+    val popup = JWindow(visibleFrame)
+    popup.type = Window.Type.POPUP
+    popup.focusableWindowState = false
+    popup.add(panel)
 
     val closeButton = JButton(object : AbstractAction(IdeBundle.message("dump.focusable.component.hierarchy.close.button")) {
       override fun actionPerformed(e: ActionEvent) {
-        val dumpAsString = StringBuilder()
-        for (i in dump.indices.reversed()) {
-          dumpAsString.append(dump[i]).append("\n")
-        }
-        Toolkit.getDefaultToolkit().systemClipboard.setContents(
-          StringSelection(dumpAsString.toString()), null)
-        popup.hide()
+        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(dump), null)
+        popup.dispose()
       }
     })
-    jPanel.add(closeButton, BorderLayout.NORTH)
+    panel.add(closeButton, BorderLayout.NORTH)
 
-    popup.show()
+    popup.setSize(800, 600)
+    popup.setLocationRelativeTo(visibleFrame)
+    popup.isVisible = true
+  }
+
+  fun createDump() : @NlsSafe String {
+    val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    val activeWindow = keyboardFocusManager.activeWindow
+    val focusedWindow = keyboardFocusManager.focusedWindow
+    val focusedComponent = keyboardFocusManager.focusOwner
+
+    val dump = mutableListOf<String>()
+
+    try {
+      dump.add("Native Focused Window: " +
+               ReflectionUtil.getDeclaredMethod(KeyboardFocusManager::class.java, "getNativeFocusedWindow")!!.invoke(keyboardFocusManager))
+    } catch (ignored: Throwable) {}
+    try {
+      dump.add("Native Focus Owner: " +
+               ReflectionUtil.getDeclaredMethod(KeyboardFocusManager::class.java, "getNativeFocusOwner")!!.invoke(keyboardFocusManager))
+    } catch (ignored: Throwable) {}
+
+    dump.add("Active Window: " + activeWindow?.javaClass?.name)
+    dump.add("Focused Window: " + focusedWindow?.javaClass?.name)
+    dump.add("Focused Component: " + focusedComponent?.javaClass?.name)
+
+    if (focusedComponent != null) {
+      var c = focusedComponent.parent
+      while (c != null) {
+        dump.add(" - " + c.javaClass.name)
+        c = c.parent
+      }
+
+      (focusedComponent as? JComponent?)?.let {
+        dump.add("Children count in focused component: ${it.componentCount}")
+      }
+    }
+
+    return dump.joinToString("\n")
   }
 }

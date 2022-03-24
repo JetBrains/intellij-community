@@ -38,6 +38,16 @@ public class FormattingServiceUtil {
     return ContainerUtil.find(FormattingService.EP_NAME.getExtensionList(), s -> s.getClass().equals(serviceClass));
   }
 
+  public static @NotNull FormattingService findImportsOptimizingService(@NotNull PsiFile file) {
+    FormattingService importsOptimizer = ContainerUtil.find(
+      FormattingService.EP_NAME.getExtensionList(),
+      s -> s.canFormat(file) && s.getFeatures().contains(FormattingService.Feature.OPTIMIZE_IMPORTS)
+    );
+    LOG.assertTrue(importsOptimizer != null,
+                   "At least 1 formatting service which can optimize imports in PsiFile " + file.getName() + " should be registered.");
+    return importsOptimizer;
+  }
+
   private static List<FormattingService> getChainedServices(@NotNull FormattingService formattingService) {
     List<FormattingService> serviceList = new ArrayList<>();
     FormattingService currService = formattingService;

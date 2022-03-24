@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -27,6 +28,8 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
@@ -114,7 +117,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
 
     private fun scheduleDownloadStdlibSources(mavenProject: MavenProject, module: Module) {
         // TODO: here we have to process all kotlin libraries but for now we only handle standard libraries
-        val artifacts = mavenProject.dependencyArtifactIndex.data[KOTLIN_PLUGIN_GROUP_ID]?.values?.flatMap { it.filter { it.isResolved } }
+        val artifacts = mavenProject.dependencyArtifactIndex.data[KOTLIN_PLUGIN_GROUP_ID]?.values?.flatMap { it.filter { it.resolved() } }
             ?: emptyList()
 
         val libraryNames = mutableSetOf<String?>()
@@ -237,7 +240,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
 
     private fun configureFacet(mavenProject: MavenProject, modifiableModelsProvider: IdeModifiableModelsProvider, module: Module) {
         val mavenPlugin = mavenProject.findPlugin(KotlinMavenConfigurator.GROUP_ID, KotlinMavenConfigurator.MAVEN_PLUGIN_ID) ?: return
-        val compilerVersion = mavenPlugin.version ?: LanguageVersion.LATEST_STABLE.versionString
+        val compilerVersion = mavenPlugin.version?.let(IdeKotlinVersion::opt)
+            ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+
         val kotlinFacet = module.getOrCreateFacet(
             modifiableModelsProvider,
             false,
@@ -275,7 +280,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     private fun detectPlatform(mavenProject: MavenProject) =
         detectPlatformByExecutions(mavenProject) ?: detectPlatformByLibraries(mavenProject)
 
-    private fun detectPlatformByExecutions(mavenProject: MavenProject): IdePlatformKind<*>? {
+    private fun detectPlatformByExecutions(mavenProject: MavenProject): IdePlatformKind? {
         return mavenProject.findPlugin(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_ARTIFACT_ID)?.executions?.flatMap { it.goals }
             ?.mapNotNull { goal ->
                 when (goal) {
@@ -287,7 +292,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             }?.distinct()?.singleOrNull()
     }
 
-    private fun detectPlatformByLibraries(mavenProject: MavenProject): IdePlatformKind<*>? {
+    private fun detectPlatformByLibraries(mavenProject: MavenProject): IdePlatformKind? {
         for (kind in IdePlatformKind.ALL_KINDS) {
             val mavenLibraryIds = kind.tooling.mavenLibraryIds
             if (mavenLibraryIds.any { mavenProject.findDependencies(KOTLIN_PLUGIN_GROUP_ID, it).isNotEmpty() }) {

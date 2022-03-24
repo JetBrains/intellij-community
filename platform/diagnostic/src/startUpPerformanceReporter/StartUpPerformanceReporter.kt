@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -24,8 +26,7 @@ import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,7 +37,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.INSTANCE
+      throw ExtensionNotApplicableException.create()
     }
   }
 
@@ -66,78 +67,6 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     fun logStats(projectName: String) {
       doLogStats(projectName)
     }
-
-    private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
-      val instantEvents = mutableListOf<ActivityImpl>()
-      // write activity category in the same order as first reported
-      val activities = LinkedHashMap<String, MutableList<ActivityImpl>>()
-      val serviceActivities = HashMap<String, MutableList<ActivityImpl>>()
-      val services = mutableListOf<ActivityImpl>()
-
-      val threadNameManager = IdeThreadNameManager()
-
-      var end = -1L
-
-      StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
-        // process it now to ensure that thread will have a first name (because report writer can process events in any order)
-        threadNameManager.getThreadName(item)
-
-        if (item.end == -1L) {
-          instantEvents.add(item)
-        }
-        else {
-          when (val category = item.category ?: ActivityCategory.DEFAULT) {
-            ActivityCategory.DEFAULT -> {
-              if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
-                end = item.end
-              }
-              activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
-            }
-            ActivityCategory.APP_COMPONENT, ActivityCategory.PROJECT_COMPONENT, ActivityCategory.MODULE_COMPONENT,
-            ActivityCategory.APP_SERVICE, ActivityCategory.PROJECT_SERVICE, ActivityCategory.MODULE_SERVICE,
-            ActivityCategory.SERVICE_WAITING -> {
-              services.add(item)
-              serviceActivities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
-            }
-            else -> {
-              activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
-            }
-          }
-        }
-      }
-
-      val pluginCostMap = computePluginCostMap()
-
-      val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
-      val defaultActivities = activities.get(ActivityCategory.DEFAULT.jsonName)
-      val startTime = defaultActivities?.first()?.start ?: 0
-      if (defaultActivities != null) {
-        for (item in defaultActivities) {
-          val pluginId = item.pluginId ?: continue
-          StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
-        }
-      }
-
-      w.write(startTime, serviceActivities, instantEvents, end, projectName)
-
-      val currentReport = w.toByteBuffer()
-
-      if (System.getProperty("idea.log.perf.stats", "false").toBoolean()) {
-        w.writeToLog(LOG)
-      }
-
-      val perfFilePath = System.getProperty("idea.log.perf.stats.file")
-      if (!perfFilePath.isNullOrBlank()) {
-        LOG.info("StartUp Measurement report was written to: $perfFilePath")
-        Path.of(perfFilePath).write(currentReport)
-      }
-
-      val classReport = System.getProperty("idea.log.class.list.file")
-      if (!classReport.isNullOrBlank()) {
-        generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
-      }
-      return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
-    }
   }
 
   override fun getMetrics() = lastMetrics
@@ -155,7 +84,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     ActivityImpl.listener = ActivityListener(projectName)
   }
 
-  inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
+  private inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
     @Volatile
     private var projectOpenedActivitiesPassed = false
 
@@ -197,24 +126,97 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       StartUpMeasurer.stopPluginCostMeasurement()
       // don't report statistic from here if we want to measure project import duration
       if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {
-        logStats(projectName)
+        keepAndLogStats(projectName)
       }
     }
   }
 
   override fun reportStatistics(project: Project) {
     ForkJoinPool.commonPool().execute {
-      logStats(project.name)
+      keepAndLogStats(project.name)
     }
   }
 
   @Synchronized
-  private fun logStats(projectName: String) {
+  private fun keepAndLogStats(projectName: String) {
     val params = doLogStats(projectName)
     pluginCostMap = params.pluginCostMap
     lastReport = params.lastReport
     lastMetrics = params.lastMetrics
   }
+}
+
+private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
+  val instantEvents = mutableListOf<ActivityImpl>()
+  // write activity category in the same order as first reported
+  val activities = LinkedHashMap<String, MutableList<ActivityImpl>>()
+  val serviceActivities = HashMap<String, MutableList<ActivityImpl>>()
+  val services = mutableListOf<ActivityImpl>()
+
+  val threadNameManager = IdeThreadNameManager()
+
+  var end = -1L
+
+  StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
+    // process it now to ensure that thread will have a first name (because report writer can process events in any order)
+    threadNameManager.getThreadName(item)
+
+    if (item.end == -1L) {
+      instantEvents.add(item)
+    }
+    else {
+      when (val category = item.category ?: ActivityCategory.DEFAULT) {
+        ActivityCategory.DEFAULT -> {
+          if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+            end = item.end
+          }
+          activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
+        }
+        ActivityCategory.APP_COMPONENT, ActivityCategory.PROJECT_COMPONENT, ActivityCategory.MODULE_COMPONENT,
+        ActivityCategory.APP_SERVICE, ActivityCategory.PROJECT_SERVICE, ActivityCategory.MODULE_SERVICE,
+        ActivityCategory.SERVICE_WAITING -> {
+          services.add(item)
+          serviceActivities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
+        }
+        else -> {
+          activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
+        }
+      }
+    }
+  }
+
+  val pluginCostMap = computePluginCostMap()
+
+  val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
+  val defaultActivities = activities.get(ActivityCategory.DEFAULT.jsonName)
+  val startTime = defaultActivities?.first()?.start ?: 0
+  if (defaultActivities != null) {
+    for (item in defaultActivities) {
+      val pluginId = item.pluginId ?: continue
+      StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
+    }
+  }
+
+  w.write(startTime, serviceActivities, instantEvents, end, projectName)
+
+  val currentReport = w.toByteBuffer()
+
+  if (System.getProperty("idea.log.perf.stats", "false").toBoolean()) {
+    w.writeToLog(StartUpPerformanceReporter.LOG)
+  }
+
+  val perfFilePath = System.getProperty("idea.log.perf.stats.file")
+  if (!perfFilePath.isNullOrBlank()) {
+    StartUpPerformanceReporter.LOG.info("StartUp Measurement report was written to: $perfFilePath")
+    Path.of(perfFilePath).write(currentReport)
+    currentReport.flip()
+  }
+
+  val classReport = System.getProperty("idea.log.class.list.file")
+  if (!classReport.isNullOrBlank()) {
+    generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
+  }
+  return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
 }
 
 private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
@@ -275,26 +277,15 @@ internal fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
 }
 
 private fun generateJarAccessLog(outFile: Path) {
-  val classLoader = StartUpPerformanceReporter::class.java.classLoader
-  @Suppress("UNCHECKED_CAST")
-  val itemsFromBootstrap = MethodHandles.lookup()
-    .findStatic(classLoader::class.java, "getLoadedClasses", MethodType.methodType(Collection::class.java))
-    .invokeExact() as Collection<Map.Entry<String, Path>>
-  val itemsFromCore = ClassPath.getLoadedClasses()
-  val items = LinkedHashSet<Map.Entry<String, Path>>(itemsFromBootstrap.size + itemsFromCore.size)
-  items.addAll(itemsFromBootstrap)
-  items.addAll(itemsFromCore)
-
   val homeDir = Path.of(PathManager.getHomePath())
-
   val builder = StringBuilder()
-  for (item in items) {
+  for (item in ClassPath.getLoadedClasses()) {
     val source = item.value
     if (!source.startsWith(homeDir)) {
       continue
     }
 
-    builder.append(item.key).append(':').append(homeDir.relativize(source))
+    builder.append(item.key).append(':').append(homeDir.relativize(source).toString().replace(File.separatorChar, '/'))
     builder.append('\n')
   }
   Files.createDirectories(outFile.parent)

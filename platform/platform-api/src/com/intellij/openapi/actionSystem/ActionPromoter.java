@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -25,16 +12,23 @@ import java.util.List;
  * context basis during processing (e.g., we can have two actions assigned to the same shortcut, but one of them is
  * configured to be inapplicable in modal dialog context).
  * <p/>
- * However, there is a possible case that there is still more than one action applicable for particular keyboard shortcut
+ * However, there is a possible case that more than one action is applicable for a particular keyboard shortcut
  * after filtering. The first one is executed then. Hence, action processing order becomes very important.
  * <p/>
- * Current key allows specifying custom action sorter to use if any. I.e., every component can define its custom
+ * The current extension point allows specifying custom action sorter to use, if any. I.e., every component can define its custom
  * sorting rule to define priorities for target actions (classes of actions).
  *
+ * If {@link AnAction} implements {@link ActionPromoter}, promoter would be used to rearrange this action (no need to register additionally as extension point)
  * @author Konstantin Bulenkov
  */
 public interface ActionPromoter {
   ExtensionPointName<ActionPromoter> EP_NAME = ExtensionPointName.create("com.intellij.actionPromoter");
 
-  List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context);
+  default @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+    return null;
+  }
+
+  default @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+    return null;
+  }
 }

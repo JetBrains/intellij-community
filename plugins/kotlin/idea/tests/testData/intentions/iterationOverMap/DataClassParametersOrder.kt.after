@@ -1,4 +1,8 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Variable 'a1' is never used
+// AFTER-WARNING: Variable 'b1' is never used
+// AFTER-WARNING: Variable 'c1' is never used
 
 fun main(args: Array<String>) {
     val list = listOf(MyClass(1, 2, 3), MyClass(2, 3, 4))

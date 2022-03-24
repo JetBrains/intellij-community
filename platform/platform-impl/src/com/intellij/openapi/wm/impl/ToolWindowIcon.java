@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.MenuBarIconProvider;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,6 +58,6 @@ public final class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvide
 
   @Override
   public @NotNull Icon scale(float scaleFactor) {
-    return myIcon instanceof ScalableIcon ? ((ScalableIcon)myIcon).scale(scaleFactor) : myIcon;
+    return new ToolWindowIcon(IconUtil.scaleOrLoadCustomVersion(myIcon, scaleFactor), myToolWindowId);
   }
 }

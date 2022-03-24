@@ -112,15 +112,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @Contract(pure = true)
   public SearchScope intersectWith(@NotNull SearchScope scope2) {
     if (scope2 instanceof LocalSearchScope) {
-      LocalSearchScope localScope2 = (LocalSearchScope)scope2;
-      return intersectWith(localScope2);
+      return intersectWith((LocalSearchScope)scope2);
     }
     return intersectWith((GlobalSearchScope)scope2);
   }
 
   @NotNull
   @Contract(pure = true)
-  public SearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
+  public LocalSearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
     PsiElement[] elements2 = localScope2.getScope();
     List<PsiElement> result = new ArrayList<>(elements2.length);
     for (final PsiElement element2 : elements2) {
@@ -128,7 +127,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         result.add(element2);
       }
     }
-    return result.isEmpty() ? EMPTY_SCOPE : new LocalSearchScope(result.toArray(PsiElement.EMPTY_ARRAY), null, localScope2.isIgnoreInjectedPsi());
+    return result.isEmpty() ? LocalSearchScope.EMPTY : new LocalSearchScope(result.toArray(PsiElement.EMPTY_ARRAY), null, localScope2.isIgnoreInjectedPsi());
   }
 
   @Override
@@ -876,15 +875,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int[] asInts() {
+    public int @NotNull [] asArray() {
       return myVirtualFile instanceof VirtualFileWithId
-             ? new int[] { ((VirtualFileWithId)myVirtualFile).getId()}
+             ? new int[]{((VirtualFileWithId)myVirtualFile).getId()}
              : ArrayUtil.EMPTY_INT_ARRAY;
-    }
-
-    @Override
-    public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.singletonList(myVirtualFile);
     }
   }
 
@@ -942,13 +936,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int[] asInts() {
+    public int @NotNull [] asArray() {
       return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
-    }
-
-    @Override
-    public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.unmodifiableSet(getFiles());
     }
   }
 

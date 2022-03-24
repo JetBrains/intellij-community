@@ -1,6 +1,5 @@
-// "Create property 'foo'" "false"
-// ACTION: Rename reference
-// ERROR: Unresolved reference: foo
+// "Create member property 'A.Companion.foo'" "true"
+// ERROR: Property must be initialized or be abstract
 
 class A<T>(val n: T)
 

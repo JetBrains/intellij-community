@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 interface CD
 
 fun <D : CD> D.foo(): D? = null

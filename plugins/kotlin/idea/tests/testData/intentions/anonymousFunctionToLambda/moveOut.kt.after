@@ -1,3 +1,6 @@
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Parameter 'i' is never used
+// AFTER-WARNING: Variable 'p' is never used
 fun foo(f: () -> Unit, i: Int) {
     f()
 }

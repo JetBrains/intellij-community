@@ -409,4 +409,3 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     }
   }
 }
-

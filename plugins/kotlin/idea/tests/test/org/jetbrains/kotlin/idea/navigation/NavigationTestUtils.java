@@ -20,7 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import junit.framework.TestCase;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.test.util.ReferenceUtils;
 import org.junit.Assert;
 

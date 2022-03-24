@@ -1,14 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.util.DetailView;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -25,6 +29,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,7 +98,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   private final List<XBreakpointPropertiesSubPanel> mySubPanels = new ArrayList<>();
 
-  private XDebuggerExpressionComboBox myConditionComboBox;
+  private @Nullable XDebuggerExpressionComboBox myConditionComboBox;
 
   private final XBreakpointBase myBreakpoint;
 
@@ -135,12 +140,10 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myActionsPanel.hide();
     }
 
-    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
     myCustomPanels = new ArrayList<>();
     if (debuggerEditorsProvider != null) {
       myConditionEnabledCheckbox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID,
-                                                            sourcePosition, true, false);
+      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID, null, true, false);
       myLanguageChooserPanel.add(myConditionComboBox.getLanguageChooser(), BorderLayout.CENTER);
       myConditionExpressionPanel.add(myConditionComboBox.getComponent(), BorderLayout.CENTER);
       myConditionEnabledCheckbox.addActionListener(e -> onCheckboxChanged());
@@ -210,11 +213,26 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     });
 
     myEnabledCheckbox.addActionListener(e -> myBreakpoint.setEnabled(myEnabledCheckbox.isSelected()));
-    XBreakpointBase lastRemovedBreakpoint = ((XBreakpointManagerImpl)breakpointManager).getLastRemovedBreakpoint();
-    myRestoreLink.setVisible(lastRemovedBreakpoint != null &&
-                             breakpointType.equals(lastRemovedBreakpoint.getType()) &&
-                             XSourcePosition.isOnTheSameLine(sourcePosition, lastRemovedBreakpoint.getSourcePosition()) &&
-                             XBreakpointManagerImpl.statesAreDifferent(lastRemovedBreakpoint.getState(), breakpoint.getState(), true));
+
+    myRestoreLink.setVisible(false);
+    ReadAction.nonBlocking(() -> {
+        XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
+        XBreakpointBase lastRemovedBreakpoint = ((XBreakpointManagerImpl)breakpointManager).getLastRemovedBreakpoint();
+        boolean restore = lastRemovedBreakpoint != null &&
+                    breakpointType.equals(lastRemovedBreakpoint.getType()) &&
+                    XSourcePosition.isOnTheSameLine(sourcePosition, lastRemovedBreakpoint.getSourcePosition()) &&
+                    XBreakpointManagerImpl.statesAreDifferent(lastRemovedBreakpoint.getState(), breakpoint.getState(), true);
+        return Pair.create(sourcePosition, restore);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), pair -> {
+        XSourcePosition sourcePosition = pair.getFirst();
+        if (myConditionComboBox != null) {
+          myConditionComboBox.setSourcePosition(sourcePosition);
+        }
+        myActionsPanel.setSourcePosition(sourcePosition);
+        myRestoreLink.setVisible(pair.getSecond());
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void onCheckboxChanged() {

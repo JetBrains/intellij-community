@@ -1,0 +1,15 @@
+// "Import" "true"
+package p
+
+import p.TObject.foobar
+
+open class T {
+    companion object
+    fun Companion.foobar() {}
+}
+
+object TObject : T()
+
+fun usage() {
+    T.<caret>foobar()
+}

@@ -1,5 +1,5 @@
 // "Add '@loop' to continue" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // LANGUAGE_VERSION: 1.3
 
 fun foo(chars: CharArray) {
@@ -13,3 +13,4 @@ fun foo(chars: CharArray) {
         pos++
     }
 }
+/* IGNORE_FIR */

@@ -137,7 +137,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static CoverageRunner getCoverageRunner(VirtualFile file) {
+  private static CoverageRunner getCoverageRunner(@NotNull VirtualFile file) {
     for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
       for (String extension : runner.getDataFileExtensions()) {
         if (Comparing.strEqual(file.getExtension(), extension)) return runner;
@@ -285,6 +285,11 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       Set<VirtualFile> validFiles = new HashSet<>();
       for (VirtualFile file : selectedFiles) {
         VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
+          @Override
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && getCoverageRunner(file) != null;
+          }
+
           @Override
           public boolean visitFile(@NotNull VirtualFile child) {
             if (getCoverageRunner(child) != null) {

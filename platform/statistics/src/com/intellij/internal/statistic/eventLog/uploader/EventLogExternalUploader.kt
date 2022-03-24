@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.google.gson.Gson
@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
 import com.intellij.internal.statistic.uploader.events.*
+import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
@@ -91,11 +92,10 @@ object EventLogExternalUploader {
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging")
 
-    val libPaths = libs.map { it.path }.toMutableList()
+    val libPaths = ArrayList<String>()
+    libPaths.add(findLibraryByClass(kotlin.coroutines.Continuation::class.java)) // add kotlin-std to classpath
     libPaths.add(findLibraryByClass(NotNull::class.java))
-    libPaths.add(findLibraryByClass(org.apache.log4j.Logger::class.java))
     libPaths.add(findLibraryByClass(Gson::class.java))
     libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
     val classpath = joinAsClasspath(libPaths, uploader)
@@ -120,6 +120,7 @@ object EventLogExternalUploader {
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
+    addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.getExtraHeaders()))
 
     if (applicationInfo.isInternal) {
       args += INTERNAL_OPTION
@@ -173,22 +174,6 @@ object EventLogExternalUploader {
 
   private fun findJavaHome(): String {
     return System.getProperty("java.home")
-  }
-
-  private fun findLibsByPrefixes(vararg prefixes: String): Array<File> {
-    val lib = PathManager.getLibPath()
-    val libFiles = File(lib).listFiles { file -> startsWithAny(file.name, prefixes) }
-    if (libFiles == null || libFiles.isEmpty()) {
-      throw EventLogUploadException("Cannot find libraries from dependency for event log uploader", NO_LIBRARIES)
-    }
-    return libFiles
-  }
-
-  private fun startsWithAny(str: String, prefixes: Array<out String>): Boolean {
-    for (prefix in prefixes) {
-      if (str.startsWith(prefix)) return true
-    }
-    return false
   }
 
   private fun getOrCreateTempDir(): File {

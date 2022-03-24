@@ -19,10 +19,9 @@ public class PagePool {
 
   private int finalizationId = 0;
 
-  private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<>();
+  private final SortedMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<>();
 
   private final Object lock = new Object();
-  private final Object finalizationMonitor = new Object();
 
   private PoolPageKey lastFinalizedKey = null;
 
@@ -83,7 +82,7 @@ public class PagePool {
       lastOwner = owner;
       lastHit = hitQueues(owner, offset);
 
-      flushFinalizationQueue(Integer.MAX_VALUE);
+      flushFinalizationQueue();
 
       return lastHit;
     }
@@ -114,9 +113,9 @@ public class PagePool {
     }
 
     cache_misses++;
-    page = new Page(owner, offset);
+    page = new Page(new PoolPageKey(owner, offset));
 
-    myProbationalQueue.put(keyForPage(page), page);
+    myProbationalQueue.put(page.getKey(), page);
 
     return page;
   }
@@ -140,22 +139,11 @@ public class PagePool {
     System.out.println("Total writes: " + RandomAccessDataFile.totalWrites + ". Bytes written: " + RandomAccessDataFile.totalWriteBytes);
   }
 
-  private static PoolPageKey keyForPage(final Page page) {
-    return page.getKey();
-  }
-
   private void toProtectedQueue(final Page page) {
-    myProtectedQueue.put(keyForPage(page), page);
+    myProtectedQueue.put(page.getKey(), page);
   }
 
   public void flushPages(final RandomAccessDataFile owner) {
-    flushPages(owner, Integer.MAX_VALUE);
-  }
-
-  /**
-   * @return {@code true} if all the dirty pages where flushed.
-   */
-  public boolean flushPages(final RandomAccessDataFile owner, final int maxPagesToFlush) {
     boolean hasFlushes;
     synchronized (lock) {
       if (lastOwner == owner) {
@@ -168,23 +156,20 @@ public class PagePool {
       hasFlushes |= scanQueue(owner, myProbationalQueue);
     }
 
-    return !hasFlushes || flushFinalizationQueue(maxPagesToFlush);
+    if (hasFlushes) {
+      flushFinalizationQueue();
+    }
   }
 
-  private boolean flushFinalizationQueue(final int maxPagesToFlush) {
-    int count = 0;
-
-    while (count < maxPagesToFlush) {
+  private void flushFinalizationQueue() {
+    while (true) {
       FinalizationRequest request = retrieveFinalizationRequest();
       if (request == null) {
-        return true;
+        return;
       }
 
       processFinalizationRequest(request);
-      count++;
     }
-
-    return false;
   }
 
   private boolean scanQueue(final RandomAccessDataFile owner, final Map<?, Page> queue) {
@@ -202,34 +187,18 @@ public class PagePool {
     return hasFlushes;
   }
 
-  private boolean scheduleFinalization(final Page page) {
+  private void scheduleFinalization(final Page page) {
     final int curFinalizationId;
     synchronized (lock) {
       curFinalizationId = ++finalizationId;
     }
 
     final FinalizationRequest request = page.prepareForFinalization(curFinalizationId);
-    if (request == null) return false;
+    if (request == null) return;
 
     synchronized (lock) {
-      /*
-      if (myFinalizerThread == null) {
-        myFinalizerThread = new Thread(new FinalizationThreadWorker(), FINALIZER_THREAD_NAME);
-        myFinalizerThread.start();
-      }
-      */
-
-      myFinalizationQueue.put(keyForPage(page), request);
-      if (myFinalizationQueue.size() > 5000) {
-        return true;
-      }
+      myFinalizationQueue.put(page.getKey(), request);
     }
-
-    synchronized (finalizationMonitor) {
-      finalizationMonitor.notifyAll();
-    }
-
-    return false;
   }
 
   private void processFinalizationRequest(final FinalizationRequest request) {

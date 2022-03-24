@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesL
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.ExecutorService
 
@@ -30,7 +31,7 @@ class MavenGeneralSettingsWatcher private constructor(
   private fun fireSettingsChange() {
     embeddersManager.reset()
     MavenDistributionsCache.getInstance(manager.project).cleanCaches();
-    watcher.scheduleUpdateAll(true, true)
+    watcher.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
   }
 
   private fun fireSettingsXmlChange() {

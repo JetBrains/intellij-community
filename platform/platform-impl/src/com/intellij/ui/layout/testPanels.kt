@@ -13,10 +13,7 @@ import java.awt.GridLayout
 import java.util.function.Supplier
 import javax.swing.*
 
-/**
- * See [ShowcaseUiDslAction]
- */
-
+@Deprecated(message = "New UI DSL is implemented, see com.intellij.ui.dsl. Whole file should be removed")
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
     row("Create Android module") { CheckBox("FooBar module name foo")() }
@@ -278,41 +275,6 @@ fun titledRows(): JPanel {
       row("JRE home:") {
         textFieldWithBrowseButton("").comment("At least OracleJRE 9 or OpenJRE 11 is required to import dump")
       }
-    }
-  }
-}
-
-fun hideableRow(): JPanel {
-  val dummyTextBinding = PropertyBinding({ "" }, {})
-
-  return panel {
-    row("Foo") {
-      textField(dummyTextBinding)
-    }
-    hideableRow("Bar") {
-      row {
-        textField(dummyTextBinding)
-      }
-      hideableRow("Nested hideable") {
-        row {
-          label("Label 1")
-        }
-        row {
-          label("Label 2")
-        }
-      }
-      row {
-        label("Text with largeGapAfter")
-      }.largeGapAfter()
-      row {
-        label("Text without largeGapAfter")
-      }
-      row {
-        label("Last Text with largeGapAfter")
-      }.largeGapAfter()
-    }
-    row {
-      label("Non hideable text")
     }
   }
 }

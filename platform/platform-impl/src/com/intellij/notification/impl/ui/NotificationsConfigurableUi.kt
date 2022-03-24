@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
@@ -21,10 +24,21 @@ import javax.swing.ListSelectionModel
 class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
   private val ui: DialogPanel
   private val notificationsList = createNotificationsList()
-  private val speedSearch = ListSpeedSearch(notificationsList) { it.toString() }
+  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList) {
+    override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
+      if (super.isMatchingElement(element, pattern)) {
+        return true
+      }
+      if (element != null && pattern != null) {
+        return super.isMatchingElement(element, NotificationGroup.getGroupTitle(pattern))
+      }
+      return false
+    }
+  }
   private lateinit var useBalloonNotifications: JCheckBox
   private lateinit var useSystemNotifications: JCheckBox
   private lateinit var notificationSettings: NotificationSettingsUi
+  private val myDoNotAskConfigurableUi = DoNotAskConfigurableUi()
 
   init {
     ui = panel {
@@ -38,7 +52,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
                                           { settings.SYSTEM_NOTIFICATIONS },
                                           { settings.SYSTEM_NOTIFICATIONS = it }).component
       }
-      row {
+      val r = row {
         notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
         cell {
           scrollPane(notificationsList)
@@ -47,12 +61,23 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
           component(notificationSettings.ui).withLargeLeftGap().constraints(CCFlags.pushX)
         }
       }
+      if (ActionCenter.isEnabled()) {
+        r.largeGapAfter()
+        row {
+          label(IdeBundle.message("notifications.configurable.do.not.ask.title"))
+        }
+        fullRow {
+          component(myDoNotAskConfigurableUi.createComponent())
+        }
+      }
     }
     ScrollingUtil.ensureSelectionExists(notificationsList)
   }
 
   private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
-    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings.toTypedArray())
+    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings
+      .sortedWith(Comparator { nsw1, nsw2 -> NaturalComparator.INSTANCE.compare(nsw1.toString(), nsw2.toString()) })
+      .toTypedArray())
       .apply {
         cellRenderer = SimpleListCellRenderer.create("") { it.toString() }
         selectionModel.addListSelectionListener {
@@ -68,10 +93,11 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
     notificationsList.model = createNotificationsList().model
     notificationsList.selectedIndex = selectedIndex
     notificationSettings.updateUi(notificationsList.selectedValue)
+    myDoNotAskConfigurableUi.reset()
   }
 
   override fun isModified(settings: NotificationsConfigurationImpl): Boolean {
-    return ui.isModified() || isNotificationsModified()
+    return ui.isModified() || isNotificationsModified() || myDoNotAskConfigurableUi.isModified()
   }
 
   private fun isNotificationsModified(): Boolean {
@@ -97,6 +123,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         settingsWrapper.apply()
       }
     }
+    myDoNotAskConfigurableUi.apply()
   }
 
   override fun getComponent() = ui

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,33 +69,10 @@ public interface Keymap extends Scheme {
   @NotNull
   Map<String, List<KeyboardShortcut>> getConflicts(@NotNull String actionId, @NotNull KeyboardShortcut keyboardShortcut);
 
-  /**
-   * @deprecated Use {@link KeymapManagerListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  void addShortcutChangeListener(@NotNull Listener listener);
-
-  /**
-   * @deprecated Use {@link KeymapManagerListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  void removeShortcutChangeListener(@NotNull Listener listener);
-
   void removeAllActionShortcuts(@NotNull String actionId);
 
   @NotNull
   Keymap deriveKeymap(@NotNull String newName);
 
   boolean hasActionId(@NotNull String actionId, @NotNull MouseShortcut shortcut);
-
-  /**
-   * @deprecated Use {@link KeymapManagerListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  interface Listener {
-    void onShortcutChanged(@NotNull String actionId);
-  }
 }

@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.config;
 
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang.BooleanUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
@@ -23,7 +22,7 @@ public class MavenConfig {
     baseDir = Objects.requireNonNull(dir);
   }
 
-  public Boolean hasOption(@NotNull MavenConfigSettings configSetting) {
+  public boolean hasOption(@NotNull MavenConfigSettings configSetting) {
     return optionMap.containsKey(configSetting.key);
   }
 
@@ -33,35 +32,21 @@ public class MavenConfig {
   }
 
   public MavenExecutionOptions.FailureMode getFailureMode() {
-    Boolean failure = hasOption(FAIL_NEVER);
-    if (BooleanUtils.isTrue(failure)) return MavenExecutionOptions.FailureMode.NEVER;
-
-    failure = hasOption(FAIL_AT_END);
-    if (BooleanUtils.isTrue(failure)) return MavenExecutionOptions.FailureMode.AT_END;
-
-    failure = hasOption(FAIL_FAST);
-    if (BooleanUtils.isTrue(failure)) return MavenExecutionOptions.FailureMode.FAST;
-
+    if (hasOption(FAIL_NEVER)) return MavenExecutionOptions.FailureMode.NEVER;
+    if (hasOption(FAIL_AT_END)) return MavenExecutionOptions.FailureMode.AT_END;
+    if (hasOption(FAIL_FAST)) return MavenExecutionOptions.FailureMode.FAST;
     return null;
   }
 
   public MavenExecutionOptions.ChecksumPolicy getChecksumPolicy() {
-    Boolean checkSum = hasOption(CHECKSUM_WARNING_POLICY);
-    if (BooleanUtils.isTrue(checkSum)) return MavenExecutionOptions.ChecksumPolicy.WARN;
-
-    checkSum = hasOption(CHECKSUM_FAILURE_POLICY);
-    if (BooleanUtils.isTrue(checkSum)) return MavenExecutionOptions.ChecksumPolicy.FAIL;
-
+    if (hasOption(CHECKSUM_WARNING_POLICY)) return MavenExecutionOptions.ChecksumPolicy.WARN;
+    if (hasOption(CHECKSUM_FAILURE_POLICY)) return MavenExecutionOptions.ChecksumPolicy.FAIL;
     return null;
   }
 
   public MavenExecutionOptions.LoggingLevel getOutputLevel() {
-    Boolean level = hasOption(QUIET);
-    if (BooleanUtils.isTrue(level)) return MavenExecutionOptions.LoggingLevel.DISABLED;
-
-    level = hasOption(DEBUG);
-    if (BooleanUtils.isTrue(level)) return MavenExecutionOptions.LoggingLevel.DEBUG;
-
+    if (hasOption(QUIET)) return MavenExecutionOptions.LoggingLevel.DISABLED;
+    if (hasOption(DEBUG)) return MavenExecutionOptions.LoggingLevel.DEBUG;
     return null;
   }
 

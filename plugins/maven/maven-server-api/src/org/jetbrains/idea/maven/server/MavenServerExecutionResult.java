@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.model.MavenProjectProblem;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,13 +31,22 @@ public class MavenServerExecutionResult implements Serializable {
   @Nullable public final ProjectData projectData;
   @NotNull public final Collection<MavenProjectProblem> problems;
   @NotNull public final Set<MavenId> unresolvedArtifacts;
+  @NotNull public final Collection<MavenProjectProblem> unresolvedProblems;
 
   public MavenServerExecutionResult(@Nullable ProjectData projectData,
                                     @NotNull Collection<MavenProjectProblem> problems,
                                     @NotNull Set<MavenId> unresolvedArtifacts) {
+    this(projectData, problems, unresolvedArtifacts, Collections.<MavenProjectProblem>emptyList());
+  }
+
+  public MavenServerExecutionResult(@Nullable ProjectData projectData,
+                                    @NotNull Collection<MavenProjectProblem> problems,
+                                    @NotNull Set<MavenId> unresolvedArtifacts,
+                                    @NotNull Collection<MavenProjectProblem> unresolvedProblems) {
     this.projectData = projectData;
     this.problems = problems;
     this.unresolvedArtifacts = unresolvedArtifacts;
+    this.unresolvedProblems = unresolvedProblems;
   }
 
   public static class ProjectData implements Serializable {

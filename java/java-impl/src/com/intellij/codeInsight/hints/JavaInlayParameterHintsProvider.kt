@@ -137,7 +137,6 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return listOf(
       showIfMethodNameContainsParameterName,
       showForParamsWithSameType,
-      showForBuilderLikeMethods,
       ignoreOneCharOneDigitHints,
       isShowHintsForEnumConstants,
       isShowHintsForNewExpressions,
@@ -155,5 +154,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   override fun getMainCheckboxText(): String {
     return JavaBundle.message("settings.inlay.java.show.parameter.hints.for")
+  }
+
+  override fun getProperty(key: String): String {
+    return JavaBundle.message(key)
   }
 }

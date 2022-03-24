@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'i' is never used
 fun foo() {
     <caret>if (true) {
         bar(1)

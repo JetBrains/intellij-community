@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.codeInsight.completion.CompletionPhase.*;
@@ -102,50 +105,53 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
-  private void addRequest(final Runnable request, final int delay) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!myAlarm.isDisposed()) myAlarm.addRequest(request, delay);
-    });
-  }
-
   @Override
   public void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
+  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod) {
     if (PowerSaveMode.isEnabled()) return;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      PsiFile file = documentManager.getPsiFile(editor.getDocument());
-      if (file == null) return;
+      AtomicInteger offset = new AtomicInteger(-1);
+      ReadAction.nonBlocking(() -> {
+          offset.set(editor.getCaretModel().getOffset());
+          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+          PsiFile file = documentManager.getPsiFile(editor.getDocument());
+          if (file == null) return;
 
-      if (!documentManager.isUncommited(editor.getDocument())) {
-        file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
-        if (file == null) return;
-      }
+          if (!documentManager.isUncommited(editor.getDocument())) {
+            file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+            if (file == null) return;
+          }
 
-      Runnable request = () -> {
-        if (!myProject.isDisposed() && !editor.isDisposed() &&
-            UIUtil.isShowing(editor.getContentComponent())) {
-          int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          try {
-            PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            if (file1 != null) {
-              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                              true, null);
+          Runnable request = () -> {
+            if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+              int lbraceOffset = offset.get() - 1;
+              try {
+                PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+                if (file1 != null) {
+                  ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
+                                                  true, null);
+                }
+              }
+              catch (IndexNotReadyException ignored) { //anything can happen on alarm
+              }
             }
-          }
-          catch (IndexNotReadyException ignored) { //anything can happen on alarm
-          }
-        }
-      };
+          };
 
-      addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+          myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+        }).expireWith(myAlarm)
+        .coalesceBy(this, editor)
+        .expireWhen(() -> {
+          int initialOffset = offset.get();
+          return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.configurationStore.JdomSerializer;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings;
@@ -28,7 +29,6 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 
 import static com.intellij.configurationStore.DefaultStateSerializerKt.deserializeState;
@@ -64,6 +64,10 @@ public class MavenSettingsTest extends MavenTestCase {
       @Override
       public void createModuleForAggregatorsChanged() {
         log[0] += "changed ";
+      }
+
+      @Override
+      public void updateAllProjectStructure() {
       }
     });
 

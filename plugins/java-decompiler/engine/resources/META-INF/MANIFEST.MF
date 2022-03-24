@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler
+Automatic-Module-Name: org.jetbrains.java.decompiler

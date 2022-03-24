@@ -20,16 +20,16 @@ import com.jetbrains.python.psi.impl.ParamHelper
 
 internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(support) {
 
-  override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
-    return findStateChanges(declaration).signature(declaration, prevState)
+  override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
+    return findStateChanges(anchor).signature(anchor, prevState)
   }
 
-  override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
-    return findStateChanges(declaration).parameterMarkerRanges(declaration)
+  override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
+    return findStateChanges(anchor).parameterMarkerRanges(anchor)
   }
 
-  override fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
-    return findStateChanges(declaration).updateNewState(state, declaration, super.updateState(state, declaration))
+  override fun updateState(state: SuggestedRefactoringState, anchor: PsiElement): SuggestedRefactoringState {
+    return findStateChanges(anchor).updateNewState(state, anchor, super.updateState(state, anchor))
   }
 
   override fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {

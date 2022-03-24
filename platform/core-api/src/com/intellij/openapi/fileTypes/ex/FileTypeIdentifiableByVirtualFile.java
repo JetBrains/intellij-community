@@ -29,6 +29,11 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.spi.SPIFileType
  */
 public interface FileTypeIdentifiableByVirtualFile extends FileType {
+  /**
+   * @return true if this particular file should be treated as belonging to this file type.
+   * Note that this file type can be associated with other files by other means as well (e.g., "Settings|Editor|File Types|Associate file name pattern..."),
+   * so this method is just one of the possible file type definitions.
+   */
   boolean isMyFileType(@NotNull VirtualFile file);
 
   FileTypeIdentifiableByVirtualFile[] EMPTY_ARRAY = new FileTypeIdentifiableByVirtualFile[0];

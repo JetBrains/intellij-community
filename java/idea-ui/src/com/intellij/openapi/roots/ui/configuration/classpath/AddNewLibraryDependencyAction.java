@@ -30,10 +30,10 @@ import javax.swing.*;
 
 class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;
-  private final LibraryType myLibraryType;
+  private final LibraryType<?> myLibraryType;
 
   AddNewLibraryDependencyAction(final ClasspathPanel classpathPanel,
-                                       StructureConfigurableContext context, LibraryType libraryType) {
+                                       StructureConfigurableContext context, LibraryType<?> libraryType) {
     super(classpathPanel);
     myContext = context;
     myLibraryType = libraryType;
@@ -73,7 +73,7 @@ class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
 
   private static void doCreateLibrary(ClasspathPanel classpathPanel,
                                       StructureConfigurableContext context,
-                                      LibraryCreatedCallback callback, final JComponent component, final @Nullable LibraryType libraryType) {
+                                      LibraryCreatedCallback callback, final JComponent component, final @Nullable LibraryType<?> libraryType) {
     final NewLibraryChooser chooser = new NewLibraryChooser(classpathPanel.getProject(), classpathPanel.getRootModel(), libraryType, context, component);
     final Library library = chooser.createLibrary();
     if (library != null) {

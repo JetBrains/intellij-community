@@ -83,7 +83,7 @@ open class ClientAppSessionsManager : ClientSessionsManager<ClientAppSession>() 
   }
 
   /**
-   * used for ClientId overriding in Code With Me Guest
+   * used for ClientId overriding in JetBrains Client
    */
   protected open fun createLocalSession(application: ApplicationImpl): ClientAppSessionImpl {
     return ClientAppSessionImpl(ClientId.localId, application)

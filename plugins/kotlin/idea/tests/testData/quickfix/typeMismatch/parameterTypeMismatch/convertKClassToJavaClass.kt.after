@@ -1,5 +1,5 @@
 // "Convert 'KClass' to 'Class'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun main() {
     acceptClass(String::class.java)

@@ -18,14 +18,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Use {@link DomService#getDomFileCandidates}.
+ */
 @ApiStatus.Internal
 public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomIndexKey> {
-  /**
-   * @deprecated should not be used since has no effect.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final ID<String, Void> NAME = ID.create("DomFileIndex_old");
   private static final ID<DomIndexKey, Void> INDEX_ID = ID.create("DomFileIndex");
   private static final String NULL_NAMESPACE = "-NULL-";
 
@@ -111,6 +108,14 @@ public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomInd
     @Override
     public int hashCode() {
       return Objects.hash(myRootTagName, myNamespace);
+    }
+
+    @Override
+    public String toString() {
+      return "DomIndexKey{" +
+             "myRootTagName='" + myRootTagName + '\'' +
+             ", myNamespace='" + myNamespace + '\'' +
+             '}';
     }
   }
 

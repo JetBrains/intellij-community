@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -19,7 +18,7 @@ import java.awt.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper.setTitle;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
-public abstract class AbstractWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider, WelcomeScreenComponentListener {
+public abstract class AbstractWelcomeScreen extends JPanel implements WelcomeScreen, WelcomeScreenComponentListener {
   @NonNls private static final String ROOT_ID = "root";
   protected final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
 

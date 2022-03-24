@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +46,25 @@ public interface RemotePathTransformerFactory {
       public @Nullable String toIdePath(@NotNull String remotePath) {
         return remotePath;
       }
+
+      @Override
+      public boolean canBeRemotePath(String s) {
+        return false;
+      }
     };
 
     @Nullable String toRemotePath(@NotNull String localPath);
 
     @Nullable String toIdePath(@NotNull String remotePath);
+
+    boolean canBeRemotePath(String s);
+
+    @Contract("!null -> !null")
+    @Nullable
+    default String toRemotePathOrSelf(@Nullable String localPath) {
+      if (localPath == null) return null;
+      String remotePath = toRemotePath(localPath);
+      return remotePath != null ? remotePath : localPath;
+    }
   }
 }

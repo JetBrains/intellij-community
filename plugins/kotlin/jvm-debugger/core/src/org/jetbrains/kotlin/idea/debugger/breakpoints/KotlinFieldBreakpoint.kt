@@ -359,12 +359,13 @@ class KotlinFieldBreakpoint(
 
     override fun getCategory() = CATEGORY
 
-    override fun getDisplayName(): String? {
+    override fun getDisplayName(): String {
         if (!isValid) {
             return JavaDebuggerBundle.message("status.breakpoint.invalid")
         }
         val className = className
-        return if (className != null && className.isNotEmpty()) className + "." + getFieldName() else getFieldName()
+        @Suppress("HardCodedStringLiteral")
+        return if (!className.isNullOrEmpty()) className + "." + getFieldName() else getFieldName()
     }
 
     private fun getFieldName(): String {

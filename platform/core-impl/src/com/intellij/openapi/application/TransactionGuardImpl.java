@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,22 +89,22 @@ public final class TransactionGuardImpl extends TransactionGuard {
    * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
    * and can be invoked in the current modality state.
    */
+  @ApiStatus.Internal
   public void performUserActivity(Runnable activity) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    try (AccessToken ignore = startActivity(true)) {
-      activity.run();
-    }
+    performActivity(true, activity);
   }
 
   /**
    * An absolutely guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
    */
-  @NotNull
-  public AccessToken startActivity(boolean userActivity) {
+  @ApiStatus.Internal
+  public void performActivity(boolean userActivity, @NotNull Runnable runnable) {
     myErrorReported = false;
     boolean allowWriting = userActivity && isWriteSafeModality(ModalityState.current());
     if (myWritingAllowed == allowWriting) {
-      return AccessToken.EMPTY_ACCESS_TOKEN;
+      runnable.run();
+      return;
     }
 
     if (allowWriting) {
@@ -114,12 +115,12 @@ public final class TransactionGuardImpl extends TransactionGuard {
     }
     final boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myWritingAllowed = prev;
-      }
-    };
+    try {
+      runnable.run();
+    }
+    finally {
+      myWritingAllowed = prev;
+    }
   }
 
   @Override
@@ -129,7 +130,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public boolean isWriteSafeModality(ModalityState state) {
+  public boolean isWriteSafeModality(@NotNull ModalityState state) {
     return Boolean.TRUE.equals(myWriteSafeModalities.get(state));
   }
 

@@ -91,11 +91,6 @@ final class ShRunConfigurationProfileState implements RunProfileState {
           public boolean splitToLines() {
             return false;
           }
-
-          @Override
-          public boolean withSeparators() {
-            return true;
-          }
         };
       }
     };
@@ -209,9 +204,12 @@ final class ShRunConfigurationProfileState implements RunProfileState {
         String escapedValue = StringUtil.escapeQuotes(value);
         quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.apply(escapedValue) : escapedValue;
       }
-      if (endWithSemicolon && index == envs.size() - 1) {
-        commandLine.add(key + "=" + quotedString + ";");
-      } else {
+      if (endWithSemicolon) {
+        String semicolon = "";
+        if (index == envs.size() - 1) semicolon = ";";
+        commandLine.add("export " + key + "=" + quotedString + semicolon);
+      }
+      else {
         commandLine.add(key + "=" + quotedString);
       }
       index++;

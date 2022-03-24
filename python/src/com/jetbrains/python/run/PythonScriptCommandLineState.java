@@ -41,7 +41,7 @@ import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.actions.PyRunFileInConsoleAction;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.remote.PyRemotePathMapper;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -177,10 +177,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
-    super.customizePythonExecutionEnvironmentVars(targetEnvironment, envs, passParentEnvs);
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
+    super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
     if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", TargetEnvironmentFunctions.constant("xterm-256color"));
@@ -205,11 +205,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
             public boolean splitToLines() {
               return false;
             }
-
-            @Override
-            public boolean withSeparators() {
-              return true;
-            }
           };
         }
       };
@@ -220,7 +215,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  protected @NotNull PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+  protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     PythonExecution pythonExecution;
     if (myConfig.isModuleMode()) {
       PythonModuleExecution moduleExecution = new PythonModuleExecution();
@@ -238,6 +234,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
       pythonExecution = pythonScriptExecution;
     }
+
+    pythonExecution.addParameters(getExpandedScriptParameters(myConfig));
 
     pythonExecution.setCharset(EncodingProjectManager.getInstance(myConfig.getProject()).getDefaultCharset());
 

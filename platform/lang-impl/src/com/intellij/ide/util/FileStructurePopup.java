@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -128,8 +129,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
    * @noinspection unused
    * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public FileStructurePopup(@NotNull Project project,
                             @NotNull FileEditor fileEditor,
                             @NotNull StructureView structureView,
@@ -192,6 +192,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
+    PopupUtil.applyNewUIBackground(myTree);
 
     ModelListener modelListener = () -> rebuild(false);
     myTreeModel.addModelListener(modelListener);
@@ -362,7 +363,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       Object userObject = StructureViewComponent.unwrapNavigatable(last);
       Object value = StructureViewComponent.unwrapValue(last);
       if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode)userObject).canRepresent(element)) {
+          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
         return TreeVisitor.Action.INTERRUPT;
       }
       if (value instanceof PsiElement && element instanceof PsiElement) {
@@ -537,7 +538,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return myFileEditor;
       }
       if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
@@ -646,7 +647,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     for (int i = 0, count = treeModel.getChildCount(parent); i < count; i++) {
       Object child = treeModel.getChild(parent, i);
       Object value = StructureViewComponent.unwrapValue(child);
-      if (value instanceof StubBasedPsiElement && ((StubBasedPsiElement)value).getStub() != null) continue;
+      if (value instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)value).getStub() != null) continue;
       TextRange r = value instanceof PsiElement ? ((PsiElement)value).getTextRange() : null;
       if (r == null) continue;
       int distance = TextRangeUtil.getDistance(range, r);
@@ -727,7 +728,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private void addCheckbox(JPanel panel, TreeAction action) {
     String text = action instanceof FileStructureFilter ? ((FileStructureFilter)action).getCheckBoxText() :
-                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider)action).getCheckBoxText() : null;
+                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider<?>)action).getCheckBoxText() : null;
 
     if (text == null) return;
 
@@ -825,7 +826,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       return KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
     }
     return action instanceof FileStructureFilter ?
-                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider<?>)action).getShortcut();
   }
 
   private static boolean getDefaultValue(TreeAction action) {
@@ -872,8 +873,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     String text = String.valueOf(object);
     Object value = StructureViewComponent.unwrapWrapper(object);
     if (text != null) {
-      if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase)value).isSearchInLocationString()) {
-           String locationString = ((PsiTreeElementBase)value).getLocationString();
+      if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase<?>)value).isSearchInLocationString()) {
+           String locationString = ((PsiTreeElementBase<?>)value).getLocationString();
           if (!StringUtil.isEmpty(locationString)) {
             String locationPrefix = null;
             String locationSuffix = null;

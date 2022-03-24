@@ -15,16 +15,18 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Query;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -74,26 +76,57 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
                          @Nullable Runnable refreshViews) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         for (CommonProblemDescriptor descriptor : descriptors) {
-          final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
-          final PsiElement parent = element.getParent();
-          final PsiElement grandParent = parent.getParent();
-          if (!(grandParent instanceof PsiMember)) {
-            return;
-          }
-          final PsiMember member = (PsiMember)grandParent;
-          final PsiModifierList modifierList = member.getModifierList();
-          if (modifierList == null) {
-            return;
-          }
-          final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-          modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-          final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
-          final boolean canBePrivate = search.forEach(reference -> {
-            return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
-          });
-          modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+          performFix((ProblemDescriptor)descriptor);
         }
       }, InspectionGadgetsBundle.message("weaken.visibility.quickfix"), true, project);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      performFix(previewDescriptor);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    private static void performFix(ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMember)) return;
+      final PsiMember member = (PsiMember)grandParent;
+      final PsiModifierList modifierList = member.getModifierList();
+      if (modifierList == null) return;
+      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
+      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+      final boolean canBePrivate = ReferencesSearch.search(member, member.getUseScope()).allMatch(
+        reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
+                                                  findAccessObjectClass(reference, member), null));
+      modifierList.setModifierProperty(canBePrivate ? PsiModifier.PRIVATE : PsiModifier.PACKAGE_LOCAL, true);
+    }
+
+    @Nullable
+    private static PsiClass findAccessObjectClass(@NotNull PsiReference reference, @NotNull PsiMember member) {
+      if (!(reference instanceof PsiJavaCodeReferenceElement)) return null;
+      PsiElement qualifier = ((PsiJavaCodeReferenceElement)reference).getQualifier();
+      if (!(qualifier instanceof PsiExpression)) return null;
+      PsiClass accessObjectClass = null;
+      JavaResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
+      PsiElement element = accessClass.getElement();
+      if (element instanceof PsiTypeParameter) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(member.getContainingFile().getProject());
+        PsiClassType type = factory.createType((PsiTypeParameter)element);
+        PsiType accessType = accessClass.getSubstitutor().substitute(type);
+        if (accessType instanceof PsiArrayType) {
+          LanguageLevel languageLevel = PsiUtil.getLanguageLevel(member.getContainingFile());
+          accessObjectClass = factory.getArrayClass(languageLevel);
+        }
+        else if (accessType instanceof PsiClassType) {
+          accessObjectClass = ((PsiClassType)accessType).resolve();
+        }
+      }
+      else if (element instanceof PsiClass) {
+        accessObjectClass = (PsiClass)element;
+      }
+      return accessObjectClass;
     }
   }
 

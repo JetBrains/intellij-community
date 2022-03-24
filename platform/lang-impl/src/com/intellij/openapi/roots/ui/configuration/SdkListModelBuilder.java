@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderLogger;
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -26,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.*;
 import java.io.File;
@@ -303,6 +305,8 @@ public final class SdkListModelBuilder {
           VfsUtil.markDirtyAndRefresh(false, true, true, new File(homePath));
         }
       });
+
+      JdkDownloaderLogger.INSTANCE.logDetected(JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath));
 
       mySdkModel.addSdk(suggestedItem.sdkType, homePath, onNewSdkAdded);
       return true;

@@ -1,5 +1,5 @@
 // "Replace with 'B<String>'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @Deprecated(message = "renamed", replaceWith = ReplaceWith("B<E>"))
 typealias A<E> = List<E>

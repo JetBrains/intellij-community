@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: The expression is unused
 
 fun test() {
     val foo: String? = null

@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
@@ -26,11 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
   @Test
   public void testLibraryDependency() {
     importProject("<groupId>test</groupId>" +
@@ -1140,7 +1135,6 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModules("project", "m");
     assertModuleLibDeps("m");
 
-    if (ignore()) return;
 
     MavenProject root = myProjectsTree.getRootProjects().get(0);
     List<MavenProject> modules = myProjectsTree.getModules(root);
@@ -1183,7 +1177,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   @Test
   public void testUsingMirrors() throws Exception {
     setRepositoryPath(myDir.getPath() + "/repo");
-    String mirrorPath = FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror");
+    String mirrorPath = myPathTransformer.toRemotePath(FileUtil.toSystemIndependentName(myDir.getPath() + "/mirror"));
 
     updateSettingsXmlFully("<settings>" +
                            "  <mirrors>" +
@@ -1256,7 +1250,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    myProjectsManager.importProjects();
+    importProject();
 
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
@@ -1886,8 +1880,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                      "</modules>");
 
     configConfirmationForYesAnswer();
-    readProjects(Arrays.asList(myProjectPom));
-    resolveDependenciesAndImport();
+    importProject();
     assertProjectLibraries("Maven: group:lib1:1");
   }
 
@@ -2177,8 +2170,12 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     configConfirmationForYesAnswer();
 
-    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(m2.getPath()));
-    myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+
+    setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));
+
+    if(!isNewImportingProcess) {
+      myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+    }
     importProject();
 
     assertModules("project", "m1");
@@ -2416,5 +2413,51 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     finally {
       value.resetToDefault();
     }
+  }
+
+  @Test
+  public void testTransitiveProfileDependency() {
+    assumeVersionMoreThan("3.1.0");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<profiles>" +
+                          "  <profile>" +
+                          "    <id>test</id>" +
+                          "    <dependencies>" +
+                          "      <dependency>" +
+                          "        <groupId>junit</groupId>" +
+                          "        <artifactId>junit</artifactId>" +
+                          "        <version>4.0</version>" +
+                          "      </dependency>" +
+                          "    </dependencies>" +
+                          "  </profile>" +
+                          "</profiles>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m1</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProjectWithProfiles("test");
+    assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
   }
 }

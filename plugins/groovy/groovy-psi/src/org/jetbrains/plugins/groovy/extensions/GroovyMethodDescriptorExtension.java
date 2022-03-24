@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -28,7 +28,9 @@ public class GroovyMethodDescriptorExtension extends GroovyMethodDescriptor impl
     myPluginDescriptor = pluginDescriptor;
   }
 
-  public ClassLoader getLoaderForClass() {
-    return myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
+  public @NotNull ClassLoader getLoaderForClass() {
+    return myPluginDescriptor != null ?
+           myPluginDescriptor.getClassLoader() :
+           getClass().getClassLoader();
   }
 }

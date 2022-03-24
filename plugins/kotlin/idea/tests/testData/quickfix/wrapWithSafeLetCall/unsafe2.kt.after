@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class A(val b: B)
 class B {
     fun c(s: String) {}

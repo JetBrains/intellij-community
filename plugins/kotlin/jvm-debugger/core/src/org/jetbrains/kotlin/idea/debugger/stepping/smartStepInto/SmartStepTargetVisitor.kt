@@ -19,12 +19,17 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.breakpoints.isInlineOnly
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.isFromJava
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParentCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.annotations.argumentValue
+import org.jetbrains.kotlin.resolve.calls.util.getParentCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.isInlineClassType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
@@ -57,9 +62,98 @@ class SmartStepTargetVisitor(
         }
     }
 
+    override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
+        recordCallableReference(expression)
+        super.visitCallableReferenceExpression(expression)
+    }
+
+    private fun recordCallableReference(expression: KtCallableReferenceExpression) {
+        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+        val resolvedCall = expression.callableReference.getResolvedCall(bindingContext) ?: return
+        when (val descriptor = resolvedCall.resultingDescriptor) {
+            is FunctionDescriptor -> recordFunctionReference(expression, descriptor)
+            is PropertyDescriptor -> recordGetter(expression, descriptor, bindingContext)
+        }
+    }
+
+    private fun recordFunctionReference(expression: KtCallableReferenceExpression, descriptor: FunctionDescriptor) {
+        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, descriptor)
+        if (descriptor.isFromJava && declaration is PsiMethod) {
+            append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+        } else if (declaration is KtNamedFunction) {
+            val label = KotlinMethodSmartStepTarget.calcLabel(descriptor)
+            append(
+                KotlinMethodReferenceSmartStepTarget(
+                    lines,
+                    expression,
+                    label,
+                    declaration,
+                    CallableMemberInfo(descriptor)
+                )
+            )
+        }
+    }
+
+    private fun recordGetter(expression: KtExpression, descriptor: PropertyDescriptor, bindingContext: BindingContext) {
+        val getterDescriptor = descriptor.getter
+        if (getterDescriptor == null || getterDescriptor.isDefault) return
+
+        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, getterDescriptor) as? KtDeclaration ?: return
+
+        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, getterDescriptor]
+        if (delegatedResolvedCall != null) {
+            val delegatedPropertyGetterDescriptor = delegatedResolvedCall.resultingDescriptor
+            val delegateDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+                element.project, delegatedPropertyGetterDescriptor
+            ) as? KtDeclarationWithBody ?: return
+            val label = "${descriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyGetterDescriptor)
+            appendPropertyFilter(delegatedPropertyGetterDescriptor, delegateDeclaration, label, expression, lines)
+        } else {
+            if (ktDeclaration is KtPropertyAccessor && ktDeclaration.hasBody()) {
+                val label = KotlinMethodSmartStepTarget.calcLabel(getterDescriptor)
+                appendPropertyFilter(getterDescriptor, ktDeclaration, label, expression, lines)
+            }
+        }
+    }
+
+    private fun appendPropertyFilter(
+        descriptor: CallableMemberDescriptor,
+        declaration: KtDeclarationWithBody,
+        label: String,
+        expression: KtExpression,
+        lines: Range<Int>
+    ) {
+        val methodInfo = CallableMemberInfo(descriptor)
+        when (expression) {
+            is KtCallableReferenceExpression ->
+                append(
+                    KotlinMethodReferenceSmartStepTarget(
+                        lines,
+                        expression,
+                        label,
+                        declaration,
+                        methodInfo
+                    )
+                )
+            else -> {
+                val ordinal = countExistingMethodCalls(declaration)
+                append(
+                    KotlinMethodSmartStepTarget(
+                        lines,
+                        expression,
+                        label,
+                        declaration,
+                        ordinal,
+                        methodInfo
+                    )
+                )
+            }
+        }
+    }
+
     private fun recordFunction(function: KtFunction): Boolean {
-        val functionParameterInfo = function.getFunctionParameterInfo() ?: return false
-        val target = createSmartStepTarget(function, functionParameterInfo)
+        val (parameter, resultingDescriptor) = function.getParameterAndResolvedCallDescriptor() ?: return false
+        val target = createSmartStepTarget(function, parameter, resultingDescriptor)
         if (target != null) {
             append(target)
             return true
@@ -69,22 +163,47 @@ class SmartStepTargetVisitor(
 
     private fun createSmartStepTarget(
         function: KtFunction,
-        functionParameterInfo: FunctionParameterInfo
+        parameter: ValueParameterDescriptor,
+        resultingDescriptor: CallableMemberDescriptor
     ): KotlinLambdaSmartStepTarget? {
-        val (param, resultingDescriptor) = functionParameterInfo
-        if (param.isSamLambdaParameterDescriptor()) {
-            val methodDescriptor = param.type.getFirstAbstractMethodDescriptor() ?: return null
+        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, resultingDescriptor) as? KtDeclaration ?: return null
+        val callerMethodOrdinal = countExistingMethodCalls(declaration)
+        if (parameter.isSamLambdaParameterDescriptor()) {
+            val methodDescriptor = parameter.type.getFirstAbstractMethodDescriptor() ?: return null
             return KotlinLambdaSmartStepTarget(
-                resultingDescriptor,
-                param,
                 function,
+                declaration,
                 lines,
-                false,
-                false,
-                methodDescriptor.name.asString()
+                KotlinLambdaInfo(
+                    resultingDescriptor,
+                    parameter,
+                    callerMethodOrdinal,
+                    methodDescriptor.containsInlineClassInValueArguments(),
+                    true,
+                    methodDescriptor.getMethodName()
+                )
             )
         }
-        return KotlinLambdaSmartStepTarget(resultingDescriptor, param, function, lines)
+        return KotlinLambdaSmartStepTarget(
+            function,
+            declaration,
+            lines,
+            KotlinLambdaInfo(
+                resultingDescriptor,
+                parameter,
+                callerMethodOrdinal,
+                parameter.type.arguments.any { it.type.isInlineClassType() }
+            )
+        )
+    }
+
+    private fun countExistingMethodCalls(declaration: KtDeclaration): Int {
+        return consumer
+            .filterIsInstance<KotlinMethodSmartStepTarget>()
+            .count {
+                val targetDeclaration = it.getDeclaration()
+                targetDeclaration != null && targetDeclaration === declaration
+            }
     }
 
     override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression) {
@@ -112,18 +231,18 @@ class SmartStepTargetVisitor(
     }
 
     override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
-        recordFunctionCall(expression)
         super.visitArrayAccessExpression(expression)
+        recordFunctionCall(expression)
     }
 
     override fun visitUnaryExpression(expression: KtUnaryExpression) {
-        recordFunctionCall(expression.operationReference)
         super.visitUnaryExpression(expression)
+        recordFunctionCall(expression.operationReference)
     }
 
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
-        recordFunctionCall(expression.operationReference)
         super.visitBinaryExpression(expression)
+        recordFunctionCall(expression.operationReference)
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
@@ -135,36 +254,15 @@ class SmartStepTargetVisitor(
     }
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-        recordGetter(expression)
-        super.visitSimpleNameExpression(expression)
-    }
-
-    private fun recordGetter(expression: KtSimpleNameExpression) {
-        val bindingContext = expression.analyze()
+        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
         val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
         val propertyDescriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
-
-        val getterDescriptor = propertyDescriptor.getter
-        if (getterDescriptor == null || getterDescriptor.isDefault) return
-
-        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, getterDescriptor) as? KtDeclaration ?: return
-
-        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, getterDescriptor]
-        if (delegatedResolvedCall != null) {
-            val delegatedPropertyGetterDescriptor = delegatedResolvedCall.resultingDescriptor
-            val label = "${propertyDescriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyGetterDescriptor)
-            append(KotlinMethodSmartStepTarget(delegatedPropertyGetterDescriptor, ktDeclaration, label, expression, lines))
-        } else {
-            if (ktDeclaration is KtPropertyAccessor && ktDeclaration.hasBody()) {
-                val label = KotlinMethodSmartStepTarget.calcLabel(getterDescriptor)
-                append(KotlinMethodSmartStepTarget(getterDescriptor, ktDeclaration, label, expression, lines))
-            }
-        }
+        recordGetter(expression, propertyDescriptor, bindingContext)
+        super.visitSimpleNameExpression(expression)
     }
 
     private fun recordFunctionCall(expression: KtExpression) {
         val resolvedCall = expression.resolveToCall() ?: return
-
         val descriptor = resolvedCall.resultingDescriptor
         if (descriptor !is FunctionDescriptor || isIntrinsic(descriptor)) return
 
@@ -203,7 +301,17 @@ class SmartStepTargetVisitor(
                 else -> callLabel
             }
 
-            append(KotlinMethodSmartStepTarget(descriptor, declaration, label, expression, lines))
+            val ordinal = if (declaration == null) 0 else countExistingMethodCalls(declaration)
+            append(
+                KotlinMethodSmartStepTarget(
+                    lines,
+                    expression,
+                    label,
+                    declaration,
+                    ordinal,
+                    CallableMemberInfo(descriptor)
+                )
+            )
         }
     }
 
@@ -212,11 +320,27 @@ class SmartStepTargetVisitor(
     }
 }
 
-private data class FunctionParameterInfo(val parameter: ValueParameterDescriptor, val resultingDescriptor: CallableDescriptor)
+private val JVM_NAME_FQ_NAME = FqName("kotlin.jvm.JvmName")
+
+private fun PropertyAccessorDescriptor.getJvmMethodName(): String {
+    val jvmNameAnnotation = annotations.findAnnotation(JVM_NAME_FQ_NAME)
+    val jvmName = jvmNameAnnotation?.argumentValue(JvmName::name.name)?.value as? String
+    if (jvmName != null) {
+        return jvmName
+    }
+    return JvmAbi.getterName(correspondingProperty.name.asString())
+}
+
+fun DeclarationDescriptor.getMethodName() =
+    when (this) {
+        is ClassDescriptor, is ConstructorDescriptor -> "<init>"
+        is PropertyAccessorDescriptor -> getJvmMethodName()
+        else -> name.asString()
+    }
 
 fun KtFunction.isSamLambda(): Boolean {
-    val functionParameterInfo = getFunctionParameterInfo() ?: return false
-    return functionParameterInfo.parameter.isSamLambdaParameterDescriptor()
+    val (parameter, _) = getParameterAndResolvedCallDescriptor() ?: return false
+    return parameter.isSamLambdaParameterDescriptor()
 }
 
 private fun ValueParameterDescriptor.isSamLambdaParameterDescriptor(): Boolean {
@@ -224,14 +348,15 @@ private fun ValueParameterDescriptor.isSamLambdaParameterDescriptor(): Boolean {
     return !type.isFunctionType && type is SimpleType && type.isSingleClassifierType
 }
 
-private fun KtFunction.getFunctionParameterInfo(): FunctionParameterInfo? {
+private fun KtFunction.getParameterAndResolvedCallDescriptor(): Pair<ValueParameterDescriptor, CallableMemberDescriptor>? {
     val context = analyze()
     val resolvedCall = getParentCall(context).getResolvedCall(context) ?: return null
+    val descriptor = resolvedCall.resultingDescriptor as? CallableMemberDescriptor ?: return null
     val arguments = resolvedCall.valueArguments
 
     for ((param, argument) in arguments) {
         if (argument.arguments.any { getArgumentExpression(it) == this }) {
-            return FunctionParameterInfo(param, resolvedCall.resultingDescriptor)
+            return Pair(param, descriptor)
         }
     }
     return null
@@ -241,11 +366,13 @@ private fun getArgumentExpression(it: ValueArgument): KtExpression? {
     return (it.getArgumentExpression() as? KtLambdaExpression)?.functionLiteral ?: it.getArgumentExpression()
 }
 
-private fun KotlinType.getFirstAbstractMethodDescriptor() =
+private fun KotlinType.getFirstAbstractMethodDescriptor(): CallableMemberDescriptor? =
     memberScope
         .getDescriptorsFiltered(DescriptorKindFilter.FUNCTIONS)
+        .asSequence()
+        .filterIsInstance<CallableMemberDescriptor>()
         .firstOrNull {
-            it is FunctionDescriptor && it.modality == Modality.ABSTRACT
+            it.modality == Modality.ABSTRACT
         }
 
 private fun isInvokeInBuiltinFunction(descriptor: DeclarationDescriptor): Boolean {

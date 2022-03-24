@@ -25,8 +25,9 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightClass
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.editor.fixers.startLine
@@ -247,6 +248,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
     if (!(KotlinLineMarkerOptions.implementingOption.isEnabled || KotlinLineMarkerOptions.overridingOption.isEnabled)) return
 
     assert(declaration is KtNamedFunction || declaration is KtProperty || declaration is KtParameter)
+    declaration as KtNamedDeclaration // implied by assert
 
     if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
 
@@ -255,7 +257,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
 
     val implements = isImplementsAndNotOverrides(resolveWithParents.descriptor!!, resolveWithParents.overriddenDescriptors)
 
-    val anchor = (declaration as? KtNamedDeclaration)?.nameIdentifier ?: declaration
+    val anchor = declaration.nameAnchor()
 
     // NOTE: Don't store descriptors in line markers because line markers are not deleted while editing other files and this can prevent
     // clearing the whole BindingTrace.
@@ -288,7 +290,7 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
         return
     }
 
-    val lightClass = element.toLightClass() ?: KtFakeLightClass(element)
+    val lightClass = element.toLightClass() ?: element.toFakeLightClass()
 
     if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null) return
 
@@ -536,7 +538,7 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
     for (function in getOverriddenDeclarations(mappingToJava, classes)) {
         ProgressManager.checkCanceled()
 
-        val anchor = function.nameIdentifier ?: function
+        val anchor = function.nameAnchor()
         val gutter = if (isImplemented(function)) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val lineMarkerInfo = LineMarkerInfo(
             anchor,
@@ -556,3 +558,5 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
         result.add(lineMarkerInfo)
     }
 }
+
+private fun KtNamedDeclaration.nameAnchor(): PsiElement = nameIdentifier ?: PsiTreeUtil.getDeepestVisibleFirst(this) ?: this

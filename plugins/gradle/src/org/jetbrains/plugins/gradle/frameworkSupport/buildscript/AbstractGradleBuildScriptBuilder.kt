@@ -1,26 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
+import java.util.function.Consumer
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>>(
   gradleVersion: GradleVersion
 ) : AbstractGradleBuildScriptBuilderCore<BSB>(gradleVersion), GradleBuildScriptBuilder<BSB> {
 
-  val kotlinVersion = if (isSupportedKotlin4(gradleVersion)) "1.4.32" else "1.3.50"
-  val groovyVersion = "3.0.5"
-  val junit4Version = "4.12"
-  val junit5Version = "5.7.0"
+  protected val kotlinVersion = getKotlinVersion(gradleVersion)
+  protected val groovyVersion = getGroovyVersion()
+  protected val junit4Version = getJunit4Version()
+  protected val junit5Version = getJunit5Version()
 
   override fun addGroup(group: String) =
     withPrefix { assign("group", group) }
 
   override fun addVersion(version: String) =
     withPrefix { assign("version", version) }
+
+  override fun configureTask(name: String, configure: Consumer<ScriptTreeBuilder>) =
+    configureTask(name, configure::accept)
 
   override fun addDependency(scope: String, dependency: String, sourceSet: String?) =
     addDependency(scope, string(dependency), sourceSet)
@@ -119,10 +124,14 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
 
-  override fun withGroovyPlugin() = apply {
+  override fun withGroovyPlugin(version: String): BSB = apply {
     withPlugin("groovy")
     withMavenCentral()
-    addImplementationDependency("org.codehaus.groovy:groovy-all:$groovyVersion")
+    if (isSupportedGroovyApache(version)) {
+      addImplementationDependency("org.apache.groovy:groovy:$version")
+    } else {
+      addImplementationDependency("org.codehaus.groovy:groovy-all:$version")
+    }
   }
 
   override fun withApplicationPlugin(
@@ -132,13 +141,11 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     defaultJvmArgs: List<String>?
   ) = apply {
     withPlugin("application")
-    withPostfix {
-      callIfNotEmpty("application") {
-        assignIfNotNull("mainModule", mainModule)
-        assignIfNotNull("mainClass", mainClass)
-        assignIfNotNull("executableDir", executableDir)
-        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let(::list))
-      }
+    configureTask("application") {
+      assignIfNotNull("mainModule", mainModule)
+      assignIfNotNull("mainClass", mainClass)
+      assignIfNotNull("executableDir", executableDir)
+      assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
     }
   }
 
@@ -155,10 +162,8 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withMavenCentral()
     addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
     addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
-    withPostfix {
-      call("test") {
-        call("useJUnitPlatform")
-      }
+    configureTask("test") {
+      call("useJUnitPlatform")
     }
   }
 }

@@ -65,7 +65,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
       }
-      return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
+      return (thisRef.diff as WorkspaceEntityStorageBuilderImpl).extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
 
     override fun setValue(thisRef: ModifParent, property: KProperty<*>, value: Child?) {
@@ -75,7 +75,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
       }
-      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
+      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneChildOfParent(connectionId!!, thisRef.id, value?.id?.asChild())
     }
   }
 }
@@ -91,7 +91,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
-      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)!!
+      return (thisRef.diff as WorkspaceEntityStorageBuilderImpl).extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
 
     override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent) {
@@ -101,14 +101,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
-
-      // A very important thing. If we replace a field in one-to-one connection, the previous entity is automatically removed.
-      val existingChild = thisRef.diff.extractOneToOneChild<Child>(connectionId!!, value.id)
-      if (existingChild != null) {
-        thisRef.diff.removeEntity(existingChild)
-      }
-
-      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
+      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }
   }
 
@@ -122,7 +115,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true)
       }
-      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)
+      return (thisRef.diff as WorkspaceEntityStorageBuilderImpl).extractOneToOneParent(connectionId!!, thisRef.id)
     }
 
     override fun setValue(thisRef: ModifChild, property: KProperty<*>, value: Parent?) {
@@ -132,7 +125,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true)
       }
-      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
+      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }
   }
 }

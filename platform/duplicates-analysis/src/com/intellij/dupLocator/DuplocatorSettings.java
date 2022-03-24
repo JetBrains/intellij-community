@@ -2,6 +2,7 @@
 package com.intellij.dupLocator;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-@State(name = "DuplocatorSettings", storages = @Storage("duplocatorSettings.xml"))
+@State(name = "DuplocatorSettings", storages = @Storage("duplocatorSettings.xml"), category = SettingsCategory.CODE)
 public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSettings> {
   public boolean DISTINGUISH_VARIABLES = false;
   public boolean DISTINGUISH_FIELDS = false;

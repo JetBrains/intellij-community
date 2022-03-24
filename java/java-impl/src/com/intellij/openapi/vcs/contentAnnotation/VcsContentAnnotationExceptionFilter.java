@@ -85,8 +85,14 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionLineParser worker = ExceptionLineParserFactory.getInstance().create(myCache);
       final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-      if (ReadAction.compute(() -> DumbService.isDumb(myProject) ? null : worker.execute(lineText, lineEndOffset)) != null) {
-        VirtualFile vf = worker.getFile().getVirtualFile();
+      PsiFile file = ReadAction.compute(() -> {
+        if (DumbService.isDumb(myProject)) return null;
+        Result result = worker.execute(lineText, lineEndOffset);
+        if (result == null) return null;
+        return worker.getFile();
+      });
+      if (file != null) {
+        VirtualFile vf = file.getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 
         VcsRevisionNumber recentChangeRevision = myRevNumbersCache.get(vf);
@@ -142,7 +148,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
         }
       }
       previousLineResult = worker.getResult() == null ? null :
-                           new Trinity<>(worker.getPsiClass(), worker.getFile(), worker.getMethod());
+                           new Trinity<>(worker.getPsiClass(), file, worker.getMethod());
     }
   }
 

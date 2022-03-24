@@ -20,15 +20,21 @@ interface DebuggerListener : XDebuggerManagerListener {
 }
 
 class CoroutineDebuggerListener(val project: Project) : DebuggerListener {
-    val log by logger
+    companion object {
+        val log by logger
+    }
 
     override fun registerDebuggerConnection(
         configuration: RunConfigurationBase<*>,
         params: JavaParameters?,
         runnerSettings: RunnerSettings?
     ): DebuggerConnection? {
-        val disableCoroutineAgent = KotlinDebuggerSettings.getInstance().debugDisableCoroutineAgent
-        if (!disableCoroutineAgent && runnerSettings is DebuggingRunnerData) {
+        val coroutineDebugIsDisabledInSettings = KotlinDebuggerSettings.getInstance().debugDisableCoroutineAgent
+        val coroutineDebugIsDisabledInParameters = params != null && params.isKotlinxCoroutinesDebugDisabled()
+        if (!coroutineDebugIsDisabledInSettings &&
+            !coroutineDebugIsDisabledInParameters &&
+            runnerSettings is DebuggingRunnerData)
+        {
             return DebuggerConnection(
                 project,
                 configuration,
@@ -38,15 +44,23 @@ class CoroutineDebuggerListener(val project: Project) : DebuggerListener {
         }
         return null
     }
-
-    private fun RunConfigurationBase<*>.isGradleConfiguration(): Boolean {
-        val name = type.id
-        return name == "GradleRunConfiguration" || name == "KotlinGradleRunConfiguration"
-    }
-
-    private fun RunConfigurationBase<*>.isMavenConfiguration() =
-        type.id == "MavenRunConfiguration"
-
-    private fun argumentsShouldBeModified(configuration: RunConfigurationBase<*>) =
-        !configuration.isGradleConfiguration() && !configuration.isMavenConfiguration()
 }
+
+private const val KOTLINX_COROUTINES_DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+private const val KOTLINX_COROUTINES_DEBUG_OFF_VALUE = "off"
+
+private fun JavaParameters.isKotlinxCoroutinesDebugDisabled(): Boolean {
+    val kotlinxCoroutinesDebugProperty = vmParametersList.properties[KOTLINX_COROUTINES_DEBUG_PROPERTY_NAME]
+    return kotlinxCoroutinesDebugProperty == KOTLINX_COROUTINES_DEBUG_OFF_VALUE
+}
+
+private fun argumentsShouldBeModified(configuration: RunConfigurationBase<*>): Boolean =
+    !configuration.isGradleConfiguration() && !configuration.isMavenConfiguration()
+
+private fun RunConfigurationBase<*>.isGradleConfiguration(): Boolean {
+    val name = type.id
+    return name == "GradleRunConfiguration" || name == "KotlinGradleRunConfiguration"
+}
+
+private fun RunConfigurationBase<*>.isMavenConfiguration(): Boolean =
+    type.id == "MavenRunConfiguration"

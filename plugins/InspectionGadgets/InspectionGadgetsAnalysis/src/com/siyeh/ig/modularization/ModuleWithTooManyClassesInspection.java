@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,21 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
 
@@ -37,28 +41,36 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
   public int limit = 100;
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(
-    @NotNull RefEntity refEntity,
-    @NotNull AnalysisScope analysisScope,
-    @NotNull InspectionManager inspectionManager,
-    @NotNull GlobalInspectionContext globalInspectionContext) {
+  public boolean isGraphNeeded() {
+    return false;
+  }
+
+  @Override
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope analysisScope,
+                                                           @NotNull InspectionManager inspectionManager,
+                                                           @NotNull GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefModule)) {
       return null;
     }
-    final List<RefEntity> children = refEntity.getChildren();
-    int numClasses = 0;
-    for (RefEntity child : children) {
-      if (child instanceof RefClass) {
-        numClasses++;
-      }
-    }
-    if (numClasses <= limit) {
+    final RefModule refModule = (RefModule)refEntity;
+    final ModuleFileIndex index = ModuleRootManager.getInstance(refModule.getModule()).getFileIndex();
+    final Project project = inspectionManager.getProject();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final int[] count = {0};
+    index.iterateContent(fileOrDir -> {
+      if (fileOrDir.isDirectory()) return true;
+      if (!analysisScope.contains(fileOrDir)) return true;
+      final PsiFile file = psiManager.findFile(fileOrDir);
+      if (!(file instanceof PsiClassOwner)) return true;
+      count[0] += ((PsiClassOwner)file).getClasses().length;
+      return true;
+    });
+    if (count[0] <= limit) {
       return null;
     }
-    final String errorString = InspectionGadgetsBundle.message(
-      "module.with.too.many.classes.problem.descriptor",
-      refEntity.getName(), Integer.valueOf(numClasses),
-      Integer.valueOf(limit));
+    final String errorString = InspectionGadgetsBundle.message("module.with.too.many.classes.problem.descriptor",
+                                                               refEntity.getName(), Integer.valueOf(count[0]), Integer.valueOf(limit));
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)
     };
@@ -66,9 +78,6 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "module.with.too.many.classes.max.option"),
-      this, "limit", 3);
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("module.with.too.many.classes.max.option"), this, "limit");
   }
 }

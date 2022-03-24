@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @see VfsUtilCore#visitChildrenRecursively
+ * @see VfsUtilCore#iterateChildrenRecursively
+ * @see VfsUtilCore#processFilesRecursively
  */
 public abstract class VirtualFileVisitor<T> {
   private boolean myFollowSymLinks = true;

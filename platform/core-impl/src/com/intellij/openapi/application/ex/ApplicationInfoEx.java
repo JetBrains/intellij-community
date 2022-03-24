@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -23,25 +23,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getAboutImageUrl();
 
   /**
-   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract String getIconUrl();
-
-  /**
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract @NotNull String getSmallIconUrl();
-
-  /**
-   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract @Nullable String getBigIconUrl();
 
   /**
    * Return path to an SVG file containing icon of the current version of the product. The path is a relative path inside the product's JAR
@@ -161,6 +147,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 
+  /**
+   * @deprecated Not used anymore.
+   */
+  @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 
   public abstract @Nullable String getDefaultDarkLaf();

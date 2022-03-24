@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +18,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedDocumentListener {
-  RangeMarkerTree(@NotNull Document document) {
+@ApiStatus.Internal
+public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedDocumentListener {
+
+  public RangeMarkerTree(@NotNull Document document) {
     document.addDocumentListener(this);
   }
   RangeMarkerTree() {
@@ -53,7 +56,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     return 0;
   }
 
-  void dispose(@NotNull Document document) {
+  public void dispose(@NotNull Document document) {
     document.removeDocumentListener(this);
   }
 
@@ -111,7 +114,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     ((RangeMarkerImpl)key).myNode = (RMNode<RangeMarkerEx>)intervalNode;
   }
 
-  static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
+  @ApiStatus.Internal
+  public static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
     private static final byte EXPAND_TO_LEFT_FLAG = VALID_FLAG<<1;
     private static final byte EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG<<1;
     static final byte STICK_TO_RIGHT_FLAG = EXPAND_TO_RIGHT_FLAG<<1;
@@ -151,8 +155,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Override
   public void documentChanged(@NotNull DocumentEvent e) {
+    l.writeLock().lock();
     try {
-      l.writeLock().lock();
       if (size() != 0) {
         updateMarkersOnChange(e);
         if (DocumentEventUtil.isMoveInsertion(e)) {
@@ -257,11 +261,11 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   // returns true if all deltas involved are still 0
-  boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                 int start, int end, int lengthDelta,
-                                                 @NotNull List<? super IntervalNode<T>> affected) {
-    if (root == null) return true;
-    boolean norm = pushDelta(root);
+  void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
+                                              int start, int end, int lengthDelta,
+                                              @NotNull List<? super IntervalNode<T>> affected) {
+    if (root == null) return;
+    pushDelta(root);
 
     int maxEnd = root.maxEnd;
     assert root.isValid();
@@ -276,15 +280,13 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     else if (end < root.intervalStart()) {
       // shift entire subtree
-      int newD = root.changeDelta(lengthDelta);
-      norm &= newD == 0;
+      root.changeDelta(lengthDelta);
       IntervalNode<T> left = root.getLeft();
       if (left != null) {
-        int newL = left.changeDelta(-lengthDelta);
-        norm &= newL == 0;
+        left.changeDelta(-lengthDelta);
       }
-      norm &= pushDelta(root);
-      norm &= collectAffectedMarkersAndShiftSubtrees(left, start, end, lengthDelta, affected);
+      pushDelta(root);
+      collectAffectedMarkersAndShiftSubtrees(left, start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
     else {
@@ -294,11 +296,10 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         root.setValid(false);  //make invisible
       }
 
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), start, end, lengthDelta, affected);
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), start, end, lengthDelta, affected);
+      collectAffectedMarkersAndShiftSubtrees(root.getLeft(), start, end, lengthDelta, affected);
+      collectAffectedMarkersAndShiftSubtrees(root.getRight(), start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
-    return norm;
   }
 
   // All intervals contained in (e.getMoveOffset(), e.getMoveOffset() + e.getNewLength())

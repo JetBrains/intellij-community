@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(list: List<Any>) {
     list.mapNotNull {
         it as? String ?: return@mapNotNull null<caret>

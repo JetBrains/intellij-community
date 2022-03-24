@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -57,9 +57,9 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override fun instantiateService(service: ServiceDescriptor) {
+  override fun preloadService(service: ServiceDescriptor) {
     ClientId.withClientId(clientId) {
-      super.instantiateService(service)
+      super.preloadService(service)
     }
   }
 
@@ -75,7 +75,7 @@ abstract class ClientSessionImpl(
   override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: List<Runnable>?) {
+                                  listenerCallbacks: MutableList<in Runnable>?) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->

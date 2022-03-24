@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -24,7 +24,7 @@ class GrUnresolvedAccessInspection : GroovyLocalInspectionTool() {
   @JvmField
   var myHighlightIfMissingMethodsDeclared = true
 
-  override fun createOptionsPanel(): JComponent? {
+  override fun createGroovyOptionsPanel(): JComponent {
     val optionsPanel = MultipleCheckboxOptionsPanel(this)
     optionsPanel.addCheckbox(GroovyBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden")
     optionsPanel.addCheckbox(GroovyBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")

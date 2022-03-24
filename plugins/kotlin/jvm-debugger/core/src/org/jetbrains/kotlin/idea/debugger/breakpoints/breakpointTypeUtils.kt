@@ -157,18 +157,26 @@ fun computeLineBreakpointVariants(
 
 fun getLambdasAtLineIfAny(sourcePosition: SourcePosition): List<KtFunction> {
     val file = sourcePosition.file as? KtFile ?: return emptyList()
-    val lineNumber = sourcePosition.line
-    return getLambdasAtLineIfAny(file, lineNumber)
+    return getLambdasAtLineIfAny(file, sourcePosition.line)
 }
 
-fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
+inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: Int): List<T> {
     val lineElement = findElementAtLine(file, line) as? KtElement ?: return emptyList()
 
     val start = lineElement.startOffset
-    val end = lineElement.endOffset
+    var end = lineElement.endOffset
+    var nextSibling = lineElement.nextSibling
+    while (nextSibling != null && line == nextSibling.getLineNumber()) {
+        end = nextSibling.endOffset
+        nextSibling = nextSibling.nextSibling
+    }
 
-    val allLiterals = CodeInsightUtils.findElementsOfClassInRange(file, start, end, KtFunction::class.java)
-        .filterIsInstance<KtFunction>()
+    return CodeInsightUtils.findElementsOfClassInRange(file, start, end, T::class.java)
+        .filterIsInstance<T>()
+}
+
+fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
+    val allLiterals = getElementsAtLineIfAny<KtFunction>(file, line)
         // filter function literals and functional expressions
         .filter { it is KtFunctionLiteral || it.name == null }
         .toSet()

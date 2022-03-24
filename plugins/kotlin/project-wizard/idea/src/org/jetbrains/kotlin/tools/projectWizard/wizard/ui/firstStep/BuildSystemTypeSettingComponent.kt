@@ -38,7 +38,8 @@ class BuildSystemTypeSettingComponent(
     private val toolbar by lazy(LazyThreadSafetyMode.NONE) {
         val buildSystemTypes = read { setting.type.values.filter { setting.type.filter(this, reference, it) } }
         val actionGroup = DefaultActionGroup(buildSystemTypes.map(::BuildSystemTypeAction))
-        BuildSystemToolbar(ActionPlaces.UNKNOWN, actionGroup, true)
+        val buildSystemToolbar = BuildSystemToolbar(ActionPlaces.NEW_PROJECT_WIZARD, actionGroup, true)
+        buildSystemToolbar.also { it.targetComponent = null }
     }
 
     override val alignment: TitleComponentAlignment

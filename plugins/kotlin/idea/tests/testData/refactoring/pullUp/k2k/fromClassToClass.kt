@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 open class A
 
 abstract class <caret>B: A() {

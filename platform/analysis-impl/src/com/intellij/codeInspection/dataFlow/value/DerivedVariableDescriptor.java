@@ -17,12 +17,12 @@ public interface DerivedVariableDescriptor extends VariableDescriptor {
   @NotNull DfType asDfType(@NotNull DfType fieldValue);
 
   /**
+   * @param qualifierType type of the qualifier
    * @param fieldValue dfType of the special field value
-   * @param project project
    * @return a dfType that represents a value having this special field restricted to the supplied dfType.
    * Unlike {@link #asDfType(DfType)} this overload may canonicalize some values.
    */
-  @NotNull DfType asDfType(@NotNull DfType fieldValue, @NotNull Project project);
+  @NotNull DfType asDfType(@NotNull DfType qualifierType, @NotNull DfType fieldValue);
 
   /**
    * Returns a DfType from given DfType qualifier if it's bound to this special field

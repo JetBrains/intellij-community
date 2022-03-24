@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 // WITH_MESSAGE: "Removed 1 import"
 import pack1.a
 import pack1.a as a1

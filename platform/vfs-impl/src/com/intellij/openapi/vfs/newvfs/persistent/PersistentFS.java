@@ -68,6 +68,7 @@ public abstract class PersistentFS extends ManagingFS {
   @ApiStatus.Internal
   public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
+  @NotNull
   public abstract String getName(int id);
 
   public abstract long getLastRecordedLength(@NotNull VirtualFile file);
@@ -105,6 +106,9 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract void releaseContent(int contentId);
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
+
+  @ApiStatus.Internal
+  public abstract boolean doesHoldFile(@NotNull VirtualFile file);
 
   @ApiStatus.Internal
   public abstract void processEvents(@NotNull List<? extends @NotNull VFileEvent> events);

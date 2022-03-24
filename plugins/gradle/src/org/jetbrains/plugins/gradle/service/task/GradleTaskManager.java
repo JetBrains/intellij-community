@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.task;
 import com.google.gson.GsonBuilder;
 import com.intellij.build.SyncViewManager;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.execution.ParametersListUtil;
+import gnu.trove.THash;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -33,6 +35,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
@@ -135,6 +138,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+      }
+
+      if (Registry.is("gradle.report.recently.saved.paths")) {
+        ApplicationManager.getApplication()
+          .getService(GradleFileModificationTracker.class)
+          .notifyConnectionAboutChangedPaths(connection);
       }
 
       if (testLauncherIsApplicable(tasks, settings)) {
@@ -354,7 +363,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                    @Nullable TaskCallback callback) {
 
     String taskName = taskClass.getSimpleName();
-    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(set(taskClass, GsonBuilder.class, ExternalSystemException.class));
+    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(set(taskClass, GsonBuilder.class, THash.class, ExternalSystemException.class));
     String initScript = "initscript {\n" +
                         "  dependencies {\n" +
                         "    classpath files(" + paths + ")\n" +

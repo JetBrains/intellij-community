@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -7,7 +7,7 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.RefactoringBundle
-import kotlin.test.assertNotEquals
+import org.junit.Assert.assertNotEquals
 
 abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType

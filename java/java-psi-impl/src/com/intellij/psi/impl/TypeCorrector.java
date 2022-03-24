@@ -172,7 +172,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     @Override
     public int getParameterCount() {
-      return myDelegate.getParameters().length;
+      return myDelegate.getParameterCount();
     }
 
     @NotNull

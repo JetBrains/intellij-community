@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test() = buildString {
+        append("test\$test")
+    }

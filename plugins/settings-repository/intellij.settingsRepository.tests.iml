@@ -12,11 +12,10 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />

@@ -18,11 +18,13 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiThisExpression
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.UThisExpression
 
+@ApiStatus.Internal
 class JavaUThisExpression(
   override val sourcePsi: PsiThisExpression,
   givenParent: UElement?

@@ -1,3 +1,2 @@
-version = "0.1"
-python2 = true
+version = "1.2.*"
 requires = ["types-python-dateutil"]

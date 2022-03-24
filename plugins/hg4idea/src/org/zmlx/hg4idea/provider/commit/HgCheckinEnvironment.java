@@ -358,10 +358,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     }
 
     @Override
-    public void refresh() {
-    }
-
-    @Override
     public void saveState() {
       setCommitSubrepositories(myCommitContext, myCommitSubrepos.isSelected());
     }
@@ -369,7 +365,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     @Override
     public void restoreState() {
       updateCommitSubreposState();
-      refresh();
     }
 
     @Override

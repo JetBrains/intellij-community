@@ -2,5 +2,6 @@
   <extensions defaultExtensionNs="training">
     <ift.language.extension language="JAVA" implementationClass="com.intellij.java.ift.JavaLangSupport"/>
     <ift.learning.course language="JAVA" implementationClass="com.intellij.java.ift.JavaLearningCourse"/>
+    <ifs.suggesterSupport language="JAVA" implementationClass="com.intellij.java.ifs.JavaSuggesterSupport"/>
   </extensions>
 </idea-plugin>

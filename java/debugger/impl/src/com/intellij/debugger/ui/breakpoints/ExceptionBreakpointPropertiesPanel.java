@@ -114,7 +114,7 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
     changed = breakpoint.getProperties().NOTIFY_UNCAUGHT != myNotifyUncaughtCheckBox.isSelected() || changed;
     breakpoint.getProperties().NOTIFY_UNCAUGHT = myNotifyUncaughtCheckBox.isSelected();
     if (changed) {
-      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
     }
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.*
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -153,7 +152,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return
-                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), RefactoringBundle.message("rename.title"), editor) {
+                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), "rename", editor) {
                     preprocessAndPass(if (it.size > 1) FunctionWithSupersWrapper(declaration, it) else wrappedMethod ?: element)
                 }
             }
@@ -202,7 +201,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                     val overriderName = overrider.name
                     val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
                     if (newOverriderName != null) {
-                        RenameProcessor.assertNonCompileElement(overrider)
+                        RenameUtil.assertNonCompileElement(overrider)
                         allRenames[overrider] = newOverriderName
                     }
                     return@forEachOverridingMethod true
@@ -215,23 +214,28 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
         val ambiguousImportUsages = SmartList<UsageInfo>()
+        val simpleImportUsages = SmartList<UsageInfo>()
         ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler = { usage ->
             if (usage is LostDefaultValuesInOverridingFunctionUsageInfo) {
                 usage.apply()
                 return@processAll
             }
 
-            if (usage.isAmbiguousImportUsage()) {
-                ambiguousImportUsages += usage
-            } else {
-                if (!renameMangledUsageIfPossible(usage, element, newName)) {
-                    simpleUsages += usage
+            when (usage.importState()) {
+                ImportState.AMBIGUOUS -> ambiguousImportUsages += usage
+                ImportState.SIMPLE -> simpleImportUsages += usage
+                ImportState.NOT_IMPORT -> {
+                    if (!renameMangledUsageIfPossible(usage, element, newName)) {
+                        simpleUsages += usage
+                    }
                 }
             }
         })
+
         element.ambiguousImportUsages = ambiguousImportUsages
 
-        RenameUtil.doRenameGenericNamedElement(element, newName, simpleUsages.toTypedArray(), listener)
+        val usagesToRename = if (simpleImportUsages.isEmpty()) simpleUsages else simpleImportUsages + simpleUsages
+        RenameUtil.doRenameGenericNamedElement(element, newName, usagesToRename.toTypedArray(), listener)
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionBundle
@@ -12,24 +12,30 @@ import com.intellij.openapi.project.DumbAware
 open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
-  override fun update(event: AnActionEvent) {
-    super.update(event)
-    event.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
-    event.presentation.isEnabledAndVisible =
-      event.presentation.isEnabled
-      && event.presentation.isVisible
-      && getDescriptor(event) != null
-      && event.presentation.isVisible
-      && if(event.isItRunToolbarMainSlot() && !event.isOpened()) event.project?.let {
-        RunToolbarSlotManager.getInstance(it).getState().isSingleMain()
-      } ?: false else true
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
+    e.presentation.isVisible = e.isActiveProcess()
+
+    e.presentation.isEnabled = !e.isProcessTerminating()
+
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   override fun actionPerformed(event: AnActionEvent) {
     event.environment()?.let {
-      event.addWaitingForAProcess(it.executor.id)
+      it.runnerAndConfigurationSettings?.let { settings ->
+        event.runToolbarData()?.startWaitingForAProcess(it.project, settings, it.executor.id)
+      }
       super.actionPerformed(event)
     }
 

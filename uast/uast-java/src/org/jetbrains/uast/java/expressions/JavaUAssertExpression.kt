@@ -17,16 +17,16 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAssertStatement
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
-
+@ApiStatus.Internal
 class JavaUAssertExpression(
   override val sourcePsi: PsiAssertStatement,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
   val condition: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.assertCondition, this) }
   val message: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.assertDescription, this) }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.local;
 
 import com.intellij.openapi.components.Service;
@@ -16,28 +16,45 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-@Service
+@Service(Service.Level.APP)
 public final class ActionsGlobalSummaryManager {
-
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
+  private final int myUpdatedStatisticsVersion;
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
+  private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
   private final ActionsGlobalTotalSummary mySummary;
+  private final ActionsGlobalTotalSummary myUpdatedSummary;
 
   public ActionsGlobalSummaryManager() {
-    myStatisticsMap = loadStatistics();
+    myUpdatedStatisticsVersion = 1;
+    myStatisticsMap = loadStatistics("/statistics/actionsUsages.csv");
+    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
+    myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }
+
+  public int getUpdatedStatisticsVersion() { return myUpdatedStatisticsVersion; }
 
   @Nullable
   public ActionGlobalUsageInfo getActionStatistics(String actionID) {
     return myStatisticsMap.get(actionID);
   }
 
+  @Nullable
+  public ActionGlobalUsageInfo getUpdatedActionStatistics(String actionID) {
+    return myUpdatedStatisticsMap.get(actionID);
+  }
+
   @NotNull
   public ActionsGlobalTotalSummary getTotalSummary() {
     return mySummary;
+  }
+
+  @NotNull
+  public ActionsGlobalTotalSummary getUpdatedTotalSummary() {
+    return myUpdatedSummary;
   }
 
   private final static String DEFAULT_SEPARATOR = ",";
@@ -53,9 +70,9 @@ public final class ActionsGlobalSummaryManager {
     return new ActionsGlobalTotalSummary(maxCount, minCount);
   }
 
-  private Map<String, ActionGlobalUsageInfo> loadStatistics() {
+  private Map<String, ActionGlobalUsageInfo> loadStatistics(String filename) {
     Map<String, ActionGlobalUsageInfo> res = new HashMap<>();
-    try (InputStream stream = getClass().getResourceAsStream("/statistics/actionsUsages.csv");
+    try (InputStream stream = getClass().getResourceAsStream(filename);
          BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String line = reader.readLine();
       while (line != null) {

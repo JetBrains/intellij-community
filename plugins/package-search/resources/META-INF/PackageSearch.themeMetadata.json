@@ -1,0 +1,36 @@
+{
+    "name": "Package Search",
+    "fixed": false,
+    "ui": [
+        {
+            "key": "PackageSearch.SearchResult.background",
+            "description": "Search results row background color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI",
+            "since": "2022.1"
+        },
+        {
+            "key": "PackageSearch.PackageTag.background",
+            "description": "Dependency tag (e.g., 'multiplatform') background color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "since": "2022.1"
+        },
+        {
+            "key": "PackageSearch.PackageTag.foreground",
+            "description": "Dependency tag (e.g., 'multiplatform') foreground color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "since": "2022.1"
+        },
+        {
+            "key": "PackageSearch.PackageTagSelected.background",
+            "description": "Dependency tag (e.g., 'multiplatform') selected background color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "since": "2022.1"
+        },
+        {
+            "key": "PackageSearch.PackageTagSelected.foreground",
+            "description": "Dependency tag (e.g., 'multiplatform') selected foreground color",
+            "source": "com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageNameCellRenderer",
+            "since": "2022.1"
+        }
+    ]
+}

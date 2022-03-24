@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Variable 't' is never used
 package p
 
 import p.foo

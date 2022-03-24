@@ -38,7 +38,7 @@ public class AfterSuiteEvent extends AbstractTestEvent {
       return;
     }
     final String testId = testEvent.getEventId();
-    TestEventResult result = TestEventResult.fromOperationResult(((ExternalSystemFinishEvent)testEvent).getOperationResult());
+    TestEventResult result = TestEventResult.fromOperationResult(((ExternalSystemFinishEvent<?>)testEvent).getOperationResult());
 
     doProcess(testId, result);
   }

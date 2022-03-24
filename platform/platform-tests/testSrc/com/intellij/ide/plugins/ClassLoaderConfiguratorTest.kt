@@ -4,12 +4,13 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.directoryStreamIfExists
+import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -23,6 +24,20 @@ internal class ClassLoaderConfiguratorTest {
   @Rule @JvmField val name = TestName()
 
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+
+  @Test
+  fun `plugin must be after child`() {
+    val pluginId = PluginId.getId("org.jetbrains.kotlin")
+    val emptyPath = Path.of("")
+    val plugins = arrayOf(
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java"),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
+    )
+    sortDependenciesInPlace(plugins)
+    assertThat(plugins.last().moduleName).isNull()
+  }
 
   @Test
   fun packageForOptionalMustBeSpecified() {
@@ -51,7 +66,7 @@ internal class ClassLoaderConfiguratorTest {
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
     val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature").getEnabledPlugins().get(1)
-    assertThat(plugin.content.modules.get(0).requireDescriptor().classLoader).isInstanceOf(PluginAwareClassLoader::class.java)
+    assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
   }
 
   @Test
@@ -87,7 +102,7 @@ internal class ClassLoaderConfiguratorTest {
     val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
     classLoaderConfigurator.configure()
 
-    assertThat((barPlugin.classLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
+    assertThat((barPlugin.pluginClassLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
       .containsExactly("com.example.sub.xml", null)
   }
 
@@ -96,7 +111,8 @@ internal class ClassLoaderConfiguratorTest {
     val rootDir = inMemoryFs.fs.getPath("/")
 
     // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Murmur3_32Hash.MURMUR3_32.hashString(javaClass.name + name.methodName)).toString(36)
+    val pluginIdSuffix = Integer.toUnsignedLong(
+      Xxh3.hash32(javaClass.name + name.methodName)).toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
       <idea-plugin package="com.bar">

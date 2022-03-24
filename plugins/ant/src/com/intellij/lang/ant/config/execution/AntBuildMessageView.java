@@ -97,7 +97,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final java.util.List<LogCommand> myLog = Collections.synchronizedList(new ArrayList<>(1024));
   private volatile int myCommandsProcessedCount;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   private final Runnable myFlushLogRunnable = () -> {
     if (myCommandsProcessedCount < myLog.size()) {
       flushWhenSmart(true);
@@ -465,7 +465,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     if (data != null) {
       return data;
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {

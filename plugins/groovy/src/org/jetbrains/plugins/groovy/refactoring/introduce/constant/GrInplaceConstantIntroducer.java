@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.psi.*;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.components.JBCheckBox;
@@ -171,7 +170,6 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
 
   @Override
   protected boolean performRefactoring() {
-    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myPanel.isMoveToAnotherClass();
     if (myPanel.isMoveToAnotherClass()) {
       try {
         myEditor.putUserData(INTRODUCE_RESTART, true);

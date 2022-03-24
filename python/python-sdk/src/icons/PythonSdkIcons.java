@@ -10,8 +10,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class PythonSdkIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonSdkIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python.svg", 2013563801968945595L, 0);
+  /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python.svg", -1025668048, 0);
 }

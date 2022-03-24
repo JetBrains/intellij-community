@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages.handlers
 
@@ -11,36 +11,36 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinTypeParameterFindUsagesDialog
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.idea.search.useScope
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtTypeParameter
 
 class KotlinTypeParameterFindUsagesHandler(
-    element: KtNamedDeclaration,
+    element: KtTypeParameter,
     factory: KotlinFindUsagesHandlerFactory
-) : KotlinFindUsagesHandler<KtNamedDeclaration>(element, factory) {
+) : KotlinFindUsagesHandler<KtTypeParameter>(element, factory) {
     override fun getFindUsagesDialog(
         isSingleFile: Boolean, toShowInNewTab: Boolean, mustOpenInNewTab: Boolean
-    ): AbstractFindUsagesDialog {
-        return KotlinTypeParameterFindUsagesDialog<KtNamedDeclaration>(
-            getElement(), project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this
-        )
-    }
+    ): AbstractFindUsagesDialog = KotlinTypeParameterFindUsagesDialog(
+        getElement(), project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, this
+    )
 
     override fun createSearcher(
         element: PsiElement,
         processor: Processor<in UsageInfo>,
         options: FindUsagesOptions
-    ): Searcher {
-        return object : Searcher(element, processor, options) {
-            override fun buildTaskList(forHighlight: Boolean): Boolean {
-                addTask {
-                    ReferencesSearch.search(element, options.searchScope).all { processUsage(processor, it) }
+    ): Searcher = object : Searcher(element, processor, options) {
+        override fun buildTaskList(forHighlight: Boolean): Boolean {
+            addTask {
+                runReadAction {
+                    val searchScope = element.useScope().intersectWith(options.searchScope)
+                    ReferencesSearch.search(element, searchScope).all { processUsage(processor, it) }
                 }
-                return true
             }
+
+            return true
         }
     }
 
-    override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions {
-        return factory.defaultOptions
-    }
+    override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.defaultOptions
 }

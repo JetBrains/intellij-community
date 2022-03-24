@@ -1,5 +1,5 @@
 // "Replace invalid positioned arguments for annotation" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Only named arguments are available for Java annotations
 // ERROR: Only named arguments are available for Java annotations
 

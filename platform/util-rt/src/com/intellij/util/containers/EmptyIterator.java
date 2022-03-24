@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
  * @deprecated Use {@link Collections#emptyIterator()} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public class EmptyIterator<T> implements Iterator<T> {
   private static final EmptyIterator INSTANCE = new EmptyIterator();
   public static <T> EmptyIterator<T> getInstance() {

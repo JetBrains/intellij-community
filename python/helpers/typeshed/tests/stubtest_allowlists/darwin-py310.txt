@@ -1,0 +1,7 @@
+_?curses.A_ITALIC
+_curses.color_pair
+curses.color_pair
+
+# Exists at runtime, but missing from stubs
+mmap.MADV_FREE
+distutils.util.__warningregistry__

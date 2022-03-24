@@ -11,7 +11,6 @@ import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -29,10 +28,6 @@ public final class IdTableBuilding {
 
   public interface ScanWordProcessor {
     void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
-  }
-
-  public static boolean isIdIndexerRegistered(@NotNull FileType fileType) {
-    return getIndexer(fileType) != null || fileType instanceof InternalFileType;
   }
 
   @Nullable

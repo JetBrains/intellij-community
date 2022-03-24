@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import org.jspecify.annotations.Nullable;
+import org.jspecify.nullness.Nullable;
 
 class NotNullAwareAnnotatedTypeParameter {
   // jspecify_unrecognized_location

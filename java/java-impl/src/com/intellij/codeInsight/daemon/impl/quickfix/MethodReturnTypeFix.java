@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -7,11 +7,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -20,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -29,20 +33,17 @@ import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.Joining;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -327,85 +328,30 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     }
 
-    final MethodSignatureChangeVisitor methodSignatureChangeVisitor = new MethodSignatureChangeVisitor();
+    Project project = method.getProject();
+    final List<PsiMethod> affectedMethods = new ArrayList<>();
     for (PsiMethod targetMethod : methods) {
-      methodSignatureChangeVisitor.addBase(targetMethod);
-      ChangeSignatureProcessor processor = new UsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
-                                                                                   false, null,
-                                                                                   myName,
-                                                                                   returnType,
-                                                                                   ParameterInfoImpl.fromMethod(targetMethod),
-                                                                                   methodSignatureChangeVisitor);
+      affectedMethods.add(targetMethod);
+      var processor = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(targetMethod,
+                                                                         false, null,
+                                                                         myName,
+                                                                         returnType,
+                                                                         ParameterInfoImpl.fromMethod(targetMethod),
+                                                                         null, null, null, null);
       processor.run();
     }
 
-    return methodSignatureChangeVisitor.getAffectedMethods();
-  }
-
-  private static final class MethodSignatureChangeVisitor implements UsageVisitor {
-    private final List<PsiMethod> myAffectedMethods;
-
-    private MethodSignatureChangeVisitor() {
-      myAffectedMethods = new ArrayList<>();
-    }
-
-    public void addBase(final PsiMethod baseMethod) {
-      myAffectedMethods.add(baseMethod);
-    }
-
-    @Override
-    public void visit(final UsageInfo usage) {
-      if (usage instanceof OverriderUsageInfo) {
-        myAffectedMethods.add(((OverriderUsageInfo) usage).getOverridingMethod());
+    PsiMethod[] hierarchyMethods = methods;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (PsiMethod psiMethod : hierarchyMethods) {
+        OverridingMethodsSearch.search(psiMethod).forEach(m -> {
+          affectedMethods.add(m);
+        });
       }
+    }, JavaBundle.message("progress.title.collect.method.overriders"), true, project)) {
+      return Collections.emptyList();
     }
-
-    public List<PsiMethod> getAffectedMethods() {
-      return myAffectedMethods;
-    }
-
-    @Override
-    public void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
-      for (Iterator<UsageInfo> usageInfoIterator = covariantOverriderInfos.iterator(); usageInfoIterator.hasNext();) {
-        final UsageInfo info = usageInfoIterator.next();
-        if (info instanceof OverriderUsageInfo) {
-          final OverriderUsageInfo overrideUsage = (OverriderUsageInfo) info;
-          if (myAffectedMethods.contains(overrideUsage.getOverridingMethod())) {
-            usageInfoIterator.remove();
-          }
-        }
-      }
-    }
-  }
-
-  private interface UsageVisitor {
-    void visit(final UsageInfo usage);
-    void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos);
-  }
-
-  private static final class UsagesAwareChangeSignatureProcessor extends ChangeSignatureProcessor {
-    private final UsageVisitor myUsageVisitor;
-
-    private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
-                                                @PsiModifier.ModifierConstant final String newVisibility, final String newName, final PsiType newType,
-                                                final ParameterInfoImpl @NotNull [] parameterInfo, final UsageVisitor usageVisitor) {
-      super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
-      myUsageVisitor = usageVisitor;
-    }
-
-    @Override
-    protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
-      myUsageVisitor.preprocessCovariantOverriders(covariantOverriderInfos);
-    }
-
-    @Override
-    protected void performRefactoring(final UsageInfo @NotNull [] usages) {
-      super.performRefactoring(usages);
-
-      for (UsageInfo usage : usages) {
-        myUsageVisitor.visit(usage);
-      }
-    }
+    return affectedMethods;
   }
 
   static void selectInEditor(@Nullable PsiElement element, Editor editor) {
@@ -452,12 +398,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                                        new PsiType[]{returnType},
                                        PsiUtil.getLanguageLevel(superClass));
 
-    final TypeMigrationRules rules = new TypeMigrationRules(project);
     final PsiSubstitutor compoundSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY).putAll(psiSubstitutor);
-    rules.setBoundScope(new LocalSearchScope(derivedClass));
-    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, referenceParameterList,
-                                                        JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor));
+    var scope = new LocalSearchScope(derivedClass);
+    var type = JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor);
+    var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
+    handler.runHighlightingTypeMigrationSilently(project, editor, scope, referenceParameterList, type);
 
     return false;
   }
@@ -497,5 +443,34 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiType type = myReturnTypePointer.getType();
+    if (type == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiMethod method = (PsiMethod)getStartElement();
+    if (method.getContainingFile() == file.getOriginalFile()) {
+      PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, file);
+      PsiTypeElement typeElement = methodCopy.getReturnTypeElement();
+      if (typeElement != null) {
+        typeElement.replace(PsiElementFactory.getInstance(project).createTypeElement(type));
+        return IntentionPreviewInfo.DIFF;
+      }
+    }
+    PsiModifierList modifiers = method.getModifierList();
+    String modifiersText = StreamEx.of(PsiModifier.MODIFIERS).filter(modifiers::hasExplicitModifier).map(mod -> mod + " ").joining();
+    PsiType oldType = method.getReturnType();
+    String oldTypeText = oldType == null ? "" : oldType.getPresentableText() + " ";
+    String newTypeText = type.getPresentableText() + " ";
+    String parameters = StreamEx.of(method.getParameterList().getParameters())
+      .map(param -> param.getType().getPresentableText() + " " + param.getName())
+      .collect(Joining.with(", ").maxChars(50).cutAfterDelimiter());
+    String name = method.getName();
+    String origText = modifiersText + oldTypeText + name + "(" + parameters + ")";
+    String newText = modifiersText + newTypeText + name + "(" + parameters + ")";
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, origText, newText);
   }
 }

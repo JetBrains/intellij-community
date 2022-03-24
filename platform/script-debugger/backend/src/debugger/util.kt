@@ -99,7 +99,7 @@ class MessagingLogger internal constructor(debugFile: String) {
   }
 }
 
-fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) key: String, suffix: String = ""): MessagingLogger? {
+fun createDebugLogger(key: String, suffix: String = ""): MessagingLogger? {
   var debugFile = Registry.stringValue(key)
   if (debugFile.isEmpty()) {
     return null

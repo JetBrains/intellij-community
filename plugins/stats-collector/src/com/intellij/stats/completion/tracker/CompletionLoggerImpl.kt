@@ -1,15 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.CompletionUtil
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.stats.completion.LookupState
 import com.intellij.stats.completion.events.*
+
+private val LOG = logger<CompletionFileLogger>()
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
@@ -47,7 +50,7 @@ class CompletionFileLogger(private val installationUID: String,
     event.isOneLineMode = lookup.editor.isOneLineMode
     event.isAutoPopup = CompletionUtil.getCurrentCompletionParameters()?.isAutoPopup
     event.fillCompletionParameters()
-    event.additionalDetails["alphabetical"] = UISettings.instance.sortLookupElementsLexicographically.toString()
+    event.additionalDetails["alphabetical"] = UISettings.getInstance().sortLookupElementsLexicographically.toString()
     if (lookupStorage != null) {
       if (lookupStorage.mlUsed() && CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
         event.additionalDetails["diff"] = "1"
@@ -97,6 +100,10 @@ class CompletionFileLogger(private val installationUID: String,
     val event = TypedSelectEvent(installationUID, completionUID, state, state.selectedId, performance, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
+    // remove after fixing EA-215359
+    if (state.ids.isEmpty()) {
+      LOG.error("Invalid state of lookup. Selected item [exists: ${lookup.currentItem != null}], but items list is empty.")
+    }
     eventLogger.log(event)
   }
 
@@ -120,10 +127,7 @@ class CompletionFileLogger(private val installationUID: String,
 }
 
 private fun calcPluginVersion(): String? {
-  val className = CompletionStartedEvent::class.java.name
-  val id = PluginManagerCore.getPluginByClassName(className)
-  val plugin = PluginManagerCore.getPlugin(id)
-  return plugin?.version
+  return PluginManager.getPluginByClass(CompletionStartedEvent::class.java)?.version
 }
 
 private val LookupState.selectedId: Int

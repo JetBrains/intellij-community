@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -7,6 +7,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -41,6 +42,9 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @NotNull
   VcsLogColorManager getColorManager();
 
+  @NotNull
+  VcsLogData getLogData();
+
   @Nullable
   History getNavigationHistory();
 
@@ -50,7 +54,12 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
-                  @NotNull SettableFuture<? super Boolean> future,
+                  @NotNull SettableFuture<JumpResult> future,
                   boolean silently,
                   boolean focus);
+
+  @ApiStatus.Internal int COMMIT_NOT_FOUND = -1;
+  @ApiStatus.Internal int COMMIT_DOES_NOT_MATCH = -2;
+
+  enum JumpResult {SUCCESS, COMMIT_NOT_FOUND, COMMIT_DOES_NOT_MATCH}
 }

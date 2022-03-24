@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 // not yet supported
 fun <T> doIt(p: () -> T): T = TODO()

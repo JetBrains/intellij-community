@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-
+// This tool is deprecated. Use WinP to SIGINT process.
 void PrintUsageAndExit() {
 	printf("Usage: runnerw.exe [/C] app [args]\n");
 	printf("app [args]	Specifies executable file, arguments.\n");

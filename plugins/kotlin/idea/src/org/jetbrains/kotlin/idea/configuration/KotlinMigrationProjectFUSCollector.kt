@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
@@ -35,7 +35,7 @@ class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
                 this.oldLanguageVersion.with(migrationInfo.oldLanguageVersion.versionString),
                 this.oldApiVersion.with(migrationInfo.oldApiVersion.versionString),
                 this.oldStdlibVersion.with(migrationInfo.oldStdlibVersion),
-                this.pluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID))
+                this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
             )
         }
 

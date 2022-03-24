@@ -6,17 +6,21 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   private final String myScopeType;
@@ -37,16 +41,25 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
     if (nodeDescriptor == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-    if (enclosingElement instanceof PsiMethod) {
-      PsiClass clazz = enclosingElement.getContainingClass();
-      if (isLocalOrAnonymousClass(clazz)) {
-        PsiElement parent = clazz.getParent();
-        PsiElement grandParent = parent instanceof PsiNewExpression ? parent.getParent() : null;
-        if (grandParent instanceof PsiExpressionList) {
-          // for created anonymous class that immediately passed as argument use instantiation point as next call point (IDEA-73312)
-          enclosingElement = CallHierarchyNodeDescriptor.getEnclosingElement(grandParent);
-        }
+    PsiClass enclosingClass = enclosingElement.getContainingClass();
+    PsiClass expectedQualifierClass; // we'll compare reference qualifier class against this to filter out irrelevant usages
+    if (enclosingElement instanceof PsiMethod && isLocalOrAnonymousClass(enclosingClass)) {
+      PsiElement parent = enclosingClass.getParent();
+      PsiElement grandParent = parent instanceof PsiNewExpression ? parent.getParent() : null;
+      if (grandParent instanceof PsiExpressionList) {
+        // for created anonymous class that immediately passed as argument use instantiation point as next call point (IDEA-73312)
+        enclosingElement = CallHierarchyNodeDescriptor.getEnclosingElement(grandParent);
+        enclosingClass = enclosingElement == null ? null : enclosingElement.getContainingClass();
       }
+      if (enclosingClass instanceof PsiAnonymousClass) {
+        expectedQualifierClass = enclosingClass.getSuperClass();
+      }
+      else {
+        expectedQualifierClass = enclosingClass;
+      }
+    }
+    else {
+      expectedQualifierClass = enclosingClass;
     }
 
     PsiMember baseMember = (PsiMember)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
@@ -60,29 +73,50 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     if (originalClass == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     
     PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
+    Set<PsiMethod> methodsToFind = new HashSet<>();
 
     if (enclosingElement instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)enclosingElement;
+      methodsToFind.add(method);
+      ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
-      Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = new ConcurrentHashMap<>();
-      JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, method, originalType, method, Set.of(method), descriptor, methodToDescriptorMap, myProject);
+      Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = new HashMap<>();
+      for (PsiMethod methodToFind : methodsToFind) {
+        JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
 
-      MethodReferencesSearch.search(method, searchScope, true).forEach(reference -> {
-        // references in javadoc really couldn't "call" anything
-        if (PsiUtil.isInsideJavadocComment(reference.getElement())) {
+        MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
+          // references in javadoc really couldn't "call" anything
+          if (PsiUtil.isInsideJavadocComment(reference.getElement())) {
+            return true;
+          }
+          PsiClass receiverClass = null;
+          if (reference instanceof PsiQualifiedReference) {
+            PsiElement qualifier = ((PsiQualifiedReference)reference).getQualifier();
+            if (qualifier instanceof PsiExpression) {
+              PsiType type = ((PsiExpression)qualifier).getType();
+              receiverClass = PsiUtil.resolveClassInClassTypeOnly(type);
+            }
+          }
+          if (receiverClass == null) {
+            PsiElement resolved = reference.resolve();
+            if (resolved instanceof PsiMethod) {
+              receiverClass = ((PsiMethod)resolved).getContainingClass();
+            }
+          }
+
+          if (receiverClass != null
+              && expectedQualifierClass != null
+              && !areClassesRelated(expectedQualifierClass, receiverClass)
+          ) {
+            // ignore impossible candidates. E.g. when A < B,A < C and we invoked call hierarchy for method in C we should filter out methods in B because B and C are assignment-incompatible
+            return true;
+          }
+          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+            if (!processor.process(reference, data)) break;
+          }
           return true;
-        }
-        // Method search sometimes finds references to the base method
-        // They shouldn't be shown because we are interested in exact results only
-        // (Do not remove constructor usages because reference to the default constructor really is a class reference)
-        if (!method.isConstructor() && !reference.isReferenceTo(method)) {
-          return true;
-        }
-        for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
-          if (!processor.process(reference, data)) break;
-        }
-        return true;
-      });
+        });
+      }
 
       return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
     }
@@ -94,6 +128,26 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       .map(PsiReference::getElement)
       .distinct()
       .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
+  }
+
+  private static boolean areClassesRelated(@NotNull PsiClass expectedQualifierClass, @NotNull PsiClass receiverClass) {
+    if (areClassesDirectlyRelated(expectedQualifierClass, receiverClass)) {
+      return true;
+    }
+    if (receiverClass instanceof PsiTypeParameter) {
+      // in case of "T extends S", it should be related to SImpl, even though T is not superclass of SImpl
+      for (PsiClass receiverExtends : PsiClassImplUtil.getAllSuperClassesRecursively(receiverClass)) {
+        if (areClassesDirectlyRelated(expectedQualifierClass, receiverExtends)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean areClassesDirectlyRelated(@NotNull PsiClass expectedQualifierClass, @NotNull PsiClass receiverClass) {
+    return InheritanceUtil.isInheritorOrSelf(expectedQualifierClass, receiverClass, true)
+           || InheritanceUtil.isInheritorOrSelf(receiverClass, expectedQualifierClass, true);
   }
 
   private static boolean isLocalOrAnonymousClass(PsiMember enclosingElement) {

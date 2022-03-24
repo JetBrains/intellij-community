@@ -59,28 +59,18 @@ class PluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   private static Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
-    if (icon instanceof IconLoader.LazyIcon) {
-      icon = ((IconLoader.LazyIcon)icon).retrieveIcon();
-    }
-
+    Icon i = icon instanceof IconLoader.LazyIcon ? ((IconLoader.LazyIcon)icon).retrieveIcon() : icon;
     synchronized (disabledIcons) {
-      Icon disabledIcon = disabledIcons.get(icon);
-      if (disabledIcon == null) {
-        if (base) {
-          disabledIcon = IconLoader.filterIcon(icon, () -> new UIUtil.GrayFilter(), null);
-        }
-        else {
-          disabledIcon = IconLoader.filterIcon(icon, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100), null);
-        }
-        disabledIcons.put(icon, disabledIcon);
-      }
-      return disabledIcon;
+      return disabledIcons.computeIfAbsent(i, __->
+        base
+             ? IconLoader.filterIcon(i, () -> new UIUtil.GrayFilter(), null)
+             : IconLoader.filterIcon(i, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100), null));
     }
   }
 
   @NotNull
   protected Icon getScaled2xIcon(@NotNull Icon icon) {
-    return IconUtil.scale(icon, null, 2f);
+    return IconUtil.scale(icon, null, 2.0f);
   }
 
   @NotNull

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,8 +16,7 @@ public interface PyUnresolvedReferenceQuickFixProvider {
   /**
    * @deprecated Override the more generic {@link #registerQuickFixes(PsiReference, List)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   default void registerQuickFixes(PsiReference reference, Consumer<LocalQuickFix> fixConsumer) {
     throw new UnsupportedOperationException();
   }

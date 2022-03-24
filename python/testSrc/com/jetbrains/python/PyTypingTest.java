@@ -975,6 +975,68 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(0).get()\n");
   }
 
+  // PY-27627
+  public void testExplicitlyParametrizedGenericClassInstance() {
+    doTest("Node[int]",
+           "from typing import TypeVar, Generic, List\n" +
+           "\n" +
+           "T = TypeVar('T')" +
+           "\n" +
+           "class Node(Generic[T]):\n" +
+           "    def __init__(self, children : List[T]):\n" +
+           "        self.children = children" +
+           "\n" +
+           "expr = Node[int]()");
+  }
+
+  // PY-27627
+  public void testMultiTypeExplicitlyParametrizedGenericClassInstance() {
+    doTest("float",
+           "from typing import TypeVar, Generic\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "V = TypeVar('V')\n" +
+           "Z = TypeVar('Z')\n" +
+           "\n" +
+           "class FirstType(Generic[T]): pass\n" +
+           "class SecondType(Generic[V]): pass\n" +
+           "class ThirdType(Generic[Z]): pass\n" +
+           "\n" +
+           "class Clazz(FirstType[T], SecondType[V], ThirdType[Z]):\n" +
+           "    first: T\n" +
+           "    second: V\n" +
+           "    third: Z\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "\n" +
+           "node = Clazz[str, int, float]()\n" +
+           "expr = node.third");
+  }
+
+  // PY-27627
+  public void testExplicitlyParametrizedGenericClassInstanceTypizationPriority() {
+    doTest("Node[str]",
+           "from typing import TypeVar, Generic, List\n" +
+           "\n" +
+           "T = TypeVar('T')" +
+           "\n" +
+           "class Node(Generic[T]):\n" +
+           "    def __init__(self, children : List[T]):\n" +
+           "        self.children = children" +
+           "\n" +
+           "expr = Node[str]([1,2,3])");
+  }
+
+  // PY-27627
+  public void testItemLookupNotResolvedAsParametrizedClassInstance() {
+    doTest("tuple",
+           "d = {\n" +
+           "    int: lambda: ()\n" +
+           "}\n" +
+           "expr = d[int]()");
+  }
+
   // PY-20057
   public void testClassObjectType() {
     doTest("Type[MyClass]",
@@ -1521,6 +1583,96 @@ public class PyTypingTest extends PyTestCase {
            "from typing import TypeAlias\n" +
            "\n" +
            "expr: TypeAlias = int\n");
+  }
+
+  // PY-29257
+  public void testParameterizedTypeAliasForPartiallyGenericType() {
+    doTest("dict[str, int]",
+           "from typing import TypeVar\n" +
+           "T = TypeVar('T')\n" +
+           "dict_t1 = dict[str, T]\n" +
+           "expr: dict_t1[int]");
+
+    doTest("dict[str, int]",
+           "from typing import TypeVar\n" +
+           "T = TypeVar('T')\n" +
+           "dict_t1 = dict[T, int]\n" +
+           "expr: dict_t1[str]");
+  }
+
+  // PY-49582
+  public void testParameterizedTypeAliasForGenericUnion() {
+    doTest("str | Awaitable[str] | None",
+           "from typing import Awaitable, Optional, TypeVar, Union\n" +
+           "T = TypeVar('T')\n" +
+           "Input = Union[T, Awaitable[T]]\n" +
+           "\n" +
+           "def f(expr: Optional[Input[str]]):\n" +
+           "    pass\n");
+  }
+
+  // PY-29257
+  public void testParameterizedTypeAliasPreservesOrderOfTypeParameters() {
+    doTest("dict[str, Any]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias = dict[T1, T2]\n" +
+           "expr: Alias[str]");
+
+    doTest("dict[str, Any]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias = dict[T2, T1]\n" +
+           "expr: Alias[str]");
+  }
+
+  // PY-29257
+  public void testGenericTypeAliasParameterizedWithExplicitAny() {
+    doTest("dict[Any, str]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias = dict[T1, T2]\n" +
+           "expr: Alias[Any, str]");
+  }
+
+  // PY-29257
+  public void testGenericTypeAliasParameterizedInTwoSteps() {
+    doTest("dict[int, str]",
+           "from typing import TypeVar\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "Alias1 = dict[T1, T2]\n" +
+           "Alias2 = Alias1[int, T2]\n" +
+           "expr: Alias2[str]");
+  }
+
+  // PY-44905
+  public void testGenericTypeAliasToAnnotated() {
+    doTest("int",
+           "from typing import Annotated, TypeVar\n" +
+           "marker = object()\n" +
+           "T = TypeVar(\"T\")\n" +
+           "Inject = Annotated[T, marker]\n" +
+           "expr: Inject[int]");
+  }
+
+  // PY-29257
+  public void testGenericTypeAliasForTuple() {
+    doTest("tuple[int, int]",
+           "from typing import TypeVar\n" +
+           "T = TypeVar('T')\n" +
+           "Pair = tuple[T, T]\n" +
+           "expr: Pair[int]");
+  }
+
+  // PY-29257
+  public void testGenericAliasParametersCannotBeOverridden() {
+    doTest("list[int]",
+           "Alias = list[int]\n" +
+           "expr: Alias[str]");
   }
 
   // PY-44974

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
 
 enum class BuildSystemType {
@@ -18,13 +17,7 @@ interface BuildSystemTypeDetector {
     }
 }
 
-fun Module.getBuildSystemType(): BuildSystemType {
-    @Suppress("DEPRECATION")
-    for (extension in Extensions.getExtensions(BuildSystemTypeDetector.EP_NAME)) {
-        val result = extension.detectBuildSystemType(this)
-        if (result != null) {
-            return result
-        }
-    }
-    return BuildSystemType.JPS
-}
+fun Module.getBuildSystemType(): BuildSystemType = BuildSystemTypeDetector.EP_NAME
+    .extensionList
+    .firstNotNullOfOrNull { it.detectBuildSystemType(this) }
+    ?: BuildSystemType.JPS

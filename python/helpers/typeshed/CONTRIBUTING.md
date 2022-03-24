@@ -16,7 +16,7 @@ are important to the project's success.
     * Create your stubs, considering [what to include](#what-to-include) and
       conforming to the [coding style](#stub-file-coding-style).
 4. [Format and check your stubs](#formatting-stubs).
-5. Optionally [run the tests](#running-the-tests).
+5. Optionally [run the tests](tests/README.md).
 6. [Submit your changes](#submitting-changes) by opening a pull request.
 
 You can expect a reply within a few days, but please be patient when
@@ -24,20 +24,79 @@ it takes a bit longer. For more details, read below.
 
 ## Preparing the environment
 
-To reformat the code, check for common problems, and
-run the tests, you need to prepare a
-[virtual environment](https://docs.python.org/3/tutorial/venv.html)
-with the necessary libraries installed. To do this, run:
+### Code away!
+
+Typeshed runs continuous integration (CI) on all pull requests. This will
+automatically fix formatting (using `black`, `isort`) and run tests.
+It means you can ignore all local setup on your side, focus on the
+code and rely on the CI to fix everything, or point you to the places that
+need fixing.
+
+### ... Or create a local development environment
+
+If you prefer to run the tests & formatting locally, it's
+possible too. Follow platform-specific instructions below.
+For more information about our available tests, see
+[tests/README.md](tests/README.md).
+
+Whichever platform you're using, you will need a
+virtual environment. If you're not familiar with what it is and how it works,
+please refer to this
+[documentation](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+
+### Linux/Mac OS
+
+On Linux and Mac OS, you will be able to run the full test suite on Python 3.8
+or 3.9. Running the tests on <=3.7 is not supported, and the pytype tests
+[cannot currently be run on Python 3.10](https://github.com/google/pytype/issues/1022).
+
+To install the necessary requirements, run the following commands from a
+terminal window:
 
 ```
 $ python3 -m venv .venv3
 $ source .venv3/bin/activate
 (.venv3)$ pip install -U pip
-(.venv3)$ pip install -r requirements-tests-py3.txt
+(.venv3)$ pip install -r requirements-tests.txt
 ```
 
-To automatically check your code before committing, copy the file
-`pre-commit` to `.git/hooks/pre-commit`.
+### Windows
+
+If you are using a Windows operating system, you will not be able to run the
+full test suite. One option is to install
+[Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/faq),
+which will allow you to run the full suite of tests. If you choose to install
+WSL, follow the Linux/Mac OS instructions above.
+
+If you do not wish to install WSL, you will not be able to run the pytype
+tests, as pytype
+[does not currently support running on Windows](https://github.com/google/pytype#requirements).
+However, the upside of this is that you will be able to run all
+Windows-compatible tests on Python 3.9, 3.8 or 3.10, as it is only the pytype
+tests that cannot currently be run on 3.10.
+
+To install all non-pytype requirements on Windows without WSL, run the
+following commands from a Windows terminal:
+
+```
+> python3 -m venv .venv3
+> ".venv3/Scripts/activate"
+(.venv3) > python -m pip install -U pip
+(.venv3) > python -m pip install -r requirements-tests.txt
+```
+
+## Code formatting
+
+The code is formatted by `black` and `isort`.
+
+The repository is equipped with a [`pre-commit.ci`](https://pre-commit.ci/)
+configuration file. This means that you don't *need* to do anything yourself to
+run the code formatters. When you push a commit, a bot will run those for you
+right away and add a commit to your PR. Neat, no?
+
+That being said, if you *want* to run the checks locally when you commit, you
+can install the hooks: please refer to the [pre-commit](https://pre-commit.com/)
+documentation.
 
 ## Where to make changes
 
@@ -54,16 +113,26 @@ Modules that are only available for Python 2 are not listed in `VERSIONS`.
 
 ### Third-party library stubs
 
-Modules that are not shipped with Python but have a type description in Python
+We accept stubs for third-party packages into typeshed as long as:
+* the package is publicly available on the [Python Package Index](https://pypi.org/);
+* the package supports any Python version supported by typeshed; and
+* the package does not ship with its own stubs or type annotations.
+
+The fastest way to generate new stubs is to use `scripts/create_baseline_stubs.py` (see below).
+
+Stubs for third-party packages
 go into `stubs`. Each subdirectory there represents a PyPI distribution, and
 contains the following:
 * `METADATA.toml`, describing the package. See below for details.
 * Stubs (i.e. `*.pyi` files) for packages and modules that are shipped in the
-  source distribution. If the Python 2 version of the stubs must be kept
-  *separate*, they can be put in a `@python2` subdirectory.
+  source distribution.
+* If the stubs are either Python 2-only, or if the Python 2 and Python 3 stubs
+  are separate, the Python 2 stubs are put in a `@python2` subdirectory.
+  Stubs outside `@python2` are always used with Python 3,
+  and also with Python 2 if `python2 = true` is set in `METADATA.toml` (see below).
 * (Rarely) some docs specific to a given type stub package in `README` file.
 
-When a third party stub is
+When a third party stub is added or
 modified, an updated version of the corresponding distribution will be
 automatically uploaded to PyPI within a few hours.
 Each time this happens the least significant
@@ -82,15 +151,24 @@ The metadata file describes the stubs package using the
 [TOML file format](https://toml.io/en/). Currently, the following keys are
 supported:
 
-* `version`: The oldest version of the library for which the stubs are still
-  applicable (i.e. reflect the actual runtime behaviour). Note that only two
-  most significant version levels are supported (i.e. only single dot).
-  When a significant change is made in the library, the version of the
-  stub should be bumped (note that previous versions are still available
-  on PyPI).
-* `python2` (default: `False`) and `python3` (default: `True`): These fields
-  indicate whether a package supports Python 2, Python 3, or both.
-* `requires` (optional): A list of other stub packages that this package uses.
+* `version`: The versions of the library that the stubs support. Two
+  formats are supported:
+    - A concrete version. This is especially suited for libraries that
+      use [Calendar Versioning](https://calver.org/).
+    - A version range ending in `.*`. This is suited for libraries that
+      reflect API changes in the version number only, where the API-independent
+      part is represented by the asterisk. In the case
+      of [Semantic Versioning](https://semver.org/), this version could look
+      like this: `2.7.*`.
+  When the stubs are updated to a newer version
+  of the library, the version of the stub should be bumped (note that
+  previous versions are still available on PyPI).
+* `python2` (default: `false`): If set to `true`, the top-level stubs
+  support both Python 2 and Python 3.
+* `requires` (optional): A list of other stub packages or packages with type
+  information that are imported by the stubs in this package. Only packages
+  generated by typeshed or required by the upstream package are allowed to
+  be listed here, for security reasons.
 * `extra_description` (optional): Can be used to add a custom description to
   the package's long description. It should be a multi-line string in
   Markdown format.
@@ -98,6 +176,12 @@ supported:
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
+* `stubtest` (default: `true`): Whether stubtest should be run against this
+  package. Please avoid setting this to `false`, and add a comment if you have
+  to.
+* `stubtest_apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
+  that need to be installed for stubtest to run successfully. These are
+  usually packages needed to pip install the implementation distribution.
 
 The format of all `METADATA.toml` files can be checked by running
 `python3 ./tests/check_consistent.py`.
@@ -126,6 +210,27 @@ See [PEP 484](http://www.python.org/dev/peps/pep-0484/) for the exact
 syntax of the stub files and [below](#stub-file-coding-style) for the
 coding style used in typeshed.
 
+### Auto-generating stub files
+
+Typeshed includes `scripts/create_baseline_stubs.py`.
+It generates stubs automatically using a tool called
+[stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html) that comes with mypy.
+
+To get started, fork typeshed, clone your fork, and then
+[create a virtualenv](#-or-create-a-local-development-environment).
+You can then install the library with `pip` into the virtualenv and run the script,
+replacing `libraryname` with the name of the library below:
+
+```
+(.venv3)$ pip install libraryname
+(.venv3)$ python3 scripts/create_baseline_stubs.py libraryname
+```
+
+When the script has finished running, it will print instructions telling you what to do next.
+
+If it has been a while since you set up the virtualenv, make sure you have
+the latest mypy (`pip install -r requirements-tests.txt`) before running the script.
+
 ### Supported type system features
 
 Since PEP 484 was accepted, there have been many other PEPs that added
@@ -137,21 +242,23 @@ Accepted features that *cannot* yet be used in typeshed include:
 - [PEP 570](https://www.python.org/dev/peps/pep-0570/) (positional-only
   arguments): see [#4972](https://github.com/python/typeshed/issues/4972),
   use argument names prefixed with `__` instead
+- [PEP 613](https://www.python.org/dev/peps/pep-0613/) (TypeAlias):
+  see [#4913](https://github.com/python/typeshed/issues/4913)
+
+The following features are partially supported:
 - [PEP 585](https://www.python.org/dev/peps/pep-0585/) (builtin
   generics): see [#4820](https://github.com/python/typeshed/issues/4820),
   mostly supported but bugs remain for a few specific cases
-- [PEP 604](https://www.python.org/dev/peps/pep-0604/) (Union
-  pipe operator): see [#4819](https://github.com/python/typeshed/issues/4819)
 - [PEP 612](https://www.python.org/dev/peps/pep-0612/) (ParamSpec):
-  see [#4827](https://github.com/python/typeshed/issues/4827)
-- [PEP 613](https://www.python.org/dev/peps/pep-0613/) (TypeAlias):
-  see [#4913](https://github.com/python/typeshed/issues/4913)
+  see [#4827](https://github.com/python/typeshed/issues/4827),
+  supported in some contexts but requires `# type: ignore` comments
 
 Supported features include:
 - [PEP 544](https://www.python.org/dev/peps/pep-0544/) (Protocol)
 - [PEP 586](https://www.python.org/dev/peps/pep-0586/) (Literal)
 - [PEP 591](https://www.python.org/dev/peps/pep-0591/) (Final/@final)
 - [PEP 589](https://www.python.org/dev/peps/pep-0589/) (TypedDict)
+- [PEP 604](https://www.python.org/dev/peps/pep-0604/) (`Foo | Bar` union syntax)
 - [PEP 647](https://www.python.org/dev/peps/pep-0647/) (TypeGuard):
   see [#5406](https://github.com/python/typeshed/issues/5406)
 
@@ -163,10 +270,13 @@ instead in typeshed stubs. This currently affects:
 - `Literal` (new in Python 3.8)
 - `SupportsIndex` (new in Python 3.8)
 - `TypedDict` (new in Python 3.8)
+- `Concatenate` (new in Python 3.10)
+- `ParamSpec` (new in Python 3.10)
 - `TypeGuard` (new in Python 3.10)
 
-An exception is `Protocol`: although it was added in Python 3.8, it
-can be used in stubs regardless of Python version.
+Two exceptions are `Protocol` and `runtime_checkable`: although
+these were added in Python 3.8, they can be used in stubs regardless
+of Python version.
 
 ### What to include
 
@@ -254,15 +364,6 @@ class Foo:
 def bar(x: str, y, *, z=...): ...
 ```
 
-### Using stubgen
-
-Mypy includes a tool called [stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html)
-that auto-generates stubs for Python and C modules using static analysis,
-Sphinx docs, and runtime introspection.  It can be used to get a starting
-point for your stubs.  Note that this generator is currently unable to
-determine most argument and return types and omits them or uses ``Any`` in
-their place.  Fill out manually the types that you know.
-
 ## Stub file coding style
 
 ### Syntax example
@@ -274,13 +375,13 @@ MAXYEAR: int
 MINYEAR: int
 
 class date:
-    def __init__(self, year: int, month: int, day: int) -> None: ...
+    def __new__(cls: Type[_S], year: int, month: int, day: int) -> _S: ...
     @classmethod
-    def fromtimestamp(cls, timestamp: float) -> date: ...
+    def fromtimestamp(cls: Type[_S], __timestamp: float) -> _S: ...
     @classmethod
-    def today(cls) -> date: ...
+    def today(cls: Type[_S]) -> _S: ...
     @classmethod
-    def fromordinal(cls, ordinal: int) -> date: ...
+    def fromordinal(cls: Type[_S], __n: int) -> _S: ...
     @property
     def year(self) -> int: ...
     def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
@@ -312,24 +413,27 @@ Stub files should only contain information necessary for the type
 checker, and leave out unnecessary detail:
 * for arguments with a default, use `...` instead of the actual
   default;
-* for arguments that default to `None`, use `Optional[]` explicitly
+* for arguments that default to `None`, use `Foo | None` explicitly
   (see below for details);
-* use `float` instead of `Union[int, float]`.
+* use `float` instead of `int | float`.
 
 Some further tips for good type hints:
 * use built-in generics (`list`, `dict`, `tuple`, `set`), instead
-  of importing them from `typing`, **except** for arbitrary length tuples
-  (`Tuple[int, ...]`) (see
-  [python/mypy#9980](https://github.com/python/mypy/issues/9980));
+  of importing them from `typing`, **except** in type aliases, in base classes, and for
+  arbitrary length tuples (`Tuple[int, ...]`);
+* use `X | Y` instead of `Union[X, Y]` and `X | None`, instead of
+  `Optional[X]`, **except** when it is not possible due to mypy bugs (type aliases and base classes);
 * in Python 3 stubs, import collections (`Mapping`, `Iterable`, etc.)
   from `collections.abc` instead of `typing`;
 * avoid invariant collection types (`list`, `dict`) in argument
   positions, in favor of covariant types like `Mapping` or `Sequence`;
-* avoid Union return types: https://github.com/python/mypy/issues/1693;
+* avoid union return types: https://github.com/python/mypy/issues/1693;
 * in Python 2, whenever possible, use `unicode` if that's the only
   possible type, and `Text` if it can be either `unicode` or `bytes`;
 * use platform checks like `if sys.platform == 'win32'` to denote
-  platform-dependent APIs.
+  platform-dependent APIs;
+* use mypy error codes for mypy-specific `# type: ignore` annotations,
+  e.g. `# type: ignore[override]` for Liskov Substitution Principle violations.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:
@@ -341,7 +445,7 @@ unless:
 When adding type hints, avoid using the `Any` type when possible. Reserve
 the use of `Any` for when:
 * the correct type cannot be expressed in the current type system; and
-* to avoid Union returns (see above).
+* to avoid union returns (see above).
 
 Note that `Any` is not the correct type to use if you want to indicate
 that some function can accept literally anything: in those cases use
@@ -361,10 +465,14 @@ When adding type annotations for context manager classes, annotate
 the return type of `__exit__` as bool only if the context manager
 sometimes suppresses exceptions -- if it sometimes returns `True`
 at runtime. If the context manager never suppresses exceptions,
-have the return type be either `None` or `Optional[bool]`. If you
+have the return type be either `None` or `bool | None`. If you
 are not sure whether exceptions are suppressed or not or if the
-context manager is meant to be subclassed, pick `Optional[bool]`.
+context manager is meant to be subclassed, pick `bool | None`.
 See https://github.com/python/mypy/issues/7214 for more details.
+
+`__enter__` methods and other methods that return instances of the
+current class should be annotated with the `_typeshed.Self` type
+variable ([example](https://github.com/python/typeshed/pull/5698)).
 
 A few guidelines for protocol names below. In cases that don't fall
 into any of those categories, use your best judgement.
@@ -395,17 +503,6 @@ To format and check your stubs, run the following commands:
 (.venv3)$ isort stdlib stubs
 (.venv3)$ flake8
 ```
-
-
-## Running the tests
-
-The tests are automatically run on every PR and push to the repo.
-Therefore you don't need to run them locally, unless you want to run
-them before making a pull request or you want to debug some problem without
-creating several small commits.
-
-For more information about our available tests, see
-[tests/README.md](tests/README.md).
 
 
 ## Submitting Changes
@@ -441,7 +538,7 @@ if it consisted of several smaller commits.
 Third-party packages are generally removed from typeshed when one of the
 following criteria is met:
 
-* The upstream package ships a `py.typed` file for at least 6-12 months, or
+* The upstream package ships a `py.typed` file for at least six months, or
 * the package does not support any of the Python versions supported by
   typeshed.
 
@@ -459,15 +556,6 @@ The process for preparing and submitting changes also applies to
 maintainers.  This ensures high quality contributions and keeps
 everybody on the same page.  Avoid direct pushes to the repository.
 
-Maintainers should follow these rules when processing pull requests:
-
-* Always wait for tests to pass before merging PRs.
-* Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
-* Delete branches for merged PRs (by maintainers pushing to the main repo).
-* Make sure commit messages to master are meaningful. For example, remove irrelevant
-  intermediate commit messages.
-* If stubs for a new library are submitted, notify the library's maintainers.
-
 When reviewing pull requests, follow these guidelines:
 
 * Typing is hard. Try to be helpful and explain issues with the PR,
@@ -477,3 +565,14 @@ When reviewing pull requests, follow these guidelines:
 * When reviewing large, hand-crafted PRs, you only need to look for red flags
   and general issues, and do a few spot checks.
 * Review smaller, hand-crafted PRs thoroughly.
+
+When merging pull requests, follow these guidelines:
+
+* Always wait for tests to pass before merging PRs.
+* Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
+* Make sure the commit message is meaningful. For example, remove irrelevant
+  intermediate commit messages.
+* The commit message for third-party stubs is used to generate the changelog.
+  It should be valid Markdown, be comprehensive, read like a changelog entry,
+  and assume that the reader has no access to the diff.
+* Delete branches for merged PRs (by maintainers pushing to the main repo).

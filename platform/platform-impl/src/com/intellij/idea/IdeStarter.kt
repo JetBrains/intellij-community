@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.idea
 
@@ -9,17 +9,18 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
@@ -32,6 +33,7 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
@@ -44,14 +46,14 @@ import javax.swing.JOptionPane
 open class IdeStarter : ApplicationStarter {
   companion object {
     private var filesToLoad: List<Path> = Collections.emptyList()
-    private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
+    private var uriToOpen: String? = null
 
-    fun openFilesOnLoading(value: List<Path>) {
+    @JvmStatic fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
-    fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
-      wizardStepProvider = provider
+    @JvmStatic fun openUriOnLoading(value: String) {
+      uriToOpen = value
     }
   }
 
@@ -90,21 +92,16 @@ open class IdeStarter : ApplicationStarter {
     }
   }
 
-  protected open fun openProjectIfNeeded(args: List<String>,
-                                         app: ApplicationEx,
-                                         lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
+  protected open fun openProjectIfNeeded(args: List<String>, app: ApplicationEx, lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
     val frameInitActivity = startActivity("frame initialization")
     frameInitActivity.runChild("app frame created callback") {
       lifecyclePublisher.appFrameCreated(args)
     }
 
-    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+    // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
     if (app.isHeadlessEnvironment) {
       frameInitActivity.end()
-
       LifecycleUsageTriggerCollector.onIdeStart()
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(null)
       return CompletableFuture.completedFuture(null)
     }
 
@@ -112,66 +109,79 @@ open class IdeStarter : ApplicationStarter {
       UiInspectorAction.initGlobalInspector()
     }
 
-    if (JetBrainsProtocolHandler.appStartedWithCommand()) {
-      val needToOpenProject = showWelcomeFrame(lifecyclePublisher, willOpenProject = false)
-      frameInitActivity.end()
+    ForkJoinPool.commonPool().execute {
       LifecycleUsageTriggerCollector.onIdeStart()
+    }
 
-      val project = when {
-        !needToOpenProject -> null
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
-        else -> null
-      }
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(project)
+    if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
+      frameInitActivity.end()
+      processUriParameter(uriToOpen ?: args[0], lifecyclePublisher)
+      return CompletableFuture.completedFuture(null)
     }
     else {
       val recentProjectManager = RecentProjectsManager.getInstance()
       val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
       val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
-      val needToOpenProject = showWelcomeFrame(lifecyclePublisher, willOpenProject)
+      val needToOpenProject = willOpenProject || showWelcomeFrame(lifecyclePublisher)
       frameInitActivity.end()
-      ForkJoinPool.commonPool().execute {
-        LifecycleUsageTriggerCollector.onIdeStart()
-      }
 
       if (!needToOpenProject) {
-        @Suppress("DEPRECATION")
-        lifecyclePublisher.appStarting(null)
         return CompletableFuture.completedFuture(null)
       }
 
       val project = when {
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(project)
 
-      if (project == null && willReopenRecentProjectOnStart) {
-        return recentProjectManager.reopenLastProjectsOnStart()
-          .thenAccept { isOpened ->
+      return when {
+        project != null -> {
+          CompletableFuture.completedFuture(null)
+        }
+        willReopenRecentProjectOnStart -> {
+          recentProjectManager.reopenLastProjectsOnStart().thenAccept { isOpened ->
             if (!isOpened) {
-              WelcomeFrame.showIfNoProjectOpened()
+              WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
             }
           }
+        }
+        else -> {
+          CompletableFuture.completedFuture(null).thenRun {
+            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+          }
+        }
       }
     }
-    return CompletableFuture.completedFuture(null)
   }
 
-  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
-    val doShowWelcomeFrame = if (willOpenProject) null else WelcomeFrame.prepareToShow()
-
-    if (doShowWelcomeFrame == null) return true
+  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
+    val showWelcomeFrameTask = WelcomeFrame.prepareToShow()
+    if (showWelcomeFrameTask == null) {
+      return true
+    }
 
     ApplicationManager.getApplication().invokeLater {
-      doShowWelcomeFrame.run()
+      showWelcomeFrameTask.run()
       lifecyclePublisher.welcomeScreenDisplayed()
     }
     return false
+  }
+
+  private fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
+    ApplicationManager.getApplication().invokeLater {
+      CommandLineProcessor.processProtocolCommand(uri)
+        .thenAccept {
+          if (it.exitCode == ProtocolHandler.PLEASE_QUIT) {
+            ApplicationManager.getApplication().invokeLater {
+              ApplicationManagerEx.getApplicationEx().exit(false, true)
+            }
+          }
+          else if (it.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+            WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+          }
+        }
+    }
   }
 
   internal class StandaloneLightEditStarter : IdeStarter() {
@@ -179,18 +189,18 @@ open class IdeStarter : ApplicationStarter {
                                      app: ApplicationEx,
                                      lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
       val project = when {
-        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
 
-      if (project != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
+      if (project != null) {
         return CompletableFuture.completedFuture(null)
       }
 
       val recentProjectManager = RecentProjectsManager.getInstance()
       return (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart()
-      else CompletableFuture.completedFuture(true))
+              else CompletableFuture.completedFuture(true))
         .thenAccept { isOpened ->
           if (!isOpened) {
             ApplicationManager.getApplication().invokeLater {
@@ -259,7 +269,7 @@ private fun reportPluginErrors() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR)
+    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error").createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
         PluginManagerMain.onEvent(event.description)

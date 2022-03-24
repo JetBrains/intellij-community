@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -100,6 +100,10 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     doTest("B/src/y/AddAmbiguous.java", true);
   }
 
+  public void testTestDependency() {
+    doTest("C/src/z/B.java", true);
+  }
+
   private void removeModule() {
     ModuleManager manager = ModuleManager.getInstance(getProject());
     ModifiableModuleModel model = manager.getModifiableModel();
@@ -140,6 +144,14 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   public void testAddJunit4inJunit() {
     doTest("A/src/x/DoTest4junit.java", false);
+  }
+
+  public void testAddCheckerFrameworkTainted() {
+    doTest("A/src/x/AddCheckerFrameworkTainted.java", false);
+  }
+
+  public void testAddCheckerFrameworkUntainted() {
+    doTest("A/src/x/AddCheckerFrameworkUntainted.java", false);
   }
 
   public void testExistingJunit() {

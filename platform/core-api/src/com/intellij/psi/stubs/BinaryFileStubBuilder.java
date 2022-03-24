@@ -8,6 +8,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
+/**
+ * Provides an ability to build stubs for binary files that are not based on a particular PSI.
+ * File type of passed file should be a binary file type, namely its {@link com.intellij.openapi.fileTypes.FileType#isBinary()} returns <strong>true</strong>.
+ * <p/>
+ * For example: java class file stubs built using bytecode decompiler.
+ */
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);
 

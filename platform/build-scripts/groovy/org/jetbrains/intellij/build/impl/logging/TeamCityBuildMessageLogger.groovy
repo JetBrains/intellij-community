@@ -144,6 +144,13 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   }
 
   private void printMessageText(String message) {
+    if (BuildUtils.isUnderJpsBootstrap()) {
+      // under jps-bootstrap we're logging directly to teamcity
+      // so special prefixes are not required
+      out.println(message)
+      return
+    }
+
     if (isTeamCityListenerRegistered) {
       //notify TeamCity via its BuildListener
       antTaskLogger.logMessageToOtherLoggers(message, Project.MSG_INFO)

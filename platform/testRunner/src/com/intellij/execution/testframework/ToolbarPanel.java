@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.PreferredPlace;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
@@ -54,17 +55,25 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
 
-    DefaultActionGroup sortGroup = !isNewLayout ? actionGroup : new DefaultActionGroup();
+    var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message("junit.runing.info.sort.group.name"));
+    DumbAwareToggleBooleanProperty suitesAlwaysOnTop =
+      new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.folders.on.top.action.name"),
+                                         ExecutionBundle.message("junit.runing.info.folders.on.top.action.description"),
+                                         null,
+                                         properties, TestConsoleProperties.SUITES_ALWAYS_ON_TOP);
+    if (isNewLayout) {
+      sortGroup.addAction(suitesAlwaysOnTop);
+    }
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                              ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
                                                              properties, TestConsoleProperties.SORT_ALPHABETICALLY));
+    
     final ToggleModelAction sortByStatistics = new SortByDurationAction(properties);
     myActions.add(sortByStatistics);
     sortGroup.addAction(sortByStatistics);
 
     if (isNewLayout) {
-      sortGroup.setPopup(true);
       sortGroup.getTemplatePresentation().setIcon(sortByStatistics.getTemplatePresentation().getIcon());
       actionGroup.add(sortGroup);
     } else {
@@ -95,8 +104,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     final AnAction[] importActions = properties.createImportActions();
     if (importActions != null) {
       for (AnAction importAction : importActions) {
-        Boolean takeOutOf = importAction.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP);
-        if (Boolean.TRUE.equals(takeOutOf)) {
+        if (importAction.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.TOOLBAR) {
           actionGroup.add(importAction);
         } else {
           moreGroup.add(importAction);
@@ -120,6 +128,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(TestRunnerBundle.message("action.show.inline.statistics.text"), TestRunnerBundle
       .message("action.toggle.visibility.test.duration.in.tree.description"),
                                                           null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
+    if (!isNewLayout) {
+      secondaryGroup.add(suitesAlwaysOnTop);
+    }
 
     secondaryGroup.addSeparator();
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
@@ -162,6 +173,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     }
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, createComparatorPropertyListener(model), model, true);
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SUITES_ALWAYS_ON_TOP, createComparatorPropertyListener(model), model, true);
   }
 
   private static TestFrameworkPropertyListener<Boolean> createComparatorPropertyListener(TestFrameworkRunningModel model) {

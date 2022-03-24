@@ -160,7 +160,7 @@ public final class PyDataView implements DumbAware {
   public void init(@NotNull ToolWindow toolWindow) {
     myTabs = new JBRunnerTabs(myProject, PythonPluginDisposable.getInstance(myProject));
     myTabs.setDataProvider(dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       return null;

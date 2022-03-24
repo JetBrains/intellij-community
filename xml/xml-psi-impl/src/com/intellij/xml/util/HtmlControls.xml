@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
 <htmlControls namespace="System.Web.UI.HtmlControls">
   <control name="A" type="HtmlAnchor" startTag="required" endTag="Required" emptyAllowed="false">
     <attribute name="href" type="%URL" />

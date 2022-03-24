@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filter{}.forEach{}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filter{}.forEach{}'"
 import java.util.ArrayList

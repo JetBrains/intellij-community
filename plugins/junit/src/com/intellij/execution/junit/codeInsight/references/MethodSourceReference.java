@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight.references;
 
 import com.intellij.psi.PsiClass;
@@ -21,6 +21,6 @@ public final class MethodSourceReference extends BaseJunitAnnotationReference {
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
-    return (TestUtils.testInstancePerClass(psiClass) != isStatic) && method.getParameterList().isEmpty();
+    return method.getParameterList().isEmpty() && (TestUtils.testInstancePerClass(psiClass) != isStatic);
   }
 }

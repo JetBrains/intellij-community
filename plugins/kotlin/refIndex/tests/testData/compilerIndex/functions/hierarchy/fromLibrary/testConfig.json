@@ -1,11 +1,10 @@
 {
+    "mainFile": "ClosedRangeUsage.kt",
     "usages": [
-        "ClosedRangeUsage.kt",
-        "ClosedFloatingPointRangeUsage.kt",
-        "MyClosedFloatingPointRangeUsage.kt"
-    ],
-    "shouldBeUsage": [
         "ClosedFloatingPointRangeUsage.java",
-        "MyClosedFloatingPointRangeUsage.java"
+        "ClosedFloatingPointRangeUsage.kt",
+        "ClosedRangeUsage.kt",
+        "MyClosedFloatingPointRangeUsage.java",
+        "MyClosedFloatingPointRangeUsage.kt"
     ]
 }

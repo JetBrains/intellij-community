@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.storage.StorageManager
 
@@ -68,11 +68,11 @@ object CreateTypeParameterUnmatchedTypeArgumentActionFactory :
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<KtTypeArgumentList>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> CreateTypeParameterData?
+        quickFixDataFactory: (KtTypeArgumentList) -> CreateTypeParameterData?
     ): List<QuickFixWithDelegateFactory> {
         return QuickFixWithDelegateFactory factory@{
             val originalElement = originalElementPointer.element ?: return@factory null
-            val data = quickFixDataFactory() ?: return@factory null
+            val data = quickFixDataFactory(originalElement) ?: return@factory null
             CreateTypeParameterFromUsageFix(originalElement, data, false)
         }.let(::listOf)
     }

@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -46,9 +49,20 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
 
         val klass = element.liftToExpected() as? KtClass ?: element
 
-        val subclasses: List<PsiElement> = project.runSynchronouslyWithProgress(KotlinBundle.message("searching.inheritors"), true) {
+        val searchAction = {
             HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().mapNotNull { it.unwrapped }
-        } ?: return
+        }
+        val subclasses: List<PsiElement> = if (element.isPhysical)
+            project.runSynchronouslyWithProgress(KotlinBundle.message("searching.inheritors"), true, searchAction) ?: return
+        else
+            searchAction().map { subClass ->
+                // search finds physical elements
+                try {
+                    PsiTreeUtil.findSameElementInCopy(subClass, klass.containingFile)
+                } catch (_: IllegalStateException) {
+                    return
+                }
+            }
 
         val subclassesByContainer: Map<KtClass?, List<PsiElement>> = subclasses.sortedBy { it.textOffset }.groupBy {
             if (it !is KtObjectDeclaration) return@groupBy null
@@ -88,11 +102,13 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
         }
     }
 
-    private fun showError(message: String, elements: List<PsiElement>, project: Project, editor: Editor?) {
+    private fun showError(@Nls message: String, elements: List<PsiElement>, project: Project, editor: Editor?) {
+        if (elements.firstOrNull()?.isPhysical == false) return
         val elementDescriptions = elements.map {
             ElementDescriptionUtil.getElementDescription(it, RefactoringDescriptionLocation.WITHOUT_PARENT)
         }
 
+        @NlsSafe
         val errorText = buildString {
             append(message)
             append(KotlinBundle.message("following.problems.are.found"))

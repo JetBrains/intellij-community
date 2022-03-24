@@ -22,14 +22,16 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("TestOnlyProblems")
 public final class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
+  private final String myName;
   private SdkLeakTracker myOldSdks;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
   private Project myProject;
   private Module myModule;
   private final Disposable mySdkParentDisposable = Disposer.newDisposable("sdk for project in light test fixture");
 
-  public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
+  public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor, @NotNull String name) {
     myProjectDescriptor = projectDescriptor;
+    myName = name;
   }
 
   @Override
@@ -38,7 +40,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
 
     TestApplicationManager application = TestApplicationManager.getInstance();
     Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable(),
-                                                                mySdkParentDisposable);
+                                                                mySdkParentDisposable, myName);
     myProject = setup.getFirst();
     myModule = setup.getSecond();
     InjectedLanguageManagerImpl.pushInjectors(getProject());

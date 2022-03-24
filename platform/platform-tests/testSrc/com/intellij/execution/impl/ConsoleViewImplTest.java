@@ -39,7 +39,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.util.*;
@@ -239,12 +238,12 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  ConsoleViewImpl createConsole() {
+  private ConsoleViewImpl createConsole() {
     return createConsole(false, getProject());
   }
 
   @NotNull
-  public static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter, Project project) {
+  static ConsoleViewImpl createConsole(boolean usePredefinedMessageFilter, Project project) {
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
                                                   false,
@@ -416,7 +415,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       myConsole.waitAllRequests();
       int estimatedPrintedChars = stdoutLines * (stdoutLinePrefix.length() + Integer.toString(stdoutLines).length() + 1) +
                                   stderrLines * (stderrLinePrefix.length() + Integer.toString(stderrLines).length() + 1);
-      Assert.assertTrue(ConsoleBuffer.getCycleBufferSize() > estimatedPrintedChars);
+      assertTrue(ConsoleBuffer.getCycleBufferSize() > estimatedPrintedChars);
       Future<?> stdout = sendMessagesInBackground(processHandler, stdoutLinePrefix, stdoutLines, ProcessOutputType.STDOUT, stdoutBufferSize);
       Future<?> stderr = sendMessagesInBackground(processHandler, stderrLinePrefix, stderrLines, ProcessOutputType.STDERR, stderrBufferSize);
       stdout.get();
@@ -429,16 +428,16 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       int readStderrLines = 0;
       for (String line : lines) {
         if (line.startsWith(stdoutLinePrefix)) {
-          Assert.assertEquals(stdoutLinePrefix + (readStdoutLines + 1) + LineSeparator.LF.getSeparatorString(), line);
+          assertEquals(stdoutLinePrefix + (readStdoutLines + 1) + LineSeparator.LF.getSeparatorString(), line);
           readStdoutLines++;
         }
         else {
-          Assert.assertEquals(stderrLinePrefix + (readStderrLines + 1) + LineSeparator.LF.getSeparatorString(), line);
+          assertEquals(stderrLinePrefix + (readStderrLines + 1) + LineSeparator.LF.getSeparatorString(), line);
           readStderrLines++;
         }
       }
-      Assert.assertEquals(stdoutLines, readStdoutLines);
-      Assert.assertEquals(stderrLines, readStderrLines);
+      assertEquals(stdoutLines, readStdoutLines);
+      assertEquals(stderrLines, readStderrLines);
     }
   }
 
@@ -614,21 +613,21 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   private void assertPrintedText(String @NotNull [] textToPrint, @NotNull String expectedText) {
     myConsole.clear();
     myConsole.waitAllRequests();
-    Assert.assertEquals("", myConsole.getText());
+    assertEquals("", myConsole.getText());
     for (String text : textToPrint) {
       myConsole.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
     }
     myConsole.flushDeferredText();
-    Assert.assertEquals(expectedText, myConsole.getText());
+    assertEquals(expectedText, myConsole.getText());
 
     myConsole.clear();
     myConsole.waitAllRequests();
-    Assert.assertEquals("", myConsole.getText());
+    assertEquals("", myConsole.getText());
     for (String text : textToPrint) {
       myConsole.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
       myConsole.flushDeferredText();
     }
-    Assert.assertEquals(expectedText, myConsole.getText());
+    assertEquals(expectedText, myConsole.getText());
   }
 
   public void testBackspacePerformance() {
@@ -643,7 +642,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         myConsole.waitAllRequests();
-        Assert.assertEquals((long) printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
+        assertEquals((long) printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
       }
     }).assertTiming();
   }
@@ -653,14 +652,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.print("Hello", ConsoleViewContentType.ERROR_OUTPUT);
     myConsole.print("\b\b\b\bDone", ConsoleViewContentType.SYSTEM_OUTPUT);
     myConsole.flushDeferredText();
-    Assert.assertEquals("Starting\nHDone", myConsole.getText());
+    assertEquals("Starting\nHDone", myConsole.getText());
 
     List<RangeHighlighter> actualHighlighters = getAllRangeHighlighters();
-    assertMarkersEqual(ContainerUtil.newArrayList(
+    assertMarkersEqual(actualHighlighters,
       new ExpectedHighlighter(0, 9, ConsoleViewContentType.NORMAL_OUTPUT),
       new ExpectedHighlighter(9, 10, ConsoleViewContentType.ERROR_OUTPUT),
       new ExpectedHighlighter(10, 14, ConsoleViewContentType.SYSTEM_OUTPUT)
-    ), actualHighlighters);
+    );
   }
 
   public void testBackspaceChangesHighlightingRanges2() {
@@ -674,15 +673,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.print("Done", ConsoleViewContentType.SYSTEM_OUTPUT);
     myConsole.flushDeferredText();
 
-    Assert.assertEquals("Ready\nSteady\nGototokenX\n_Done", myConsole.getText());
-    List<RangeHighlighter> actualHighlighters = getAllRangeHighlighters();
-    assertMarkersEqual(ContainerUtil.newArrayList(
+    assertEquals("Ready\nSteady\nGototokenX\n_Done", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
       new ExpectedHighlighter(0, 13, ConsoleViewContentType.NORMAL_OUTPUT),  // Ready\nSteady\n
       new ExpectedHighlighter(13, 15, ConsoleViewContentType.ERROR_OUTPUT),  // Go
       new ExpectedHighlighter(15, 17, ConsoleViewContentType.SYSTEM_OUTPUT), // to
       new ExpectedHighlighter(17, 24, ConsoleViewContentType.NORMAL_OUTPUT), // tokenX\n
       new ExpectedHighlighter(24, 29, ConsoleViewContentType.SYSTEM_OUTPUT)  // Done
-    ), actualHighlighters);
+    );
   }
 
   public void testBackspaceChangesHighlightingRanges3() {
@@ -691,11 +689,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.print("\b\b\b\b\b\b", ConsoleViewContentType.ERROR_OUTPUT);
     myConsole.flushDeferredText();
 
-    Assert.assertEquals("Test1\n", myConsole.getText());
-    List<RangeHighlighter> actualHighlighters = getAllRangeHighlighters();
-    assertMarkersEqual(ContainerUtil.newArrayList(
+    assertEquals("Test1\n", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
       new ExpectedHighlighter(0, 6, ConsoleViewContentType.NORMAL_OUTPUT)  // Test1\n
-    ), actualHighlighters);
+    );
   }
 
   public void testSubsequentFoldsAreCombined() {
@@ -898,10 +895,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     return Arrays.asList(highlighters);
   }
 
-  private static void assertMarkersEqual(@NotNull List<ExpectedHighlighter> expected, @NotNull List<RangeHighlighter> actual) {
-    assertEquals(expected.size(), actual.size());
-    for (int i = 0; i < expected.size(); i++) {
-      assertMarkerEquals(expected.get(i), actual.get(i));
+  private static void assertMarkersEqual(@NotNull List<? extends RangeHighlighter> actual, @NotNull ExpectedHighlighter @NotNull ... expected) {
+    assertEquals(expected.length, actual.size());
+    for (int i = 0; i < expected.length; i++) {
+      assertMarkerEquals(expected[i], actual.get(i));
     }
   }
 
@@ -922,5 +919,21 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       myEndOffset = endOffset;
       myContentType = contentType;
     }
+  }
+
+  public void testTypingMustLeadToMergedUserInputTokensAtTheDocumentEnd() {
+    myConsole.type(myConsole.getEditor(), "/");
+    myConsole.flushDeferredText();
+    assertEquals("/", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
+      new ExpectedHighlighter(0, 1, ConsoleViewContentType.USER_INPUT)
+    );
+
+    myConsole.type(myConsole.getEditor(), "/");
+    myConsole.flushDeferredText();
+    assertEquals("//", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
+      new ExpectedHighlighter(0, 2, ConsoleViewContentType.USER_INPUT)
+    );
   }
 }

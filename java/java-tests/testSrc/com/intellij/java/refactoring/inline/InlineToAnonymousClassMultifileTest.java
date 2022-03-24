@@ -77,6 +77,7 @@ public class InlineToAnonymousClassMultifileTest extends LightMultiFileTestCase 
       PsiClass classToInline = myFixture.findClass(className);
       classToInline = (PsiClass)classToInline.getNavigationElement();
       assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+      assertTrue(new InlineToAnonymousClassHandler().canInlineElement(classToInline));
       InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(),
                                                                                       classToInline,
                                                                                       null, false, false, false);

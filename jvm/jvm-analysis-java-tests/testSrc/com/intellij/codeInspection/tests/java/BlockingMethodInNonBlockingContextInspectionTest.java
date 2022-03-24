@@ -13,7 +13,8 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
-import java.util.Collections;
+import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
+import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;
 
 public class BlockingMethodInNonBlockingContextInspectionTest extends UsefulTestCase {
 
@@ -59,16 +60,19 @@ public class BlockingMethodInNonBlockingContextInspectionTest extends UsefulTest
     JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = true;
 
     BlockingMethodInNonBlockingContextInspection myInspection = new BlockingMethodInNonBlockingContextInspection();
-    myInspection.myBlockingAnnotations =
-      Collections.singletonList(BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATION);
-    myInspection.myNonBlockingAnnotations =
-      Collections.singletonList(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION);
+    myInspection.myBlockingAnnotations = DEFAULT_BLOCKING_ANNOTATIONS;
+    myInspection.myNonBlockingAnnotations = DEFAULT_NONBLOCKING_ANNOTATIONS;
     myFixture.enableInspections(myInspection);
   }
 
   public void testSimpleAnnotationDetection() {
     myFixture.configureByFiles("TestSimpleAnnotationsDetection.java", "Blocking.java", "NonBlocking.java");
     myFixture.testHighlighting(true, false, true, "TestSimpleAnnotationsDetection.java");
+  }
+
+  public void testClassAnnotationDetection() {
+    myFixture.configureByFiles("TestClassAnnotationsDetection.java", "Blocking.java", "NonBlocking.java");
+    myFixture.testHighlighting(true, false, true, "TestClassAnnotationsDetection.java");
   }
 
   public void testExternalBlockingAnnotationDetection() {

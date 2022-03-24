@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -31,7 +32,6 @@ import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -424,6 +424,10 @@ public abstract class GitHandler {
   }
 
   private void start() {
+    if (myProject != null && !myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
+    }
+
     if (isStarted()) {
       throw new IllegalStateException("The process has been already started");
     }
@@ -512,8 +516,7 @@ public abstract class GitHandler {
    * @return is "--progress" parameter supported by this version of Git.
    * @deprecated use {@link #addParameters}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean addProgressParameter() {
     if (myProject != null && GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
       addParameters("--progress");
@@ -526,8 +529,7 @@ public abstract class GitHandler {
    * @return exit code for process if it is available
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int getExitCode() {
     if (myExitCode == null) {
       return -1;
@@ -614,8 +616,7 @@ public abstract class GitHandler {
    * @return unmodifiable list of errors.
    * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public List<VcsException> errors() {
     return Collections.unmodifiableList(myErrors);
   }

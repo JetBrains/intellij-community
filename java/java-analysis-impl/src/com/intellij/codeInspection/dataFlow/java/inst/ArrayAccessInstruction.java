@@ -26,9 +26,9 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   private final @NotNull IndexOutOfBoundsProblem myProblem;
   private final @Nullable DfaVariableValue myStaticValue;
 
-  public ArrayAccessInstruction(@Nullable DfaControlTransferValue outOfBoundsTransfer,
-                                @Nullable DfaAnchor anchor,
+  public ArrayAccessInstruction(@Nullable DfaAnchor anchor,
                                 @NotNull IndexOutOfBoundsProblem indexProblem,
+                                @Nullable DfaControlTransferValue outOfBoundsTransfer,
                                 @Nullable DfaVariableValue staticValue) {
     super(anchor);
     myOutOfBoundsTransfer = outOfBoundsTransfer;
@@ -40,9 +40,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue newTransfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
     DfaVariableValue newStaticValue = myStaticValue == null ? null : myStaticValue.bindToFactory(factory);
-    var instruction = new ArrayAccessInstruction(newTransfer, getDfaAnchor(), myProblem, newStaticValue);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new ArrayAccessInstruction(getDfaAnchor(), myProblem, newTransfer, newStaticValue);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -143,7 +144,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public State collectInformation(@NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null || vFile.getFileType() != PythonFileType.INSTANCE) {
+    if (vFile == null || !FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)) {
       return null;
     }
     Sdk sdk = PythonSdkType.findLocalCPython(ModuleUtilCore.findModuleForPsiElement(file));

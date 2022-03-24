@@ -1,18 +1,22 @@
 import email.feedparser
 from email.message import Message
 from email.policy import Policy
-from typing import BinaryIO, Callable, Optional, TextIO
+from typing import BinaryIO, Callable, TextIO, TypeVar
 
-FeedParser = email.feedparser.FeedParser
-BytesFeedParser = email.feedparser.BytesFeedParser
+__all__ = ["Parser", "HeaderParser", "BytesParser", "BytesHeaderParser", "FeedParser", "BytesFeedParser"]
+
+_M = TypeVar("_M", bound=Message)
+
+FeedParser = email.feedparser.FeedParser[_M]
+BytesFeedParser = email.feedparser.BytesFeedParser[_M]
 
 class Parser:
-    def __init__(self, _class: Optional[Callable[[], Message]] = ..., *, policy: Policy = ...) -> None: ...
+    def __init__(self, _class: Callable[[], Message] | None = ..., *, policy: Policy = ...) -> None: ...
     def parse(self, fp: TextIO, headersonly: bool = ...) -> Message: ...
     def parsestr(self, text: str, headersonly: bool = ...) -> Message: ...
 
 class HeaderParser(Parser):
-    def __init__(self, _class: Optional[Callable[[], Message]] = ..., *, policy: Policy = ...) -> None: ...
+    def __init__(self, _class: Callable[[], Message] | None = ..., *, policy: Policy = ...) -> None: ...
     def parse(self, fp: TextIO, headersonly: bool = ...) -> Message: ...
     def parsestr(self, text: str, headersonly: bool = ...) -> Message: ...
 

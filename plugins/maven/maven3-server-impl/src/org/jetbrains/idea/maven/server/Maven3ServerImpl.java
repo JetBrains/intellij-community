@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
@@ -12,17 +13,6 @@ import java.util.Collection;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
-  @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      Maven3ServerGlobals.set(logger, downloadListener);
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-  }
-
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -87,6 +77,32 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return Maven3ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
+      throw rethrowException(e);
+    }
+  }
+
+  @Override
+  public MavenPullServerLogger createPullLogger(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
+      throw rethrowException(e);
+    }
+  }
+
+  @Override
+  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
       throw rethrowException(e);
     }
   }

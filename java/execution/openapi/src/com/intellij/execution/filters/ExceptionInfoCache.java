@@ -29,7 +29,7 @@ public class ExceptionInfoCache {
   /**
    * @deprecated use {@link #ExceptionInfoCache(Project, GlobalSearchScope)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ExceptionInfoCache(@NotNull GlobalSearchScope searchScope) {
     this(Objects.requireNonNull(searchScope.getProject()), searchScope);
   }
@@ -50,7 +50,7 @@ public class ExceptionInfoCache {
   }
   
   @NotNull
-  public ClassResolveInfo resolveClassOrFile(String className, @Nullable String fileName) {
+  public ClassResolveInfo resolveClassOrFile(@NotNull String className, @Nullable String fileName) {
     ClassResolveInfo info = resolveClass(className);
     
     if (info.myClasses.isEmpty() && fileName != null) {
@@ -66,7 +66,7 @@ public class ExceptionInfoCache {
     return info;
   }
 
-  @NotNull ClassResolveInfo resolveClass(String className) {
+  @NotNull ClassResolveInfo resolveClass(@NotNull String className) {
     ClassResolveInfo cached = myCache.get(className);
     if (cached != null && cached.isValid()) {
       return cached;

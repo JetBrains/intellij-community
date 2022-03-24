@@ -165,8 +165,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
-  private @NotNull IComponentStore getStore() {
+  protected @NotNull IComponentStore getStore() {
     return Objects.requireNonNull(getService(IComponentStore.class));
+  }
+
+  @Override
+  public boolean canStoreSettings() {
+    return !(getStore() instanceof NonPersistentModuleStore);
   }
 
   @Override
@@ -243,11 +248,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
+    //noinspection deprecation
     processInitializedComponents(ModuleComponent.class, (component, __) -> {
+      //noinspection deprecation
       component.moduleAdded();
       return Unit.INSTANCE;
     });
@@ -335,6 +341,18 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleProductionSourceScope() {
+    return myModuleScopeProvider.getModuleProductionSourceScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleTestSourceScope() {
+    return myModuleScopeProvider.getModuleTestSourceScope();
   }
 
   @Override

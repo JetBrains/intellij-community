@@ -41,13 +41,13 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   }
 
   @Override
-  public V get(Object key) {
+  public V get(@NotNull Object key) {
     ValueReference<K,V> ref = myMap.get(key);
     return dereference(ref);
   }
 
   @Override
-  public V put(K key, V value) {
+  public V put(@NotNull K key, V value) {
     processQueue();
     RefHashMap.Key<K> weakKey = myMap.createKey(key);
     ValueReference<K, V> reference = createValueReference(weakKey, value, myQueue);
@@ -56,7 +56,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   }
 
   @Override
-  public V remove(Object key) {
+  public V remove(@NotNull Object key) {
     processQueue();
     ValueReference<K,V> ref = myMap.remove(key);
     return dereference(ref);

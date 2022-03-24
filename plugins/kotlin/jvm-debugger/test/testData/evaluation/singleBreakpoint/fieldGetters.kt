@@ -56,6 +56,9 @@ class K2 {
 // RESULT: Unresolved reference: foo_field
 
 // EXPRESSION: PublicFieldGetter().foo
+// RESULT: "a": Ljava/lang/String;
+
+// EXPRESSION: PublicFieldGetter().getFoo()
 // RESULT: "b": Ljava/lang/String;
 
 // EXPRESSION: PublicFieldGetter().foo_field
@@ -74,6 +77,9 @@ class K2 {
 // RESULT: "e": Ljava/lang/String;
 
 // EXPRESSION: PublicGetter1().foo
+// RESULT: "a": Ljava/lang/String;
+
+// EXPRESSION: PublicGetter1().getFoo()
 // RESULT: "g": Ljava/lang/String;
 
 // EXPRESSION: PublicGetter1().foo_field
@@ -98,6 +104,9 @@ class K2 {
 // RESULT: Unresolved reference: foo_field
 
 // EXPRESSION: PublicFieldAndGetterInParent().foo
+// RESULT: "b": Ljava/lang/String;
+
+// EXPRESSION: PublicFieldAndGetterInParent().getFoo()
 // RESULT: "a": Ljava/lang/String;
 
 // EXPRESSION: PublicFieldAndGetterInParent().foo_field

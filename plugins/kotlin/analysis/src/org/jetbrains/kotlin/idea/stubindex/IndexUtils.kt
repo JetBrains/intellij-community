@@ -97,6 +97,10 @@ private fun KtTypeElement.index(
 
             is KtDynamicType -> occurrence("Any")
 
+            // Currently, the only possible intersection type is "T & Any". "Any" is allowed to be only on RHS
+            is KtIntersectionType ->
+                getLeftTypeRef()?.typeElement?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
+
             else -> error("Unsupported type: $this")
         }
     }

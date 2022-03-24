@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 
 open class MarkdownFormatterTest : LightPlatformCodeInsightTestCase() {
   override fun getTestDataPath(): String {
@@ -15,15 +16,23 @@ open class MarkdownFormatterTest : LightPlatformCodeInsightTestCase() {
 
   private var myOldWrap = false
   private var myOldMargin = 0
+  private var myOldWrapTextBlocksIfLong = false
+  private var myOldKeepLineBreaks = true
 
   override fun setUp() {
     super.setUp()
 
     val settings = CodeStyle.getSettings(project)
     val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
+    val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
+
     myOldWrap = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
     myOldMargin = common.RIGHT_MARGIN
+    myOldWrapTextBlocksIfLong = custom.WRAP_TEXT_IF_LONG
+    myOldKeepLineBreaks = custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS
 
+    custom.WRAP_TEXT_IF_LONG = true
+    custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = false
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
     common.RIGHT_MARGIN = 40
   }
@@ -31,9 +40,12 @@ open class MarkdownFormatterTest : LightPlatformCodeInsightTestCase() {
   override fun tearDown() {
     val settings = CodeStyle.getSettings(project)
     val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
+    val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
 
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap
     common.RIGHT_MARGIN = myOldMargin
+    custom.WRAP_TEXT_IF_LONG = myOldWrapTextBlocksIfLong
+    custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = myOldKeepLineBreaks
 
     super.tearDown()
   }

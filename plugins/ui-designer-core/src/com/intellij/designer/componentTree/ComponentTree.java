@@ -27,7 +27,7 @@ import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -130,7 +130,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myArea;
     }
     if (myDesigner != null) {
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return myDesigner.getEditor();
       }
       return myDesigner.getActionPanel().getData(dataId);

@@ -1,5 +1,5 @@
 // "Surround with null check" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun Int.bar() = this
 

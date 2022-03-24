@@ -1186,6 +1186,16 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON310);
   }
 
+  // PY-48940
+  public void testAssignmentExpressionsInSet() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-48940
+  public void testAssignmentExpressionsInIndexes() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

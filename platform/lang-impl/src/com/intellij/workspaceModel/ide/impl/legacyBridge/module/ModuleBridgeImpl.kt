@@ -1,11 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
@@ -17,6 +20,7 @@ import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
@@ -32,7 +36,7 @@ internal class ModuleBridgeImpl(
 ) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
   init {
     // default project doesn't have modules
-    if (!project.isDefault) {
+    if (!project.isDefault && !project.isDisposed) {
       val busConnection = project.messageBus.connect(this)
 
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
@@ -66,15 +70,19 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
+  override fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl) {
+    myImlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
+    val imlPath = newModuleFileUrl.toPath()
+    (store.storageManager as RenameableStateStorageManager).pathRenamed(imlPath, null)
+    store.setPath(imlPath)
+    (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
+  }
+
   override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: List<Runnable>?) {
-    registerComponents(corePlugin = modules.find { it.pluginId == PluginManagerCore.CORE_ID },
-                       modules = modules,
-                       precomputedExtensionModel = precomputedExtensionModel,
-                       app = app,
-                       listenerCallbacks = listenerCallbacks)
+                                  listenerCallbacks: MutableList<in Runnable>?) {
+    registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app, listenerCallbacks)
   }
 
   override fun callCreateComponents() {
@@ -85,11 +93,8 @@ internal class ModuleBridgeImpl(
                                   modules: Sequence<IdeaPluginDescriptorImpl>,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
-                                  listenerCallbacks: List<Runnable>?) {
-    super.registerComponents(modules = modules,
-                             app = app,
-                             precomputedExtensionModel = precomputedExtensionModel,
-                             listenerCallbacks = listenerCallbacks)
+                                  listenerCallbacks: MutableList<in Runnable>?) {
+    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
     if (corePlugin == null) {
       return
     }

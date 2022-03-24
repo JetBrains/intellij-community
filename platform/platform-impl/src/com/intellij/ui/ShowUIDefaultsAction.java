@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TextCopyProvider;
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.speedSearch.FilteringTableModel;
@@ -45,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
@@ -110,7 +109,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 updateValue(pair, !((Boolean)value), row, column);
                 changed = true;
               } else if (value instanceof Integer) {
-                Integer newValue = editNumber(key.toString(), value.toString());
+                Integer newValue = editNumber(key.toString(), value.toString(), Integer::parseInt);
+                if (newValue != null) {
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
+                }
+              } else if (value instanceof Float) {
+                Float newValue = editNumber(key.toString(), value.toString(), Float::parseFloat);
                 if (newValue != null) {
                   updateValue(pair, newValue, row, column);
                   changed = true;
@@ -153,7 +158,6 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
               if (changed) {
                 ApplicationManager.getApplication().invokeLater(() -> {
-                  LafManager.getInstance().updateUI();
                   LafManager.getInstance().repaintUI();
                 });
               }
@@ -175,7 +179,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                                          boolean hasFocus,
                                                          int row,
                                                          int column) {
-            value = column == 0 ? ((Pair)value).first : ((Pair)value).second;
+            value = column == 0 ? ((Pair<?, ?>)value).first : ((Pair<?, ?>)value).second;
             if (value instanceof Boolean) {
               TableCellRenderer renderer = table.getDefaultRenderer(Boolean.class);
               if (renderer != null) {
@@ -327,7 +331,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
         MinusculeMatcher matcher = NameUtil.buildMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
         model.setFilter(pair -> {
-          Object obj = ((Pair)pair).second;
+          Object obj = ((Pair<?, ?>)pair).second;
           String value;
           if (obj == null) {
             value = "null";
@@ -337,20 +341,20 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             value = obj.toString();
           }
 
-          value = ((Pair)pair).first.toString() + " " + value;
+          value = ((Pair<?, ?>)pair).first.toString() + " " + value;
           return (!myColorsOnly.isSelected() || obj instanceof Color) && matcher.matches(value);
         });
 
       }
 
-      private @Nullable Integer editNumber(String key, String value) {
+      private @Nullable <T> T editNumber(String key, String value, Function<String, T> parser) {
         String newValue = Messages.showInputDialog(getRootPane(), IdeBundle.message("dialog.message.enter.new.value.for.0", key),
                                                    IdeBundle.message("dialog.title.number.editor"), null, value,
                                                    new InputValidator() {
                                      @Override
                                      public boolean checkInput(String inputString) {
                                        try {
-                                         Integer.parseInt(inputString);
+                                         parser.apply(inputString);
                                          return true;
                                        } catch (NumberFormatException nfe){
                                          return false;
@@ -363,7 +367,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                      }
                                    });
 
-        return newValue != null ? Integer.valueOf(newValue) : null;
+        return newValue != null ? parser.apply(newValue) : null;
       }
 
       @Nullable
@@ -483,7 +487,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       i++;
     }
 
-    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair)o1[0]).first.toString(), ((Pair)o2[0]).first.toString()));
+    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair<?, ?>)o1[0]).first.toString(), ((Pair<?, ?>)o2[0]).first.toString()));
     return data;
   }
 
@@ -493,10 +497,11 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       @Override
       public boolean isCellEditable(int row, int column) {
         if (column != 1) return false;
-        Object value = ((Pair)getValueAt(row, column)).second;
+        Object value = ((Pair<?, ?>)getValueAt(row, column)).second;
         return (value instanceof Color ||
                 value instanceof Boolean ||
                 value instanceof Integer ||
+                value instanceof Float ||
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||
                 value instanceof UIUtil.GrayFilter ||

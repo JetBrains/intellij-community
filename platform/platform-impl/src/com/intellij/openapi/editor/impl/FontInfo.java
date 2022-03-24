@@ -20,7 +20,7 @@ public final class FontInfo {
   private static final Font DUMMY_FONT = new Font(null);
 
   private final Font myFont;
-  private final int mySize;
+  private final float mySize;
   private final IntSet mySafeCharacters = new IntOpenHashSet();
   private final FontRenderContext myContext;
   private FontMetrics myFontMetrics = null;
@@ -38,9 +38,26 @@ public final class FontInfo {
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
    */
-  public FontInfo(Font font, int size, boolean useLigatures, FontRenderContext fontRenderContext) {
+  public FontInfo(final String familyName, final float size, @JdkConstants.FontStyle int style, boolean useLigatures,
+                  FontRenderContext fontRenderContext) {
     mySize = size;
-    myFont = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont((float)size), useLigatures);
+    myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, 1).deriveFont(size), useLigatures);
+    myContext = fontRenderContext;
+  }
+
+  /**
+   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
+   */
+  public FontInfo(Font font, int size, boolean useLigatures, FontRenderContext fontRenderContext) {
+    this(font, (float)size, useLigatures, fontRenderContext);
+  }
+
+  /**
+   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
+   */
+  public FontInfo(Font font, float size, boolean useLigatures, FontRenderContext fontRenderContext) {
+    mySize = size;
+    myFont = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
     myContext = fontRenderContext;
   }
 
@@ -105,6 +122,10 @@ public final class FontInfo {
   }
 
   public int getSize() {
+    return (int)(mySize + 0.5);
+  }
+
+  public float getSize2D() {
     return mySize;
   }
 

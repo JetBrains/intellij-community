@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -48,7 +48,11 @@ abstract class AbstractRangeInspection : AbstractKotlinInspection() {
     companion object {
         private val rangeFunctions = listOf("..", "rangeTo", "until", "downTo")
 
-        private val rangeToFqNames = listOf("Char", "Byte", "Short", "Int", "Long",).map { FqName("kotlin.$it.rangeTo") }
+        private val rangeToFqNames = listOf(
+            "Char",
+            "Byte", "Short", "Int", "Long",
+            "UByte", "UShort", "UInt", "ULong"
+        ).map { FqName("kotlin.$it.rangeTo") }
 
         private val untilFqName = FqName("kotlin.ranges.until")
 

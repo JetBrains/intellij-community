@@ -1,6 +1,6 @@
 import Foo.bar
 
-// WITH_RUNTIME
+// WITH_STDLIB
 object Foo {
     fun String.bar() {}
 }

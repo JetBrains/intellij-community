@@ -40,7 +40,7 @@ public interface ArrangementSettings extends Cloneable {
   /**
    * @deprecated collect match rules from {@link #getSections()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   List<? extends ArrangementMatchRule> getRules();
 

@@ -5,6 +5,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.LangBundle;
@@ -101,8 +103,11 @@ public class FileInEditorProcessor {
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(() -> {
-        if (!myEditor.isDisposed() && myEditor.getComponent().isShowing() &&
-            (!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)) {
+        if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) {
+          return;
+        }
+        if ((!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)
+            && !isExternalFormatterInUse()) {
           showHint(myEditor, new FormattedMessageBuilder());
         }
       });
@@ -113,6 +118,11 @@ public class FileInEditorProcessor {
     if (myEditor != null && myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
     }
+  }
+
+  private boolean isExternalFormatterInUse() {
+    return !(FormattingServiceUtil.findService(myFile, true, myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE)
+               instanceof CoreFormattingService);
   }
 
   @NotNull

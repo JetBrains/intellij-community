@@ -149,7 +149,7 @@ public final class FavoritesPanel {
               Object element = abstractTreeNode.getValue();
               mgr.removeRoot(listFrom, Collections.singletonList(abstractTreeNode));
               if (element instanceof SmartPsiElementPointer) {
-                element = ((SmartPsiElementPointer)element).getElement();
+                element = ((SmartPsiElementPointer<?>)element).getElement();
               }
               mgr.addRoots(listTo, null, element);
             }

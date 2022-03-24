@@ -65,10 +65,6 @@ public class ConsoleExecutionEditor implements Disposable {
         ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
     }
-
-    @Override
-    public void focusLost(@NotNull Editor editor) {
-    }
   };
 
   public void initComponent() {

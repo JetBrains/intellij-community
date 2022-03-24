@@ -7,13 +7,14 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends NonOpaquePanel implements Accessible {
+  public static final String PROPERTY_TEXT = "TextPanel.text";
+
   @Nullable @Nls private String myText;
 
   private Integer myPrefHeight;
@@ -46,7 +49,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
+    return SystemInfo.isMac && !ExperimentalUI.isNewUI() ? JBUI.Fonts.label(11) : JBFont.label();
   }
 
   public void recomputeSize() {
@@ -58,8 +61,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   /**
    * @deprecated no effect
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void resetColor() {
   }
 
@@ -84,7 +86,17 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     }
 
     int y = UIUtil.getStringY(s, bounds, g2);
-    Color foreground = isEnabled() ? getForeground() : UIUtil.getInactiveTextColor();
+    if (ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm) {
+      y += fm.getLeading(); // See SimpleColoredComponent.getTextBaseline
+    }
+
+    var effect = ComponentUtil.getClientProperty(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY);
+    var foreground = isEnabled() ?
+                   effect == IdeStatusBarImpl.WidgetEffect.PRESSED ? JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND :
+                   effect == IdeStatusBarImpl.WidgetEffect.HOVER ? JBUI.CurrentTheme.StatusBar.Widget.HOVER_FOREGROUND :
+                   JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND :
+                 UIUtil.getInactiveTextColor();
+
     g2.setColor(foreground);
     g2.drawString(s, x, y);
   }
@@ -130,7 +142,9 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
       oldAccessibleName = accessibleContext.getAccessibleName();
     }
 
+    String oldText = myText;
     myText = text;
+    firePropertyChange(PROPERTY_TEXT, oldText, text);
 
     if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
       accessibleContext.firePropertyChange(
@@ -195,8 +209,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     /**
      * @deprecated arrows are not painted anymore
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     protected boolean shouldPaintArrows() {
       return false;
     }

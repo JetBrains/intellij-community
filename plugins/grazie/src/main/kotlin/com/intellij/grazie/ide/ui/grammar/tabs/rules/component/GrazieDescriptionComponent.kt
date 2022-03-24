@@ -10,14 +10,15 @@ import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.html
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.layout.migLayout.*
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import kotlinx.html.unsafe
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
@@ -28,11 +29,12 @@ import javax.swing.ScrollPaneConstants
 
 class GrazieDescriptionComponent {
   private val description = JEditorPane().apply {
-    editorKit = UIUtil.getHTMLEditorKit()
+    editorKit = HTMLEditorKitBuilder.simple()
     isEditable = false
     isOpaque = true
     border = null
     background = null
+    addHyperlinkListener(BrowserHyperlinkListener())
   }
   private val link = GrazieLinkLabel(msg("grazie.settings.grammar.rule.description")).apply {
     component.isVisible = false

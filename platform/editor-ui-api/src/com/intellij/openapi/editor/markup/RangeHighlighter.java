@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,8 +123,7 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * @deprecated Use the overload with {@link EditorColorsScheme}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   default Color getErrorStripeMarkColor() {
     return getErrorStripeMarkColor(null);

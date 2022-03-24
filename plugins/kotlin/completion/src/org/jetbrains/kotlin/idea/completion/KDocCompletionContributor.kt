@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -116,11 +115,10 @@ class KDocNameCompletionSession(
     private fun addLinkCompletions(declarationDescriptor: DeclarationDescriptor, kDocLink: KDocLink) {
         collectDescriptorsForLinkCompletion(declarationDescriptor, kDocLink).forEach {
             val element = basicLookupElementFactory.createLookupElement(it, parametersAndTypeGrayed = true)
-            collector.addElement(object : LookupElementDecorator<LookupElement>(element) {
-                override fun handleInsert(context: InsertionContext) {
-                    // insert only plain name here, no qualifier/parentheses/etc.
-                }
-            })
+            collector.addElement(
+                // insert only plain name here, no qualifier/parentheses/etc.
+                LookupElementDecorator.withDelegateInsertHandler(element, EmptyDeclarativeInsertHandler)
+            )
         }
     }
 }

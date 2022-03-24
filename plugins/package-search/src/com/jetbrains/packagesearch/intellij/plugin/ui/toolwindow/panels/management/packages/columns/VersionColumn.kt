@@ -2,9 +2,9 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.editors.PackageVersionTableCellEditor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageVersionTableCellRenderer
@@ -12,7 +12,7 @@ import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class VersionColumn(
-    private val versionSetter: (uiPackageModel: UiPackageModel<*>, newVersion: PackageVersion) -> Unit
+    private val versionSetter: (uiPackageModel: UiPackageModel<*>, newVersion: NormalizedPackageVersion<*>) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, UiPackageModel<*>>(
     PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.versions")
 ) {
@@ -28,7 +28,7 @@ internal class VersionColumn(
     override fun getEditor(item: PackagesTableItem<*>): TableCellEditor = cellEditor
 
     override fun isCellEditable(item: PackagesTableItem<*>?) =
-        item?.packageModel?.getAvailableVersions(onlyStable)?.isNotEmpty() ?: false
+        item?.uiPackageModel?.sortedVersions?.isNotEmpty() ?: false
 
     fun updateData(onlyStable: Boolean, targetModules: TargetModules) {
         this.onlyStable = onlyStable
@@ -44,9 +44,10 @@ internal class VersionColumn(
         }
 
     override fun setValue(item: PackagesTableItem<*>?, value: UiPackageModel<*>?) {
-        if (value == null) return
-        if (value.selectedVersion == item?.uiPackageModel?.selectedVersion) return
+        val selectedVersion = value?.selectedVersion
+        if (selectedVersion == null) return
+        if (selectedVersion == item?.uiPackageModel?.selectedVersion) return
 
-        versionSetter(value, value.selectedVersion)
+        versionSetter(value, selectedVersion)
     }
 }

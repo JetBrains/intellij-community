@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
@@ -10,6 +9,7 @@ import com.intellij.refactoring.HelpID
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyProcessor.Companion.extractInitialization
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -75,7 +75,7 @@ class KotlinInlinePropertyHandler(private val withPrompt: Boolean = true) : Kotl
             editor = editor
         )
 
-        if (withPrompt && !ApplicationManager.getApplication().isUnitTestMode && dialog.shouldBeShown()) {
+        if (withPrompt && !isUnitTestMode() && dialog.shouldBeShown()) {
             dialog.show()
         } else {
             try {

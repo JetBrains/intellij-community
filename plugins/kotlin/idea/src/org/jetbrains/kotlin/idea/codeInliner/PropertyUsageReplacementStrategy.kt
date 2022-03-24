@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
-import org.jetbrains.kotlin.idea.references.ReferenceAccess
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
 class PropertyUsageReplacementStrategy(readReplacement: CodeToInline?, writeReplacement: CodeToInline?) : UsageReplacementStrategy {
     private val readReplacementStrategy = readReplacement?.let {

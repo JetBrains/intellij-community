@@ -29,6 +29,7 @@ public interface VcsDataKeys {
    * @see com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule
    */
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
+  DataKey<String[]> VCS_COMMIT_SUBJECTS = DataKey.create("VCS_COMMIT_SUBJECTS");
 
   DataKey<File> IO_FILE = DataKey.create("IO_FILE");
   DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");

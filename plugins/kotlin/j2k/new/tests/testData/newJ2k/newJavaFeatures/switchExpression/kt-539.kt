@@ -10,50 +10,62 @@ object SwitchDemo {
                 monthString = "January"
                 1
             }
+
             2 -> {
                 monthString = "February"
                 2
             }
+
             3 -> {
                 monthString = "March"
                 3
             }
+
             4 -> {
                 monthString = "April"
                 4
             }
+
             5 -> {
                 monthString = "May"
                 5
             }
+
             6 -> {
                 monthString = "June"
                 6
             }
+
             7 -> {
                 monthString = "July"
                 7
             }
+
             8 -> {
                 monthString = "August"
                 8
             }
+
             9 -> {
                 monthString = "September"
                 9
             }
+
             10 -> {
                 monthString = "October"
                 10
             }
+
             11 -> {
                 monthString = "November"
                 11
             }
+
             12 -> {
                 monthString = "December"
                 12
             }
+
             else -> {
                 monthString = "Invalid month"
                 13

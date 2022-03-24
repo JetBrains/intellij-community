@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class KotlinCreateFileFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
@@ -13,7 +13,7 @@ class KotlinCreateFileFUSCollector : CounterUsagesCollector() {
     companion object {
         private val GROUP = EventLogGroup("kotlin.ide.new.file", 2)
 
-        private val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
+        private val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
         private val allowedTemplates = listOf(
             "Kotlin_Class",

@@ -157,11 +157,11 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
   private @NotNull ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
     if (myMapExternalizer != null) {
-      return AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size() * 4);
+      return AbstractForwardIndexAccessor.serializeValueToByteSeq(data, myMapExternalizer, data.size() * 4);
     }
     else {
       assert myValueExternalizer != null;
-      return AbstractForwardIndexAccessor.serializeToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, 4);
+      return AbstractForwardIndexAccessor.serializeValueToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, 4);
     }
   }
 

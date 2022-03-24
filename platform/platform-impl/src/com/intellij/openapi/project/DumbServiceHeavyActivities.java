@@ -84,4 +84,10 @@ class DumbServiceHeavyActivities {
       currentSuspender.suspendProcess(reason);
     }
   }
+
+  public void disposeSuspender() {
+    if (myCurrentSuspender != null) {
+      myCurrentSuspender.close();
+    }
+  }
 }

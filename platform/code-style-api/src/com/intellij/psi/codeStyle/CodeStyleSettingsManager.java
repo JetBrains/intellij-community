@@ -34,8 +34,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
@@ -59,13 +58,14 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @TestOnly
+  @NotNull
   public final CodeStyleSettings createTemporarySettings() {
     myTemporarySettings = new CodeStyleSettings(true, false);
     return myTemporarySettings;
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public final CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
+  public final @NotNull CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
     CodeStyleSettings clonedSettings = new CodeStyleSettings(true, false);
     clonedSettings.copyFrom(settings);
     registerSettings(clonedSettings);
@@ -73,7 +73,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @TestOnly
-  public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
+  public static @NotNull CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
     final CodeStyleSettings testSettings = new CodeStyleSettings(true, false);
     if (baseSettings != null) {
       testSettings.copyFrom(baseSettings);
@@ -81,7 +81,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return testSettings;
   }
 
-  private Collection<CodeStyleSettings> getAllSettings() {
+  private @NotNull Collection<CodeStyleSettings> getAllSettings() {
     List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
     allSettings.addAll(ourReferencedSettings.toStrongList());
     return allSettings;
@@ -142,6 +142,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }, disposable);
   }
 
+  @NotNull
   protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal

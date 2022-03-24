@@ -493,6 +493,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)result;
   }
 
+  @Override
   public boolean hasAfterLineEndElements() {
     return myAfterLineEndElementsTree.size() > 0;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInspection.IntentionWrapper
@@ -12,11 +12,10 @@ import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.openapi.project.Project
-import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 
 class JUnit5MalformedNestedClassInspection : JvmLocalInspection() {
-  override fun buildVisitor(project: Project, sink: JvmLocalInspection.HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean>? {
+  override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitClass(clazz: JvmClass): Boolean {
         if (clazz.containingClass != null &&

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 @DslMarker
 annotation class SimpleDsl
 

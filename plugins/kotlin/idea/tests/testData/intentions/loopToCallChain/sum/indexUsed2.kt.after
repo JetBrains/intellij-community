@@ -1,6 +1,8 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'mapIndexed{}.sum()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().mapIndexed{}.sum()'"
+// AFTER-WARNING: Parameter 'index' is never used
+// AFTER-WARNING: Parameter 'item' is never used
 fun foo(list: List<Any>): Int {
     val s = list
         .mapIndexed { index, item -> getShort(index, item) }

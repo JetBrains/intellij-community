@@ -1,2 +1,1 @@
-version = "0.1"
-requires = []
+version = "0.8.*"

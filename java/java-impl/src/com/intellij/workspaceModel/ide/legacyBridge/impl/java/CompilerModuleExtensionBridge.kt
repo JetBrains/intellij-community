@@ -83,7 +83,8 @@ class CompilerModuleExtensionBridge(
       error("Read-only $javaClass")
     }
 
-    val moduleEntity = entityStorage.current.findModuleEntity(module) ?: error("Could not find entity for $module")
+    val moduleEntity = entityStorage.current.findModuleEntity(module)
+                       ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
     val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(

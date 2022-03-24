@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.NullnessUnspecified;
 
 interface NullAwareDirectUseOfNotNullAwareBoundedTypeVariable {
   class UnspecBounded1<T> {
-    @DefaultNonNull
+    @NullMarked
     class Inner {
       Object x0(T t) {
         // jspecify_nullness_not_enough_information
@@ -29,7 +29,7 @@ interface NullAwareDirectUseOfNotNullAwareBoundedTypeVariable {
   }
 
   class UnspecBounded2<T extends Object> {
-    @DefaultNonNull
+    @NullMarked
     class Inner {
       Object x0(T t) {
         // jspecify_nullness_not_enough_information
@@ -39,7 +39,7 @@ interface NullAwareDirectUseOfNotNullAwareBoundedTypeVariable {
   }
 
   class UnspecBounded3<T extends @NullnessUnspecified Object> {
-    @DefaultNonNull
+    @NullMarked
     class Inner {
       Object x0(T t) {
         // jspecify_nullness_not_enough_information

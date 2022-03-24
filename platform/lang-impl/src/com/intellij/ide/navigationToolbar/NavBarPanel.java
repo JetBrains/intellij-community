@@ -50,6 +50,8 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -108,7 +110,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     installPopupHandler(this, -1);
     setOpaque(false);
-    if (!docked && StartupUiUtil.isUnderDarcula()) {
+    if (!ExperimentalUI.isNewUI() && !docked && StartupUiUtil.isUnderDarcula()) {
       setBorder(new LineBorder(Gray._120, 1));
     }
     myUpdateQueue.queueModelUpdateFromFocus();
@@ -488,6 +490,28 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         }
       }
 
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        if (e.isConsumed() || !ExperimentalUI.isNewUI()) return;
+        NavBarItem item = getItem(index);
+        if (item != null) {
+          item.setMouseHover(true);
+          repaint();
+        }
+        e.consume();
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        if (e.isConsumed() || !ExperimentalUI.isNewUI()) return;
+        NavBarItem item = getItem(index);
+        if (item != null) {
+          item.setMouseHover(false);
+          repaint();
+        }
+        e.consume();
+      }
+
       private void click(final MouseEvent e) {
         if (e.isConsumed()) return;
 
@@ -597,7 +621,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final NavBarItem item = getItem(index);
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
-      myNodePopup = new NavBarPopup(this, index, siblings, selectedIndex);
+      myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
      // if (item != null && item.isShowing()) {
         myNodePopup.show(item);
         item.update();
@@ -721,7 +745,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (LangDataKeys.MODULE.is(dataId)) {
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
       Module module = selection.get().filter(Module.class).first();
       if (module != null && !module.isDisposed()) return module;
       PsiElement element = selection.get().filter(PsiElement.class).first();
@@ -762,7 +786,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return elements.isEmpty() ? null : elements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
 
-    if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
       return this;
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -843,7 +867,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(this);
       panel.setOpaque(true);
-      panel.setBackground(UIUtil.getListBackground());
+
+      if (ExperimentalUI.isNewUI()) {
+        panel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets()));
+        panel.setBackground(JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_BACKGROUND);
+      }
+      else {
+        panel.setBackground(UIUtil.getListBackground());
+      }
 
       myHint = new LightweightHint(panel) {
         @Override
@@ -858,7 +889,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       myUpdateQueue.rebuildUi();
       if (editor == null) {
-        myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+        myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
         getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
           final Component owner = focusManager.getFocusOwner();
           final Component cmp = relativePoint.getComponent();
@@ -898,7 +929,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         }
         else {
           dataManager.getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
-            myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+            myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
             DataContext ctx = dataManager.getDataContext(myContextComponent);
             myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(ctx);
           });

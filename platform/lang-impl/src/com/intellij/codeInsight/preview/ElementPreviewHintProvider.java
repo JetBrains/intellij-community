@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.preview;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -18,6 +19,10 @@ import java.awt.*;
 
 import static com.intellij.codeInsight.hint.HintManagerImpl.getHintPosition;
 
+/**
+ * @deprecated see {@link PreviewHintProvider} deprecation notice
+ */
+@Deprecated
 public class ElementPreviewHintProvider implements ElementPreviewProvider {
   private static final Logger LOG = Logger.getInstance(ElementPreviewHintProvider.class);
 
@@ -31,6 +36,9 @@ public class ElementPreviewHintProvider implements ElementPreviewProvider {
 
   @Override
   public boolean isSupportedFile(@NotNull PsiFile psiFile) {
+    if (!Registry.is("ide.shift.hover.image.preview")) {
+      return false;
+    }
     for (PreviewHintProvider hintProvider : PreviewHintProvider.EP_NAME.getExtensionList()) {
       if (hintProvider.isSupportedFile(psiFile)) {
         return true;

@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.execution.build;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -11,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Extension point to ability to delegate {@link ApplicationConfiguration} to maven exec goal.
+ * Extension point allows to delegate execution of any Run Configuration to maven exec goal.
+ * Usage on execute maven goal. {@link MavenProjectTaskRunner}
  * @author ibessonov
  */
 public interface MavenExecutionEnvironmentProvider {
@@ -22,7 +22,8 @@ public interface MavenExecutionEnvironmentProvider {
   boolean isApplicable(@NotNull ExecuteRunConfigurationTask task);
 
   @Nullable
-  ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
+  ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                  @NotNull ExecuteRunConfigurationTask task,
                                                   @Nullable Executor executor);
 }
 

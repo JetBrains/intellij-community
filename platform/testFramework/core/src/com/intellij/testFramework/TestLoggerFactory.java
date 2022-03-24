@@ -1,15 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.xml.DOMConfigurator;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -23,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +32,12 @@ import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public final class TestLoggerFactory implements Logger.Factory {
+  /**
+   * If property is {@code true}, saves full test log to a separate file, instead of flushing it in the stdout (buildlog on TC)
+   */
+  private static final String SPLIT_TEST_LOGS_KEY = "idea.split.test.logs";
+  private static final String SPLIT_LOGS_SUBDIR = "splitTestLogs";
+  private static boolean SPLIT_TEST_LOGS = SystemProperties.getBooleanProperty(SPLIT_TEST_LOGS_KEY, false);
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
@@ -50,24 +58,33 @@ public final class TestLoggerFactory implements Logger.Factory {
     return new TestLogger(category);
   }
 
+  /**
+   * @return true iff logs for each test should be saved separately
+   */
+  static boolean shouldSplitTestLogs() {
+    return SPLIT_TEST_LOGS;
+  }
+
   public static boolean reconfigure() {
     try {
-      Path logXmlFile = Paths.get(PathManager.getHomePath(), "test-log.xml");
-      if (!Files.exists(logXmlFile)) {
-        return false;
+      String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
+      Path logProperties = customConfigPath != null
+                        ? Paths.get(customConfigPath)
+                        : Paths.get(PathManager.getHomePath(), "test-log.properties");
+      if (Files.exists(logProperties)) {
+        try (final InputStream in = Files.newInputStream(logProperties)) {
+          final BufferedInputStream bin = new BufferedInputStream(in);
+          LogManager.getLogManager().readConfiguration(bin);
+        }
       }
 
       String logDir = getTestLogDir();
-      String text = Files.readString(logXmlFile);
-      text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
       Files.createDirectories(Paths.get(logDir));
 
-      System.setProperty("log4j.defaultInitOverride", "true");
-      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
-
       Path logFile = Paths.get(getTestLogDir(), "idea.log");
+      JulLogger.clearHandlers();
+      JulLogger.configureLogFileAndConsole(logFile, false, false, null);
+
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");
       }
@@ -122,8 +139,8 @@ public final class TestLoggerFactory implements Logger.Factory {
     for (String category : categories) {
       Logger logger = Logger.getInstance(category);
       if (!logger.isDebugEnabled()) {
-        logger.setLevel(Level.DEBUG);
-        Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
+        logger.setLevel(LogLevel.DEBUG);
+        Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
       }
     }
   }
@@ -159,13 +176,65 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  private static @NotNull String saveSplitLog(@NotNull String testName, @NotNull String buffer) {
+    var logsDir = new File(getTestLogDir(), SPLIT_LOGS_SUBDIR);
+    if (!logsDir.exists() && !logsDir.mkdirs()) {
+      buffer += "\nUnable to create dir for split logs, disabling splitting: " + logsDir;
+      SPLIT_TEST_LOGS = false;
+      return buffer;
+    }
+
+    var testFileName = FileUtil.sanitizeFileName(testName);
+    var logFile = FileUtil.findSequentNonexistentFile(logsDir, testFileName, "log");
+
+    try (var writer = new BufferedWriter(new FileWriter(logFile, StandardCharsets.UTF_8))) {
+      writer.write(buffer);
+    }
+    catch (IOException e) {
+      buffer += "\nError writing split log, disabling splitting: " + logFile + "\n" + e;
+      SPLIT_TEST_LOGS = false;
+      return buffer;
+    }
+    return "Log saved to: " + logFile.getName() + " (" + logFile + ")";
+  }
+
+  /**
+   * @deprecated use {@link #onTestFinished(boolean, Description)} or {@link #onTestFinished(boolean, String)} instead
+   */
+  @Deprecated
   public static void onTestFinished(boolean success) {
+    onTestFinished(success, "unnamed_test");
+  }
+
+  /**
+   * @see #onTestFinished(boolean, String)
+   */
+  public static void onTestFinished(boolean success, @NotNull Description description) {
+    onTestFinished(success, description.getDisplayName());
+  }
+
+  public static void logTestFailure(@NotNull Throwable t) {
+    if (shouldSplitTestLogs()) {
+      log(LogLevel.ERROR.toString(), "Test framework", "Test failed", t);
+    }
+  }
+
+  /**
+   * Invoke this method instead of {@link #onTestFinished(boolean)} to support separate logs saving
+   *
+   * @param testName - going to be used for the log file name
+   */
+  public static void onTestFinished(boolean success, @NotNull String testName) {
     String buffer;
     synchronized (BUFFER) {
       buffer = BUFFER.length() != 0 && !success ? BUFFER.toString() : null;
       BUFFER.setLength(0);
     }
     if (buffer != null) {
+      if (shouldSplitTestLogs()) {
+        buffer = saveSplitLog(testName, buffer);
+      }
+
       if (System.getenv("TEAMCITY_VERSION") != null) {
         // print in several small statements to avoid service messages tearing causing this fold to expand
         // using .out instead of .err by the advice from Nikita Skvortsov
@@ -190,17 +259,18 @@ public final class TestLoggerFactory implements Logger.Factory {
     return new TestWatcher() {
       @Override
       protected void succeeded(Description description) {
-        onTestFinished(true);
+        onTestFinished(true, description);
       }
 
       @Override
       protected void failed(Throwable e, Description description) {
-        onTestFinished(false);
+        logTestFailure(e);
+        onTestFinished(false, description);
       }
 
       @Override
       protected void skipped(AssumptionViolatedException e, Description description) {
-        onTestFinished(true);
+        onTestFinished(true, description);
       }
 
       @Override

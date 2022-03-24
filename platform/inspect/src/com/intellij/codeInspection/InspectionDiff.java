@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection;
 
@@ -9,7 +9,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,13 +69,10 @@ public final class InspectionDiff {
       }
     }
 
-  private static void writeInspectionDiff(final String oldPath, final String newPath, final String outPath) {
+  private static void writeInspectionDiff(String oldPath, String newPath, final String outPath) {
     try {
-      InputStream oldStream = oldPath != null ? new BufferedInputStream(new FileInputStream(oldPath)) : null;
-      InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
-
-      Element oldDoc = oldStream != null ? JDOMUtil.load(oldStream) : null;
-      Element newDoc = JDOMUtil.load(newStream);
+      Element oldDoc = oldPath == null ? null : JDOMUtil.load(Path.of(oldPath));
+      Element newDoc = JDOMUtil.load(Path.of(newPath));
 
       OutputStream outStream = System.out;
       if (outPath != null) {
@@ -83,7 +84,8 @@ public final class InspectionDiff {
       if (outStream != System.out) {
         outStream.close();
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       e.printStackTrace();
     }
   }

@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.JTable

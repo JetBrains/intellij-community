@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
@@ -26,12 +26,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.siyeh.ig.psiutils.SealedUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.PATTERNS_IN_SWITCH;
 
 public final class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassHint {
   private static final Logger LOG = Logger.getInstance(JavaCompletionProcessor.class);
@@ -192,7 +196,26 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       }
     }
 
+    if (!(element instanceof PsiClass) || !PATTERNS_IN_SWITCH.isAvailable(myElement)) return true;
+
+    final PsiClass psiClass = (PsiClass)element;
+    if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+      addSealedHierarchy(state, psiClass);
+    }
     return true;
+  }
+
+  @Contract(pure = true)
+  private void addSealedHierarchy(@NotNull ResolveState state, @NotNull PsiClass psiClass) {
+    final Collection<PsiClass> sealedInheritors = SealedUtils.findSameFileInheritorsClasses(psiClass);
+    for (PsiClass inheritor : sealedInheritors) {
+      final CompletionElement completion = new CompletionElement(inheritor, state.get(PsiSubstitutor.KEY));
+      final CompletionElement prev = myResults.get(completion);
+
+      if (prev == null || completion.isMoreSpecificThan(prev)) {
+        myResults.put(completion, completion);
+      }
+    }
   }
 
   @Nullable
@@ -200,13 +223,13 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     PsiElement parent = myElement.getParent();
     if (completion instanceof PsiMethod && parent instanceof PsiMethodReferenceExpression) {
       PsiType matchingType = ContainerUtil.find(myExpectedGroundTypes.getValue(), candidate ->
-        hasSuitableType((PsiMethodReferenceExpression)parent, (PsiMethod)completion, candidate));
+        candidate != null && hasSuitableType((PsiMethodReferenceExpression)parent, (PsiMethod)completion, candidate));
       return matchingType != null ? matchingType : new PsiMethodReferenceType((PsiMethodReferenceExpression)parent);
     }
     return null;
   }
 
-  private static boolean hasSuitableType(PsiMethodReferenceExpression refPlace, PsiMethod method, PsiType expectedType) {
+  private static boolean hasSuitableType(PsiMethodReferenceExpression refPlace, PsiMethod method, @NotNull PsiType expectedType) {
     PsiMethodReferenceExpression referenceExpression = createMethodReferenceExpression(method, refPlace);
     return LambdaUtil.performWithTargetType(referenceExpression, expectedType, () -> {
       JavaResolveResult result = referenceExpression.advancedResolve(false);
@@ -252,7 +275,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if (myStatic) {
         if (!(element instanceof PsiClass) && !modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
-          // we don't need non static method in static context.
+          // we don't need non-static method in static context.
           return StaticProblem.instanceAfterStatic;
         }
       }
@@ -294,7 +317,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
 
   public boolean isAccessible(@Nullable final PsiElement element) {
     // if checkAccess is false, we only show inaccessible source elements because their access modifiers can be changed later by the user.
-    // compiled element can't be changed so we don't pollute the completion with them. In Javadoc, everything is allowed.
+    // compiled element can't be changed, so we don't pollute the completion with them. In Javadoc, everything is allowed.
     if (!myOptions.checkAccess && myInJavaDoc) return true;
 
     if (isAccessibleForResolve(element)) {

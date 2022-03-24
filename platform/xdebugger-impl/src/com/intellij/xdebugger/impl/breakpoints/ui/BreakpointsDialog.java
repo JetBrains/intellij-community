@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -162,7 +162,7 @@ public class BreakpointsDialog extends DialogWrapper {
           if (!(lastPathComponent instanceof BreakpointsGroupNode)) {
             return TreeVisitor.Action.CONTINUE;
           }
-          return ((BreakpointsGroupNode) lastPathComponent).getGroup().expandedByDefault() ?
+          return ((BreakpointsGroupNode<?>) lastPathComponent).getGroup().expandedByDefault() ?
             TreeVisitor.Action.CONTINUE :
             TreeVisitor.Action.SKIP_CHILDREN;
         },
@@ -276,8 +276,8 @@ public class BreakpointsDialog extends DialogWrapper {
         res.add(group);
         Object component = tree.getLastSelectedPathComponent();
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointsGroupNode &&
-            ((BreakpointsGroupNode)component).getGroup() instanceof XBreakpointCustomGroup) {
-          res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode)component).getGroup()));
+            ((BreakpointsGroupNode<?>)component).getGroup() instanceof XBreakpointCustomGroup) {
+          res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
           res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
@@ -348,6 +348,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private void collectGroupingRules() {
+    myRulesAvailable.addAll(XBreakpointGroupingRule.EP.getExtensionList());
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
       provider.createBreakpointsGroupingRules(myRulesAvailable);
     }
@@ -478,7 +479,7 @@ public class BreakpointsDialog extends DialogWrapper {
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
         Object breakpoint = item.getBreakpoint();
         if (breakpoint instanceof XBreakpointBase) {
-          ((XBreakpointBase)breakpoint).setGroup(groupName);
+          ((XBreakpointBase<?, ?, ?>)breakpoint).setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);

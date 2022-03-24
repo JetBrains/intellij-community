@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -325,7 +325,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     if (text.isEmpty()) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
-    return text.split(" ");
+    return text.split("\u001B");
   }
 
   @Override
@@ -678,7 +678,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
             }
           };
         }
-        classFilter = TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule());
+        classFilter = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+          () -> TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule()));
       }
       catch (JUnitUtil.NoJUnitException e) {
         throw new NoFilterException(new MessagesEx.MessageInfo(

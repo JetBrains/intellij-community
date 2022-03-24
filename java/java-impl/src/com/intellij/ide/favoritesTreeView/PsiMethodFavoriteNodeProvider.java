@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -21,11 +21,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
+public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
   public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -115,8 +116,12 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     if (DumbService.isDumb(project)) return null;
-    final PsiMethod method = RefMethodImpl.findPsiMethod(PsiManager.getInstance(project), url);
-    if (method == null) return null;
-    return new Object[]{method};
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
+
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
+    return RefMethodImpl.findPsiMethod(PsiManager.getInstance(project), url);
   }
 }

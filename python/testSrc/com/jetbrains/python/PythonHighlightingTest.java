@@ -508,24 +508,14 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON310, false, true);
   }
 
-  // PY-44974
-  public void testBitwiseOrUnionInOlderVersionsError() {
-    doTest(LanguageLevel.PYTHON39, false, false);
+  // PY-24653
+  public void testSelfHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
   }
 
-  // PY-44974
-  public void testBitwiseOrUnionInOlderVersionsErrorIsInstance() {
-    doTest(LanguageLevel.PYTHON39, false, false);
-  }
-
-  // PY-49697
-  public void testNoErrorMetaClassOverloadBitwiseOrOperator() {
-    doTest(LanguageLevel.PYTHON39, false, false);
-  }
-
-  // PY-49697
-  public void testNoErrorMetaClassOverloadBitwiseOrOperatorReturnTypesUnion() {
-    doTest(LanguageLevel.PYTHON39, false, false);
+  // PY-24653
+  public void testNestedParamHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
   }
 
   @NotNull

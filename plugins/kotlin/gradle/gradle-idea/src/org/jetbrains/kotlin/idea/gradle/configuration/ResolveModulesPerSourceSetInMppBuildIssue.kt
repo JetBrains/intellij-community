@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -11,16 +11,13 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.pom.Navigatable
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
-@IntellijInternalApi
 class ResolveModulesPerSourceSetInMppBuildIssue(
     private val projectRefresher: ProjectRefresher = ReimportGradleProjectRefresher
 ) : BuildIssue {
@@ -32,7 +29,7 @@ class ResolveModulesPerSourceSetInMppBuildIssue(
     private val quickFix  = object: BuildIssueQuickFix {
         override val id: String = "MppNotResolveModulePerSourceSetBuildIssue.QuickFix"
 
-        override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+        override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
             runWriteAction {
                 project.gradleProjectSettings.forEach { it.isResolveModulePerSourceSet = true }
             }

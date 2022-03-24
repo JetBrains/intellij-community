@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -15,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * An extension point for 'Import Module from Existing Sources'.
+ * See {@link com.intellij.ide.actions.ImportModuleAction#createImportWizard}.
+ */
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
@@ -80,6 +84,9 @@ public abstract class ProjectImportProvider {
     return true;
   }
 
+  /**
+   * Adds the {@link ModuleWizardStep}-s from {@link ProjectImportProvider#createSteps(WizardContext)} to the import wizard.
+   */
   public void addSteps(StepSequence sequence, WizardContext context, String id) {
     ModuleWizardStep[] steps = createSteps(context);
     for (ModuleWizardStep step : steps) {
@@ -87,6 +94,9 @@ public abstract class ProjectImportProvider {
     }
   }
 
+  /**
+   * Returns the {@link ModuleWizardStep}-s to be added to the import wizard.
+   */
   public ModuleWizardStep[] createSteps(WizardContext context) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }

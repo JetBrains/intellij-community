@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ParameterHintsPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  protected static final Key<Long> PSI_MODIFICATION_STAMP = Key.create("psi.modification.stamp");
+  private static final Key<Long> PSI_MODIFICATION_STAMP = Key.create("psi.modification.stamp");
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {

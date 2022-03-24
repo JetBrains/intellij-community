@@ -13,8 +13,7 @@ public class PointlessBooleanExpressionBuilderDefault {
       System.out.println("ConstantConditions");
     }
 
-    // shouldn't be here because the b is not 100% initialized with 'true' value
-    if (b == true) {
+    if (<warning descr="'b == true' can be simplified to 'b'">b == true</warning>) {
       System.out.println("ConstantConditions");
     }
   }

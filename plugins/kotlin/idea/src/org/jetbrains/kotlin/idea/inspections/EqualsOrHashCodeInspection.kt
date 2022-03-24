@@ -27,7 +27,6 @@ object DeleteEqualsAndHashCodeFix : LocalQuickFix {
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
         val objectDeclaration = descriptor.psiElement.getStrictParentOfType<KtObjectDeclaration>() ?: return
         val classDescriptor = objectDeclaration.resolveToDescriptorIfAny() ?: return
         classDescriptor.findDeclaredEquals(false)?.source?.getPsi()?.delete()

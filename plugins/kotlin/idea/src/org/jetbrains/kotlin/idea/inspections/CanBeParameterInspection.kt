@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
@@ -107,9 +108,9 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
         })
     }
 
-    class RemoveValVarFix(parameter: KtParameter) : LocalQuickFix {
+    class RemoveValVarFix(private val fix : RemoveValVarFromParameterFix) : LocalQuickFix {
 
-        private val fix = RemoveValVarFromParameterFix(parameter)
+        constructor(parameter: KtParameter): this(RemoveValVarFromParameterFix(parameter))
 
         override fun getName() = fix.text
 
@@ -117,7 +118,6 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val parameter = descriptor.psiElement.getParentOfType<KtParameter>(strict = true) ?: return
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             parameter.valOrVarKeyword?.delete()
             // Delete visibility / open / final / lateinit, if any
             // Retain annotations / vararg
@@ -126,6 +126,11 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
             for (modifier in CONSTRUCTOR_VAL_VAR_MODIFIERS) {
                 modifierList.getModifier(modifier)?.delete()
             }
+        }
+
+        override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+            val newFix = fix.getFileModifierForPreview(target) as? RemoveValVarFromParameterFix
+            return newFix?.let(::RemoveValVarFix)
         }
     }
 }

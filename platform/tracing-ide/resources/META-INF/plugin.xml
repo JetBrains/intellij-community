@@ -1,0 +1,26 @@
+<idea-plugin package="com.intellij.tracing.ide"
+             implementation-detail="true">
+  <id>com.intellij.tracing.ide</id>
+  <vendor>JetBrains</vendor>
+  <description>
+    Infrastructure to conveniently gather tracing information from builds.
+  </description>
+  <depends optional="false">com.intellij.modules.java</depends>
+
+  <actions>
+    <action class="com.intellij.tracing.ide.ToggleBuildTracingAction" internal="true" id="toggle.tracing.action"/>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="" description="Path to tracing snapshots" key="tracing.snapshots.path" />
+    <notificationGroup displayType="BALLOON" id="BuildTracing" bundle="messages.TracingBundle" key="build.tracing.group"/>
+    <applicationService serviceImplementation="com.intellij.tracing.ide.TracingPersistentStateComponent"/>
+    <buildProcess.parametersProvider implementation="com.intellij.tracing.ide.TracingBuildProcessParameterProvider"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.tracing.ide.TracingProjectTaskListener" topic="com.intellij.task.ProjectTaskListener" />
+  </projectListeners>
+
+  <resource-bundle>messages.TracingBundle</resource-bundle>
+</idea-plugin>

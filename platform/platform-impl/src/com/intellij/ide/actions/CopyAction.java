@@ -41,35 +41,25 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
       ProviderState providerState = ProviderState.create(dataContext, isEditorPopup, provider);
       presentation.setEnabled(providerState.isCopyEnabled);
       presentation.setVisible(providerState.isVisible);
-      return;
     }
-    Presentation updatedPresentation = Utils.getOrCreateUpdateSession(event).presentation(new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        ProviderState providerState = ProviderState.create(dataContext, isEditorPopup, provider);
-        e.getPresentation().setEnabled(providerState.isCopyEnabled);
-        e.getPresentation().setVisible(providerState.isVisible);
-      }
-    });
-    presentation.setEnabled(updatedPresentation.isEnabled());
-    presentation.setVisible(updatedPresentation.isVisible());
+    else {
+      ProviderState providerState = Utils.getOrCreateUpdateSession(event).computeOnEdt(
+        "ProviderState#create", () -> ProviderState.create(dataContext, isEditorPopup, provider));
+      presentation.setEnabled(providerState.isCopyEnabled);
+      presentation.setVisible(providerState.isVisible);
+    }
   }
 
   private static class ProviderState {
-    private final boolean isCopyEnabled;
-    private final boolean isVisible;
+    final boolean isCopyEnabled;
+    final boolean isVisible;
 
-    private ProviderState(boolean enabled, boolean visible) {
+    ProviderState(boolean enabled, boolean visible) {
       isCopyEnabled = enabled;
       isVisible = visible;
     }
 
-    private static @NotNull ProviderState create(@NotNull DataContext dataContext, boolean isEditorPopup, @NotNull CopyProvider provider) {
+    static @NotNull ProviderState create(@NotNull DataContext dataContext, boolean isEditorPopup, @NotNull CopyProvider provider) {
       boolean isCopyEnabled = provider.isCopyEnabled(dataContext);
       boolean isVisible = !isEditorPopup || provider.isCopyVisible(dataContext);
       return new ProviderState(isCopyEnabled, isVisible);

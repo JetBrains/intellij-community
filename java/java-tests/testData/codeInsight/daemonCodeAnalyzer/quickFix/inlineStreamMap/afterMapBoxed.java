@@ -1,4 +1,4 @@
-// "Merge 'map' call and 'boxed' call" "true"
+// "Merge 'map()' call and 'boxed()' call" "true"
 import java.util.List;
 import java.util.stream.IntStream;
 

@@ -1,7 +1,8 @@
 <keymap version="1" name="Xcode" parent="Mac OS X 10.5+">
   <action id="ActivateHierarchyToolWindow"/>
   <action id="ActivateProblemsViewToolWindow"/>
-  <action id="ActivateFavoritesToolWindow" />
+  <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="ActivateProjectToolWindow">
     <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
@@ -228,7 +229,9 @@
   </action>
   <action id="FileChooser.GotoHome"/>
   <action id="FileChooser.GotoProject"/>
-  <action id="FileChooser.TogglePathShowing"/>
+  <action id="FileChooser.TogglePathBar"/>
+  <action id="FileChooserList.Root"/>
+  <action id="FileChooserList.LevelUp"/>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="meta G"/>
     <keyboard-shortcut first-keystroke="F3"/>

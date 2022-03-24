@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.impl.PrioritizedTask;
@@ -74,6 +74,12 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
   public static class JavaFieldBreakpointHandler extends JavaBreakpointHandler {
     public JavaFieldBreakpointHandler(DebugProcessImpl process) {
       super(JavaFieldBreakpointType.class, process);
+    }
+  }
+
+  public static class JavaCollectionBreakpointHandler extends JavaBreakpointHandler {
+    public JavaCollectionBreakpointHandler(DebugProcessImpl process) {
+      super(JavaCollectionBreakpointType.class, process);
     }
   }
 }

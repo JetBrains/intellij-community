@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
@@ -19,7 +19,7 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
     Project project = e.getProject();
     if (project == null) return false;
 
-    XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(project).getCurrentSession();
+    XDebugSessionImpl session = (XDebugSessionImpl)DebuggerUIUtil.getSession(e);
     if (session != null && !session.isStopped()) {
       return !session.isReadOnly() && session.isPaused();
     }

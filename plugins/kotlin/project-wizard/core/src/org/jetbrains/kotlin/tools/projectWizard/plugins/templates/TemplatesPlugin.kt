@@ -15,9 +15,11 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.settingValue
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectName
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.updateBuildFiles
+import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptionApplicationState
@@ -157,7 +159,8 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
 
         private fun Reader.defaultSettings(moduleIR: ModuleIR) = mapOf(
             "projectName" to projectName,
-            "moduleName" to moduleIR.name
+            "moduleName" to moduleIR.name,
+            "package" to moduleIR.originalModule.javaPackage(pomIR()).asCodePackage()
         )
 
         private fun Reader.generatePathForFileTemplate(module: ModuleIR, filePath: FilePath): Path? {

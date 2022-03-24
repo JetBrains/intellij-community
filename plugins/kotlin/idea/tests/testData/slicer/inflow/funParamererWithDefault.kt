@@ -1,5 +1,5 @@
 // FLOW: IN
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @JvmOverloads
 fun foo(n: Int, <caret>s: String = "???") {

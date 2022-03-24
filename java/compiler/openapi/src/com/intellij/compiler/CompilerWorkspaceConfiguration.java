@@ -35,8 +35,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
    * @deprecated use {@link CompilerConfiguration#isParallelCompilationEnabled()}
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public Boolean PARALLEL_COMPILATION = null;
 
   public int COMPILER_PROCESS_HEAP_SIZE = 0;

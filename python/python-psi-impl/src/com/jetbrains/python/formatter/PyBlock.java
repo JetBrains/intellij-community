@@ -831,7 +831,7 @@ public class PyBlock implements ASTBlock {
             return getBlankLinesForOption(pySettings.BLANK_LINES_BEFORE_FIRST_METHOD);
           }
         }
-        if (childType1 == PyTokenTypes.COLON && needLineBreakInStatement()) {
+        if (childType1 == PyTokenTypes.COLON && (needLineBreakInStatement())) {
           return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
@@ -935,11 +935,16 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean needLineBreakInStatement() {
-    final PyStatement statement = PsiTreeUtil.getParentOfType(myNode.getPsi(), PyStatement.class);
-    if (statement != null) {
-      final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
-      return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
-             (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
+    if (myNode.getPsi() instanceof PyStatementListContainer) {
+      final PyStatement statement = PsiTreeUtil.getParentOfType(myNode.getPsi(), PyStatement.class);
+      if (statement != null) {
+        final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
+        return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
+               (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
+      }
+      else {
+        return myContext.getPySettings().NEW_LINE_AFTER_COLON;
+      }
     }
     return false;
   }
@@ -973,9 +978,10 @@ public class PyBlock implements ASTBlock {
 
       ASTNode lastChild = insertAfterBlock.getNode();
 
-      // HACK? This code fragment is needed to make testClass2() pass,
-      // but I don't quite understand why it is necessary and why the formatter
-      // doesn't request childAttributes from the correct block
+      //In case of a dedent(or multiple dedents) the cursor doesn't belong to the correct block, instead
+      //formatter chooses the biggest enclosing incomplete block as a parent (see FormatProcessor.getParentFor).
+      //To get the correct indent, we have to descend into the inner incomplete block:
+      //each time we see an error element inside a statement we delegate to the previous child.
       while (lastChild != null) {
         final IElementType lastType = lastChild.getElementType();
         if (lastType == PyElementTypes.STATEMENT_LIST && hasLineBreaksBeforeInSameParent(lastChild, 1)) {

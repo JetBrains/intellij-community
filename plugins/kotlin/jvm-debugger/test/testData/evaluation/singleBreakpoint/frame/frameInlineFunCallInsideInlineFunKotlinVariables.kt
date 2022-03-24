@@ -39,6 +39,7 @@ fun main(args: Array<String>) {
 }
 
 // PRINT_FRAME
+// SHOW_KOTLIN_VARIABLES
 
 // EXPRESSION: element
 // RESULT: 1.0: D

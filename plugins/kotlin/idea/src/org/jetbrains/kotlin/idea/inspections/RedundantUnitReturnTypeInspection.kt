@@ -25,7 +25,7 @@ class RedundantUnitReturnTypeInspection : AbstractKotlinInspection(), CleanupLoc
                     typeElement,
                     KotlinBundle.message("redundant.unit.return.type"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    IntentionWrapper(RemoveExplicitTypeIntention(), function.containingKtFile)
+                    IntentionWrapper(RemoveExplicitTypeIntention())
                 )
             }
         })

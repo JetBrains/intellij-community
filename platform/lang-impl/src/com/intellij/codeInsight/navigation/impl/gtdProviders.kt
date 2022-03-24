@@ -1,17 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.SingleTargetElementInfo
+import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
-import com.intellij.codeInsight.navigation.targetPresentation
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.util.SmartList
 
 internal fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionData? {
   return processInjectionThenHost(editor, offset) { _editor, _offset ->
@@ -57,19 +57,33 @@ private class GTDProviderData(
     }
   }
 
-  override fun result(): GTDActionResult? {
+  override fun ctrlMouseData(): CtrlMouseData {
+    val singleTarget = targetElements.singleOrNull()
+    if (singleTarget == null) {
+      return multipleTargetsCtrlMouseData(getReferenceRanges(leafElement))
+    }
+    else {
+      return psiCtrlMouseData(leafElement, singleTarget)
+    }
+  }
+
+  override fun result(): NavigationActionResult? {
     return when (targetElements.size) {
       0 -> null
       1 -> {
-        val navigatable = gtdTargetNavigatable(targetElements.single())
-        GTDActionResult.SingleTarget(navigatable, navigationProvider)
+        targetElements.single().gtdTargetNavigatable()?.navigationRequest()?.let { request ->
+          SingleTarget(request, navigationProvider)
+        }
       }
       else -> {
-        val targets = targetElements.mapTo(SmartList()) { targetElement ->
-          val navigatable = psiNavigatable(targetElement)
-          GTDTarget(navigatable, targetPresentation(targetElement), navigationProvider)
+        val targets = targetElements.map { targetElement ->
+          LazyTargetWithPresentation(
+            { targetElement.psiNavigatable()?.navigationRequest() },
+            targetPresentation(targetElement),
+            navigationProvider
+          )
         }
-        GTDActionResult.MultipleTargets(targets)
+        NavigationActionResult.MultipleTargets(targets)
       }
     }
   }

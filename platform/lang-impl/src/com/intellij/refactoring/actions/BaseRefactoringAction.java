@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -34,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Predicate;
 
 public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
@@ -117,7 +114,8 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
 
     if (handler == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
@@ -135,7 +133,9 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group, UndoConfirmationPolicy.DEFAULT, doc);
+        CommandProcessor.getInstance()
+          .executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group,
+                          UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
 
@@ -268,27 +268,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
-    final int offset = fixCaretOffset(editor);
-    PsiElement element = file.findElementAt(offset);
-    if (element == null && offset == file.getTextLength()) {
-      element = file.findElementAt(offset - 1);
-    }
-
-    if (element instanceof PsiWhiteSpace) {
-      element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
-    }
-    return element;
-  }
-
-  private static int fixCaretOffset(@NotNull final Editor editor) {
-    final int caret = editor.getCaretModel().getOffset();
-    if (editor.getSelectionModel().hasSelection()) {
-      if (caret == editor.getSelectionModel().getSelectionEnd()) {
-        return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
-      }
-    }
-
-    return caret;
+    return CommonRefactoringUtil.getElementAtCaret(editor, file);
   }
 
   private static void disableAction(@NotNull AnActionEvent e) {
@@ -304,23 +284,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
-    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        psiElements = new PsiElement[]{element};
-      }
-    }
-
-    if (psiElements == null) return PsiElement.EMPTY_ARRAY;
-
-    List<PsiElement> filtered = null;
-    for (PsiElement element : psiElements) {
-      if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
-        filtered.remove(element);
-      }
-    }
-    return filtered == null ? psiElements : PsiUtilCore.toPsiElementArray(filtered);
+    return CommonRefactoringUtil.getPsiElementArray(dataContext);
   }
 }

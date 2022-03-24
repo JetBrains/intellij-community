@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -182,6 +183,7 @@ public class CodeInsightUtils {
         return element;
     }
 
+    @SafeVarargs
     @NotNull
     public static List<PsiElement> findElementsOfClassInRange(@NotNull PsiFile file, int startOffset, int endOffset, Class<? extends PsiElement> ... classes) {
         PsiElement element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset);
@@ -209,6 +211,14 @@ public class CodeInsightUtils {
                     result.add(currentElement);
                 }
                 result.addAll(PsiTreeUtil.findChildrenOfType(currentElement, aClass));
+            }
+        }
+
+        if (!parent.equals(element1) && parent.getTextRange().getStartOffset() == startOffset) {
+            for (var aClass : classes) {
+                if (aClass.isInstance(parent)) {
+                    result.add(parent);
+                }
             }
         }
 
@@ -275,7 +285,7 @@ public class CodeInsightUtils {
 
     public static void showErrorHint(
             @NotNull Project project, @NotNull Editor editor,
-            @NotNull String message, @NotNull String title,
+            @NlsContexts.DialogMessage @NotNull String message, @NlsContexts.DialogTitle @NotNull String title,
             @Nullable String helpId
     ) {
         if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
@@ -351,8 +361,9 @@ public class CodeInsightUtils {
     }
 
 
+    @SafeVarargs
     @Nullable
-    public static <T> T getTopmostElementAtOffset(@NotNull PsiElement element, int offset, @NotNull Class<? extends T>... classes) {
+    public static <T> T getTopmostElementAtOffset(@NotNull PsiElement element, int offset, @NotNull Class<? extends T> @NotNull ... classes) {
         T lastElementOfType = null;
         if (anyIsInstance(element, classes)) {
             lastElementOfType = (T) element;
@@ -372,7 +383,7 @@ public class CodeInsightUtils {
         return lastElementOfType;
     }
 
-    private static <T> boolean anyIsInstance(PsiElement finalElement, @NotNull Class<? extends T>[] klass) {
+    private static <T> boolean anyIsInstance(PsiElement finalElement, @NotNull Class<? extends T> @NotNull [] klass) {
         return ArraysKt.any(klass, aClass -> aClass.isInstance(finalElement));
     }
 }

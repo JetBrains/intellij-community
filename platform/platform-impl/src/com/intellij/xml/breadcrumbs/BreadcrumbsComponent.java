@@ -629,8 +629,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  static class ButtonSettings extends PainterSettings {
-    static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
+  public static class ButtonSettings extends PainterSettings {
+    public static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
         hovered
         ? EditorColors.BREADCRUMBS_HOVERED

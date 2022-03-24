@@ -91,7 +91,9 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @NotNull
   @Override
   public DfReferenceType dropNullability() {
-    return this;
+    // Nullable constant is not constant anymore
+    return new DfGenericObjectType(
+      Set.of(), myConstraint, DfaNullability.UNKNOWN, myMutability, myJvmSpecialField, mySpecialFieldType, false);
   }
 
   @NotNull
@@ -106,10 +108,13 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     DfReferenceType type = (DfReferenceType)other;
     TypeConstraint constraint = getConstraint().join(type.getConstraint());
     DfaNullability nullability = getNullability().unite(type.getNullability());
-    Mutability mutability = getMutability().unite(type.getMutability());
+    Mutability mutability = getMutability().join(type.getMutability());
     boolean locality = isLocal() && type.isLocal();
     SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
+    if (constraint.isSingleton() && nullability == DfaNullability.NOT_NULL) {
+      return new DfReferenceConstantType(constraint, constraint, false);
+    }
     return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
   }
 

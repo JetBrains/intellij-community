@@ -25,7 +25,7 @@ internal fun getNodeElement(userObject: Any?): Any? {
   }
 }
 
-internal fun moduleContexts(project: Project, elements: Array<Any?>): List<Module> {
+internal fun moduleContexts(project: Project, elements: Array<out Any>): List<Module> {
   val result = ArrayList<Module>()
   for (selectedValue in elements) {
     result += moduleContexts(project, selectedValue) ?: continue
@@ -69,7 +69,7 @@ private fun moduleBySingleContentRoot(project: Project, file: VirtualFile): Modu
   return module
 }
 
-internal fun unloadedModules(project: Project, elements: Array<out Any?>): List<UnloadedModuleDescription> {
+internal fun unloadedModules(project: Project, elements: Array<out Any>): List<UnloadedModuleDescription> {
   val result = SmartList<UnloadedModuleDescription>()
   for (element in elements) {
     val file = when (element) {

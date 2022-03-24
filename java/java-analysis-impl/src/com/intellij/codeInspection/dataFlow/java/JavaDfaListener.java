@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java;
 
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -36,6 +33,9 @@ public interface JavaDfaListener extends DfaListener {
     if (anchor instanceof JavaExpressionAnchor) {
       PsiExpression psiAnchor = ((JavaExpressionAnchor)anchor).getExpression();
       callBeforeExpressionPush(value, psiAnchor, state, psiAnchor);
+    }
+    if (anchor instanceof JavaMethodReferenceArgumentAnchor) {
+      beforeMethodReferenceArgumentPush(value, ((JavaMethodReferenceArgumentAnchor)anchor).getMethodReference(), state);
     }
   }
 
@@ -91,13 +91,25 @@ public interface JavaDfaListener extends DfaListener {
   }
 
   /**
+   * Called before implicit sole argument of method reference is pushed to the stack
+   * @param value value that is about to be pushed
+   * @param expression corresponding method reference
+   * @param state memory state
+   */
+  default void beforeMethodReferenceArgumentPush(@NotNull DfaValue value,
+                                                 @NotNull PsiMethodReferenceExpression expression,
+                                                 @NotNull DfaMemoryState state) {
+
+  }
+
+  /**
    * Called before returning the value from specific computation scope (method, lambda, method reference).
    * Can be called many times for the same scope.
-   * 
-   * @param value value to be returned
-   * @param expression expression that resulted in a given value (can be null) 
-   * @param context context ({@link PsiMethod}, or {@link PsiFunctionalExpression})
-   * @param state memory state
+   *
+   * @param value      value to be returned
+   * @param expression expression that resulted in a given value (can be null)
+   * @param context    context ({@link PsiMethod}, or {@link PsiFunctionalExpression})
+   * @param state      memory state
    */
   default void beforeValueReturn(@NotNull DfaValue value,
                                  @Nullable PsiExpression expression,

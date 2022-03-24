@@ -4,7 +4,7 @@ package org.jetbrains.plugins.javaFX.wizard
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.shared.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -19,8 +19,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Module
   override fun getPresentableName(): String = JavaFXBundle.JAVA_FX
   override fun getDescription(): String = JavaFXBundle.message("javafx.module.builder.description")
-
-  override fun getWeight(): Int = super.getWeight() + 10
+  override fun getWeight(): Int = super.getWeight() + 1
 
   override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
 
@@ -37,7 +36,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   }
 
   override fun getTestFrameworks(): List<StarterTestRunner> {
-    return listOf(JUNIT_TEST_RUNNER, TESTNG_TEST_RUNNER)
+    return listOf(JUNIT_TEST_RUNNER)
   }
 
   override fun getStarterPack(): StarterPack {
@@ -54,6 +53,10 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
         Library("formsfx", null, "FormsFX", JavaFXBundle.message("library.formsfx.description"),
                 "com.dlsc.formsfx", "formsfx-core", listOf(
           LibraryLink(LibraryLinkType.WEBSITE, "https://github.com/dlsc-software-consulting-gmbh/FormsFX/")
+        )),
+        Library("fxgl", null, "FXGL", JavaFXBundle.message("library.fxgl.description"),
+                "com.github.almasb", "fxgl", listOf(
+          LibraryLink(LibraryLinkType.WEBSITE, "https://github.com/AlmasB/FXGL")
         )),
         Library("ikonli", null, "Ikonli", JavaFXBundle.message("library.ikonli.description"),
                 "org.kordamp.ikonli", "ikonli-javafx", listOf(
@@ -112,19 +115,32 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
     return dependencyConfig.properties["fx.default.version"]
   }
 
+  override fun getCustomizedMessages(): CustomizedMessages {
+    return CustomizedMessages().apply {
+      dependenciesLabel = JavaFXBundle.message("javafx.module.additional.libraries")
+    }
+  }
+
   override fun getAssets(starter: Starter): List<GeneratorAsset> {
     val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
+    val standardAssetsProvider = StandardAssetsProvider()
 
     val assets = mutableListOf<GeneratorAsset>()
     if (starterContext.projectType == GRADLE_PROJECT) {
       assets.add(GeneratorTemplateFile("build.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_BUILD_GRADLE)))
       assets.add(GeneratorTemplateFile("settings.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_SETTINGS_GRADLE)))
-      assets.add(GeneratorTemplateFile("gradle/wrapper/gradle-wrapper.properties",
+      assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_GRADLEW_PROPERTIES)))
-      assets.addAll(GradleResourcesProvider().getGradlewResources())
+      assets.addAll(standardAssetsProvider.getGradlewAssets())
+      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
     }
     else if (starterContext.projectType == MAVEN_PROJECT) {
       assets.add(GeneratorTemplateFile("pom.xml", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_POM_XML)))
+
+      assets.add(GeneratorTemplateFile(standardAssetsProvider.mavenWrapperPropertiesLocation,
+                                       ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MVNW_PROPERTIES)))
+      assets.addAll(standardAssetsProvider.getMvnwAssets())
+      assets.addAll(standardAssetsProvider.getMavenIgnoreAssets())
     }
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)

@@ -12,6 +12,8 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
 
   fun testNewItem() = doTest()
 
+  fun testNewItemInBlockQuote() = doTest()
+
   fun testNewItemTwoSpacesInMarkerAndDocumentEnd() = doTest()
 
   private fun doTest() {

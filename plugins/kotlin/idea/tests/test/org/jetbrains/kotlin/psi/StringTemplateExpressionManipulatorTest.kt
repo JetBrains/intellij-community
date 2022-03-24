@@ -84,14 +84,10 @@ class StringTemplateExpressionManipulatorTest : KotlinLightCodeInsightFixtureTes
     override fun getProjectDescriptor() = KotlinLightProjectDescriptor.INSTANCE
 }
 
-private fun <T> suppressFallingOnLogError(call: () -> T) {
-    val loggedErrorProcessor = LoggedErrorProcessor.getInstance()
-    try {
-        LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-            override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean = false
-        })
+private fun suppressFallingOnLogError(call: () -> Unit) {
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean = false
+    }) {
         call()
-    } finally {
-        LoggedErrorProcessor.setNewInstance(loggedErrorProcessor)
     }
 }

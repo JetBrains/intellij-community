@@ -17,16 +17,16 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -92,6 +92,28 @@ public class CalendarView extends JPanel {
     Dimension preferredSize = getPreferredSize();
     setMaximumSize(preferredSize);
     setMaximumSize(preferredSize);
+
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    selectAllOnFocusGained(myYears);
+    selectAllOnFocusGained(myHours);
+    selectAllOnFocusGained(myMinutes);
+    selectAllOnFocusGained(mySeconds);
+  }
+
+  private static void selectAllOnFocusGained(@NotNull JSpinner spinner) {
+    JSpinner.DefaultEditor editor = ObjectUtils.tryCast(spinner.getEditor(), JSpinner.DefaultEditor.class);
+    if (editor == null) return;
+    editor.getTextField().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          editor.getTextField().selectAll();
+        });
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) { }
+    });
   }
 
   @NotNull

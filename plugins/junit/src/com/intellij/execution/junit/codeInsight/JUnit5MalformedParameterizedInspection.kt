@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInsight.MetaAnnotationUtil
@@ -40,6 +40,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
+    const val NULL_ENUM_PROVIDER = "org.junit.jupiter.params.provider.NullEnum"
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -68,6 +69,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
           val singleParameterProviderChecker = SingleParameterChecker(holder)
           val methodSourceChecker = MethodSourceChecker(holder)
           val csvChecker = CsvChecker(holder)
+          val nullOrEmptySourceChecker = NullOrEmptySourceChecker(holder)
           val usedSourceAnnotations = MetaAnnotationUtil.findMetaAnnotations(node.javaPsi, JUnitCommonClassNames.SOURCE_ANNOTATIONS).map {
             when (it.qualifiedName) {
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
@@ -81,6 +83,16 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
               }
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE -> {
                 csvChecker.checkFileSource(it)
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_NULL_SOURCE -> {
+                nullOrEmptySourceChecker.checkNullSource(node, it)
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_EMPTY_SOURCE -> {
+                nullOrEmptySourceChecker.checkEmptySource(node, it)
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_NULL_AND_EMPTY_SOURCE -> {
+                nullOrEmptySourceChecker.checkNullSource(node, it)
+                nullOrEmptySourceChecker.checkEmptySource(node, it)
               }
             }
             it
@@ -109,7 +121,10 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
                                                     method: UMethod,
                                                     elementToHighlight: UAnnotation) {
         val singleParameterProviders = usedSourceAnnotations.containsValue(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE) ||
-                                       usedSourceAnnotations.containsValue(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE)
+                                       usedSourceAnnotations.containsValue(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE) ||
+                                       usedSourceAnnotations.containsValue(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_NULL_SOURCE) ||
+                                       usedSourceAnnotations.containsValue(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_EMPTY_SOURCE) ||
+                                       usedSourceAnnotations.containsValue(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_NULL_AND_EMPTY_SOURCE)
 
         val multipleParametersProvider = usedSourceAnnotations.containsValue(
           JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE) ||
@@ -195,6 +210,48 @@ private class CsvChecker(val holder: ProblemsHolder) {
   }
 }
 
+private class NullOrEmptySourceChecker(val holder: ProblemsHolder) {
+  fun checkNullSource(method: UMethod, psiAnnotation: PsiAnnotation) {
+    val size = method.uastParameters.size
+    if (size != 1) {
+      val sourcePsi = getElementToHighlight(psiAnnotation, method).toUElement()?.sourcePsi ?: return
+      checkFormalParameters(size, sourcePsi, psiAnnotation.qualifiedName)
+    }
+  }
+
+  private fun checkFormalParameters(size: Int, sourcePsi: PsiElement, sourceName : String?) {
+    if (sourceName == null) return
+    val errorMessageKey = if (size == 0)
+      "junit5.malformed.parameterized.inspection.description.nullsource.cannot.provide.argument.no.params"
+    else
+      "junit5.malformed.parameterized.inspection.description.nullsource.cannot.provide.argument.too.many.params"
+    holder.registerProblem(sourcePsi, JUnitBundle.message(errorMessageKey, StringUtil.getShortName(sourceName)))
+  }
+
+  fun checkEmptySource(method: UMethod, psiAnnotation: PsiAnnotation) {
+    val sourcePsi = getElementToHighlight(psiAnnotation, method).toUElement()?.sourcePsi ?: return
+    val size = method.uastParameters.size
+    val shortName = psiAnnotation.qualifiedName ?: return
+    if (size == 1) {
+      val type = method.uastParameters[0].type
+      if (type is PsiArrayType ||
+          type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+          type.equalsToText(CommonClassNames.JAVA_UTIL_LIST) ||
+          type.equalsToText(CommonClassNames.JAVA_UTIL_SET) ||
+          type.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) {
+        return
+      }
+      holder.registerProblem(sourcePsi, 
+                             JUnitBundle.message("junit5.malformed.parameterized.inspection.description.emptysource.cannot.provide.argument",
+                                                 StringUtil.getShortName(shortName),
+                                                 type.presentableText))
+    }
+    else {
+      checkFormalParameters(size, sourcePsi, shortName)
+    }
+  }
+}
+
 private class SingleParameterChecker(val holder: ProblemsHolder) {
   fun checkEnumSource(method: UMethod, enumSource: PsiAnnotation) {
     // @EnumSource#value type is Class<?>, not an array
@@ -245,7 +302,14 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
                                  method: UMethod) {
     val mode = enumSource.findAttributeValue("mode")
     if (mode is PsiReferenceExpression && ("INCLUDE" == mode.referenceName || "EXCLUDE" == mode.referenceName)) {
-      val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(enumType) ?: return).fields
+      var validType = enumType
+      if (enumType.canonicalText == JUnit5MalformedParameterizedInspection.Annotations.NULL_ENUM_PROVIDER) {
+        val parameters = method.uastParameters
+        if (parameters.isNotEmpty()) {
+          validType = parameters.first().type
+        }
+      }
+      val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(validType) ?: return).fields
         .filterIsInstance<PsiEnumConstant>()
         .map { it.name }
         .toSet()
@@ -304,7 +368,7 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
             if (psiClass.methods.find { it.hasModifier(JvmModifier.STATIC) && factoryMethod(it) } != null) return
           }
         }
-        else if (componentType.equalsToText("org.junit.jupiter.params.provider.NullEnum")) {
+        else if (componentType.equalsToText(JUnit5MalformedParameterizedInspection.Annotations.NULL_ENUM_PROVIDER)) {
           val psiClass = PsiUtil.resolveClassInClassTypeOnly(paramType)
           if (psiClass != null && psiClass.isEnum) return
         }

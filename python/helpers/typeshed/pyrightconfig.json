@@ -5,43 +5,7 @@
         "stubs"
     ],
     "exclude": [
-        // Python 2 only modules.
-        "**/@python2",
-        "stubs/enum34",
-        "stubs/fb303",
-        "stubs/futures",
-        "stubs/ipaddress",
-        "stubs/kazoo",
-        "stubs/openssl-python",
-        "stubs/pathlib2",
-        "stubs/pymssql",
-        "stubs/Routes",
-        "stubs/scribe",
-        "stubs/tornado",
-        // Modules that are incomplete in some way.
-        "stdlib/sqlite3/dbapi2.pyi",
-        "stdlib/tkinter",
-        "stdlib/xml/dom",
-        "stdlib/xml/sax",
-        "stubs/backports",
-        "stubs/backports_abc",
-        "stubs/boto",
-        "stubs/cryptography",
-        "stubs/docutils",
-        "stubs/Flask",
-        "stubs/Jinja2",
-        "stubs/Markdown",
-        "stubs/paramiko",
-        "stubs/protobuf",
-        "stubs/PyMySQL",
-        "stubs/python-dateutil",
-        "stubs/pyvmomi",
-        "stubs/PyYAML",
-        "stubs/redis",
-        "stubs/requests",
-        "stubs/simplejson",
-        "stubs/waitress",
-        "stubs/Werkzeug"
+        "**/@python2"
     ],
     "typeCheckingMode": "basic",
     "strictListInference": true,
@@ -65,27 +29,24 @@
     "reportUntypedClassDecorator": "error",
     "reportUntypedBaseClass": "error",
     "reportUntypedNamedTuple": "error",
-    "reportPrivateUsage": "error",
+    "reportPrivateUsage": "none",
     "reportConstantRedefinition": "error",
     "reportIncompatibleMethodOverride": "error",
     "reportIncompatibleVariableOverride": "error",
     "reportInvalidStringEscapeSequence": "error",
-    "reportUnknownParameterType": "error",
     "reportUnknownArgumentType": "error",
     "reportUnknownLambdaType": "error",
-    "reportUnknownVariableType": "error",
-    "reportUnknownMemberType": "error",
     "reportMissingTypeArgument": "error",
     "reportUndefinedVariable": "error",
     "reportUnboundVariable": "error",
     "reportInvalidStubStatement": "error",
-    "reportUnsupportedDunderAll": "error",
     "reportInvalidTypeVarUse": "error",
     "reportPropertyTypeMismatch": "error",
     "reportSelfClsParameterName": "error",
-    // Overloapping overloads cannot be enabled at this time because
-    // of the "factions.Fraction.__pow__" method and "tasks.gather" function.
+    "reportUnsupportedDunderAll": "error",
+    // Overlapping overloads cannot be enabled at this time because
+    // of the "fractions.Fraction.__pow__" method and "tasks.gather" function.
     // Mypy's overlapping overload logic misses these issues (see mypy
     // issue #10143 and #10157).
-    "reportOverlappingOverload": "none"
+    "reportOverlappingOverload": "none",
 }

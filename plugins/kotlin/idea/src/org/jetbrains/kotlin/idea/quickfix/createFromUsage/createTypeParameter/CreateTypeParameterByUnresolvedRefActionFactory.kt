@@ -74,7 +74,7 @@ object CreateTypeParameterByUnresolvedRefActionFactory : KotlinIntentionActionFa
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<KtUserType>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> CreateTypeParameterData?
+        quickFixDataFactory: (KtUserType) -> CreateTypeParameterData?
     ): List<QuickFixWithDelegateFactory> {
         val ktUserType = originalElementPointer.element ?: return emptyList()
         val name = ktUserType.referencedName ?: return emptyList()
@@ -85,7 +85,7 @@ object CreateTypeParameterByUnresolvedRefActionFactory : KotlinIntentionActionFa
             }.map {
                 QuickFixWithDelegateFactory factory@{
                     val originalElement = originalElementPointer.element ?: return@factory null
-                    val data = quickFixDataFactory()?.copy(declaration = it) ?: return@factory null
+                    val data = quickFixDataFactory(originalElement)?.copy(declaration = it) ?: return@factory null
                     CreateTypeParameterFromUsageFix(originalElement, data, presentTypeParameterNames = true)
                 }
             }

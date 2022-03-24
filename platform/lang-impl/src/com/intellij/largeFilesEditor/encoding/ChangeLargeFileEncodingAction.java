@@ -77,7 +77,7 @@ class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
       .add(CommonDataKeys.VIRTUAL_FILE, vFile)
       .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{vFile})
       .add(CommonDataKeys.PROJECT, editor.getProject())
-      .add(PlatformDataKeys.CONTEXT_COMPONENT, editor.getComponent())
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.getComponent())
       .build();
   }
 }

@@ -136,9 +136,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myFile = file;
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
-
-    setIsDecorated(false);
-
+    
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -484,7 +482,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return notNull(myVcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
     }
     return null;

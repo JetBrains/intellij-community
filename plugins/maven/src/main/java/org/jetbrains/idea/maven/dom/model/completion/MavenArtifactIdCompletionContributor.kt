@@ -43,6 +43,7 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
                            cld: ConcurrentLinkedDeque<RepositoryArtifactData>,
                            promise: Promise<Int>) {
     val set = HashSet<String>()
+    //todo hot spot - spin loop (see also parent and other child classes)
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
       val item = cld.poll()

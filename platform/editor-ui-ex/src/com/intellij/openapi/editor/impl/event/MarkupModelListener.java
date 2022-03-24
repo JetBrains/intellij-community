@@ -23,12 +23,4 @@ public interface MarkupModelListener extends EventListener {
                                  boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     attributesChanged(highlighter, renderersChanged, fontStyleChanged || foregroundColorChanged);
   }
-
-  /**
-   * @deprecated Use {@link MarkupModelListener} directly.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  abstract class Adapter implements MarkupModelListener {
-  }
 }

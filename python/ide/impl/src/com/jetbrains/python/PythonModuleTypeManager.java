@@ -3,10 +3,11 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleTypeManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 final class PythonModuleTypeManager extends ModuleTypeManagerImpl {
   @Override
-  public ModuleType<?> getDefaultModuleType() {
+  public @NotNull ModuleType<?> getDefaultModuleType() {
     return new PlatformPythonModuleType();
   }
 }

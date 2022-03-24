@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
     for (int i = 0; i < Math.min(args.length, 255); i++) {
       PsiExpression exp = args[i];
 
-      PsiType argType = RefactoringUtil.getTypeByExpression(exp);
+      PsiType argType = CommonJavaRefactoringUtil.getTypeByExpression(exp);
       SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names;

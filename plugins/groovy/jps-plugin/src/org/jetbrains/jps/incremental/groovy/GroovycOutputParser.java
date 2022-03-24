@@ -23,8 +23,10 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -176,7 +178,7 @@ public class GroovycOutputParser {
     final int start = outputBuffer.indexOf(startMarker);
     final int end = outputBuffer.indexOf(endMarker);
     if (start > end) {
-      throw new AssertionError("Malformed Groovyc output: " + outputBuffer.toString());
+      throw new AssertionError("Malformed Groovyc output: " + outputBuffer);
     }
 
     String text = outputBuffer.substring(start + startMarker.length(), end);
@@ -259,8 +261,7 @@ public class GroovycOutputParser {
                                                    String classpath) throws IOException {
     File tempFile = FileUtil.createTempFile("ideaGroovyToCompile", ".txt", true);
 
-    final Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8));
-    try {
+    try (Writer writer = Files.newBufferedWriter(tempFile.toPath())) {
       writer.write(classpath);
       writer.write("\n");
 
@@ -292,9 +293,6 @@ public class GroovycOutputParser {
       writer.write(GroovyRtConstants.FINAL_OUTPUTPATH + "\n");
       writer.write(StringUtil.join(finalOutputs, File.pathSeparator));
       writer.write("\n");
-    }
-    finally {
-      writer.close();
     }
     return tempFile;
   }

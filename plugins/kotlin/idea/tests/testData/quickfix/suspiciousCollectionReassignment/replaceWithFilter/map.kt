@@ -4,7 +4,7 @@
 // ACTION: Join with initializer
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     var map = mapOf(1 to 10)
     map <caret>-= listOf(1)

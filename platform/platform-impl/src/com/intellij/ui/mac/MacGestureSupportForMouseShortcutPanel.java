@@ -25,9 +25,15 @@ import com.apple.eawt.event.PressureEvent;
 import com.apple.eawt.event.PressureListener;
 import com.intellij.openapi.actionSystem.PressureShortcut;
 import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.lang.JavaVersion;
 
 public class MacGestureSupportForMouseShortcutPanel {
   public MacGestureSupportForMouseShortcutPanel(MouseShortcutPanel panel, Runnable runnable) {
+    //todo[kb]: return pressure listener to jbr17
+    if (SystemInfo.isJetBrainsJvm && JavaVersion.current().isAtLeast(17)) {
+      return;
+    }
     GestureListener pressureListener = new PressureListener() {
       @Override
       public void pressure(PressureEvent e) {

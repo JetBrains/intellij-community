@@ -19,7 +19,8 @@ import kotlin.concurrent.thread
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
-  private val project: Project
+  private val project: Project,
+  private val parentDisposable: Disposable
 ) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
@@ -50,11 +51,22 @@ class MockProjectAware(
     _settingsFiles.add(path)
   }
 
-  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
+  override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     eventDispatcher.addListener(Listener.create(listener), parentDisposable)
     subscribeCounter.incrementAndGet()
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })
   }
+
+  fun forceReloadProject() {
+    val message = "Useless assertion parameter: don't assert mock reload context"
+    reloadProject(object : ExternalSystemProjectReloadContext {
+      override val isExplicitReload get() = throw UnsupportedOperationException(message)
+      override val hasUndefinedModifications get() = throw UnsupportedOperationException(message)
+      override val settingsFilesContext get() = throw UnsupportedOperationException(message)
+    })
+  }
+
+  fun notifySettingsFilesListChanged() = background { eventDispatcher.multicaster.onSettingsFilesListChange() }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     when (refreshCollisionPassType.get()!!) {
@@ -63,7 +75,7 @@ class MockProjectAware(
       }
       CANCEL -> {
         val task = once { doRefreshProject(context) }
-        refresh.onceAfterOperation { task.run() }
+        refresh.onceAfterOperation({ task.run() }, parentDisposable)
         if (refresh.isOperationCompleted()) task.run()
       }
       IGNORE -> {
@@ -77,12 +89,12 @@ class MockProjectAware(
   private fun doRefreshProject(context: ExternalSystemProjectReloadContext) {
     background {
       val refreshStatus = refreshStatus.get()
-      eventDispatcher.multicaster.beforeProjectRefresh()
+      eventDispatcher.multicaster.onProjectReloadStart()
       refresh.task {
         refreshCounter.incrementAndGet()
         eventDispatcher.multicaster.insideProjectRefresh(context)
       }
-      eventDispatcher.multicaster.afterProjectRefresh(refreshStatus)
+      eventDispatcher.multicaster.onProjectReloadFinish(refreshStatus)
     }
   }
 
@@ -101,11 +113,13 @@ class MockProjectAware(
   }
 
   fun beforeRefresh(times: Int, action: () -> Unit) {
-    subscribe(times, action, {
-      object : Listener {
-        override fun beforeProjectRefresh() = it()
-      }
-    }, eventDispatcher::addListener)
+    subscribe(times, action, ::beforeRefresh, parentDisposable)
+  }
+
+  fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) {
+    eventDispatcher.addListener(object : Listener {
+      override fun onProjectReloadStart() = action()
+    }, parentDisposable)
   }
 
   fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) {
@@ -113,11 +127,13 @@ class MockProjectAware(
   }
 
   fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) {
-    subscribe(times, action, {
-      object : Listener {
-        override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = it(context)
-      }
-    }, eventDispatcher::addListener)
+    subscribe(times, action, ::duringRefresh, parentDisposable)
+  }
+
+  fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) {
+    eventDispatcher.addListener(object : Listener {
+      override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = action(context)
+    }, parentDisposable)
   }
 
   fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) {
@@ -125,20 +141,23 @@ class MockProjectAware(
   }
 
   fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) {
-    subscribe(times, action, {
-      object : Listener {
-        override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = it(status)
-      }
-    }, eventDispatcher::addListener)
+    subscribe(times, action, ::afterRefresh, parentDisposable)
   }
 
-  interface Listener : ExternalSystemProjectRefreshListener, EventListener {
+  fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) {
+    eventDispatcher.addListener(object : Listener {
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = action(status)
+    }, parentDisposable)
+  }
+
+  interface Listener : ExternalSystemProjectListener, EventListener {
     fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) {}
 
     companion object {
-      fun create(listener: ExternalSystemProjectRefreshListener) = object : Listener {
-        override fun beforeProjectRefresh() = listener.beforeProjectRefresh()
-        override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = listener.afterProjectRefresh(status)
+      fun create(listener: ExternalSystemProjectListener) = object : Listener {
+        override fun onProjectReloadStart() = listener.onProjectReloadStart()
+        override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = listener.onProjectReloadFinish(status)
+        override fun onSettingsFilesListChange() = listener.onSettingsFilesListChange()
       }
     }
   }

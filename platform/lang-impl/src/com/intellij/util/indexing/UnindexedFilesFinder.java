@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -11,7 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +31,15 @@ final class UnindexedFilesFinder {
 
   private final Project myProject;
   private final FileBasedIndexImpl myFileBasedIndex;
-  private final UpdatableIndex<FileType, Void, FileContent> myFileTypeIndex;
+  private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
+  private final @Nullable BooleanFunction<? super IndexedFile> myForceReindexingTrigger;
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
 
   UnindexedFilesFinder(@NotNull Project project,
-                       @NotNull FileBasedIndexImpl fileBasedIndex) {
+                       @NotNull FileBasedIndexImpl fileBasedIndex,
+                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger) {
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
@@ -46,6 +50,7 @@ final class UnindexedFilesFinder {
       .map(ex -> ex.createFileIndexingStatusProcessor(project))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
+    myForceReindexingTrigger = forceReindexingTrigger;
 
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
 
@@ -67,7 +72,7 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject);
+      boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject) == FileAddStatus.ADDED;
 
       if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
         boolean wasInvalidated = false;
@@ -105,7 +110,7 @@ final class UnindexedFilesFinder {
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
-            if (myFileBasedIndex.doTraceStubUpdates()) {
+            if (myFileBasedIndex.doTraceIndexUpdates()) {
               LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
@@ -116,6 +121,7 @@ final class UnindexedFilesFinder {
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = affectedIndexCandidates.get(i);
+              if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
               try {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
                   FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
@@ -177,9 +183,14 @@ final class UnindexedFilesFinder {
           }
         }
 
+        boolean mayMarkFileIndexed = true;
         long nowTime = System.nanoTime();
         try {
           for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
+            if (!RebuildStatus.isOk(indexId)) {
+              mayMarkFileIndexed = false;
+              continue;
+            }
             if (FileTypeIndex.NAME.equals(indexId) && fileTypeIndexState != null && !fileTypeIndexState.updateRequired()) {
               continue;
             }
@@ -190,9 +201,14 @@ final class UnindexedFilesFinder {
         } finally {
           timeUpdatingContentLessIndexes.addAndGet(System.nanoTime() - nowTime);
         }
-        IndexingStamp.flushCache(inputId);
 
-        if (!shouldIndex.get()) {
+        if (myForceReindexingTrigger != null && myForceReindexingTrigger.fun(indexedFile)) {
+          myFileBasedIndex.dropNontrivialIndexedStates(inputId);
+          shouldIndex.set(true);
+        }
+
+        IndexingStamp.flushCache(inputId);
+        if (!shouldIndex.get() && mayMarkFileIndexed) {
           IndexingFlag.setFileIndexed(file);
         }
       });

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -21,11 +22,11 @@ import java.util.function.ToIntFunction;
  * @author dsl, ven
  */
 public final class DFSTBuilder<Node> {
-  private final DFSTBuilderAwareGraph<Node> graphAdapter;
 
-  @SuppressWarnings("GrazieInspection")
-  private final ToIntFunction<Node> myNodeToNNumber; // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
-  @SuppressWarnings("GrazieInspection")
+  private final @NotNull OutboundSemiGraph<Node> myGraph;
+
+  private final ToIntFunction<Node> myNodeToNNumber;
+  // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
   private final Node[] myInvN; // node number in topological order [0..size) -> node
   private Map.Entry<Node, Node> myBackEdge;
 
@@ -34,23 +35,10 @@ public final class DFSTBuilder<Node> {
   private Comparator<Node> myNComparator;
   private Comparator<Node> myTComparator;
   private final IntList mySCCs = new IntArrayList(); // strongly connected component sizes
-  private final ToIntFunction<Node> myNodeToTNumber; // node -> number in scc topological order. Independent scc are in reversed loading order
+  private final ToIntFunction<Node> myNodeToTNumber;
+    // node -> number in scc topological order. Independent scc are in reversed loading order
 
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
-
-  /**
-   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
-   */
-  public DFSTBuilder(@NotNull Graph<Node> graph) {
-    this(graph, null);
-  }
-
-  /**
-   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
-   */
-  public DFSTBuilder(@NotNull Graph<Node> graph, @Nullable Node entryNode) {
-    this((OutboundSemiGraph<Node>)graph, entryNode);
-  }
 
   /**
    * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
@@ -59,32 +47,19 @@ public final class DFSTBuilder<Node> {
     this(graph, null, false);
   }
 
-  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph, @Nullable Node entryNode) {
+  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph,
+                     @Nullable Node entryNode) {
     this(graph, entryNode, false);
   }
 
   @ApiStatus.Internal
-  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph, @Nullable Node entryNode, boolean useIdentityStrategy) {
-    //noinspection unchecked
-    this((Node[])graph.getNodes().toArray(), entryNode, useIdentityStrategy, new DFSTBuilderAwareGraph<Node>() {
-      @Override
-      public int[] buildOuts(@NotNull ToIntFunction<? super Node> nodeIndex, @NotNull Node node) {
-        IntList list = new IntArrayList();
-        Iterator<Node> out = graph.getOut(node);
-        while (out.hasNext()) {
-          list.add(nodeIndex.applyAsInt(out.next()));
-        }
-        return list.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : list.toIntArray();
-      }
-    });
-  }
-
-  @ApiStatus.Internal
-  public DFSTBuilder(Node[] allNodes,
+  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph,
                      @Nullable Node entryNode,
-                     boolean useIdentityStrategy,
-                     @Nullable DFSTBuilderAwareGraph<Node> graphAdapter) {
-    this.allNodes = allNodes;
+                     boolean useIdentityStrategy) {
+    this.myGraph = graph;
+    //noinspection unchecked
+    this.allNodes = (Node[])graph.getNodes().toArray();
+
     if (entryNode != null) {
       int index = useIdentityStrategy ? ArrayUtil.indexOfIdentity(allNodes, entryNode) : ArrayUtil.indexOf(allNodes, entryNode);
       if (index != -1) {
@@ -96,8 +71,6 @@ public final class DFSTBuilder<Node> {
     myInvN = (Node[])new Object[size];
     //noinspection unchecked
     myInvT = (Node[])new Object[size];
-
-    this.graphAdapter = graphAdapter;
 
     if (useIdentityStrategy) {
       Reference2IntOpenHashMap<Node> nMap = new Reference2IntOpenHashMap<>(size * 2, 0.5f);
@@ -115,11 +88,6 @@ public final class DFSTBuilder<Node> {
       myNodeToTNumber = tMap;
       new Tarjan(tMap::put, nMap::put, allNodes, false);
     }
-  }
-
-  @ApiStatus.Internal
-  public interface DFSTBuilderAwareGraph<Node> {
-    int[] buildOuts(@NotNull ToIntFunction<? super Node> nodeIndex, @NotNull Node node);
   }
 
   private static final class TarjanFrame<Node> {
@@ -165,36 +133,25 @@ public final class DFSTBuilder<Node> {
     private int dfsIndex;
     private int sccsSizeCombined;
     private final IntList topo = new IntArrayList(index.length); // nodes in reverse topological order
-    private ToIntFunction<? super Node> getNodeIndex;
+    private final ToIntFunction<? super Node> myNodeIndex;
 
     private Tarjan(ObjIntConsumer<Node> putTNumber, ObjIntConsumer<Node> putNNumber, Node[] allNodes, boolean useIdentityStrategy) {
-      if (useIdentityStrategy) {
-        Reference2IntOpenHashMap<Node> nodeIndex = new Reference2IntOpenHashMap<>(allNodes.length);
-        build(putTNumber, putNNumber, allNodes, nodeIndex::put, nodeIndex);
-      }
-      else {
-        Object2IntMap<Node> nodeIndex = new Object2IntOpenHashMap<>(allNodes.length);
-        build(putTNumber, putNNumber, allNodes, nodeIndex::put, nodeIndex);
-      }
+      myNodeIndex = useIdentityStrategy ?
+                    createReference2IntMap(allNodes) :
+                    createObject2IntMap(allNodes);
+      Arrays.fill(index, -1);
+      build(putTNumber, putNNumber, allNodes);
     }
 
     private void build(ObjIntConsumer<Node> putTNumber,
                        ObjIntConsumer<Node> putNNumber,
-                       Node[] allNodes,
-                       @NotNull ObjIntConsumer<Node> putNodeIndex,
-                       @NotNull ToIntFunction<? super Node> getNodeIndex) {
-      this.getNodeIndex = getNodeIndex;
-      Arrays.fill(index, -1);
-      for (int i = 0; i < allNodes.length; i++) {
-        Node node = allNodes[i];
-        putNodeIndex.accept(node, i);
-      }
+                       Node[] allNodes) {
       for (int i = 0; i < index.length; i++) {
         if (index[i] != -1) {
           continue;
         }
 
-        frames.addLast(new TarjanFrame<>(i, allNodes, graphAdapter.buildOuts(getNodeIndex, allNodes[i])));
+        frames.addLast(new TarjanFrame<>(i, allNodes, buildOuts(allNodes[i])));
         List<List<Node>> sccs = new ArrayList<>();
 
         strongConnect(sccs, allNodes);
@@ -266,7 +223,7 @@ public final class DFSTBuilder<Node> {
         while (pair.nextUnexploredIndex < pair.out.length) {
           int nextI = pair.out[pair.nextUnexploredIndex++];
           if (index[nextI] == -1) {
-            frames.addLast(new TarjanFrame<>(nextI, allNodes, graphAdapter.buildOuts(getNodeIndex, allNodes[nextI])));
+            frames.addLast(new TarjanFrame<>(nextI, allNodes, buildOuts(allNodes[nextI])));
             continue nextNode;
           }
           if (isOnStack[nextI]) {
@@ -294,6 +251,33 @@ public final class DFSTBuilder<Node> {
           sccs.add(scc);
         }
       }
+    }
+
+    private int[] buildOuts(@NotNull Node node) {
+      IntList list = new IntArrayList();
+      Iterator<Node> out = myGraph.getOut(node);
+      while (out.hasNext()) {
+        list.add(myNodeIndex.applyAsInt(out.next()));
+      }
+      return list.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : list.toIntArray();
+    }
+
+    @ReviseWhenPortedToJDK(value = "8", description = "define static")
+    private @NotNull Object2IntMap<Node> createObject2IntMap(Node[] nodes) {
+      Object2IntMap<Node> result = new Object2IntOpenHashMap<>(nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        result.put(nodes[i], i);
+      }
+      return result;
+    }
+
+    @ReviseWhenPortedToJDK(value = "8", description = "define static")
+    private @NotNull Reference2IntOpenHashMap<Node> createReference2IntMap(Node[] nodes) {
+      Reference2IntOpenHashMap<Node> nodeIndex = new Reference2IntOpenHashMap<>(nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        nodeIndex.put(nodes[i], i);
+      }
+      return nodeIndex;
     }
   }
 

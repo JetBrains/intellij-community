@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'any' is never used
 fun println(any: Any) = Unit
 fun debug(comment: String, body: String.() -> Unit) = body(comment)
 fun test() {

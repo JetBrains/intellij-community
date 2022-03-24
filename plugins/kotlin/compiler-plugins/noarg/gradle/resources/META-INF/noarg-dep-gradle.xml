@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg.NoArgGradleProjectImportHandler"/>
-  </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg.NoArgProjectResolverExtension" order="last"/>
-  </extensions>
-</idea-plugin>

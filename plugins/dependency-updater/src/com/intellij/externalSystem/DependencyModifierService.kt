@@ -8,6 +8,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 
+/**
+ * @see ExternalDependencyModificator
+ */
 @ApiStatus.Experimental
 class DependencyModifierService(private val myProject: Project) {
 

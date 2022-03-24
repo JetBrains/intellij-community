@@ -5,9 +5,10 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 
 @CompileStatic
-class BuildOptions {
+final class BuildOptions {
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
@@ -29,11 +30,11 @@ class BuildOptions {
    * Specifies for which operating systems distributions should be built.
    */
   String targetOS
-  static final String OS_LINUX = "linux"
-  static final String OS_WINDOWS = "windows"
-  static final String OS_MAC = "mac"
-  static final String OS_ALL = "all"
-  static final String OS_CURRENT = "current"
+  public static final String OS_LINUX = "linux"
+  public static final String OS_WINDOWS = "windows"
+  public static final String OS_MAC = "mac"
+  public static final String OS_ALL = "all"
+  public static final String OS_CURRENT = "current"
 
   /**
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
@@ -44,48 +45,52 @@ class BuildOptions {
   /**
    * Pass comma-separated names of build steps (see below) to this system property to skip them.
    */
-  public static final String BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
+  private static final String BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
 
   /**
-   * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
+   * Pass comma-separated names of build steps (see below) to {@link BuildOptions#BUILD_STEPS_TO_SKIP_PROPERTY} system property to skip them when building locally.
    */
-  Set<String> buildStepsToSkip = new HashSet<>(Arrays.asList(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(",")))
+  Set<String> buildStepsToSkip = new HashSet<>(Arrays.asList(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(",")).findAll {!it.isBlank() })
   /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
-  static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
+  public static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
-  static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
-  static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
-  static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
-  static final String GENERATE_JAR_ORDER_STEP = "jar_order"
-  static final String SOURCES_ARCHIVE_STEP = "sources_archive"
-  static final String SCRAMBLING_STEP = "scramble"
-  static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  public static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
+  public static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
+  public static final String GENERATE_JAR_ORDER_STEP = "jar_order"
+  public static final String SOURCES_ARCHIVE_STEP = "sources_archive"
+  public static final String SCRAMBLING_STEP = "scramble"
+  public static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
-  static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
+  public static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
-  static final String MAC_ARTIFACTS_STEP = "mac_artifacts"
+  public static final String MAC_ARTIFACTS_STEP = "mac_artifacts"
   /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
-  static final String MAC_DMG_STEP = "mac_dmg"
-  /** Sign additional binary files in macOS distribution. */
-  static final String MAC_SIGN_STEP = "mac_sign"
+  public static final String MAC_DMG_STEP = "mac_dmg"
+  /** Sign macOS distribution. */
+  public static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
-  static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  public static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
   /** Build Linux tar.gz artifact without bundled JRE. */
-  static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+  public static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
-  static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+  public static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Sign *.exe files in Windows distribution. */
-  static final String WIN_SIGN_STEP = "windows_sign"
-  static final Map<String,String> WIN_SIGN_OPTIONS =
+  public static final String WIN_SIGN_STEP = "windows_sign"
+  public static final Map<String,String> WIN_SIGN_OPTIONS =
     System.getProperty("intellij.build.win.sign.options", "").tokenize(';')*.tokenize('=').collectEntries()
   /** Build Frankenstein artifacts. */
-  static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+  public static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
-  static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
+  public static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
   /** Generate files containing lists of used third-party libraries */
-  static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
+  public static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
-  static final String COMMUNITY_DIST_STEP = "community_dist"
+  public static final String COMMUNITY_DIST_STEP = "community_dist"
+  public static final String OS_SPECIFIC_DISTRIBUTIONS_STEP = "os_specific_distributions"
+  public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
+  public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
+  public static final String VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
@@ -95,7 +100,12 @@ class BuildOptions {
   /**
    * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
    */
-  static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
+  public static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
+
+  /**
+   * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+   */
+  public static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
@@ -156,6 +166,11 @@ class BuildOptions {
 
   String logPath = System.getProperty("intellij.build.log.root")
 
+  /**
+   * If {@code true} write a separate compilation.log for all compilation messages
+   */
+  Boolean compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
+
   static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
   boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
 
@@ -177,7 +192,7 @@ class BuildOptions {
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  List<String> bundledPluginDirectoriesToSkip = StringUtil.split(System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", ""), ",") as List<String>
+  Set<String> bundledPluginDirectoriesToSkip = Set.of(System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(","))
 
   /**
    * Specifies list of names of directories of non-bundled plugins (determined by {@link ProductModulesLayout#pluginsToPublish} and
@@ -189,34 +204,25 @@ class BuildOptions {
   List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",")
 
   /**
-   * Specifies JRE version to be bundled with distributions, 11 by default.
+   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} version to be bundled with distributions, 11 by default.
    */
-  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
+  int bundledRuntimeVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 
   /**
-   * Specifies JRE build to be bundled with distributions. If {@code null} then {@code jdkBuild} from gradle.properties will be used.
+   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} build to be bundled with distributions. If {@code null} then {@code runtimeBuild} from gradle.properties will be used.
    */
-  String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+  String bundledRuntimeBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Specifies a prefix to use when looking for an artifact of a JRE to be bundled with distributions.
-   * If {@code null}, {@code "jbr-"} will be used.
-   *
-   * @see org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
+   * Specifies a prefix to use when looking for an artifact of a {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} to be bundled with distributions.
+   * If {@code null}, {@code "jbr_dcevm-"} will be used.
    */
-  String bundledJrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
+  String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
-   * Directory path to unpack JetBrains Runtime builds into
+   * Enables fastdebug runtime
    */
-  static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
-  String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
-
-  /**
-   * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.
-   */
-  static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "11").toInteger()
+  boolean runtimeDebug = System.getProperty("intellij.build.bundled.jre.debug", "false").toBoolean()
 
   /**
    * Specifies an algorithm to build distribution checksums.
@@ -229,16 +235,35 @@ class BuildOptions {
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
 
+  @ApiStatus.Internal
+  public boolean compressNonBundledPluginArchive = true
+
   /**
-   * Path to prebuilt Kotlin plugin (not zipped).
-   * Currently fully-fledged Kotlin plugin distribution is being on TeamCity only via kombo.gant script.
-   * If this path is not specified then distribution without LLDB debugger is going to be built locally (for tests only).
+   * Max attempts of dependencies resolution on fault. "1" means no retries.
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
    */
-  static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
-  String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
+  public static final String RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
+  int resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInteger()
+
+  /**
+   * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
+   */
+  public static final String RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
+  long resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
+
+  static final String TARGET_OS = "intellij.build.target.os"
+
+  /**
+   * See https://reproducible-builds.org/specs/source-date-epoch/
+   */
+  long buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLong() ?: System.currentTimeSeconds()
+  long randomSeedNumber = System.getProperty("intellij.build.randomSeed")?.toLong() ?: new Random().nextLong()
 
   BuildOptions() {
-    targetOS = System.getProperty("intellij.build.target.os")
+    targetOS = System.getProperty(TARGET_OS)
     if (targetOS == OS_CURRENT) {
       targetOS = SystemInfo.isWindows ? OS_WINDOWS :
                  SystemInfo.isMac ? OS_MAC :

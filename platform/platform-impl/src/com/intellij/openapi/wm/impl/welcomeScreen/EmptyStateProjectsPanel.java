@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -142,7 +142,7 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
       vPanel.add(promotion);
       hasPromotion = true;
     }
-    JPanel notification = ProjectsTabFactory.createNotificationsPanel(parentDisposable);
+    JPanel notification = WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable);
     if (!hasPromotion) return notification;
     vPanel.add(notification);
     return vPanel;

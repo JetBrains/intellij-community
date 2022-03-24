@@ -27,7 +27,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
       if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()){
         SelectInNavBarTarget.selectInNavBar(true);
       } else {
-        final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+        final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
         if (!isInsideNavBar(component)) {
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           final Editor editor = CommonDataKeys.EDITOR.getData(context);

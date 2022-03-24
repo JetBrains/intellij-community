@@ -1,0 +1,6 @@
+// FIR_COMPARISON
+fun t() {
+    while (<caret>)
+}
+
+// ELEMENT: while

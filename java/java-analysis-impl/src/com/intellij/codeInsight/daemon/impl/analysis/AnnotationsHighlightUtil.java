@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -63,8 +63,8 @@ public final class AnnotationsHighlightUtil {
     }
     if (method == null) {
       if (pair.getName() != null) {
-        final String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
-        final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
+        String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
+        HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
           .range(ref.getElement(), ref.getRangeInElement())
           .descriptionAndTooltip(description)
           .create();
@@ -74,7 +74,7 @@ public final class AnnotationsHighlightUtil {
       else {
         String description = JavaErrorBundle.message("annotation.missing.method", ref.getCanonicalText());
         PsiElement element = ref.getElement();
-        final HighlightInfo highlightInfo =
+        HighlightInfo highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
         for (IntentionAction action : QUICK_FIX_FACTORY.createAddAnnotationAttributeNameFixes(pair)) {
           QuickFixAction.registerQuickFixAction(highlightInfo, action);
@@ -104,7 +104,11 @@ public final class AnnotationsHighlightUtil {
       if (Objects.equals(attribute.getName(), name)) {
         String description = JavaErrorBundle.message("annotation.duplicate.attribute",
                                                        name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(pair));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMergeDuplicateAttributesFix(pair));
+        return info;
       }
     }
 
@@ -120,7 +124,7 @@ public final class AnnotationsHighlightUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
       }
     }
-    final PsiAnnotationMethod annotationMethod = ObjectUtils.tryCast(method, PsiAnnotationMethod.class);
+    PsiAnnotationMethod annotationMethod = ObjectUtils.tryCast(method, PsiAnnotationMethod.class);
     if (annotationMethod == null) return null;
     boolean fromDefaultValue = PsiTreeUtil.isAncestor(annotationMethod.getDefaultValue(), value, false);
     if (value instanceof PsiAnnotation) {
@@ -182,7 +186,7 @@ public final class AnnotationsHighlightUtil {
       PsiExpression expr = (PsiExpression)value;
       PsiType type = expr.getType();
 
-      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass != null && psiClass.isEnum() && !(expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() instanceof PsiEnumConstant)) {
         String description = JavaErrorBundle.message("annotation.non.enum.constant.attribute.value");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
@@ -298,16 +302,16 @@ public final class AnnotationsHighlightUtil {
   static HighlightInfo checkMissingAttributes(@NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
-    PsiClass aClass = (PsiClass)nameRef.resolve();
-    if (aClass != null && aClass.isAnnotationType()) {
+    PsiElement aClass = nameRef.resolve();
+    if (aClass instanceof PsiClass && ((PsiClass)aClass).isAnnotationType()) {
       Set<String> names = new HashSet<>();
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
-        final String name = attribute.getName();
+        String name = attribute.getName();
         names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
-      PsiMethod[] annotationMethods = aClass.getMethods();
+      PsiMethod[] annotationMethods = ((PsiClass)aClass).getMethods();
       List<String> missed = new ArrayList<>();
       for (PsiMethod method : annotationMethods) {
         if (PsiUtil.isAnnotationMethod(method)) {
@@ -341,7 +345,7 @@ public final class AnnotationsHighlightUtil {
   }
 
   static HighlightInfo checkConstantExpression(@NotNull PsiExpression expression) {
-    final PsiElement parent = expression.getParent();
+    PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
         String description = JavaErrorBundle.message("annotation.non.constant.attribute.value");
@@ -396,7 +400,13 @@ public final class AnnotationsHighlightUtil {
     if (applicable == null) {
       String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
       String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
-      return annotationError(annotation, message);
+      HighlightInfo info = annotationError(annotation, message);
+      if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
+        for (PsiAnnotation.TargetType targetType : targets) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType));
+        }
+      }
+      return info;
     }
 
     if (applicable == PsiAnnotation.TargetType.TYPE_USE) {
@@ -418,7 +428,7 @@ public final class AnnotationsHighlightUtil {
             return annotationError(annotation, message);
           }
           if (typeElement.isInferredType()) {
-            final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(annotation)
               .descriptionAndTooltip(JavaErrorBundle.message("annotation.not.allowed.var"))
               .create();
@@ -449,10 +459,10 @@ public final class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo annotationError(@NotNull final PsiAnnotation annotation,
-                                               @NotNull final @NlsContexts.DetailedDescription String message,
-                                               @NotNull final IntentionAction fix) {
-    final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation,
+                                               @NotNull @NlsContexts.DetailedDescription String message,
+                                               @NotNull IntentionAction fix) {
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(annotation)
       .descriptionAndTooltip(message)
       .create();
@@ -463,16 +473,16 @@ public final class AnnotationsHighlightUtil {
   @Nullable
   private static HighlightInfo checkReferenceTarget(@NotNull PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
     if (ref == null) return null;
-    final PsiElement refTarget = ref.resolve();
+    PsiElement refTarget = ref.resolve();
     if (refTarget == null) return null;
 
     if (!(refTarget instanceof PsiClass)) {
       return annotationError(annotation, JavaErrorBundle.message("annotation.not.allowed.ref"));
     }
 
-    final PsiElement parent = ref.getParent();
+    PsiElement parent = ref.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement) {
-      final PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
+      PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return annotationError(annotation,
                                JavaErrorBundle.message("annotation.not.allowed.static"),
@@ -518,13 +528,13 @@ public final class AnnotationsHighlightUtil {
   private static boolean cyclicDependencies(@NotNull PsiClass aClass,
                                             @Nullable PsiType type,
                                             @NotNull Set<? super PsiClass> checked) {
-    final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
+    PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
     if (resolvedClass != null && resolvedClass.isAnnotationType()) {
       if (aClass == resolvedClass) {
         return true;
       }
       if (!checked.add(resolvedClass) || !BaseIntentionAction.canModify(resolvedClass)) return false;
-      final PsiMethod[] methods = resolvedClass.getMethods();
+      PsiMethod[] methods = resolvedClass.getMethods();
       for (PsiMethod method : methods) {
         if (cyclicDependencies(aClass, method.getReturnType(), checked)) return true;
       }
@@ -533,13 +543,13 @@ public final class AnnotationsHighlightUtil {
   }
 
   static HighlightInfo checkClashesWithSuperMethods(@NotNull PsiAnnotationMethod psiMethod) {
-    final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
+    PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
     if (nameIdentifier != null) {
-      final PsiMethod[] methods = psiMethod.findDeepestSuperMethods();
+      PsiMethod[] methods = psiMethod.findDeepestSuperMethods();
       for (PsiMethod method : methods) {
-        final PsiClass containingClass = method.getContainingClass();
+        PsiClass containingClass = method.getContainingClass();
         if (containingClass != null) {
-          final String qualifiedName = containingClass.getQualifiedName();
+          String qualifiedName = containingClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
               JavaErrorBundle.message("error.interface.member.clashes", JavaHighlightUtil.formatMethod(method),
@@ -625,11 +635,11 @@ public final class AnnotationsHighlightUtil {
 
   static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
-      final PsiAnnotationOwner owner = annotation.getOwner();
+      PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList) {
-        final PsiElement parent = ((PsiModifierList)owner).getParent();
+        PsiElement parent = ((PsiModifierList)owner).getParent();
         if (parent instanceof PsiClass) {
-          final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, JavaErrorBundle.message("not.a.functional.interface", ((PsiClass)parent).getName()));
+          String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, JavaErrorBundle.message("not.a.functional.interface", ((PsiClass)parent).getName()));
           if (errorMessage != null) {
             HighlightInfo info =
               HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
@@ -674,7 +684,7 @@ public final class AnnotationsHighlightUtil {
     PsiClass container = getRepeatableContainer(annotation);
     if (container == null) return null;
 
-    PsiMethod[] methods = !container.isAnnotationType() ? PsiMethod.EMPTY_ARRAY 
+    PsiMethod[] methods = !container.isAnnotationType() ? PsiMethod.EMPTY_ARRAY
                                                         : container.findMethodsByName("value", false);
     if (methods.length == 0) {
       return JavaErrorBundle.message("annotation.container.no.value", container.getQualifiedName());
@@ -703,11 +713,11 @@ public final class AnnotationsHighlightUtil {
           if (repeatableTargets.contains(containerTarget)) {
             continue;
           }
-          if (containerTarget == PsiAnnotation.TargetType.ANNOTATION_TYPE && 
+          if (containerTarget == PsiAnnotation.TargetType.ANNOTATION_TYPE &&
               (repeatableTargets.contains(PsiAnnotation.TargetType.TYPE) || repeatableTargets.contains(PsiAnnotation.TargetType.TYPE_USE))) {
             continue;
           }
-          if ((containerTarget == PsiAnnotation.TargetType.TYPE || containerTarget == PsiAnnotation.TargetType.TYPE_PARAMETER) && 
+          if ((containerTarget == PsiAnnotation.TargetType.TYPE || containerTarget == PsiAnnotation.TargetType.TYPE_PARAMETER) &&
               repeatableTargets.contains(PsiAnnotation.TargetType.TYPE_USE)) {
             continue;
           }
@@ -762,11 +772,11 @@ public final class AnnotationsHighlightUtil {
       String text = JavaErrorBundle.message("receiver.static.context");
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       QuickFixAction.registerQuickFixAction(
         info,
         QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false)
       );
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       return info;
     }
 
@@ -774,11 +784,11 @@ public final class AnnotationsHighlightUtil {
       String text = JavaErrorBundle.message("receiver.wrong.position");
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       PsiReceiverParameter firstReceiverParameter = PsiTreeUtil.getChildOfType(method.getParameterList(), PsiReceiverParameter.class);
       if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstReceiverParameter), JavaTokenType.LPARENTH)) {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMakeReceiverParameterFirstFix(parameter));
       }
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       return info;
     }
 
@@ -791,7 +801,8 @@ public final class AnnotationsHighlightUtil {
 
     PsiMethod method = (PsiMethod)owner;
     PsiClass enclosingClass = method.getContainingClass();
-    if (method.isConstructor() && enclosingClass != null) {
+    boolean isConstructor = method.isConstructor();
+    if (isConstructor && enclosingClass != null) {
       enclosingClass = enclosingClass.getContainingClass();
     }
 
@@ -808,7 +819,19 @@ public final class AnnotationsHighlightUtil {
       PsiThisExpression identifier = parameter.getIdentifier();
       if (!enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
         String text = JavaErrorBundle.message("receiver.name.mismatch");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        String name;
+        if (isConstructor) {
+          String className = enclosingClass.getName();
+          name = className != null ? className + ".this" : null;
+        }
+        else {
+          name = "this";
+        }
+        if (name != null) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createReceiverParameterNameFix(parameter, name));
+        }
+        return info;
       }
     }
 

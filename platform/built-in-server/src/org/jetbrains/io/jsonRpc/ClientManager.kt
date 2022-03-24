@@ -96,7 +96,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
   }
 
-  fun findClient(predicate: Predicate<Client>): Client? {
+  fun findClient(predicate: Predicate<in Client>): Client? {
     synchronized (clients) {
       return clients.firstOrNull { predicate.test(it) }
     }

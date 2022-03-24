@@ -20,7 +20,7 @@ import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isTag;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJButtonBorder implements Border, UIResource {
+public final class MacIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!c.hasFocus() || c instanceof JComponent && UIUtil.isHelpButton(c)) return;

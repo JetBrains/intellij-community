@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -68,7 +70,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     }
 
     override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
-        if (file.fileType != KotlinFileType.INSTANCE) return null
+        if (!file.isKotlinFileType()) return null
 
         val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         val scriptDefinition = ktFile.findScriptDefinition() ?: return null

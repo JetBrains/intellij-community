@@ -28,6 +28,7 @@ enum class ModuleKind(val isSinglePlatform: Boolean) : DisplayableSettingItem {
     ;
 
     override val text: String
+        @Suppress("HardCodedStringLiteral")
         get() = name
 }
 
@@ -69,7 +70,9 @@ class Module(
     }
 
 
+    @Suppress("HardCodedStringLiteral")
     override val text: String get() = name
+
     override val greyText: String
         get() = when {
             kind == ModuleKind.target -> configurator.text + " " + KotlinNewProjectWizardBundle.message("module.kind.target")

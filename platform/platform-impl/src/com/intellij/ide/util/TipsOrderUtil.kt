@@ -17,11 +17,14 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.HttpRequests
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import java.util.*
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<TipsOrderUtil>()
+private const val EXPERIMENT_RANDOM_SEED = 0L
+private const val USED_BUCKETS_COUNT = 128
 private const val RANDOM_SHUFFLE_ALGORITHM = "default_shuffle"
 private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aws.intellij.net/tips/v1"
 
@@ -29,9 +32,11 @@ internal data class RecommendationDescription(val algorithm: String, val tips: L
 
 private fun getUtilityExperiment(): TipsUtilityExperiment? {
   if (!ApplicationManager.getApplication().isEAP) return null
-  return when (EventLogConfiguration.getInstance().bucket) {
-    in 50..74 -> TipsUtilityExperiment.BY_TIP_UTILITY
-    in 75..99 -> TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED
+  val shuffledBuckets = (0 until USED_BUCKETS_COUNT).shuffled(Random(EXPERIMENT_RANDOM_SEED))
+  return when (shuffledBuckets[EventLogConfiguration.getInstance().bucket % USED_BUCKETS_COUNT]) {
+    in 0..31 -> TipsUtilityExperiment.BY_TIP_UTILITY
+    in 32..63 -> TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED
+    in 64..95 -> TipsUtilityExperiment.RANDOM_IGNORE_USED
     else -> null
   }
 }
@@ -100,7 +105,7 @@ internal class TipsOrderUtil {
    */
   fun sort(tips: List<TipAndTrickBean>): RecommendationDescription {
     getUtilityExperiment()?.let {
-      return service<TipsUsageManager>().sortByUtility(tips, it)
+      return service<TipsUsageManager>().sortTips(tips, it)
     }
 
     serverRecommendation?.let { return it.reorder(tips) }
@@ -115,6 +120,9 @@ enum class TipsUtilityExperiment {
   },
   BY_TIP_UTILITY_IGNORE_USED {
     override fun toString(): String = "tip_utility_and_ignore_used"
+  },
+  RANDOM_IGNORE_USED {
+    override fun toString(): String = "random_ignore_used"
   }
 }
 

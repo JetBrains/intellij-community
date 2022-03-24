@@ -149,7 +149,7 @@ class TMHAssertionGenerator {
   }
 
   static class AssertNoReadAccess extends TMHAssertionGenerator {
-    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresNoReadLock";
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLockAbsence";
 
     AssertNoReadAccess() {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);

@@ -145,7 +145,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
       List<String> parentParts = StringUtil.split(parentString, ":");
       //if revision has only 1 parent and "--debug" argument were added or if appropriate parent template were used,
       // its second parent has revision number  -1
-      if (Integer.valueOf(parentParts.get(0)) >= 0) {
+      if (Integer.parseInt(parentParts.get(0)) >= 0) {
         parents.add(HgRevisionNumber.getInstance(parentParts.get(0), parentParts.get(1)));
       }
     }

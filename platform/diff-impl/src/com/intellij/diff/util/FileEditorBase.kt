@@ -6,26 +6,22 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.ui.docking.impl.DockManagerImpl
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 
-abstract class FileEditorBase : UserDataHolderBase(), FileEditor {
+abstract class FileEditorBase : UserDataHolderBase(), FileEditor, CheckedDisposable {
+  private var isDisposed = false
 
-  init {
-    configureDefaults()
-  }
-
-  private fun configureDefaults() {
-    putUserData(FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW, true)
-    putUserData(DockManagerImpl.SHOW_NORTH_PANEL, false)
-  }
+  override fun isDisposed(): Boolean = isDisposed
 
   protected val propertyChangeSupport = PropertyChangeSupport(this)
 
-  override fun dispose() {}
+  override fun dispose() {
+    isDisposed = true
+  }
+
   override fun isValid(): Boolean = true
 
   override fun selectNotify() {}

@@ -12,7 +12,7 @@ class GHPRDetailsModelImpl(private val valueModel: SingleValueModel<GHPullReques
   override val title: String
     get() = valueModel.value.title
   override val description: String
-    get() = valueModel.value.bodyHTML
+    get() = valueModel.value.body
   override val state: GHPullRequestState
     get() = valueModel.value.state
   override val isDraft: Boolean

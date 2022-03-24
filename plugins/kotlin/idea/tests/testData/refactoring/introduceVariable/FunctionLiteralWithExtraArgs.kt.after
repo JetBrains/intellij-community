@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(c : Collection<String>){
     val predicate: (String) -> Boolean = { it.length > 1 }
     c.filterTo(ArrayList<String>(), predicate)

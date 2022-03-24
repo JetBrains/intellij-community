@@ -67,12 +67,15 @@ public class HgConfigTest extends HgPlatformTest {
     cd(myChildRepo);
     String pushPath = "somePath";
     appendToHgrc(myChildRepo, "\n[paths]\n" +
-                              "default-push=" + pushPath);
+                              "default-push = " + pushPath);
+    appendToHgrc(myChildRepo, "\n[paths]\n" +
+                              "default:pushurl = " + pushPath);
     updateRepoConfig(myProject, myChildRepo);
     final String defaultPushPath = HgUtil.getRepositoryDefaultPushPath(myProject, myChildRepo);
     assertNotNull(defaultPushPath);
-    assertEquals(FileUtil.toSystemIndependentName(myChildRepo.getPath() + "/" + pushPath),
-                 FileUtil.toSystemIndependentName(defaultPushPath));
+    String absolutePath = FileUtil.toSystemIndependentName(myChildRepo.getPath() + "/" + pushPath);
+    // after default-push config deprecation around version 3.7 ,hg reports the same value that is contained in hgrc file
+    assertTrue(absolutePath.contains(FileUtil.toSystemIndependentName(defaultPushPath)));
   }
 
   public void testPushPathWithoutAppropriateConfig() {

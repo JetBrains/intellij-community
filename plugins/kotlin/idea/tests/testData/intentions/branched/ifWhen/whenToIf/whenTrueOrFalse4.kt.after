@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'i' is never used
 fun foo(b: Boolean?) {
     if (b == true) print(1)
     else if (b == false) print(2)

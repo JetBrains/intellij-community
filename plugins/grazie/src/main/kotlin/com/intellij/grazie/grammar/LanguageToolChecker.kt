@@ -8,16 +8,16 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.VisibleForTesting
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
 import org.languagetool.markup.AnnotatedTextBuilder
@@ -26,8 +26,7 @@ import org.languagetool.rules.RuleMatch
 import org.slf4j.LoggerFactory
 import java.util.*
 
-@VisibleForTesting
-class LanguageToolChecker : TextChecker() {
+open class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
     val state = GrazieConfig.get()
@@ -35,23 +34,76 @@ class LanguageToolChecker : TextChecker() {
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
-  override fun check(extracted: TextContent): @NotNull List<TextProblem> {
-    val warnings = checkText(extracted)
-    return warnings.filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
+  override fun check(extracted: TextContent): List<Problem> {
+    return CachedValuesManager.getManager(extracted.containingFile.project).getCachedValue(extracted) {
+      CachedValueProvider.Result.create(doCheck(extracted), extracted.containingFile)
+    }
   }
 
-  class Problem(private val match: RuleMatch, lang: Lang, text: TextContent)
+  private fun doCheck(extracted: TextContent): List<Problem> {
+    val str = extracted.toString()
+    if (str.isBlank()) return emptyList()
+
+    val lang = LangDetector.getLang(str) ?: return emptyList()
+
+    return try {
+      ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+        val tool = LangTool.getTool(lang)
+        val sentences = tool.sentenceTokenize(str)
+        if (sentences.any { it.length > 1000 }) emptyList()
+        else {
+          val annotated = AnnotatedTextBuilder().addText(str).build()
+          val matches = tool.check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
+            null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
+          matches.asSequence()
+            .map { Problem(it, lang, extracted, this is TestChecker) }
+            .filterNot { isGitCherryPickedFrom(it.match, extracted) }
+            .filterNot { isKnownLTBug(it.match, extracted) }
+            .filterNot {
+              val range = if (it.fitsGroup(RuleGroup.CASING)) includeSentenceBounds(extracted, it.patternRange) else it.patternRange
+              extracted.hasUnknownFragmentsIn(range)
+            }
+            .toList()
+        }
+      }
+    }
+    catch (e: Throwable) {
+      if (ExceptionUtil.causedBy(e, ProcessCanceledException::class.java)) {
+        throw ProcessCanceledException()
+      }
+
+      logger.warn("Got exception from LanguageTool", e)
+      emptyList()
+    }
+  }
+
+  private fun includeSentenceBounds(text: CharSequence, range: TextRange): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+
+    while (start > 0 && text[start - 1].isWhitespace()) start--
+    while (end < text.length && text[end].isWhitespace()) end++
+    return TextRange(start, end)
+  }
+
+  class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
     : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =
       match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
 
-    override fun getDescriptionTemplate(isOnTheFly: Boolean) = toDescriptionTemplate(match, isOnTheFly)
-    override fun getReplacementRange() = highlightRange
+    override fun getDescriptionTemplate(isOnTheFly: Boolean): String =
+      if (testDescription) match.rule.id
+      else match.messageSanitized
+
+    override fun getTooltipTemplate(): String = toTooltipTemplate(match)
+
+    override fun getReplacementRange(): TextRange = highlightRanges[0]
     override fun getCorrections(): List<String> = match.suggestedReplacements
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
+      val highlightRange = highlightRanges[0]
       val ruleId = match.rule.id
       if (RuleGroup.INCOMPLETE_SENTENCE in group.rules) {
         if (highlightRange.startOffset == 0 &&
@@ -87,34 +139,15 @@ class LanguageToolChecker : TextChecker() {
         .toList()
     }
 
-    @VisibleForTesting
-    fun checkText(text: TextContent): List<Problem> {
-      val str = text.toString()
-      if (str.isBlank()) return emptyList()
-
-      val lang = LangDetector.getLang(str) ?: return emptyList()
-
-      return try {
-        ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-          val tool = LangTool.getTool(lang)
-          val sentences = tool.sentenceTokenize(str)
-          if (sentences.any { it.length > 1000 }) emptyList()
-          else {
-            val annotated = AnnotatedTextBuilder().addText(str).build()
-            val matches = tool.check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
-                                     null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
-            matches.mapNotNull { if (!isKnownLTBug(it, text)) Problem(it, lang, text) else null }
-          }
-        }
-      }
-      catch (e: Throwable) {
-        if (ExceptionUtil.causedBy(e, ProcessCanceledException::class.java)) {
-          throw ProcessCanceledException()
-        }
-
-        logger.warn("Got exception during check for typos by LanguageTool", e)
-        emptyList()
-      }
+    /**
+     * Git adds "cherry picked from", which doesn't seem entirely grammatical,
+     * but zillions of tools depend on this message, and it's unlikely to be changed.
+     * So we ignore this pattern in commit messages and literals (which might be used for parsing git output)
+     */
+    private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
+      return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
+             (text.domain == TextContent.TextDomain.LITERALS ||
+              text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessage.isCommitMessage(text.containingFile))
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
@@ -127,20 +160,30 @@ class LanguageToolChecker : TextChecker() {
         return true // https://github.com/languagetool-org/languagetool/issues/5270
       }
 
-      if (match.rule.id == "EN_A_VS_AN" && text.subSequence(match.toPos, text.length).matches(Regex("[^\\p{javaLetterOrDigit}]*hour.*"))) {
-        return true // https://github.com/languagetool-org/languagetool/issues/5260
-      }
-
       if (match.rule.id == "THIS_NNS_VB" && text.subSequence(match.toPos, text.length).matches(Regex("\\s+reverts\\s.*"))) {
         return true // https://github.com/languagetool-org/languagetool/issues/5455
+      }
+
+      if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
+          (isNumberRange(match.fromPos, match.toPos, text) || isPathPart(match.fromPos, match.toPos, text))) {
+        return true
       }
 
       return false
     }
 
+    // https://github.com/languagetool-org/languagetool/issues/5230
+    private fun isNumberRange(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+      return startOffset > 0 && endOffset < text.length && text[startOffset - 1].isDigit() && text[endOffset].isDigit()
+    }
+
+    // https://github.com/languagetool-org/languagetool/issues/5883
+    private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+      return text.subSequence(0, startOffset).endsWith('/') || text.subSequence(endOffset, text.length).startsWith('/')
+    }
+
     @NlsSafe
-    private fun toDescriptionTemplate(match: RuleMatch, isOnTheFly: Boolean): String {
-      if (ApplicationManager.getApplication().isUnitTestMode) return match.rule.id
+    private fun toTooltipTemplate(match: RuleMatch): String {
       val html = html {
         val withCorrections = match.rule.incorrectExamples.filter { it.corrections.isNotEmpty() }.takeIf { it.isNotEmpty() }
         val incorrectExample = (withCorrections ?: match.rule.incorrectExamples).minByOrNull { it.example.length }
@@ -150,7 +193,7 @@ class LanguageToolChecker : TextChecker() {
           }
 
           +match.messageSanitized
-          if (!isOnTheFly) nbsp()
+          nbsp()
         }
 
         table {
@@ -165,12 +208,12 @@ class LanguageToolChecker : TextChecker() {
                 +" "
                 +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
                 +" "
-                if (!isOnTheFly) nbsp()
+                nbsp()
               }
               td {
                 style = "width: 100%;"
                 toIncorrectHtml(it)
-                if (!isOnTheFly) nbsp()
+                nbsp()
               }
             }
 
@@ -182,12 +225,12 @@ class LanguageToolChecker : TextChecker() {
                   +" "
                   +GrazieBundle.message("grazie.settings.grammar.rule.correct")
                   +" "
-                  if (!isOnTheFly) nbsp()
+                  nbsp()
                 }
                 td {
                   style = "padding-top: 5px; width: 100%;"
                   toCorrectHtml(it)
-                  if (!isOnTheFly) nbsp()
+                  nbsp()
                 }
               }
             }
@@ -203,5 +246,7 @@ class LanguageToolChecker : TextChecker() {
       return interner.intern(html)
     }
   }
+
+  class TestChecker: LanguageToolChecker()
 
 }

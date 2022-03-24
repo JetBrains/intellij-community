@@ -30,6 +30,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance(VirtualMachineProxyImpl.class);
@@ -220,7 +221,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     clearCaches();
     LOG.debug("before resume VM");
     DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
-      if (throwable != null) {
+      if (throwable != null && !(DebuggerUtilsAsync.unwrap(throwable) instanceof RejectedExecutionException)) {
         LOG.error(throwable);
       }
       LOG.debug("VM resumed");

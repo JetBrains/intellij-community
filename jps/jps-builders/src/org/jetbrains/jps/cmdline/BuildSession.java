@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
@@ -21,12 +22,11 @@ import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.RebuildRequestedException;
-import org.jetbrains.jps.incremental.TargetTypeRegistry;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
@@ -34,10 +34,13 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Executor;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD_PORTABLE_CACHES;
 
 /**
 * @author Eugene Zhuravlev
@@ -65,6 +68,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
   private final boolean myLoadUnloadedModules;
+  @Nullable
+  private JpsOutputLoaderManager myCacheLoadManager;
+  @Nullable
+  private CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings myCacheDownloadSettings;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -78,6 +85,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
     myScopes = params.getScopeList();
+    myCacheDownloadSettings = params.hasCacheDownloadSettings() ? params.getCacheDownloadSettings() : null;
     List<String> filePaths = params.getFilePathList();
     final Map<String, String> builderParams = new HashMap<>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -120,6 +128,19 @@ final class BuildSession implements Runnable, CanceledStatus {
       LOG.debug(" preloadedData = " + myPreloadedData);
       LOG.debug(" buildType = " + myBuildType);
     }
+
+    try {
+      String tracingFile = System.getProperty("tracingFile");
+      if (tracingFile != null) {
+        LOG.debug("Tracing enabled, file: " + tracingFile);
+        Path tracingFilePath = Paths.get(tracingFile);
+        Tracer.runTracer(1, tracingFilePath, 1, e -> {
+          LOG.warn(e);
+        });
+      }
+    } catch (IOException e) {
+      LOG.warn(e);
+    }
   }
 
   private static @NonNls String showFirstItemIfAny(List<String> list) {
@@ -141,6 +162,14 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (Utils.IS_PROFILING_MODE) {
         profilingHelper = new ProfilingHelper();
         profilingHelper.startProfiling();
+      }
+
+      myCacheLoadManager = null;
+      if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
+        LOG.info("Trying to download JPS caches before build");
+        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.loadModelAndGetJpsProject(), this, myProjectPath, myChannel,
+                                                        mySessionId, myCacheDownloadSettings);
+        myCacheLoadManager.load(myBuildRunner, true, myScopes);
       }
 
       runBuild(new MessageHandler() {
@@ -307,6 +336,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
+      if (myCacheLoadManager != null && !FORCE_DOWNLOAD_PORTABLE_CACHES) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
 
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 
@@ -315,7 +345,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      myBuildRunner.runBuild(pd, cs, null, msgHandler, myBuildType, myScopes, false);
+      myBuildRunner.runBuild(pd, cs, msgHandler, myBuildType, myScopes, false);
       TimingLog.LOG.debug("Build finished");
     }
     finally {
@@ -609,6 +639,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         else if (!doneSomething){
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE;
         }
+        if (myCacheLoadManager != null) myCacheLoadManager.saveLatestBuiltCommitId(status);
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createBuildCompletedEvent("build completed", status));
       }
     }

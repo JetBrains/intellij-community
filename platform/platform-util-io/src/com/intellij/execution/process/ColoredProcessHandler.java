@@ -30,7 +30,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
@@ -38,16 +38,16 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     this(process, commandLine, charset, null);
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDelete) {
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(false);
   }
@@ -59,9 +59,9 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
 
   /**
    * Override this method to handle colored text lines.
-   * Overrides should call super.coloredTextAvailable() if they want to pass lines to registered listeners
-   * To receive chunks of data instead of fragments inherit your class from ColoredChunksAcceptor interface and
-   * override coloredChunksAvailable method.
+   * Overrides should call super.coloredTextAvailable() if they want to pass lines to registered listeners.
+   * To receive chunks of data instead of fragments, inherit your class from {@link AnsiEscapeDecoder.ColoredTextAcceptor}
+   * and implement {@link AnsiEscapeDecoder.ColoredTextAcceptor#coloredTextAvailable}.
    */
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {

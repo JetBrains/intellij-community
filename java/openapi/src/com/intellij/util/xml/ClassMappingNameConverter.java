@@ -48,7 +48,7 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
     List<DomElement> children = DomUtil.getDefinedChildren(parent, true, true);
     DomElement classElement = ContainerUtil.find(children, domElement -> domElement.getAnnotation(MappingClass.class) != null);
     if (classElement == null) return Collections.emptyList();
-    Object value = ((GenericDomValue)classElement).getValue();
+    Object value = ((GenericDomValue<?>)classElement).getValue();
     if (value == null) return Collections.emptyList();
     PsiType type;
     if (value instanceof PsiType) {

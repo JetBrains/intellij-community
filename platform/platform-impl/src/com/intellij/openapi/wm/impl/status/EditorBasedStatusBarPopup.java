@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.IndexingBundle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -51,7 +53,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final JPanel myComponent;
   private final boolean myWriteableFileRequired;
-  private boolean actionEnabled;
+  protected boolean actionEnabled;
   private final Alarm update;
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   private volatile Reference<Editor> myEditor = new WeakReference<>(null);
@@ -67,11 +69,12 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         update();
+        UIEventLogger.StatusBarPopupShown.log(project, EditorBasedStatusBarPopup.this.getClass());
         showPopup(e);
         return true;
       }
     }.installOn(myComponent, true);
-    myComponent.setBorder(WidgetBorder.WIDE);
+    myComponent.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
   }
 
   protected JPanel createComponent() {
@@ -200,7 +203,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
       .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
       .add(CommonDataKeys.PROJECT, getProject())
-      .add(PlatformDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
       .setParent(parent)
       .build();
   }
@@ -208,6 +211,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @Override
   public JComponent getComponent() {
     return myComponent;
+  }
+
+  protected Alarm getUpdateAlarm() {
+    return update;
   }
 
   protected boolean isEmpty() {
@@ -350,6 +357,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     @Nls
     public String getText() {
       return text;
+    }
+
+    public boolean isActionEnabled() {
+      return actionEnabled;
     }
 
     public @Tooltip String getToolTip() {

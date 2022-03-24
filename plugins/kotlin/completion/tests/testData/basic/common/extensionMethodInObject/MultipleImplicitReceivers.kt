@@ -17,7 +17,7 @@ class A {
     }
 }
 
-// EXIST: { lookupString: "fooForA", itemText: "fooForA" }
-// EXIST: { lookupString: "fooForB", itemText: "fooForB" }
-// EXIST: { lookupString: "fooForT", itemText: "fooForT" }
+// EXIST: { lookupString: "fooForA", itemText: "fooForA", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooForB", itemText: "fooForB", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "nodes/function.svg"}
 // ABSENT: fooForC

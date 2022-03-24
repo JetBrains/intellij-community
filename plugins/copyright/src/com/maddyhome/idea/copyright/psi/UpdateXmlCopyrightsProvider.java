@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,146 +23,118 @@ public final class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider 
     return createDefaultOptions(false);
   }
 
-  public static class UpdateXmlFileCopyright extends UpdatePsiFileCopyright
-  {
-      public UpdateXmlFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
-      {
-          super(project, module, root, options);
+  public static class UpdateXmlFileCopyright extends UpdatePsiFileCopyright {
+    public UpdateXmlFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options) {
+      super(project, module, root, options);
+    }
+
+    @Override
+    protected boolean accept() {
+      return getFile() instanceof XmlFile;
+    }
+
+    @Override
+    protected void scanFile() {
+      logger.debug("updating " + getFile().getVirtualFile());
+
+
+      XmlDoctype doctype = null;
+      PsiElement root = null;
+
+      XmlDocument doc = ((XmlFile)getFile()).getDocument();
+      PsiElement elem = doc.getFirstChild();
+      while (elem != null) {
+        if (elem instanceof XmlProlog) {
+          PsiElement prolog = elem.getFirstChild();
+          while (prolog != null) {
+            if (prolog instanceof XmlDoctype) {
+              doctype = (XmlDoctype)prolog;
+            }
+
+            prolog = prolog.getNextSibling();
+          }
+        }
+        else if (elem instanceof XmlTag || elem instanceof XmlElementDecl || elem instanceof XmlAttributeDecl) {
+          root = elem;
+          break;
+        }
+
+        elem = elem.getNextSibling();
       }
 
-      @Override
-      protected boolean accept()
-      {
-          return getFile() instanceof XmlFile;
+      PsiElement first = doc.getFirstChild();
+      if (root == null) {
+        root = doc.getLastChild();
       }
 
-      @Override
-      protected void scanFile()
-      {
-          logger.debug("updating " + getFile().getVirtualFile());
-
-
-          XmlDoctype doctype = null;
-          PsiElement root = null;
-
-          XmlDocument doc = ((XmlFile)getFile()).getDocument();
-          PsiElement elem = doc.getFirstChild();
-          while (elem != null)
-          {
-              if (elem instanceof XmlProlog)
-              {
-                  PsiElement prolog = elem.getFirstChild();
-                  while (prolog != null)
-                  {
-                      if (prolog instanceof XmlDoctype)
-                      {
-                          doctype = (XmlDoctype)prolog;
-                      }
-
-                      prolog = prolog.getNextSibling();
-                  }
-              }
-              else if (elem instanceof XmlTag || elem instanceof XmlElementDecl || elem instanceof XmlAttributeDecl)
-              {
-                  root = elem;
-                  break;
-              }
-
-              elem = elem.getNextSibling();
-          }
-
-          PsiElement first = doc.getFirstChild();
-          if (root == null)
-          {
-              root = doc.getLastChild();
-          }
-
-          int location = getLanguageOptions().getFileLocation();
-          if (doctype != null)
-          {
-              checkComments(first, doctype, location == XmlOptions.LOCATION_BEFORE_DOCTYPE);
-              first = doctype;
-          }
-          else if (location == XmlOptions.LOCATION_BEFORE_DOCTYPE)
-          {
-              location = XmlOptions.LOCATION_BEFORE_ROOTTAG;
-          }
-
-          if (root != null)
-          {
-              checkComments(first, root, location == XmlOptions.LOCATION_BEFORE_ROOTTAG);
-          }
-          else if (location == XmlOptions.LOCATION_BEFORE_ROOTTAG)
-          {
-              // If we get here we have an empty file
-              checkComments(first, first, true);
-          }
+      int location = getLanguageOptions().getFileLocation();
+      if (doctype != null) {
+        checkComments(first, doctype, location == XmlOptions.LOCATION_BEFORE_DOCTYPE);
+        first = doctype;
+      }
+      else if (location == XmlOptions.LOCATION_BEFORE_DOCTYPE) {
+        location = XmlOptions.LOCATION_BEFORE_ROOTTAG;
       }
 
-      @Override
-      protected PsiElement getPreviousSibling(PsiElement element)
-      {
-          if (element == null) return null;
+      if (root != null) {
+        checkComments(first, root, location == XmlOptions.LOCATION_BEFORE_ROOTTAG);
+      }
+      else if (location == XmlOptions.LOCATION_BEFORE_ROOTTAG) {
+        // If we get here we have an empty file
+        checkComments(first, first, true);
+      }
+    }
 
-          PsiElement res = element.getPrevSibling();
-          if (res != null)
-          {
-              if (res instanceof XmlProlog)
-              {
-                  XmlProlog prolog = (XmlProlog)res;
-                  if (prolog.getChildren().length > 0)
-                  {
-                      res = prolog.getLastChild();
-                  }
-                  else
-                  {
-                      res = prolog.getPrevSibling();
-                  }
-              }
-          }
-          else
-          {
-              if (element.getParent() instanceof XmlProlog)
-              {
-                  res = element.getParent().getPrevSibling();
-              }
-          }
+    @Override
+    protected PsiElement getPreviousSibling(PsiElement element) {
+      if (element == null) return null;
 
-          return res;
+      PsiElement res = element.getPrevSibling();
+      if (res != null) {
+        if (res instanceof XmlProlog) {
+          XmlProlog prolog = (XmlProlog)res;
+          if (prolog.getChildren().length > 0) {
+            res = prolog.getLastChild();
+          }
+          else {
+            res = prolog.getPrevSibling();
+          }
+        }
+      }
+      else {
+        if (element.getParent() instanceof XmlProlog) {
+          res = element.getParent().getPrevSibling();
+        }
       }
 
-      @Override
-      protected PsiElement getNextSibling(PsiElement element)
-      {
-          if (element == null) return null;
+      return res;
+    }
 
-          PsiElement res = element instanceof XmlProlog ? element : element.getNextSibling();
-          if (res != null)
-          {
-              if (res instanceof XmlProlog)
-              {
-                  XmlProlog prolog = (XmlProlog)res;
-                  if (prolog.getChildren().length > 0)
-                  {
-                      res = prolog.getFirstChild();
-                  }
-                  else
-                  {
-                      res = prolog.getNextSibling();
-                  }
-              }
-          }
-          else
-          {
-              if (element.getParent() instanceof XmlProlog)
-              {
-                  res = element.getParent().getNextSibling();
-              }
-          }
+    @Override
+    protected PsiElement getNextSibling(PsiElement element) {
+      if (element == null) return null;
 
-          return res;
+      PsiElement res = element instanceof XmlProlog ? element : element.getNextSibling();
+      if (res != null) {
+        if (res instanceof XmlProlog) {
+          XmlProlog prolog = (XmlProlog)res;
+          if (prolog.getChildren().length > 0) {
+            res = prolog.getFirstChild();
+          }
+          else {
+            res = prolog.getNextSibling();
+          }
+        }
+      }
+      else {
+        if (element.getParent() instanceof XmlProlog) {
+          res = element.getParent().getNextSibling();
+        }
       }
 
-      private static final Logger logger = Logger.getInstance(UpdateXmlFileCopyright.class.getName());
+      return res;
+    }
+
+    private static final Logger logger = Logger.getInstance(UpdateXmlFileCopyright.class.getName());
   }
 }

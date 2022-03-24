@@ -1,13 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testFramework
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.open.setupGradleProjectSettings
@@ -57,11 +54,6 @@ private fun _attachGradleProjectAndRefresh(
     project: Project
 ) {
     val externalProjectPath = gradleProjectSettings.externalProjectPath
-    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-        DumbService.getInstance(project).runWhenSmart {
-            ExternalSystemUtil.ensureToolWindowInitialized(project, GradleConstants.SYSTEM_ID)
-        }
-    }
     val settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)
     if (settings.getLinkedProjectSettings(externalProjectPath) == null) {
         settings.linkProject(gradleProjectSettings)

@@ -2,8 +2,11 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
+import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -38,19 +41,13 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
 
-  IntentionActionWithTextCaching(@NotNull IntentionAction action){
-    this(action, action.getText(), null, (__1, __2) -> {});
-  }
-
-  IntentionActionWithTextCaching(@NotNull HighlightInfo.IntentionActionDescriptor descriptor, @NotNull BiConsumer<? super IntentionActionWithTextCaching,? super IntentionAction> markInvoked) {
-    this(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), markInvoked);
-  }
-
-  private IntentionActionWithTextCaching(@NotNull IntentionAction action, @NlsContexts.PopupTitle String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+  IntentionActionWithTextCaching(@NotNull IntentionAction action,
+                                 @NlsContexts.PopupTitle String displayName,
+                                 @Nullable Icon icon,
+                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
-    //noinspection ConstantConditions
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
@@ -131,7 +128,8 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   @Nullable
   @Override
   public ShortcutSet getShortcut() {
-    return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    ShortcutSet shortcut = myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
   }
 
   @NotNull
@@ -140,7 +138,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return getAction();
   }
 
-  public boolean isShowSubmenu() {
+  boolean isShowSubmenu() {
     IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)myAction).isShowSubmenu();
@@ -162,6 +160,23 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       return ((CustomizableIntentionAction)action).isShowIcon();
     }
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof IntentionActionWithTextCaching)) return false;
+    IntentionActionWithTextCaching other = (IntentionActionWithTextCaching) o;
+    return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
+  }
+
+  private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
+    return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
+  }
+
+  @Override
+  public int hashCode() {
+    return getText().hashCode();
   }
 
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
@@ -222,8 +237,8 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return myAction.getFileModifierForPreview(target);
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      return myAction.generatePreview(project, editor, file);
     }
 
     @Nullable
@@ -235,7 +250,9 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     @Nullable
     @Override
     public ShortcutSet getShortcut() {
-      return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+      return myAction instanceof ShortcutProvider
+             ? ((ShortcutProvider)myAction).getShortcut()
+             : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ProblemsView;
@@ -14,14 +14,13 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +31,17 @@ import java.util.concurrent.ExecutorService;
 
 @SuppressWarnings("IncorrectParentDisposable")
 final class ProblemsViewImpl extends ProblemsView {
-  private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
+  private static final String AUTO_BUILD_TOOLWINDOW_ID = "Problems";
 
   private volatile ProblemsViewPanel myPanel;
   private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView Pool");
+  private static final EnumSet<ErrorTreeElementKind> interestingMessageKinds =
+    EnumSet.of(ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.NOTE);
 
   ProblemsViewImpl(@NotNull Project project) {
     super(project);
 
-    Disposer.register(project, () -> myViewUpdater.shutdownNow());
+    Disposer.register(project, myViewUpdater::shutdownNow);
     myViewUpdater.execute(() -> {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         if (project.isDisposed()) {
@@ -49,7 +50,12 @@ final class ProblemsViewImpl extends ProblemsView {
 
         ProblemsViewPanel panel = new ProblemsViewPanel(project);
 
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.notClosable(PROBLEMS_TOOLWINDOW_ID));
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(AUTO_BUILD_TOOLWINDOW_ID, builder -> {
+          builder.icon = AllIcons.Toolwindows.ProblemsEmpty;
+          builder.stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.Problems");
+          builder.canCloseContent = false;
+          return Unit.INSTANCE;
+        });
         Disposer.register(toolWindow.getDisposable(), panel);
 
         Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
@@ -64,7 +70,7 @@ final class ProblemsViewImpl extends ProblemsView {
   }
 
   @Override
-  public void clearOldMessages(@Nullable final CompileScope scope, @NotNull final UUID currentSessionId) {
+  public void clearOldMessages(@Nullable CompileScope scope, @NotNull UUID currentSessionId) {
     myViewUpdater.execute(() -> {
       cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
       updateIcon();
@@ -120,20 +126,17 @@ final class ProblemsViewImpl extends ProblemsView {
   }
 
   private void updateIcon() {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(AUTO_BUILD_TOOLWINDOW_ID);
       if (toolWindow != null) {
         doUpdateIcon(myPanel, toolWindow);
       }
-    });
+    }, myProject.getDisposed());
   }
 
   private static void doUpdateIcon(@NotNull ProblemsViewPanel panel, @NotNull ToolWindow toolWindow) {
-    boolean active = panel.getErrorViewStructure().hasMessages(
-      EnumSet.of(ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.NOTE));
+    boolean active = panel.getErrorViewStructure().hasMessages(interestingMessageKinds);
     toolWindow.setIcon(active ? AllIcons.Toolwindows.Problems : AllIcons.Toolwindows.ProblemsEmpty);
-    //noinspection DialogTitleCapitalization
-    toolWindow.setStripeTitle(IdeBundle.message("toolwindow.stripe.Problems"));
   }
 
   @Override

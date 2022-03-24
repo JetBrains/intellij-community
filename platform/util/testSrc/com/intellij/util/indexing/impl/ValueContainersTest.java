@@ -9,6 +9,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
@@ -16,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
 
@@ -39,56 +38,18 @@ public class ValueContainersTest extends TestCase {
     runSimpleAddRemoveIteration(new Integer[] { 25, 33, 77}, new int[][]{{ 10, 20, 30}, { 11, 22 }, {44}});
   }
 
-  public void testTolerateHashcodeProblems() {
-    class MutableValue {
-      int id;
-      MutableValue(int _id) {
-        id = _id;
-      }
+  public void testMixedValueContainer() {
+    ValueContainerImpl<String> container = new ValueContainerImpl<>();
 
-      @Override
-      public int hashCode() {
-        return id;
-      }
-    }
+    container.addValue(294005, "com");
+    container.addValue(294001, "com");
+    container.addValue(294010, null);
+    container.removeValue(294010, null);
+    container.addValue(294001, "com");
+    container.removeValue(294005, "com");
+    container.removeValue(294001, "com");
 
-    ValueContainerImpl<MutableValue> container = new ValueContainerImpl<>();
-    MutableValue value1 = new MutableValue(1);
-    container.addValue(value1.id, value1);
-    MutableValue value2 = new MutableValue(2);
-    container.addValue(value2.id, value2);
-    value2.id = 1;
-    container.removeValue(value1.id, value1);
-
-    InvertedIndexValueIterator<MutableValue> iterator = container.getValueIterator();
-    assertTrue(iterator.hasNext());
-    MutableValue valueFromIterator = iterator.next();
-    assertEquals(value2, valueFromIterator);
-    assertEquals(Integer.valueOf(0), iterator.getFileSetObject());
-    assertFalse(iterator.hasNext());
-
-    container.addValue(value1.id, value1);
-    value1.id = 2;
-    value2.id = 1;
-
-    iterator = container.getValueIterator();
-    Set<MutableValue> processed = new HashSet<>();
-
-    for (int i = 0; i < 2; ++i) {
-      assertTrue(iterator.hasNext());
-      valueFromIterator = iterator.next();
-
-      assertTrue(processed.add(valueFromIterator));
-      if (value1 == valueFromIterator) {
-        assertEquals(Integer.valueOf(1), iterator.getFileSetObject());
-      }
-      else {
-        assertEquals(value2, valueFromIterator);
-        assertEquals(Integer.valueOf(0), iterator.getFileSetObject());
-      }
-    }
-
-    assertFalse(iterator.hasNext());
+    assertEquals("Actual container: " + container, 0, container.size());
   }
 
   public void testValueContainerForTroveMap() throws IOException {
@@ -142,11 +103,11 @@ public class ValueContainersTest extends TestCase {
   }
 
   private static <T> void runSimpleAddRemoveIteration(T[] values, int[][] inputIds) {
-    HashMap<T, IntArrayList> valueToIdList = new HashMap<>();
+    HashMap<T, IntList> valueToIdList = new HashMap<>();
     ValueContainerImpl<T> container = new ValueContainerImpl<>();
 
     for(int i = 0; i < values.length; ++i) {
-      IntArrayList list = new IntArrayList(inputIds.length);
+      IntList list = new IntArrayList(inputIds.length);
       IntSet set = new IntOpenHashSet(inputIds.length);
       T value = values[i];
 
@@ -165,7 +126,7 @@ public class ValueContainersTest extends TestCase {
       assertTrue(valueIterator.hasNext());
 
       T value = valueIterator.next();
-      IntArrayList list = valueToIdList.get(value);
+      IntList list = valueToIdList.get(value);
       assertNotNull(list);
 
       Object object = valueIterator.getFileSetObject();

@@ -25,7 +25,7 @@ public class IncorrectOperationException extends RuntimeException {
 
   /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public IncorrectOperationException(String message, Exception e) {
     super(message, e);
   }

@@ -466,20 +466,24 @@ class C(
 class G(
         val x: String,
         val y: String
-        = "", /* */
+        = "",
+        /* */
         val z: String,
 )
 
 class G(
         val x: String,
         val y: String
-        = "", /* */ /* */
+        = "",
+        /* */
+        /* */
         val z: String,
 )
 
 class H(
-        val x: String, /*
-    */
+        val x: String,
+        /*
+           */
         val y: String,
         val z: String,
 )
@@ -487,7 +491,8 @@ class H(
 class J(
         val x: String,
         val y: String,
-        val z: String, /*
+        val z: String,
+        /*
      */
 )
 

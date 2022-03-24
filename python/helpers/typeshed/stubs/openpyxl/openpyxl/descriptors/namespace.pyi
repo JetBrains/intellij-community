@@ -1,0 +1,3 @@
+from typing import Any
+
+def namespaced(obj, tagname, namespace: Any | None = ...): ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -518,11 +518,11 @@ public class JBZipEntry implements Cloneable {
   public void setDataFromPath(@NotNull Path file) throws IOException {
     long size = Files.size(file);
     if (size < FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
-      //for small files its faster to load their whole content into memory so we can write it to zip sequentially
-      setData(Files.readAllBytes(file));
+      // for small files it's faster to load their whole content into memory, so we can write it to zip sequentially
+      myFile.getOutputStream().putNextEntryBytes(this, Files.readAllBytes(file));
     }
     else {
-      try(InputStream input = new BufferedInputStream(Files.newInputStream(file))) {
+      try (InputStream input = Files.newInputStream(file)) {
         myFile.getOutputStream().putNextEntryContent(this, input);
       }
     }
@@ -536,7 +536,9 @@ public class JBZipEntry implements Cloneable {
   }
 
   public byte[] getData() throws IOException {
-    if (size == -1) throw new IOException("no data");
+    if (size == -1) {
+      throw new IOException("no data");
+    }
 
     try (InputStream stream = getInputStream()) {
       return FileUtil.loadBytes(stream, (int)size);

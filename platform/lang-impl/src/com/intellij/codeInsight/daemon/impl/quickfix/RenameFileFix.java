@@ -21,6 +21,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -65,8 +66,8 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
       WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, file));
     }
@@ -77,9 +78,9 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     if (file == null || !file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
-    final VirtualFile parent = vFile.getParent();
+    VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
-    final VirtualFile newVFile = parent.findChild(myNewFileName);
+    VirtualFile newVFile = parent.findChild(myNewFileName);
     return newVFile == null || newVFile.equals(vFile);
   }
 
@@ -95,6 +96,16 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     catch (IOException e) {
       MessagesEx.error(project, e.getMessage()).showLater();
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.rename(previewDescriptor.getPsiElement().getContainingFile(), myNewFileName);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return IntentionPreviewInfo.rename(file, myNewFileName);
   }
 
   @Override

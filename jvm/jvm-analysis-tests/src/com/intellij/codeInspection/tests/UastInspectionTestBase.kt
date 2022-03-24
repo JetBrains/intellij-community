@@ -3,56 +3,85 @@ package com.intellij.codeInspection.tests
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.InspectionTestUtil
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import java.io.File
 
-abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
-  abstract val fileExt: String
+abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
+  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   abstract val inspection: InspectionProfileEntry
+
+  open val languageLevel = LanguageLevel.JDK_11
+
+  open val sdkLevel = LanguageLevel.JDK_11
 
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(inspection)
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
   }
 
-  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
-    super.tuneFixture(moduleBuilder)
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
+  override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(sdkLevel)
+
+  protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
   }
 
-  protected fun testHighlighting(vararg names: String) {
-    myFixture.testHighlighting(*names.map { "$it.$fileExt" }.toTypedArray())
+  protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
+    configureByText("UnderTest${lang.ext}", text)
+    checkHighlighting()
   }
 
-  protected fun testQuickFix(name: String, hint: String) {
-    myFixture.configureByFile("$name.$fileExt")
-    val action = myFixture.getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
-    myFixture.launchAction(action)
-    myFixture.checkResultByFile("$name.after.$fileExt")
+  protected fun JavaCodeInsightTestFixture.testQuickFix(
+    lang: ULanguage,
+    before: String,
+    after: String,
+    vararg hints: String = arrayOf(InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    ))
+  ) {
+    configureByText("UnderTest${lang.ext}", before)
+    hints.forEach { runQuickFix(it) }
+    checkResult(after)
   }
 
-  protected fun testQuickFixAll(name: String) {
-    val inspection = InspectionTestUtil.instantiateTool(inspection.javaClass) ?: error("No inspection to test.")
-    testQuickFix(name, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName))
+  protected fun JavaCodeInsightTestFixture.testQuickFix(file: String, hint: String = InspectionsBundle.message(
+    "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+  )) {
+    configureByFile(file)
+    runQuickFix(hint)
+    checkResultByFile(file.replace(".", ".after."))
   }
 
-  protected fun testQuickFixUnavailable(name: String, hint: String) {
-    myFixture.configureByFile("$name.$fileExt")
+  private fun JavaCodeInsightTestFixture.runQuickFix(hint: String) {
+    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
+    launchAction(action)
+  }
+
+  protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
+    lang: ULanguage,
+    text: String,
+    hint: String = InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    )
+  ) {
+    configureByText("UnderTest${lang.ext}", text)
     assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
 
-  protected fun testQuickFixUnavailableAll(name: String) {
-    val inspection = InspectionTestUtil.instantiateTool(inspection.javaClass) ?: error("No inspection to test.")
-    testQuickFixUnavailable(name, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName))
+  protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(file: String, hint: String = InspectionsBundle.message(
+    "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+  )) {
+    configureByFile(file)
+    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
-
-  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   override fun tearDown() {
     try {

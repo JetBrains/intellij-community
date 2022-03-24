@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -53,6 +54,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public final class DfaPsiUtil {
+  private static final Logger LOG = Logger.getInstance(DfaPsiUtil.class);
 
   private static final CallMatcher NON_NULL_VAR_ARG = CallMatcher.anyOf(
     staticCall(JAVA_UTIL_LIST, "of"),
@@ -277,16 +279,21 @@ public final class DfaPsiUtil {
     return Nullability.UNKNOWN;
   }
 
+  private static final CallMatcher OPTIONAL_FUNCTIONS =
+    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map", "filter", "ifPresent", "flatMap", "ifPresentOrElse");
+  private static final CallMatcher MAP_COMPUTE =
+    CallMatcher.instanceCall(JAVA_UTIL_MAP, "compute").parameterTypes("K", JAVA_UTIL_FUNCTION_BI_FUNCTION);
+
   @NotNull
   private static Nullability getLambdaParameterNullability(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
-    PsiClass type = method.getContainingClass();
-    if(type != null) {
-      if(JAVA_UTIL_OPTIONAL.equals(type.getQualifiedName())) {
-        String methodName = method.getName();
-        if((methodName.equals("map") || methodName.equals("filter") || methodName.equals("ifPresent") || methodName.equals("flatMap"))
-          && parameterIndex == 0 && lambdaParameterIndex == 0) {
-          return Nullability.NOT_NULL;
-        }
+    if (OPTIONAL_FUNCTIONS.methodMatches(method)) {
+      if (parameterIndex == 0 && lambdaParameterIndex == 0) {
+        return Nullability.NOT_NULL;
+      }
+    }
+    else if (MAP_COMPUTE.methodMatches(method)) {
+      if (parameterIndex == 1 && lambdaParameterIndex == 1) {
+        return Nullability.NULLABLE;
       }
     }
     return Nullability.UNKNOWN;
@@ -304,7 +311,7 @@ public final class DfaPsiUtil {
     for (PsiClassInitializer initializer : containingClass.getInitializers()) {
       if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
           initializer.hasModifierProperty(PsiModifier.STATIC) == staticField &&
-          getBlockNotNullFields(containingClass, initializer.getBody()).contains(field)) {
+          getBlockNotNullFields(initializer.getBody()).contains(field)) {
         return true;
       }
     }
@@ -315,20 +322,22 @@ public final class DfaPsiUtil {
 
     for (PsiMethod method : constructors) {
       if (!method.getLanguage().isKindOf(JavaLanguage.INSTANCE) ||
-          !getBlockNotNullFields(containingClass, method.getBody()).contains(field)) {
+          !getBlockNotNullFields(method.getBody()).contains(field)) {
         return false;
       }
     }
     return true;
   }
 
-  private static Set<PsiField> getBlockNotNullFields(PsiClass containingClass, PsiCodeBlock body) {
+  private static Set<PsiField> getBlockNotNullFields(PsiCodeBlock body) {
     if (body == null) return Collections.emptySet();
 
     return CachedValuesManager.getCachedValue(body, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
+        PsiClass containingClass = PsiTreeUtil.getContextOfType(body, PsiClass.class);
+        LOG.assertTrue(containingClass != null);
         DfaValueFactory factory = new DfaValueFactory(body.getProject());
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
         if (flow == null) {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
@@ -28,10 +29,11 @@ public class ReferenceData implements Cloneable, Serializable {
 
   public int startOffset;
   public int endOffset;
+  @NotNull
   public final String qClassName;
   public final String staticMemberName;
 
-  public ReferenceData(int startOffset, int endOffset, String qClassName, String staticMemberDescriptor) {
+  public ReferenceData(int startOffset, int endOffset, @NotNull String qClassName, String staticMemberDescriptor) {
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     this.qClassName = qClassName;

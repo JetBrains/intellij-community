@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -17,11 +18,17 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.nio.file.Path;
+
 public final class CompilerTestUtil {
+  private static final Logger LOG = Logger.getInstance(CompilerTestUtil.class);
+
   private CompilerTestUtil() {
   }
 
@@ -72,5 +79,23 @@ public final class CompilerTestUtil {
         BuildManager.getInstance().clearState(project);
       });
     });
+  }
+
+  public static void deleteBuildSystemDirectory(@NotNull Project project) {
+    BuildManager buildManager = BuildManager.getInstance();
+    if (buildManager == null) return;
+    Path buildSystemDirectory = buildManager.getBuildSystemDirectory(project);
+    try {
+      PathKt.delete(buildSystemDirectory);
+      return;
+    }
+    catch (Exception ignore) {
+    }
+    try {
+      FileUtil.delete(buildSystemDirectory.toFile());
+    }
+    catch (Exception e) {
+      LOG.warn("Unable to remove build system directory.", e);
+    }
   }
 }

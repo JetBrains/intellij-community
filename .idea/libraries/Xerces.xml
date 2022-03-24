@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="Xerces" type="repository">
-    <properties include-transitive-deps="false" maven-id="xerces:xercesImpl:2.12.1" />
+    <properties include-transitive-deps="false" maven-id="xerces:xercesImpl:2.12.2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/xerces/xercesImpl/2.12.1/xercesImpl-2.12.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/xerces/xercesImpl/2.12.1/xercesImpl-2.12.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

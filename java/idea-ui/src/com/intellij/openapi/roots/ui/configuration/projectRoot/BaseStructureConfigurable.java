@@ -168,7 +168,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
       final NamedConfigurable configurable = node.getConfigurable();
       if (configurable instanceof ProjectStructureElementConfigurable) {
-        return ((ProjectStructureElementConfigurable)configurable).getProjectStructureElement();
+        return ((ProjectStructureElementConfigurable<?>)configurable).getProjectStructureElement();
       }
     }
     return null;

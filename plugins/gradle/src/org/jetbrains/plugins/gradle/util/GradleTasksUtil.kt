@@ -18,7 +18,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
-@ApiStatus.Experimental
+/**
+ * @see org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
+ */
+@ApiStatus.Internal
 fun getGradleTasks(project: Project): Map<String, MultiMap<String, GradleTaskData>> {
   return CachedValuesManager.getManager(project).getCachedValue(project) {
     CachedValueProvider.Result.create(getGradleTasksMap(project), ExternalProjectsDataStorage.getInstance(project))
@@ -43,8 +46,7 @@ private fun getGradleTasksMap(project: Project): Map<String, MultiMap<String, Gr
 /**
  * @return `external module path (path to the directory) -> {gradle module path -> {[task nodes of this module]}}`
  */
-@ApiStatus.Experimental
-fun getGradleTaskNodesMap(project: Project): Map<String, MultiMap<String, DataNode<TaskData>>> {
+private fun getGradleTaskNodesMap(project: Project): Map<String, MultiMap<String, DataNode<TaskData>>> {
   val tasks = LinkedHashMap<String, MultiMap<String, DataNode<TaskData>>>()
   for (projectTaskData in findGradleTasks(project)) {
     val projectTasks = MultiMap.createOrderedSet<String, DataNode<TaskData>>()

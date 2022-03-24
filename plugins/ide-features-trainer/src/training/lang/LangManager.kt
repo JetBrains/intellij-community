@@ -9,17 +9,13 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.XMap
-import training.ui.LearnToolWindowFactory
-import training.util.WeakReferenceDelegator
-import training.util.courseCanBeUsed
-import training.util.findLanguageByID
-import training.util.trainerPluginConfigName
+import training.util.*
 
 @State(name = "LangManager", storages = [
   Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),
   Storage(value = trainerPluginConfigName, deprecated = true)
 ])
-internal class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
+class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
   val supportedLanguagesExtensions: List<LanguageExtensionPoint<LangSupport>>
     get() {
       return ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME).extensionList
@@ -52,7 +48,9 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
     fun getInstance() = service<LangManager>()
   }
 
-  fun getLearningProjectPath(langSupport: LangSupport): String? = state.languageToProjectMap[langSupport.primaryLanguage]
+  fun getLearningProjectPath(langSupport: LangSupport): String? =
+    if (langSupport.useUserProjects) null
+    else state.languageToProjectMap[langSupport.primaryLanguage]
 
   fun setLearningProjectPath(langSupport: LangSupport, path: String) {
     state.languageToProjectMap[langSupport.primaryLanguage] = path
@@ -68,7 +66,7 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
     this.langSupportRef = langSupport
     state.languageName = supportedLanguagesExtensions.find { it.instance == langSupport }?.language
                          ?: throw Exception("Unable to get language.")
-    LearnToolWindowFactory.learnWindowPerProject.values.forEach { it.reinitViews() }
+    getAllLearnToolWindows().forEach { it.reinitViews() }
   }
 
   fun getLangSupport(): LangSupport? = langSupportRef

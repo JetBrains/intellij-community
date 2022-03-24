@@ -1,5 +1,5 @@
 // "Replace with 'foo(list)'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class Builder<Base : Any> {
     @Deprecated(message = "", level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("foo(list)"))

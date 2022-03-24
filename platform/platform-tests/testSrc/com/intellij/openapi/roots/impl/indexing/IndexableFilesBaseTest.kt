@@ -9,6 +9,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
@@ -20,6 +24,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import junit.framework.TestCase
 import org.junit.Before
@@ -86,11 +91,24 @@ abstract class IndexableFilesBaseTest {
     else {
       Assertions.assertThat(actualFiles).containsExactlyInAnyOrderElementsOf(expectedFiles.toList())
     }
+
+    for (expectedFile in expectedFiles) {
+      val scope = GlobalSearchScope.fileScope(project, expectedFile)
+      Assertions.assertThat(FilenameIndex.getVirtualFilesByName(expectedFile.name, scope)).contains(expectedFile)
+    }
+  }
+
+  protected fun assertHasNoIndexes(vararg expectedFiles: VirtualFile) {
+    for (expectedFile in expectedFiles) {
+      expectedFile as VirtualFileWithId
+      TestCase.assertNull(FileTypeIndex.getIndexedFileType(expectedFile, project))
+      Assertions.assertThat(IndexingStamp.getNontrivialFileIndexedStates(expectedFile.id)).isEmpty()
+    }
   }
 
   private fun iterateIndexableFiles(processor: (VirtualFile) -> Boolean, project: Project, expectedNumberOfSkippedFiles: Int) {
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
-    val providers = fileBasedIndexEx.getOrderedIndexableFilesProviders (project)
+    val providers = fileBasedIndexEx.getIndexableFilesProviders (project)
     val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
     for (provider in providers) {
       provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)

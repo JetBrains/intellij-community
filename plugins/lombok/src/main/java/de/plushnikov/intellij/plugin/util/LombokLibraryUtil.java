@@ -14,7 +14,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import de.plushnikov.intellij.plugin.Version;
-import de.plushnikov.intellij.plugin.jps.LombokBuildProcessParametersProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,7 @@ import java.util.List;
 
 public class LombokLibraryUtil {
 
-  private static final Logger LOG = Logger.getInstance(LombokBuildProcessParametersProvider.class);
+  private static final Logger LOG = Logger.getInstance(LombokLibraryUtil.class);
 
   private static final String LOMBOK_PACKAGE = "lombok.experimental";
 

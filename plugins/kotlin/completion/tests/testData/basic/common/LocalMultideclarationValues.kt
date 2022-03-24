@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 data class TestData(val first: Int, val second: String)
 

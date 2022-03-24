@@ -2,7 +2,7 @@
 package com.intellij.internal.tree;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -21,7 +21,7 @@ public class ExpandAll extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    JTree tree = ComponentUtil.getParentOfType((Class<? extends JTree>)JTree.class, e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    JTree tree = ComponentUtil.getParentOfType((Class<? extends JTree>)JTree.class, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
     if (tree != null) {
       TreeUtil.expandAll(tree);
     }

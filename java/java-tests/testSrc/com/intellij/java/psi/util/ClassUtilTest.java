@@ -7,6 +7,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 
 public class ClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
@@ -46,7 +48,8 @@ public class ClassUtilTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("Runnable", fooLocal2.getImplementsListTypes()[0].getClassName());
   }
 
-  private PsiClass createClass(String text) throws IncorrectOperationException {
+  @NotNull
+  private PsiClass createClass(@NotNull @Language("JAVA") String text) throws IncorrectOperationException {
     return JavaPsiFacade.getElementFactory(getProject()).createClassFromText(text, null).getInnerClasses()[0];
   }
 

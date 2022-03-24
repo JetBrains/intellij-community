@@ -172,15 +172,17 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getEditorComponent();
       if (component == null) continue;
-      component.addFocusListener(new FocusListener() {
+      FocusListener listener = new FocusListener() {
         @Override
-        public void focusGained(FocusEvent e) {}
+        public void focusGained(FocusEvent e) { }
 
         @Override
         public void focusLost(FocusEvent e) {
           checkGotIt(fragment);
         }
-      });
+      };
+      component.addFocusListener(listener);
+      Disposer.register(fragment, () -> component.removeFocusListener(listener));
     }
   }
 

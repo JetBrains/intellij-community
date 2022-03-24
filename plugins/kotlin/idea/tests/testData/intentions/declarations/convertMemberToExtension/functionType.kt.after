@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'p' is never used
 class Owner {
 }
 

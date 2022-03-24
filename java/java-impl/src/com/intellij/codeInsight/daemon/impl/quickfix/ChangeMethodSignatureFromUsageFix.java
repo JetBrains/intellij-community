@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -16,7 +16,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,15 +29,13 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.ChangeSignatureRefactoring;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +189,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                final ParameterInfoImpl[] newParametersInfo,
                                                final boolean changeAllUsages,
                                                final boolean allowDelegation,
-                                               @Nullable final Consumer<? super List<ParameterInfoImpl>> callback) {
+                                               @Nullable final Consumer<? super List<ParameterInfo>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
@@ -213,27 +210,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return null;
 
     if (ApplicationManager.getApplication().isUnitTestMode() || usagesFound[0] < minUsagesNumber) {
-      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
-                            project,
-                            method,
-                            false, null,
-                            method.getName(),
-                            method.getReturnType(),
-                            newParametersInfo){
-        @Override
-        protected UsageInfo @NotNull [] findUsages() {
-          return changeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
-        }
-
-        @Override
-        protected void performRefactoring(UsageInfo @NotNull [] usages) {
-          CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
-          super.performRefactoring(usages);
-          if (callback  != null) {
-            callback.consume(Arrays.asList(newParametersInfo));
-          }
-        }
-      };
+      ChangeSignatureRefactoring processor =
+        JavaRefactoringFactory.getInstance(project)
+          .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), newParametersInfo, null, null,
+                                          null, callback);
       processor.run();
       ApplicationManager.getApplication().runWriteAction(() -> UndoUtil.markPsiFileForUndo(file));
       return Arrays.asList(newParametersInfo);
@@ -344,7 +324,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         }
         else {
           if (PsiPolyExpressionUtil.isPolyExpression(expression)) return null;
-          PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
+          PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
           if (exprType == null || PsiType.VOID.equals(exprType)) return null;
           if (exprType instanceof PsiDisjunctionType) {
             exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
@@ -419,7 +399,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       else if (expression != null) {
         if (varargParam != null && pi >= parameters.length) return false;
         if (PsiPolyExpressionUtil.isPolyExpression(expression)) return false;
-        PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
+        PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
         if (exprType == null || PsiType.VOID.equals(exprType)) return false;
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();

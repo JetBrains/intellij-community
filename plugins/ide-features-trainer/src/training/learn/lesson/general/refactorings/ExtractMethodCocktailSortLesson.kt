@@ -22,7 +22,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
       task("ExtractMethod") {
         startTaskId = taskId
         text(LessonsBundle.message("extract.method.invoke.action", action(it)))
-        triggerByUiComponentAndHighlight(false, false) { dialog: JDialog ->
+        triggerUI().component { dialog: JDialog ->
           dialog.title == extractMethodDialogTitle
         }
         restoreIfModifiedOrMoved()
@@ -54,7 +54,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         text(LessonsBundle.message("extract.method.confirm.several.replaces", strong(yesButtonText)))
 
         // Wait until the third dialog
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
+        triggerUI().component { dialog: JDialog ->
           dialog.title == replaceFragmentDialogTitle
         }
         restoreState(restoreId = startTaskId, delayMillis = defaultRestoreDelay) {
@@ -84,4 +84,11 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
   private fun insideRefactoring() = Thread.currentThread().stackTrace.any {
     it.className.contains(ExtractMethodHelper::class.java.simpleName)
   }
+
+  override val suitableTips = listOf("ExtractMethod")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("extract.method.help.link"),
+         LessonUtil.getHelpLink("extract-method.html")),
+  )
 }

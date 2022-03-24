@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.psi.*;
@@ -49,21 +49,25 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
+        super.visitMethod(method);
         addDescriptors(checkMethod(method, holder.getManager(), isOnTheFly));
       }
 
       @Override
       public void visitClass(PsiClass aClass) {
+        super.visitClass(aClass);
         addDescriptors(checkClass(aClass, holder.getManager(), isOnTheFly));
       }
 
       @Override
       public void visitField(PsiField field) {
+        super.visitField(field);
         addDescriptors(checkField(field, holder.getManager(), isOnTheFly));
       }
 
       @Override
       public void visitFile(@NotNull PsiFile file) {
+        super.visitFile(file);
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 

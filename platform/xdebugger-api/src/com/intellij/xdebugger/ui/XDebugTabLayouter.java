@@ -1,10 +1,10 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.icons.AllIcons;
 import com.intellij.ui.content.Content;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public class XDebugTabLayouter {
   public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
     Content content = ui.createContent(DebuggerContentInfo.CONSOLE_CONTENT, console.getComponent(),
                                        XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                                       AllIcons.Debugger.Console,
+                                       null,
                                        console.getPreferredFocusableComponent());
     content.setCloseable(false);
     ui.addContent(content, 1, PlaceInGrid.bottom, false);

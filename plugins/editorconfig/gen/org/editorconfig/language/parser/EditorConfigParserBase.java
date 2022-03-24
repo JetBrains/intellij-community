@@ -188,7 +188,7 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, header_1(b, l + 1));
     r = p && consumeToken(b, R_BRACKET) && r;
-    exit_section_(b, l, m, r, p, not_next_entry_parser_);
+    exit_section_(b, l, m, r, p, EditorConfigParserBase::not_next_entry);
     return r || p;
   }
 
@@ -247,41 +247,15 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // option_key (SEPARATOR option_value?)?
+  // option_with_raw_value | simple_option
   public static boolean option(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "option")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, OPTION, "<option>");
-    r = option_key(b, l + 1);
-    p = r; // pin = 1
-    r = r && option_1(b, l + 1);
-    exit_section_(b, l, m, r, p, not_next_entry_parser_);
-    return r || p;
-  }
-
-  // (SEPARATOR option_value?)?
-  private static boolean option_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "option_1")) return false;
-    option_1_0(b, l + 1);
-    return true;
-  }
-
-  // SEPARATOR option_value?
-  private static boolean option_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "option_1_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SEPARATOR);
-    r = r && option_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
+    Marker m = enter_section_(b, l, _NONE_, OPTION, "<option>");
+    r = option_with_raw_value(b, l + 1);
+    if (!r) r = simple_option(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
-  }
-
-  // option_value?
-  private static boolean option_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "option_1_0_1")) return false;
-    option_value(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -457,6 +431,20 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = option_value_list(b, l + 1);
     r = r && followedByNewLineOrEndOfFile(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // <<isOptionWithRawValueKeyAhead>> option_key SEPARATOR <<rawOptionValue>>
+  static boolean option_with_raw_value(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "option_with_raw_value")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = isOptionWithRawValueKeyAhead(b, l + 1);
+    r = r && option_key(b, l + 1);
+    r = r && consumeToken(b, SEPARATOR);
+    r = r && rawOptionValue(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -678,6 +666,13 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  public static boolean raw_option_value(PsiBuilder b, int l) {
+    Marker m = enter_section_(b);
+    exit_section_(b, m, RAW_OPTION_VALUE, true);
+    return true;
+  }
+
+  /* ********************************************************** */
   // root_declaration_key SEPARATOR root_declaration_list (COLON root_declaration_list)?
   public static boolean root_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root_declaration")) return false;
@@ -688,7 +683,7 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     p = r; // pin = 2
     r = r && report_error_(b, root_declaration_list(b, l + 1));
     r = p && root_declaration_3(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, not_next_entry_parser_);
+    exit_section_(b, l, m, r, p, EditorConfigParserBase::not_next_entry);
     return r || p;
   }
 
@@ -778,7 +773,7 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     r = header(b, l + 1);
     p = r; // pin = 1
     r = r && section_1(b, l + 1);
-    exit_section_(b, l, m, r, p, not_header_parser_);
+    exit_section_(b, l, m, r, p, EditorConfigParserBase::not_header);
     return r || p;
   }
 
@@ -806,14 +801,42 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     return r;
   }
 
-  static final Parser not_header_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return not_header(b, l + 1);
-    }
-  };
-  static final Parser not_next_entry_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return not_next_entry(b, l + 1);
-    }
-  };
+  /* ********************************************************** */
+  // option_key (SEPARATOR option_value?)?
+  static boolean simple_option(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_option")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = option_key(b, l + 1);
+    p = r; // pin = 1
+    r = r && simple_option_1(b, l + 1);
+    exit_section_(b, l, m, r, p, EditorConfigParserBase::not_next_entry);
+    return r || p;
+  }
+
+  // (SEPARATOR option_value?)?
+  private static boolean simple_option_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_option_1")) return false;
+    simple_option_1_0(b, l + 1);
+    return true;
+  }
+
+  // SEPARATOR option_value?
+  private static boolean simple_option_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_option_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, SEPARATOR);
+    r = r && simple_option_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // option_value?
+  private static boolean simple_option_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simple_option_1_0_1")) return false;
+    option_value(b, l + 1);
+    return true;
+  }
+
 }

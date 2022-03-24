@@ -9,7 +9,7 @@ public class ExTest {
             try {
                 return ExTest.maybeThrow(t);
             } catch (Ex e) {
-                <selection>e.printStackTrace();</selection>
+                <selection>throw new RuntimeException(e);</selection>
             }
         };
     }

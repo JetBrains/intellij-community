@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -15,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,12 +62,9 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
 
   public static void removeReferences(PsiParameter parameter) {
     PsiMethod method = (PsiMethod) parameter.getDeclarationScope();
-    ChangeSignatureProcessor processor = new ChangeSignatureProcessor(parameter.getProject(),
-                                                                      method,
-                                                                      false, null,
-                                                                      method.getName(),
-                                                                      method.getReturnType(),
-                                                                      ParameterInfoImpl.fromMethodExceptParameter(method, parameter));
+    var processor = JavaRefactoringFactory.getInstance(parameter.getProject())
+      .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(),
+                                      ParameterInfoImpl.fromMethodExceptParameter(method, parameter), null, null, null, null);
     processor.run();
   }
 

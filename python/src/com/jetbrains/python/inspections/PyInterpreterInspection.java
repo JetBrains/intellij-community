@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -8,20 +10,20 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -32,12 +34,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
-import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
@@ -49,10 +52,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,14 +73,29 @@ public final class PyInterpreterInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
+    /** Invalidated by {@link CacheCleaner}. */
+    private static final AsyncLoadingCache<Module, List<PyDetectedSdk>> DETECTED_ASSOCIATED_ENVS_CACHE = Caffeine.newBuilder()
+      .executor(AppExecutorUtil.getAppExecutorService())
+
+      // Even though various listeners invalidate the cache on many actions, it's unfeasible to track for venv/conda interpreters
+      // creation performed outside the IDE.
+      // 20 seconds timeout is taken at random.
+      .expireAfterWrite(Duration.ofSeconds(20))
+
+      .weakKeys()
+      .buildAsync(module -> {
+        final List<Sdk> existingSdks = getExistingSdks();
+        final UserDataHolderBase context = new UserDataHolderBase();
+        return PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context);
+      });
 
     public Visitor(@Nullable ProblemsHolder holder,
-                   @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+                   @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -172,17 +190,19 @@ public final class PyInterpreterInspection extends PyInspection {
       final UserDataHolderBase context = new UserDataHolderBase();
 
       List<PyDetectedSdk> detectedAssociatedEnvs = Collections.emptyList();
-      try {
-        detectedAssociatedEnvs = ApplicationUtil.runWithCheckCanceled(
-          () -> PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context),
-          ProgressManager.getInstance().getProgressIndicator()
-        );
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOGGER.warn(e);
+      while (true) {
+        try {
+          // Beware that this thread holds the read lock. Shouldn't wait too much.
+          detectedAssociatedEnvs = DETECTED_ASSOCIATED_ENVS_CACHE.get(module).get(10, TimeUnit.MILLISECONDS);
+          break;
+        }
+        catch (InterruptedException | TimeoutException ignored) {
+          ProgressManager.checkCanceled();
+        }
+        catch (Exception e) {
+          LOGGER.warn("Failed to get suitable sdk fix for name " + name + " and module " + module, e);
+          break;
+        }
       }
       final var detectedAssociatedSdk = ContainerUtil.getFirstItem(detectedAssociatedEnvs);
       if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
@@ -286,6 +306,32 @@ public final class PyInterpreterInspection extends PyInspection {
     private static String getEnvRootName(@Nullable File envRoot) {
       return envRoot == null ? null : PathUtil.getFileName(envRoot.getPath());
     }
+
+    private static class CacheCleaner implements ModuleRootListener, ProjectJdkTable.Listener {
+      @Override
+      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
+        invalidate();
+      }
+
+      @Override
+      public void jdkAdded(@NotNull Sdk jdk) {
+        invalidate();
+      }
+
+      @Override
+      public void jdkRemoved(@NotNull Sdk jdk) {
+        invalidate();
+      }
+
+      @Override
+      public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
+        invalidate();
+      }
+
+      private void invalidate() {
+        DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidateAll();
+      }
+    }
   }
 
   @Nullable
@@ -333,8 +379,10 @@ public final class PyInterpreterInspection extends PyInspection {
     }
 
     public static void showPythonInterpreterSettings(@NotNull Project project, @NotNull Module module) {
-      if (hasPythonSdkConfigurable(project)) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, PyActiveSdkModuleConfigurable.class);
+      final var id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
+      final var group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true);
+      if (ConfigurableVisitor.findById(id, Collections.singletonList(group)) != null) {
+        ShowSettingsUtilImpl.showSettingsDialog(project, id, null);
         return;
       }
 
@@ -345,13 +393,6 @@ public final class PyInterpreterInspection extends PyInspection {
       else {
         settingsService.openModuleSettings(module);
       }
-    }
-
-    private static boolean hasPythonSdkConfigurable(@NotNull Project project) {
-      if (PlatformUtils.isPyCharm()) return true;
-
-      final List<ConfigurableGroup> groups = Collections.singletonList(ConfigurableExtensionPointUtil.getConfigurableGroup(project, true));
-      return ConfigurableVisitor.findByType(PyActiveSdkModuleConfigurable.class, groups) != null;
     }
 
     private static boolean justOneModuleInheritingSdk(@NotNull Project project, @NotNull Module module) {

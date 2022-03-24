@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
@@ -32,6 +33,7 @@ import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import icons.PythonIcons
 import java.awt.Component
 import java.io.File
@@ -89,8 +91,10 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
       return ValidationInfo(message, field)
     }
 
+    /** Should be protected. Please, don't use outside the class. KT-48508 */
     @JvmStatic
-    protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
+    @PublishedApi
+    internal fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
       return validateSdkComboBox(field, getDefaultButtonName(view))
     }
 
@@ -101,6 +105,9 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
         is PySdkToInstall -> {
           val message = sdk.getInstallationWarning(defaultButtonName)
           ValidationInfo(message).asWarning().withOKEnabled()
+        }
+        is PyDetectedSdk -> {
+          if (SystemInfo.isMac) MacPythonSdkFlavor.checkDetectedPython(sdk) else null
         }
         else -> null
       }
@@ -130,7 +137,7 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox, sdkObtainer: ()
  */
 fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
                          sdkObtainer: () -> List<Sdk>,
-                         onAdded: () -> Unit) {
+                         onAdded: (List<Sdk>) -> Unit) {
   ApplicationManager.getApplication().executeOnPooledThread {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
     executor.execute { sdkComboBox.setBusy(true) }
@@ -141,11 +148,25 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     finally {
       executor.execute {
         sdkComboBox.setBusy(false)
-        sdkComboBox.childComponent.removeAllItems()
-        sdks.forEach(sdkComboBox.childComponent::addItem)
-        onAdded()
+        sdkComboBox.removeAllItems()
+        sdks.forEach(sdkComboBox::addSdkItem)
+        onAdded(sdks)
       }
     }
+  }
+}
+
+/**
+ * Keeps [NewPySdkComboBoxItem] if it is present in the combobox.
+ */
+private fun PySdkPathChoosingComboBox.removeAllItems() {
+  if (childComponent.itemCount > 0 && childComponent.getItemAt(0) is NewPySdkComboBoxItem) {
+    while (childComponent.itemCount > 1) {
+      childComponent.removeItemAt(1)
+    }
+  }
+  else {
+    childComponent.removeAllItems()
   }
 }
 
@@ -166,7 +187,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
         val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(items)
         if (preferredSdk != null) {
           if (items.find { it.homePath == preferredSdk.homePath } == null) {
-            childComponent.insertItemAt(preferredSdk, 0)
+            addSdkItemOnTop(preferredSdk)
           }
           selectedSdk = preferredSdk
         }

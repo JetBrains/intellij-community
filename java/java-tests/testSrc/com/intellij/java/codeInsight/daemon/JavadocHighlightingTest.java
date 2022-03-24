@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -56,7 +56,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testParam2() { doTest(); }
   public void testParam3() { doTest(); }
   public void testParam4() { doTest(); }
-  public void testRecordParamJava15Preview() { doTest(); }
+  public void testRecordParamJava16() { doTest(); }
   public void testTypeParam() {
     myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "private";
     myInspection.METHOD_OPTIONS.REQUIRED_TAGS = "@param";
@@ -125,6 +125,14 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIgnoreAccessors() { myInspection.setIgnoreSimpleAccessors(true); doTest(); }
   public void testAuthoredMethod() { doTest(); }
   public void testThrowsInheritDoc() { doTest(); }
+  public void testSnippetInlineTag() {  doTest(); }
+  public void testSnippet() { doTest(); }
+  public void testSnippetMethod() { doTest(); }
+  public void testSnippetInstructions() { doTest(); }
+  public void testEmptySnippet() { doTest(); }
+  public void testOnlyEmptyLinesInSnippet() { doTest(); }
+  public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }
+  public void testUnalignedLeadingAsterisks() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
@@ -141,7 +149,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
       else {
         List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
-        assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+        assertTrue(ContainerUtil.and(refs, PsiReferenceBase::isSoft));
         assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
       }
     }
@@ -163,7 +171,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     else {
       List<WebReference> refs = PlatformTestUtil.collectWebReferences(getFile());
-      assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+      assertTrue(ContainerUtil.and(refs, PsiReferenceBase::isSoft));
       assertEquals(expected, refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet()));
     }
   }

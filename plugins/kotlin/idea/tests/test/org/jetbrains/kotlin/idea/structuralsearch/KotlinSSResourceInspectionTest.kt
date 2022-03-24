@@ -19,7 +19,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 
 abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
     private var myInspection: SSBasedInspection? = null
@@ -38,6 +38,16 @@ abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
 
     protected fun doTest(pattern: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
         myFixture.configureByFile(getTestName(true) + ".kt")
+        testHighlighting(pattern, context)
+    }
+
+
+    protected fun doTest(pattern: String, highlighting: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
+        myFixture.configureByText("aaa.kt", highlighting)
+        testHighlighting(pattern, context)
+    }
+
+    private fun testHighlighting(pattern: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
         val options = myConfiguration.matchOptions.apply {
             fillSearchCriteria(pattern)
             patternContext = context

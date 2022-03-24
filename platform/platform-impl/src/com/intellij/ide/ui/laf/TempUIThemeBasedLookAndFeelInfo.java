@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
@@ -23,7 +23,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo {
+public final class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo {
   private final VirtualFile mySchemeFile;
   private UIManager.LookAndFeelInfo myPreviousLaf;
   private static final Logger LOG = Logger.getInstance(TempUIThemeBasedLookAndFeelInfo.class);

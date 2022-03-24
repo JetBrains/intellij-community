@@ -9,20 +9,21 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -30,14 +31,19 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
 
 @ApiStatus.Internal
 public final class FSRecords {
@@ -49,13 +55,16 @@ public final class FSRecords {
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
   static final boolean useCompressionUtil = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
   static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
-  static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
+  public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
   private static volatile PersistentFSConnection ourConnection;
   private static volatile PersistentFSContentAccessor ourContentAccessor;
   private static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
   private static volatile PersistentFSTreeAccessor ourTreeAccessor;
   private static volatile PersistentFSRecordAccessor ourRecordAccessor;
+  private static volatile int ourCurrentVersion;
+
+  private static final AtomicLong ourNamesIndexModCount = new AtomicLong();
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
@@ -63,21 +72,25 @@ public final class FSRecords {
     if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
+
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
-  private static final int VERSION = nextMask(59,  // acceptable range is [0..255]
-                                              8,
-                                              nextMask(useContentHashes,
-                                              nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
-                                              nextMask(bulkAttrReadSupport,
-                                              nextMask(inlineAttributes,
-                                              nextMask(ourStoreRootsSeparately,
-                                              nextMask(useCompressionUtil,
-                                              nextMask(useSmallAttrTable,
-                                              nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                              nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                                              nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP, 0)))))))))));
+
+  private static int calculateVersion() {
+    return nextMask(59,  // acceptable range is [0..255]
+                    8,
+                    nextMask(useContentHashes,
+                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                    nextMask(bulkAttrReadSupport,
+                    nextMask(inlineAttributes,
+                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                    nextMask(useCompressionUtil,
+                    nextMask(useSmallAttrTable,
+                    nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                    nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(), 0)))))))))));
+  }
 
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   static final ReentrantReadWriteLock lock;
@@ -106,11 +119,6 @@ public final class FSRecords {
     });
   }
 
-  @Contract("_->fail")
-  static void requestVfsRebuild(@NotNull Throwable e) {
-    handleError(e);
-  }
-
   @NotNull
   public static String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
     invalidateCaches();
@@ -130,14 +138,15 @@ public final class FSRecords {
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return VERSION;
+    return ourCurrentVersion;
   }
 
   static void connect() {
-    ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion(), useContentHashes);
+    ourCurrentVersion = calculateVersion();
+    ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
     ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
     ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
-    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately, ourConnection);
+    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
     ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
     try {
       ourTreeAccessor.ensureLoaded();
@@ -161,8 +170,13 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> ourRecordAccessor.createRecord());
   }
 
+  public static long getNamesIndexModCount() {
+    return ourNamesIndexModCount.get();
+  }
+
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
+      ourNamesIndexModCount.incrementAndGet();
       incModCount(id);
       markAsDeletedRecursively(id);
     });
@@ -173,6 +187,9 @@ public final class FSRecords {
       markAsDeletedRecursively(subRecord);
     }
 
+    if (PersistentFS.isDirectory(getFlags(id))) {
+      ourTreeAccessor.deleteDirectoryRecord(id);
+    }
     ourRecordAccessor.addToFreeRecordsList(id);
   }
 
@@ -196,15 +213,28 @@ public final class FSRecords {
     return readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
   }
 
+  @ApiStatus.Internal
+  public static boolean isDeleted(int id) {
+    return readAndHandleErrors(() -> ourRecordAccessor.isDeleted(id));
+  }
+
   static int findRootRecord(@NotNull String rootUrl) {
     return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, () -> createRecord()));
+  }
+
+  static void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    writeAndHandleErrors(() -> ourTreeAccessor.loadRootData(id, path, fs));
+  }
+
+  static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    writeAndHandleErrors(() -> ourTreeAccessor.loadDirectoryData(id, path, fs));
   }
 
   static void deleteRootRecord(int fileId) {
     writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId));
   }
 
-  static int @NotNull [] listIds(int fileId) {
+  public static int @NotNull [] listIds(int fileId) {
     return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId));
   }
 
@@ -246,6 +276,10 @@ public final class FSRecords {
       finally {
         r.unlock();
       }
+    }
+    catch (ProcessCanceledException e) {
+      // long reads like processXXX can be safely cancelled
+      throw e;
     }
     catch (Throwable e) {
       handleError(e);
@@ -296,7 +330,7 @@ public final class FSRecords {
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
-  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -318,6 +352,7 @@ public final class FSRecords {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
+        incModCount(parentId);
         updateSymlinksForNewChildren(parent, children, toSave);
         ourTreeAccessor.doSaveChildren(parentId, toSave);
       }
@@ -331,6 +366,37 @@ public final class FSRecords {
       handleError(e);
       ExceptionUtil.rethrow(e);
       return result;
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  static void moveChildren(int fromParentId, int toParentId) {
+    assert fromParentId > 0: fromParentId;
+    assert toParentId > 0: toParentId;
+
+    w.lock();
+    try {
+      final ListResult children = list(fromParentId);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
+      }
+
+      incModCount(toParentId);
+      ourTreeAccessor.doSaveChildren(toParentId, children);
+
+      incModCount(fromParentId);
+      ourTreeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
+    }
+    catch (ProcessCanceledException e) {
+      // NewVirtualFileSystem.list methods can be interrupted now
+      throw e;
+    }
+    catch (Throwable e) {
+      handleError(e);
+      ExceptionUtil.rethrow(e);
     }
     finally {
       w.unlock();
@@ -385,7 +451,7 @@ public final class FSRecords {
 
 
   static int getLocalModCount() {
-    return ourConnection.getLocalModificationCount(); // This is volatile, only modified under Application.runWriteAction() lock.
+    return ourConnection.getLocalModificationCount() + ourAttributeAccessor.getLocalModificationCount();
   }
 
   static int getPersistentModCount() {
@@ -500,11 +566,33 @@ public final class FSRecords {
     });
   }
 
+  public static boolean processAllNames(@NotNull Processor<? super String> processor) {
+    return readAndHandleErrors(() -> ourConnection.getNames().processAllDataObjects(processor));
+  }
+
+  public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+    if (names.isEmpty()) return true;
+    if (Registry.is("indexing.filename.over.vfs.with.reverse.index")) {
+      return InvertedNameIndex.processFilesWithNames(names, processor, () -> ourConnection.getRecords());
+    }
+    long start = System.nanoTime();
+    IntOpenHashSet nameIds = new IntOpenHashSet();
+    for (String name : names) {
+      nameIds.add(getNameId(name));
+    }
+    boolean result = readAndHandleErrors(() -> ourConnection.getRecords().processAllNames(
+      (nameId, fileId) -> nameIds.contains(nameId) && !processor.test(fileId) ? 1 : 0));
+    if (LOG.isDebugEnabled()) {
+      LOG.info("FSRecords.processFilesWithNames in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    }
+    return result;
+  }
+
   public static int getNameId(@NotNull String name) {
     return readAndHandleErrors(() -> ourConnection.getNames().enumerate(name));
   }
 
-  public static String getName(int id) {
+  public static @NotNull String getName(int id) {
     return getNameSequence(id).toString();
   }
 
@@ -533,6 +621,7 @@ public final class FSRecords {
    */
   static int setName(int fileId, @NotNull String name) {
     return writeAndHandleErrors(() -> {
+      ourNamesIndexModCount.incrementAndGet();
       incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
@@ -605,9 +694,9 @@ public final class FSRecords {
   }
 
   @Nullable
-  public static DataInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
-    return readAndHandleErrors(() -> {
-      try (DataInputStream stream = readAttribute(fileId, att)) {
+  public static AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
+    try {
+      try (AttributeInputStream stream = readAttribute(fileId, att)) {
         if (stream != null && att.isVersioned()) {
           try {
             int actualVersion = DataInputOutputUtil.readINT(stream);
@@ -621,12 +710,16 @@ public final class FSRecords {
         }
         return stream;
       }
-    });
+    }
+    catch (Throwable e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   // must be called under r or w lock
   @Nullable
-  private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+  private static AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     return ourAttributeAccessor.readAttribute(fileId, attribute);
   }
 
@@ -673,18 +766,8 @@ public final class FSRecords {
   }
 
   @NotNull
-  public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    DataOutputStream dataOutputStream = ourAttributeAccessor.writeAttribute(fileId, att);
-    return new DataOutputStream(dataOutputStream) {
-      @Override
-      public void close() {
-        writeAndHandleErrors(() -> super.close());
-      }
-    };
-  }
-
-  public static @NotNull PersistentFSPaths getPersistentFSPaths() {
-    return new PersistentFSPaths(getCachesDir());
+  public static AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
+    return ourAttributeAccessor.writeAttribute(fileId, att);
   }
 
   static synchronized void dispose() {

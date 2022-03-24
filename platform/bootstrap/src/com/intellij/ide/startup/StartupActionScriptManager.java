@@ -24,16 +24,15 @@ public final class StartupActionScriptManager {
   @ApiStatus.Internal
   public static synchronized void executeActionScript() throws IOException {
     Path scriptFile = getActionScriptFile();
-    if (Files.isRegularFile(scriptFile)) {
-      try {
-        List<ActionCommand> commands = loadActionScript(scriptFile);
-        for (ActionCommand command : commands) {
-          command.execute();
-        }
+    try {
+      List<ActionCommand> commands = loadActionScript(scriptFile);
+      for (ActionCommand command : commands) {
+        command.execute();
       }
-      finally {
-        Files.deleteIfExists(scriptFile);  // deleting a file should not cause an exception
-      }
+    }
+    finally {
+      // deleting a file should not cause an exception
+      Files.deleteIfExists(scriptFile);
     }
   }
 
@@ -174,8 +173,7 @@ public final class StartupActionScriptManager {
     }
 
     /** @deprecated Use {@link #CopyCommand(Path, Path)} */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public CopyCommand(@NotNull File source, @NotNull File destination) {
       mySource = source.getAbsolutePath();
       myDestination = destination.getAbsolutePath();

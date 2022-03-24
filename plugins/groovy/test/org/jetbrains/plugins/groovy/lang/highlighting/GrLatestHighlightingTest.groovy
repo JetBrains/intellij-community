@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -719,5 +719,11 @@ def test() {
     def x = 1
     1.with { x.byteValue() }
 }''', true, false, false
+  }
+
+  void 'test +='() {
+    testHighlighting '''
+properties[""] += sourceSets
+''', false
   }
 }

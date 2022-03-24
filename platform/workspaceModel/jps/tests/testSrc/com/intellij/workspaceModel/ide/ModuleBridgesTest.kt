@@ -518,20 +518,16 @@ class ModuleBridgesTest {
       assertEquals("x y z", (contentEntry.sourceFolders[0].jpsElement.properties as TestCustomSourceRootProperties).testString)
 
       assertTrue(contentEntry.sourceFolders[1].rootType is TestCustomSourceRootType)
-      assertEquals(null, (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
+      assertEquals("default properties", (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
 
       val customRoots = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList()
         .sortedBy { it.sourceRoot.url.url }
-      assertEquals(2, customRoots.size)
+      assertEquals(1, customRoots.size)
 
       assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
       assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
       assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
-
-      assertEquals("<sourceFolder />", customRoots[1].propertiesXmlTag)
-      assertEquals("$url/root2", customRoots[1].sourceRoot.url.url)
-      assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[1].sourceRoot.rootType)
     }
   }
 

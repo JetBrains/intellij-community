@@ -5,6 +5,7 @@ package com.intellij.codeInspection.lang;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
@@ -19,6 +20,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 
+
+/**
+ * An extension to manage the reference graph (see {@link RefManager}).
+ */
 public interface RefManagerExtension<T> {
   @NotNull
   Key<T> getID();
@@ -31,7 +36,7 @@ public interface RefManagerExtension<T> {
   /**
    * @deprecated override {@link #getLanguages()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   Language getLanguage();
 

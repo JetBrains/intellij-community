@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.SlowOperations;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,8 +23,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
    * @deprecated use {@link #JavaClassTreeElement(PsiClass, boolean)}
    * @noinspection unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
     this(cls, inherited);
   }
@@ -55,6 +53,12 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
       }
       else if (child instanceof PsiClassInitializer) {
         children.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
+      }
+    }
+    PsiRecordHeader header = aClass.getRecordHeader();
+    if (header != null) {
+      for (PsiRecordComponent recordComponent : header.getRecordComponents()) {
+        children.add(new JavaRecordComponentTreeElement(recordComponent, false));
       }
     }
     return children;

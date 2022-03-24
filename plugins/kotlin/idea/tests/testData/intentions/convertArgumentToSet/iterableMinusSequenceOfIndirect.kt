@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 
 fun <T : CharSequence> foo(a: Iterable<T>) {

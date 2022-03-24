@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.Divider
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.problems.ProblemImpl
 import com.intellij.lang.annotation.HighlightSeverity
@@ -26,22 +27,21 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
+import org.jetbrains.kotlin.diagnostics.rendering.parameters
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.*
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
@@ -54,6 +54,10 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
     override fun analyze(psiFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         val file = psiFile as? KtFile ?: return false
+        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
+        if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+            return true
+        }
 
         try {
             analyze(file, holder)
@@ -62,17 +66,12 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
 
-            val timestamp = System.currentTimeMillis()
-            // daemon is restarted when exception is thrown
-            // if there is a recurred error (e.g. within a resolve) it could lead to infinite highlighting loop
-            // so, do not rethrow exception too often to disable HL for a while (1 minute)
-            if (timestamp - lastThrownExceptionTimestamp > TimeUnit.MINUTES.toMillis(1)) {
-                lastThrownExceptionTimestamp = timestamp
+            if (KotlinHighlightingSuspender.getInstance(file.project).suspend(file.virtualFile)) {
                 throw e
             } else {
                 LOG.warn(e)
             }
-        }  finally {
+        } finally {
           afterAnalysisVisitor = null
         }
 
@@ -122,10 +121,18 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
                 )
             } else {
                 file.analyzeWithAllCompilerChecks()
-            }.also { it.throwIfError() }
+            }
         // resolve is done!
 
-        val bindingContext = analysisResult.bindingContext
+        val bindingContext =
+            file.actionUnderSafeAnalyzeBlock(
+                {
+                    analysisResult.throwIfError()
+                    analysisResult.bindingContext
+                },
+                { BindingContext.EMPTY }
+            )
+
 
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 
@@ -253,10 +260,25 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     companion object {
         private val LOG = Logger.getInstance(AbstractKotlinHighlightVisitor::class.java)
 
-        @Volatile
-        private var lastThrownExceptionTimestamp: Long = 0
-
         private val UNRESOLVED_KEY = Key<Unit>("KotlinHighlightVisitor.UNRESOLVED_KEY")
+
+        private val DO_NOT_HIGHLIGHT_KEY = Key<Unit>("DO_NOT_HIGHLIGHT_KEY")
+
+        @JvmStatic
+        fun KtElement.suppressHighlight() {
+            putUserData(DO_NOT_HIGHLIGHT_KEY, Unit)
+            forEachDescendantOfType<KtElement> {
+                it.putUserData(DO_NOT_HIGHLIGHT_KEY, Unit)
+            }
+        }
+
+        @JvmStatic
+        fun KtElement.unsuppressHighlight() {
+            putUserData(DO_NOT_HIGHLIGHT_KEY, null)
+            forEachDescendantOfType<KtElement> {
+                it.putUserData(DO_NOT_HIGHLIGHT_KEY, null)
+            }
+        }
 
         fun getAfterAnalysisVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) = arrayOf(
             PropertiesHighlightingVisitor(holder, bindingContext),
@@ -285,6 +307,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             calculatingInProgress: Boolean = false
         ) {
             if (diagnostics.isEmpty()) return
+            element.getUserData(DO_NOT_HIGHLIGHT_KEY)?.let { return }
 
             assertBelongsToTheSameElement(element, diagnostics)
 

@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.codeInsight.ImportFilter
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 object KotlinTestImportFilter : ImportFilter() {
     override fun shouldUseFullyQualifiedName(targetFile: PsiFile, classQualifiedName: String): Boolean {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
+        if (!isUnitTestMode()) {
             return false
         }
         val doNotImport = InTextDirectivesUtils.findLinesWithPrefixesRemoved(targetFile.text, "// DO_NOT_IMPORT:")

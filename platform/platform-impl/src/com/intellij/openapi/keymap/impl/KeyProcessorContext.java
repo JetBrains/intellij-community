@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.project.Project;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,6 +28,7 @@ public final class KeyProcessorContext {
   private boolean isModalContext;
   private WeakReference<Component> myFocusOwner;
   private KeyEvent myInputEvent;
+  private Shortcut myShortcut;
 
   @NotNull List<AnAction> getActions() {
     return myActions;
@@ -84,8 +86,17 @@ public final class KeyProcessorContext {
     return myInputEvent;
   }
 
+  public Shortcut getShortcut() {
+    return myShortcut;
+  }
+
+  public void setShortcut(Shortcut shortcut) {
+    myShortcut = shortcut;
+  }
+
   public void clear() {
     myInputEvent = null;
+    myShortcut = null;
     myActions.clear();
     mySecondStrokeActions.clear();
     myFocusOwner = null;

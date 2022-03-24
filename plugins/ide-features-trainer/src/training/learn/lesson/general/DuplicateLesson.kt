@@ -4,6 +4,7 @@ package training.learn.lesson.general
 import com.intellij.openapi.editor.Editor
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.learn.LessonsBundle
@@ -60,4 +61,11 @@ class DuplicateLesson(private val sample: LessonSample) :
     val end = model.selectionEndPosition ?: return false
     return start.column == end.column && abs(start.line - end.line) >= 2
   }
+
+  override val suitableTips = listOf("CtrlD", "DeleteLine")
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.lines.of.code"),
+         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
+  )
 }

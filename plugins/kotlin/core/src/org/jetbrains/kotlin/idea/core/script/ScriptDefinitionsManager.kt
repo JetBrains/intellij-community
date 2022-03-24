@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.script.IdeConsoleRootType
@@ -14,7 +13,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
@@ -24,11 +22,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.SLRUMap
+import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.getScriptRelatedModuleInfo
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
@@ -42,9 +40,7 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 import java.io.File
-import java.net.URLClassLoader
 import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.Environment
 import kotlin.script.dependencies.ScriptContents
@@ -61,17 +57,15 @@ import kotlin.script.experimental.jvm.util.ClasspathExtractionException
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-class LoadScriptDefinitionsStartupActivity : StartupActivity.Background {
+internal class LoadScriptDefinitionsStartupActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
         if (isUnitTestMode()) {
             // In tests definitions are loaded synchronously because they are needed to analyze script
             // In IDE script won't be highlighted before all definitions are loaded, then the highlighting will be restarted
             ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitionsIfNeeded()
         } else {
-            BackgroundTaskUtil.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
-                ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitionsIfNeeded()
-                ScriptConfigurationManager.getInstance(project).loadPlugins()
-            }
+            ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitionsIfNeeded()
+            ScriptConfigurationManager.getInstance(project).loadPlugins()
         }
     }
 }
@@ -140,11 +134,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
 
         val safeGetDefinitions = source.safeGetDefinitions()
-        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
-            definitionsBySource[source] = safeGetDefinitions
-
-            definitions = definitionsBySource.values.flattenTo(mutableListOf())
-
+        val updateDefinitionsResult = run {
+            definitionsLock.writeWithCheckCanceled {
+                definitionsBySource[source] = safeGetDefinitions
+                definitions = definitionsBySource.values.flattenTo(mutableListOf())
+            }
             updateDefinitions()
         }
         updateDefinitionsResult?.apply()
@@ -179,10 +173,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
-        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
-            definitionsBySource.putAll(newDefinitionsBySource)
-            definitions = definitionsBySource.values.flattenTo(mutableListOf())
-
+        val updateDefinitionsResult = run {
+            definitionsLock.writeWithCheckCanceled {
+                definitionsBySource.putAll(newDefinitionsBySource)
+                definitions = definitionsBySource.values.flattenTo(mutableListOf())
+            }
             updateDefinitions()
         }
         updateDefinitionsResult?.apply()
@@ -198,21 +193,25 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
-            definitions?.let { list ->
-                list.forEach {
-                    it.order = scriptingSettings.getScriptDefinitionOrder(it)
+        val updateDefinitionsResult = run {
+            definitionsLock.writeWithCheckCanceled {
+                definitions?.let { list ->
+                    list.forEach {
+                        it.order = scriptingSettings.getScriptDefinitionOrder(it)
+                    }
+                    definitions = list.sortedBy(ScriptDefinition::order)
                 }
-                definitions = list.sortedBy(ScriptDefinition::order)
-
-                updateDefinitions()
             }
+            updateDefinitions()
         }
         updateDefinitionsResult?.apply()
     }
 
-    private fun kotlinScriptingSettingsSafe() = runReadAction {
-        if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
+    private fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
+        assert(!definitionsLock.isWriteLockedByCurrentThread) { "kotlinScriptingSettingsSafe should be called out if the write lock to avoid deadlocks" }
+        return runReadAction {
+            if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
+        }
     }
 
     fun getAllDefinitions(): List<ScriptDefinition> = definitions ?: run {
@@ -236,7 +235,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     private fun updateDefinitions(): UpdateDefinitionsResult? {
-        assert(definitionsLock.isWriteLocked) { "updateDefinitions should only be called under the write lock" }
+        assert(!definitionsLock.isWriteLockedByCurrentThread) { "updateDefinitions should be called out the write lock" }
         if (project.isDisposed) return null
 
         val fileTypeManager = FileTypeManager.getInstance()
@@ -283,13 +282,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
             if (t is ControlFlowException) throw t
             // reporting failed loading only once
             failedContributorsHashes.add(this@safeGetDefinitions.hashCode())
-            // Assuming that direct ClasspathExtractionException is the result of versions mismatch and missing subsystems, e.g. kotlin plugin
-            // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
-            if (t.cause is ClasspathExtractionException || t is ClasspathExtractionException) {
-                scriptingWarnLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}")
-            } else {
-                scriptingErrorLog("[kts] cannot load script definitions using $this", t)
-            }
+            scriptingErrorLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}", t)
         }
         return emptyList()
     }
@@ -352,14 +345,15 @@ fun loadDefinitionsFromTemplatesByPaths(
     val loader = if (classpath.isEmpty())
         baseLoader
     else
-        URLClassLoader(classpath.map { it.toUri().toURL() }.toTypedArray(), baseLoader)
+        UrlClassLoader.build().files(classpath).parent(baseLoader).get()
 
     return templateClassNames.mapNotNull { templateClassName ->
         try {
             // TODO: drop class loading here - it should be handled downstream
             // as a compatibility measure, the asm based reading of annotations should be implemented to filter classes before classloading
             val template = loader.loadClass(templateClassName).kotlin
-            val templateClasspathAsFiles = templateClasspath.map(Path::toFile)
+            // do not use `Path::toFile` here as it might break the path format of non-local file system
+            val templateClasspathAsFiles = templateClasspath.map { File(it.toString()) }
             val hostConfiguration = ScriptingHostConfiguration(baseHostConfiguration) {
                 configurationDependencies(JvmDependency(templateClasspathAsFiles))
             }
@@ -381,13 +375,15 @@ fun loadDefinitionsFromTemplatesByPaths(
         } catch (e: ClassNotFoundException) {
             // Assuming that direct ClassNotFoundException is the result of versions mismatch and missing subsystems, e.g. gradle
             // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
-            scriptingWarnLog("Cannot load script definition class $templateClassName")
+            scriptingWarnLog("Cannot load script definition class $templateClassName", e)
             null
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            if (e is ControlFlowException) {
+                throw e
+            }
 
             val message = "Cannot load script definition class $templateClassName"
-            PluginManagerCore.getPluginByClassName(templateClassName)?.let {
+            PluginManager.getPluginByClassNameAsNoAccessToClass(templateClassName)?.let {
                 scriptingErrorLog(message, PluginException(message, e, it))
             } ?: scriptingErrorLog(message, e)
             null

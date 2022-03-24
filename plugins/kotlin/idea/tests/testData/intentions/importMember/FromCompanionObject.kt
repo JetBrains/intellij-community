@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Add import for 'kotlin.text.Regex.Companion.escape'"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import kotlin.text.Regex
 

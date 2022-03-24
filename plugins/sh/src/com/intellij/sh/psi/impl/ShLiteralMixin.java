@@ -17,11 +17,6 @@ abstract class ShLiteralMixin extends ShSimpleCommandElementImpl implements ShLi
   }
 
   @Override
-  public String getName() {
-    return null;
-  }
-
-  @Override
   public @Nullable PsiElement getNameIdentifier() {
     return null;
   }

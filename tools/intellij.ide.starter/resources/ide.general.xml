@@ -1,0 +1,12 @@
+<application>
+  <component name="GeneralSettings">
+    <option name="useSafeWrite" value="false" />
+    <option name="confirmExit" value="false"/>
+    <option name="showTipsOnStartup" value="false"/>
+  </component>
+  <component name="Registry">
+    <entry key="compiler.automake.allow.parallel" value="true"/>
+    <entry key="vcs.log.index.git" value="false"/>
+    <entry key="vcs.log.keep.up.to.date" value="false"/>
+  </component>
+</application>

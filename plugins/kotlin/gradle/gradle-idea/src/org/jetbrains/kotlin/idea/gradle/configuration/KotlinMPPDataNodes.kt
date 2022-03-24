@@ -14,20 +14,33 @@ import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.gradle.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnosticsContainer
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
+import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.io.Serializable
 import com.intellij.openapi.externalSystem.model.Key as ExternalKey
 
+@Deprecated(
+    "This UserData property is deprecated and will be removed soon",
+    ReplaceWith("kotlinSourceSetData?.sourceSetInfo"),
+    DeprecationLevel.ERROR
+)
 var DataNode<out ModuleData>.kotlinSourceSet: KotlinSourceSetInfo?
         by CopyableDataNodeUserDataProperty(Key.create("KOTLIN_SOURCE_SET"))
 
-val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
-        get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
+val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
+    get() = ExternalSystemApiUtil.getChildren(this, KotlinSourceSetData.KEY).firstOrNull()?.data
 
-class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinModule: KotlinModule) : Serializable {
+val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
+    get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
+
+class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val kotlinComponent: KotlinComponent) : Serializable {
     var moduleId: String? = null
     var gradleModuleId: String = ""
 
@@ -38,11 +51,25 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotli
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
     @Transient
+    @Deprecated("Use lazyDefaultCompilerArguments instead!", ReplaceWith("lazyDefaultCompilerArguments"), DeprecationLevel.ERROR)
     var defaultCompilerArguments: CommonCompilerArguments? = null
 
     @Transient
+    var lazyDefaultCompilerArguments: Lazy<CommonCompilerArguments>? = null
+
+    @Transient
+    @Deprecated("Use lazyCompilerArguments instead!", ReplaceWith("lazyCompilerArguments"), DeprecationLevel.ERROR)
     var compilerArguments: CommonCompilerArguments? = null
+
+    @Transient
+    var lazyCompilerArguments: Lazy<CommonCompilerArguments>? = null
+
+    @Transient
+    @Deprecated("Use lazyDependencyClasspath instead!", ReplaceWith("lazyDependencyClasspath"), DeprecationLevel.ERROR)
     var dependencyClasspath: List<String> = emptyList()
+
+    @Transient
+    var lazyDependencyClasspath: Lazy<List<String>> = lazy { emptyList() }
     var isTestModule: Boolean = false
     var sourceSetIdsByName: MutableMap<String, String> = LinkedHashMap()
     var dependsOn: List<String> = emptyList()
@@ -50,7 +77,15 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotli
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
 }
 
-class KotlinAndroidSourceSetData @PropertyMapping("sourceSetInfos") constructor(val sourceSetInfos: List<KotlinSourceSetInfo>
+class KotlinSourceSetData @PropertyMapping("sourceSetInfo") constructor(val sourceSetInfo: KotlinSourceSetInfo) :
+    AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
+    companion object {
+        val KEY = ExternalKey.create(KotlinSourceSetData::class.java, KotlinTargetData.KEY.processingWeight + 1)
+    }
+}
+
+class KotlinAndroidSourceSetData @PropertyMapping("sourceSetInfos") constructor(
+    val sourceSetInfos: List<KotlinSourceSetInfo>
 ) : AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
     companion object {
         val KEY = ExternalKey.create(KotlinAndroidSourceSetData::class.java, KotlinTargetData.KEY.processingWeight + 1)

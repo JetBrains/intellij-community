@@ -10,11 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class AnalyzeDependenciesAction extends BaseAnalysisAction {
-  private AnalyzeDependenciesSettingPanelUi myPanel;
+  private AnalyzeDependenciesAdditionalUi myPanel;
 
   public AnalyzeDependenciesAction() {
     super(CodeInsightBundle.messagePointer("action.forward.dependency.analysis"), CodeInsightBundle.messagePointer("action.analysis.noun"));
@@ -29,16 +27,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   @Override
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    myPanel = new AnalyzeDependenciesSettingPanelUi();
-    myPanel.getTransitiveCB().setText(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.checkbox"));
-    myPanel.getTransitiveCB().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myPanel.getBorderChooser().setEnabled(myPanel.getTransitiveCB().isSelected());
-      }
-    });
-    myPanel.getBorderChooser().setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
-    myPanel.getBorderChooser().setEnabled(myPanel.getTransitiveCB().isSelected());
+    myPanel = new AnalyzeDependenciesAdditionalUi();
     return myPanel.getPanel();
   }
 

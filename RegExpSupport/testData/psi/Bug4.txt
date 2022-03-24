@@ -1,6 +1,6 @@
 REGEXP_FILE
   RegExpPatternImpl: <{>
     RegExpBranchImpl: <{>
-      PsiErrorElement:Dangling metacharacter
+      PsiErrorElement:Unexpected start of quantifier '{'
         <empty list>
       PsiElement(LBRACE)('{')

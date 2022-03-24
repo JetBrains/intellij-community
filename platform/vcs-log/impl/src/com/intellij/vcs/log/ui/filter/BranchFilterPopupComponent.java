@@ -150,7 +150,7 @@ public class BranchFilterPopupComponent
     }
 
     @Override
-    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItems) {
+    protected void createRecentAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> recentItems) {
       actionGroup.add(new PredefinedValueAction(recentItems));
     }
 
@@ -161,7 +161,7 @@ public class BranchFilterPopupComponent
     }
 
     @Override
-    protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
+    protected void createFavoritesAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> favorites) {
       actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.messagePointer("vcs.log.branch.filter.favorites"), false));
     }
 

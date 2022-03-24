@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.intellij.lang.annotations.Language
 import org.jdom.Content
@@ -11,7 +9,7 @@ import org.jdom.Element
 import org.jdom.Text
 import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
-import training.learn.CourseManager
+import training.dsl.LessonUtil
 import training.util.KeymapUtil
 import training.util.openLinkInBrowser
 import java.util.regex.Pattern
@@ -20,25 +18,15 @@ import javax.swing.KeyStroke
 internal object MessageFactory {
   private val LOG = Logger.getInstance(MessageFactory::class.java)
 
-  fun setLinksHandlers(project: Project, messageParts: List<MessagePart>) {
+  fun setLinksHandlers(messageParts: List<MessagePart>) {
     for (message in messageParts) {
       if (message.type == MessagePart.MessageType.LINK && message.runnable == null) {
-        //add link handler
-        message.runnable = Runnable {
-          val link = message.link
-          if (link == null || link.isEmpty()) {
-            val lesson = CourseManager.instance.findLessonByName(message.text)
-            if (lesson != null) {
-              try {
-                CourseManager.instance.openLesson(project, lesson)
-              }
-              catch (e: Exception) {
-                LOG.warn(e)
-              }
-
-            }
-          }
-          else {
+        val link = message.link
+        if (link.isNullOrEmpty()) {
+          LOG.error("No link specified for ${message.text}")
+        }
+        else {
+          message.runnable = Runnable {
             try {
               openLinkInBrowser(link)
             }
@@ -79,8 +67,7 @@ internal object MessageFactory {
         val outputter = XMLOutputter()
         var type = MessagePart.MessageType.TEXT_REGULAR
         val text: String = StringUtil.unescapeXmlEntities(outputter.outputString(content.content))
-        var textFn = { text }
-        var splitter: (() -> List<IntRange>)? = null
+        var textAndSplitFn: (() -> Pair<String, List<IntRange>?>)? = null
         var link: String? = null
         var runnable: Runnable? = null
         when (content.name) {
@@ -110,37 +97,28 @@ internal object MessageFactory {
           "action" -> {
             type = MessagePart.MessageType.SHORTCUT
             link = text
-            val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
-            val (visualText, split) = if (shortcutByActionId != null) {
-              KeymapUtil.getKeyStrokeData(shortcutByActionId)
-            }
-            else {
-              KeymapUtil.getGotoActionData(text)
-            }
-            textFn = {
-              visualText
-            }
-            splitter = {
-              split
+            textAndSplitFn = {
+              val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
+              if (shortcutByActionId != null) {
+                KeymapUtil.getKeyStrokeData(shortcutByActionId)
+              }
+              else {
+                KeymapUtil.getGotoActionData(text)
+              }
             }
           }
           "raw_shortcut" -> {
             type = MessagePart.MessageType.SHORTCUT
-            val (visualText, split) = KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
-            textFn = {
-              visualText
-            }
-            splitter = {
-              split
+            textAndSplitFn = {
+              KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
             }
           }
           "ide" -> {
             type = MessagePart.MessageType.TEXT_REGULAR
-            textFn = { ApplicationNamesInfo.getInstance().fullProductName }
+            textAndSplitFn = { LessonUtil.productName to null }
           }
         }
-        val message = MessagePart(type, textFn)
-        splitter?.let { message.splitter = it }
+        val message = MessagePart(type, textAndSplitFn ?: { text to null })
         message.link = link
         message.runnable = runnable
         list.add(message)

@@ -1,7 +1,7 @@
 // "class org.jetbrains.kotlin.idea.quickfix.LiftAssignmentOutOfTryFix" "false"
 // ACTION: Change to 'var'
 // DISABLE-ERRORS
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(arg: Boolean) {
     val x: Int

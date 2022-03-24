@@ -1,5 +1,5 @@
 // "Replace with 'newFun()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @Deprecated("", ReplaceWith("newFun()"))
 fun Int.oldFun(): Int = this

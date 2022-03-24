@@ -36,7 +36,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component focusedComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (!(focusedComponent instanceof JComponent)) return;
@@ -94,7 +94,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
-    Object component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Object component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) return false;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return !editor.isViewer();

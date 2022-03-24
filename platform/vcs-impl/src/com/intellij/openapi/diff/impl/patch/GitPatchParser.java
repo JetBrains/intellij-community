@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +22,13 @@ import static com.intellij.openapi.diff.impl.patch.PatchReader.PatchContentParse
 
 public final class GitPatchParser {
   @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
-  @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
+  @NonNls private static final Pattern SIMPLE_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*"); // NB: can't handle whitespaces in file names
+  @NonNls private static final Pattern AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " a/(.+) b/(.+)");
+  @NonNls private static final Pattern QUOTED_AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " \"a/(.+)\" \"b/(.+)\"\\s*");
   @NonNls private static final Pattern ourIndexHeaderLinePattern =
     Pattern.compile("index\\s+(" + HASH_PATTERN + ")..(" + HASH_PATTERN + ").*");
-  @NonNls private static final Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s+(\\S+)\\s*");
-  @NonNls private static final Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s+(\\S+)\\s*");
+  @NonNls private static final Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s(.*)");
+  @NonNls private static final Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s(.*)");
   @NonNls private static final Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
   @NonNls private static final Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
 
@@ -95,7 +98,7 @@ public final class GitPatchParser {
         else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
           Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
           if (fileRenameToMatcher.matches()) {
-            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1), fileRenameToMatcher.group(1));
+            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1).trim(), fileRenameToMatcher.group(1).trim());
           }
           else {
             iterator.previous();
@@ -128,11 +131,28 @@ public final class GitPatchParser {
 
   @Nullable
   private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
-    Matcher m = ourGitHeaderLinePattern.matcher(start);
-    return m.matches()
-           ? Couple.of(getFileNameFromGitHeaderLine(m.group(1), true),
-                       getFileNameFromGitHeaderLine(m.group(2), false))
-           : null;
+    Matcher m = AB_PREFIX_HEADER_PATTERN.matcher(start);
+    if (m.matches()) {
+      return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
+    }
+
+    m = QUOTED_AB_PREFIX_HEADER_PATTERN.matcher(start);
+    if (m.matches()) {
+      return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
+    }
+
+    m = SIMPLE_HEADER_PATTERN.matcher(start);
+    if (m.matches()) {
+      return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
+    }
+
+    return null;
+  }
+
+  @NotNull
+  private static Couple<String> getFileNamesFromGitHeaderLine(@NotNull String path1, @NotNull String path2) {
+    return Couple.of(getFileNameFromGitHeaderLine(path1, true),
+                     getFileNameFromGitHeaderLine(path2, false));
   }
 
   @Nullable
@@ -153,15 +173,17 @@ public final class GitPatchParser {
     @Nullable private final String myBeforeName;
     @Nullable private final String myAfterName;
 
-    @Nullable private final String myBeforeIndex;
-    @Nullable private final String myAfterIndex;
+    @Nullable private final @Nls String myBeforeIndex;
+    @Nullable private final @Nls String myAfterIndex;
 
     private final int myNewFileMode;
 
     @NotNull private final FileStatus myFileStatus;
 
     private PatchInfo(@NotNull Couple<String> beforeAfterName,
-                      @Nullable Couple<String> indexes, @NotNull FileStatus status, int newFileMode) {
+                      @Nullable Couple<@Nls String> indexes,
+                      @NotNull FileStatus status,
+                      int newFileMode) {
       myBeforeName = beforeAfterName.first;
       myAfterName = beforeAfterName.second;
       myBeforeIndex = Pair.getFirst(indexes);

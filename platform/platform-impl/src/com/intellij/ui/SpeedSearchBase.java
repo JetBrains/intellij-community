@@ -65,9 +65,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
     @Override
     public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (!isInsideActiveToolWindow(toolWindowManager)) {
-          manageSearchPopup(null);
-        }
+      if (!isInsideActiveToolWindow(toolWindowManager)) {
+        manageSearchPopup(null);
+      }
     }
 
     private boolean isInsideActiveToolWindow(@NotNull ToolWindowManager toolWindowManager) {
@@ -192,8 +192,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract int getSelectedIndex();
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected Object @NotNull [] getAllElements() {
     throw new UnsupportedOperationException("See `SpeedSearchBase.getElementIterator(int)` javadoc");
   }
@@ -211,8 +210,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int convertIndexToModel(final int viewIndex) {
     return viewIndex;
   }
@@ -224,8 +222,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract void selectElement(Object element, String selectedText);
 
   /**
-   * The main method for items traversal. 
-   * 
+   * The main method for items traversal.
+   *
    * Implementations can override it or use the default implementation
    * that uses {@link #getElementAt(int)} and {@link #getElementCount()} methods.
    *
@@ -621,7 +619,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         i == KeyEvent.VK_PAGE_DOWN ||
         i == KeyEvent.VK_LEFT ||
         i == KeyEvent.VK_RIGHT
-        ) {
+      ) {
         if (!isStickySearch()) {
           manageSearchPopup(null);
         }

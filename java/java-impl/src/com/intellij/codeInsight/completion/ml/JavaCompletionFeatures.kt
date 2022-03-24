@@ -126,12 +126,13 @@ object JavaCompletionFeatures {
   }
 
   fun calculateVariables(environment: CompletionEnvironment) = try {
-    val parentClass = PsiTreeUtil.getParentOfType(environment.parameters.position, PsiClass::class.java)
-    val variables = getVariablesInScope(environment.parameters.position, parentClass)
-    val names = variables.mapNotNull { it.name }.toSet()
-    val types = variables.map { it.type }.toSet()
-    val names2types = variables.mapNotNull { variable -> variable.name?.let { Pair(it, variable.type) } }.toSet()
-    environment.putUserData(VARIABLES_KEY, VariablesInfo(names, types, names2types))
+    PsiTreeUtil.getParentOfType(environment.parameters.position, PsiMethod::class.java)?.let { enclosingMethod ->
+      val variables = getVariablesInScope(environment.parameters.position, enclosingMethod)
+      val names = variables.mapNotNull { it.name }.toSet()
+      val types = variables.map { it.type }.toSet()
+      val names2types = variables.mapNotNull { variable -> variable.name?.let { Pair(it, variable.type) } }.toSet()
+      environment.putUserData(VARIABLES_KEY, VariablesInfo(names, types, names2types))
+    }
   } catch (ignored: PsiInvalidElementAccessException) {}
 
   fun getArgumentsVariablesMatchingFeatures(contextFeatures: ContextFeatures, method: PsiMethod): Map<String, MLFeatureValue> {
@@ -181,7 +182,7 @@ object JavaCompletionFeatures {
   fun getPackageMatchingFeatures(contextFeatures: ContextFeatures, psiClass: PsiClass): Map<String, MLFeatureValue> {
     val packagesInfo = contextFeatures.getUserData(PACKAGES_KEY) ?: return emptyMap()
     val packageName = PsiUtil.getPackageName(psiClass)
-    if (packageName == null || packageName.isEmpty()) return emptyMap()
+    if (packageName.isNullOrEmpty()) return emptyMap()
     val packagePartsCount = packageName.split(".").size
     val result = mutableMapOf<String, MLFeatureValue>()
     val packageMatchedParts = packagesInfo.packageName.matchedParts(packageName)

@@ -1,33 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
-import org.apache.http.HttpEntity
-import org.apache.http.HttpHeaders
-import org.apache.http.HttpStatus
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.HttpRequestBase
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.util.EntityUtils
-import java.util.*
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
-internal fun get(path: String, conf: HttpRequestBase.() -> Unit = {}) = rest(HttpGet(path).apply { conf() })
-
-internal fun post(path: String, body: String, conf: HttpRequestBase.() -> Unit = {}) = rest(HttpPost(path).apply {
-  entity = StringEntity(body, Charsets.UTF_8)
-  conf()
-})
-
-private fun rest(request: HttpRequestBase) = HttpClients.createDefault().use {
-  val response = it.execute(request)
-  val entity = response.entity.asString()
-  if (response.statusLine.statusCode != HttpStatus.SC_OK) error("${response.statusLine.statusCode} ${response.statusLine.reasonPhrase} $entity")
-  entity
+private val client by lazy {
+  OkHttpClient.Builder().protocols(listOf(Protocol.HTTP_1_1)).build()
 }
 
-internal fun HttpRequestBase.basicAuth(login: String, password: String) {
-  addHeader(HttpHeaders.AUTHORIZATION, "Basic ${Base64.getEncoder().encodeToString("$login:$password".toByteArray())}")
+internal fun loadUrl(path: String, conf: Request.Builder.() -> Unit = {}): String {
+  val requestBuilder = Request.Builder().url(path)
+  requestBuilder.conf()
+  return rest(requestBuilder.build())
 }
 
-private fun HttpEntity.asString() = EntityUtils.toString(this, Charsets.UTF_8)
+internal fun post(path: String, body: String, mediaType: MediaType?, conf: Request.Builder.() -> Unit = {}): String {
+  val requestBuilder = Request.Builder().url(path).post(body.toRequestBody(mediaType))
+  requestBuilder.conf()
+  return rest(requestBuilder.build())
+}
+
+private fun rest(request: Request): String {
+  client.newCall(request).execute().use { response ->
+    val entity = response.body!!.string()
+    if (response.code != 200) {
+      throw IllegalStateException("${response.code} ${response.message} $entity")
+    }
+    return entity
+  }
+}

@@ -11,24 +11,26 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
 class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
@@ -76,7 +78,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
                     KotlinNameSuggester.suggestNameByName(name ?: descriptor.name.asString(), validator)
                 }
 
-            runWriteAction {
+            runWriteActionIfPhysical(element) {
                 variableToDrop?.delete()
                 usagesToReplace.forEach {
                     it.replace(factory.createExpression(suggestedName))
@@ -89,7 +91,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
         when (element) {
             is KtParameter -> {
                 val loopRange = (element.parent as? KtForExpression)?.loopRange
-                runWriteAction {
+                runWriteActionIfPhysical(element) {
                     val type = element.typeReference?.let { ": ${it.text}" } ?: ""
                     element.replace(factory.createDestructuringParameter("($joinedNames)$type"))
                     if (removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
@@ -101,7 +103,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
             is KtFunctionLiteral -> {
                 val lambda = element.parent as KtLambdaExpression
                 SpecifyExplicitLambdaSignatureIntention().applyTo(lambda, editor)
-                runWriteAction {
+                runWriteActionIfPhysical(element) {
                     lambda.functionLiteral.valueParameters.singleOrNull()?.replace(
                         factory.createDestructuringParameter("($joinedNames)")
                     )
@@ -110,21 +112,16 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
 
             is KtVariableDeclaration -> {
                 val rangeAfterEq = PsiChildRange(element.initializer, element.lastChild)
-                val modifierList = element.modifierList
-                runWriteAction {
-                    if (modifierList == null) {
-                        element.replace(
-                            factory.createDestructuringDeclarationByPattern(
-                                "val ($joinedNames) = $0", rangeAfterEq
-                            )
+                val modifierList = element.modifierList?.copied()
+                runWriteActionIfPhysical(element) {
+                    val result = element.replace(
+                        factory.createDestructuringDeclarationByPattern(
+                            "val ($joinedNames) = $0", rangeAfterEq
                         )
-                    } else {
-                        val rangeBeforeVal = PsiChildRange(element.firstChild, modifierList)
-                        element.replace(
-                            factory.createDestructuringDeclarationByPattern(
-                                "$0:'@xyz' val ($joinedNames) = $1", rangeBeforeVal, rangeAfterEq
-                            )
-                        )
+                    ) as KtModifierListOwner
+
+                    if (modifierList != null) {
+                        result.setModifierList(modifierList)
                     }
                 }
             }
@@ -168,7 +165,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
         internal data class UsagesToRemove(val data: List<UsageData>, val removeSelectorInLoopRange: Boolean)
 
         internal fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? {
-            val context = declaration.analyze()
+            val context = declaration.safeAnalyzeNonSourceRootCode()
 
             val variableDescriptor = when (declaration) {
                 is KtParameter -> context.get(BindingContext.VALUE_PARAMETER, declaration)

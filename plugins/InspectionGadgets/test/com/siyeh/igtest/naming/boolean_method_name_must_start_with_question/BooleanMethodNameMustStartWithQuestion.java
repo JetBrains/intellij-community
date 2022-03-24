@@ -8,3 +8,13 @@ class BooleanMethodNameMustStartWithQuestion {
     return false;
   }
 }
+abstract class MyCollection<E> {
+
+  public boolean add(E e) {
+    return false;
+  }
+
+  public boolean remove(Object o) {
+    return false;
+  }
+}

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class C {
     val xxx = 1
 
@@ -11,5 +13,5 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Boolean" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "Boolean", icon: "org/jetbrains/kotlin/idea/icons/value.svg"}
 // NOTHING_ELSE

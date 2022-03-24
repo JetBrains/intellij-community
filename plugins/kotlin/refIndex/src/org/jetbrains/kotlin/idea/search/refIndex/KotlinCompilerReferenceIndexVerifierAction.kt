@@ -12,17 +12,18 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.search.codeUsageScope
+import org.jetbrains.kotlin.idea.search.toHumanReadableString
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -43,8 +44,8 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
         val pointToElement = element.createSmartPointer()
         ReadAction.nonBlocking<CompilerReferenceData?> {
             val psiElement = pointToElement.element ?: return@nonBlocking null
-            val codeUsageScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(psiElement)
-            val useScope = PsiSearchHelper.getInstance(project).getUseScope(psiElement)
+            val codeUsageScope = psiElement.codeUsageScope()
+            val useScope = psiElement.useScope()
 
             CompilerReferenceData(
                 elementText = "${psiElement::class.simpleName}:${psiElement.safeAs<PsiNamedElement>()?.name}",
@@ -88,7 +89,7 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             }
             .coalesceBy(this)
             .inSmartMode(project)
-            .expireWhen { pointToElement.element == null || Disposer.isDisposed(project) }
+            .expireWhen { pointToElement.element == null || project.isDisposed() }
             .submit(AppExecutorUtil.getAppExecutorService())
     }
 
@@ -101,37 +102,6 @@ class KotlinCompilerReferenceIndexVerifierAction : AnAction(
             val numberOfKotlinFilesInUseScope: String,
             val numberOfJavaFilesInUseScope: String,
         )
-
-        /**
-         * `( *\\( *)` and `( *\\) *)` – to find parenthesis
-         * `( *, *(?![^\\[]*]))` – to find commas outside square brackets
-         */
-        private val parenthesisRegex = Regex("( *\\( *)|( *\\) *)|( *, *(?![^\\[]*]))")
-
-        fun SearchScope.toHumanReadableString(): String = buildString {
-            val scopeText = this@toHumanReadableString.toString()
-            var currentIndent = 0
-            var lastIndex = 0
-            for (parenthesis in parenthesisRegex.findAll(scopeText)) {
-                val subSequence = scopeText.subSequence(lastIndex, parenthesis.range.first)
-                subSequence.ifNotEmpty {
-                    append(" ".repeat(currentIndent))
-                    appendLine(it)
-                }
-
-                val value = parenthesis.value
-                when {
-                    "(" in value -> currentIndent += 2
-                    ")" in value -> currentIndent -= 2
-                }
-
-                lastIndex = parenthesis.range.last + 1
-            }
-        }
-
-        private inline fun CharSequence.ifNotEmpty(action: (CharSequence) -> Unit) {
-            takeIf(CharSequence::isNotBlank)?.let(action)
-        }
 
         private fun SearchScope.countOfFileType(fileType: FileType): String = safeAs<GlobalSearchScope>()?.let {
             FileTypeIndex.getFiles(fileType, it).size.toString()

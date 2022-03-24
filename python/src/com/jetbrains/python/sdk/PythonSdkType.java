@@ -34,6 +34,7 @@ import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -48,6 +49,8 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.target.PyInterpreterVersionUtil;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -299,7 +302,10 @@ public final class PythonSdkType extends SdkType {
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
     WSLUtil.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
-    if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
+    if (homePath != null && homePath.startsWith("target://")) {
+      return PyTargetAwareAdditionalData.loadTargetAwareData(currentSdk, additional);
+    }
+    else if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return manager.loadRemoteSdkData(currentSdk, additional);
@@ -352,6 +358,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
+    if (PlatformUtils.isFleetBackend()) return;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
@@ -465,8 +472,20 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   @Override
   public String getVersionString(@NotNull Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
+      // TODO [targets] Cache version as for `PyRemoteSdkAdditionalDataBase`
+      String versionString;
+      try {
+        versionString = PyInterpreterVersionUtil.getInterpreterVersion((PyTargetAwareAdditionalData)sdkAdditionalData, null, true);
+      }
+      catch (Exception e) {
+        versionString = "undefined";
+      }
+      return versionString;
+    }
+    else if (PythonSdkUtil.isRemote(sdk)) {
+      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdkAdditionalData;
       assert data != null;
       String versionString = data.getVersionString();
       if (StringUtil.isEmpty(versionString)) {
@@ -516,9 +535,8 @@ public final class PythonSdkType extends SdkType {
     return homeDir != null && homeDir.isValid();
   }
 
-  public static boolean isIncompleteRemote(Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      //noinspection ConstantConditions
+  public static boolean isIncompleteRemote(@NotNull Sdk sdk) {
+    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
       if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isValid()) {
         return true;
       }
@@ -531,10 +549,9 @@ public final class PythonSdkType extends SdkType {
     return data instanceof PyRemoteSdkAdditionalDataBase && ((PyRemoteSdkAdditionalDataBase)data).isRunAsRootViaSudo();
   }
 
-  public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
-    if (PythonSdkUtil.isRemote(sdk)) {
+  public static boolean hasInvalidRemoteCredentials(@NotNull Sdk sdk) {
+    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
       final Ref<Boolean> result = Ref.create(false);
-      //noinspection ConstantConditions
       ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(
         new LanguageCaseCollector<PyCredentialsContribution>() {
 
@@ -601,6 +618,11 @@ public final class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean allowWslSdkForLocalProject() {
+    return true;
   }
 }
 

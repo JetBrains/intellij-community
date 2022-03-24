@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +53,7 @@ public abstract class IconWithTextAction extends AnAction implements CustomCompo
   }
 
   /** @deprecated use {@link IconWithTextAction#createCustomComponentImpl(AnAction, Presentation, String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static JComponent createCustomComponentImpl(AnAction action, Presentation presentation) {
     return new ActionButtonWithText(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
   }

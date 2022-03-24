@@ -923,7 +923,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "public class Main {\n" +
       "\n" +
       "    /**\n" +
-      "     * {@link #authenticationCompleted(android.app.Activity,\n" +
+      "     * {@link\n" +
+      "     * #authenticationCompleted(android.app.Activity,\n" +
       "     * int, int, android.content.Intent)}\n" +
       "     *\n" +
       "     * @param args\n" +
@@ -1072,6 +1073,60 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "        \"content\", \"value\", \"content\", \"value\",\n" +
       "        \"content\", \"value\", \"content\", \"value\",\n" +
       "        \"content\", \"value\", \"content\", \"value\");"
+    );
+  }
+
+  public void testSwitchLabelBracesWrapping() {
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+
+    doClassTest(
+      "static boolean test(String name)" +
+      "{\n" +
+      "    switch (name)" +
+      "{\n" +
+      "        case \"GET\" -> {\n" +
+      "            return true;\n" +
+      "        }\n" +
+      "        case \"POST\" -> {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "    }\n" +
+      "    return false;\n" +
+      "}",
+
+      "static boolean test(String name) {\n" +
+      "    switch (name)\n" +
+      "    {\n" +
+      "        case \"GET\" ->\n" +
+      "        {\n" +
+      "            return true;\n" +
+      "        }\n" +
+      "        case \"POST\" ->\n" +
+      "        {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "    }\n" +
+      "    return false;\n" +
+      "}"
+    );
+  }
+
+  public void testExprInSwitchWrapping() {
+    doClassTest(
+      "  String process(E e) {\n" +
+      "    return switch (e) {\n" +
+      "      case LONG_NAME_A -> throw new IllegalStateException(\"long text long text long text long text long text long text  |  long text\");\n" +
+      "      case LONG_NAME_B -> \"text\";\n" +
+      "    };\n" +
+      "  }",
+
+      "String process(E e) {\n" +
+      "    return switch (e) {\n" +
+      "        case LONG_NAME_A ->\n" +
+      "                throw new IllegalStateException(\"long text long text long text long text long text long text  |  long text\");\n" +
+      "        case LONG_NAME_B -> \"text\";\n" +
+      "    };\n" +
+      "}"
     );
   }
 }

@@ -1,7 +1,7 @@
 import BExtSpace.aaa
 
 // "Import" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Unresolved reference: aaa
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
@@ -12,3 +12,4 @@ fun test() {
         }
     }
 }
+/* IGNORE_FIR */

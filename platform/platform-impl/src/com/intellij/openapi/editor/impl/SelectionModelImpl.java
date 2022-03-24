@@ -122,15 +122,6 @@ public class SelectionModelImpl implements SelectionModel {
     LOG.assertTrue(success);
   }
 
-  /**
-   * @deprecated Use {@link EditorActionUtil#selectEntireLines} instead.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  public static void doSelectLineAtCaret(@NotNull Caret caret) {
-    EditorActionUtil.selectEntireLines(caret, true);
-  }
-
   @Override
   public void copySelectionToClipboard() {
     EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);

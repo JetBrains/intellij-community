@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
@@ -39,6 +39,8 @@ fun ExpirableExecutor.withConstraint(constraint: ContextConstraint, parentDispos
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
  * Contains: [ContinuationInterceptor].
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(message = "Do not use: coroutine cancellation must not be handled by a dispatcher.")
 fun ExpirableExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
   (this as ExpirableExecutorImpl).asCoroutineDispatcher()
 

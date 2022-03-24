@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -465,9 +464,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
-        if (PsiUtil.isJvmLocalVariable(element) && myVarNames.contains(element.getName())) return false;
-        myVarNames.add(element.getName());
-        return true;
+        boolean added = myVarNames.add(element.getName());
+        return !PsiUtil.isJvmLocalVariable(element) || added;
       }
 
       private boolean shouldProcessMethod(@NotNull PsiMethod method) {
@@ -538,8 +536,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return aClass instanceof PsiCompiledElement && seemsScrambledByStructure(aClass);
   }
 
-  @VisibleForTesting
-  public static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
+  static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
     PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null && !seemsScrambledByStructure(containingClass)) {
       return false;
@@ -572,6 +569,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public PsiType @NotNull [] getTypeParameters() {
     PsiReferenceParameterList parameterList = getParameterList();
     return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
+  }
+
+  @Override
+  public int getTypeParameterCount() {
+    PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList != null ? parameterList.getTypeArgumentCount() : 0;
   }
 
   @Override

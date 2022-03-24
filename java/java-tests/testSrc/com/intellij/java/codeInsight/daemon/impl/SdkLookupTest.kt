@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
@@ -17,25 +17,30 @@ import com.intellij.openapi.roots.ui.configuration.*
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.setSystemPropertyForTest
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.SystemPropertyRule
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.WaitFor
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.ui.UIUtil
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Rule
+import org.junit.Test
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 
-class SdkLookupTest : LightPlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
-    setSystemPropertyForTest("intellij.progress.task.ignoreHeadless", "true")
-  }
+@RunsInEdt
+class SdkLookupTest : BareTestFixtureTestCase() {
+  @Rule @JvmField val tempDir = TempDirectory()
+  @Rule @JvmField val runInEdt = EdtRule()
+  @Rule @JvmField val testProgress = SystemPropertyRule("intellij.progress.task.ignoreHeadless", "true")
 
-  val log = Collections.synchronizedList(mutableListOf<String>())
+  val log: MutableList<String> = Collections.synchronizedList(mutableListOf<String>())
   val sdkType get() = SimpleJavaSdkType.getInstance()!!
 
   interface SdkLookupBuilderEx : SdkLookupBuilder {
@@ -51,7 +56,6 @@ class SdkLookupTest : LightPlatformTestCase() {
       var onSdkResolvedHook : (Sdk?) -> Unit = {}
 
       val base = SdkLookup.newLookupBuilder()
-        .withProject(project)
         .withProgressIndicator(ProgressIndicatorBase())
         .withSdkType(sdkType)
         .onSdkNameResolved { log += "sdk-name: ${it?.name}" }
@@ -72,8 +76,8 @@ class SdkLookupTest : LightPlatformTestCase() {
 
         override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): SdkLookupBuilder = error("Must not call in test")
         override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision): SdkLookupBuilder  = error("Must not call in test")
-
         override fun onSdkNameResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder = error("Must not call in test")
+
         override fun onSdkResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder = apply {
           onSdkResolvedHook = handler
         }
@@ -83,16 +87,10 @@ class SdkLookupTest : LightPlatformTestCase() {
   fun SdkLookupBuilder.lookupBlocking(): Unit = service<SdkLookup>().lookupBlocking(this as SdkLookupParameters)
 
   private fun assertLog(vararg messages: String) {
-    fun List<String>.format() = joinToString("") { "\n  $it" }
-    Assert.assertEquals("actual log: " + log.format(), messages.toList().format(), log.format())
+    assertThat(log).containsExactly(*messages)
   }
 
-  private fun assertLogContains(vararg messages: String) {
-    fun List<String>.format() = joinToString("") { "\n  $it" }
-    Assert.assertEquals("actual log: " + log.format(), messages.toList().format(), log.format())
-  }
-
-  fun `test no sdk found`() {
+  @Test fun `test no sdk found`() {
     runInThreadAndPumpMessages {
       lookup.lookupBlocking()
     }
@@ -102,7 +100,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test find existing by name`() {
+  @Test fun `test find existing by name`() {
     val sdk = newSdk("temp-1")
     runInThreadAndPumpMessages {
       lookup.withSdkName(sdk.name).lookupBlocking()
@@ -113,7 +111,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test find sdk from alternatives`() {
+  @Test fun `test find sdk from alternatives`() {
     val sdk1 = newUnregisteredSdk("temp-3")
     val sdk2 = newUnregisteredSdk("temp-2")
     runInThreadAndPumpMessages {
@@ -127,7 +125,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test find sdk from alternatives and filter`() {
+  @Test fun `test find sdk from alternatives and filter`() {
     val sdk1 = newUnregisteredSdk("temp-3", "1.2.3")
     val sdk2 = newUnregisteredSdk("temp-2", "2.3.4")
 
@@ -143,12 +141,12 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test find downloading sdk`() {
+  @Test fun `test find downloading sdk`() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
     val eternalTask = object: SdkDownloadTask {
-      val home = createTempDir("planned-home").toPath().systemIndependentPath
+      val home = tempDir.newDirectoryPath("planned-home").systemIndependentPath
       override fun getPlannedHomeDir() = home
       override fun getSuggestedSdkName() = "suggested name"
       override fun getPlannedVersion() = "planned version"
@@ -200,12 +198,12 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test find downloading sdk stop`() {
+  @Test fun `test find downloading sdk stop`() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
     val eternalTask = object : SdkDownloadTask {
-      val home = createTempDir("planned-home").toPath().systemIndependentPath
+      val home = tempDir.newDirectoryPath("planned-home").systemIndependentPath
       override fun getPlannedHomeDir() = home
       override fun getSuggestedSdkName() = "suggested name"
       override fun getPlannedVersion() = "planned version"
@@ -261,12 +259,12 @@ class SdkLookupTest : LightPlatformTestCase() {
       )
   }
 
-  fun `test find downloading sdk async`() {
+  @Test fun `test find downloading sdk async`() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
     val eternalTask = object: SdkDownloadTask {
-      val home = createTempDir("planned-home").toPath().systemIndependentPath
+      val home = tempDir.newDirectoryPath("planned-home").systemIndependentPath
       override fun getPlannedHomeDir() = home
       override fun getSuggestedSdkName() = "suggested name"
       override fun getPlannedVersion() = "planned version"
@@ -317,7 +315,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test local fix`() {
+  @Test fun `test local fix`() {
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
@@ -325,7 +323,7 @@ class SdkLookupTest : LightPlatformTestCase() {
         override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {
           if (sdk.sdkName != "xqwr") return null
           return object : UnknownSdkLocalSdkFix {
-            val home = createTempDir("our home for ${sdk.sdkName}")
+            val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
             override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
             override fun getExistingSdkHome() = home.toString()
             override fun getVersionString() = "1.2.3"
@@ -356,14 +354,14 @@ class SdkLookupTest : LightPlatformTestCase() {
     SdkTestCase.removeSdk(sdk)
   }
 
-  fun `test local fix with SDK prototype`() {
+  @Test fun `test local fix with SDK prototype`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
         override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
         override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator) = object : UnknownSdkLocalSdkFix {
-          val home = createTempDir("our home for ${sdk.sdkName}")
+          val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
           override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
           override fun getExistingSdkHome() = home.toString()
           override fun getVersionString() = "1.2.3"
@@ -385,14 +383,14 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test local fix with unregistered SDK prototype`() {
+  @Test fun `test local fix with unregistered SDK prototype`() {
     val prototypeSdk = newUnregisteredSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
         override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
         override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator) = object : UnknownSdkLocalSdkFix {
-          val home = createTempDir("our home for ${sdk.sdkName}")
+          val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
           override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
           override fun getExistingSdkHome() = home.toString()
           override fun getVersionString() = "1.2.3"
@@ -418,14 +416,14 @@ class SdkLookupTest : LightPlatformTestCase() {
   }
 
 
-  fun `test local fix with stop`() {
+  @Test fun `test local fix with stop`() {
     val prototypeSdk = newUnregisteredSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
         override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
         override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator) = object : UnknownSdkLocalSdkFix {
-          val home = createTempDir("our home for ${sdk.sdkName}")
+          val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
           override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
           override fun getExistingSdkHome() = home.toString()
           override fun getVersionString() = "1.2.3"
@@ -449,14 +447,14 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test local fix should not clash with SDK name`() {
+  @Test fun `test local fix should not clash with SDK name`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
         override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
         override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator) = object : UnknownSdkLocalSdkFix {
-          val home = createTempDir("our home for ${sdk.sdkName}")
+          val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
           override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
           override fun getExistingSdkHome() = home.toString()
           override fun getVersionString() = "1.2.3"
@@ -479,7 +477,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test download fix`() {
+  @Test fun `test download fix`() {
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
@@ -494,7 +492,7 @@ class SdkLookupTest : LightPlatformTestCase() {
               override fun getPlannedVersion() = versionString
               override fun doDownload(indicator: ProgressIndicator) { log += "download: ${sdk.sdkName}" }
             }
-            val home = createTempDir("our home for ${sdk.sdkName}")
+            val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
             override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
             override fun getVersionString() = "1.2.3"
           }
@@ -519,7 +517,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     removeSdk("xqwr")
   }
 
-  fun `test download fix stop`() {
+  @Test fun `test download fix stop`() {
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
@@ -534,7 +532,7 @@ class SdkLookupTest : LightPlatformTestCase() {
               override fun getPlannedVersion() = versionString
               override fun doDownload(indicator: ProgressIndicator) { log += "download: ${sdk.sdkName}" }
             }
-            val home = createTempDir("our home for ${sdk.sdkName}")
+            val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
             override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
             override fun getVersionString() = "1.2.3"
           }
@@ -557,7 +555,7 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
-  fun `test download fix should not clash SDK name`() {
+  @Test fun `test download fix should not clash SDK name`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
@@ -571,7 +569,7 @@ class SdkLookupTest : LightPlatformTestCase() {
               override fun getPlannedVersion() = versionString
               override fun doDownload(indicator: ProgressIndicator) { log += "download: ${sdk.sdkName}" }
             }
-            val home = createTempDir("our home for ${sdk.sdkName}")
+            val home = tempDir.newDirectoryPath("our home for ${sdk.sdkName}")
             override fun configureSdk(sdk: Sdk)  { log += "configure: ${sdk.name}"}
             override fun getVersionString() = "1.2.3"
         }

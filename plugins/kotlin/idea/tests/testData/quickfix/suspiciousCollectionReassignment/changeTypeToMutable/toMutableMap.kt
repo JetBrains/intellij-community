@@ -1,6 +1,6 @@
 // "Change type to mutable" "true"
 // TOOL: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection
-// WITH_RUNTIME
+// WITH_STDLIB
 fun toMutableMap() {
     var map = foo()
     map -=<caret> 3

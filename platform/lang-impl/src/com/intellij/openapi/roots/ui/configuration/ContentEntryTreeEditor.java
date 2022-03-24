@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -277,8 +277,8 @@ public class ContentEntryTreeEditor {
 
   private static final class MyNewFolderAction extends NewFolderAction implements CustomComponentAction {
     private MyNewFolderAction() {
-      super(ActionsBundle.messagePointer("action.FileChooser.NewFolder.text"),
-            ActionsBundle.messagePointer("action.FileChooser.NewFolder.description"),
+      super(ActionsBundle.message("action.FileChooser.NewFolder.text"),
+            ActionsBundle.message("action.FileChooser.NewFolder.description"),
             AllIcons.Actions.NewFolder);
     }
 

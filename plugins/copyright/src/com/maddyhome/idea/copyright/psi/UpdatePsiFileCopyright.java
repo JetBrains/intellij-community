@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -31,6 +30,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+/**
+ * Psi aware implementation of {@link UpdateCopyright}
+ */
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   private static final Logger LOG = Logger.getInstance(UpdatePsiFileCopyright.class);
   private final CopyrightProfile myOptions;
@@ -81,6 +83,9 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     return !(file instanceof PsiPlainTextFile);
   }
 
+  /**
+   * Call {@link #checkComments(PsiElement, PsiElement, boolean)} for the correct range according to the copyright {@link #langOpts}
+   */
   protected abstract void scanFile();
 
   protected void checkComments(PsiElement first, PsiElement last, boolean commentHere) {
@@ -404,7 +409,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
   }
 
-  protected static class CommentAction implements Comparable<CommentAction> {
+  protected static final class CommentAction implements Comparable<CommentAction> {
     public static final int ACTION_INSERT = 1;
     public static final int ACTION_REPLACE = 2;
     public static final int ACTION_DELETE = 3;

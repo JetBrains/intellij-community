@@ -47,6 +47,10 @@ class BuilderValidConstructor5 {
   }
 }
 
+@lombok.Builder
+@lombok.NoArgsConstructor
+class BuilderNoConstructors { }
+
 <error descr="Lombok @Builder needs a proper constructor for this class">@lombok.Builder</error>
 @lombok.NoArgsConstructor
 class BuilderInvalidConstructor {
@@ -83,4 +87,17 @@ class BuilderInvalidConstructor4 {
   BuilderInvalidConstructor4(int id) {
     this.id = id;
   }
+}
+
+@lombok.experimental.SuperBuilder
+@lombok.NoArgsConstructor
+class WithSuperBuilder<T> {
+
+    private int someSubIntProperty;
+    private double dbl;
+
+    public static WithSuperBuilder<Integer> calculateSomething(String s, int i, double d) {
+        WithSuperBuilder<Integer> result = WithSuperBuilder.<Integer>builder().build();
+        return result;
+    }
 }

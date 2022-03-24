@@ -1,2 +1,2 @@
 // INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
-// WITH_RUNTIME
+// WITH_STDLIB

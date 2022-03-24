@@ -11,7 +11,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +55,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @deprecated use {@link #getFileElement(XmlFile, Class)}
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
@@ -116,15 +114,14 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @param description The description in question
    * @deprecated Make your file description an extension (see {@link DomFileDescription#EP_NAME})
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void registerFileDescription(DomFileDescription<?> description);
 
   /**
    * @return {@link ConverterManager} instance
    * @deprecated This will be moved at the application level
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();

@@ -2,26 +2,36 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.externalSystem.service.ui.completion.JTextCompletionContributor
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.completion.*
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenProfilesFiled(project: Project, workingDirectoryField: WorkingDirectoryField) : ExtendableTextField() {
-  private val textProperty = AtomicObservableProperty("")
+class MavenProfilesFiled(
+  private val project: Project,
+  private val workingDirectoryField: WorkingDirectoryField
+) : TextCompletionField<TextCompletionInfo>(project) {
+
+  private val textProperty = AtomicProperty("")
 
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 
+  override fun getCompletionVariants(): List<TextCompletionInfo> {
+    val profiles = getProfiles(project, workingDirectoryField)
+      .sortedWith(NaturalComparator.INSTANCE)
+    return profiles.map { TextCompletionInfo(it) } +
+           profiles.map { TextCompletionInfo("-$it") }
+  }
+
   init {
+    renderer = TextCompletionInfoRenderer()
+    completionType = CompletionType.REPLACE_WORD
     bind(textProperty)
   }
 
@@ -51,16 +61,6 @@ class MavenProfilesFiled(project: Project, workingDirectoryField: WorkingDirecto
       }
     }
     return parametersList.parametersString
-  }
-
-  init {
-    val textCompletionContributor = JTextCompletionContributor.create<MavenProfilesFiled> {
-      val profiles = getProfiles(project, workingDirectoryField)
-        .sortedWith(NaturalComparator.INSTANCE)
-      profiles.map { TextCompletionInfo(it) } +
-        profiles.map { TextCompletionInfo("-$it") }
-    }
-    TextCompletionPopup(project, this, textCompletionContributor)
   }
 
   private fun getProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {

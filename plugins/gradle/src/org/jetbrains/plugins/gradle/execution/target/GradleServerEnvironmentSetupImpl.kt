@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -9,7 +9,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredLocalTargetValue
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.lang.LangBundle
+import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -39,7 +39,7 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
-import org.slf4j.impl.Log4jLoggerFactory
+import org.slf4j.impl.JDK14LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -164,11 +164,11 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     for (localPath in localPathsToMap) {
       if (targetPathMapper != null && targetPathMapper.canReplaceLocal(localPath)) {
         val targetPath = targetPathMapper.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
+        mapperInitScript.append("ext.pathMapper.put(${toGroovyString(localPath)}, ${toGroovyString(targetPath)})\n")
       }
       else if (pathMappingSettings.canReplaceLocal(localPath)) {
         val targetPath = pathMappingSettings.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
+        mapperInitScript.append("ext.pathMapper.put(${toGroovyString(localPath)}, ${toGroovyString(targetPath)})\n")
       }
     }
 
@@ -179,7 +179,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     if (javaRuntime != null) {
       val targetJavaExecutablePath = arrayOf(javaRuntime.homePath, "bin", java).joinToString(platform.fileSeparator.toString())
       mapperInitScript.append(
-        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${toGroovyString(targetJavaExecutablePath)}\")\n")
+        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", ${toGroovyString(targetJavaExecutablePath)})\n")
     }
     else {
       mapperInitScript.append("ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${java}\")\n")
@@ -296,8 +296,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(WrapperExecutor::class.java)
     // logging jars
     classpathInferer.add(LoggerFactory::class.java)
-    classpathInferer.add(Log4jLoggerFactory::class.java)
-    classpathInferer.add(org.apache.log4j.Level::class.java)
+    classpathInferer.add(JDK14LoggerFactory::class.java)
     // gradle tooling proxy module
     classpathInferer.add(Main::class.java)
     // intellij.gradle.toolingExtension - for use of model adapters classes
@@ -356,7 +355,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
       val languageRuntime = environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java)
       val toolingFileOnTarget = LanguageRuntimeType.VolumeDescriptor(LanguageRuntimeType.VolumeType("gradleToolingFilesOnTarget"),
-                                                                     "", "", "", request.projectPathOnTarget)
+                                                                     "", "", "", "")
       val uploadRoot = languageRuntime?.createUploadRoot(toolingFileOnTarget, localRootPath) ?: TargetEnvironment.UploadRoot(localRootPath,
                                                                                                                              TargetEnvironment.TargetPath.Temporary())
       request.uploadVolumes += uploadRoot
@@ -371,7 +370,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         }
         catch (t: Throwable) {
           targetProgressIndicator.stopWithErrorMessage(
-            LangBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot, t.localizedMessage))
+            LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot, t.localizedMessage))
           result.resolveFailure(t)
         }
       }

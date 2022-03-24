@@ -118,8 +118,8 @@ public final class CompilerTester {
   public void tearDown() {
     try {
       RunAll.runAll(
-        () -> CompilerTestUtil.disableExternalCompiler(getProject()),
-        () -> myMainOutput.tearDown()
+        () -> myMainOutput.tearDown(),
+        () -> CompilerTestUtil.disableExternalCompiler(getProject())
       );
     }
     finally {

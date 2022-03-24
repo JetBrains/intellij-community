@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.vcs.log.VcsLogFilter;
@@ -54,8 +54,7 @@ public abstract class FilterModel<Filter> {
   }
 
   protected static void triggerFilterSet(@NotNull String name) {
-    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.FILTER_SET, false,
-                                             data -> data.addData("filter_name", name));
+    VcsLogUsageTriggerCollector.triggerFilterSet(name);
   }
 
   protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,

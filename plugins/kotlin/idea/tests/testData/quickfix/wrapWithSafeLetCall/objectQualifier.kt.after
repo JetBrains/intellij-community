@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 object Obj {
     fun foo(x: Int) = x

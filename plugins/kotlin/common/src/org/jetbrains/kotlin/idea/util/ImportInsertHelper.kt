@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.util.*
@@ -20,23 +22,41 @@ abstract class ImportInsertHelper {
     abstract fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath>
 
     abstract fun importDescriptor(
-        file: KtFile,
+        element: KtElement,
         descriptor: DeclarationDescriptor,
         actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
         forceAllUnderImport: Boolean = false
     ): ImportDescriptorResult
+
+    @Deprecated("Use importDescriptor(KtElement)", ReplaceWith("importDescriptor(element, descriptor)"))
+    fun importDescriptor(
+        file: KtFile,
+        descriptor: DeclarationDescriptor,
+        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
+        forceAllUnderImport: Boolean = false
+    ): ImportDescriptorResult = importDescriptor(
+        element = file,
+        descriptor = descriptor,
+        actionRunningMode = actionRunningMode,
+        forceAllUnderImport = forceAllUnderImport
+    )
 
     fun importDescriptor(
         file: KtFile,
         descriptor: DeclarationDescriptor,
         forceAllUnderImport: Boolean = false
     ): ImportDescriptorResult = importDescriptor(
-        file,
+        file as KtElement,
         descriptor,
         ActionRunningMode.RUN_IN_CURRENT_THREAD,
         forceAllUnderImport
     )
 
+    abstract fun importPsiClass(
+        element: KtElement,
+        psiClass: PsiClass,
+        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
+    ): ImportDescriptorResult
 
     companion object {
         @JvmStatic

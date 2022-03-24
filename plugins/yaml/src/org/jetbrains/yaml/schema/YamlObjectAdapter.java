@@ -67,11 +67,6 @@ public final class YamlObjectAdapter implements JsonObjectValueAdapter {
     return null;
   }
 
-  @Override
-  public boolean shouldCheckIntegralRequirements() {
-    return true;
-  }
-
   @NotNull
   @Override
   public List<JsonPropertyAdapter> getPropertyList() {

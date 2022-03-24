@@ -1,6 +1,6 @@
 package entryPoint
 
-// WITH_RUNTIME
+// WITH_STDLIB
 
 object EntryPoint {
     @JvmStatic public fun main(args: Array<String>) {

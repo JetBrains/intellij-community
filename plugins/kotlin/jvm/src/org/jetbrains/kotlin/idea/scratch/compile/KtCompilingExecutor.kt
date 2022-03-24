@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.scratch.*
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputType
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
@@ -41,20 +42,20 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
         }
     }
 
-    fun checkForErrors(psiFile: KtFile, expressions: List<ScratchExpression>): Boolean {
-        return runReadAction {
+    fun checkForErrors(psiFile: KtFile, expressions: List<ScratchExpression>): Boolean =
+        psiFile.project.runReadActionInSmartMode {
             try {
                 AnalyzingUtils.checkForSyntacticErrors(psiFile)
             } catch (e: IllegalArgumentException) {
                 errorOccurs(e.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), isFatal = true)
-                return@runReadAction false
+                return@runReadActionInSmartMode false
             }
 
             val analysisResult = psiFile.analyzeWithAllCompilerChecks()
 
             if (analysisResult.isError()) {
                 errorOccurs(analysisResult.error.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), isFatal = true)
-                return@runReadAction false
+                return@runReadActionInSmartMode false
             }
 
             val bindingContext = analysisResult.bindingContext
@@ -81,11 +82,10 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
                     }
                 }
                 handler.onFinish(file)
-                return@runReadAction false
+                return@runReadActionInSmartMode false
             }
-            return@runReadAction true
+            return@runReadActionInSmartMode true
         }
-    }
 
     fun parseOutput(processOutput: ProcessOutput, expressions: List<ScratchExpression>) {
         ProcessOutputParser(expressions).parse(processOutput)

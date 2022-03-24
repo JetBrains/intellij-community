@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 open class PageManager(a: Runnable)
 class Tab
 
@@ -9,3 +10,4 @@ class ChromePageManager(): PageManager(object : Runnable {
 }
 
 // EXIST: Tab
+// FIR_COMPARISON

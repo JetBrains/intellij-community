@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -281,6 +282,27 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 24, 0, 0));
     }
+  },
+
+  /**
+   * Options "-m" and "--diff-merges=m" changed their meaning. When one of these options is provided, instead of showing diff for each parent commit,
+   * the value of the "log.diffMerges" configuration parameter ("separate" by default) is used to determine how to show diff.
+   */
+  DIFF_MERGES_M_USES_DEFAULT_SETTING {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 32, 0, 0));
+    }
+  },
+
+  /**
+   * Option "--diff-merges=first-parent" is supported since git version 2.31.0.
+   */
+  DIFF_MERGES_SUPPORTS_FIRST_PARENT {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 31, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
@@ -298,6 +320,15 @@ public enum GitVersionSpecialty {
    */
   public boolean existsIn(@NotNull Project project) {
     GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
+    return existsIn(Objects.requireNonNullElse(version, GitVersion.NULL));
+  }
+
+  /**
+   * @param project    to use for progresses and notifications
+   * @param executable to check
+   */
+  public boolean existsIn(@Nullable Project project, @NotNull GitExecutable executable) {
+    GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project, executable);
     return existsIn(Objects.requireNonNullElse(version, GitVersion.NULL));
   }
 

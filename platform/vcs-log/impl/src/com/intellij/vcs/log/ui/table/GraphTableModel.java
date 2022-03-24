@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.AbstractList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -31,9 +30,6 @@ import java.util.function.Function;
 public final class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
-
-  public static final int COMMIT_NOT_FOUND = -1;
-  public static final int COMMIT_DOES_NOT_MATCH = -2;
 
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
 

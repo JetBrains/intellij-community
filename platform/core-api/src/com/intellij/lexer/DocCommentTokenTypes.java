@@ -26,4 +26,10 @@ public interface DocCommentTokenTypes {
   IElementType inlineTagEnd();
   IElementType badCharacter();
   IElementType commentLeadingAsterisks();
+  default IElementType tagValueQuote() {
+    return commentData();
+  }
+  default IElementType tagValueColon() {
+    return commentData();
+  }
 }

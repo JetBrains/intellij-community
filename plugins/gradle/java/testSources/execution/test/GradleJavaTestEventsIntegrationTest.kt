@@ -11,11 +11,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.jetbrains.plugins.gradle.GradleManager
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
@@ -173,10 +174,10 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     else {
       assertThat(testListener.eventLog)
         .contains(
-          "<descriptor name='testFail' className='my.pack.AClassTest' />",
-          "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
+          "<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
+          "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
         .doesNotContain(
-          "<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
+          "<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
         .doesNotContain(
           "Attempt to resolve configuration too early")
     }
@@ -214,9 +215,9 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                                        testListener)
 
     assertThat(testListener.eventLog)
-      .contains("<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
-      .doesNotContain("<descriptor name='testFail' className='my.pack.AClassTest' />",
-                      "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
+      .contains("<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
+      .doesNotContain("<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
+                      "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
   }
 
   private fun `test events use display name`() {
@@ -243,8 +244,13 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
     }
     else {
-      assertThat(testListener.eventLog)
-        .contains("<descriptor name='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      if (GradleVersionComparator(currentGradleVersion).isOrGreaterThan("4.10.3")) {
+        assertThat(testListener.eventLog)
+          .contains("<descriptor name='successful_test()' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      } else {
+        assertThat(testListener.eventLog)
+          .contains("<descriptor name='successful test' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      }
     }
 
   }

@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ public abstract class CompilerManager {
   public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
   public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
 
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Compiler");
 
   /**
    * Returns the compiler manager instance for the specified project.
@@ -45,8 +45,7 @@ public abstract class CompilerManager {
    *
    * @deprecated use {@link CompileTask} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addCompiler(@NotNull Compiler compiler);
 
   /**
@@ -54,8 +53,7 @@ public abstract class CompilerManager {
    *
    * @deprecated use {@link CompileTask} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
@@ -81,8 +79,7 @@ public abstract class CompilerManager {
    * @param type the type for which the Compile action is disabled.
    * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
@@ -107,8 +104,7 @@ public abstract class CompilerManager {
    * Registers a compiler task  that will be executed after the compilation.
    * @deprecated Use {@code compiler.task} extension point instead (see {@link CompileTask} for details).
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**
@@ -243,12 +239,23 @@ public abstract class CompilerManager {
    */
   @NotNull
   public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
+
   @NotNull
-  public abstract CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules);
+  public CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
+    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
+  }
+
   @NotNull
-  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules);
+  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
+    return createModulesCompileScope(modules, includeDependentModules, false);
+  }
+
   @NotNull
-  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
+  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
+    return createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies, true);
+  }
+
+  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests);
   @NotNull
   public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
   @NotNull

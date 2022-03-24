@@ -1,16 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -21,6 +15,7 @@ class MixedListFactory extends SEResultsListFactory {
 
   MixedListFactory() {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
+    prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
     if (Registry.is("search.everywhere.recent.at.top")) {
@@ -65,31 +60,10 @@ class MixedListFactory extends SEResultsListFactory {
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
-          Component component = myMoreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
-          return component;
+          return getMoreElementRenderer(list, index, isSelected, cellHasFocus);
         }
 
-        Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
-          list, value, index, isSelected, cellHasFocus);
-        if (component == null) {
-          SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
-          assert contributor != null : "Null contributor is not allowed here";
-          ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
-          //noinspection ConstantConditions
-          component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
-        }
-
-        if (component instanceof JComponent) {
-          Border border = ((JComponent)component).getBorder();
-          if (border != GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER) {
-            ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
-          }
-        }
-        AppUIUtil.targetToDevice(component, list);
-        component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
-
-        return component;
+        return getNonMoreElementRenderer(list, value, index, isSelected, cellHasFocus, model, myRenderersCache);
       }
     };
   }

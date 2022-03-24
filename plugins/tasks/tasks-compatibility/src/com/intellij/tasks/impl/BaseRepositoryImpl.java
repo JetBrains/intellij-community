@@ -7,7 +7,6 @@ import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +22,7 @@ import java.nio.charset.StandardCharsets;
  * @author Dmitry Avdeev
  * @deprecated Upgrade your clients to use Apache HttpClient 4.x or other transport libraries.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BaseRepositoryImpl extends BaseRepository {
   private final HttpClient myClient;
 

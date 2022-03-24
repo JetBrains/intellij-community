@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -14,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
         storages = {
                 @Storage(
                         value = "$APP_CONFIG$/editor.xml"
-                )}
+                )},
+        category = SettingsCategory.CODE
 )
 public class KotlinEditorOptions implements PersistentStateComponent<KotlinEditorOptions> {
     private boolean donTShowConversionDialog = false;

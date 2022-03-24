@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -18,8 +18,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
@@ -32,14 +32,14 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
+    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(e);
     ObjectReference reference = getObjectReference(node);
     if (debugProcess == null || reference == null) return;
 
     XDebuggerTree tree = node.getTree();
     RetainedSizeDialog dialog = new RetainedSizeDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(),
                                                        nodeName, node.getValueContainer(), tree.getValueMarkers(),
-                                                       XDebuggerManager.getInstance(tree.getProject()).getCurrentSession(),
+                                                       DebuggerUIUtil.getSession(e),
                                                        true);
     dialog.show();
 
@@ -101,7 +101,7 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
-    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
+    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(e);
     if (debugProcess == null || !debugProcess.isEvaluationPossible() ||
         !DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
       e.getPresentation().setVisible(false);

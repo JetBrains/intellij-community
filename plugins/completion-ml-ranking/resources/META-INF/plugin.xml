@@ -30,6 +30,10 @@
       <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.LookupFeatureProvider"/>
     </extensionPoint>
 
+    <extensionPoint qualifiedName="com.intellij.completion.ml.additionalContextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.AdditionalContextFeatureProvider"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.completion.ml.elementIdProvider" dynamic="true" interface="com.intellij.completion.ml.util.LookupElementIdProvider" />
 
     <extensionPoint qualifiedName="com.intellij.completion.ml.localModelProvider" dynamic="true" interface="com.intellij.completion.ml.ranker.local.LocalZipModelProvider" />
@@ -69,6 +73,7 @@
                         preload="true"/>
 
     <projectService serviceImplementation="com.intellij.completion.ml.ngram.NGramModelRunnerManager"/>
+    <projectService serviceImplementation="com.intellij.completion.ml.common.CurrentProjectInfo"/>
 
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.features.MLCompletionWeigher" order="last"/>
     <completion.contributor language="any" order="first" id="ml_context"
@@ -101,6 +106,8 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
+    <statistics.collectorExtension implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor$MLRankingCompletionCollectorExtension"/>
+
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>

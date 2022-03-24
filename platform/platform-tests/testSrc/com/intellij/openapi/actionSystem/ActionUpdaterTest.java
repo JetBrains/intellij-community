@@ -36,7 +36,7 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
   private List<AnAction> testExpandActionGroup(ActionGroup actionGroup) {
     PresentationFactory presentationFactory = new PresentationFactory();
     DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
-    return Utils.expandActionGroup(false, actionGroup, presentationFactory, dataContext, ActionPlaces.UNKNOWN);
+    return Utils.expandActionGroup(actionGroup, presentationFactory, dataContext, ActionPlaces.UNKNOWN);
   }
 
   private static class PopupGroup extends DefaultActionGroup {
@@ -61,14 +61,10 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
     }
 
     @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myVisible);
       e.getPresentation().setEnabled(myEnabled);
+      e.getPresentation().setPerformGroup(true);
     }
   }
 }

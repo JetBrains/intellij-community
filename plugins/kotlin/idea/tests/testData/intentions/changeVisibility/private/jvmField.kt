@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 class Test {
     @JvmField
     <caret>val foo = 1

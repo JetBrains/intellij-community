@@ -29,7 +29,7 @@ Here we do not have non-safe string assignments to <code>s</code> so warning is 
     String s = safe();
     String s1 = "other";
     s1 = foo();
-    if (b) s1 = s;
+    if (b) s = s1;
     sink(s);        // warning here
   }
   

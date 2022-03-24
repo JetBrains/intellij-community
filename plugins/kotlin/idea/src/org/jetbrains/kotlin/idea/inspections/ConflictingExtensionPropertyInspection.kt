@@ -162,10 +162,10 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
         isOnTheFly: Boolean
     ): Array<IntentionWrapper> {
         return if (isSameAsSynthetic(property, conflictingExtension)) {
-            val fix1 = IntentionWrapper(DeleteRedundantExtensionAction(property), property.containingFile)
+            val fix1 = IntentionWrapper(DeleteRedundantExtensionAction(property))
             // don't add the second fix when on the fly to allow code cleanup
             val fix2 = if (isOnTheFly)
-                object : IntentionWrapper(MarkHiddenAndDeprecatedAction(property), property.containingFile), LowPriorityAction {}
+                object : IntentionWrapper(MarkHiddenAndDeprecatedAction(property)), LowPriorityAction {}
             else
                 null
             listOfNotNull(fix1, fix2).toTypedArray()
@@ -189,7 +189,7 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
             val fqName = declaration.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL).importableFqName
             if (fqName != null) {
                 ProgressManager.getInstance().run(
-                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete"), true) {
+                    object : Task.Modal(project, KotlinBundle.message("searching.for.imports.to.delete.title"), true) {
                         override fun run(indicator: ProgressIndicator) {
                             val importsToDelete = runReadAction {
                                 val searchScope = KotlinSourceFilterScope.projectSources(GlobalSearchScope.projectScope(project), project)

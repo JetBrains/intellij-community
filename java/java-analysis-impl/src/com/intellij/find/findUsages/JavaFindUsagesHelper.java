@@ -138,7 +138,7 @@ public final class JavaFindUsagesHelper {
       if (!addClassesUsages((PsiPackage)element, (JavaPackageFindUsagesOptions)options, processor)) return false;
     }
 
-    if (options instanceof JavaClassFindUsagesOptions) {
+    if (options instanceof JavaClassFindUsagesOptions && element instanceof PsiClass) {
       JavaClassFindUsagesOptions classOptions = (JavaClassFindUsagesOptions)options;
       PsiClass psiClass = (PsiClass)element;
       PsiManager manager = ReadAction.compute(psiClass::getManager);

@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -97,8 +99,18 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
   override val isExternalSystemStorageEnabled: Boolean
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled ?: false
 
-  override fun createFileBasedStorage(path: Path, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage {
-    return ModuleFileStorage(this, path, collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
+  override fun createFileBasedStorage(path: Path,
+                                      collapsedPath: String,
+                                      roamingType: RoamingType,
+                                      usePathMacroManager: Boolean,
+                                      rootTagName: String?): StateStorage {
+    return ModuleFileStorage(storageManager = this,
+                             file = path,
+                             fileSpec = collapsedPath,
+                             rootElementName = rootTagName,
+                             roamingType = roamingType,
+                             pathMacroManager = macroSubstitutor,
+                             provider = if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
   }
 
   override fun getFileBasedStorageConfiguration(fileSpec: String) = moduleFileBasedStorageConfiguration

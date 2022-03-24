@@ -10,7 +10,4 @@ public interface JsonPathIdSegment extends PsiElement {
   @NotNull
   JsonPathId getId();
 
-  @NotNull
-  List<JsonPathSegmentExpression> getSegmentExpressionList();
-
 }

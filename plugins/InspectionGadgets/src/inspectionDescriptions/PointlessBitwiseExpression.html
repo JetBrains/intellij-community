@@ -1,13 +1,12 @@
 <html>
 <body>
-Reports pointless bitwise
-expressions.
+Reports pointless bitwise expressions.
 <p>
   Such expressions include applying the <code>&</code> operator to the maximum value for the given type, applying the
   <code>or</code> operator to zero, and shifting by zero. Such expressions may be the result of automated
   refactorings not followed through to completion and are unlikely to be originally intended.</p>
 <p><b>Examples:</b></p>
-<pre>
+<pre><code>
   // Warning: operation is pointless and can be replaced with just `flags`
   // 0xFFFF_FFFF is the maximum value for an integer, and both literals are treated
   // as 32 bit integer literals.
@@ -19,7 +18,7 @@ expressions.
 
   // Warning: operation is pointless, as always results in 0
   int xor = or ^ or;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

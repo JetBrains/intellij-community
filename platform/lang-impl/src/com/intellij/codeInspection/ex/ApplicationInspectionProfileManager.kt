@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -26,9 +26,11 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Paths
 
-@State(name = "InspectionProfileManager", storages = [Storage("editor.xml")], additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
-open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : ApplicationInspectionProfileManagerBase(schemeManagerFactory),
-                                                                                                                                  PersistentStateComponent<Element> {
+@State(name = "InspectionProfileManager",
+       storages = [Storage("editor.xml")],
+       additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
+open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
+  : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
   open val converter: InspectionProfileConvertor
     get() = InspectionProfileConvertor(this)
 
@@ -91,7 +93,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   @Throws(IOException::class, JDOMException::class)
   override fun loadProfile(path: String): InspectionProfileImpl? {
     try {
-     return super.loadProfile(path)
+      return super.loadProfile(path)
     }
     catch (e: IOException) {
       throw e

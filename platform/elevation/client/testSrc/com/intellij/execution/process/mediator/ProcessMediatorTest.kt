@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.client.MediatedProcess
@@ -30,8 +30,11 @@ open class ProcessMediatorTest {
     }
   })
 
-  private lateinit var connection: ProcessMediatorConnection
-  private val client: ProcessMediatorClient get() = connection.client
+  private var connection: ProcessMediatorConnection? = null
+  private val client: ProcessMediatorClient
+    get() = connection!!.client
+
+  private val startedProcesses = mutableListOf<Process>()
 
   protected open fun createProcessMediatorConnection(coroutineScope: CoroutineScope, testInfo: TestInfo): ProcessMediatorConnection {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
@@ -51,7 +54,10 @@ open class ProcessMediatorTest {
       delay(TIMEOUT_MS)
       deferred.completeExceptionally(TimeoutException("tearDown() timed out"))
     }
-    connection.close()
+    startedProcesses.forEach {
+      destroyProcess(it)
+    }
+    connection?.close()
     watchdogJob.cancel()
     runBlocking {
       deferred.complete(Unit)
@@ -88,15 +94,6 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `create process with endless loop without destroying shouldn't hang the client on close`() {
-    val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Loop::class)
-      .startMediatedProcess()
-    val pid = process.pid()
-    assertTrue(process.isAlive)
-    assertTrue(ProcessHandle.of(pid).isPresent)
-  }
-
-  @Test
   internal fun `destroy process with endless loop`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Loop::class)
       .startMediatedProcess()
@@ -104,7 +101,7 @@ open class ProcessMediatorTest {
     assertTrue(process.isAlive)
     assertTrue(ProcessHandle.of(pid).isPresent)
 
-    //destroyProcess(process)
+    destroyProcess(process)
   }
 
   @Test
@@ -116,8 +113,6 @@ open class ProcessMediatorTest {
     assertTrue(hasExited)
     assertTrue(ProcessHandle.of(process.pid()).isEmpty)
     assertFalse(process.isAlive)
-
-    //destroyProcess(process)
   }
 
   @Test
@@ -127,16 +122,11 @@ open class ProcessMediatorTest {
 
     process.outputStream.close()
 
-    try {
-      assertThrows(IOException::class.java) {
-        OutputStreamWriter(process.outputStream).use {
-          it.write("test")
-          it.flush()
-        }
+    assertThrows(IOException::class.java) {
+      OutputStreamWriter(process.outputStream).use {
+        it.write("test")
+        it.flush()
       }
-    }
-    finally {
-      destroyProcess(process)
     }
   }
 
@@ -148,16 +138,11 @@ open class ProcessMediatorTest {
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
     assertFalse(hasExited)
 
-    try {
-      assertThrows(IOException::class.java) {
-        OutputStreamWriter(process.outputStream).use {
-          it.write("test\n")
-          it.flush()
-        }
+    assertThrows(IOException::class.java) {
+      OutputStreamWriter(process.outputStream).use {
+        it.write("test\n")
+        it.flush()
       }
-    }
-    finally {
-      destroyProcess(process)
     }
   }
 
@@ -241,7 +226,6 @@ open class ProcessMediatorTest {
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
     assertTrue(hasExited)
     assertFalse(process.isAlive)
-    //destroyProcess(process)
   }
 
   @Test
@@ -327,49 +311,60 @@ open class ProcessMediatorTest {
     val process = builder.startMediatedProcess()
 
     val executor = Executors.newFixedThreadPool(3)
-    val expectedData = executor.submit(Callable {
-      var expected = ""
-      OutputStreamWriter(process.outputStream).use {
-        for (i in 0..1000) {
-          val content = Stream.generate { "ping! ping! ping!\n" }
-            .limit(Random().nextInt(1000).toLong())
-            .collect(Collectors.joining())
-          it.write(content)
-          it.flush()
+    try {
+      val expectedData = executor.submit(Callable {
+        var expected = ""
+        OutputStreamWriter(process.outputStream).use {
+          for (i in 0..1000) {
+            val content = Stream.generate { "ping! ping! ping!\n" }
+              .limit(Random().nextInt(1000).toLong())
+              .collect(Collectors.joining())
+            it.write(content)
+            it.flush()
 
-          expected += content
+            expected += content
+          }
         }
-      }
-      expected
-    })
+        expected
+      })
 
-    val inputData = executor.submit(Callable {
-      BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-    })
+      val inputData = executor.submit(Callable {
+        BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+      })
 
-    val errorData = executor.submit(Callable {
-      BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
-    })
+      val errorData = executor.submit(Callable {
+        BufferedReader(InputStreamReader(process.errorStream)).use { it.readText() }
+      })
 
-    val expected = expectedData.get(60, TimeUnit.SECONDS)
-    assertEquals(expected, inputData.get(60, TimeUnit.SECONDS))
-    assertEquals(expected, errorData.get(60, TimeUnit.SECONDS))
+      val expected = expectedData.get(60, TimeUnit.SECONDS)
+      assertEquals(expected, inputData.get(60, TimeUnit.SECONDS))
+      assertEquals(expected, errorData.get(60, TimeUnit.SECONDS))
 
-    val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-    assertTrue(hasExited)
-    assertFalse(process.isAlive)
-    destroyProcess(process)
-    executor.shutdown()
+      val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+      assertTrue(hasExited)
+      assertFalse(process.isAlive)
+      destroyProcess(process)
+    }
+    finally {
+      executor.shutdown()
+    }
   }
 
   private fun destroyProcess(process: Process) {
-    process.destroy()
-    assertTrue(process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-    assertFalse(process.isAlive)
-    assertTrue(ProcessHandle.of(process.pid()).isEmpty)
+    try {
+      process.destroy()
+      assertTrue(process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+      assertFalse(process.isAlive)
+      assertTrue(ProcessHandle.of(process.pid()).isEmpty)
+    }
+    finally {
+      process.destroyForcibly()
+    }
   }
 
   private fun ProcessBuilder.startMediatedProcess(): Process {
-    return MediatedProcess.create(client, this)
+    return MediatedProcess.create(client, this).also {
+      startedProcesses += it
+    }
   }
 }

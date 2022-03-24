@@ -53,7 +53,7 @@ public class TimedZipHandler extends ZipHandlerBase {
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
-      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::dispose);
+      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::clearCaches);
     }
   }
 
@@ -65,11 +65,6 @@ public class TimedZipHandler extends ZipHandlerBase {
   public TimedZipHandler(@NotNull String path) {
     super(path);
     myHandle = new ZipResourceHandle(((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(getFile()) ? 2000L : 5L * 60 * 1000);
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
   }
 
   @Override

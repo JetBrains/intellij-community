@@ -35,10 +35,6 @@ public class SvnRemoteFileAnnotation extends BaseSvnFileAnnotation {
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   public VirtualFile getFile() {
     return myCurrentFile;
   }

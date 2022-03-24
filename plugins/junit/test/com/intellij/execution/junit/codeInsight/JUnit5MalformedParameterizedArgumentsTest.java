@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -32,5 +34,22 @@ public class JUnit5MalformedParameterizedArgumentsTest extends LightJavaCodeInsi
     myFixture.configureByFile(name + ".java");
     myFixture.launchAction(myFixture.findSingleIntention("Create method 'parameters' in 'Test'"));
     myFixture.checkResultByFile(name + ".after.java");
+  }
+
+  public void testCreateCsvFile() {
+    PsiFile file = myFixture.addFileToProject("/a/b/c/MyTest.java", "package a.b.c;\n" +
+                                                                    "import org.junit.jupiter.params.ParameterizedTest;\n" +
+                                                                    "import org.junit.jupiter.params.provider.CsvFileSource;\n" +
+                                                                    "class CsvFile {\n" +
+                                                                    "    @ParameterizedTest\n" +
+                                                                    "    @CsvFileSource(resources = \"two-<caret>column.txt\")\n" +
+                                                                    "    void testWithCsvFileSource(String first, int second) {\n" +
+                                                                    "    }\n" +
+                                                                    "}\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    IntentionAction intention = myFixture.findSingleIntention("Create File two-column.txt");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    assertNotNull(myFixture.findFileInTempDir("a/b/c/two-column.txt"));
   }
 }

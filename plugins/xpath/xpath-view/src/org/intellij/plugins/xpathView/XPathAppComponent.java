@@ -21,7 +21,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -51,7 +51,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"), category = ComponentCategory.CODE)
+@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"), category = SettingsCategory.CODE)
 public final class XPathAppComponent implements PersistentStateComponent<Config> {
   private Config configuration = new Config();
 

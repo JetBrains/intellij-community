@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
@@ -40,7 +40,7 @@ public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
     PsiParenthesizedExpression parenthExpr = (PsiParenthesizedExpression)factory.createExpressionFromText("(a)", null);
     parenthExpr = (PsiParenthesizedExpression)codeStyleManager.reformat(parenthExpr);
     parenthExpr.getExpression().replace(expr);
-    expr = (PsiExpression)IntroduceVariableBase.replace(expr, parenthExpr, project);
+    expr = (PsiExpression)IntroduceVariableUtil.replace(expr, parenthExpr, project);
     int offset = expr.getTextRange().getEndOffset();
     return new TextRange(offset, offset);
   }

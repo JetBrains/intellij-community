@@ -1,11 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SearchTextField
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.Subscription
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,7 @@ class PackagesSmartSearchField(
 
     init {
         @Suppress("MagicNumber") // Swing dimension constants
-        PackageSearchUI.setHeight(this, height = 25.scaled())
+        PackageSearchUI.setHeight(this, height = 25)
 
         @Suppress("MagicNumber") // Swing dimension constants
         minimumSize = Dimension(100.scaled(), minimumSize.height)
@@ -33,7 +34,7 @@ class PackagesSmartSearchField(
         PackageSearchUI.overrideKeyStroke(textEditor, "shift ENTER", this::transferFocusBackward)
 
         searchFieldFocus
-            .onEach { withContext(Dispatchers.AppUI) { requestFocus() } }
+            .onEach { withContext(Dispatchers.EDT) { requestFocus() } }
             .launchIn(project.lifecycleScope)
     }
 
@@ -45,7 +46,15 @@ class PackagesSmartSearchField(
 
     var fieldClearedListener: (() -> Unit)? = null
 
+    private val listeners = mutableSetOf<(KeyEvent) -> Unit>()
+
+    fun registerOnKeyPressedListener(action: (KeyEvent) -> Unit): Subscription {
+        listeners.add(action)
+        return Subscription { listeners.remove(action) }
+    }
+
     override fun preprocessEventForTextField(e: KeyEvent?): Boolean {
+        e?.let { keyEvent -> listeners.forEach { listener -> listener(keyEvent) } }
         if (e?.keyCode == KeyEvent.VK_DOWN || e?.keyCode == KeyEvent.VK_PAGE_DOWN) {
             goToTable() // trying to navigate to the list instead of "show history"
             e.consume() // suppress default "show history" logic anyway

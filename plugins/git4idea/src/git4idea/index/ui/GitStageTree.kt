@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.ide.dnd.DnDActionInfo
@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -37,7 +36,6 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 
@@ -116,7 +114,7 @@ abstract class GitStageTree(project: Project,
         .toList().toTypedArray()
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
         .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
-      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty()) VirtualFileDeleteProvider() else null
+      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
       else -> super.getData(dataId)
     }
   }
@@ -237,24 +235,12 @@ abstract class GitStageTree(project: Project,
 
   protected class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
-    private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
+
     internal val conflict by lazy { getUserObject().createConflict() }
 
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
 
-    override fun originText(userObject: GitFileStatusNode): String? {
-      val originalPath = userObject.origPath ?: return null
-      if (movedRelativePath != null) {
-        return VcsBundle.message("change.file.moved.from.text", movedRelativePath)
-      }
-      return VcsBundle.message("change.file.renamed.from.text", originalPath.name)
-    }
-
-    private fun getMovedRelativePath(userObject: GitFileStatusNode): String? {
-      val origPath = userObject.origPath
-      if (origPath == null || origPath.parentPath == userObject.filePath.parentPath) return null
-      return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath)
-    }
+    override fun originPath(userObject: GitFileStatusNode): FilePath? = userObject.origPath
 
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
       super.render(renderer, selected, expanded, hasFocus)
@@ -268,10 +254,6 @@ abstract class GitStageTree(project: Project,
       if (conflict == null) {
         super.appendParentPath(renderer, parentPath)
       }
-    }
-
-    override fun getBackgroundColor(project: Project): Color? {
-      return getBackgroundColorFor(project, getUserObject().filePath)
     }
   }
 
@@ -416,7 +398,7 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
   val fileStatus: FileStatus get() = kind.status(status)
 
   override fun toString(): @NonNls String {
-    return "GitFileStatusNode(root=$root, status=$fileStatus, kind=$kind)"
+    return "GitFileStatusNode(root=${root.name}, status=$fileStatus, kind=$kind, path=$filePath)"
   }
 }
 

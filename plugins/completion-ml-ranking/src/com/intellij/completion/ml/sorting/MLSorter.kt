@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.completion.ml.sorting
 
@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.util.prefix
 import com.intellij.completion.ml.util.queryLength
 import com.intellij.completion.ml.util.RelevanceUtil
-import com.intellij.completion.ml.common.PrefixMatchingUtil
+import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.completion.ml.features.RankingFeaturesOverrides
 import com.intellij.completion.ml.performance.CompletionPerformanceTracker
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
@@ -129,7 +129,7 @@ class MLSorter : CompletionFinalSorter() {
       SessionFactorsUtils.saveElementFactorsTo(additional, lookupStorage, element)
       calculateAdditionalFeaturesTo(additional, element, queryLength, prefix.length, position, items.size, parameters)
       lookupStorage.performanceTracker.trackElementFeaturesCalculation(PrefixMatchingUtil.baseName) {
-        PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
+        PrefixMatchingUtil.calculateFeatures(element.lookupString, prefix, additional)
       }
       meaningfulRelevanceExtractor.processFeatures(relevance)
       calculatedElementFeatures.add(ElementFeatures(relevance, additional))
@@ -140,9 +140,14 @@ class MLSorter : CompletionFinalSorter() {
       val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
       lookupFeatures.putAll(features)
     }
+    val additionalContextFeatures = mutableMapOf<String, String>()
+    for (contextFeatureProvider in AdditionalContextFeatureProvider.forLanguage(lookupStorage.language)) {
+      val features = contextFeatureProvider.calculateFeatures(lookupStorage.contextFactors)
+      additionalContextFeatures.putAll(features)
+    }
 
+    val contextFactors = lookupStorage.contextFactors + additionalContextFeatures
     val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
-    val contextFactors = lookupStorage.contextFactors
     val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
     val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures, meaningfulRelevance)
 

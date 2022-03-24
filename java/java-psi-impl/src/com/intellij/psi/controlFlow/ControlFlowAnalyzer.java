@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -244,11 +244,19 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     // optimization: reduce number of instructions
-    boolean isGeneratingStatement = element instanceof PsiStatement && !(element instanceof PsiSwitchLabelStatement);
-    boolean isGeneratingCodeBlock = element instanceof PsiCodeBlock && !(element.getParent() instanceof PsiSwitchStatement);
-    if (isGeneratingStatement || isGeneratingCodeBlock) {
+    boolean isGeneratingStatement = element instanceof PsiStatement && !(element instanceof PsiSwitchLabelStatement) &&
+                                    !isAbruptStatement(element);
+    PsiElement parent = element.getParent();
+    boolean isGeneratingCodeBlock = element instanceof PsiCodeBlock && !(parent instanceof PsiSwitchStatement);
+    boolean isGeneratingExpression = element instanceof PsiExpression && !(element instanceof PsiSwitchExpression) &&
+                                     isAbruptStatement(parent);
+    if (isGeneratingStatement || isGeneratingCodeBlock || isGeneratingExpression) {
       generateUncheckedExceptionJumps(element, atStart);
     }
+  }
+
+  private static boolean isAbruptStatement(@NotNull PsiElement element) {
+    return element instanceof PsiReturnStatement || element instanceof PsiYieldStatement || element instanceof PsiThrowStatement;
   }
 
   private void finishElement(@NotNull PsiElement element) {
@@ -877,7 +885,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
     startElement(statement);
-    generateCaseValueInstructions(statement.getCaseValues());
+    generateCaseValueInstructions(statement.getCaseLabelElementList());
     finishElement(statement);
   }
 
@@ -885,7 +893,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
     startElement(statement);
 
-    generateCaseValueInstructions(statement.getCaseValues());
+    generateCaseValueInstructions(statement.getCaseLabelElementList());
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -903,11 +911,13 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void generateCaseValueInstructions(@Nullable PsiExpressionList values) {
+  private void generateCaseValueInstructions(@Nullable PsiCaseLabelElementList values) {
     if (values != null) {
-      for (PsiExpression caseValue : values.getExpressions()) {
+      for (PsiCaseLabelElement caseValue : values.getElements()) {
         ProgressManager.checkCanceled();
-        generateExpressionInstructions(caseValue);
+        if (caseValue instanceof PsiExpression) {
+          generateExpressionInstructions((PsiExpression)caseValue);
+        }
       }
     }
   }
@@ -1809,13 +1819,21 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitClass(PsiClass aClass) {
     startElement(aClass);
+    List<PsiVariable> array = new ArrayList<>();
     // anonymous or local class
     if (aClass instanceof PsiAnonymousClass) {
       final PsiElement arguments = PsiTreeUtil.getChildOfType(aClass, PsiExpressionList.class);
       if (arguments != null) arguments.accept(this);
+      PsiElement next = arguments != null ? arguments.getNextSibling() : aClass.getFirstChild();
+      while (next != null) {
+        addUsedVariables(array, next);
+        next = next.getNextSibling();
+      }
     }
-    List<PsiVariable> array = new ArrayList<>();
-    addUsedVariables(array, aClass);
+    else {
+      addUsedVariables(array, aClass);
+    }
+    
     for (PsiVariable var : array) {
       ProgressManager.checkCanceled();
       generateReadInstruction(var);

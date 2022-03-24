@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
@@ -112,9 +113,25 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
   }
 
+  /**
+   * @param element element to which the template was applied
+   * @return an element to remove before inserting the template
+   */
   @NotNull
   protected PsiElement getElementToRemove(@NotNull PsiElement element) {
     return element;
+  }
+
+  /**
+   * @param element element to which the template was applied
+   * @return a range to remove before inserting the template
+   *
+   * Default implementation delegates to getElementToRemove and takes the range of the resulting element.
+   * You may override it if it's desired to remove only a part of PsiElement range
+   */
+  @NotNull
+  protected TextRange getRangeToRemove(@NotNull PsiElement element) {
+    return getElementToRemove(element).getTextRange();
   }
 
   @NotNull
@@ -140,8 +157,8 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   private void expandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {
     Project project = element.getProject();
     Document document = editor.getDocument();
-    PsiElement elementToRemove = getElementToRemove(element);
-    document.deleteString(elementToRemove.getTextRange().getStartOffset(), elementToRemove.getTextRange().getEndOffset());
+    TextRange range = getRangeToRemove(element);
+    document.deleteString(range.getStartOffset(), range.getEndOffset());
     TemplateManager manager = TemplateManager.getInstance(project);
 
     TemplateImpl template = myLiveTemplate.copy();

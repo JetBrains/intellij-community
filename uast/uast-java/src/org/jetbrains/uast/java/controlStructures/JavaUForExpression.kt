@@ -15,14 +15,15 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.impl.source.tree.ChildRole
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UForExpression
 import org.jetbrains.uast.UIdentifier
 
+@ApiStatus.Internal
 class JavaUForExpression(
   override val sourcePsi: PsiForStatement,
   givenParent: UElement?

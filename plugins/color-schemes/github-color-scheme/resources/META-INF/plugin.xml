@@ -1,0 +1,13 @@
+<idea-plugin>
+  <name>Github Color Scheme</name>
+  <id>com.intellij.plugins.github.colorscheme</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <description>
+    Github editor color scheme for all IntelliJ-based IDEs.
+  </description>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme path="/colorSchemes/github"/>
+  </extensions>
+</idea-plugin>

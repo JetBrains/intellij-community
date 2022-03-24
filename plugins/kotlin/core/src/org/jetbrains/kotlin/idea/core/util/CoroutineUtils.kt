@@ -10,14 +10,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 
 object EDT : CoroutineDispatcher() {
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-        return !ApplicationManager.getApplication().isDispatchThread
-    }
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !isDispatchThread()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val modalityState = context[ModalityStateElement.Key]?.modalityState ?: ModalityState.defaultModalityState()

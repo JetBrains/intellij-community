@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -16,13 +15,14 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.refactoring.replaceWithCopyWithResolveCheck
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
 class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
@@ -32,6 +32,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val arrow = functionLiteral.arrow ?: return
             val parameters = functionLiteral.valueParameters
             val singleParameter = parameters.singleOrNull()
+            if (singleParameter?.typeReference != null) return
             if (parameters.isNotEmpty() && singleParameter?.isSingleUnderscore != true && singleParameter?.name != "it") {
                 return
             }
@@ -50,9 +51,9 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val lambdaContext = lambdaExpression.analyze()
             if (parameters.isNotEmpty() && lambdaContext[BindingContext.EXPECTED_EXPRESSION_TYPE, lambdaExpression] == null) return
 
-            val valueArgument = lambdaExpression.parent as? KtValueArgument
-            val valueArgumentCall = valueArgument?.getStrictParentOfType<KtCallExpression>()
-            if (valueArgumentCall?.isApplicableCall(lambdaExpression, lambdaContext) == false) return
+            val valueArgument = lambdaExpression.getStrictParentOfType() as? KtValueArgument
+            val valueArgumentCalls = valueArgument?.parentCallExpressions().orEmpty()
+            if (valueArgumentCalls.any { !it.isApplicableCall(lambdaExpression, lambdaContext) }) return
 
             val functionLiteralDescriptor = functionLiteral.descriptor
             if (functionLiteralDescriptor != null) {
@@ -80,7 +81,6 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as? KtFunctionLiteral ?: return
-            FileModificationService.getInstance().preparePsiElementForWrite(element)
             element.removeArrow()
         }
     }
@@ -107,8 +107,7 @@ private fun KtCallExpression.isApplicableCall(lambdaExpression: KtLambdaExpressi
             },
             context = lambdaContext,
             preHook = {
-                val call = selectorExpression as? KtCallExpression
-                call?.findLambdaExpressionByOffset(offset)?.functionLiteral?.removeArrow()
+                findLambdaExpressionByOffset(offset)?.functionLiteral?.removeArrow()
             }
         )
     } != null
@@ -119,8 +118,19 @@ private fun KtFunctionLiteral.removeArrow() {
     arrow?.delete()
 }
 
-private fun KtCallExpression.findLambdaExpressionByOffset(offset: Int): KtLambdaExpression? =
-    lambdaArguments.asSequence().mapNotNull(KtLambdaArgument::getLambdaExpression).firstOrNull { it.textOffset == offset }
-        ?: valueArguments.asSequence().mapNotNull(KtValueArgument::getArgumentExpression)
-            .firstOrNull { it.textOffset == offset } as? KtLambdaExpression
+private fun KtExpression.findLambdaExpressionByOffset(offset: Int): KtLambdaExpression? {
+    val lbrace = findElementAt(offset)?.takeIf { it.node.elementType == KtTokens.LBRACE } ?: return null
+    val functionLiteral = lbrace.parent as? KtFunctionLiteral ?: return null
+    return functionLiteral.parent as? KtLambdaExpression
+}
 
+private fun KtValueArgument.parentCallExpressions(): List<KtCallExpression> {
+    val calls = mutableListOf<KtCallExpression>()
+    var argument = this
+    while (true) {
+        val call = argument.getStrictParentOfType<KtCallExpression>() ?: break
+        calls.add(call)
+        argument = call.getStrictParentOfType() ?: break
+    }
+    return calls
+}

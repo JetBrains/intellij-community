@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import java.io.File
 
 abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -19,6 +19,11 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
 
     override fun mainFile(): File =
         File(testDataDirectory, "${fileName()}.kt")
+
+
+    protected open fun setupAutoImportEnvironment(settings: KotlinCodeInsightSettings, withAutoImport: Boolean) {
+        settings.addUnambiguousImportsOnTheFly = withAutoImport
+    }
 
     private fun doTest(withAutoImport: Boolean) {
         val mainFile = mainFile().also { check(it.exists()) { "$it should exist" } }
@@ -39,7 +44,8 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
         val settings = KotlinCodeInsightSettings.getInstance()
         val oldValue = settings.addUnambiguousImportsOnTheFly
         try {
-            settings.addUnambiguousImportsOnTheFly = withAutoImport
+            setupAutoImportEnvironment(settings, withAutoImport)
+
             // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
             CodeInsightTestFixtureImpl.instantiateAndRun(
                 getFile(),

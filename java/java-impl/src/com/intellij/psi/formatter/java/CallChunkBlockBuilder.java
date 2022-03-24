@@ -37,7 +37,9 @@ public class CallChunkBlockBuilder {
   private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
   private final JavaCodeStyleSettings myJavaSettings;
   private final FormattingMode myFormattingMode;
-  private final Indent mySmartIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
+  private final Indent mySmartIndent;
+  private final boolean myUseRelativeIndents;
+
   private boolean isFirst = true;
 
   public CallChunkBlockBuilder(@NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings,
@@ -46,6 +48,8 @@ public class CallChunkBlockBuilder {
     myIndentSettings = settings.getIndentOptions();
     myJavaSettings = javaSettings;
     myFormattingMode = formattingMode;
+    myUseRelativeIndents = myIndentSettings != null && myIndentSettings.USE_RELATIVE_INDENTS;
+    mySmartIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION, myUseRelativeIndents);
   }
 
   @NotNull
@@ -89,7 +93,7 @@ public class CallChunkBlockBuilder {
       isFirst = false;
       return Indent.getNoneIndent();
     }
-    return isChainedCall ? mySmartIndent : Indent.getContinuationIndent();
+    return isChainedCall ? mySmartIndent : Indent.getContinuationIndent(myUseRelativeIndents);
   }
 
   @NotNull

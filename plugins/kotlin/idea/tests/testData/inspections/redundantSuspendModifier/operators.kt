@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A(val x: Int) {
     // Redundant
@@ -66,4 +66,9 @@ open class E {
     }
     // Not redundant
     abstract suspend fun baz()
+}
+
+// Not redundant
+suspend fun foo(): Int {
+    return someFunctionThatDoesntResolve()
 }

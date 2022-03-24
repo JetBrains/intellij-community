@@ -13,6 +13,7 @@ public final class PerformanceTrace implements Serializable {
   public static final Key<PerformanceTrace> TRACE_NODE_KEY = Key.create(PerformanceTrace.class, ExternalSystemConstants.UNORDERED + 1);
 
   private final Map<String, Long> performanceData = new ConcurrentSkipListMap<>();
+  private long myId = 0;
 
   public void logPerformance(@NotNull String key, long millis) {
     performanceData.put(key, millis);
@@ -25,5 +26,16 @@ public final class PerformanceTrace implements Serializable {
 
   public void addTrace(@NotNull Map<String, Long> trace) {
     performanceData.putAll(trace);
+  }
+
+  public long getId() {
+    return myId;
+  }
+
+  /**
+   * @param id Identifier to distinguish traces of different sync operations
+   */
+  public void setId(long id) {
+    myId = id;
   }
 }

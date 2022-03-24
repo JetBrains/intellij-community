@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -68,11 +69,12 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
             parameterList.addParameterBefore(indexParameter, parameters.first())
         }
         val callOrQualified = element.getQualifiedExpressionForSelector() ?: element
-        callOrQualified.replace(
+        val result = callOrQualified.replace(
             psiFactory.buildExpression {
                 appendCallOrQualifiedExpression(element, newFunctionName)
             }
         )
+        CodeStyleManager.getInstance(element.project).reformat(result)
     }
 
     companion object {

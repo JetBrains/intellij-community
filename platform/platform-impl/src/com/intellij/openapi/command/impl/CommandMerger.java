@@ -2,12 +2,14 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
@@ -103,7 +105,13 @@ public final class CommandMerger {
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
       return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
-    return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
+
+    if ((myForcedGlobal || nextCommandToMerge.myForcedGlobal) && !isMergeGlobalCommandsAllowed()) return false;
+    return canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
+  }
+
+  private static boolean isMergeGlobalCommandsAllowed() {
+    return ((CoreCommandProcessor)CommandProcessor.getInstance()).isMergeGlobalCommandsAllowed();
   }
 
   // remove all references to document to avoid memory leaks
@@ -278,8 +286,21 @@ public final class CommandMerger {
           if (undoRedo.confirmSwitchTo(blockingChange)) blockingChange.execute(false, true);
           break;
         }
+
+        // if undo is block by other global command, trying to split global command and undo only local change in editor
+        if (isUndo && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
+          if (myManager.splitGlobalCommand(undoRedo)) {
+            var splittedUndo = createUndoOrRedo(editor, true);
+            if (splittedUndo != null) undoRedo = splittedUndo;
+          }
+        }
       }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
+
+      if(editor != null && !isUndo && Registry.is("ide.undo.fallback")){
+        myManager.gatherGlobalCommand(undoRedo);
+      }
+
       isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);
       if (isInsideStartFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();

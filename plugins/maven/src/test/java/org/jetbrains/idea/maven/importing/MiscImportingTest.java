@@ -16,9 +16,8 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
@@ -255,42 +254,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     scheduleResolveAll(); // force resolving
     resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
-  }
-
-  @Test
-  public void testClearUnresolvedPluginsAfterPluginResolution() {
-    try {
-      File repo = new File(myDir, "repo");
-      setRepositoryPath(repo.getPath());
-
-      createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>project</artifactId>" +
-                       "<version>1</version>" +
-                       "" +
-                       "<build>" +
-                       "  <plugins>" +
-                       "    <plugin>" +
-                       "      <artifactId>maven-surefire-plugin</artifactId>" +
-                       "    </plugin>" +
-                       "  </plugins>" +
-                       "</build>");
-      importProjectWithErrors();
-
-      List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
-      assertTrue(problems.size() > 0);
-
-      for (MavenProjectProblem problem : problems) {
-        assertTrue(problem.getDescription(), problem.getDescription().contains("Unresolved plugin"));
-      }
-
-      resolvePlugins();
-
-      assertEquals(0, myProjectsTree.getRootProjects().get(0).getProblems().size());
-    }
-    finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
-    }
   }
 
   @Test

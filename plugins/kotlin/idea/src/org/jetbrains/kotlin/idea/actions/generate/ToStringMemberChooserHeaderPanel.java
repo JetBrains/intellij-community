@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.actions.generate;
 
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.jetbrains.kotlin.idea.KotlinBundle;
@@ -30,7 +31,8 @@ public class ToStringMemberChooserHeaderPanel extends JPanel {
                             boolean cellHasFocus
                     ) {
                         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                        setText(((KotlinGenerateToStringAction.Generator) value).getText());
+                        @NlsSafe String text = ((KotlinGenerateToStringAction.Generator) value).getText();
+                        setText(text);
                         return this;
                     }
                 }

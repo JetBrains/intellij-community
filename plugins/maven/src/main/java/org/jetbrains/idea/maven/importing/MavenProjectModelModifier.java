@@ -29,12 +29,12 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugins;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.util.*;
@@ -42,12 +42,10 @@ import java.util.*;
 public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
-  private final MavenProjectIndicesManager myIndicesManager;
 
   public MavenProjectModelModifier(Project project) {
     myProject = project;
     myProjectsManager = MavenProjectsManager.getInstance(project);
-    myIndicesManager = MavenProjectIndicesManager.getInstance(project);
   }
 
   @Nullable
@@ -144,7 +142,9 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
                                @Nullable String minVersion,
                                @Nullable String maxVersion,
                                @Nullable String preferredVersion) {
-    Set<String> versions = myIndicesManager.getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
+    Set<String> versions = (mavenId.getGroupId() == null || mavenId.getArtifactId() == null)
+                           ? Collections.emptySet()
+                           : DependencySearchService.getInstance(myProject).getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
     if (preferredVersion != null && versions.contains(preferredVersion)) {
       return preferredVersion;
     }

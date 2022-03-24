@@ -248,7 +248,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val elem = sourceRootElement.clone()
           elem.removeAttribute(URL_ATTRIBUTE)
           elem.removeAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE)
-          builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem))
+          if (!elem.isEmpty()) {
+            builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem))
+          }
         }
       }
 

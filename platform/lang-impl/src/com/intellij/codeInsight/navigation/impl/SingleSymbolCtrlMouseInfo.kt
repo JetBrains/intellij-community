@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
@@ -13,6 +13,7 @@ internal class SingleSymbolCtrlMouseInfo(
   symbol: Symbol,
   private val elementAtOffset: PsiElement,
   textRanges: List<TextRange>,
+  private val declared: Boolean,
 ) : BaseCtrlMouseInfo(textRanges) {
 
   private val pointer: Pointer<out Symbol> = symbol.createPointer()
@@ -25,6 +26,9 @@ internal class SingleSymbolCtrlMouseInfo(
   override fun isValid(): Boolean = pointer.dereference() != null && elementAtOffset.isValid
 
   override fun isNavigatable(): Boolean {
+    if (declared) {
+      return true
+    }
     val psi = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
               ?: return true // non-PSI are always navigatable
     return psi !== elementAtOffset && psi !== elementAtOffset.parent

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.code.interpreter;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.DataPoint;
+import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.ListStack;
@@ -403,6 +404,14 @@ public final class InstructionImpact {
           case CodeConstants.CONSTANT_MethodHandle:
             stack.push(new VarType(((LinkConstant)constant).descriptor));
             break;
+          case CodeConstants.CONSTANT_Dynamic:
+            ck = pool.getLinkConstant(instr.operand(0));
+            FieldDescriptor constDescriptor = FieldDescriptor.parseDescriptor(ck.descriptor);
+            stack.push(constDescriptor.type);
+            if (constDescriptor.type.getStackSize() == 2) {
+              stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
+            }
+            break;
         }
         break;
       case CodeConstants.opc_aload:
@@ -416,7 +425,7 @@ public final class InstructionImpact {
         break;
       case CodeConstants.opc_aaload:
         var1 = stack.pop(2);
-        stack.push(new VarType(var1.type, var1.arrayDim - 1, var1.value));
+        stack.push(new VarType(var1.getType(), var1.getArrayDim() - 1, var1.getValue()));
         break;
       case CodeConstants.opc_astore:
         data.setVariable(instr.operand(0), stack.pop());
@@ -444,7 +453,7 @@ public final class InstructionImpact {
         ck = pool.getLinkConstant(instr.operand(0));
         var1 = new VarType(ck.descriptor);
         stack.push(var1);
-        if (var1.stackSize == 2) {
+        if (var1.getStackSize() == 2) {
           stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
         }
         break;
@@ -453,7 +462,7 @@ public final class InstructionImpact {
       case CodeConstants.opc_putstatic:
         ck = pool.getLinkConstant(instr.operand(0));
         var1 = new VarType(ck.descriptor);
-        stack.pop(var1.stackSize);
+        stack.pop(var1.getStackSize());
         break;
       case CodeConstants.opc_invokevirtual:
       case CodeConstants.opc_invokespecial:
@@ -465,11 +474,11 @@ public final class InstructionImpact {
           ck = pool.getLinkConstant(instr.operand(0));
           MethodDescriptor md = MethodDescriptor.parseDescriptor(ck.descriptor);
           for (int i = 0; i < md.params.length; i++) {
-            stack.pop(md.params[i].stackSize);
+            stack.pop(md.params[i].getStackSize());
           }
-          if (md.ret.type != CodeConstants.TYPE_VOID) {
+          if (md.ret.getType() != CodeConstants.TYPE_VOID) {
             stack.push(md.ret);
-            if (md.ret.stackSize == 2) {
+            if (md.ret.getStackSize() == 2) {
               stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
             }
           }
@@ -501,7 +510,7 @@ public final class InstructionImpact {
         cn = pool.getPrimitiveConstant(instr.operand(0));
         if (cn.isArray) {
           var1 = new VarType(CodeConstants.TYPE_OBJECT, 0, cn.getString());
-          var1 = var1.resizeArrayDim(var1.arrayDim + dimensions);
+          var1 = var1.resizeArrayDim(var1.getArrayDim() + dimensions);
           stack.push(var1);
         }
         else {

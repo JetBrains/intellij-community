@@ -20,14 +20,11 @@ class GHPRCommentsDataProviderImpl(private val commentService: GHPRCommentServic
       it
     }
 
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String) =
-    commentService.getCommentMarkdownBody(progressIndicator, commentId)
-
   override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String): CompletableFuture<String> =
     commentService.updateComment(progressIndicator, commentId, text).successOnEdt {
-      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onCommentUpdated(commentId, it.bodyHTML)
+      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onCommentUpdated(commentId, it.body)
       it
-    }.thenApply { it.bodyHTML }
+    }.thenApply { it.body }
 
   override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<out Any?> =
     commentService.deleteComment(progressIndicator, commentId).successOnEdt {

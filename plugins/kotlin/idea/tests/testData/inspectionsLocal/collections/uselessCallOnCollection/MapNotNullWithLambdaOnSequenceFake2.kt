@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(): Sequence<String> {
     return sequenceOf(1, 2, 3).<caret>mapNotNull { i ->
         foo {

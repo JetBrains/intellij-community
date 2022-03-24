@@ -3,6 +3,7 @@ package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public interface ExternalDocumentationHandler {
     return false;
   }
 
-  default @NotNull String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
+  default @Nls @NotNull String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
     return "";
   }
 

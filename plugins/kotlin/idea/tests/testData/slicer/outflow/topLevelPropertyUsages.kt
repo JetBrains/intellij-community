@@ -1,5 +1,5 @@
 // FLOW: OUT
-// WITH_RUNTIME
+// WITH_STDLIB
 
 val <caret>x = 1
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.pivotal;
 
 import com.intellij.openapi.util.IconLoader;
@@ -16,48 +16,42 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.Date;
 
-public class PivotalTrackerTask extends Task {
-  @NotNull private final PivotalTrackerRepository myRepository;
-  @NotNull private final PivotalTrackerStory myStory;
+public final class PivotalTrackerTask extends Task {
+  private final @NotNull PivotalTrackerRepository myRepository;
+  private final @NotNull PivotalTrackerStory myStory;
 
   public PivotalTrackerTask(@NotNull PivotalTrackerRepository repository, @NotNull PivotalTrackerStory story) {
     myRepository = repository;
     myStory = story;
   }
 
-  @Nullable
   @Override
-  public TaskRepository getRepository() {
+  public @NotNull TaskRepository getRepository() {
     return myRepository;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myStory.getProjectId() + "-" + myStory.getId();
   }
 
-  @NotNull
   @Override
-  public String getPresentableId() {
+  public @NotNull String getPresentableId() {
     return "#" + myStory.getId();
   }
 
-  @NotNull
   @Override
-  public String getNumber() {
+  public @NotNull String getNumber() {
     return myStory.getId();
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return myStory.getName();
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myStory.getDescription();
   }
 
@@ -66,27 +60,23 @@ public class PivotalTrackerTask extends Task {
     return Comment.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
-    return IconLoader.getIcon(getCustomIcon(), PivotalTrackerRepository.class);
+  public @NotNull Icon getIcon() {
+    return IconLoader.getIcon(getCustomIcon(), PivotalTrackerRepository.class.getClassLoader());
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return TaskType.OTHER;
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return TaskUtil.parseDate(myStory.getUpdatedAt());
   }
 
-  @Nullable
   @Override
-  public Date getCreated() {
+  public @Nullable Date getCreated() {
     return TaskUtil.parseDate(myStory.getCreatedAt());
   }
 
@@ -100,21 +90,18 @@ public class PivotalTrackerTask extends Task {
     return true;
   }
 
-  @Nullable
   @Override
-  public String getIssueUrl() {
+  public @NotNull String getIssueUrl() {
     return myRepository.getUrl() + "/story/show/" + myStory.getId();
   }
 
-  @NotNull
   @Override
-  public String getCustomIcon() {
-    return "/icons/pivotal/" + myStory.getStoryType() + ".png";
+  public @NotNull String getCustomIcon() {
+    return "icons/pivotal/" + myStory.getStoryType() + ".png";
   }
 
   @TestOnly
-  @NotNull
-  public PivotalTrackerStory getStory() {
+  public @NotNull PivotalTrackerStory getStory() {
     return myStory;
   }
 }

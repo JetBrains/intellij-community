@@ -9,11 +9,9 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -243,11 +241,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     return true;
   }
 
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "deprecation"})
   void updateTheOnlyProjectField() {
     boolean isDefaultInitialized = isDefaultProjectInitialized();
+    boolean isLightEditActive = LightEditService.getInstance().getProject() != null;
     synchronized (lock) {
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultInitialized ? myOpenProjects[0] : null;
+      ProjectCoreUtil.updateInternalTheOnlyProjectFieldTemporarily(myOpenProjects.length == 1 && !isDefaultInitialized && !isLightEditActive ? myOpenProjects[0] : null);
     }
   }
 
@@ -281,6 +279,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   @Override
   public boolean forceCloseProject(@NotNull Project project) {
     return closeProject(project, /* isSaveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
+  }
+
+  @Override
+  public boolean saveAndForceCloseProject(@NotNull Project project) {
+    return closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, /* checkCanClose = */ false);
   }
 
   // return true if successful
@@ -467,7 +470,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     });
     // see "why is called after message bus" in the fireProjectOpened
     for (int i = projectComponents.size() - 1; i >= 0; i--) {
-      @SuppressWarnings("deprecation") ProjectComponent component = projectComponents.get(i);
+      //noinspection deprecation
+      ProjectComponent component = projectComponents.get(i);
       try {
         component.projectClosed();
       }
@@ -504,7 +508,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
     for (ProjectManagerListener listener : getAllListeners(project)) {
       try {
-        @SuppressWarnings("deprecation")
+        //noinspection deprecation
         boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
         if (!canClose) {
           LOG.debug("close canceled by " + listener);
@@ -575,7 +579,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     }
 
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super(NotificationGroup.createIdWithTitle("Project Settings", IdeBundle.message("notification.group.project.settings")),
+      super("Project Settings",
             IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
             IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR);
       setListener((notification, event) -> {

@@ -10,7 +10,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
+/**
+ * This extension allows modifying text that's copied from editor by 'Copy' action and text that's inserted into editor by 'Paste' action.
+ */
 public interface CopyPastePreProcessor {
   ExtensionPointName<CopyPastePreProcessor> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePreProcessor");
 

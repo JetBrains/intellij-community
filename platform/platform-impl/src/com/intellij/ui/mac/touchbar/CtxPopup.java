@@ -30,7 +30,7 @@ class CtxPopup {
 
     @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
 
-    final TouchBar tb = createScrubberBarFromPopup(listPopup);
+    final TBPanel tb = createScrubberBarFromPopup(listPopup);
     TouchBarsManager.registerAndShow(popupComponent, tb);
 
     return () -> {
@@ -39,8 +39,8 @@ class CtxPopup {
   }
 
   // creates releaseOnClose touchbar
-  private static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
-    final TouchBar result = new TouchBar("popup_scrubber_bar_" + listPopup.hashCode(), new TouchBar.CrossEscInfo(true, false), false);
+  private static TBPanel createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
+    final TBPanel result = new TBPanel("popup_scrubber_bar_" + listPopup.hashCode(), new TBPanel.CrossEscInfo(true, false), false);
 
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
 

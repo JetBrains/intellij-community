@@ -1,22 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -93,7 +92,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.WEST;
     final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
-    coloredComponent.setIpad(JBUI.emptyInsets());
+    coloredComponent.setIpad(JBInsets.emptyInsets());
     coloredComponent.setMyBorder(null);
     configureLabelComponent(coloredComponent);
     panel.add(coloredComponent, gbConstraints);
@@ -110,7 +109,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     JPanel allOptionsPanel = createAllOptionsPanel();
     if (allOptionsPanel != null) {
       panel.add(allOptionsPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                                        JBUI.emptyInsets(), 0, 0));
+                                                        JBInsets.emptyInsets(), 0, 0));
     }
 
     if (myIsShowInNewTabVisible) {
@@ -131,7 +130,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
       ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
     }
-    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions);
+    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions, isShowInSeparateWindow());
     return myFindUsagesOptions;
   }
 
@@ -292,12 +291,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
       return myScopeCombo.getComboBox();
     }
     return getPreferredFocusedControl();
-  }
-
-  protected final void addScopeData(FeatureUsageData data, SearchScope scope) {
-    if (FindUsagesStatisticsCollector.SearchableScopeField.isPredefinedScope(myProject, scope)) {
-      data.addData("searchScope", scope.getDisplayName());
-    }
   }
 
   private static class Title extends JPanel {

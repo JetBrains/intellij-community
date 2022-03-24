@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
+import org.jetbrains.kotlin.idea.util.resultingWhens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -40,7 +41,8 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
         }
     }
 
-    override fun allowCaretInsideElement(element: PsiElement) = element !is KtDeclaration && super.allowCaretInsideElement(element)
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+        element is KtDeclaration || super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtDeclarationWithBody, editor: Editor?) {
         convert(element, true)

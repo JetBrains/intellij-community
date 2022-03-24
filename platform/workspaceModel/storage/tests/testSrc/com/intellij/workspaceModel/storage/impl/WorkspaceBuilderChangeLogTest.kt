@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.workspaceModel.storage.createEmptyBuilder
-import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.testFramework.assertInstanceOf
+import com.intellij.workspaceModel.storage.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,8 +38,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.AddEntity<*>)
-    assertEquals("Another Parent", ((changeEntry as ChangeEntry.AddEntity<*>).entityData as ParentEntityData).parentProperty)
+    assertTrue(changeEntry is ChangeEntry.AddEntity)
+    assertEquals("Another Parent", ((changeEntry as ChangeEntry.AddEntity).entityData as ParentEntityData).parentProperty)
   }
 
   @Test
@@ -50,8 +50,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.AddEntity<*>)
-    assertEquals((changeEntry as ChangeEntry.AddEntity<*>).entityData.entitySource, AnotherSource)
+    assertTrue(changeEntry is ChangeEntry.AddEntity)
+    assertEquals((changeEntry as ChangeEntry.AddEntity).entityData.entitySource, AnotherSource)
   }
 
   @Test
@@ -65,8 +65,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.AddEntity<*>)
-    assertEquals("Another Parent", ((changeEntry as ChangeEntry.AddEntity<*>).entityData as ParentEntityData).parentProperty)
+    assertTrue(changeEntry is ChangeEntry.AddEntity)
+    assertEquals("Another Parent", ((changeEntry as ChangeEntry.AddEntity).entityData as ParentEntityData).parentProperty)
     assertEquals(changeEntry.entityData.entitySource, AnotherSource)
   }
 
@@ -82,8 +82,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceAndChangeSource<*>)
-    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource<*>).dataChange.newData as ParentEntityData).parentProperty,
+    assertTrue(changeEntry is ChangeEntry.ReplaceAndChangeSource)
+    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource).dataChange.newData as ParentEntityData).parentProperty,
                  "Another Parent")
     assertEquals(changeEntry.sourceChange.newData.entitySource, AnotherSource)
   }
@@ -115,8 +115,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceAndChangeSource<*>)
-    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource<*>).dataChange.newData as ParentEntityData).parentProperty,
+    assertTrue(changeEntry is ChangeEntry.ReplaceAndChangeSource)
+    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource).dataChange.newData as ParentEntityData).parentProperty,
                  "Another Parent")
     assertEquals(changeEntry.sourceChange.newData.entitySource, AnotherSource)
   }
@@ -158,15 +158,15 @@ class WorkspaceBuilderChangeLogTest {
     builder.modifyEntity(ModifiableParentEntity::class.java, entity) {
       this.parentProperty = "Another Parent"
     }
-    builder.changeSource(entity, MySource)
+    builder.changeSource(entity, SampleEntitySource("X"))
 
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceAndChangeSource<*>)
-    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource<*>).dataChange.newData as ParentEntityData).parentProperty,
+    assertInstanceOf<ChangeEntry.ReplaceAndChangeSource>(changeEntry)
+    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource).dataChange.newData as ParentEntityData).parentProperty,
                  "Another Parent")
-    assertEquals(changeEntry.sourceChange.newData.entitySource, MySource)
+    assertEquals(changeEntry.sourceChange.newData.entitySource, SampleEntitySource("X"))
   }
 
   @Test
@@ -184,8 +184,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceAndChangeSource<*>)
-    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource<*>).dataChange.newData as ParentEntityData).parentProperty,
+    assertInstanceOf<ChangeEntry.ReplaceAndChangeSource>(changeEntry)
+    assertEquals(((changeEntry as ChangeEntry.ReplaceAndChangeSource).dataChange.newData as ParentEntityData).parentProperty,
                  "Third Parent")
     assertEquals(changeEntry.sourceChange.newData.entitySource, AnotherSource)
   }
@@ -204,8 +204,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
+    assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
+    changeEntry as ChangeEntry.ReplaceEntity
     assertEquals(0, changeEntry.removedChildren.size)
     assertEquals(2, changeEntry.newChildren.size)
     assertEquals(0, changeEntry.modifiedParents.size)
@@ -225,8 +225,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
+    assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
+    changeEntry as ChangeEntry.ReplaceEntity
     assertEquals(2, changeEntry.removedChildren.size)
     assertEquals(0, changeEntry.newChildren.size)
     assertEquals(0, changeEntry.modifiedParents.size)
@@ -246,8 +246,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
+    assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
+    changeEntry as ChangeEntry.ReplaceEntity
     assertEquals(1, changeEntry.removedChildren.size)
     assertEquals(1, changeEntry.newChildren.size)
     assertEquals(0, changeEntry.modifiedParents.size)
@@ -269,13 +269,7 @@ class WorkspaceBuilderChangeLogTest {
     }
 
     val log = builder.changeLog.changeLog
-    assertEquals(1, log.size)
-    val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
-    assertEquals(0, changeEntry.removedChildren.size)
-    assertEquals(0, changeEntry.newChildren.size)
-    assertEquals(0, changeEntry.modifiedParents.size)
+    assertEquals(0, log.size)
   }
 
   @Test
@@ -294,13 +288,7 @@ class WorkspaceBuilderChangeLogTest {
     }
 
     val log = builder.changeLog.changeLog
-    assertEquals(1, log.size)
-    val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
-    assertEquals(0, changeEntry.removedChildren.size)
-    assertEquals(0, changeEntry.newChildren.size)
-    assertEquals(0, changeEntry.modifiedParents.size)
+    assertEquals(0, log.size)
   }
 
   @Test
@@ -321,8 +309,8 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
+    assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
+    changeEntry as ChangeEntry.ReplaceEntity
     assertEquals(2, changeEntry.removedChildren.size)
     assertEquals(0, changeEntry.newChildren.size)
     assertEquals(0, changeEntry.modifiedParents.size)
@@ -346,10 +334,176 @@ class WorkspaceBuilderChangeLogTest {
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
     val changeEntry = log.values.single()
-    assertTrue(changeEntry is ChangeEntry.ReplaceEntity<*>)
-    changeEntry as ChangeEntry.ReplaceEntity<*>
+    assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
+    changeEntry as ChangeEntry.ReplaceEntity
     assertEquals(0, changeEntry.removedChildren.size)
     assertEquals(2, changeEntry.newChildren.size)
     assertEquals(0, changeEntry.modifiedParents.size)
   }
+
+  // ------------- Testing events collapsing ----
+
+  @Test
+  fun `collaps empty modify`() {
+    val entity = builder.addNamedEntity("Parent")
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {}
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps two modify`() {
+    val entity = builder.addNamedEntity("Parent")
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "AnotherName"
+    }
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "Parent"
+    }
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps two modify with parent refs`() {
+    val parent1 = builder.addNamedEntity("Parent")
+    val parent2 = builder.addNamedEntity("Parent2")
+    val child1 = builder.addNamedChildEntity(parent1)
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedChildEntity::class.java, child1) {
+      this.parent = parent2
+    }
+
+    builder.modifyEntity(ModifiableNamedChildEntity::class.java, child1) {
+      this.parent = parent1
+    }
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps two modify with children refs`() {
+    val parent = builder.addParentEntity()
+    val child1 = builder.addChildWithOptionalParentEntity(parent)
+    val child2 = builder.addChildWithOptionalParentEntity(parent)
+    val child3 = builder.addChildWithOptionalParentEntity(parent)
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.optionalChildren = emptySequence()
+    }
+
+    builder.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.optionalChildren = sequenceOf(child1, child2, child3)
+    }
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps three modify`() {
+    val entity = builder.addNamedEntity("Parent")
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "AnotherName"
+    }
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "AndAnotherName"
+    }
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "Parent"
+    }
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps two modify and source change`() {
+    val entity = builder.addNamedEntity("Parent")
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "AnotherName"
+    }
+    builder.changeSource(entity, AnotherSource)
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "Parent"
+    }
+
+    val log = builder.changeLog.changeLog
+    assertEquals(1, log.size)
+    assertInstanceOf<ChangeEntry.ChangeEntitySource>(log.entries.single ().value)
+  }
+
+  @Test
+  fun `collaps two modify and two source change`() {
+    val entity = builder.addNamedEntity("Parent")
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "AnotherName"
+    }
+    builder.changeSource(entity, AnotherSource)
+    builder.changeSource(entity, MySource)
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "Parent"
+    }
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps two modify and two source change in mix`() {
+    val entity = builder.addNamedEntity("Parent")
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "AnotherName"
+    }
+    builder.changeSource(entity, AnotherSource)
+    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
+      name = "Parent"
+    }
+    builder.changeSource(entity, MySource)
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps empty source change`() {
+    val entity = builder.addNamedEntity("Parent", source = MySource)
+    builder.changeLog.clear()
+
+    builder.changeSource(entity, MySource)
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  @Test
+  fun `collaps source change twice`() {
+    val entity = builder.addNamedEntity("Parent", source = MySource)
+    builder.changeLog.clear()
+
+    builder.changeSource(entity, AnotherSource)
+    builder.changeSource(entity, MySource)
+
+    val log = builder.changeLog.changeLog
+    assertEquals(0, log.size)
+  }
+
+  // ------------- Testing events collapsing end ----
 }

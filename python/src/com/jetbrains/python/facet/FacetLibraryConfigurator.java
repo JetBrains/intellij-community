@@ -87,10 +87,6 @@ public final class FacetLibraryConfigurator {
         if (pathEntry != null && !pathEntry.isDirectory() && pathEntry.getFileType() instanceof ArchiveFileType) {
           pathEntry = JarFileSystem.getInstance().getJarRootForLocalFile(pathEntry);
         }
-        // buildout includes source root of project in paths; don't add it as library home
-        if (pathEntry != null && roots.contains(pathEntry)) {
-          continue;
-        }
         if (pathEntry != null) {
           modifiableModel.addRoot(pathEntry, OrderRootType.CLASSES);
         }

@@ -32,7 +32,7 @@
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="meta shift Z"/>
   </action>
-  <action id="FileChooser.TogglePathShowing"/>
+  <action id="FileChooser.TogglePathBar"/>
   <action id="ParameterInfo"/>
   <action id="Print">
     <keyboard-shortcut first-keystroke="meta P"/>
@@ -68,6 +68,7 @@
     <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="DuplicatesForm.SendToRight"/>
   <action id="FileChooser.GotoProject"/>
   <action id="ActivateFindToolWindow">
@@ -84,6 +85,7 @@
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="alt control M"/>
   </action>
+  <action id="ShowTypeBookmarks"/>
   <action id="ExportToTextFile"/>
   <action id="UsageGrouping.FlattenModules"/>
   <action id="OverrideMethods"/>
@@ -286,6 +288,9 @@
   </action>
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="meta F3"/>
+  </action>
+  <action id="FindPrevWordAtCaret">
+    <keyboard-shortcut first-keystroke="shift meta F3"/>
   </action>
   <action id="FindInPath">
     <keyboard-shortcut first-keystroke="meta shift F"/>

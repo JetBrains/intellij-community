@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 'f' is never used
 fun test(x: Int) {
     val f: Function<Int> = <caret>if (x == 0) {
         { 0 }

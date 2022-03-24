@@ -8,15 +8,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
   private final Map<K, Collection<V>> myMap;
-  private final BuilderCollectionFactory<V> myCollectionFactory;
+  private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-  public ObjectObjectTransientMultiMaplet(HashingStrategy<K> hashingStrategy, BuilderCollectionFactory<V> collectionFactory) {
+  public ObjectObjectTransientMultiMaplet(HashingStrategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
     myMap = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }
@@ -64,7 +65,7 @@ public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> ext
   public void put(final K key, final V value) {
     final Collection<V> collection = myMap.get(key);
     if (collection == null) {
-      final Collection<V> x = myCollectionFactory.create();
+      final Collection<V> x = myCollectionFactory.get();
       x.add(value);
       myMap.put(key, x);
     }

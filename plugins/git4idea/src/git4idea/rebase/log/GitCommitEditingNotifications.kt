@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
 import com.intellij.notification.NotificationAction
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
+import git4idea.GitNotificationIdsHolder
 import git4idea.GitNotificationIdsHolder.Companion.REBASE_COMMIT_EDIT_UNDO_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.REBASE_COMMIT_EDIT_UNDO_ERROR_PROTECTED_BRANCH
 import git4idea.GitNotificationIdsHolder.Companion.REBASE_COMMIT_EDIT_UNDO_ERROR_REPO_CHANGES
@@ -27,6 +28,7 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
 ) {
   val project = repository.project
   val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
+  notification.setDisplayId(GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS)
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
     Runnable {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUserFilterTest;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,13 @@ public class HgUserFilterTest extends HgPlatformTest {
           hg("commit -m ' Commit by " + user.getName() + "' --user '" + VcsUserUtil.toExactString(user) + "'");
           debug(hg("tip"));
         }
-        catch (RuntimeException e) {
-          // nothing changed error (hg wrong file status)
-          if (StringUtil.containsIgnoreCase(e.getMessage(), "nothing")) {
+        catch (HgExecutor.HgCommandFailedException e) {
+          // retry commit in case of "nothing changed" error (hg wrong file status)
+          String nothingChangedSubstring = "nothing";
+          if (
+            StringUtil.containsIgnoreCase(e.getRawError(), nothingChangedSubstring) ||
+            StringUtil.containsIgnoreCase(e.getRawOutput(), nothingChangedSubstring)
+          ) {
             debug(e.getMessage());
             return false;
           }

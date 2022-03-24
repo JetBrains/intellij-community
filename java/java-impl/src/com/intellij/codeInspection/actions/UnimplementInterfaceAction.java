@@ -144,9 +144,4 @@ public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionActio
     final PsiManager manager = aClass.getManager();
     return !manager.areElementsEquivalent(otherElement, element) && manager.areElementsEquivalent(otherElement.resolve(), aClass);
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

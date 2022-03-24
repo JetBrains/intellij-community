@@ -1,22 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.UniqueNameGenerator
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Scope
+import io.opentelemetry.sdk.trace.ReadableSpan
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
+import org.jetbrains.intellij.build.impl.TracerManager
+import org.jetbrains.intellij.build.impl.TracerProviderManager
 
+import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.Path
 import java.util.function.BiFunction
 import java.util.function.Supplier
 
 @CompileStatic
-class BuildMessagesImpl implements BuildMessages {
+final class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger
   private final BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory
   private final AntTaskLogger antTaskLogger
@@ -132,15 +140,21 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   void setDebugLogPath(Path path) {
-    debugLogger.setOutputFile(path.toFile())
+    debugLogger.setOutputFile(path)
   }
 
-  File getDebugLogFile() {
+  Path getDebugLogFile() {
     debugLogger.getOutputFile()
   }
 
   @Override
   void error(String message) {
+    try {
+      TracerManager.finish()
+    }
+    catch (Throwable e) {
+      System.err.println("Cannot finish tracing: " + e)
+    }
     throw new BuildException(message)
   }
 
@@ -185,22 +199,49 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   <V> V block(String blockName, Supplier<V> body) {
-    long start = System.currentTimeMillis()
+    block(TracerManager.spanBuilder(blockName.toLowerCase()), body)
+  }
+
+  @Override
+  <V> V block(SpanBuilder spanBuilder, Supplier<V> body) {
+    Span span = spanBuilder.startSpan()
+    Scope scope = span.makeCurrent()
+    String blockName = ((ReadableSpan)span).getName()
     try {
       blockNames.push(blockName)
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      V result = body.get()
-      long elapsedTime = System.currentTimeMillis() - start
-      debug("${blockNames.join(" > ")} finished in ${elapsedTime}ms")
-      return result
+      return body.get()
     }
     catch (IntelliJBuildException e) {
+      span.setStatus(StatusCode.ERROR, e.message)
+      span.recordException(e)
       throw e
     }
     catch (BuildException e) {
+      span.setStatus(StatusCode.ERROR, e.message)
+      span.recordException(e)
       throw new IntelliJBuildException(blockNames.join(" > "), e.message, e)
     }
+    catch (Throwable e) {
+      if (e instanceof UndeclaredThrowableException) {
+        e = e.cause
+      }
+
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR, e.message)
+
+      // print all pending spans
+      TracerProviderManager.flush()
+      throw e
+    }
     finally {
+      try {
+        scope.close()
+      }
+      finally {
+        span.end()
+      }
+
       blockNames.pop()
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }

@@ -1,10 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
-import com.github.markusbernhardt.proxy.ProxySearch;
-import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
-import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
-import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
@@ -16,7 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.io.IoService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +36,7 @@ public final class NetUtils {
   }
 
   /** @deprecated use {@link InetAddress#getLoopbackAddress()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static InetAddress getLoopbackAddress() {
     return InetAddress.getLoopbackAddress();
   }
@@ -151,6 +146,17 @@ public final class NetUtils {
   }
 
   /**
+   * @deprecated use {@link #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long)} instead
+   */
+  @Deprecated
+  public static int copyStreamContent(@Nullable ProgressIndicator indicator,
+                                      @NotNull InputStream inputStream,
+                                      @NotNull OutputStream outputStream,
+                                      int expectedContentLength) throws IOException, ProcessCanceledException {
+    return (int)copyStreamContent(indicator, inputStream, outputStream, (long)expectedContentLength);
+  }
+
+  /**
    * @param indicator             progress indicator
    * @param inputStream           source stream
    * @param outputStream          destination stream
@@ -161,10 +167,10 @@ public final class NetUtils {
    * @throws IOException              if IO error occur
    * @throws ProcessCanceledException if process was canceled.
    */
-  public static int copyStreamContent(@Nullable ProgressIndicator indicator,
-                                      @NotNull InputStream inputStream,
-                                      @NotNull OutputStream outputStream,
-                                      int expectedContentLength) throws IOException, ProcessCanceledException {
+  public static long copyStreamContent(@Nullable ProgressIndicator indicator,
+                                       @NotNull InputStream inputStream,
+                                       @NotNull OutputStream outputStream,
+                                       long expectedContentLength) throws IOException, ProcessCanceledException {
     if (indicator != null) {
       indicator.checkCanceled();
       indicator.setIndeterminate(expectedContentLength <= 0);
@@ -172,7 +178,7 @@ public final class NetUtils {
     CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
     byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     int count;
-    int bytesWritten = 0;
+    long bytesWritten = 0;
     long bytesRead = 0;
     while ((count = inputStream.read(buffer)) > 0) {
       outputStream.write(buffer, 0, count);
@@ -211,17 +217,7 @@ public final class NetUtils {
   }
 
   static ProxySelector getProxySelector(@Nullable String pacUrlForUse) {
-    ProxySelector newProxySelector;
-    if (pacUrlForUse == null) {
-      ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
-      // cache 32 urls for up to 10 min
-      proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
-      newProxySelector = proxySearch.getProxySelector();
-    }
-    else {
-      newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
-    }
-    return newProxySelector;
+    return IoService.getInstance().getProxySelector(pacUrlForUse);
   }
 
   public enum ValidHostInfo {

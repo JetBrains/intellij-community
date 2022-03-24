@@ -1,5 +1,5 @@
-// "Add '@OptIn(A::class)' annotation to 'root'" "true"
-// WITH_RUNTIME
+// "Opt in for 'A' on 'root'" "true"
+// WITH_STDLIB
 @RequiresOptIn
 annotation class A
 

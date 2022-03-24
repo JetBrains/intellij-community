@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_LATEST;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
@@ -43,7 +43,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
+    return JAVA_LATEST;
   }
 
   public void testEmpty() {
@@ -733,7 +733,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   private void doTest(/*@Language("JAVA")*/ String source, @Language("TEXT") String expected) {
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_15_PREVIEW);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
     FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());

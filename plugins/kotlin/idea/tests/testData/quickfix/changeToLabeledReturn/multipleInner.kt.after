@@ -1,8 +1,8 @@
 // "Change to 'return@forEach'" "true"
 // ACTION: Change to 'return@foo'
-// ACTION: Introduce local variable
+// ACTION: Change to 'return@forEach'
 // ERROR: The integer literal does not conform to the expected type Unit
-// WITH_RUNTIME
+// WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun foo(f:()->Int){}

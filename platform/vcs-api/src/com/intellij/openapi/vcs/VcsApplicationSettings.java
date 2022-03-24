@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 @State(
   name = "VcsApplicationSettings",
   storages = @Storage("vcs.xml"),
-  category = ComponentCategory.TOOLS
+  category = SettingsCategory.TOOLS
 )
 public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
   public String PATCH_STORAGE_LOCATION = null;

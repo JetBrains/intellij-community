@@ -11,8 +11,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.idea.extensions.*
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 
@@ -76,7 +75,7 @@ class GroovyBuildScriptManipulator(
         kotlinPluginName: String,
         kotlinPluginExpression: String,
         stdlibArtifactName: String,
-        version: String,
+        version: IdeKotlinVersion,
         jvmTarget: String?
     ): Boolean {
         val oldText = scriptFile.text
@@ -138,13 +137,13 @@ class GroovyBuildScriptManipulator(
         return scriptFile.text != oldText
     }
 
-    override fun configureProjectBuildScript(kotlinPluginName: String, version: String): Boolean {
+    override fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
         if (useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)) return false
 
         val oldText = scriptFile.text
         scriptFile.apply {
             getBuildScriptBlock().apply {
-                addFirstExpressionInBlockIfNeeded(VERSION.replace(VERSION_TEMPLATE, version))
+                addFirstExpressionInBlockIfNeeded(VERSION.replace(VERSION_TEMPLATE, version.rawVersion))
             }
 
             getBuildScriptRepositoriesBlock().apply {
@@ -398,7 +397,7 @@ class GroovyBuildScriptManipulator(
     private fun getApplyStatement(file: GroovyFile): GrApplicationStatement? =
         file.getChildrenOfType<GrApplicationStatement>().find { it.invokedExpression.text == "apply" }
 
-    private fun GrClosableBlock.addRepository(version: String): Boolean {
+    private fun GrClosableBlock.addRepository(version: IdeKotlinVersion): Boolean {
         val repository = getRepositoryForVersion(version)
         val snippet = when {
             repository != null -> repository.toGroovyRepositorySnippet()

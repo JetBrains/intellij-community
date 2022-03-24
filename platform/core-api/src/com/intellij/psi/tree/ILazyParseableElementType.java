@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
@@ -21,18 +21,18 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
 
   public static final Key<Language> LANGUAGE_KEY = Key.create("LANGUAGE_KEY");
 
-  public ILazyParseableElementType(@NotNull @NonNls final String debugName) {
+  public ILazyParseableElementType(final @NotNull @NonNls String debugName) {
     this(debugName, null);
   }
 
-  public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language) {
+  public ILazyParseableElementType(final @NotNull @NonNls String debugName, final @Nullable Language language) {
     super(debugName, language);
   }
 
   /**
    * Allows constructing element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
    */
-  public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language, final boolean register) {
+  public ILazyParseableElementType(final @NotNull @NonNls String debugName, final @Nullable Language language, final boolean register) {
     super(debugName, language, register);
   }
 
@@ -59,12 +59,11 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
     return node.getFirstChildNode();
   }
 
-  protected Language getLanguageForParser(PsiElement psi) {
+  protected @NotNull Language getLanguageForParser(@NotNull PsiElement psi) {
     return getLanguage();
   }
 
-  @Nullable
-  public ASTNode createNode(CharSequence text) {
+  public @Nullable ASTNode createNode(CharSequence text) {
     return null;
   }
 

@@ -10,13 +10,13 @@ Groovy script
       PsiElement(identifier)('Foo')
     Arguments
       PsiElement(()('(')
-      builtin type class expression
-        PsiElement(int)('int')
-      PsiErrorElement:')' or ',' expected, got 'a'
-        <empty list>
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('a')
+      Call expression
+        builtin type class expression
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('a')
       PsiElement())(')')
     PsiWhiteSpace(' ')
     Closable block

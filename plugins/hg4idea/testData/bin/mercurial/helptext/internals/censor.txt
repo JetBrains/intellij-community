@@ -1,0 +1,22 @@
+The censor system allows retroactively removing content from
+files. Actually censoring a node requires using the censor extension,
+but the functionality for handling censored nodes is partially in core.
+
+Censored nodes in a filelog have the flag ``REVIDX_ISCENSORED`` set,
+and the contents of the censored node are replaced with a censor
+tombstone. For historical reasons, the tombstone is packed in the
+filelog metadata field ``censored``. This allows censored nodes to be
+(mostly) safely transmitted through old formats like changegroup
+versions 1 and 2. When using changegroup formats older than 3, the
+receiver is required to re-add the ``REVIDX_ISCENSORED`` flag when
+storing the revision. This depends on the ``censored`` metadata key
+never being used for anything other than censoring revisions, which is
+true as of January 2017. Note that the revlog flag is the
+authoritative marker of a censored node: the tombstone should only be
+consulted when looking for a reason a node was censored or when revlog
+flags are unavailable as mentioned above.
+
+The tombstone data is a free-form string. It's expected that users of
+censor will want to record the reason for censoring a node in the
+tombstone. Censored nodes must be able to fit in the size of the
+content being censored.

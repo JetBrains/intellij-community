@@ -76,7 +76,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     }
 
     Project project = initEvent.getProject();
-    Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
     Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors = createContributors(initEvent, project, contextComponent);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
@@ -155,6 +155,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     calcPositionAndShow(initEvent, project, myBalloon);
   }
 
+  @Override
+  public @NotNull SearchEverywhereUI getCurrentlyShownUI() {
+    checkIsShown();
+    return mySearchEverywhereUI;
+  }
+
   private WindowStateService getStateService() {
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
@@ -173,9 +179,11 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
             SearchEverywhereTabDescriptor.IDE);
 
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
-      SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
-      SearchEverywhereTabDescriptor tab = factory.getTab();
-      res.put(contributor, tab);
+      if (factory.isAvailable(project)) {
+        SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
+        SearchEverywhereTabDescriptor tab = factory.getTab();
+        res.put(contributor, tab);
+      }
     }
 
     return res;
@@ -184,7 +192,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,
                                    Project project,
                                    JBPopup balloon) {
-    if(initEvent.getPlace().equals(ActionPlaces.RUN_TOOLBAR)){
+    if (initEvent.getPlace().equals(ActionPlaces.RUN_TOOLBAR_LEFT_SIDE)) {
       var component = (Component)initEvent.getInputEvent().getSource();
       balloon.setLocation(component.getLocationOnScreen());
       ((AbstractPopup)balloon).show(component, 0, 0, true);
@@ -375,6 +383,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
     addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
+    addShortcut(res, "TextSearchContributor", "TextSearchAction");
 
     return res;
   }

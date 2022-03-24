@@ -16,6 +16,7 @@
 package com.intellij.internal.performance;
 
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -40,8 +41,7 @@ import java.awt.*;
 public class EditorRenderingBenchmarkAction extends AnAction implements DumbAware {
   private static final int PERIOD = 5; // s
 
-  private final NotificationGroup myNotificationGroup = NotificationGroup.logOnlyGroup("editor-rendering-benchmark",
-                                                                                       PluginId.getId("com.intellij"));
+  private final NotificationGroup myNotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("editor-rendering-benchmark");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

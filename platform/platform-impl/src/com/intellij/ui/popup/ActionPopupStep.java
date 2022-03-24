@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
 
   private final List<PopupFactoryImpl.ActionItem> myItems;
-  private final @NlsContexts.PopupTitle String myTitle;
+  private final @NlsContexts.PopupTitle @Nullable String myTitle;
   private final Supplier<? extends DataContext> myContext;
   private final String myActionPlace;
   private final boolean myEnableMnemonics;
@@ -38,7 +39,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final Condition<? super AnAction> myPreselectActionCondition;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
-                         @PopupTitle String title,
+                         @PopupTitle @Nullable String title,
                          @NotNull Supplier<? extends DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
@@ -82,7 +83,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                              boolean showNumbers,
                                                                              boolean useAlphaAsNumbers,
                                                                              boolean showDisabledActions,
-                                                                             @PopupTitle String title,
+                                                                             @PopupTitle @Nullable String title,
                                                                              boolean honorActionMnemonics,
                                                                              boolean autoSelectionEnabled,
                                                                              Supplier<? extends DataContext> contextSupplier,
@@ -94,7 +95,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
     boolean enableMnemonics = showNumbers ||
                               honorActionMnemonics &&
-                              items.stream().anyMatch(actionItem -> actionItem.getAction().getTemplatePresentation().getMnemonic() != 0);
+                              PopupFactoryImpl.anyMnemonicsIn(items);
 
     return new ActionPopupStep(
       items, title, contextSupplier, actionPlace, enableMnemonics,
@@ -174,7 +175,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Nullable
   @Override
   public String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
-    return value.getDescription();
+    return value.getTooltip();
   }
 
   @Override
@@ -196,6 +197,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
+  @Nullable
   public String getTitle() {
     return myTitle;
   }
@@ -206,23 +208,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice, int eventModifiers) {
-    if (!actionChoice.isEnabled()) return FINAL_CHOICE;
-    final AnAction action = actionChoice.getAction();
-    final DataContext dataContext = myContext.get();
-    if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
+  public PopupStep<?> onChosen(@NotNull PopupFactoryImpl.ActionItem item, boolean finalChoice, int eventModifiers) {
+    if (!item.isEnabled()) return FINAL_CHOICE;
+    AnAction action = item.getAction();
+    if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
       return createActionsStep(
-        (ActionGroup)action,
-        dataContext,
-        myEnableMnemonics,
-        true,
-        myShowDisabledActions,
-        null,
-        false, false,
-        myContext,
-        myActionPlace,
-        myPreselectActionCondition, -1,
-        myPresentationFactory);
+        (ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
+        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else {
       myFinalRunnable = () -> performAction(action, eventModifiers);
@@ -231,11 +223,22 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public boolean isFinal(PopupFactoryImpl.ActionItem value) {
-    if (!value.isEnabled()) return true;
-    final AnAction action = value.getAction();
-    final DataContext dataContext = myContext.get();
-    return !(action instanceof ActionGroup) || ((ActionGroup)action).canBePerformed(dataContext);
+  public boolean isFinal(@NotNull PopupFactoryImpl.ActionItem item) {
+    if (!item.isEnabled()) return true;
+    return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
+  }
+
+  @ApiStatus.Internal
+  public static void performAction(@NotNull Supplier<? extends DataContext> contextSupplier, @NotNull String actionPlace,
+                                   @NotNull AnAction action, int modifiers, @Nullable InputEvent inputEvent) {
+    DataContext dataContext = contextSupplier.get();
+    AnActionEvent event = new AnActionEvent(
+      inputEvent, dataContext, actionPlace, action.getTemplatePresentation().clone(),
+      ActionManager.getInstance(), modifiers);
+    event.setInjectedContext(action.isInInjectedContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
   }
 
   public void performAction(@NotNull AnAction action, int modifiers) {
@@ -243,14 +246,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
-    DataContext dataContext = myContext.get();
-    AnActionEvent event = new AnActionEvent(
-      inputEvent, dataContext, myActionPlace, action.getTemplatePresentation().clone(),
-      ActionManager.getInstance(), modifiers);
-    event.setInjectedContext(action.isInInjectedContext());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    performAction(myContext, myActionPlace, action, modifiers, inputEvent);
   }
 
   @Override
@@ -260,7 +256,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public boolean hasSubstep(final PopupFactoryImpl.ActionItem selectedValue) {
-    return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
+    return selectedValue != null && selectedValue.isEnabled() &&
+           selectedValue.getAction() instanceof ActionGroup && !selectedValue.isSubstepSuppressed();
   }
 
   @Override

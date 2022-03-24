@@ -73,35 +73,30 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   public void appendCoverageArgument(@NotNull RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
-    try {
-      if (runner instanceof JavaCoverageRunner) {
-        final String path = getCoverageFilePath();
-        assert path != null; // cannot be null here if runner != null
+    if (runner instanceof JavaCoverageRunner) {
+      final String path = getCoverageFilePath();
+      assert path != null; // cannot be null here if runner != null
 
-        String sourceMapPath = null;
-        if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
-          sourceMapPath = getSourceMapPath(path);
-        }
-
-        final JavaCoverageRunner javaCoverageRunner = (JavaCoverageRunner)runner;
-        final String[] patterns = getPatterns();
-        final String[] excludePatterns = getExcludePatterns();
-        final Project project = configuration.getProject();
-        CoverageLogger.logStarted(javaCoverageRunner, isSampling(), isTrackPerTestCoverage(),
-                                  patterns == null ? 0 : patterns.length,
-                                  excludePatterns == null ? 0 : excludePatterns.length);
-        javaCoverageRunner.appendCoverageArgument(new File(path).getCanonicalPath(),
-                                                  patterns,
-                                                  excludePatterns,
-                                                  javaParameters,
-                                                  isTrackPerTestCoverage() && !isSampling(),
-                                                  isSampling(),
-                                                  sourceMapPath,
-                                                  project);
+      String sourceMapPath = null;
+      if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
+        sourceMapPath = getSourceMapPath(path);
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
+
+      final JavaCoverageRunner javaCoverageRunner = (JavaCoverageRunner)runner;
+      final String[] patterns = getPatterns();
+      final String[] excludePatterns = getExcludePatterns();
+      final Project project = configuration.getProject();
+      CoverageLogger.logStarted(javaCoverageRunner, isSampling(), isTrackPerTestCoverage(),
+                                patterns == null ? 0 : patterns.length,
+                                excludePatterns == null ? 0 : excludePatterns.length);
+      javaCoverageRunner.appendCoverageArgument(new File(path).getAbsolutePath(),
+                                                patterns,
+                                                excludePatterns,
+                                                javaParameters,
+                                                isTrackPerTestCoverage() && !isSampling(),
+                                                isSampling(),
+                                                sourceMapPath,
+                                                project);
     }
   }
 

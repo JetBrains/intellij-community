@@ -42,9 +42,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
-@SuppressWarnings("ComponentNotRegistered")
+/**
+ * {@link AbstractNewProjectStep}
+ */
 public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
   protected DirectoryProjectGenerator<T> myProjectGenerator;
   protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
@@ -300,7 +303,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   public final void setLocation(@NotNull final String location) {
-    myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
+    myLocationField.setText(getPresentablePath(location));
   }
 
   protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
@@ -318,7 +321,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener(IdeBundle.message("directory.project.location.title"),
                                             IdeBundle.message("directory.project.location.description"), null, descriptor);
-    return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")), BorderLayout.WEST);
+    return LabeledComponent.create(myLocationField,
+                                   BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")),
+                                   BorderLayout.WEST);
   }
 
   @NotNull
@@ -327,5 +332,5 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() { }
 }

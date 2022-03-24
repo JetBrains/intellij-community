@@ -2,12 +2,22 @@ package pkg;
 
 class TestDebugSymbols {
    private int m() {
-      String text = "text";// 21
-      long prolonged = 42L;// 22
-      float decimated = (float)prolonged / 10.0F;// 23
-      double doubled = (double)(2.0F * decimated);// 24
-      return (text + ":" + prolonged + ":" + decimated + ":" + doubled).length();// 25
+      String text = "text";// 6
+      long prolonged = 42L;// 7
+      float decimated = (float)prolonged / 10.0F;// 8
+      double doubled = (double)(2.0F * decimated);// 9
+      return (text + ":" + prolonged + ":" + decimated + ":" + doubled).length();// 10
    }
+
+   public void test() {
+      int i = 0;// 14
+      int count = 0;// 15
+
+      do {
+         i += count++;// 17
+      } while(i < 10);// 18
+
+   }// 19
 }
 
 class 'pkg/TestDebugSymbols' {
@@ -31,11 +41,28 @@ class 'pkg/TestDebugSymbols' {
       40      8
       43      8
    }
+
+   method 'test ()V' {
+      0      12
+      1      12
+      2      13
+      3      13
+      6      16
+      a      16
+      c      17
+      e      17
+      11      19
+   }
 }
 
 Lines mapping:
-21 <-> 5
-22 <-> 6
-23 <-> 7
-24 <-> 8
-25 <-> 9
+6 <-> 5
+7 <-> 6
+8 <-> 7
+9 <-> 8
+10 <-> 9
+14 <-> 13
+15 <-> 14
+17 <-> 17
+18 <-> 18
+19 <-> 20

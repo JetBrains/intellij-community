@@ -11,6 +11,7 @@ class JUnit4LightTestFramework: AbstractLightTestFramework() {
 
     override val name: String = "JUnit4"
 
+    override val slowProvider: Boolean = false
     override fun detectFramework(namedDeclaration: KtNamedDeclaration): LightTestFrameworkResult {
         val testFramework = framework
         if (testFramework == null ||

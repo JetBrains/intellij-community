@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
  * @deprecated obsolete
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public class ArrayListEnumeration implements Enumeration {
   private final ArrayList myArrayList;
   private int myCounter;

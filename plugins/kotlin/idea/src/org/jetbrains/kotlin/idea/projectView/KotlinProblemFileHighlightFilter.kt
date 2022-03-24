@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.projectView
 
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
 class KotlinProblemFileHighlightFilter : Condition<VirtualFile> {
-    override fun value(t: VirtualFile): Boolean = t.fileType == KotlinFileType.INSTANCE
+    override fun value(file: VirtualFile): Boolean = file.isKotlinFileType()
 }

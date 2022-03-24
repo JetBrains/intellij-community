@@ -37,17 +37,17 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
             }
 
             private fun processPropertyReference(ref: PropertyReference, template: KtStringTemplateExpression) {
+                if (ref.isSoft) return // don't highlight soft references, they are inserted in every string literal
+
                 val property = ref.multiResolve(true).firstOrNull()?.element as? Property
                 if (property == null) {
-                    if (!ref.isSoft) {
-                        holder.registerProblem(
-                            template,
-                            JavaI18nBundle.message("inspection.unresolved.property.key.reference.message", ref.canonicalText),
-                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                            TextRange(0, template.textLength),
-                            *ref.quickFixes
-                        )
-                    }
+                    holder.registerProblem(
+                        template,
+                        JavaI18nBundle.message("inspection.unresolved.property.key.reference.message", ref.canonicalText),
+                        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                        TextRange(0, template.textLength),
+                        *ref.quickFixes
+                    )
                     return
                 }
 

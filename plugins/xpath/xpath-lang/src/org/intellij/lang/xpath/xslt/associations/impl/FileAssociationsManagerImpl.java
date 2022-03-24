@@ -113,15 +113,15 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
     }
   }
 
-  private static HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
+  private HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
     final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap = new LinkedHashMap<>();
 
     final Set<VirtualFilePointer> virtualFilePointers = other.myAssociations.keySet();
     VirtualFilePointerManager filePointerManager = VirtualFilePointerManager.getInstance();
     for (VirtualFilePointer pointer : virtualFilePointers) {
-      final VirtualFilePointerContainer container = filePointerManager.createContainer(other);
+      final VirtualFilePointerContainer container = filePointerManager.createContainer(this);
       container.addAll(other.myAssociations.get(pointer));
-      hashMap.put(filePointerManager.duplicate(pointer, other, null), container);
+      hashMap.put(filePointerManager.duplicate(pointer, this, null), container);
     }
     return hashMap;
   }

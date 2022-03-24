@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
 import java.nio.file.Path
 
@@ -23,9 +24,9 @@ abstract class LinuxDistributionCustomizer {
   List<String> extraExecutables = []
 
   /**
-   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced.
+   * If {@code true} a separate *-no-jdk.tar.gz artifact without runtime will be produced.
    */
-  boolean buildTarGzWithoutBundledJre = true
+  boolean buildTarGzWithoutBundledRuntime = true
 
   /**
    * If {@code true}, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
@@ -51,5 +52,7 @@ abstract class LinuxDistributionCustomizer {
    * Override this method to copy additional files to Linux distribution of the product.
    * @param targetDirectory contents of this directory will be packed into .tar.gz archive under {@link #getRootDirectoryName(ApplicationInfoProperties, String)}
    */
-  void copyAdditionalFiles(BuildContext context, Path targetDir) {}
+  void copyAdditionalFiles(BuildContext context, Path targetDir) {
+    RepairUtilityBuilder.bundle(context, OsFamily.LINUX, JvmArchitecture.x64, targetDir)
+  }
 }

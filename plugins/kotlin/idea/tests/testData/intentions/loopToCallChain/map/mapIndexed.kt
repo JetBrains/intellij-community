@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'mapIndexed{}.firstOrNull{}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().mapIndexed{}.firstOrNull{}'"
 fun foo(list: List<String>): Int? {

@@ -78,6 +78,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null) return false;
       if (!lookup.isAvailableToUser()) return false;
+      if (lookup.getCurrentItemOrEmpty() == null) return false;
       if (focusedOnly && lookup.getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED) return false;
       if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
         return !lookup.getItems().isEmpty();
@@ -108,9 +109,9 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
     if (liveTemplateLookup == null || !liveTemplateLookup.sudden) {
-      // Lookup doesn't contain sudden live templates. It means that 
+      // Lookup doesn't contain sudden live templates. It means that
       // - there are no live template with given key:
-      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action). 
+      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action).
       // - completion provider worked too long:
       //    in this case we should check custom templates that provides completion lookup.
       if (LiveTemplateCompletionContributor.customTemplateAvailableAndHasCompletionItem(shortcutChar, editor, file, offset)) {

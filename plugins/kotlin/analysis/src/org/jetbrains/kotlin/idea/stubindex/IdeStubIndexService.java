@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassInfo;
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
+import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
@@ -103,11 +104,16 @@ public class IdeStubIndexService extends StubIndexService {
 
     @Override
     public void indexObject(@NotNull KotlinObjectStub stub, @NotNull IndexSink sink) {
-        processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
+        String shortName = stub.getName();
+        processNames(sink, shortName, stub.getFqName(), stub.isTopLevel());
 
         indexSuperNames(stub, sink);
 
         indexPrime(stub, sink);
+
+        if (shortName != null && !stub.isObjectLiteral() && !stub.getSuperNames().isEmpty()) {
+            sink.occurrence(KotlinSubclassObjectNameIndex.getInstance().getKey(), shortName);
+        }
     }
 
     private static void processNames(
@@ -197,12 +203,17 @@ public class IdeStubIndexService extends StubIndexService {
 
         IndexUtilsKt.indexTypeAliasExpansion(stub, sink);
 
-        if (stub.isTopLevel()) {
-            FqName fqName = stub.getFqName();
-            if (fqName != null) {
+        FqName fqName = stub.getFqName();
+        if (fqName != null) {
+            if (stub.isTopLevel()) {
                 sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.getInstance().getKey(), fqName.asString());
                 sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.getInstance().getKey(), fqName.parent().asString());
             }
+        }
+
+        ClassId classId = stub.getClassId();
+        if (classId != null && !stub.isTopLevel()) {
+            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.getInstance().getKey(), classId.asString());
         }
     }
 

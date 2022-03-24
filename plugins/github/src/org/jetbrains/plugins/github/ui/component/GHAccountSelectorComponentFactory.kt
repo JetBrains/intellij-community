@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItemRenderer
@@ -55,7 +55,7 @@ class GHAccountSelectorComponentFactory {
     }
 
     override fun getBorderInsets(c: Component): Insets {
-      val g2d = c.graphics as? Graphics2D ?: return JBUI.emptyInsets()
+      val g2d = c.graphics as? Graphics2D ?: return JBInsets.emptyInsets()
 
       val bw = if (UIUtil.isUnderDefaultMacTheme()) JBUIScale.scale(3).toFloat() else DarculaUIUtil.BW.float
       val f = if (UIUtil.isRetina(g2d)) 0.5f else 1.0f

@@ -4,7 +4,6 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,8 +20,24 @@ public interface NonBlockingContextChecker {
   boolean isApplicable(@NotNull PsiFile file);
 
   /**
-   * @param element PsiElement (e.g. method call or reference) to check if it is placed in code fragment where thread block is not allowed
+   * @param elementContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
+   *                      to check if it is placed in code fragment where thread block is not allowed
    * @return true if code fragment for {@code element} is considered "non-blocking", false otherwise
    */
-  boolean isContextNonBlockingFor(@NotNull PsiElement element);
+  default ContextType computeContextType(@NotNull ElementContext elementContext) {
+    if (isContextNonBlockingFor(elementContext.getElement())) {
+      return ContextType.NonBlocking.INSTANCE;
+    }
+    else {
+      return ContextType.Blocking.INSTANCE;
+    }
+  }
+
+  /**
+   * @deprecated Override {@link #computeContextType(ElementContext)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isContextNonBlockingFor(@NotNull PsiElement element) {
+    return false;
+  }
 }

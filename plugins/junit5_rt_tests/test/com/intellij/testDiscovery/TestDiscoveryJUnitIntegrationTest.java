@@ -8,7 +8,7 @@ import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryIndex;
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Couple;
@@ -140,7 +140,7 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
 
   private void runTestConfiguration(@NotNull PsiElement psiElement) throws ExecutionException {
     MapDataContext context = new MapDataContext();
-    context.put(LangDataKeys.MODULE, myModule);
+    context.put(PlatformCoreDataKeys.MODULE, myModule);
     JUnitConfiguration configuration = createConfiguration(psiElement, context);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     TestDiscoveryDataSocketListener socketListener =

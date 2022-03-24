@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewNode
-import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
@@ -36,11 +36,13 @@ open class ProjectViewRenderer : NodeRenderer() {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
 
     val userObject = TreeUtil.getUserObject(value)
-    if (userObject is ProjectViewNode<*> && instance.showInplaceComments) {
+    if (userObject is ProjectViewNode<*> && UISettings.getInstance().showInplaceComments) {
       appendInplaceComments(userObject)
     }
   }
 
+  // used in Rider
+  @Suppress("MemberVisibilityCanBePrivate")
   fun appendInplaceComments(project: Project?, file: VirtualFile?) {
     val ioFile = if (file == null || file.isDirectory || !file.isInLocalFileSystem) null else file.toNioPath()
     val fileAttributes = try {
@@ -62,7 +64,7 @@ open class ProjectViewRenderer : NodeRenderer() {
     }
   }
 
-  fun appendInplaceComments(node: ProjectViewNode<*>) {
+  private fun appendInplaceComments(node: ProjectViewNode<*>) {
     val parentNode = node.parent
     val content = node.value
     if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.value is PsiDirectory) {

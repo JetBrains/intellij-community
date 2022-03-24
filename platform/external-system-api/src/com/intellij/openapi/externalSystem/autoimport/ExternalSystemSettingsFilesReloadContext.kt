@@ -7,12 +7,26 @@ import org.jetbrains.annotations.ApiStatus
  * Reload context that describes modifications in settings files
  * @see [ExternalSystemProjectAware.settingsFiles] for details
  */
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface ExternalSystemSettingsFilesReloadContext {
 
+  /**
+   * Aggregated modification type for changed all files.
+   */
+  val modificationType: ExternalSystemModificationType
+
+  /**
+   * Paths of updated files since previous reload.
+   */
   val updated: Set<String>
 
+  /**
+   * Paths of create files since previous reload.
+   */
   val created: Set<String>
 
+  /**
+   * Paths of deleted files since previous reload.
+   */
   val deleted: Set<String>
 }

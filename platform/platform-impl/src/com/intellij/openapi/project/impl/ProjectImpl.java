@@ -30,10 +30,11 @@ public abstract class ProjectImpl extends ClientAwareComponentManager implements
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
   static boolean ourClassesAreLoaded;
-  private final String creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? ExceptionUtil.currentStackTrace() : null;
+  private static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
 
   protected ProjectImpl(@NotNull ComponentManagerImpl parent) {
     super(parent);
+    storeCreationTrace();
   }
 
   @Override
@@ -77,6 +78,12 @@ public abstract class ProjectImpl extends ClientAwareComponentManager implements
   @Override
   @TestOnly
   public String getCreationTrace() {
-    return creationTrace;
+    return getUserData(CREATION_TRACE);
+  }
+
+  void storeCreationTrace() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace());
+    }
   }
 }

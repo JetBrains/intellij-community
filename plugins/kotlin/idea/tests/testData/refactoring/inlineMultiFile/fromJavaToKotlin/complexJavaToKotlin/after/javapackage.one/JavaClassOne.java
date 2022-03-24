@@ -1,8 +1,5 @@
 package javapackage.one;
 
-import usage.KotlinClassOne;
-import usage.KotlinClassTwo;
-
 public class JavaClassOne {
 
     public int field = MAGIC_CONST;

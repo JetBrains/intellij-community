@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(list: List<String>) {
     var i = 0
     <caret>for (s in list) {

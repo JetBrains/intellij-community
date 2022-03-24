@@ -12,9 +12,7 @@ import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.configuration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
-import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
-import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
 import org.jetbrains.kotlin.idea.inspections.migration.DEPRECATED_COROUTINES_LIBRARIES_INFORMATION
 import org.jetbrains.kotlin.idea.inspections.migration.DeprecatedForKotlinLibInfo
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -57,7 +55,7 @@ class GradleKotlinxCoroutinesDeprecationInspection : BaseInspection(), CleanupLo
                     }
 
                     val libVersion =
-                        DifferentStdlibGradleVersionInspection.getResolvedLibVersion(
+                        DifferentStdlibGradleVersionInspection.getRawResolvedLibVersion(
                             dependencyStatement.containingFile, outdatedInfo.lib.groupId, listOf(outdatedInfo.lib.name)
                         ) ?: DeprecatedGradleDependencyInspection.libraryVersionFromOrderEntry(
                             dependencyStatement.containingFile,

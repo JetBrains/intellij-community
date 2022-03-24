@@ -1,0 +1,11 @@
+package one
+
+import three.Nest
+
+class Outer {
+    fun t(n: two.Nest) {
+    }
+}
+
+// ELEMENT: Nest
+// TAIL_TEXT: " (two)"

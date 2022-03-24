@@ -95,7 +95,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
       }
     });
-    myMethodNameCombo.setModel(new DefaultComboBoxModel());
+    myMethodNameCombo.setModel(new DefaultComboBoxModel<>());
     myMethodNameCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {

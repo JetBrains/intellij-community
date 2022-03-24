@@ -15,11 +15,6 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <bundledColorScheme path="/colorSchemes/monokai"/>
-    <bundledColorScheme path="/colorSchemes/twilight"/>
-    <bundledColorScheme path="/colorSchemes/WarmNeon"/>
-    <bundledColorScheme path="/colorSchemes/github"/>
-
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
   </extensions>

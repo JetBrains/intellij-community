@@ -3,17 +3,21 @@
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.compute
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIRListBuilder
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradlePropertyAccessIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.BrowserJsSinglePlatformModuleConfigurator.settingsValue
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.isApplication
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
@@ -22,6 +26,7 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedC
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
@@ -52,6 +57,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind"),
             GenerationPhase.PROJECT_GENERATION
         ) {
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.hint")
             defaultValue = value(JsTargetKind.APPLICATION)
             filter = filter@{ reference, kindCandidate ->
                 when {
@@ -69,8 +75,9 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler"),
             GenerationPhase.PROJECT_GENERATION
         ) {
-            defaultValue = value(JsCompiler.LEGACY)
-            filter = filter@{ reference, compilerCandidate ->
+            defaultValue = value(JsCompiler.BOTH)
+            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.tooltip")
+            filter = { reference, compilerCandidate ->
                 when {
                     reference !is ModuleConfiguratorSettingReference<*, *> -> false
                     reference.module?.let { settingValue(it, kind) } == JsTargetKind.LIBRARY -> true
@@ -81,7 +88,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             }
         }
 
-        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.text
+        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.scriptValue
 
         val useJsIrCompiler by booleanSetting(
             KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.title"),
@@ -93,7 +100,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
 
         internal fun Reader.irOrLegacyCompiler(module: Module): String {
             fun Reader.useJsIrCompiler(module: Module): Boolean = settingValue(module, useJsIrCompiler) ?: false
-            return if (useJsIrCompiler(module)) JsCompiler.IR.text else JsCompiler.LEGACY.text
+            return if (useJsIrCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
         }
 
         fun Reader.isApplication(module: Module): Boolean =
@@ -205,3 +212,54 @@ fun GradleIRListBuilder.commonCssSupport() {
         +"cssSupport.enabled = true"
     }
 }
+
+object JsComposeMppConfigurator : JsBrowserBasedConfigurator, SimpleTargetConfigurator {
+    @NonNls
+    override val id = "jsBrowserComposeMpp"
+
+    @NonNls
+    override val suggestedModuleName = "js"
+
+    override val moduleKind = ModuleKind.target
+
+    override val text = KotlinNewProjectWizardBundle.message("module.configurator.simple.js.compose.browser")
+
+    override val moduleSubType = ModuleSubType.js
+
+    override fun createInnerTargetIrs(
+        reader: Reader,
+        module: Module
+    ): List<BuildSystemIR> = irsList {
+        +super<SimpleTargetConfigurator>.createInnerTargetIrs(reader, module)
+        "browser" {
+            "testTask" {
+                +"testLogging.showStandardStreams = true"
+                "useKarma" {
+                    +"useChromeHeadless()"
+                    +"useFirefox()"
+                }
+            }
+        }
+        applicationSupport()
+    }
+
+    override fun Reader.createTargetIrs(
+        module: Module
+    ): List<BuildSystemIR> = org.jetbrains.kotlin.tools.projectWizard.core.buildList {
+        +DefaultTargetConfigurationIR(
+            module.createTargetAccessIr(moduleSubType),
+            createInnerTargetIrs(this@createTargetIrs, module).toPersistentList(),
+            listOf(GradlePropertyAccessIR("IR"))
+        )
+    }
+
+    override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path,
+    ): TaskResult<Unit> = compute {
+        GradlePlugin.gradleProperties.addValues("kotlin.js.webpack.major.version" to 4) //workaround for KT-48273 TODO:remove once the issue is fixed
+    }
+
+}
+

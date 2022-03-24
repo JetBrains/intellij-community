@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -122,7 +122,7 @@ public final class DiffDividerDrawUtil {
   }
 
   /**
-   * Use EditorInlayFoldingMapper-friendly renderer for folded lines.
+   * Use CustomFoldRegion-friendly renderer for folded lines.
    * We do not use it by default to avoid potential inconsistency with {@link DiffLineMarkerRenderer}.
    *
    * @see DiffDrawUtil#getGutterMarkerPaintRange
@@ -167,6 +167,9 @@ public final class DiffDividerDrawUtil {
 
       boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
                                 @NotNull TextDiffType type, boolean excluded, boolean skipped);
+
+      boolean processAligned(int startLine1, int endLine1, int startLine2, int endLine2,
+                             @NotNull TextDiffType type);
     }
   }
 
@@ -209,14 +212,52 @@ public final class DiffDividerDrawUtil {
       return process(startLine1, endLine1, startLine2, endLine2, new ExcludablePainter(type, excluded, skipped));
     }
 
+    @Override
+    public boolean processAligned(int startLine1, int endLine1, int startLine2, int endLine2,
+                                  @NotNull TextDiffType type) {
+      if (type == TextDiffType.INSERTED || type == TextDiffType.DELETED) {
+        return process(startLine1, endLine1, startLine2, endLine2, new DefaultPainter(type), true);
+      }
+      else {
+        return process(startLine1, endLine1, startLine2, endLine2, type);
+      }
+    }
+
     private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter) {
+      return process(startLine1, endLine1, startLine2, endLine2, painter, false);
+    }
+
+    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                            @NotNull Painter painter, boolean withAlignedHeight) {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
 
-      ContainerUtil.addIfNotNull(myPolygons, createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
-                                                           painter));
+      DividerPolygon polygon = createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2, painter);
+      if (withAlignedHeight && polygon != null) {
+        int inlayOffset = getInlayOffset(myEditor1, myEditor2, startLine1, startLine2, painter.getType());
+        polygon = polygon.withAlignedHeight(inlayOffset);
+      }
+
+      ContainerUtil.addIfNotNull(myPolygons, polygon);
       return true;
+    }
+
+    private static int getInlayOffset(@NotNull Editor editor1, @NotNull Editor editor2,
+                                      int startLine1, int startLine2,
+                                      @NotNull TextDiffType type) {
+      if (type == TextDiffType.INSERTED) {
+        return EditorUtil.getInlaysHeight(editor2, startLine2, true);
+      }
+      if (type == TextDiffType.DELETED) {
+        return EditorUtil.getInlaysHeight(editor1, startLine1, true);
+      }
+      if (type == TextDiffType.MODIFIED) {
+        return Math.max(EditorUtil.getInlaysHeight(editor1, startLine1, true),
+                        EditorUtil.getInlaysHeight(editor2, startLine2, true));
+      }
+
+      return 0;
     }
 
     @Nullable
@@ -277,6 +318,11 @@ public final class DiffDividerDrawUtil {
       public boolean isAlwaysVisible() {
         return true;
       }
+
+      @Override
+      public @NotNull TextDiffType getType() {
+        return myType;
+      }
     }
 
     private static class ResolvablePainter implements Painter {
@@ -306,6 +352,11 @@ public final class DiffDividerDrawUtil {
       @Override
       public boolean isAlwaysVisible() {
         return !myResolved;
+      }
+
+      @Override
+      public @NotNull TextDiffType getType() {
+        return myType;
       }
     }
 
@@ -340,6 +391,11 @@ public final class DiffDividerDrawUtil {
       public boolean isAlwaysVisible() {
         return !mySkipped;
       }
+
+      @Override
+      public @NotNull TextDiffType getType() {
+        return myType;
+      }
     }
 
     private interface Painter {
@@ -350,6 +406,8 @@ public final class DiffDividerDrawUtil {
       boolean isDottedBorder();
 
       boolean isAlwaysVisible();
+
+      @NotNull TextDiffType getType();
     }
   }
 
@@ -414,14 +472,51 @@ public final class DiffDividerDrawUtil {
         g.setStroke(BOLD_DOTTED_STROKE);
       }
 
-      if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
-      else {
-        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
+      drawTrapezium(g, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor, curve);
 
       g.setStroke(oldStroke);
+    }
+
+    private static void drawTrapezium(@NotNull Graphics2D g,
+                                      int width,
+                                      int startY1, int endY1,
+                                      int startY2, int endY2,
+                                      @Nullable Color fillColor, @Nullable Color borderColor,
+                                      boolean curve) {
+      if (curve) {
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+      else {
+        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+    }
+
+    @NotNull
+    public DividerPolygon withAlignedHeight(int inlayOffset) {
+      int delta = (myEnd2 - myStart2) - (myEnd1 - myStart1);
+      if (delta == 0) return this;
+
+      if (myStart2 == myEnd1 && myEnd1 == myEnd2) { //correspond to the last line DELETED change (e.g. last line deleted)
+        return new DividerPolygon(myStart1, myStart2 - (myEnd2 - myStart1), myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
+      }
+      else if (myEnd1 == myEnd2 && myStart1 == myEnd1) { //correspond to the last line INSERTED change (e.g. added new lines after last line)
+        return new DividerPolygon(myStart1 - (myEnd2 - myStart2), myStart2, myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
+      }
+      if (delta < 0) {
+        int startDelta = myStart2 == myEnd2 ? 0 : -delta;
+        int endDelta = myStart2 == myEnd2 ? -delta : 0;
+        return new DividerPolygon(myStart1, myStart2 - startDelta + inlayOffset,
+                                  myEnd1, myEnd2 + endDelta + inlayOffset,
+                                  myFillColor, myBorderColor, myDottedBorder);
+      }
+      else {
+        int startDelta = myStart1 == myEnd1 ? 0 : delta;
+        int endDelta = myStart1 == myEnd1 ? delta : 0;
+        int firstLineOffset = (myStart1 == myEnd1 && myStart2 == 0) ? -1 : 0;
+        return new DividerPolygon(myStart1 - startDelta + firstLineOffset + inlayOffset, myStart2,
+                                  myEnd1 + endDelta + firstLineOffset + inlayOffset, myEnd2,
+                                  myFillColor, myBorderColor, myDottedBorder);
+      }
     }
 
     public String toString() {

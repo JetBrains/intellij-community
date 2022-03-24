@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.service.settings
 
-import com.intellij.openapi.externalSystem.test.ExternalSystemProjectTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
 
 class ExternalSystemConfigurableTest : ExternalSystemProjectTestCase() {
   fun `test es settings controls reset`() {

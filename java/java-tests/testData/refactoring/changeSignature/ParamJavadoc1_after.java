@@ -5,8 +5,8 @@ class X {
      */
     public class TestRefactorLink {
       /**
-       * @return nothing
        * @param z yparam
+       * @return nothing
        */
         public void mymethod(boolean z) { }
     }

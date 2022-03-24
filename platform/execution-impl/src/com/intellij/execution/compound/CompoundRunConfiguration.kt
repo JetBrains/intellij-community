@@ -19,10 +19,8 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
-import kotlin.collections.LinkedHashMap
 
 data class SettingsAndEffectiveTarget(val configuration: RunConfiguration, val target: ExecutionTarget)
 
@@ -152,7 +150,8 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
   }
 
   override fun loadState(state: CompoundRunConfigurationOptions) {
-    super.loadState(state)
+    options.configurations.clear()
+    options.configurations.addAll(state.configurations)
     sortedConfigurationsWithTargets.clear()
     isInitialized = false
   }

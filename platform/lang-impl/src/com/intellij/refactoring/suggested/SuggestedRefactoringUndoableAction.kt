@@ -22,9 +22,9 @@ class SuggestedRefactoringUndoableAction private constructor(
 {
   companion object {
     fun create(document: Document, state: SuggestedRefactoringState): SuggestedRefactoringUndoableAction {
-      val signatureRange = state.refactoringSupport.signatureRange(state.declaration)!!
+      val signatureRange = state.refactoringSupport.signatureRange(state.anchor)!!
       return SuggestedRefactoringUndoableAction(
-        document, state.declaration.project, signatureRange, state.oldDeclarationText, state.oldImportsText,
+        document, state.anchor.project, signatureRange, state.oldDeclarationText, state.oldImportsText,
         state.oldSignature, state.newSignature, state.disappearedParameters, state.additionalData
       )
     }
@@ -42,12 +42,12 @@ class SuggestedRefactoringUndoableAction private constructor(
     psiDocumentManager.commitAllDocuments()
     val psiFile = psiDocumentManager.getPsiFile(document) ?: return
     val refactoringSupport = SuggestedRefactoringSupport.forLanguage(psiFile.language) ?: return
-    val declaration = refactoringSupport.declarationByOffset(psiFile, signatureRange.startOffset)
+    val anchor = refactoringSupport.anchorByOffset(psiFile, signatureRange.startOffset)
                         ?.takeIf { refactoringSupport.signatureRange(it) == signatureRange } ?: return
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
+      anchor, refactoringSupport, SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
       oldDeclarationText, oldImportsText, oldSignature, newSignature,
-      refactoringSupport.stateChanges.parameterMarkers(declaration, newSignature), disappearedParameters, additionalData = additionalData
+      refactoringSupport.stateChanges.parameterMarkers(anchor, newSignature), disappearedParameters, additionalData = additionalData
     )
 
     SuggestedRefactoringProviderImpl.getInstance(project).undoToState(state, signatureRange)

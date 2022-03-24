@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.DirectoryPackagingElementEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableDirectoryPackagingElementEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import kotlin.Unit;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * classpath is used for exploded WAR and EJB directories under exploded EAR
@@ -51,12 +53,12 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
 
   @NonNls @Override
   public String toString() {
-    return "dir:" + myDirectoryName;
+    return "dir:" + getMyDirectoryName();
   }
 
   @Attribute(NAME_ATTRIBUTE)
   public @NlsSafe String getDirectoryName() {
-    return myDirectoryName;
+    return getMyDirectoryName();
   }
 
   public void setDirectoryName(String directoryName) {
@@ -82,12 +84,12 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
 
   @Override
   public String getName() {
-    return myDirectoryName;
+    return getMyDirectoryName();
   }
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(myDirectoryName);
+    return element instanceof DirectoryPackagingElement && ((DirectoryPackagingElement)element).getDirectoryName().equals(getMyDirectoryName());
   }
 
   @Override
@@ -109,5 +111,18 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
   @Override
   public void loadState(@NotNull DirectoryPackagingElement state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  private String getMyDirectoryName() {
+    if (myStorage == null) {
+      return myDirectoryName;
+    } else {
+      DirectoryPackagingElementEntity entity = (DirectoryPackagingElementEntity)getThisEntity();
+      String directoryName = entity.getDirectoryName();
+      if (!Objects.equals(directoryName, myDirectoryName)) {
+        myDirectoryName = directoryName;
+      }
+      return directoryName;
+    }
   }
 }

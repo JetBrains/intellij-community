@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -29,7 +30,17 @@ public class HtmlTextCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    if (psiFile instanceof HtmlFileImpl) {
+      return notAfterASpace(psiFile, offset);
+    }
     return shouldSkipAutopopupInHtml(contextElement, offset) ? ThreeState.YES : ThreeState.UNSURE;
+  }
+
+  private static ThreeState notAfterASpace(PsiFile file, int offset) {
+    if (offset <= 0 || file.getText().charAt(offset - 1) != ' ') {
+      return ThreeState.UNSURE;
+    }
+    return ThreeState.YES;
   }
 
   public static boolean shouldSkipAutopopupInHtml(@NotNull PsiElement contextElement, int offset) {

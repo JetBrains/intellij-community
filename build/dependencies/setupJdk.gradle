@@ -6,11 +6,14 @@ import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 apply from: 'archivesCleanup.gradle'
+apply from: 'retries.gradle'
 
-def jbrVersion = System.getProperty('intellij.build.jdk.version', '11').toInteger()
-def setupJdkTasks = ["setupJbr$jbrVersion"]
+def sdkVersion = System.getProperty('intellij.build.jdk.version', '11').toInteger()
+def runtimeVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
+def jbrs = [(sdkVersion): jdkBuild, (runtimeVersion): runtimeBuild]
+def setupJdkTasks = jbrs.keySet().collect { "setupJbr$it" }
 task setupJdks(dependsOn: setupJdkTasks)
-cleanSetupJdks.dependsOn('cleanSetupJbr11', 'cleanDownloadJbr11')
+cleanSetupJdks.dependsOn(jbrs.keySet().collectMany { ["cleanSetupJbr$it", "cleanDownloadJbr$it"] })
 project.ext.jbrRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
@@ -22,7 +25,6 @@ def deleteObsoleteJdkArchives = ext.deleteObsoleteArchivesTask('Jdk', jbsdkDir)
 
 /**
  * Update this method together with:
- *  `setupJbre.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
  */
@@ -45,69 +47,81 @@ static def splitJbrBuild(String jreBuild, String version) {
   }
 }
 
-def jbrBuild = jdkBuild
-def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
-def jbrArtifactPrefix = setupJbrSdk ? 'jbrsdk-' : 'jbr_dcevm-'
+jbrs.each { jbrVersion, jbrBuild ->
+  def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
+  def jbrArtifactPrefix = jbrArtifactPrefix(setupJbrSdk)
 
-def jbrOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/$jbrVersion")
+  def jbrOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/$jbrVersion")
 
-def downloadJbr = task("downloadJbr$jbrVersion") {
-  def arch = jbrArch()
-  def platform = currentPlatformName()
-  def jbrUrl = jbrUrl(jbrVersion.toString(), jbrBuild.toString(), jbrArtifactPrefix)
-  def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), jbrVersion.toString())
-  def artifactName = "$jbrArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
-  def outputFile = "$jbsdkDir/${artifactName}"
+  def downloadJbr = task("downloadJbr$jbrVersion") {
+    def arch = jbrArch()
+    def platform = currentPlatformName()
+    def jbrUrl = jbrUrl(jbrVersion.toString(), jbrBuild.toString(), jbrArtifactPrefix)
+    def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), jbrVersion.toString())
+    def artifactName = "$jbrArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+    def outputFile = "$jbsdkDir/${artifactName}"
 
-  inputs.property('version', jbrVersion)
-  inputs.property('build', jbrBuild)
-  inputs.property('url', jbrUrl)
-  outputs.file(outputFile)
-  doLast {
-    logger.info("Downloading JBR $jbrVersion to compile (using $jbrUrl)")
-    download {
-      src jbrUrl
-      dest outputFile
-      tempAndMove true
-      connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
-      readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
-      retries 10
+    inputs.property('version', jbrVersion)
+    inputs.property('build', jbrBuild)
+    inputs.property('url', jbrUrl)
+    outputs.file(outputFile)
+    doLast {
+      logger.info("Downloading JBR $jbrVersion to compile (using $jbrUrl)")
+      project.ext.retry {
+        download {
+          src jbrUrl
+          dest outputFile
+          tempAndMove true
+          connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+          readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+        }
+      }
     }
   }
+
+  def setupJbr = tasks.create(name: "setupJbr$jbrVersion", dependsOn: [downloadJbr]) {
+    def outputDir = jbrOutputDir
+    def downloadOutputs = downloadJbr.outputs.files
+    inputs.files(downloadOutputs)
+    inputs.property("jdkOutputDir", outputDir)
+    outputs.dir(outputDir)
+    outputs.upToDateWhen {
+      !fileTree(outputDir).isEmpty()
+    }
+    doLast {
+      logger.info("Setting up JBR $jbrVersion to compile")
+      unpackJdk(downloadOutputs.singleFile, outputDir)
+    }
+  }
+  setupJbr.finalizedBy(checkJbr(jbrVersion, jbrOutputDir))
+  setupJbr.finalizedBy(deleteObsoleteJdkArchives)
 }
 
-def setupJbr = tasks.create(name: "setupJbr$jbrVersion", dependsOn: [downloadJbr]) {
-  def outputDir = jbrOutputDir
-  def downloadOutputs = downloadJbr.outputs.files
-  inputs.files(downloadOutputs)
-  inputs.property("jdkOutputDir", outputDir)
-  outputs.dir(outputDir)
-  outputs.upToDateWhen {
-    !fileTree(outputDir).isEmpty()
-  }
-  doLast {
-    logger.info("Setting up JBR $jbrVersion to compile")
-    unpackJdk(downloadOutputs.singleFile, outputDir)
+def untar(File archive, String directory) {
+  copy {
+    from tarTree(archive)
+    into directory
   }
 }
-setupJbr.finalizedBy(checkJbr(jbrVersion, jbrOutputDir))
-setupJbr.finalizedBy(deleteObsoleteJdkArchives)
 
-def unpackJdk(jbrArchive, outputDir) {
+def unpackJdk(File jbrArchive, String outputDir) {
   logger.info("Unpacking $jbrArchive to ${outputDir}")
   if (file(outputDir).exists()) {
     delete(outputDir)
   }
   def currentOs = OperatingSystem.current()
   if (currentOs.isWindows()) {
-    copy {
-      from tarTree(jbrArchive)
-      into outputDir
-    }
+    untar(jbrArchive, outputDir)
   }
   else {
-    exec { commandLine 'mkdir', '-p', outputDir }
-    exec { commandLine 'tar', 'xpf', "$jbrArchive.absolutePath", '--directory', outputDir }
+    try {
+      exec { commandLine 'mkdir', '-p', outputDir }
+      exec { commandLine 'tar', 'xpf', "$jbrArchive.absolutePath", '--directory', outputDir }
+    }
+    catch (Throwable e) {
+      logger.log(LogLevel.WARN, 'Failed to unpack via native executables', e)
+      untar(jbrArchive, outputDir)
+    }
   }
   def rootDirs = ['jbrsdk', 'jbr', 'jdk']
   if (file(outputDir).list()?.any { rootDirs.contains(it) }) {
@@ -131,14 +145,45 @@ def unpackJdk(jbrArchive, outputDir) {
   }
 }
 
+/**
+ * Inspired with com.intellij.util.system.CpuArch
+ */
+static def currentArch() {
+  String arch = System.getProperty("os.arch")
+  if ("x86_64" == arch || "amd64" == arch) {
+    return 'x64'
+  }
+  else if ("i386" == arch || "x86" == arch) {
+    // x86 JVMs are sometimes used as JAVA_HOME to reduce memory consumption on TeamCity, shouldn't affect SDK choice
+    return 'x64'
+  }
+  else if ("aarch64" == arch || "arm64" == arch) {
+    return 'aarch64'
+  }
+  else {
+    throw new IllegalStateException("Unknown arch '$arch'")
+  }
+}
+
 static def jbrArch() {
   def arch = System.getProperty("intellij.jdk.arch", "")
-  if (arch == '32') return 'i586'
+  if (arch == '32') return 'x86'
   if (arch == '64') return 'x64'
-  def os = OperatingSystem.current()
-  if (os.isWindows()) return System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'i586'
-  else if (os.isMacOsX()) return System.getProperty("os.arch") != 'aarch64' ? 'x64' : 'aarch64'
-  else return 'x64'
+  return currentArch()
+}
+
+static String jbrArtifactPrefix(Boolean setupJbrSdk) {
+  def arch = jbrArch()
+  def platform = currentPlatformName()
+
+  if (setupJbrSdk) return 'jbrsdk-'
+
+  // for now there's no linux-aarch64 with DCEVM flavour available
+  if (arch == 'aarch64' && platform == 'linux') {
+    return 'jbr-'
+  }
+
+  return 'jbr_dcevm-'
 }
 
 @SuppressWarnings("GrMethodMayBeStatic")
@@ -148,7 +193,12 @@ def jbrUrl(String jbrVersion, String jbrBuild, String jbrArtifactPrefix) {
   def (update, buildNumber) = splitJbrBuild(jbrBuild, jbrVersion)
   // base url of TeamCity build to download JBR from
   def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
-  "${teamCityBuild ?: jbrRepo}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  if (teamCityBuild != null) {
+    "${teamCityBuild}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz?guest=1"
+  }
+  else {
+    "${jbrRepo}/${jbrArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  }
 }
 
 static def currentPlatformName() {

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 // Minimized from KT-20714 itself
 class ServerUser {

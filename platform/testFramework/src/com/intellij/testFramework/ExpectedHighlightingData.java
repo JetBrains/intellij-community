@@ -231,7 +231,7 @@ public class ExpectedHighlightingData {
   }
 
   /**
-   * Removes highlights (bounded with <marker>...</marker>) from test case file.
+   * Removes highlights (bounded with {@code <marker>...</marker>}) from test case file.
    */
   private void extractExpectedHighlightsSet(Document document) {
     String text = document.getText();

@@ -8,7 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -30,9 +30,9 @@ class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
         val psiClass = (file as PsiJavaFile).classes[0]
         val docInfo = JavaDocInfoGenerator(project, psiClass).generateDocInfo(emptyList())
         Assert.assertEquals(
-            """<div class='definition'><pre>class <b>ExtMethod</b>
-extends <a href="psi_element://Super"><code>Super</code></a></pre></div><div class='content'>
-   <a href="psi_element://Project#guessDir()"><code>directory</code></a>
+            """<div class='definition'><pre><span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">ExtMethod</span>
+<span style="color:#000080;font-weight:bold;">extends</span> <a href="psi_element://Super"><code><span style="color:#000000;">Super</span></code></a></pre></div><div class='content'>
+  <a href="psi_element://Project#guessDir()"><code>directory</code></a>
  </div><table class='sections'><p></table>""", docInfo)
     }
     

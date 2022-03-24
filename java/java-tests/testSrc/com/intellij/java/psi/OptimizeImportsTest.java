@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,9 +13,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -111,11 +95,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.checkResult("class Foo {}");
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
-  }
-
   public void testNoStubPsiMismatchOnRecordInsideImportList() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", "import java.ut<caret>il.List;\n" +
@@ -140,10 +119,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
 
     // whatever: main thing it didn't throw
-    myFixture.checkResult("record\n" +
-                          "java.util.Map;\n" +
-                          "\n" +
-                          "class Foo {}");
+    myFixture.checkResult("class Foo {}");
   }
 
   public void testRemovingAllUnusedImports() {

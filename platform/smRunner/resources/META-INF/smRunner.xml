@@ -1,8 +1,12 @@
 <idea-plugin>
+  
   <extensionPoints>
     <extensionPoint name="importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="255" 
+                 description="Expected/actual values max length to be printed in the console" 
+                 key="test.console.expected.actual.max.length"/>
     <projectService serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
                             order="first" id="smtRunnerCustomizer"/>

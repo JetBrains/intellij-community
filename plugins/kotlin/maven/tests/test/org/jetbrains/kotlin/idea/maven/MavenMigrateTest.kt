@@ -24,7 +24,6 @@ import java.util.concurrent.TimeoutException
 class MavenMigrateTest : KotlinMavenImportingTestCase() {
     override fun setUp() {
         super.setUp()
-        repositoryPath = File(myDir, "repo").path
         createStdProjectFolders()
     }
 

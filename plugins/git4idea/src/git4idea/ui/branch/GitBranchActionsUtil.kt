@@ -109,6 +109,13 @@ internal fun hasRemotes(project: Project): Boolean {
   return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
 }
 
+internal fun hasTrackingConflicts(conflictingLocalBranches: Map<GitRepository, GitLocalBranch>,
+                                  remoteBranchName: String): Boolean =
+  conflictingLocalBranches.any { (repo, branch) ->
+    val trackInfo = GitBranchUtil.getTrackInfoForBranch(repo, branch)
+    trackInfo != null && !GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, trackInfo.remoteBranch.name)
+  }
+
 internal abstract class BranchGroupingAction(private val key: GroupingKey,
                                              icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
 

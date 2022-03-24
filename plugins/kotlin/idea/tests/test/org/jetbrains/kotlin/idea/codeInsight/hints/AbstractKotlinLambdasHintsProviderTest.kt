@@ -6,10 +6,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
-@Suppress("UnstableApiUsage")
 abstract class AbstractKotlinLambdasHintsProvider :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
@@ -34,7 +33,7 @@ abstract class AbstractKotlinLambdasHintsProvider :
                 }
             }
 
-            testProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings)
+            testProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings, true)
         }
     }
 

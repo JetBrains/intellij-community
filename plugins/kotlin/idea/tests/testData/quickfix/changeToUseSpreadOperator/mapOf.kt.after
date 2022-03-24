@@ -1,5 +1,5 @@
 // "Change 'pairs' to '*pairs'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun <K, V> yourMapOf(vararg pairs: Pair<K, V>) {}
 

@@ -18,6 +18,14 @@ import java.util.Collection;
 import java.util.List;
 
 
+/**
+ * @see ExternalSystemProjectTracker#markDirty
+ * @see ExternalSystemProjectTracker#markDirtyAllProjects
+ * @see ExternalSystemProjectTracker#scheduleChangeProcessing
+ * @deprecated use {@link ExternalSystemProjectTracker} instead
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated(forRemoval = true)
 public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjectsWatcher {
 
   @NotNull
@@ -89,6 +97,11 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
     return list;
   }
 
+  /**
+   * @deprecated see {@link ExternalSystemProjectsWatcherImpl}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
   public interface Contributor {
 
     void markDirtyAllExternalProjects(@NotNull Project project);

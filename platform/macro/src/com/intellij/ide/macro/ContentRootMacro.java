@@ -25,7 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ContentRootMacro extends Macro {
+public class ContentRootMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

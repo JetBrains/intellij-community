@@ -78,9 +78,14 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testWidenMismatch() { doTest(); }
   public void testDontWidenPlusInLoop() { doTest(); }
   public void testCollectionAddRemove() { doTest(); }
+
+  public void testCollectionRemoveIf() { doTest(); }
+
   public void testRelationsOnAddition() { doTest(); }
   public void testModSpecialCase() { doTest(); }
   public void testArrayAccessWithCastInCountedLoop() { doTest(); }
   public void testFloatingPointRanges() { doTest(); }
   public void testFloatingPointCasts() { doTest(); }
+  public void testFloatingPointMaxLoop() { doTest(); }
+  public void testStringIndexOfRelation() { doTest(); }
 }

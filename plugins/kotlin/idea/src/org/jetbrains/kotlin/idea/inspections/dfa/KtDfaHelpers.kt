@@ -12,30 +12,29 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
-import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
+import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 internal fun KotlinType?.toDfType(context: KtElement) : DfType {
     if (this == null) return DfType.TOP
@@ -68,7 +67,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
         is ClassDescriptor -> when (val fqNameUnsafe = descriptor.fqNameUnsafe) {
             FqNames._boolean -> DfTypes.BOOLEAN
             FqNames._byte -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
-            FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
+            FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong()))
             FqNames._short -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
             FqNames._int -> DfTypes.INT
             FqNames._long -> DfTypes.LONG
@@ -78,6 +77,24 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                 TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
+                if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
+                    val source = descriptor.source
+                    if (source is KotlinSourceElement) {
+                        val psi = source.psi
+                        if (psi is KtObjectDeclaration) {
+                            val bindingContext = psi.safeAnalyzeNonSourceRootCode()
+                            val superTypes = psi.superTypeListEntries
+                                .map { entry ->
+                                    val psiType = entry.typeReference?.getAbbreviatedTypeOrType(bindingContext)?.toPsiType(psi)
+                                    PsiUtil.resolveClassInClassTypeOnly(psiType)
+                                }
+                            return if (superTypes.contains(null))
+                                DfType.TOP
+                            else
+                                TypeConstraints.exactSubtype(psi, superTypes).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+                        }
+                    }
+                }
                 val typeConstraint = when (val typeFqName = correctFqName(fqNameUnsafe)) {
                     "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
                     "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
@@ -90,7 +107,11 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                     else -> {
                         val psiClass =
                             JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
-                        TypeConstraints.exactClass(psiClass).instanceOf()
+                        if (descriptor.kind == ClassKind.OBJECT && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+                            TypeConstraints.singleton(psiClass)
+                        } else {
+                            TypeConstraints.exactClass(psiClass).instanceOf()
+                        }
                     }
                 }
                 return typeConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)
@@ -112,6 +133,7 @@ private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNa
     "kotlin.Comparable" -> CommonClassNames.JAVA_LANG_COMPARABLE
     "kotlin.Enum" -> CommonClassNames.JAVA_LANG_ENUM
     "kotlin.Annotation" -> CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
+    "kotlin.Nothing" -> CommonClassNames.JAVA_LANG_VOID
     "kotlin.collections.Iterable", "kotlin.collections.MutableIterable" -> CommonClassNames.JAVA_LANG_ITERABLE
     "kotlin.collections.Iterator", "kotlin.collections.MutableIterator" -> CommonClassNames.JAVA_UTIL_ITERATOR
     "kotlin.collections.Collection", "kotlin.collections.MutableCollection" -> CommonClassNames.JAVA_UTIL_COLLECTION
@@ -130,7 +152,7 @@ internal fun KotlinType?.fqNameEquals(fqName: String): Boolean {
 internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()
 
 internal fun getConstant(expr: KtConstantExpression): DfType {
-    val bindingContext = expr.analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val type = bindingContext.getType(expr)
     val constant: ConstantValue<Any?>? =
         if (type == null) null else ConstantExpressionEvaluator.getConstant(expr, bindingContext)?.toConstantValue(type)
@@ -139,7 +161,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
         is BooleanValue -> DfTypes.booleanValue(constant.value)
         is ByteValue -> DfTypes.intValue(constant.value.toInt())
         is ShortValue -> DfTypes.intValue(constant.value.toInt())
-        is CharValue -> DfTypes.intValue(constant.value.toInt())
+        is CharValue -> DfTypes.intValue(constant.value.code)
         is IntValue -> DfTypes.intValue(constant.value)
         is LongValue -> DfTypes.longValue(constant.value)
         is FloatValue -> DfTypes.floatValue(constant.value)
@@ -148,7 +170,46 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode.PARTIAL).getType(this)
+internal fun KtExpression.getKotlinType(): KotlinType? {
+    var parent = this.parent
+    if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
+        parent = parent.parent
+    }
+    while (parent is KtParenthesizedExpression) {
+        parent = parent.parent
+    }
+    // In (call() as? X), the call() type might be inferred to be X due to peculiarities
+    // of Kotlin type system. This produces an unpleasant effect for data flow analysis:
+    // it assumes that this cast never fails, thus result is never null, which is actually wrong
+    // So we have to patch the original call type, widening it to its upper bound.
+    // Current implementation is not always precise and may result in skipping a useful warning.
+    if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
+        val call = resolveToCall()
+        if (call != null) {
+            val descriptor = call.resultingDescriptor
+            val typeDescriptor = descriptor.original.returnType?.constructor?.declarationDescriptor
+            if (typeDescriptor is TypeParameterDescriptor) {
+                val upperBound = typeDescriptor.upperBounds.singleOrNull()
+                if (upperBound != null) {
+                    return upperBound
+                }
+            }
+        }
+    }
+    return safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(this)
+}
+
+/**
+ * JVM-patched array element type (e.g. Int? for Array<Int>)
+ */
+internal fun KotlinType.getArrayElementType(context: KtElement): KotlinType? {
+    if (!KotlinBuiltIns.isArrayOrPrimitiveArray(this)) return null
+    val type = context.builtIns.getArrayElementType(this)
+    if (KotlinBuiltIns.isArray(this) && KotlinBuiltIns.isPrimitiveType(type)) {
+        return type.makeNullable()
+    }
+    return type
+}
 
 internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
     val typeFqName = this.constructor.declarationDescriptor?.fqNameUnsafe ?: return null
@@ -163,8 +224,8 @@ internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
         FqNames._char -> PsiType.CHAR.orBoxed()
         FqNames._double -> PsiType.DOUBLE.orBoxed()
         FqNames._float -> PsiType.FLOAT.orBoxed()
-        FqNames.unit -> PsiType.VOID.orBoxed()
-        FqNames.array -> context.builtIns.getArrayElementType(this).toPsiType(context)?.createArrayType()
+        FqNames.nothing -> PsiType.VOID.orBoxed()
+        FqNames.array -> getArrayElementType(context)?.toPsiType(context)?.createArrayType()
         else -> when (val fqNameString = correctFqName(typeFqName)) {
             "kotlin.ByteArray" -> PsiType.BYTE.createArrayType()
             "kotlin.IntArray" -> PsiType.INT.createArrayType()
@@ -215,3 +276,18 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     KtTokens.PERCEQ -> LongRangeBinOp.MOD
     else -> null
 }
+
+internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
+    val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
+    val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null
+    val index = expr.valueArguments.indexOf(lambdaArgument)
+    assert(index >= 0)
+    val resolvedCall = expr.resolveToCall() ?: return null
+    val descriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor
+    if (descriptor == null || !descriptor.isInline) return null
+    val parameterDescriptor = (resolvedCall.getArgumentMapping(lambdaArgument) as? ArgumentMatch)?.valueParameter ?: return null
+    if (parameterDescriptor.isNoinline) return null
+    return LambdaAndParameter(lambdaExpression, parameterDescriptor)
+}
+
+internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: ValueParameterDescriptor)

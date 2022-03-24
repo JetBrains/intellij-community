@@ -1,0 +1,24 @@
+docutils.TransformSpec.unknown_reference_resolvers
+docutils.frontend.ConfigParser.__getattr__
+docutils.frontend.ConfigParser.read
+docutils.frontend.OptionParser.__getattr__
+docutils.io.FileOutput.__getattr__
+docutils.io.FileOutput.__init__
+docutils.io.Input.__getattr__
+docutils.io.Input.__init__
+docutils.languages.LanguageImporter.__getattr__
+docutils.nodes.Element.__getattr__
+docutils.nodes.NodeVisitor.__getattr__
+docutils.nodes.document.__getattr__
+docutils.nodes.document.__init__
+docutils.parsers.rst.Directive.__getattr__
+docutils.transforms.Transform.__getattr__
+docutils.transforms.Transformer.__getattr__
+docutils.utils.Reporter.__getattr__
+
+# the constructor appears to be mostly internal API, public API users are meant to use docutils.utils.new_reporter instead
+docutils.utils.Reporter.__init__
+
+# these methods take a rawsource parameter that has been deprecated and is completely ignored, so we omit it from the stub
+docutils.nodes.Text.__new__
+docutils.nodes.Text.__init__

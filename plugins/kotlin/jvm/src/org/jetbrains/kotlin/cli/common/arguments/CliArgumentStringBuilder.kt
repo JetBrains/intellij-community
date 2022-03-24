@@ -2,14 +2,12 @@
 
 package org.jetbrains.kotlin.cli.common.arguments
 
-import com.intellij.openapi.util.text.StringUtil.compareVersionNumbers
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 
 object CliArgumentStringBuilder {
     private const val LANGUAGE_FEATURE_FLAG_PREFIX = "-XXLanguage:"
     private const val LANGUAGE_FEATURE_DEDICATED_FLAG_PREFIX = "-X"
-
-    private val versionRegex = Regex("""^(\d+)\.(\d+)\.(\d+)""")
 
     private val LanguageFeature.dedicatedFlagInfo
         get() = when (this) {
@@ -33,18 +31,11 @@ object CliArgumentStringBuilder {
         return Regex(fullPattern)
     }
 
-    fun LanguageFeature.buildArgumentString(state: LanguageFeature.State, kotlinVersion: String?): String {
+    fun LanguageFeature.buildArgumentString(state: LanguageFeature.State, kotlinVersion: IdeKotlinVersion?): String {
         val shouldBeFeatureEnabled = state == LanguageFeature.State.ENABLED || state == LanguageFeature.State.ENABLED_WITH_WARNING
         val dedicatedFlag = dedicatedFlagInfo?.run {
             val (xFlag, xFlagSinceVersion) = this
-
-            if (kotlinVersion == null) return@run xFlag
-
-            val parsedVersion = versionRegex.find(kotlinVersion) ?: return@run xFlag
-            val isAtLeastSpecifiedVersion = parsedVersion.destructured.let { (major, minor, patch) ->
-                KotlinVersion(major.toInt(), minor.toInt(), patch.toInt()) >= xFlagSinceVersion
-            }
-            if (isAtLeastSpecifiedVersion) xFlag else null
+            if (kotlinVersion == null || kotlinVersion.kotlinVersion >= xFlagSinceVersion) xFlag else null
         }
 
         return if (shouldBeFeatureEnabled && dedicatedFlag != null) {
@@ -57,7 +48,7 @@ object CliArgumentStringBuilder {
     fun String.replaceLanguageFeature(
         feature: LanguageFeature,
         state: LanguageFeature.State,
-        kotlinVersion: String?,
+        kotlinVersion: IdeKotlinVersion?,
         prefix: String = "",
         postfix: String = "",
         separator: String = ", ",

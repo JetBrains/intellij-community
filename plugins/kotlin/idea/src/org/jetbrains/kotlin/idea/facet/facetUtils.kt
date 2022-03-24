@@ -17,10 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.coerceAtMostVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.core.isAndroidModule
 import org.jetbrains.kotlin.idea.defaultSubstitutors
@@ -62,7 +59,7 @@ fun KotlinFacetSettings.initializeIfNeeded(
     module: Module,
     rootModel: ModuleRootModel?,
     platform: TargetPlatform? = null, // if null, detect by module dependencies
-    compilerVersion: String? = null
+    compilerVersion: IdeKotlinVersion? = null
 ) {
     val project = module.project
 
@@ -104,7 +101,22 @@ fun KotlinFacetSettings.initializeIfNeeded(
     }
 }
 
-val mavenLibraryIdToPlatform: Map<String, IdePlatformKind<*>> by lazy {
+private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVersion {
+    fun isUpToNextMinor(major: Int, minor: Int, patch: Int): Boolean {
+        return version.kotlinVersion.isAtLeast(major, minor, patch) && !version.kotlinVersion.isAtLeast(major, minor + 1)
+    }
+
+    // 1.4.30+ and 1.5.30+ have full support of next language version
+    val languageVersion = when {
+        isUpToNextMinor(1, 4, 30) -> LanguageVersion.KOTLIN_1_5
+        isUpToNextMinor(1, 5, 30) -> LanguageVersion.KOTLIN_1_6
+        else -> version.languageVersion
+    }
+
+    return this.coerceAtMost(languageVersion)
+}
+
+val mavenLibraryIdToPlatform: Map<String, IdePlatformKind> by lazy {
     IdePlatformKind.ALL_KINDS
         .flatMap { platform -> platform.tooling.mavenLibraryIds.map { it to platform } }
         .sortedByDescending { it.first.length }
@@ -117,15 +129,26 @@ fun Module.getOrCreateFacet(
     externalSystemId: String? = null,
     commitModel: Boolean = false
 ): KotlinFacet {
+    return getOrCreateConfiguredFacet(modelsProvider, useProjectSettings, externalSystemId, commitModel)
+}
+
+fun Module.getOrCreateConfiguredFacet(
+    modelsProvider: IdeModifiableModelsProvider,
+    useProjectSettings: Boolean,
+    externalSystemId: String? = null,
+    commitModel: Boolean = false,
+    configure: KotlinFacet.() -> Unit = {}
+): KotlinFacet {
     val facetModel = modelsProvider.getModifiableFacetModel(this)
 
     val facet = facetModel.findFacet(KotlinFacetType.TYPE_ID, KotlinFacetType.INSTANCE.defaultFacetName)
-        ?: with(KotlinFacetType.INSTANCE) { createFacet(this@getOrCreateFacet, defaultFacetName, createDefaultConfiguration(), null) }
+        ?: with(KotlinFacetType.INSTANCE) { createFacet(this@getOrCreateConfiguredFacet, defaultFacetName, createDefaultConfiguration(), null) }
             .apply {
                 val externalSource = externalSystemId?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
                 facetModel.addFacet(this, externalSource)
             }
     facet.configuration.settings.useProjectSettings = useProjectSettings
+    facet.configure()
     if (commitModel) {
         runWriteAction {
             facetModel.commit()
@@ -153,7 +176,7 @@ fun Module.removeKotlinFacet(
 //method used for non-mpp modules
 @JvmOverloads
 fun KotlinFacet.configureFacet(
-    compilerVersion: String?,
+    compilerVersion: IdeKotlinVersion?,
     platform: TargetPlatform?,
     modelsProvider: IdeModifiableModelsProvider,
     additionalVisibleModuleNames: Set<String> = emptySet()
@@ -171,7 +194,7 @@ fun KotlinFacet.configureFacet(
 
 @JvmOverloads
 fun KotlinFacet.configureFacet(
-    compilerVersion: String?,
+    compilerVersion: IdeKotlinVersion?,
     platform: TargetPlatform?, // if null, detect by module dependencies
     modelsProvider: IdeModifiableModelsProvider,
     hmppEnabled: Boolean,
@@ -201,7 +224,7 @@ fun KotlinFacet.configureFacet(
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 
-    module.externalCompilerVersion = compilerVersion
+    module.externalCompilerVersion = compilerVersion?.rawVersion
 }
 
 private fun Module.externalSystemRunTasks(): List<ExternalSystemRunTask> {
@@ -311,7 +334,7 @@ private fun Module.configureSdkIfPossible(compilerArguments: CommonCompilerArgum
 private fun Module.hasNonOverriddenExternalSdkConfiguration(compilerArguments: CommonCompilerArguments): Boolean =
     hasExternalSdkConfiguration && (compilerArguments !is K2JVMCompilerArguments || compilerArguments.jdkHome == null)
 
-private fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
+fun substituteDefaults(args: List<String>, compilerArguments: CommonCompilerArguments): List<String> =
     args + defaultSubstitutors[compilerArguments::class]?.filter { it.isSubstitutable(args) }?.flatMap { it.oldSubstitution }.orEmpty()
 
 fun parseCompilerArgumentsToFacet(

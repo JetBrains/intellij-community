@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.VcsCloneComponentStub;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,18 +40,8 @@ public interface CheckoutProvider {
     }
   }
 
-  /**
-   * @deprecated Use {@link #buildVcsCloneComponent(Project, ModalityState, VcsCloneDialogComponentStateListener)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-    return new VcsCloneComponentStub(this, VcsBundle.message("clone.dialog.clone.button"));
-  }
-
   @NotNull
   default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
-    return new VcsCloneComponentStub(this, VcsBundle.message("clone.dialog.clone.button"));
+    return new VcsCloneComponentStub(project, this, VcsBundle.message("clone.dialog.clone.button"));
   }
 }

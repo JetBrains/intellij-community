@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -25,12 +25,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -40,10 +37,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.inputStream
+import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -51,11 +48,12 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
 private val notificationGroup by lazy {
-  NotificationGroup(displayId = "Update from Sources", displayType = NotificationDisplayType.STICKY_BALLOON)
+  NotificationGroupManager.getInstance().getNotificationGroup("Update from Sources")
 }
 
 internal open class UpdateIdeFromSourcesAction
@@ -103,27 +101,30 @@ internal open class UpdateIdeFromSourcesAction
       return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_SYSTEM_PATH))
     }
 
-    val scriptFile = File(devIdeaHome, "build/scripts/idea_ultimate.gant")
-    if (!scriptFile.exists()) {
-      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.not.exists", scriptFile))
-    }
-    if (!scriptFile.readText().contains(includeBinAndRuntimeProperty)) {
-      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.out.of.date"))
-    }
-
     val bundledPluginDirsToSkip: List<String>
     val nonBundledPluginDirsToInclude: List<String>
     val buildEnabledPluginsOnly = !state.buildDisabledPlugins
     if (buildEnabledPluginsOnly) {
       val pluginDirectoriesToSkip = LinkedHashSet(state.pluginDirectoriesForDisabledPlugins)
-      pluginDirectoriesToSkip.removeAll(PluginManagerCore.getLoadedPlugins().asSequence().filter { it.isBundled }.map { it.path }.filter { it.isDirectory }.map { it.name })
-      PluginManagerCore.getPlugins().filter { it.isBundled && !it.isEnabled }.map { it.path }.filter { it.isDirectory }.mapTo(pluginDirectoriesToSkip) { it.name }
+      pluginDirectoriesToSkip.removeAll(
+        PluginManagerCore.getLoadedPlugins().asSequence()
+          .filter { it.isBundled }
+          .map { it.pluginPath }
+          .filter { it.isDirectory() }
+          .map { it.name }
+          .toSet()
+      )
+      PluginManagerCore.getPlugins()
+        .filter { it.isBundled && !it.isEnabled }
+        .map { it.pluginPath }
+        .filter { it.isDirectory() }
+        .mapTo(pluginDirectoriesToSkip) { it.name }
       val list = pluginDirectoriesToSkip.toMutableList()
       state.pluginDirectoriesForDisabledPlugins = list
       bundledPluginDirsToSkip = list
       nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins().filter {
-        !it.isBundled && it.isEnabled && it.version != null && it.version.contains("SNAPSHOT")
-      }.map { it.path }.filter { it.isDirectory }.map { it.name }
+        !it.isBundled && it.isEnabled
+      }.map { it.pluginPath }.filter { it.isDirectory() }.map { it.name }
     }
     else {
       bundledPluginDirsToSkip = emptyList()
@@ -133,7 +134,7 @@ internal open class UpdateIdeFromSourcesAction
     val deployDir = "$devIdeaHome/out/deploy" // NON-NLS
     val distRelativePath = "dist" // NON-NLS
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources" // NON-NLS
-    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
+    val params = createScriptJavaParameters(project, deployDir, distRelativePath,
                                             buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
@@ -172,7 +173,7 @@ internal open class UpdateIdeFromSourcesAction
         backupImportantFilesIfNeeded(workIdeHome, backupDir, indicator)
         indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.delete", builtDistPath)
         FileUtil.delete(File(builtDistPath))
-        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.gant.script")
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.script", ULTIMATE_UPDATE_FROM_SOURCES_BUILD_TARGET)
         val commandLine = params.toCommandLine()
         commandLine.isRedirectErrorStream = true
         val scriptHandler = OSProcessHandler(commandLine)
@@ -356,7 +357,7 @@ internal open class UpdateIdeFromSourcesAction
       return
     }
     val plugins = try {
-      pluginsXml.inputStream().reader().use {
+      pluginsXml.inputStream().use {
         MarketplaceRequests.parsePluginList(it)
       }
     }
@@ -376,11 +377,9 @@ internal open class UpdateIdeFromSourcesAction
     }
   }
 
-  private fun createScriptJavaParameters(devIdeaHome: String,
-                                         project: Project,
+  private fun createScriptJavaParameters(project: Project,
                                          deployDir: String,
                                          @Suppress("SameParameterValue") distRelativePath: String,
-                                         scriptFile: File,
                                          buildEnabledPluginsOnly: Boolean,
                                          bundledPluginDirsToSkip: List<String>,
                                          nonBundledPluginDirsToInclude: List<String>): JavaParameters? {
@@ -394,7 +393,7 @@ internal open class UpdateIdeFromSourcesAction
     params.setDefaultCharset(project)
     params.jdk = sdk
 
-    params.mainClass = "org.codehaus.groovy.tools.GroovyStarter"
+    params.mainClass = ULTIMATE_UPDATE_FROM_SOURCES_BUILD_TARGET
     params.programParametersList.add("--classpath")
     val buildScriptsModuleName = "intellij.idea.ultimate.build"
     val buildScriptsModule = ModuleManager.getInstance(project).findModuleByName(buildScriptsModuleName)
@@ -403,30 +402,10 @@ internal open class UpdateIdeFromSourcesAction
       return null
     }
     val classpath = OrderEnumerator.orderEntries(buildScriptsModule)
-      .recursively().withoutSdk().runtimeOnly().productionOnly().classes().pathsList
+      .recursively().withoutSdk().runtimeOnly().productionOnly().classes().pathsList.pathList
 
-    val classesFromCoreJars = listOf(
-      params.mainClass,
-      "org.apache.tools.ant.BuildException",   //ant
-      "org.apache.tools.ant.launch.AntMain",   //ant-launcher
-      "org.apache.commons.cli.ParseException", //commons-cli
-      "groovy.util.CliBuilder",                //groovy-cli-commons
-      "org.codehaus.groovy.runtime.NioGroovyMethods", //groovy-nio
-    )
-    val coreClassPath = classpath.rootDirs.filter { root ->
-      classesFromCoreJars.any { LibraryUtil.isClassAvailableInLibrary(listOf(root), it) }
-    }.mapNotNull { PathUtil.getLocalPath(it) }
-    params.classPath.addAll(coreClassPath)
-    coreClassPath.forEach { classpath.remove(FileUtil.toSystemDependentName(it)) }
+    params.classPath.addAll(classpath)
 
-    params.programParametersList.add(classpath.pathsString)
-    params.programParametersList.add("--main")
-    params.programParametersList.add("gant.Gant")
-    params.programParametersList.add("--debug")
-    params.programParametersList.add("-Dsome_unique_string_42_239")
-    params.programParametersList.add("--file")
-    params.programParametersList.add(scriptFile.absolutePath)
-    params.programParametersList.add("update-from-sources")
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
     params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
 
@@ -448,14 +427,7 @@ internal open class UpdateIdeFromSourcesAction
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && isIdeaProject(project)
-  }
-
-  private fun isIdeaProject(project: Project) = try {
-    DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, RuntimeException> { PsiUtil.isIdeaProject(project) }
-  }
-  catch (e: IndexNotReadyException) {
-    false
+    e.presentation.isEnabledAndVisible = project != null && PsiUtil.isIdeaProject(project)
   }
 }
 
@@ -474,7 +446,7 @@ private val safeToDeleteFilesInBin = setOf(
   "append.bat", "appletviewer.policy", "format.sh", "format.bat",
   "fsnotifier", "fsnotifier64",
   "inspect.bat", "inspect.sh",
-  "restarter"
+  "restarter", "icons",
   /*
   "idea.properties",
   "idea.sh",
@@ -489,3 +461,5 @@ private val safeToDeleteFilesInBin = setOf(
 
 @NonNls
 private val safeToDeleteExtensions = setOf("exe", "dll", "dylib", "so", "ico", "svg", "png", "py")
+
+private const val ULTIMATE_UPDATE_FROM_SOURCES_BUILD_TARGET = "UltimateUpdateFromSourcesBuildTarget"

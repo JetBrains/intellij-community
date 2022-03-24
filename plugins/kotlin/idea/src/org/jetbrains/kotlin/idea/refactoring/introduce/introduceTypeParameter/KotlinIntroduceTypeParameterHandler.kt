@@ -6,10 +6,10 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetP
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.rename.VariableInplaceRenameHandlerWithFinishHook
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.keysToMap
 
 object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
+    @NlsContexts.DialogTitle
     @JvmField
     val REFACTORING_NAME = KotlinBundle.message("introduce.type.parameter")
 
@@ -152,7 +154,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
                 }
             }
 
-            if (!ApplicationManager.getApplication().isUnitTestMode) {
+            if (!isUnitTestMode()) {
                 val dataContext = SimpleDataContext.getSimpleContext(
                     CommonDataKeys.PSI_ELEMENT, newTypeParameter,
                     (editor as? EditorEx)?.dataContext

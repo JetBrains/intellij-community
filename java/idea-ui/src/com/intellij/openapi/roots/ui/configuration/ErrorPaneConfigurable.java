@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -67,7 +68,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   public ErrorPaneConfigurable(final Project project, StructureConfigurableContext context, Runnable onErrorsChanged) {
     super(new BorderLayout());
     myOnErrorsChanged = onErrorsChanged;
-    myContent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myContent.setEditorKit(HTMLEditorKitBuilder.simple());
     myContent.setEditable(false);
     myContent.setBackground(UIUtil.getListBackground());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);

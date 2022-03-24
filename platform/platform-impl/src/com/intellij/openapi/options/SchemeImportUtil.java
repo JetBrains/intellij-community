@@ -35,8 +35,8 @@ public final class SchemeImportUtil {
       }
 
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return !file.isDirectory() && extensions.contains(file.getExtension());
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && !file.isDirectory() && extensions.contains(file.getExtension());
       }
     };
     if (description != null) {

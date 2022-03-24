@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -20,7 +20,7 @@ public final class TextUtil {
   public static void writeQualifiedSuper(TextBuffer buf, String qualifier) {
     ClassesProcessor.ClassNode classNode = (ClassesProcessor.ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     if (!qualifier.equals(classNode.classStruct.qualifiedName)) {
-      buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(qualifier))).append('.');
+      buf.append(DecompilerContext.getImportCollector().getNestedName(ExprProcessor.buildJavaClassName(qualifier))).append('.');
     }
     buf.append("super");
   }

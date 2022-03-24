@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.UserDataHolder;
@@ -18,8 +19,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FloatingDecoratorMarker;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +42,11 @@ public class DataManagerImpl extends DataManager {
   private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
+
+  private static class GetDataRuleBean extends KeyedLazyInstanceEP<GetDataRule> {
+    @Attribute("injectedContext")
+    public boolean injectedContext;
+  }
 
   public DataManagerImpl() {
   }
@@ -97,6 +106,16 @@ public class DataManagerImpl extends DataManager {
     return dataProvider;
   }
 
+  static {
+    for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionsIfPointIsRegistered()) {
+      // initialize data-key instances for rules
+      DataKey<?> dataKey = DataKey.create(instance.getKey());
+      if (!((GetDataRuleBean)instance).injectedContext) continue;
+      // add "injected" data-key for rules like "usageTarget"
+      InjectedDataKeys.injectedKey(dataKey);
+    }
+  }
+
   public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
     String uninjectedId = InjectedDataKeys.uninjectedId(dataId);
     GetDataRule slowRule = dataProvider -> getSlowData(dataId, dataProvider);
@@ -105,33 +124,38 @@ public class DataManagerImpl extends DataManager {
     if (rules1 == null && rules2 == null) return slowRule;
     return dataProvider -> {
       Object data = slowRule.getData(dataProvider);
-      if (data != null) return data;
-      if (rules1 != null) {
-        for (GetDataRule rule : rules1) {
-          data = rule.getData(dataProvider);
-          if (data != null) return DataValidators.validOrNull(data, dataId, rule);
-        }
-      }
-      if (rules2 != null) {
-        for (GetDataRule rule : rules2) {
-          data = rule.getData(id -> {
-            String injectedId = InjectedDataKeys.injectedId(id);
-            return injectedId != null ? dataProvider.getData(injectedId) : null;
-          });
-          if (data != null) return DataValidators.validOrNull(data, dataId, rule);
-        }
-      }
-      return null;
+      data = data != null ? data : rules1 == null ? null : getRulesData(dataId, rules1, dataProvider);
+      data = data != null ? data : rules2 == null ? null : getRulesData(dataId, rules2, id -> {
+        String injectedId = InjectedDataKeys.injectedId(id);
+        return injectedId != null ? dataProvider.getData(injectedId) : null;
+      });
+      return data;
     };
+  }
+
+  private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<GetDataRule> rules, @NotNull DataProvider provider) {
+    for (GetDataRule rule : rules) {
+      try {
+        Object data = rule.getData(provider);
+        if (data != null) return DataValidators.validOrNull(data, dataId, rule);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+    }
+    return null;
   }
 
   private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
     Iterable<DataProvider> asyncProviders = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
     if (asyncProviders == null) return null;
     for (DataProvider provider : asyncProviders) {
-      Object data = provider.getData(dataId);
-      if (data != null) {
-        return DataValidators.validOrNull(data, dataId, provider);
+      try {
+        Object data = provider.getData(dataId);
+        if (data != null) {
+          return DataValidators.validOrNull(data, dataId, provider);
+        }
+      }
+      catch (IndexNotReadyException ignore) {
       }
     }
     return null;
@@ -139,11 +163,9 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
-    if (Registry.is("actionSystem.dataContextAssertions")) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (ourGetDataLevel.get()[0] > 0) {
-        LOG.error("DataContext shall not be created and queried inside another getData() call.");
-      }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ourGetDataLevel.get()[0] > 0) {
+      LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }
     return IdeUiService.getInstance().createUiDataContext(component);
   }
@@ -229,7 +251,8 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
-    if (dataContext instanceof UserDataHolder && !DataContextUtils.isFrozenDataContext(dataContext)) {
+    if (dataContext instanceof UserDataHolder &&
+        !((dataContext instanceof FreezingDataContext) && ((FreezingDataContext)dataContext).isFrozenDataContext())) {
       ((UserDataHolder)dataContext).putUserData(dataKey, data);
     }
   }

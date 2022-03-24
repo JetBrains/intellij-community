@@ -114,10 +114,10 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
           return false;
         }
         Object toEdit = selectedObjects.iterator().next();
-        return toEdit instanceof AbstractTreeNode && ((AbstractTreeNode)toEdit).getValue() instanceof Bookmark;
+        return toEdit instanceof AbstractTreeNode && ((AbstractTreeNode<?>)toEdit).getValue() instanceof Bookmark;
       case REMOVE:
         for (Object toRemove : selectedObjects) {
-          if (!(toRemove instanceof AbstractTreeNode && ((AbstractTreeNode)toRemove).getValue() instanceof Bookmark)) {
+          if (!(toRemove instanceof AbstractTreeNode && ((AbstractTreeNode<?>)toRemove).getValue() instanceof Bookmark)) {
             return false;
           }
         }
@@ -135,8 +135,8 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
           break;
         }
         Object toEdit = selectedObjects.iterator().next();
-        if (toEdit instanceof AbstractTreeNode && ((AbstractTreeNode)toEdit).getValue() instanceof Bookmark) {
-          Bookmark bookmark = (Bookmark)((AbstractTreeNode)toEdit).getValue();
+        if (toEdit instanceof AbstractTreeNode && ((AbstractTreeNode<?>)toEdit).getValue() instanceof Bookmark) {
+          Bookmark bookmark = (Bookmark)((AbstractTreeNode<?>)toEdit).getValue();
           if (bookmark == null) {
             break;
           }

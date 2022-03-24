@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getConfigurationPossibilitiesForConfigureNotification
@@ -16,7 +17,7 @@ import javax.swing.event.HyperlinkEvent
 
 data class ConfigureKotlinNotificationState(
     val debugProjectName: String,
-    val notificationString: String,
+    @Nls val notificationString: String,
     val notConfiguredModules: Collection<String>
 )
 
@@ -26,7 +27,7 @@ class ConfigureKotlinNotification(
     val notificationState: ConfigureKotlinNotificationState
 ) : Notification(
     KotlinConfigurationCheckerService.CONFIGURE_NOTIFICATION_GROUP_ID,
-    KotlinJvmBundle.message("configure.kotlin"),
+    @Suppress("DialogTitleCapitalization") KotlinJvmBundle.message("configure.kotlin"),
     notificationState.notificationString,
     NotificationType.WARNING
 ) {

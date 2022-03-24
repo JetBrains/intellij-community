@@ -5,6 +5,9 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.ComparisonFailure
@@ -12,14 +15,12 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.allKotlinFiles
-import org.jetbrains.kotlin.idea.test.findFileWithCaret
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -37,7 +38,10 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
     fun doTest(unused: String) {
         setupMppProjectFromDirStructure(testDataFile())
-        doQuickFixTest(fileName())
+        val directiveFileText = project.findFileWithCaret().text
+        withCustomCompilerOptions(directiveFileText, project, module) {
+            doQuickFixTest(fileName())
+        }
     }
 
     private fun doQuickFixTest(dirPath: String) {
@@ -62,8 +66,18 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     "// SHOULD_FAIL_WITH: "
                 ).joinToString(separator = "\n")
 
+                val dialogOption = when (InTextDirectivesUtils.findStringWithPrefixes(actionFileText, "// DIALOG_OPTION: ")) {
+                    "OK" -> TestDialog.OK
+                    "NO" -> TestDialog.NO
+                    "CANCEL" -> TestDialog { Messages.CANCEL }
+                    else -> TestDialog.DEFAULT
+                }
+
+                val oldDialogOption = TestDialogManager.setTestDialog(dialogOption)
+
                 TypeAccessibilityChecker.testLog = StringBuilder()
                 val log = try {
+
                     AbstractQuickFixMultiFileTest.doAction(
                         text,
                         file,
@@ -77,6 +91,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
                     TypeAccessibilityChecker.testLog.toString()
                 } finally {
+                    TestDialogManager.setTestDialog(oldDialogOption)
                     TypeAccessibilityChecker.testLog = null
                 }
 

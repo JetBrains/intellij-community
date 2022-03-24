@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
@@ -12,6 +13,7 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.text.MessageFormat
+import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -50,11 +52,11 @@ final class ApplicationInfoProperties {
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileStatic(TypeCheckingMode.SKIP)
-  private ApplicationInfoProperties(ProductProperties productProperties, String appInfoXml) {
+  private ApplicationInfoProperties(ProductProperties productProperties, BuildOptions buildOptions, String appInfoXml, BuildMessages messages) {
     this.appInfoXml = appInfoXml
-    def root = new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
+    Node root = loadXml(appInfoXml)
 
-    def versionTag = root.version.first()
+    Node versionTag = root["version"].first()
     majorVersion = versionTag.@major
     minorVersion = versionTag.@minor ?: "0"
     microVersion = versionTag.@micro ?: "0"
@@ -64,9 +66,9 @@ final class ApplicationInfoProperties {
     versionSuffix = versionTag.@suffix ?: isEAP ? "EAP" : null
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
 
-    def namesTag = root.names.first()
+    def namesTag = root["names"].first()
     shortProductName = namesTag.@product
-    String buildNumber = root.build.first().@number
+    String buildNumber = root["build"].first().@number
     int productCodeSeparator = buildNumber.indexOf('-')
     String productCode = null
     if (productCodeSeparator != -1) {
@@ -79,20 +81,41 @@ final class ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    majorReleaseDate = formatMajorReleaseDate(root.build.first().@majorReleaseDate)
+    def majorReleaseDate = root["build"].first().@majorReleaseDate
+    if (!isEAP && (majorReleaseDate == null || majorReleaseDate.startsWith('__'))) {
+      messages.error("majorReleaseDate may be omitted only for EAP")
+    }
+    this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto
 
-    def companyTag = root.company.first()
+    def companyTag = root["company"].first()
     companyName = companyTag.@name
     shortCompanyName = companyTag.@shortName ?: shortenCompanyName(companyName)
 
-    def svgPath = root.icon[0]?.@svg
-    svgRelativePath = isEAP ? (root."icon-eap"[0]?.@svg ?: svgPath) : svgPath
-    svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
+    def svgPath = getFirst(root["icon"])?.@svg
+    svgRelativePath = isEAP ? (getFirst(root["icon-eap"])?.@svg ?: svgPath) : svgPath
+    svgProductIcons = collectAllIcons(root)
 
-    patchesUrl = root."update-urls"[0]?.@"patches"
+    patchesUrl = getFirst(root["update-urls"])?.@"patches"
+  }
+
+  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10459) */
+  private static Node getFirst(NodeList children) {
+    if (children == null || children.isEmpty()) return null
+    return children[0] as Node
+  }
+
+  @SuppressWarnings('GrUnresolvedAccess')
+  @CompileDynamic
+  private static List<String> collectAllIcons(Node root) {
+    (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
+  }
+
+  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10457) */
+  private static Node loadXml(String appInfoXml) {
+    new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
   }
 
   String getAppInfoXml() {
@@ -100,9 +123,10 @@ final class ApplicationInfoProperties {
   }
 
   @VisibleForTesting
-  static String formatMajorReleaseDate(String majorReleaseDateRaw) {
+  static String formatMajorReleaseDate(String majorReleaseDateRaw, long buildDateInSeconds = System.currentTimeSeconds()) {
     if (majorReleaseDateRaw == null || majorReleaseDateRaw.startsWith('__')) {
-      return ZonedDateTime.now(ZoneOffset.UTC).format(MAJOR_RELEASE_DATE_PATTERN)
+      def buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(buildDateInSeconds), ZoneOffset.UTC)
+      return buildDate.format(MAJOR_RELEASE_DATE_PATTERN)
     }
     else {
       try {
@@ -115,8 +139,8 @@ final class ApplicationInfoProperties {
     }
   }
 
-  ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    this(productProperties, findApplicationInfoInSources(project, productProperties, messages))
+  ApplicationInfoProperties(JpsProject project, ProductProperties productProperties, BuildOptions buildOptions, BuildMessages messages) {
+    this(productProperties, buildOptions, findApplicationInfoInSources(project, productProperties, messages), messages)
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
@@ -136,7 +160,6 @@ final class ApplicationInfoProperties {
 
   @NotNull
   ApplicationInfoProperties patch(BuildContext buildContext) {
-    String date = ZonedDateTime.now(ZoneOffset.UTC).format(BUILD_DATE_PATTERN)
     ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     String builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -145,18 +168,19 @@ final class ApplicationInfoProperties {
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
-    def patchedAppInfoXml = BuildUtils.replaceAll(appInfoXml, Map.<String, String> of(
-      "BUILD_NUMBER", buildContext.fullBuildNumber,
-      "BUILD_DATE", date,
+    def buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(buildContext.options.buildDateInSeconds), ZoneOffset.UTC)
+    def patchedAppInfoXml = BuildUtils.replaceAll(appInfoXml, Map.<String, String>of(
+      "BUILD_NUMBER", productCode + "-" + buildContext.buildNumber,
+      "BUILD_DATE", buildDate.format(BUILD_DATE_PATTERN),
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
     ), "__")
-    return new ApplicationInfoProperties(buildContext.productProperties, patchedAppInfoXml)
+    return new ApplicationInfoProperties(buildContext.productProperties, buildContext.options, patchedAppInfoXml, buildContext.messages)
   }
 
   //copy of ApplicationInfoImpl.shortenCompanyName
   private static String shortenCompanyName(String name) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.")
+    return Strings.trimEnd(Strings.trimEnd(name, " s.r.o."), " Inc.")
   }
 
   private static @NotNull String findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {

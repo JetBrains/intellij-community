@@ -14,7 +14,7 @@ private class OpenLearnPanel : DumbAwareAction() {
       toolWindow.show()
     }
     else {
-      OpenLessonActivities.openLearnProjectFromWelcomeScreen()
+      OpenLessonActivities.openLearnProjectFromWelcomeScreen(null)
     }
   }
 }

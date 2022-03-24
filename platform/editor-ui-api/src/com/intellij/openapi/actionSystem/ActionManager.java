@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,8 +144,7 @@ public abstract class ActionManager {
    *   {@link #createActionToolbar(String, ActionGroup, boolean)}, or
    *   {@link com.intellij.ui.ToolbarDecorator} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
 
@@ -175,15 +173,13 @@ public abstract class ActionManager {
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addAnActionListener(AnActionListener listener);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
@@ -191,8 +187,7 @@ public abstract class ActionManager {
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removeAnActionListener(AnActionListener listener);
 
   @Nullable

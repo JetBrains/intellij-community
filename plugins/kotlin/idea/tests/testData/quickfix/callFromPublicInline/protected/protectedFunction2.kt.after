@@ -1,0 +1,10 @@
+// "Make 'inlineProperty' protected" "true"
+open class Foo {
+    protected fun protectedMethod() {}
+
+    protected inline val inlineProperty: Int
+        get() {
+            protectedMethod()
+            return 42
+        }
+}

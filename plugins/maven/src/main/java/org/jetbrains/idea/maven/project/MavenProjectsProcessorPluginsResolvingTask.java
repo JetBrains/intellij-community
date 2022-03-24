@@ -22,17 +22,20 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorPluginsResolvingTask extends MavenProjectsProcessorBasicTask {
   private final NativeMavenProjectHolder myNativeMavenProject;
+  private final boolean forceUpdateSnapshots;
 
   public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
                                                     NativeMavenProjectHolder nativeMavenProject,
-                                                    MavenProjectsTree tree) {
+                                                    MavenProjectsTree tree,
+                                                    boolean forceUpdateSnapshots) {
     super(project, tree);
     myNativeMavenProject = nativeMavenProject;
+    this.forceUpdateSnapshots = forceUpdateSnapshots;
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolvePlugins(project, myMavenProject, myNativeMavenProject, embeddersManager, console, indicator);
+    myResolver.resolvePlugins(myMavenProject, myNativeMavenProject, embeddersManager, console, indicator, true, forceUpdateSnapshots);
   }
 }

@@ -7,8 +7,10 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.target.*
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslProxy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.util.io.sizeOrNull
@@ -23,6 +25,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
+  private val proxies = mutableMapOf<Int, WslProxy>() //port to proxy
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -42,6 +45,9 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
       if (targetRoot != null) {
         myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
       }
+      else {
+        LOG.error("Cannot register upload volume: WSL path not found for local path: " + uploadRoot.localRootPath)
+      }
     }
     for (downloadRoot in request.downloadVolumes) {
       val localRootPath = downloadRoot.localRootPath ?: FileUtil.createTempDirectory("intellij-target.", "").toPath()
@@ -59,16 +65,21 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
 
     for (localPortBinding in request.localPortBindings) {
-      val host = if (distribution.version == 1) {
-        // Ports bound on localhost in Windows can be accessed by linux apps running in WSL1, but not in WSL2:
-        //   https://docs.microsoft.com/en-US/windows/wsl/compare-versions#accessing-network-applications
-        "127.0.0.1"
-      }
-      else {
-        distribution.hostIp
-      }
-      val hostPort = HostPort(host, localPortBinding.local)
+      // Ports bound on localhost in Windows can be accessed by linux apps running in WSL1, but not in WSL2:
+      // https://docs.microsoft.com/en-US/windows/wsl/compare-versions#accessing-network-applications
+      val localPort = localPortBinding.local
+      val hostPort = HostPort("127.0.0.1", if (distribution.version > 1) getWslPort(localPort) else localPort)
       myLocalPortBindings[localPortBinding] = ResolvedPortBinding(hostPort, hostPort)
+    }
+  }
+
+  private fun getWslPort(localPort: Int): Int {
+    proxies[localPort]?.wslIngressPort?.let {
+      return it
+    }
+    WslProxy(distribution, localPort).apply {
+      proxies[localPort] = this
+      return this.wslIngressPort
     }
   }
 
@@ -99,17 +110,21 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val ptyOptions = request.ptyOptions
     val generalCommandLine = if (ptyOptions != null) {
-      PtyCommandLine(commandLine.collectCommandsSynchronously()).also {
-        it.withOptions(ptyOptions)
-      }
+      PtyCommandLine(commandLine.collectCommandsSynchronously()).withOptions(ptyOptions)
     }
     else {
       GeneralCommandLine(commandLine.collectCommandsSynchronously())
     }
     generalCommandLine.environment.putAll(commandLine.environmentVariables)
     request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
+    generalCommandLine.withRedirectErrorStream(commandLine.isRedirectErrorStream)
     distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
-    return generalCommandLine.createProcess()
+    return generalCommandLine.createProcess().apply {
+      onExit().whenCompleteAsync { _, _ ->
+        proxies.forEach { Disposer.dispose(it.value) }
+        proxies.clear()
+      }
+    }
   }
 
   override fun shutdown() {}
@@ -119,7 +134,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
-      return toLinuxPath(localPath)!!
+      return toLinuxPath(localPath) ?: throw RuntimeException("Cannot find Linux path for $localPath (${distribution.msId})")
     }
 
     @Throws(IOException::class)

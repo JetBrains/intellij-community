@@ -1,7 +1,4 @@
 <keymap version="1" name="Eclipse (Mac OS X)" disable-mnemonics="false" parent="Mac OS X 10.5+">
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="meta P"/>
-  </action>
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="meta shift Z"/>
   </action>
@@ -126,6 +123,7 @@
     <keyboard-shortcut first-keystroke="meta shift U"/>
   </action>
   <action id="FindWordAtCaret"/>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
     <mouse-shortcut keystroke="button5"/>
@@ -322,6 +320,7 @@
 
   <action id="ActivateProjectToolWindow"/>
   <action id="ActivateFavoritesToolWindow"/>
+  <action id="ActivateBookmarksToolWindow"/>
   <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="alt meta Q" second-keystroke="S"/>
   </action>

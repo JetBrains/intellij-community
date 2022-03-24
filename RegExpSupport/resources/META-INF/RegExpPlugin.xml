@@ -1,7 +1,3 @@
-<!--
-  ~ Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-  -->
-
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
@@ -36,7 +32,8 @@
 
     <intentionAction>
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
-      <category>RegExp</category>
+      <bundleName>messages.RegExpBundle</bundleName>
+      <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>
 
     <localInspection language="RegExp" shortName="RegExpRepeatedSpace" enabledByDefault="true" level="WARNING"
@@ -62,9 +59,9 @@
     <localInspection language="RegExp" shortName="RegExpAnonymousGroup" enabledByDefault="false" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.anonymous.group.or.numeric.back.reference"
                      implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
-    <localInspection language="RegExp" shortName="RegExpRedundantEscape" enabledByDefault="true" level="WARNING"
+    <localInspection language="RegExp" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.character.escape"
-                     implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
+                     implementationClass="org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection"/>
     <localInspection language="RegExp" shortName="RegExpUnexpectedAnchor" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.begin.or.end.anchor.in.unexpected.position"
                      implementationClass="org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection"/>
@@ -77,6 +74,11 @@
     <localInspection language="RegExp" shortName="RegExpUnnecessaryNonCapturingGroup" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.unnecessary.non.capturing.group"
                      implementationClass="org.intellij.lang.regexp.inspection.UnnecessaryNonCapturingGroupInspection"/>
-
+    <localInspection language="RegExp" shortName="RegExpSuspiciousBackref" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.suspicious.backref"
+                     implementationClass="org.intellij.lang.regexp.inspection.SuspiciousBackrefInspection"/>
+    <localInspection language="RegExp" shortName="RegExpSimplifiable" enabledByDefault="true" level="WEAK WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.simplifiable.expression"
+                     implementationClass="org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection"/>
   </extensions>
 </idea-plugin>

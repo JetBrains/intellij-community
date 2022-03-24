@@ -3,6 +3,7 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.Executor
 import com.intellij.execution.Location
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
@@ -18,9 +19,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
-import org.jetbrains.annotations.NotNull
 
 /**
  * Pytest runner
@@ -46,10 +47,10 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
     envs[PYTEST_RUN_CONFIG] = "True"
   }
 
-  override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: @NotNull TargetEnvironmentRequest,
-                                                       envs: @NotNull MutableMap<String, TargetEnvironmentFunction<String>>,
+  override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+                                                       envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                                                        passParentEnvs: Boolean) {
-    super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
+    super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     envs[PYTEST_RUN_CONFIG] = constant("True")
   }
 }
@@ -64,35 +65,44 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   @ConfigField("runcfg.pytest.config.parameters")
   var parameters: String = ""
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
     PyPyTestExecutionEnvironment(this, environment)
 
   override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
     PyTestSettingsEditor(this)
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String = mutableListOf<String>().apply {
-    if (keywords.isNotEmpty()) add("-k $keywords")
+    if (keywords.isNotEmpty() && target.targetType != PyRunTargetVariant.CUSTOM) {
+      val keywords = keywords.removeSurrounding("'").removeSurrounding("\"")
+      add("-k '$keywords'")
+    }
     if (AdvancedSettings.getBoolean("python.pytest.swapdiff")) add("--jb-swapdiff")
     if (AdvancedSettings.getBoolean("python.pytest.show_summary")) add("--jb-show-summary")
   }.joinToString(" ")
 
-  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
+  /**
+   * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+   */
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: List<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
     target.generateArgumentsLine(this) +
     listOf(rawArgumentsSeparator, "--last-failed") +
     ParametersListUtil.parse(additionalArguments)
       .filter(String::isNotEmpty)
 
-  override fun getTestSpec(): List<String> {
-    // Parametrized test must add parameter to target.
-    // So, foo.spam becomes foo.spam[param]
-    if (parameters.isNotEmpty() && target.targetType == PyRunTargetVariant.PYTHON) {
-      return super.getTestSpec().toMutableList().apply {
-        this[size - 1] = last() + "[$parameters]"
-      }
-    }
-    return super.getTestSpec()
-  }
+  override fun getTestSpecsForRerun(request: TargetEnvironmentRequest,
+                                    scope: GlobalSearchScope,
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<TargetEnvironmentFunction<String>> =
+    // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
+    target.generateArgumentsLine(request, this) +
+    listOf(rawArgumentsSeparator, "--last-failed").map(::constant) +
+    ParametersListUtil.parse(additionalArguments)
+      .filter(String::isNotEmpty)
+      .map(::constant)
+
+  override val pythonTargetAdditionalParams: String
+    get() =
+      if (parameters.isNotEmpty() && target.targetType == PyRunTargetVariant.PYTHON) "[$parameters]" else ""
 
   override fun setMetaInfo(metaInfo: String) {
     // Metainfo contains test name along with params.

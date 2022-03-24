@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.ArrayStoreInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
@@ -249,6 +250,9 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       }
       if (instruction instanceof MethodCallInstruction) {
         return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
+      }
+      if (instruction instanceof ArrayStoreInstruction) {
+        return true;
       }
       return false;
     }

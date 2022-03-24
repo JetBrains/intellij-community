@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlElement
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 
@@ -52,7 +52,7 @@ class RawPluginDescriptor {
 
   @JvmField var epNameToExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
 
-  @JvmField internal var content = PluginContentDescriptor.EMPTY
+  @JvmField internal var contentModules: MutableList<PluginContentDescriptor.ModuleItem>? = null
   @JvmField internal var dependencies = ModuleDependenciesDescriptor.EMPTY
 
   class ActionDescriptor(

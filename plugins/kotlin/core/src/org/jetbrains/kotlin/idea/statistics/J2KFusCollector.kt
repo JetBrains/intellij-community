@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class J2KFusCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
@@ -37,12 +37,12 @@ class J2KFusCollector : CounterUsagesCollector() {
             linesCount: Int,
             filesCount: Int
         ) = event.log(
-            this.sourceType.with(type.text),
-            this.isNewJ2K.with(isNewJ2k),
-            this.conversionTime.with(conversionTime),
-            this.linesCount.with(linesCount),
-            this.filesCount.with(filesCount),
-            this.pluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)),
+          this.sourceType.with(type.text),
+          this.isNewJ2K.with(isNewJ2k),
+          this.conversionTime.with(conversionTime),
+          this.linesCount.with(linesCount),
+          this.filesCount.with(filesCount),
+          this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id)),
         )
     }
 

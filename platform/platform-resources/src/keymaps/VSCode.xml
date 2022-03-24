@@ -33,7 +33,7 @@
   </action>
   <action id="ChangesView.GroupBy.Directory" />
   <action id="ChangesView.Rename">
-    <keyboard-shortcut first-keystroke="shift f6" />
+    <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="ChangesView.SetDefault" />
   <action id="CheckinProject" />
@@ -238,7 +238,7 @@
   <action id="FileChooser.NewFolder">
     <keyboard-shortcut first-keystroke="alt insert" />
   </action>
-  <action id="FileChooser.TogglePathShowing" />
+  <action id="FileChooser.TogglePathBar" />
   <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="shift ctrl o" />
   </action>
@@ -257,7 +257,7 @@
   <action id="Generate.Missing.Members.ES6" />
   <action id="Generate.Missing.Members.TypeScript" />
   <action id="Git.Reword.Commit">
-    <keyboard-shortcut first-keystroke="shift f6" />
+    <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="GoToClass" />
   <action id="GotoAction">
@@ -414,7 +414,9 @@
     <keyboard-shortcut first-keystroke="shift ctrl h" />
   </action>
   <action id="Rerun" />
-  <action id="Resume" />
+  <action id="Resume">
+    <keyboard-shortcut first-keystroke="f5"/>
+  </action>
   <action id="RevealIn">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="r" />
   </action>
@@ -467,9 +469,10 @@
   <action id="SendEOF" />
   <action id="ShelveChanges.UnshelveWithDialog" />
   <action id="ShelvedChanges.Rename">
-    <keyboard-shortcut first-keystroke="shift f6" />
+    <keyboard-shortcut first-keystroke="f2" />
   </action>
   <action id="ShowBookmarks" />
+  <action id="ShowTypeBookmarks"/>
   <action id="ShowContent" />
   <action id="ShowIntentionActions">
     <keyboard-shortcut first-keystroke="ctrl period" />

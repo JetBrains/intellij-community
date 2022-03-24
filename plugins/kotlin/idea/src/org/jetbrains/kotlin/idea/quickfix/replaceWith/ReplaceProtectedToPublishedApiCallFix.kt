@@ -81,7 +81,7 @@ class ReplaceProtectedToPublishedApiCallFix(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val psiElement = diagnostic.psiElement as? KtExpression ?: return null
             val descriptor = DiagnosticFactory.cast(
-                diagnostic, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
+                diagnostic, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE.warningFactory, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE.errorFactory
             ).a.let {
                 if (it is CallableMemberDescriptor) DescriptorUtils.getDirectMember(it) else it
             }

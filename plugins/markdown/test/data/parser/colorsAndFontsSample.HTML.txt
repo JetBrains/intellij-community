@@ -150,4 +150,4 @@ HtmlFile:a.md
       XmlToken:XML_END_TAG_START('</')
       XmlToken:XML_NAME('table')
       XmlToken:XML_TAG_END('>')
-  PsiElement(MARKDOWN_OUTER_BLOCK)('\n\nHorizontal rules\n----------------\n\n---\n\n___\n\n\n***\n\n\nLists\n-----\n\nUnordered list:\n\n*\tasterisk 1\n*\tasterisk 2\n*\tasterisk 3\n\n\nOrdered list:\n\n1.\tFirst\n2.\tSecond\n3.\tThird\n\n\nMixed:\n\n1. First\n2. Second:\n\t* Fee\n\t* Fie\n\t* Foe\n3. Third\n\n\nTables:\n\n| Header 1 | Header 2 |\n| -------- | -------- |\n| Data 1   | Data 2   |')
+  PsiElement(MARKDOWN_OUTER_BLOCK)('\n\nHorizontal rules\n----------------\n\n---\n\n___\n\n\n***\n\n\nLists\n-----\n\nUnordered list:\n\n*\tasterisk 1\n*\tasterisk 2\n*\tasterisk 3\n\n\nOrdered list:\n\n1.\tFirst\n2.\tSecond\n3.\tThird\n\n\nMixed:\n\n1. First\n2. Second:\n\t* Fee\n\t* Fie\n\t* Foe\n3. Third\n\n\n\nDefinition list:\n\nSome term\n: First definition\n: Second definition\n\n\nTables:\n\n| Header 1 | Header 2 |\n| -------- | -------- |\n| Data 1   | Data 2   |')

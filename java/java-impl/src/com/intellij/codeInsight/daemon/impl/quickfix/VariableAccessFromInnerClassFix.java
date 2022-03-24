@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -22,7 +23,7 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,9 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @NotNull
   private Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
-    if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
+    if (vars == null) {
+      vars = ((UserDataHolderEx)myContext).putUserDataIfAbsent(VARS[myFixType], ContainerUtil.createConcurrentWeakMap());
+    }
     final Map<PsiVariable, Boolean> finalVars = vars;
     return new AbstractCollection<>() {
       @Override
@@ -202,8 +205,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     if (statement == null) return;
     PsiExpression newExpression = factory.createExpressionFromText(newName, variable);
     replaceReferences(context, variable, newExpression);
-    if (RefactoringUtil.isLoopOrIf(statement.getParent())) {
-      RefactoringUtil.putStatementInLoopBody(copyDecl, statement.getParent(), statement);
+    if (CommonJavaRefactoringUtil.isLoopOrIf(statement.getParent())) {
+      CommonJavaRefactoringUtil.putStatementInLoopBody(copyDecl, statement.getParent(), statement);
     } else {
       statement.getParent().addBefore(copyDecl, statement);
     }
@@ -217,7 +220,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiElement statement = context;
     nextInnerClass:
     do {
-      statement = RefactoringUtil.getParentStatement(statement, false);
+      statement = CommonJavaRefactoringUtil.getParentStatement(statement, false);
 
       if (statement == null || statement.getParent() == null) {
         return null;

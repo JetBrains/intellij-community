@@ -14,9 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.psi.util.PsiFormatUtil.*;
-
-public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> implements SortableTreeElement {
+public class PsiFieldTreeElement extends JavaVariableBaseTreeElement<PsiField> {
   public PsiFieldTreeElement(PsiField field, boolean isInherited) {
     super(isInherited,field);
  }
@@ -34,30 +32,7 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
     return Collections.emptyList();
   }
 
-  @Override
-  public String getPresentableText() {
-    final PsiField field = getElement();
-    if (field == null) return "";
-    
-    final boolean dumb = DumbService.isDumb(field.getProject());
-    return StringUtil.replace(formatVariable(
-      field,
-      SHOW_NAME | (dumb ? 0 : SHOW_TYPE) | TYPE_AFTER | (dumb ? 0 : SHOW_INITIALIZER),
-      PsiSubstitutor.EMPTY
-    ), ":", ": ");
-  }
-
   public PsiField getField() {
     return getElement();
-  }
-
-  @Override
-  @NotNull
-  public String getAlphaSortKey() {
-    final PsiField field = getElement();
-    if (field != null) {
-      return field.getName();
-    }
-    return "";
   }
 }

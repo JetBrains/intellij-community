@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -64,6 +64,10 @@ interface JKOperatorToken {
         val GTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTEQ)
         val GTGTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTGTEQ)
 
+        internal val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
+        internal val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
+        internal val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
+
         private val elementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,
             JavaTokenType.MINUS to MINUS,
@@ -117,9 +121,9 @@ class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnT
 
 interface JKKtOperatorToken : JKOperatorToken
 
-class JKJavaOperatorToken(val psiToken: IElementType) : JKOperatorToken {
+class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
     override val text: String
-        get() = error("Java token should not be printed, it should be replaces with corresponding Kotlin one")
+        get() = error("Java token '$psiToken' should not be printed, it should be replaced with the corresponding Kotlin one")
 }
 
 class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {

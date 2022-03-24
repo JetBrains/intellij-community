@@ -21,14 +21,14 @@ public final class CleanupOnScopeIntention extends CleanupIntention {
 
   @Nullable
   @Override
-  protected AnalysisScope getScope(final Project project, final PsiFile file) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+  protected AnalysisScope getScope(Project project, PsiFile file) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
     AnalysisScope analysisScope = new AnalysisScope(file);
-    final VirtualFile virtualFile = file.getVirtualFile();
+    VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() || virtualFile == null || !virtualFile.isInLocalFileSystem()) {
       analysisScope = new AnalysisScope(project);
     }
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
+    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       CodeInsightBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       CodeInsightBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
       project, analysisScope, module, file),

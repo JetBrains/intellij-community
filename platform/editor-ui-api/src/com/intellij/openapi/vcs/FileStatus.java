@@ -25,22 +25,22 @@ import java.awt.*;
 @SuppressWarnings("UseJBColor")
 public interface FileStatus {
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   Color COLOR_MERGE = new Color(117, 3, 220);
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   Color COLOR_MODIFIED = new Color(0, 50, 160);
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   Color COLOR_MISSING = Gray._97;
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   Color COLOR_SWITCHED = new Color(8, 151, 143);
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", PlatformEditorBundle

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.ui.UISettings
@@ -6,18 +6,19 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.ui.RegionPainter
 import com.intellij.ui.IconWrapperWithToolTip
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
+import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.RegionPaintIcon
+import com.intellij.util.ui.RegionPainter
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import javax.swing.Icon
 
-enum class BookmarkType(val mnemonic: Char, private val painter: RegionPainter<Component?>) {
+enum class BookmarkType(val mnemonic: Char) {
   DIGIT_1('1'), DIGIT_2('2'), DIGIT_3('3'), DIGIT_4('4'), DIGIT_5('5'),
   DIGIT_6('6'), DIGIT_7('7'), DIGIT_8('8'), DIGIT_9('9'), DIGIT_0('0'),
 
@@ -29,16 +30,12 @@ enum class BookmarkType(val mnemonic: Char, private val painter: RegionPainter<C
   LETTER_U('U'), LETTER_V('V'), LETTER_W('W'),
   LETTER_X('X'), LETTER_Y('Y'), LETTER_Z('Z'),
 
-  DEFAULT(0.toChar(), BookmarkPainter());
-
-  constructor(mnemonic: Char) : this(mnemonic, MnemonicPainter(mnemonic.toString()))
+  DEFAULT(0.toChar());
 
   val icon by lazy { createIcon(16, 1) }
   val gutterIcon by lazy { createIcon(12, 0) }
 
-  private fun createIcon(size: Int, insets: Int): Icon = IconWrapperWithToolTip(
-    RegionPaintIcon(size, size, insets, painter).withIconPreScaled(false),
-    LangBundle.messagePointer("tooltip.bookmarked"))
+  private fun createIcon(size: Int, insets: Int): Icon = BookmarkIcon(mnemonic, size, insets)
 
   companion object {
     @JvmStatic
@@ -47,7 +44,7 @@ enum class BookmarkType(val mnemonic: Char, private val painter: RegionPainter<C
 }
 
 
-private val BOOKMARK_ICON_BACKGROUND = EditorColorsUtil.createColorKey("BookmarkIcon.background", JBColor(0xF7C777, 0xAA8542))
+private val BOOKMARK_ICON_BACKGROUND = EditorColorsUtil.createColorKey("Bookmark.iconBackground", JBColor(0xF7C777, 0xAA8542))
 
 private class BookmarkPainter : RegionPainter<Component?> {
   override fun toString() = "BookmarkIcon"
@@ -81,12 +78,12 @@ private class BookmarkPainter : RegionPainter<Component?> {
 }
 
 
-private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.foreground", JBColor(0x000000, 0xBBBBBB))
-private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.background", JBColor(0xFEF7EC, 0x5B5341))
-private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("MnemonicIcon.borderColor", JBColor(0xF4AF3D, 0xD9A343))
+private val MNEMONIC_ICON_FOREGROUND = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconForeground", JBColor(0x000000, 0xBBBBBB))
+private val MNEMONIC_ICON_BACKGROUND = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconBackground", JBColor(0xFEF7EC, 0x5B5341))
+private val MNEMONIC_ICON_BORDER_COLOR = EditorColorsUtil.createColorKey("Bookmark.Mnemonic.iconBorderColor", JBColor(0xF4AF3D, 0xD9A343))
 
 private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> {
-  override fun toString() = "MnemonicIcon:$mnemonic"
+  override fun toString() = "BookmarkMnemonicIcon:$mnemonic"
   override fun hashCode() = mnemonic.hashCode()
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
@@ -125,6 +122,20 @@ private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> 
     if (borderColor != null && borderColor != background) {
       g.paint = borderColor
       RectanglePainter.DRAW.paint(g, x, y, width, height, round)
+    }
+  }
+}
+
+class BookmarkIcon internal constructor(
+  val mnemonic: Char,
+  size: Int,
+  insets: Int,
+) : IconWrapperWithToolTip(createBookmarkIcon(mnemonic, size, insets),
+                           LangBundle.messagePointer("tooltip.bookmarked")) {
+  companion object {
+    private fun createBookmarkIcon(mnemonic: Char, size: Int, insets: Int): JBScalableIcon {
+      val painter = if (mnemonic == 0.toChar()) BookmarkPainter() else MnemonicPainter(mnemonic.toString())
+      return RegionPaintIcon(size, size, insets, painter).withIconPreScaled(false)
     }
   }
 }

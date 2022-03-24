@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -50,20 +48,15 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-
-  @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
+    if (file instanceof XmlFile && file.isPhysical()) {
       DomManager domManager = DomManager.getDomManager(file.getProject());
       DomFileElement<MavenDomProjectModel> model = domManager.getFileElement((XmlFile)file, MavenDomProjectModel.class);
 
 
       if (model != null) {
-        MavenDistribution distribution = MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
+        MavenDistribution distribution =
+          MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
         boolean maven35 = distribution == null || StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
@@ -116,10 +109,13 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
           }
         };
       }
-      XmlText[] textElements = domValue.getXmlTag().getValue().getTextElements();
-      if (textElements.length > 0) {
-        problems.add(manager.createProblemDescriptor(textElements[0], MavenDomBundle.message("inspection.property.in.parent.description"),
-                                                     fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      XmlTag xmlTag = domValue.getXmlTag();
+      if (xmlTag != null) {
+        XmlText[] textElements = xmlTag.getValue().getTextElements();
+        if (textElements.length > 0) {
+          problems.add(manager.createProblemDescriptor(textElements[0], MavenDomBundle.message("inspection.property.in.parent.description"),
+                                                       fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+        }
       }
     }
   }

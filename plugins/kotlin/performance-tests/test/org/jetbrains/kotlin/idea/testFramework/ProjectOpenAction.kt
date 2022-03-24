@@ -25,7 +25,7 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase.assertTrue
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
 import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
@@ -54,15 +54,16 @@ enum class ProjectOpenAction {
 
                 project.setupJdk(jdk)
 
-                val module = runWriteAction {
+                //val module = runWriteAction {
+                //
+                //    val module = ModuleManager.getInstance(project).newModule(modulePath, ModuleTypeId.JAVA_MODULE)
+                //    PsiTestUtil.addSourceRoot(module, srcFile)
+                //
+                //    module
+                //}
 
-                    val module = ModuleManager.getInstance(project).newModule(modulePath, ModuleTypeId.JAVA_MODULE)
-                    PsiTestUtil.addSourceRoot(module, srcFile)
-
-                    module
-                }
-
-                ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, jdk)
+                //ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, jdk)
+                //ConfigLibraryUtil.configureSdk(module, jdk)
             }
         }
     },
@@ -177,9 +178,9 @@ enum class ProjectOpenAction {
         }.get()
 
         val modules = ModuleManager.getInstance(project).modules
-        assertTrue("project ${openProject.projectName} has to have at least one module", modules.isNotEmpty())
+        assertTrue("project '${openProject.projectName}' has to have at least one module", modules.isNotEmpty())
 
-        logMessage { "modules of ${openProject.projectName}: ${modules.map { m -> m.name }}" }
+        logMessage { "modules of '${openProject.projectName}': ${modules.map { m -> m.name }}" }
         project.projectFile?.parent?.let { parent ->
             VfsUtil.markDirtyAndRefresh(false, true, true, parent)
         }
@@ -205,6 +206,7 @@ enum class ProjectOpenAction {
             with(ChangeListManager.getInstance(project) as ChangeListManagerImpl) {
                 waitUntilRefreshed()
             }
+            project.save()
             return project
         }
     }

@@ -4,4 +4,4 @@ class CrExtended
 
 val funExtension = fun CrExtended.(): Unit {}
 
-// WITH_RUNTIME
+// WITH_STDLIB

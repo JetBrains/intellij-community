@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
@@ -13,7 +14,7 @@ public class LookupTest extends LightPlatformCodeInsightTestCase {
     configureFromFileText("test.txt", "");
     int smallWidth = getLookupWidth("Short");
     int longWidth = getLookupWidth("A long long long long long long text");
-    assertTrue(longWidth > smallWidth);
+    assertTrue(longWidth + "<=" + smallWidth, longWidth > smallWidth);
   }
 
   private int getLookupWidth(String string) {
@@ -24,6 +25,8 @@ public class LookupTest extends LightPlatformCodeInsightTestCase {
     JList<?> list = lookup.getList();
     list.setSize(1, 1); // Make it visible
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    return lookup.myCellRenderer.getLookupTextWidth();
+    int width = lookup.myCellRenderer.getLookupTextWidth();
+    lookup.hide();
+    return width;
   }
 }

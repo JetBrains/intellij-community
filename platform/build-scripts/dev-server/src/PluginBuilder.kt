@@ -1,21 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.openapi.util.Pair
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.LayoutBuilder
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
-import org.jetbrains.intellij.build.tasks.reorderJar
-import java.io.File
-import java.nio.file.*
+import org.jetbrains.intellij.build.impl.TracerManager
+import org.jetbrains.intellij.build.tasks.useWithScope
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.ForkJoinTask
 
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
 
@@ -27,69 +25,23 @@ data class BuildItem(val dir: Path, val layout: PluginLayout) {
       try {
         Files.newByteChannel(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME), TOUCH_OPTIONS)
       }
-      catch (e: NoSuchFileException) {
+      catch (ignore: NoSuchFileException) {
       }
     }
   }
 }
 
-class PluginBuilder(private val builder: DistributionJARsBuilder,
-                    val buildContext: BuildContext,
-                    private val outDir: Path) {
+class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
   private val dirtyPlugins = HashSet<BuildItem>()
 
-  fun initialBuild(@Suppress("SameParameterValue") parallelCount: Int, plugins: List<BuildItem>) {
-    val executor: Executor = if (parallelCount == 1) {
-      Executor(Runnable::run)
-    }
-    else {
-      Executors.newWorkStealingPool(parallelCount)
-    }
-    val errorRef = AtomicReference<Throwable>()
-
-    var sharedLayoutBuilder: LayoutBuilder? = null
+  fun initialBuild(plugins: List<BuildItem>) {
+    val tasks = mutableListOf<ForkJoinTask<*>>()
     for (plugin in plugins) {
-      if (errorRef.get() != null) {
-        break
-      }
-
-      val buildContextForPlugin = if (parallelCount == 1) buildContext
-      else buildContext.forkForParallelTask("Build ${plugin.layout.mainModule}")
-      executor.execute(Runnable {
-        if (errorRef.get() != null) {
-          return@Runnable
-        }
-
-        try {
-          val layoutBuilder: LayoutBuilder
-          if (parallelCount == 1) {
-            if (sharedLayoutBuilder == null) {
-              sharedLayoutBuilder = LayoutBuilder(buildContext, false)
-            }
-            layoutBuilder = sharedLayoutBuilder!!
-          }
-          else {
-            layoutBuilder = LayoutBuilder(buildContextForPlugin, false)
-          }
-          buildPlugin(plugin, buildContextForPlugin, builder, layoutBuilder)
-          plugin.markAsBuilt(outDir)
-        }
-        catch (e: Throwable) {
-          if (errorRef.compareAndSet(null, e)) {
-            throw e
-          }
-        }
+      tasks.add(ForkJoinTask.adapt {
+        buildPlugin(plugin, buildContext, outDir)
       })
     }
-
-    if (executor is ExecutorService) {
-      executor.shutdown()
-      executor.awaitTermination(5, TimeUnit.MINUTES)
-    }
-
-    errorRef.get()?.let {
-      throw it
-    }
+    ForkJoinTask.invokeAll(tasks)
   }
 
   @Synchronized
@@ -116,12 +68,10 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
       return "All plugins are up to date"
     }
 
-    val layoutBuilder = LayoutBuilder(buildContext, false)
     for (plugin in dirtyPlugins) {
       try {
         clearDirContent(plugin.dir)
-        buildPlugin(plugin, buildContext, builder, layoutBuilder)
-        plugin.markAsBuilt(outDir)
+        buildPlugin(plugin, buildContext, outDir)
       }
       catch (e: Throwable) {
         // put back (that's ok to add already processed plugins - doesn't matter, no need to complicate)
@@ -135,59 +85,30 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
   }
 }
 
-private fun buildPlugin(plugin: BuildItem,
-                        buildContext: BuildContext,
-                        builder: DistributionJARsBuilder,
-                        layoutBuilder: LayoutBuilder) {
+private fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOutDir: Path) {
   val mainModule = plugin.layout.mainModule
   if (skippedPluginModules.contains(mainModule)) {
     return
   }
 
-  buildContext.messages.info("Build ${mainModule}")
-  val generatedResources = getGeneratedResources(plugin.layout, buildContext)
+  val moduleOutputPatcher = ModuleOutputPatcher()
+  TracerManager.spanBuilder("build plugin")
+    .setAttribute("mainModule", mainModule)
+    .setAttribute("dir", plugin.dir.fileName.toString())
+    .startSpan()
+    .useWithScope {
+      Span.current().addEvent("build ${mainModule}")
 
-  if (mainModule != "intellij.platform.builtInHelp") {
-    builder.checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes)
-  }
-
-  val layoutSpec = layoutBuilder.createLayoutSpec(ProjectStructureMapping(), true)
-  builder.processLayout(layoutBuilder, plugin.layout, plugin.dir, layoutSpec, plugin.layout.moduleJars, generatedResources)
-
-  val stream: DirectoryStream<Path>
-  try {
-    stream = Files.newDirectoryStream(plugin.dir.resolve("lib"))
-  }
-  catch (ignore: NoSuchFileException) {
-    return
-  }
-
-  stream.use {
-    for (path in it) {
-      if (path.toString().endsWith(".jar")) {
-        reorderJar(path, emptyList(), path)
+      if (mainModule != "intellij.platform.builtInHelp") {
+        DistributionJARsBuilder.checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
       }
-    }
-  }
-}
 
-private fun getGeneratedResources(plugin: PluginLayout, buildContext: BuildContext): List<Pair<File, String>> {
-  if (plugin.resourceGenerators.isEmpty()) {
-    return emptyList()
-  }
-
-  val generatedResources = ArrayList<Pair<File, String>>(plugin.resourceGenerators.size)
-  for (resourceGenerator in plugin.resourceGenerators) {
-    val className = resourceGenerator.first::class.java.name
-    if (className == "org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator" ||
-        className.endsWith("PrebuiltIndicesResourcesGenerator")) {
-      continue
+      DistributionJARsBuilder.layout(plugin.layout,
+                                     plugin.dir,
+                                     true,
+                                     moduleOutputPatcher,
+                                     plugin.layout.moduleJars,
+                                     buildContext)
+      plugin.markAsBuilt(projectOutDir)
     }
-
-    val resourceFile = resourceGenerator.first.generateResources(buildContext)
-    if (resourceFile != null) {
-      generatedResources.add(Pair(resourceFile, resourceGenerator.second))
-    }
-  }
-  return generatedResources.takeIf { it.isNotEmpty() } ?: emptyList()
 }

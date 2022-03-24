@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Pair;
@@ -44,6 +44,7 @@ public final class Functions {
   @NotNull
   public static <A, B> Function<A, B> constant(final B b) {
     return new Function<A, B>() {
+      @Override
       public B fun(A a) {
         return b;
       }
@@ -75,6 +76,7 @@ public final class Functions {
       return (Function<A, C>)f1;
     }
     return new Function<A, C>() {
+      @Override
       public C fun(A a) {
         return f2.fun(f1.fun(a));
       }
@@ -90,6 +92,7 @@ public final class Functions {
   @NotNull
   public static <A, B> Function<A, B> fromMap(@NotNull final Map<? super A, ? extends B> map) {
     return new Function<A, B>() {
+      @Override
       public B fun(A a) {
         return map.get(a);
       }
@@ -97,12 +100,14 @@ public final class Functions {
   }
 
   private static final Function<Pair<?, ?>, Object> PAIR_FIRST = new Function<Pair<?, ?>, Object>() {
+    @Override
     public Object fun(Pair<?, ?> pair) {
       return Pair.getFirst(pair);
     }
   };
 
   private static final Function<Pair<?, ?>, Object> PAIR_SECOND = new Function<Pair<?, ?>, Object>() {
+    @Override
     public Object fun(Pair<?, ?> pair) {
       return Pair.getSecond(pair);
     }
@@ -121,6 +126,7 @@ public final class Functions {
   }
 
   private static final Function<Object[], Iterable<Object>> WRAP_ARRAY = new Function<Object[], Iterable<Object>>() {
+    @Override
     public Iterable<Object> fun(Object[] t) {
       return t == null ? Collections.emptyList() : Arrays.asList(t);
     }

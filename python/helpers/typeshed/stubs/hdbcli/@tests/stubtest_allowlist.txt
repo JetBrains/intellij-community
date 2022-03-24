@@ -1,0 +1,8 @@
+hdbcli.dbapi.Error.errorcode
+hdbcli.dbapi.Error.errortext
+hdbcli.dbapi.Warning.errorcode
+hdbcli.dbapi.Warning.errortext
+# Similar issues to builtins.memoryview
+hdbcli.dbapi.BINARY.__iter__
+hdbcli.dbapi.BINARY.cast
+hdbcli.dbapi.BINARY.__contains__

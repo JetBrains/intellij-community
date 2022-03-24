@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -25,10 +25,14 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -82,7 +86,6 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     final PsiExpression rExpression = assignment.getRExpression();
     if (rExpression == null) return;
     PsiJavaToken operationSign = assignment.getOperationSign();
-    checkIntersectionType(lType, rExpression.getType(), operationSign);
 
     IElementType eqOpSign = operationSign.getTokenType();
     IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
@@ -101,43 +104,15 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitVariable(PsiVariable variable) {
-    super.visitVariable(variable);
-    final PsiExpression initializer = variable.getInitializer();
-    if (initializer != null) {
-      final PsiElement assignmentToken = PsiTreeUtil.skipWhitespacesBackward(initializer);
-      if (assignmentToken != null) {
-        checkIntersectionType(variable.getType(), initializer.getType(), assignmentToken);
-      }
-    }
-  }
-
-  private void checkIntersectionType(@NotNull PsiType lType, @Nullable PsiType rType, @NotNull PsiElement elementToHighlight) {
-    if (rType instanceof PsiIntersectionType && TypeConversionUtil.isAssignable(lType, rType)) {
-      final PsiClass psiClass = PsiUtil.resolveClassInType(lType);
-      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-        final PsiType[] conjuncts = ((PsiIntersectionType)rType).getConjuncts();
-        for (PsiType conjunct : conjuncts) {
-          if (!TypeConversionUtil.isAssignable(conjunct, lType)) {
-            final String descriptionTemplate =
-              JavaAnalysisBundle.message("inspection.message.javac.quick.intersection.type.problem", lType.getPresentableText(),rType.getPresentableText());
-            myHolder.registerProblem(elementToHighlight, descriptionTemplate);
-          }
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     super.visitMethodCallExpression(expression);
-    if (PsiUtil.isLanguageLevel8OrHigher(expression) && expression.getTypeArguments().length == 0) {
+    if (expression.getTypeArguments().length == 0) {
       PsiExpression[] args = expression.getArgumentList().getExpressions();
       JavaResolveResult resolveResult = expression.resolveMethodGenerics();
       if (resolveResult instanceof MethodCandidateInfo) {
         PsiMethod method = ((MethodCandidateInfo)resolveResult).getElement();
-        if (method.isVarArgs() && method.hasTypeParameters() && args.length > method.getParameterList().getParametersCount() + 50) {
-          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        if (PsiUtil.isLanguageLevel8OrHigher(expression) && method.isVarArgs() && method.hasTypeParameters() && args.length > method.getParameterList().getParametersCount() + 50) {
           for (PsiTypeParameter typeParameter : method.getTypeParameters()) {
             if (!PsiTypesUtil.isDenotableType(substitutor.substitute(typeParameter), expression)) {
               return;
@@ -152,6 +127,31 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
                                          .message("vararg.method.call.with.50.poly.arguments"),
                                        new MyAddExplicitTypeArgumentsFix());
               break;
+            }
+          }
+        }
+        if (resolveResult.isValidResult()) {
+          for (PsiType value : substitutor.getSubstitutionMap().values()) {
+            if (value instanceof PsiIntersectionType) {
+              PsiClass aClass = Arrays.stream(((PsiIntersectionType)value).getConjuncts())
+                .map(PsiUtil::resolveClassInClassTypeOnly)
+                .filter(_aClass -> _aClass != null && _aClass.hasModifierProperty(PsiModifier.FINAL))
+                .findFirst().orElse(null);
+              if (aClass != null && aClass.hasModifierProperty(PsiModifier.FINAL)) {
+                for (PsiType conjunct : ((PsiIntersectionType)value).getConjuncts()) {
+                  PsiClass currentClass = PsiUtil.resolveClassInClassTypeOnly(conjunct);
+                  if (currentClass != null && 
+                      !aClass.equals(currentClass) && 
+                      !aClass.isInheritor(currentClass, true)) {
+                    final String descriptionTemplate =
+                      JavaAnalysisBundle.message("inspection.message.javac.quick.intersection.type.problem",
+                                                 value.getPresentableText(), ObjectUtils.notNull(aClass.getQualifiedName(),
+                                                                                                 Objects.requireNonNull(aClass.getName())));
+                    myHolder.registerProblem(expression.getMethodExpression(), descriptionTemplate);
+                  }
+                }
+                break;
+              }
             }
           }
         }

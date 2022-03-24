@@ -15,8 +15,6 @@ class JSLibraryStdDescription(project: Project?) : CustomLibraryDescriptorWithDe
     project,
     KotlinJsModuleConfigurator.NAME,
     LIBRARY_NAME,
-    DIALOG_TITLE,
-    LIBRARY_CAPTION,
     JSLibraryKind,
     SUITABLE_LIBRARY_KINDS
 ) {
@@ -31,7 +29,6 @@ class JSLibraryStdDescription(project: Project?) : CustomLibraryDescriptorWithDe
 
         val JAVA_SCRIPT_LIBRARY_CREATION get() = KotlinJvmBundle.message("javascript.library.creation")
         val DIALOG_TITLE get() = KotlinJvmBundle.message("create.kotlin.javascript.library")
-        val LIBRARY_CAPTION get() = KotlinJvmBundle.message("kotlin.javascript.library")
         val SUITABLE_LIBRARY_KINDS = setOf(JSLibraryKind)
     }
 }

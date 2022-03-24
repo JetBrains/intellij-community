@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH;
 
@@ -75,9 +75,9 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
                                             @NotNull MavenParentDesc parentDesc) {
     RESULT_TYPE result = null;
     VirtualFile parentFile;
-    File parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
+    Path parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
                                                           parentDesc.getParentId(), "pom");
-    parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
+    parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile);
     if (parentFile != null) {
       result = processRepositoryParent(parentFile);
     }

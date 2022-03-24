@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AssignFieldFromParameterAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance(AssignFieldFromParameterAction.class);
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {
@@ -96,7 +95,9 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     PsiField field = myParameter == null ? null : findFieldToAssign(project, myParameter);
     if (field != null) {
-      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+      if (file.isPhysical()) {
+        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+      }
       addFieldAssignmentStatement(project, field, myParameter, editor);
     }
   }

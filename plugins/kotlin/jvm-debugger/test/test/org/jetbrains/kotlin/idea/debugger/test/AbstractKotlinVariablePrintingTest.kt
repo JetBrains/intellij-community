@@ -16,8 +16,8 @@ abstract class AbstractKotlinVariablePrintingTest : KotlinDescriptorTestCaseWith
     }
 
     private fun SuspendContextImpl.printFrame() =
-        processStackFrameOnPooledThread {
-            val out = FramePrinter(this@printFrame).printTopVariables(this)
+        processStackFramesOnPooledThread {
+            val out = FramePrinter(this@printFrame).printTopVariables(first())
             print(out, ProcessOutputTypes.SYSTEM)
             resume(this@printFrame)
         }

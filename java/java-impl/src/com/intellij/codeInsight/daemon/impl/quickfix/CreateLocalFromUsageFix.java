@@ -22,7 +22,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +130,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     final PsiTypeElement typeElement = var.getTypeElement();
     LOG.assertTrue(typeElement != null);
     builder.replaceElement(typeElement,
-                           AbstractJavaInplaceIntroducer.createExpression(expression, typeElement.getText()));
+                           IntroduceVariableUtil.createExpression(expression, typeElement.getText()));
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 

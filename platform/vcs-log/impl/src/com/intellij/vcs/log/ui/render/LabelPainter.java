@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
@@ -16,9 +17,6 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,50 +43,35 @@ public class LabelPainter {
   private static final String SEPARATOR = "/";
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
-  @NotNull private final VcsLogData myLogData;
   @NotNull private final JComponent myComponent;
   @NotNull private final LabelIconCache myIconCache;
 
-  @NotNull private List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
+  @NotNull protected List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
   private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
-  @NotNull private Color myBackground = UIUtil.getTableBackground();
+  @NotNull protected Color myBackground = UIUtil.getTableBackground();
   @Nullable private Color myGreyBackground = null;
   @NotNull private Color myForeground = UIUtil.getTableForeground();
 
   private boolean myCompact;
-  private boolean myShowTagNames;
   private boolean myLeftAligned;
 
-  public LabelPainter(@NotNull VcsLogData data,
-                      @NotNull JComponent component,
+  public LabelPainter(@NotNull JComponent component,
                       @NotNull LabelIconCache iconCache) {
-    myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
   }
 
-  @Nullable
-  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
-    if (references.isEmpty()) return null;
-
-    VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(references)).getRoot();
-    return logData.getLogProvider(root).getReferenceManager();
-  }
-
-  public void customizePainter(@NotNull Collection<? extends VcsRef> references,
-                               @NotNull Color background,
+  public void customizePainter(@NotNull Color background,
                                @NotNull Color foreground,
                                boolean isSelected,
-                               int availableWidth) {
+                               int availableWidth,
+                               @NotNull List<RefGroup> refGroups) {
     myBackground = background;
     myForeground = isSelected ? foreground : TEXT_COLOR;
 
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
-
-    VcsLogRefManager manager = getRefManager(myLogData, references);
-    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references, myCompact, myShowTagNames);
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
@@ -283,7 +266,9 @@ public class LabelPainter {
   public void paint(@NotNull Graphics2D g2, int x, int y, int height) {
     if (myLabels.isEmpty()) return;
 
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g2)
+      .setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getFractionalMetricsValue())
+      .setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, getTextAntiAliasingValue());
     g2.setFont(getReferenceFont());
     g2.setStroke(new BasicStroke(1.5f));
 
@@ -325,6 +310,16 @@ public class LabelPainter {
     config.restore();
   }
 
+  private Object getTextAntiAliasingValue() {
+    return Objects.requireNonNullElse(myComponent.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING),
+                                      AntialiasingType.getKeyForCurrentScope(false));
+  }
+
+  private Object getFractionalMetricsValue() {
+    return Objects.requireNonNullElse(myComponent.getClientProperty(RenderingHints.KEY_FRACTIONALMETRICS),
+                                      UISettings.Companion.getPreferredFractionalMetricsValue());
+  }
+
   public Dimension getSize() {
     if (myLabels.isEmpty()) return new Dimension();
     return new Dimension(myWidth, myHeight);
@@ -341,10 +336,6 @@ public class LabelPainter {
 
   public boolean isCompact() {
     return myCompact;
-  }
-
-  public void setShowTagNames(boolean showTagNames) {
-    myShowTagNames = showTagNames;
   }
 
   public void setCompact(boolean compact) {

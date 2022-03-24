@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 data class My(val first: String, val second: Int, val third: Boolean)
 

@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
-import com.intellij.openapi.externalSystem.service.ui.util.FileChooserInfo
+import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import org.jetbrains.annotations.Nls
 
 interface WorkingDirectoryInfo : FileChooserInfo, LabeledSettingsFragmentInfo {

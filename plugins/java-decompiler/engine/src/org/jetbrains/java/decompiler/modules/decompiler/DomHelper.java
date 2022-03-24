@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -6,12 +6,14 @@ import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -40,7 +42,7 @@ public final class DomHelper {
     }
     else { // one straightforward basic block
       RootStatement root = new RootStatement(firstst, dummyexit);
-      firstst.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, firstst, dummyexit, root));
+      firstst.addSuccessor(new StatEdge(EdgeType.BREAK, firstst, dummyexit, root));
 
       return root;
     }
@@ -48,31 +50,31 @@ public final class DomHelper {
     for (BasicBlock block : blocks) {
       Statement stat = stats.getWithKey(block.id);
 
-      for (BasicBlock succ : block.getSuccs()) {
+      for (BasicBlock succ : block.getSuccessors()) {
         Statement stsucc = stats.getWithKey(succ.id);
 
-        int type;
+        EdgeType type;
         if (stsucc == firstst) {
-          type = StatEdge.TYPE_CONTINUE;
+          type = EdgeType.CONTINUE;
         }
         else if (graph.getFinallyExits().contains(block)) {
-          type = StatEdge.TYPE_FINALLYEXIT;
+          type = EdgeType.FINALLY_EXIT;
           stsucc = dummyexit;
         }
         else if (succ.id == graph.getLast().id) {
-          type = StatEdge.TYPE_BREAK;
+          type = EdgeType.BREAK;
           stsucc = dummyexit;
         }
         else {
-          type = StatEdge.TYPE_REGULAR;
+          type = EdgeType.REGULAR;
         }
 
-        stat.addSuccessor(new StatEdge(type, stat, (type == StatEdge.TYPE_CONTINUE) ? general : stsucc,
-                                       (type == StatEdge.TYPE_REGULAR) ? null : general));
+        stat.addSuccessor(new StatEdge(type, stat, (type == EdgeType.CONTINUE) ? general : stsucc,
+                                       (type == EdgeType.REGULAR) ? null : general));
       }
 
       // exceptions edges
-      for (BasicBlock succex : block.getSuccExceptions()) {
+      for (BasicBlock succex : block.getSuccessorExceptions()) {
         Statement stsuccex = stats.getWithKey(succex.id);
 
         ExceptionRangeCFG range = graph.getExceptionRange(succex, block);
@@ -91,10 +93,9 @@ public final class DomHelper {
 
     HashMap<Statement, FastFixedSet<Statement>> lists = new HashMap<>();
 
-    StrongConnectivityHelper schelper = new StrongConnectivityHelper(container);
-    List<List<Statement>> components = schelper.getComponents();
+    StrongConnectivityHelper connectivityHelper = new StrongConnectivityHelper(container);
 
-    List<Statement> lstStats = container.getPostReversePostOrderList(StrongConnectivityHelper.getExitReps(components));
+    List<Statement> lstStats = container.getPostReversePostOrderList(connectivityHelper.getExitReps());
 
     FastFixedSetFactory<Statement> factory = new FastFixedSetFactory<>(lstStats);
 
@@ -104,7 +105,7 @@ public final class DomHelper {
     FastFixedSet<Statement> initSet = factory.spawnEmptySet();
     initSet.setAllElements();
 
-    for (List<Statement> lst : components) {
+    for (List<Statement> lst : connectivityHelper.getComponents()) {
       FastFixedSet<Statement> tmpSet;
 
       if (StrongConnectivityHelper.isExitComponent(lst)) {
@@ -132,7 +133,7 @@ public final class DomHelper {
         FastFixedSet<Statement> doms = lists.get(stat);
         FastFixedSet<Statement> domsSuccs = factory.spawnEmptySet();
 
-        List<Statement> lstSuccs = stat.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD);
+        List<Statement> lstSuccs = stat.getNeighbours(EdgeType.REGULAR, EdgeDirection.FORWARD);
         for (int j = 0; j < lstSuccs.size(); j++) {
           Statement succ = lstSuccs.get(j);
           FastFixedSet<Statement> succlst = lists.get(succ);
@@ -149,11 +150,11 @@ public final class DomHelper {
           domsSuccs.add(stat);
         }
 
-        if (!InterpreterUtil.equalObjects(domsSuccs, doms)) {
+        if (!Objects.equals(domsSuccs, doms)) {
 
           lists.put(stat, domsSuccs);
 
-          List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD);
+          List<Statement> lstPreds = stat.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD);
           for (Statement pred : lstPreds) {
             setFlagNodes.add(pred);
           }
@@ -220,7 +221,7 @@ public final class DomHelper {
       removeSynchronizedHandler(st);
     }
 
-    if (stat.type == Statement.TYPE_SYNCRONIZED) {
+    if (stat.type == StatementType.SYNCHRONIZED) {
       ((SynchronizedStatement)stat).removeExc();
     }
   }
@@ -232,7 +233,7 @@ public final class DomHelper {
       buildSynchronized(st);
     }
 
-    if (stat.type == Statement.TYPE_SEQUENCE) {
+    if (stat.type == StatementType.SEQUENCE) {
 
       while (true) {
 
@@ -247,22 +248,22 @@ public final class DomHelper {
             Statement next = lst.get(i + 1);
             Statement nextDirect = next;
 
-            while (next.type == Statement.TYPE_SEQUENCE) {
+            while (next.type == StatementType.SEQUENCE) {
               next = next.getFirst();
             }
 
-            if (next.type == Statement.TYPE_CATCHALL) {
+            if (next.type == StatementType.CATCH_ALL) {
 
               CatchAllStatement ca = (CatchAllStatement)next;
 
               if (ca.getFirst().isContainsMonitorExit() && ca.getHandler().isContainsMonitorExit()) {
 
                 // remove the head block from sequence
-                current.removeSuccessor(current.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0));
+                current.removeSuccessor(current.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));
 
-                for (StatEdge edge : current.getPredecessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
+                for (StatEdge edge : current.getPredecessorEdges(EdgeType.DIRECT_ALL)) {
                   current.removePredecessor(edge);
-                  edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, nextDirect);
+                  edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, nextDirect);
                   nextDirect.addPredecessor(edge);
                 }
 
@@ -277,7 +278,7 @@ public final class DomHelper {
                   sync.addLabeledEdge(edge);
                 }
 
-                current.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, current, ca.getFirst()));
+                current.addSuccessor(new StatEdge(EdgeType.REGULAR, current, ca.getFirst()));
 
                 ca.getParent().replaceStatement(ca, sync);
                 found = true;
@@ -296,9 +297,9 @@ public final class DomHelper {
 
   private static boolean processStatement(Statement general, HashMap<Integer, Set<Integer>> mapExtPost) {
 
-    if (general.type == Statement.TYPE_ROOT) {
+    if (general.type == StatementType.ROOT) {
       Statement stat = general.getFirst();
-      if (stat.type != Statement.TYPE_GENERAL) {
+      if (stat.type != StatementType.GENERAL) {
         return true;
       }
       else {
@@ -357,7 +358,7 @@ public final class DomHelper {
               reducibility = 0;
             }
 
-            if (general.type == Statement.TYPE_PLACEHOLDER) {
+            if (general.type == StatementType.PLACEHOLDER) {
               return true;
             }
 
@@ -482,7 +483,7 @@ public final class DomHelper {
 
             boolean addhd = (setNodes.size() == 0); // first handler == head
             if (!addhd) {
-              List<Statement> hdsupp = handler.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
+              List<Statement> hdsupp = handler.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
               addhd = (setNodes.containsAll(hdsupp) && (setNodes.size() > hdsupp.size()
                                                         || setNodes.size() == 1)); // strict subset
             }
@@ -498,14 +499,14 @@ public final class DomHelper {
                   setNodes.add(st);
                   if (st != head) {
                     // record predeccessors except for the head
-                    setPreds.addAll(st.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD));
+                    setPreds.addAll(st.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD));
                   }
 
                   // put successors on the stack
-                  lstStack.addAll(st.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD));
+                  lstStack.addAll(st.getNeighbours(EdgeType.REGULAR, EdgeDirection.FORWARD));
 
                   // exception edges
-                  setHandlers.addAll(st.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_FORWARD));
+                  setHandlers.addAll(st.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD));
                 }
               }
 
@@ -523,13 +524,13 @@ public final class DomHelper {
         // check exception handlers
         setHandlers.clear();
         for (Statement st : setNodes) {
-          setHandlers.addAll(st.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_FORWARD));
+          setHandlers.addAll(st.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD));
         }
         setHandlers.removeAll(setNodes);
 
         boolean excok = true;
         for (Statement handler : setHandlers) {
-          if (!handler.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD).containsAll(setNodes)) {
+          if (!handler.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD).containsAll(setNodes)) {
             excok = false;
             break;
           }
@@ -542,7 +543,7 @@ public final class DomHelper {
           setPreds.removeAll(setNodes);
           if (setPreds.size() == 0) {
             if ((setNodes.size() > 1 ||
-                 head.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).contains(head))
+                 head.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).contains(head))
                 && setNodes.size() < stats.size()) {
               if (checkSynchronizedCompleteness(setNodes)) {
                 res = new GeneralStatement(head, setNodes, same ? null : post);
@@ -563,8 +564,8 @@ public final class DomHelper {
     // check exit nodes
     for (Statement stat : setNodes) {
       if (stat.isMonitorEnter()) {
-        List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
-        if (lstSuccs.size() != 1 || lstSuccs.get(0).getType() != StatEdge.TYPE_REGULAR) {
+        List<StatEdge> lstSuccs = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
+        if (lstSuccs.size() != 1 || lstSuccs.get(0).getType() != EdgeType.REGULAR) {
           return false;
         }
 
@@ -591,10 +592,10 @@ public final class DomHelper {
 
         if (result != null) {
 
-          if (stat.type == Statement.TYPE_GENERAL && result.getFirst() == stat.getFirst() &&
+          if (stat.type == StatementType.GENERAL && result.getFirst() == stat.getFirst() &&
               stat.getStats().size() == result.getStats().size()) {
             // mark general statement
-            stat.type = Statement.TYPE_PLACEHOLDER;
+            stat.type = StatementType.PLACEHOLDER;
           }
 
           stat.collapseNodesToStatement(result);

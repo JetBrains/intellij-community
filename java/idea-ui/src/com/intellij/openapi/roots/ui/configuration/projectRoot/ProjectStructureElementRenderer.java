@@ -59,7 +59,7 @@ class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
       }
       else if (namedConfigurable instanceof ProjectStructureElementConfigurable) {
         final ProjectStructureElement projectStructureElement =
-          ((ProjectStructureElementConfigurable)namedConfigurable).getProjectStructureElement();
+          ((ProjectStructureElementConfigurable<?>)namedConfigurable).getProjectStructureElement();
         if (projectStructureElement != null) {
           final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
           final ProjectStructureProblemsHolderImpl problemsHolder = daemonAnalyzer.getProblemsHolder(projectStructureElement);

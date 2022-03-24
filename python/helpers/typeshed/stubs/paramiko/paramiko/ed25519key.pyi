@@ -1,4 +1,4 @@
-from typing import IO, Any, Optional
+from typing import IO
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
@@ -7,11 +7,11 @@ class Ed25519Key(PKey):
     public_blob: None
     def __init__(
         self,
-        msg: Optional[Message] = ...,
-        data: Optional[bytes] = ...,
-        filename: Optional[str] = ...,
-        password: Optional[str] = ...,
-        file_obj: Optional[IO[str]] = ...,
+        msg: Message | None = ...,
+        data: bytes | None = ...,
+        filename: str | None = ...,
+        password: str | None = ...,
+        file_obj: IO[str] | None = ...,
     ) -> None: ...
     def asbytes(self) -> bytes: ...
     def __hash__(self) -> int: ...

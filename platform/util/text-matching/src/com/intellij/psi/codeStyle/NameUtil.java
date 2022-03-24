@@ -2,16 +2,14 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.text.NameUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class NameUtil {
   private static final int MAX_LENGTH = 40;
@@ -20,7 +18,12 @@ public final class NameUtil {
 
   @NotNull
   public static List<String> nameToWordsLowerCase(@NotNull String name){
-    return Arrays.stream(NameUtilCore.nameToWords(name)).map(Strings::toLowerCase).collect(Collectors.toList());
+    String[] words = NameUtilCore.nameToWords(name);
+    List<String> list = new ArrayList<>(words.length);
+    for (String word : words) {
+      list.add(Strings.toLowerCase(word));
+    }
+    return list;
   }
 
   @NotNull
@@ -264,19 +267,10 @@ public final class NameUtil {
     return NameUtilCore.nameToWords(name);
   }
 
-  /**
-   * @deprecated use {@link com.intellij.util.text.Matcher}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public interface Matcher {
-    boolean matches(@NotNull String name);
-  }
-
-  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern,
-                                                            int exactPrefixLen,
-                                                            boolean allowToUpper,
-                                                            boolean allowToLower) {
+  public static Matcher buildMatcher(@NotNull String pattern,
+                                     int exactPrefixLen,
+                                     boolean allowToUpper,
+                                     boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL
                                                                      : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER
                                                                                           : MatchingCaseSensitivity.NONE;
@@ -289,6 +283,7 @@ public final class NameUtil {
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
     private boolean typoTolerant = false;
     private boolean preferStartMatches = false;
+    private boolean allOccurrences = false;
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -314,10 +309,20 @@ public final class NameUtil {
       return this;
     }
 
+    public MatcherBuilder allOccurrences() {
+      allOccurrences = true;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
-                                              : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
-      return preferStartMatches ? new PreferStartMatchMatcherWrapper(matcher) : matcher;
+      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators) :
+                                 allOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, separators) :
+                                 new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      if (preferStartMatches) {
+        matcher = new PreferStartMatchMatcherWrapper(matcher);
+      }
+      matcher = PinyinMatcher.create(matcher);
+      return matcher;
     }
   }
 

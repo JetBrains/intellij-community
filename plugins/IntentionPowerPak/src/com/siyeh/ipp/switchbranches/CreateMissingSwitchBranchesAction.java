@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAction {
   private static final int MAX_NUMBER_OF_BRANCHES = 100;
+  @SafeFieldForPreview
   private List<Value> myAllValues;
 
   @Override
@@ -48,7 +49,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     List<String> missingValueNames = ContainerUtil.map(missingValues, v -> v.myName);
     List<PsiSwitchLabelStatementBase> addedLabels =
       CreateSwitchBranchesUtil.createMissingBranches(block, allValueNames, missingValueNames,
-                                                           label -> extractConstantNames(allValues, label));
+                                                     label -> extractConstantNames(allValues, label));
     CreateSwitchBranchesUtil.createTemplate(block, addedLabels);
   }
 
@@ -66,9 +67,14 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     PsiType type = expression.getType();
     if (type == null) return false;
     boolean isString = TypeUtils.isJavaLangString(type);
-    if (type instanceof PsiClassType && !isString) return false;
+    if (type instanceof PsiClassType && !isString) {
+      type = PsiPrimitiveType.getUnboxedType(type);
+      if (type == null) {
+        return false;
+      }
+    }
 
-    List<Value> values = getPossibleValues(expression);
+    List<Value> values = getPossibleValues(expression, type);
     if (!values.isEmpty()) {
       List<Value> missingValues = getMissingValues(block, values);
       if (!missingValues.isEmpty()) {
@@ -81,9 +87,8 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   }
 
   @NotNull
-  private static List<Value> getPossibleValues(PsiExpression expression) {
+  private static List<Value> getPossibleValues(PsiExpression expression, PsiType type) {
     CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
-    PsiType type = expression.getType();
     if (dfr != null) {
       LongRangeSet range = DfIntType.extractRange(dfr.getDfType(expression));
       if (type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
@@ -96,26 +101,42 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     }
     if (expression instanceof PsiReferenceExpression) {
       PsiModifierListOwner target = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiModifierListOwner.class);
-      if (target != null) {
-        MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(target, type);
-        if (values != null && !values.isFlagSet() && values.getValues().length <= MAX_NUMBER_OF_BRANCHES) {
-          List<Value> result = new ArrayList<>();
-          for (PsiAnnotationMemberValue value : values.getValues()) {
-            Value val = null;
-            if (value instanceof PsiReferenceExpression) {
-              PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)value).resolve(), PsiField.class);
-              if (field != null) {
-                val = Value.fromField(field);
-              }
-            }
-            if (val == null) return Collections.emptyList();
-            result.add(val);
-          }
-          return result;
-        }
-      }
+      List<Value> values = getValues(target, type, expression);
+      if (values != null) return values;
+    }
+    else if (expression instanceof PsiMethodCallExpression) {
+      PsiModifierListOwner target = ObjectUtils.tryCast(((PsiMethodCallExpression)expression).resolveMethod(), PsiModifierListOwner.class);
+      List<Value> values = getValues(target, type, expression);
+      if (values != null) return values;
     }
     return Collections.emptyList();
+  }
+
+  private static List<Value> getValues(PsiModifierListOwner target, PsiType type, PsiElement context) {
+    if (target == null) {
+      return null;
+    }
+    MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(target, type, context);
+    if (values != null && !values.isFlagSet() && values.getValues().length <= MAX_NUMBER_OF_BRANCHES) {
+      List<Value> result = new ArrayList<>();
+      for (PsiAnnotationMemberValue value : values.getValues()) {
+        Value val = null;
+        if (value instanceof PsiReferenceExpression) {
+          PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)value).resolve(), PsiField.class);
+          if (field != null) {
+            val = Value.fromField(field);
+          }
+        }
+        else if (value instanceof PsiExpression) {
+          final Object o = ExpressionUtils.computeConstantExpression((PsiExpression)value);
+          val = Value.fromConstant(o);
+        }
+        if (val == null) return Collections.emptyList();
+        result.add(val);
+      }
+      return result;
+    }
+    return null;
   }
 
   @NotNull

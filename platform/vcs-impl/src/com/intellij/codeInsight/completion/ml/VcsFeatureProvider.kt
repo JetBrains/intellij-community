@@ -27,7 +27,7 @@ class VcsFeatureProvider : ElementFeatureProvider {
         if (change.type == Change.Type.MODIFICATION && psi is PsiNameIdentifierOwner) {
           val document = PsiDocumentManager.getInstance(project).getCachedDocument(psiFile)
           val range = psi.textRange
-          if (document != null && range != null) {
+          if (document != null && range != null && range.endOffset <= document.textLength) {
             val lineStatusTracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
             if (lineStatusTracker != null && lineStatusTracker.isValid()) {
               if (lineStatusTracker.isRangeModified(document.getLineNumber(range.startOffset), document.getLineNumber(range.endOffset))) {

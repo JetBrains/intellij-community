@@ -17,9 +17,9 @@ object ESUploader {
     private val client = OkHttpClient()
 
     init {
-        host = System.getenv("es.hostname")
-        username = System.getenv("es.username")
-        password = System.getenv("es.password")
+        host = System.getenv("ES_HOSTNAME") ?: System.getenv("es.hostname")
+        username = System.getenv("ES_USERNAME") ?: System.getenv("es.username")
+        password = System.getenv("ES_PASSWORD") ?: System.getenv("es.password")
         logMessage { "initialized es details $username @ $host" }
     }
 

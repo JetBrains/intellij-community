@@ -11,13 +11,14 @@ import com.intellij.xdebugger.XDebuggerBundle
 import training.dsl.LessonContext
 import training.dsl.TaskTestContext
 import training.dsl.highlightButtonById
+import training.dsl.restoreChangedSettingsInformer
 import training.learn.lesson.general.run.CommonDebugLesson
 import training.ui.LearningUiManager
 import javax.swing.JEditorPane
 
 class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   private val demoClassName = JavaRunLessonsUtils.demoClassName
   override val configurationName: String = demoClassName
@@ -26,7 +27,6 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
   override val confNameForWatches: String = "Application"
   override val quickEvaluationArgument = "Integer.parseInt"
-  override val expressionToBeEvaluated = "result/input.length"
   override val debuggingMethodName = "findAverage"
   override val methodForStepInto: String = "extractNumber"
   override val stepIntoDirectionToRight = true
@@ -57,7 +57,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     task("CompileDirty") {
       text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it), icon(AllIcons.Actions.Compile)))
       if (isAlwaysHotSwap()) {
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JEditorPane ->
+        triggerUI().component { ui: JEditorPane ->
           ui.text.contains(JavaDebuggerBundle.message("status.hot.swap.completed.stop"))
         }
       }
@@ -82,7 +82,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
       proposeModificationRestore(afterFixText)
       test(waitEditorToBeReady = false) {
-        dialog(null) {
+        dialog(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", JavaRunLessonsUtils.demoClassName)) {
           button("Reload").click()
         }
       }
@@ -107,5 +107,12 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     }
   }
 
-  override val fileName: String = "$demoClassName.java"
+  override fun LessonContext.restoreHotSwapStateInformer() {
+    if (!isHotSwapDisabled()) return
+    restoreChangedSettingsInformer {
+      DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_NEVER
+    }
+  }
+
+  override val sampleFilePath: String = "src/$demoClassName.java"
 }

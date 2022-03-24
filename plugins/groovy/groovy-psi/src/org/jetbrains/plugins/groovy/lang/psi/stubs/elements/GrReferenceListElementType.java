@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
+public class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
   public GrReferenceListElementType(final String debugName) {
     super(debugName);
   }
@@ -59,6 +59,11 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
         sink.occurrence(GrDirectInheritorsIndex.KEY, PsiNameHelper.getShortClassName(name));
       }
     }
+  }
+
+  @Override
+  public T createPsi(@NotNull GrReferenceListStub stub) {
+    throw new AssertionError();
   }
 
   @Override

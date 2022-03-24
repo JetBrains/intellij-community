@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,8 +109,8 @@ final class ActivityMonitorAction extends DumbAwareAction {
           pkg = pkg.substring(prefix.length()) + " (in " + StringUtil.trimEnd(prefix, ".") + ")";
         }
 
-        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManagerCore.getPluginByClassName(className));
-        return plugin != null ? "Plugin " + plugin.getName() + ": " + pkg : pkg;
+        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManager.getPluginByClassNameAsNoAccessToClass(className));
+        return plugin == null ? pkg : "Plugin " + plugin.getName() + ": " + pkg;
       }
 
       private String getMeaninglessPrefix(String qname) {

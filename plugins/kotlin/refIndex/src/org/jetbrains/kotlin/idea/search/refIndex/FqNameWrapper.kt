@@ -6,6 +6,8 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
+import org.jetbrains.jps.backwardRefs.CompilerRef
+import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.idea.util.jvmFqName
 import org.jetbrains.kotlin.idea.util.toJvmFqName
 import org.jetbrains.kotlin.name.FqName
@@ -28,7 +30,7 @@ sealed class FqNameWrapper {
     companion object {
         fun createFromFqName(fqName: FqName): FqNameWrapper = FqNameBasedWrapper(fqName)
         fun createFromJvmFqName(jvmFqName: String): FqNameWrapper = JvmFqNameBasedWrapper(jvmFqName)
-        fun createFromSearchId(searchId: SearchId): FqNameWrapper = JvmFqNameBasedWrapper(searchId.deserializedName)
+        fun createFromSearchId(searchId: SearchId): FqNameWrapper? = searchId.deserializedName?.let(::JvmFqNameBasedWrapper)
         fun createFromPsiElement(clazz: PsiElement): FqNameWrapper? = when (clazz) {
             is PsiClass -> ClassUtil.getJVMClassName(clazz)
             is KtClassOrObject -> clazz.jvmFqName
@@ -44,3 +46,6 @@ private class FqNameBasedWrapper(override val fqName: FqName) : FqNameWrapper() 
 private class JvmFqNameBasedWrapper(override val jvmFqName: String) : FqNameWrapper() {
     override val fqName: FqName = FqName(jvmFqName.replace('$', '.'))
 }
+
+fun FqNameWrapper.asJavaCompilerClassRef(nameEnumerator: NameEnumerator): CompilerRef.JavaCompilerClassRef =
+    JavaCompilerClassRefWithSearchId.create(jvmFqName, nameEnumerator)

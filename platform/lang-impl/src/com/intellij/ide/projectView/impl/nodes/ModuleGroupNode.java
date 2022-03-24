@@ -64,7 +64,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     Set<VirtualFile> result = new HashSet<>();
     for (AbstractTreeNode each : children) {
       if (each instanceof ProjectViewNode) {
-        result.addAll(((ProjectViewNode)each).getRoots());
+        result.addAll(((ProjectViewNode<?>)each).getRoots());
       }
     }
 

@@ -2,7 +2,6 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +32,7 @@ public interface DnDSource extends DnDDropActionHandler {
   /**
    * @deprecated override {@link DnDSource#createDraggedImage(DnDAction, Point, DnDDragStartBean)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     return null;

@@ -10,7 +10,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -56,7 +56,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Module module = e.getData(LangDataKeys.MODULE);
+    final Module module = e.getData(PlatformCoreDataKeys.MODULE);
     e.getPresentation().setEnabled(module != null && !PyPackageUtil.hasSetupPy(module));
   }
 
@@ -78,7 +78,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @NotNull
   private static String getSetupImport(@NotNull DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     return hasSetuptoolsPackage(module) ? "from setuptools import setup" : "from distutils.core import setup";
   }
 
@@ -91,7 +91,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   private static String getPackageList(DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       return "['" + StringUtil.join(PyPackageUtil.getPackageNames(module), "', '") + "']";
     }
@@ -99,7 +99,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   private static String getPackageDirs(DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       if (sourceRoots.length > 0) {
@@ -118,7 +118,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @Override
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
       if (sourceRoots.size() > 0) {

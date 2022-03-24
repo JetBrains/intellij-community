@@ -21,7 +21,7 @@ class KotlinUsageTypeProviderImpl : KotlinUsageTypeProvider() {
 
         val context = refExpr.analyze(BodyResolveMode.PARTIAL)
 
-         fun getFunctionUsageTypeDescriptor(descriptor: FunctionDescriptor): UsageTypeEnum? {
+        fun getFunctionUsageTypeDescriptor(descriptor: FunctionDescriptor): UsageTypeEnum? {
             when (refExpr.mainReference) {
                 is KtArrayAccessReference -> {
                     return when {

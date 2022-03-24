@@ -8,10 +8,12 @@ import com.intellij.ide.actions.SelectInContextImpl
 import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW
 
 private const val SELECT_CONTEXT_FILE = "SelectInProjectView"
@@ -21,7 +23,12 @@ internal class SelectFileAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     when (getActionId(event)) {
       SELECT_CONTEXT_FILE -> getSelector(event)?.run { target.selectIn(context, true) }
-      SELECT_OPENED_FILE -> getView(event)?.selectOpenedFile?.run()
+      SELECT_OPENED_FILE ->
+        if (Registry.`is`("ide.selectIn.works.as.revealIn.when.project.view.focused")) {
+          ActionManager.getInstance().getAction("RevealIn")?.actionPerformed(event)
+        } else {
+          getView(event)?.selectOpenedFile?.run()
+        }
     }
   }
 
@@ -63,7 +70,7 @@ internal class SelectFileAction : DumbAwareAction() {
     event.project?.let { ProjectView.getInstance(it) as? ProjectViewImpl }
 
   private fun getActionId(event: AnActionEvent) =
-    when (TOOL_WINDOW.getData(event.dataContext)?.id) {
+    when (event.getData(TOOL_WINDOW)?.id) {
       PROJECT_VIEW -> SELECT_OPENED_FILE
       else -> SELECT_CONTEXT_FILE
     }

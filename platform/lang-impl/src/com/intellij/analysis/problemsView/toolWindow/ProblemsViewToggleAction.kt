@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ToggleOptionAction
 import com.intellij.openapi.project.DumbAware
 
 internal class AutoscrollToSource : ProblemsViewToggleAction({ it.autoscrollToSource })
+internal class OpenInPreviewTab : ProblemsViewToggleAction({ it.openInPreviewTab })
 internal class ShowPreview : ProblemsViewToggleAction({ it.showPreview })
 internal class GroupByToolId : ProblemsViewToggleAction({ it.groupByToolId })
 internal class SortFoldersFirst : ProblemsViewToggleAction({ it.sortFoldersFirst })

@@ -18,7 +18,7 @@ final class R {
      * @param b b value
      * @param c c value
      * @param d d value
-     * @param s s value    
+     * @param s s value
      */
     R(int a, boolean b, float c, double d, String s) {
         this.a = a;

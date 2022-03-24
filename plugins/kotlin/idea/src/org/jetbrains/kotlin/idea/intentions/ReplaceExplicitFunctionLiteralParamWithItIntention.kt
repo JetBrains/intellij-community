@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -46,7 +46,9 @@ class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntenti
             val argumentIndex = call.valueArguments.indexOfFirst { it.getArgumentExpression() == lambda }
             val callOrQualified = call.getQualifiedExpressionForSelectorOrThis()
             val newCallOrQualified = callOrQualified.copied()
-            val newCall = newCallOrQualified.safeAs<KtQualifiedExpression>()?.callExpression ?: newCallOrQualified.safeAs() ?: return false
+            val newCall = newCallOrQualified.safeAs<KtQualifiedExpression>()?.callExpression
+                ?: newCallOrQualified as? KtCallExpression
+                ?: return false
             val newArgument = newCall.valueArguments.getOrNull(argumentIndex) ?: newCall.lambdaArguments.singleOrNull() ?: return false
             newArgument.replace(KtPsiFactory(element).createLambdaExpression("", "TODO()"))
             val newContext = newCallOrQualified.analyzeAsReplacement(callOrQualified, callOrQualified.analyze(BodyResolveMode.PARTIAL))

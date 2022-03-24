@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UastContextKt;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.xmlb.annotations.Property.Style.ATTRIBUTE;
@@ -29,18 +27,9 @@ public class ExtensionPointBinding {
   }
 
   public void visit(BindingVisitor visitor) {
-    PsiField[] fields;
-    UClass beanClassNavigationClass = UastContextKt.toUElement(myPsiClass.getNavigationElement(), UClass.class);
-    if (beanClassNavigationClass != null) {
-      fields = beanClassNavigationClass.getAllFields();
-    }
-    else {
-      fields = myPsiClass.getAllFields(); // fallback
-    }
-
     boolean hasClassLevelPropertyAnnotation = hasClassLevelPropertyAnnotation();
 
-    for (PsiField field : fields) {
+    for (PsiField field : myPsiClass.getAllFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
       final PsiMethod getter = PropertyUtilBase.findGetterForField(field);
       final PsiMethod setter = PropertyUtilBase.findSetterForField(field);

@@ -23,13 +23,12 @@ import org.jetbrains.kotlin.psi.*
 
 val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
 
-
 /**
- * Tested in OutOfBlockModificationTestGenerated
+ * Tested in [OutOfBlockModificationTestGenerated]
  */
 class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable {
-    private val modificationTrackerImpl: PsiModificationTrackerImpl =
-        PsiModificationTracker.SERVICE.getInstance(project) as PsiModificationTrackerImpl
+    private val modificationTrackerImpl: PsiModificationTracker =
+        PsiModificationTracker.SERVICE.getInstance(project)
 
     @Volatile
     private var kotlinModificationCount: Long = 0

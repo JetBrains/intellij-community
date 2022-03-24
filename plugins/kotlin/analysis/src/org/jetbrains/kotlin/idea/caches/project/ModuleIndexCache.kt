@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -11,11 +11,9 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.Queue
-import gnu.trove.THashSet
 import java.util.*
 
-//NOTE: this is an approximation that may contain more module infos then the exact solution
+//NOTE: this is an approximation that may contain more module infos than the exact solution
 fun ModuleSourceInfo.getDependentModules(): Set<ModuleSourceInfo> {
     val dependents = getDependents(module)
     return when (sourceType) {
@@ -26,19 +24,19 @@ fun ModuleSourceInfo.getDependentModules(): Set<ModuleSourceInfo> {
 
 //NOTE: getDependents adapted from com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope#buildDependents()
 private fun getDependents(module: Module): Set<Module> {
-    val result = THashSet<Module>()
+    val result = HashSet<Module>()
     result.add(module)
 
-    val processedExporting = THashSet<Module>()
+    val processedExporting = HashSet<Module>()
 
     val index = getModuleIndex(module.project)
 
-    val walkingQueue = Queue<Module>(10)
+    val walkingQueue = ArrayDeque<Module>(10)
     walkingQueue.addLast(module)
 
-    while (!walkingQueue.isEmpty) {
-        val current = walkingQueue.pullFirst()
-        processedExporting.add(current!!)
+    while (true) {
+        val current = walkingQueue.pollFirst() ?: break
+        processedExporting.add(current)
         result.addAll(index.plainUsages[current])
         for (dependent in index.exportingUsages[current]) {
             result.add(dependent)

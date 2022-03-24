@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -25,7 +26,8 @@ public class DarculaMenuBarBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insetsBottom(1).asUIResource();
+    int height = SystemInfo.isJBSystemMenu ? 0 : 1;
+    return JBUI.insetsBottom(height).asUIResource();
   }
 
   @Override

@@ -14,7 +14,6 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependencies.Companion.scriptCacheDependencies
 import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
 import org.jetbrains.kotlin.idea.core.util.readObject
 import org.jetbrains.kotlin.idea.core.util.writeObject
@@ -44,6 +43,20 @@ class ScriptClassRootsCache(
 
     fun withUpdatedSdks(newSdks: ScriptSdks) =
         ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks)
+
+    fun builder(project: Project): ScriptClassRootsBuilder {
+        return ScriptClassRootsBuilder(
+            project,
+            classes.toMutableSet(),
+            sources.toMutableSet(),
+            scripts.toMutableMap()
+        ).also { builder ->
+            if (customDefinitionsUsed) {
+                builder.useCustomScriptDefinition()
+            }
+            builder.sdks.addAll(sdks)
+        }
+    }
 
     abstract class LightScriptInfo(val definition: ScriptDefinition?) {
         @Volatile
@@ -83,7 +96,7 @@ class ScriptClassRootsCache(
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
         val roots = configuration.dependenciesClassPath
-        val sdk = sdks[SdkId(configuration.javaHome)]
+        val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         return if (sdk == null) {
             HeavyScriptInfo(configuration, compose(toVfsRoots(roots)), null)
@@ -130,10 +143,12 @@ class ScriptClassRootsCache(
             null -> FullUpdate(project, this)
             this -> NotChanged(this)
             else -> IncrementalUpdates(
-                this,
-                this.hasNewRoots(old),
-                old.hasNewRoots(this),
-                getChangedScripts(old)
+                cache = this,
+                hasNewRoots = this.hasNewRoots(old),
+                hasOldRoots = old.hasNewRoots(this),
+                updatedScripts = getChangedScripts(old),
+                oldRoots = old.allDependenciesClassFiles + old.allDependenciesSources,
+                newRoots = allDependenciesClassFiles + allDependenciesSources
             )
         }
 
@@ -167,6 +182,8 @@ class ScriptClassRootsCache(
         val cache: ScriptClassRootsCache
         val changed: Boolean
         val hasNewRoots: Boolean
+        val oldRoots: Collection<VirtualFile>
+        val newRoots: Collection<VirtualFile>
         val hasUpdatedScripts: Boolean
         fun isScriptChanged(scriptPath: String): Boolean
     }
@@ -174,6 +191,8 @@ class ScriptClassRootsCache(
     class IncrementalUpdates(
         override val cache: ScriptClassRootsCache,
         override val hasNewRoots: Boolean,
+        override val oldRoots: Collection<VirtualFile>,
+        override val newRoots: Collection<VirtualFile>,
         private val hasOldRoots: Boolean,
         private val updatedScripts: Set<String>
     ) : Updates {
@@ -189,10 +208,16 @@ class ScriptClassRootsCache(
         override val hasUpdatedScripts: Boolean get() = true
         override fun isScriptChanged(scriptPath: String): Boolean = true
 
+        override val oldRoots: Collection<VirtualFile> = emptyList()
+
+        override val newRoots: Collection<VirtualFile>
+            get() {
+                return cache.allDependenciesClassFiles + cache.allDependenciesSources
+            }
+
         override val hasNewRoots: Boolean
             get() {
-                val scriptCacheDependencies = project.scriptCacheDependencies()
-                return scriptCacheDependencies?.sameAs(cache) == false
+                return cache.allDependenciesClassFiles.isNotEmpty() || cache.allDependenciesSources.isNotEmpty()
             }
     }
 
@@ -200,6 +225,8 @@ class ScriptClassRootsCache(
         override val changed: Boolean get() = false
         override val hasNewRoots: Boolean get() = false
         override val hasUpdatedScripts: Boolean get() = false
+        override val oldRoots: Collection<VirtualFile> = emptyList()
+        override val newRoots: Collection<VirtualFile> = emptyList()
         override fun isScriptChanged(scriptPath: String): Boolean = false
     }
 }

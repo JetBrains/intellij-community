@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -13,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -23,7 +21,6 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -35,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,46 +187,15 @@ public class LocalHintManager implements ClientHintManager {
     return false;
   }
 
-  /**
-   * In this method the point to show hint depends on current caret position.
-   * So, first of all, editor will be scrolled to make the caret position visible.
-   */
   @Override
-  public void showEditorHint(final LightweightHint hint,
-                             final Editor editor,
-                             @HintManager.PositionFlags final short constraint,
-                             @HintManager.HideFlags final int flags,
-                             final int timeout,
-                             final boolean reviveOnEditorChange) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-      LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-      Point p = HintManagerImpl.getHintPosition(hint, editor, pos, constraint);
-      showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManagerImpl.createHintHint(editor, p, hint, constraint));
-    });
-  }
-
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(@NotNull LightweightHint hint,
                              @NotNull Editor editor,
+                             @NotNull HintHint hintInfo,
                              @NotNull Point p,
                              @HintManager.HideFlags int flags,
                              int timeout,
                              boolean reviveOnEditorChange,
-                             @HintManager.PositionFlags short position) {
-
-    HintHint hintHint = HintManagerImpl.createHintHint(editor, p, hint, position).setShowImmediately(true);
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, hintHint);
-  }
-
-  @Override
-  public void showEditorHint(@NotNull final LightweightHint hint,
-                             @NotNull Editor editor,
-                             @NotNull Point p,
-                             @HintManager.HideFlags int flags,
-                             int timeout,
-                             boolean reviveOnEditorChange,
-                             HintHint hintInfo) {
+                             @Nullable Runnable onHintHidden) {
     EDT.assertIsEdt();
     myHideAlarm.cancelAllRequests();
 
@@ -245,7 +210,7 @@ public class LocalHintManager implements ClientHintManager {
 
     updateLastEditor(editor);
 
-    HintManagerImpl.getPublisher().hintShown(editor.getProject(), hint, flags);
+    HintManagerImpl.getPublisher().hintShown(editor, hint, flags, hintInfo);
 
     Component component = hint.getComponent();
 
@@ -413,42 +378,12 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   @Override
-  public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position) {
-    JComponent label = HintUtil.createErrorLabel(text);
-    LightweightHint hint = new LightweightHint(label);
-    Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p,
-                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                   0, false, position);
-  }
-
-  @Override
-  public void showInformationHint(@NotNull Editor editor,
-                                  @NotNull JComponent component,
-                                  @HintManager.PositionFlags short position,
-                                  @Nullable Runnable onHintHidden) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-    AccessibleContextUtil.setName(component, IdeBundle.message("information.hint.accessible.context.name"));
-    LightweightHint hint = new LightweightHint(component);
-    if (onHintHidden != null) {
-      hint.addHintListener((event) -> {
-        onHintHidden.run();
-      });
-    }
-    Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p,
-                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false, position);
-  }
-
-
-  @Override
   public void showQuestionHint(@NotNull final Editor editor,
                                @NotNull final Point p,
                                final int offset1,
                                final int offset2,
                                @NotNull final LightweightHint hint,
+                               int flags,
                                @NotNull final QuestionAction action,
                                @HintManager.PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -480,11 +415,8 @@ public class LocalHintManager implements ClientHintManager {
       }
     });
 
-    showEditorHint(hint, editor, p,
-                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
-                   HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE,
-                   0, false,
-                   HintManagerImpl.createHintHint(editor, p, hint, constraint));
+    showEditorHint(hint, editor, HintManagerImpl.createHintHint(editor, p, hint, constraint),
+                   p, flags, 0, false, null);
     myQuestionAction = action;
     myQuestionHint = hint;
   }

@@ -22,7 +22,6 @@ import org.jetbrains.yaml.*;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLScalarList;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator;
 
@@ -41,14 +40,12 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   @NotNull
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
-    if (!(file instanceof YAMLFile)) {
-      return text;
-    }
+    if (!file.getViewProvider().hasLanguage(YAMLLanguage.INSTANCE)) return text;
     CaretModel caretModel = editor.getCaretModel();
     SelectionModel selectionModel = editor.getSelectionModel();
     Document document = editor.getDocument();
     int caretOffset = selectionModel.getSelectionStart() != selectionModel.getSelectionEnd() ?
-                            selectionModel.getSelectionStart() : caretModel.getOffset();
+                      selectionModel.getSelectionStart() : caretModel.getOffset();
     int lineNumber = document.getLineNumber(caretOffset);
     int lineStartOffset = YAMLTextUtil.getLineStartSafeOffset(document, lineNumber);
     int indent = caretOffset - lineStartOffset;
@@ -82,7 +79,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
 
     if (element != null) {
       if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.SCALAR_LIST ||
-          element.getParent() instanceof YAMLScalarList) {
+          PsiUtilCore.getElementType(element.getParent()) == YAMLElementTypes.SCALAR_LIST_VALUE) {
         return false;
       }
       TokenSet ends = TokenSet.create(YAMLTokenTypes.EOL, YAMLTokenTypes.SCALAR_EOL, YAMLTokenTypes.COMMENT);

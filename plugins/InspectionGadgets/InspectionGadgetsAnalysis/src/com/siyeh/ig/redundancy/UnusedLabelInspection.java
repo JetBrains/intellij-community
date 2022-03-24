@@ -16,6 +16,7 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -85,7 +86,7 @@ public class UnusedLabelInspection extends BaseInspection {
         return;
       }
       final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
-      registerError(labelIdentifier);
+      registerError(labelIdentifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
 
     private static boolean containsBreakOrContinueForLabel(PsiLabeledStatement statement) {

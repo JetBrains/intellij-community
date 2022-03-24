@@ -21,8 +21,7 @@ public interface StatusBarWidget extends Disposable {
   /**
    * @deprecated do not use it
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   enum PlatformType {
     DEFAULT, MAC
   }
@@ -38,8 +37,7 @@ public interface StatusBarWidget extends Disposable {
   /**
    * @deprecated use this{@link #getPresentation()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
@@ -78,8 +76,7 @@ public interface StatusBarWidget extends Disposable {
      * @deprecated unused
      */
     @NotNull
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+    @Deprecated(forRemoval = true)
     default String getMaxPossibleText() { return ""; }
 
     float getAlignment();
@@ -96,8 +93,7 @@ public interface StatusBarWidget extends Disposable {
      * @deprecated unused
      */
     @NotNull
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+    @Deprecated(forRemoval = true)
     default String getMaxValue() { return ""; }
 
     @Nullable
@@ -106,9 +102,13 @@ public interface StatusBarWidget extends Disposable {
     }
   }
 
+  /**
+   * @deprecated Use {@link JBUI.CurrentTheme.StatusBar.Widget} border methods
+   */
+  @Deprecated
   abstract class WidgetBorder implements Border {
-    public static final Border ICON = JBUI.Borders.empty(0, 4);
-    public static final Border INSTANCE = JBUI.Borders.empty(0, 6);
-    public static final Border WIDE = JBUI.Borders.empty(0, 6);
+    public static final Border ICON = JBUI.CurrentTheme.StatusBar.Widget.iconBorder();
+    public static final Border INSTANCE = JBUI.CurrentTheme.StatusBar.Widget.border();
+    public static final Border WIDE = JBUI.CurrentTheme.StatusBar.Widget.border();
   }
 }

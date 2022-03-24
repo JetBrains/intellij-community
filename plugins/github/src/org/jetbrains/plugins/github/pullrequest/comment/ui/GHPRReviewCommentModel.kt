@@ -1,34 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
-import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
-import java.util.*
 
-class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentState, dateCreated: Date, body: String,
-                             authorUsername: String?, authorLinkUrl: String?, authorAvatarUrl: String?,
-                             val canBeDeleted: Boolean, val canBeUpdated: Boolean) {
+class GHPRReviewCommentModel(comment: GHPullRequestReviewComment) {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  var state = state
+  val id = comment.id
+  val canBeDeleted = comment.viewerCanDelete
+  val canBeUpdated = comment.viewerCanUpdate
+
+  var state = comment.state
     private set
-  var dateCreated = dateCreated
+  var dateCreated = comment.createdAt
     private set
-  var body = body
+  var body = comment.body
     private set
-  var authorUsername = authorUsername
+  var authorUsername = comment.author?.login
     private set
-  var authorLinkUrl = authorLinkUrl
+  var authorLinkUrl = comment.author?.url
     private set
-  var authorAvatarUrl = authorAvatarUrl
+  var authorAvatarUrl = comment.author?.avatarUrl
     private set
 
   var isFirstInResolvedThread by equalVetoingObservable(false) {
     changeEventDispatcher.multicaster.eventOccurred()
+  }
+
+  init {
+    update(comment)
   }
 
   fun update(comment: GHPullRequestReviewComment): Boolean {
@@ -42,9 +46,9 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
 
     dateCreated = comment.createdAt
 
-    if (body != comment.bodyHTML)
+    if (body != comment.body)
       updated = true
-    body = comment.bodyHTML
+    body = comment.body
 
     if (authorUsername != comment.author?.login)
       updated = true
@@ -71,12 +75,8 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
     return id.hashCode()
   }
 
-
   companion object {
     fun convert(comment: GHPullRequestReviewComment): GHPRReviewCommentModel =
-      GHPRReviewCommentModel(comment.id, comment.state, comment.createdAt, comment.bodyHTML,
-                             comment.author?.login, comment.author?.url,
-                             comment.author?.avatarUrl,
-                             comment.viewerCanDelete, comment.viewerCanUpdate)
+      GHPRReviewCommentModel(comment)
   }
 }

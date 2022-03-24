@@ -8,14 +8,10 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.ensureIndexesUpToDate
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
-import org.jetbrains.kotlin.idea.perf.TestData
-import org.jetbrains.kotlin.idea.perf.performanceTest
-import org.jetbrains.kotlin.idea.perf.util.removeInfoMarkers
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
+import org.jetbrains.kotlin.idea.testFramework.*
 
 /**
  * inspired by @see AbstractHighlightingTest
@@ -30,6 +26,8 @@ abstract class AbstractPerformanceHighlightingTest : KotlinLightCodeInsightFixtu
         val stats: Stats = Stats("highlight")
 
     }
+
+    protected open fun stats() = stats
 
     override fun setUp() {
         super.setUp()
@@ -88,7 +86,7 @@ abstract class AbstractPerformanceHighlightingTest : KotlinLightCodeInsightFixtu
     private fun innerPerfTest(name: String, setUpBody: (TestData<Unit, MutableList<HighlightInfo>>) -> Unit) {
         performanceTest<Unit, MutableList<HighlightInfo>> {
             name(name)
-            stats(stats)
+            stats(stats())
             setUp {
                 setUpBody(it)
             }

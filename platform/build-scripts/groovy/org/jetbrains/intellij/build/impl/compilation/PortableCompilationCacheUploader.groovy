@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
@@ -24,7 +22,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
-class PortableCompilationCacheUploader {
+final class PortableCompilationCacheUploader {
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
@@ -88,7 +86,7 @@ class PortableCompilationCacheUploader {
     }
     finally {
       executor.close()
-      StreamUtil.closeStream(uploader)
+      CloseStreamUtil.closeStream(uploader)
     }
   }
 
@@ -130,6 +128,13 @@ class PortableCompilationCacheUploader {
     executor.submit {
       def sourcePath = compilationOutput.remotePath
       def outputFolder = new File(compilationOutput.path)
+      if (!outputFolder.exists()) {
+        context.messages.warning("$outputFolder doesn't exist, was a respective module removed?")
+        return
+      }
+      if (!outputFolder.isDirectory()) {
+        context.messages.error("$outputFolder isn't a directory")
+      }
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
       if (!uploader.isExist(sourcePath)) {
@@ -236,7 +241,7 @@ class PortableCompilationCacheUploader {
         throw new UploadException("Failed to GET $path: " + e.getMessage(), e)
       }
       finally {
-        StreamUtil.closeStream(response)
+        CloseStreamUtil.closeStream(response)
       }
     }
 

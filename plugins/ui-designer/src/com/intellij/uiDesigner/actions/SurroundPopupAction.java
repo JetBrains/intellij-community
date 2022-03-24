@@ -3,7 +3,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -27,7 +27,7 @@ public class SurroundPopupAction extends AbstractGuiEditorAction {
       .createActionGroupPopup(UIDesignerBundle.message("surround.with.popup.title"), myActionGroup, e.getDataContext(),
                               JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true);
 
-    final JComponent component = (JComponent)e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    final JComponent component = (JComponent)e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof ComponentTree) {
       groupPopup.show(JBPopupFactory.getInstance().guessBestPopupLocation(component));
     }

@@ -43,15 +43,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   @Override
-  public PsiFile getContainingFile() {
-    PsiElement parent = getParent();
-    if (parent == null) {
-      throw new PsiInvalidElementAccessException(this);
-    }
-    return parent.getContainingFile();
-  }
-
-  @Override
   public final boolean isWritable() {
     return false;
   }

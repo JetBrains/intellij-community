@@ -82,7 +82,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
   }
 
   protected void showPopup(DataContext context, ListPopup popup, JComponent contextComponent) {
-    Component focusedComponent = contextComponent != null ? contextComponent : PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+    Component focusedComponent = contextComponent != null ? contextComponent : PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
       if (popup instanceof PopupFactoryImpl.ActionGroupPopup && focusedComponent instanceof JLabel) {
         ((PopupFactoryImpl.ActionGroupPopup)popup).showUnderneathOfLabel((JLabel)focusedComponent);

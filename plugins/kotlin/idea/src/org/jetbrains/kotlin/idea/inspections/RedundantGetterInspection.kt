@@ -6,11 +6,11 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.idea.util.isRedundantGetter
+import org.jetbrains.kotlin.idea.util.removeRedundantGetter
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.propertyAccessorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 
 class RedundantGetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -29,36 +29,6 @@ class RedundantGetterInspection : AbstractKotlinInspection(), CleanupLocalInspec
     }
 }
 
-fun KtPropertyAccessor.isRedundantGetter(): Boolean {
-    if (!isGetter) return false
-    val expression = bodyExpression ?: return canBeCompletelyDeleted()
-    if (expression.isBackingFieldReferenceTo(property)) return true
-    if (expression is KtBlockExpression) {
-        val statement = expression.statements.singleOrNull() ?: return false
-        val returnExpression = statement as? KtReturnExpression ?: return false
-        return returnExpression.returnedExpression?.isBackingFieldReferenceTo(property) == true
-    }
-    return false
-}
-
-fun KtExpression.isBackingFieldReferenceTo(property: KtProperty) =
-    this is KtNameReferenceExpression
-            && text == KtTokens.FIELD_KEYWORD.value
-            && property.isAncestor(this)
-
-
-fun KtPropertyAccessor.canBeCompletelyDeleted(): Boolean {
-    if (modifierList == null) return true
-    if (annotationEntries.isNotEmpty()) return false
-    if (hasModifier(KtTokens.EXTERNAL_KEYWORD)) return false
-    return visibilityModifierTypeOrDefault() == property.visibilityModifierTypeOrDefault()
-}
-
-fun KtPropertyAccessor.deleteBody() {
-    val leftParenthesis = leftParenthesis ?: return
-    deleteChildRange(leftParenthesis, lastChild)
-}
-
 class RemoveRedundantGetterFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.getter.fix.text")
 
@@ -67,20 +37,5 @@ class RemoveRedundantGetterFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val accessor = descriptor.psiElement as? KtPropertyAccessor ?: return
         removeRedundantGetter(accessor)
-    }
-
-    companion object {
-        fun removeRedundantGetter(getter: KtPropertyAccessor) {
-            val property = getter.property
-            val accessorTypeReference = getter.returnTypeReference
-            if (accessorTypeReference != null && property.typeReference == null && property.initializer == null) {
-                property.typeReference = accessorTypeReference
-            }
-            if (getter.canBeCompletelyDeleted()) {
-                getter.delete()
-            } else {
-                getter.deleteBody()
-            }
-        }
     }
 }

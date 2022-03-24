@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture
 interface BuildIssueQuickFix {
   val id: String
   @JvmDefault
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use runQuickFix(Project, DataContext) function instead.", ReplaceWith("runQuickFix(Project, DataContext)"))
   fun runQuickFix(project: Project, dataContext: DataProvider): CompletableFuture<*> = CompletableFuture.completedFuture(null)
   @JvmDefault

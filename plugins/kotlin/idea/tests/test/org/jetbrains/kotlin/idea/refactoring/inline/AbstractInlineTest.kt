@@ -15,14 +15,14 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
     protected fun doTest(unused: String) {
         val testDataFile = testDataFile()
-        val afterFile = File(testDataPath, "${fileName()}.after")
+        val afterFile = testDataFile("${fileName()}.after")
 
         val mainFileName = testDataFile.name
         val mainFileBaseName = FileUtil.getNameWithoutExtension(mainFileName)

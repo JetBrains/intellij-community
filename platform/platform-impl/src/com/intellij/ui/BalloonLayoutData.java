@@ -65,6 +65,7 @@ public class BalloonLayoutData {
 
   public boolean isExpandable;
 
+  public Type collapseType = Type.Timeline;
 
   @NotNull
   public static BalloonLayoutData createEmpty() {
@@ -122,5 +123,9 @@ public class BalloonLayoutData {
       }
       linkIds.add(linkId);
     }
+  }
+
+  public enum Type {
+    Timeline, Suggestion, ImportantSuggestion
   }
 }

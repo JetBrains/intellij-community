@@ -77,6 +77,12 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
     }
   }
 
+  public void testAtTypeCast() { doTest("Change cast type to List<?>"); }
+  public void testAtTypeCast2() { doTest("Change cast type to List<?>"); }
+  public void testAtTypeCast3() { assertIntentionNotAvailable("Change cast type to List<?>"); }
+  public void testAtTypeCast4() { doTest("Change cast type to X<?>"); }
+  public void testAtTypeCast5() { assertIntentionNotAvailable("Change cast type to X<?>"); }
+
   public void testAtInitializer() {
     assertIntentionNotAvailable(getMessagePrefix());
   }

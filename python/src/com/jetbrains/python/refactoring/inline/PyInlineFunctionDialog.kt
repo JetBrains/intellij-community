@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.inline.InlineOptionsDialog
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.pyi.PyiUtil
@@ -15,7 +16,7 @@ import com.jetbrains.python.pyi.PyiUtil
 /**
  * @author Aleksei.Kniazev
  */
-class PyInlineFunctionDialog(project: Project,
+public class PyInlineFunctionDialog(project: Project,
                              private val myEditor: Editor,
                              private val myFunction: PyFunction,
                              private val myInvocationReference: PsiReference?) : InlineOptionsDialog(project, true, myFunction) {
@@ -26,28 +27,29 @@ class PyInlineFunctionDialog(project: Project,
   init {
     myInvokedOnReference = myInvocationReference != null
     title = when {
-      isMethod -> PyBundle.message("refactoring.inline.method", myFunctionName)
-      else -> PyBundle.message("refactoring.inline.function", myFunctionName)
+      isMethod -> PyPsiBundle.message("refactoring.inline.method", myFunctionName)
+      else -> PyPsiBundle.message("refactoring.inline.function", myFunctionName)
     }
     init()
   }
 
   override fun doAction() {
     val originalFunction = PyiUtil.getOriginalElement(myFunction) as PyFunction?
-    invokeRefactoring(PyInlineFunctionProcessor(myProject, myEditor, originalFunction ?: myFunction, myInvocationReference, isInlineThisOnly, !isKeepTheDeclaration))
+    invokeRefactoring(
+      PyInlineFunctionProcessor(myProject, myEditor, originalFunction ?: myFunction, myInvocationReference, isInlineThisOnly, !isKeepTheDeclaration))
   }
 
   override fun getNameLabelText(): String {
-    val text = if (isMethod) PyBundle.message("refactoring.inline.label.method", myFunctionName) else PyBundle.message("refactoring.inline.label.function", myFunctionName)
+    val text = if (isMethod) PyPsiBundle.message("refactoring.inline.label.method", myFunctionName) else PyPsiBundle.message("refactoring.inline.label.function", myFunctionName)
     if (myNumberOfOccurrences != -1) {
-      return PyBundle.message("refactoring.name.label.text", text, myNumberOfOccurrences, if (myNumberOfOccurrences == 1) 0 else 1)
+      return PyPsiBundle.message("refactoring.name.label.text", text, myNumberOfOccurrences, if (myNumberOfOccurrences == 1) 0 else 1)
     }
     return text
   }
-  override fun getBorderTitle(): String  = PyBundle.message("refactoring.inline.all.border.title")
-  override fun getInlineAllText(): String = PyBundle.message("refactoring.inline.all.remove.declaration")
-  override fun getKeepTheDeclarationText(): String = PyBundle.message("refactoring.inline.all.keep.declaration")
-  override fun getInlineThisText(): String = PyBundle.message("refactoring.inline.this.only")
+  override fun getBorderTitle(): String  = PyPsiBundle.message("refactoring.inline.all.border.title")
+  override fun getInlineAllText(): String = PyPsiBundle.message("refactoring.inline.all.remove.declaration")
+  override fun getKeepTheDeclarationText(): String = PyPsiBundle.message("refactoring.inline.all.keep.declaration")
+  override fun getInlineThisText(): String = PyPsiBundle.message("refactoring.inline.this.only")
   override fun getHelpId(): String = PyInlineFunctionHandler.REFACTORING_ID
 
   override fun allowInlineAll(): Boolean = true

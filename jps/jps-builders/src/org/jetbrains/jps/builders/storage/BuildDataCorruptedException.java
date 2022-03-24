@@ -31,6 +31,11 @@ public class BuildDataCorruptedException extends RuntimeException {
   }
 
   @Override
+  public synchronized Throwable initCause(Throwable cause) {
+    throw new UnsupportedOperationException("Overwriting of cause field is not supported for " + BuildDataCorruptedException.class.getName());
+  }
+
+  @Override
   public synchronized IOException getCause() {
     return (IOException)super.getCause();
   }

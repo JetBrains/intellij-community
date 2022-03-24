@@ -40,7 +40,7 @@ public class ConditionalGotoInstruction extends Instruction {
    * @deprecated used in "Find the cause" feature only. Will be removed
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiElement getPsiAnchor() {
     return myAnchor;
   }

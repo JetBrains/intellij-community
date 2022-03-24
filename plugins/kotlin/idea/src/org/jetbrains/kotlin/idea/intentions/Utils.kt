@@ -111,15 +111,6 @@ fun KtExpression.negate(reformat: Boolean = true): KtExpression {
     return KtPsiFactory(this).createExpressionByPattern("!$0", this, reformat = reformat)
 }
 
-fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
-    is KtWhenExpression -> listOf(this) + entries.map { it.expression?.resultingWhens() ?: listOf() }.flatten()
-    is KtIfExpression -> (then?.resultingWhens() ?: listOf()) + (`else`?.resultingWhens() ?: listOf())
-    is KtBinaryExpression -> (left?.resultingWhens() ?: listOf()) + (right?.resultingWhens() ?: listOf())
-    is KtUnaryExpression -> this.baseExpression?.resultingWhens() ?: listOf()
-    is KtBlockExpression -> statements.lastOrNull()?.resultingWhens() ?: listOf()
-    else -> listOf()
-}
-
 fun KtExpression?.hasResultingIfWithoutElse(): Boolean = when (this) {
     is KtIfExpression -> `else` == null || then.hasResultingIfWithoutElse() || `else`.hasResultingIfWithoutElse()
     is KtWhenExpression -> entries.any { it.expression.hasResultingIfWithoutElse() }
@@ -222,25 +213,24 @@ fun KtElement?.isZero() = this?.text == "0"
 
 fun KtElement?.isOne() = this?.text == "1"
 
-private fun KtExpression.isExpressionOfTypeOrSubtype(predicate: (KotlinType) -> Boolean): Boolean {
-    val returnType = resolveToCall()?.resultingDescriptor?.returnType
-    return returnType != null && (returnType.constructor.supertypes + returnType).any(predicate)
-}
-
-fun KtElement?.isSizeOrLength(): Boolean {
-    if (this !is KtDotQualifiedExpression) return false
-
-    return when (selectorExpression?.text) {
-        "size" -> receiverExpression.isExpressionOfTypeOrSubtype { type ->
+fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
+    val selector = (this as? KtDotQualifiedExpression)?.selectorExpression ?: this
+    val predicate: (KotlinType) -> Boolean = when (selector?.text) {
+        "size" -> { type ->
             KotlinBuiltIns.isArray(type) ||
                     KotlinBuiltIns.isPrimitiveArray(type) ||
                     KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
                     KotlinBuiltIns.isMapOrNullableMap(type)
         }
-        "length" -> receiverExpression.isExpressionOfTypeOrSubtype(KotlinBuiltIns::isCharSequenceOrNullableCharSequence)
-        else -> false
+        "length" -> KotlinBuiltIns::isCharSequenceOrNullableCharSequence
+        else -> return null
     }
+    val resolvedCall = selector.resolveToCall() ?: return null
+    val receiverType = (resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver)?.type ?: return null
+    return receiverType.takeIf { (it.constructor.supertypes + it).any(predicate) }
 }
+
+fun KtExpression?.isSizeOrLength() = receiverTypeIfSelectorIsSizeOrLength() != null
 
 private val COUNT_FUNCTIONS = listOf(FqName("kotlin.collections.count"), FqName("kotlin.text.count"))
 
@@ -411,11 +401,23 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
         appendExpression(callOrQualified.receiverExpression)
         appendFixedText(".")
     }
-    appendFixedText(newFunctionName)
-    call.valueArgumentList?.let { appendFixedText(it.text) }
-    call.lambdaArguments.firstOrNull()?.let { appendFixedText(it.text) }
+    appendNonFormattedText(newFunctionName)
+    call.valueArgumentList?.let { appendNonFormattedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let { appendNonFormattedText(it.text) }
 }
 
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
-    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs() ?: getLastLambdaExpression()
+    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs<KtLambdaExpression>() ?: getLastLambdaExpression()
+}
+
+private val rangeTypes = setOf(
+    "kotlin.ranges.IntRange",
+    "kotlin.ranges.CharRange",
+    "kotlin.ranges.LongRange",
+    "kotlin.ranges.UIntRange",
+    "kotlin.ranges.ULongRange"
+)
+
+fun ClassDescriptor.isRange(): Boolean {
+    return rangeTypes.any { this.fqNameUnsafe.asString() == it }
 }

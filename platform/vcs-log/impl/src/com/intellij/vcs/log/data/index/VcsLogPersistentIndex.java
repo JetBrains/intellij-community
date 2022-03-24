@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
@@ -64,6 +65,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogBigRepositoriesList myBigRepositoriesList;
   @NotNull private final VcsLogIndexCollector myIndexCollector;
+  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   @Nullable private final IndexStorage myIndexStorage;
   @Nullable private final IndexDataGetter myDataGetter;
@@ -114,6 +116,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
 
     Disposer.register(disposableParent, this);
+    Disposer.register(this, myDisposableFlag);
   }
 
   private static int getIndexingLimit() {
@@ -144,7 +147,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   }
 
   private synchronized void doScheduleIndex(boolean full, @NotNull Consumer<IndexingRequest> requestConsumer) {
-    if (Disposer.isDisposed(this)) return;
+    if (myDisposableFlag.isDisposed()) return;
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;
@@ -316,7 +319,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       try {
         StorageId storageId = indexStorageId(projectName, logId);
-        StorageLockContext storageLockContext = new StorageLockContext(true);
+        StorageLockContext storageLockContext = new StorageLockContext();
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
@@ -471,8 +474,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   private class IndexingRequest {
     private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
-    private static final int LOGGED_ERRORS_COUNT = 10;
-    private static final int STOPPING_ERROR_COUNT = 100;
+    private static final int LOGGED_ERRORS_COUNT = 5;
+    private static final int STOPPING_ERROR_COUNT = 30;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final IntSet myCommits;
     @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
@@ -613,7 +616,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         List<String> hashes = IntCollectionUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           storeDetail(detail);
-          myNewIndexedCommits.incrementAndGet();
+          if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
           checkShouldCancel(indicator);
         });

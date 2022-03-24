@@ -10,7 +10,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ public class CompileQrcAction extends AnAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null;
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     String path = QtFileType.findQtTool(module, "pyrcc4");
     if (path == null) {
       path = QtFileType.findQtTool(module, "pyside-rcc");
@@ -68,7 +68,7 @@ public class CompileQrcAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     e.getPresentation().setVisible(module != null && filesAreQrc(vFiles));
   }

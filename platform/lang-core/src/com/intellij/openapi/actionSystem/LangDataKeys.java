@@ -40,7 +40,6 @@ public class LangDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<ModifiableModuleModel> MODIFIABLE_MODULE_MODEL = DataKey.create("modifiable.module.model");
 
   public static final DataKey<Language[]> CONTEXT_LANGUAGES = DataKey.create("context.Languages");
-  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 
   /**
    * Returns {@link IdeView} (one of project, packages, commander or favorites view).

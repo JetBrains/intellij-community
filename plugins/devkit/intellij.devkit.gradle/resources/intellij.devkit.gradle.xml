@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.idea.devkit.gradle">
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <frameworkSupport implementation="org.jetbrains.idea.devkit.gradle.GradleIntellijPluginFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.idea.devkit.gradle.KdslGradleIntellijPluginFrameworkSupportProvider"/>
+  </extensions>
+</idea-plugin>

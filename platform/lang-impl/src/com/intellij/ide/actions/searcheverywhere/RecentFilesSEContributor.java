@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.JTextComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

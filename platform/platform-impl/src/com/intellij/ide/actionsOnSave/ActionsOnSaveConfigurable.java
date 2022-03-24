@@ -3,6 +3,7 @@ package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
@@ -10,13 +11,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,26 +40,24 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     }
 
     @Override
-    public boolean canCreateConfigurable() {
-      return !PlatformUtils.isRider();
-    }
-
-    @Override
     public @Nullable Configurable createConfigurable() {
       return new ActionsOnSaveConfigurable(myProject);
     }
   }
 
+  public static final String CONFIGURABLE_ID = "actions.on.save";
+
   private static final Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
-  private static final String CONFIGURABLE_ID = "actions.on.save";
 
   private final @NotNull Project myProject;
+  private final @NotNull Disposable myDisposable;
 
   private ActionOnSaveContext myActionOnSaveContext;
   private TableView<ActionOnSaveInfo> myTable;
 
   public ActionsOnSaveConfigurable(@NotNull Project project) {
     myProject = project;
+    myDisposable = Disposer.newDisposable();
   }
 
   @Override
@@ -166,11 +165,16 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     }
 
     if (myActionOnSaveContext == null) {
-      myActionOnSaveContext = new ActionOnSaveContext(myProject, settings);
+      myActionOnSaveContext = new ActionOnSaveContext(myProject, settings, myDisposable);
     }
 
     List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
     myTable.getListTableModel().setItems(infos);
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myDisposable);
   }
 
   public static @NotNull ActionLink createGoToActionsOnSavePageLink() {

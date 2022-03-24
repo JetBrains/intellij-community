@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -30,6 +30,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
   private final boolean myIgnoreMethodsOfDeprecated;
   private final boolean myIgnoreInSameOutermostClass;
   private final boolean myForRemoval;
+  private final boolean myIgnoreApiDeclaredInThisProject;
   private final ProblemHighlightType myHighlightType;
 
   public DeprecatedApiUsageProcessor(@NotNull ProblemsHolder holder,
@@ -39,7 +40,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                      boolean ignoreMethodsOfDeprecated,
                                      boolean ignoreInSameOutermostClass,
                                      boolean forRemoval,
-                                     @Nullable HighlightSeverity severity) {
+                                     boolean ignoreApiDeclaredInThisProject, @Nullable HighlightSeverity severity) {
     myHolder = holder;
     myIgnoreInsideDeprecated = ignoreInsideDeprecated;
     myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
@@ -47,6 +48,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     myIgnoreMethodsOfDeprecated = ignoreMethodsOfDeprecated;
     myIgnoreInSameOutermostClass = ignoreInSameOutermostClass;
     myForRemoval = forRemoval;
+    myIgnoreApiDeclaredInThisProject = ignoreApiDeclaredInThisProject;
     myHighlightType = forRemoval && severity == HighlightSeverity.ERROR
                       ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL
                       : ProblemHighlightType.LIKE_DEPRECATED;
@@ -72,7 +74,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
 
   private void checkTargetDeprecated(@NotNull PsiElement elementToHighlight, @NotNull PsiModifierListOwner target) {
     checkDeprecated(target, elementToHighlight, null, myIgnoreInsideDeprecated, myIgnoreImportStatements,
-                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
+                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myIgnoreApiDeclaredInThisProject, myHighlightType);
   }
 
   @Override
@@ -113,6 +115,8 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
       return;
     }
 
+    if (myIgnoreApiDeclaredInThisProject && overriddenMethod.getManager().isInProject(overriddenMethod)) return;
+    
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
       String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                    getPresentableName(aClass));

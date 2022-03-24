@@ -45,7 +45,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
         public void actionPerformed(ActionEvent e) {
           final NamedScope scope;
           if (component instanceof JComboBox) {
-            scope = (NamedScope)((JComboBox)component).getSelectedItem();
+            scope = (NamedScope)((JComboBox<?>)component).getSelectedItem();
           }
           else {
             scope = (NamedScope)((JBComboBoxTableCellEditorComponent)component).getEditorValue();
@@ -103,7 +103,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
         for (int i = 0; i < model.getSize(); i++) {
           final NamedScope descriptor = (NamedScope)model.getElementAt(i);
           if (preselect.equals(descriptor.getScopeId())) {
-            ((JComboBox)component).setSelectedIndex(i);
+            ((JComboBox<?>)component).setSelectedIndex(i);
             break;
           }
         }
@@ -145,9 +145,9 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
   public NamedScope getSelectedScope() {
     final JComponent component = getChildComponent();
     if (component instanceof JComboBox) {
-      int idx = ((JComboBox)component).getSelectedIndex();
+      int idx = ((JComboBox<?>)component).getSelectedIndex();
       if (idx < 0) return null;
-      return (NamedScope)((JComboBox)component).getSelectedItem();
+      return (NamedScope)((JComboBox<?>)component).getSelectedItem();
     }
     else {
       return (NamedScope)((JBComboBoxTableCellEditorComponent)component).getEditorValue();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -10,6 +10,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.*;
+import com.intellij.lang.jvm.util.JvmUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -29,6 +32,10 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInspectionTool {
   @NotNull
@@ -55,7 +62,8 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
                   final String text = reference.getCanonicalText();
                   boolean validName = LanguageNamesValidation.isIdentifier(fieldClass.getLanguage(), text, fieldClass.getProject());
                   holder.registerProblem(reference.getElement(), reference.getRangeInElement(), JavaFXBundle.message("inspection.javafx.unresolved.fx.id.reference.problem"),
-                                         isOnTheFly && validName ? new LocalQuickFix[]{new CreateFieldFromUsageQuickFix(text)} : LocalQuickFix.EMPTY_ARRAY);
+                                         isOnTheFly && validName ?
+                                         createFixes((JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef)reference, holder.getFile()) : LocalQuickFix.EMPTY_ARRAY);
                 }
               }
             }
@@ -63,6 +71,29 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
         }
       }
     };
+  }
+
+  private static LocalQuickFix @NotNull [] createFixes(JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef reference, PsiFile file) {
+    
+    @PsiModifier.ModifierConstant
+    String visibility = JavaCodeStyleSettings.getInstance(file).VISIBILITY;
+   
+    Collection<AnnotationRequest> annotations; 
+    if (!PsiModifier.PUBLIC.equals(visibility)) {
+      annotations = Collections.singletonList(AnnotationRequestsKt.annotationRequest(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION));
+    }
+    else {
+      annotations = Collections.emptyList();
+    }
+
+    JvmModifier modifier = JvmUtil.getAccessModifier(VisibilityUtil.getAccessLevel(visibility));
+    List<ExpectedType> expectedTypes = ExpectedTypesKt.expectedTypes(JavaPsiFacade.getElementFactory(file.getProject()).createType(checkContext(reference.getXmlAttributeValue())), ExpectedType.Kind.SUBTYPE);
+    CreateFieldRequest request = FieldRequestsKt.fieldRequest(reference.getCanonicalText(), 
+                                                              annotations, 
+                                                              Collections.singletonList(modifier),
+                                                              expectedTypes,
+                                                              new PsiJvmSubstitutor(file.getProject(), PsiSubstitutor.EMPTY), null, false);
+    return IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddFieldActions(reference.getAClass(), request), file).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   protected static PsiClass checkContext(final XmlAttributeValue attributeValue) {

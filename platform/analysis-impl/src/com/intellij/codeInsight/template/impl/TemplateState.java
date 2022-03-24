@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -88,6 +88,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     myProject = project;
     myLiveTemplateProcessor = processor;
     myEventPublisher = project.getMessageBus().syncPublisher(TEMPLATE_STARTED_TOPIC);
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   private void initListeners() {
@@ -305,7 +309,9 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     setTemplate(template);
     myProcessor = processor;
 
-    myLiveTemplateProcessor.registerUndoableAction(this, myProject, getDocument());
+    if (requiresWriteAction()) {
+      myLiveTemplateProcessor.registerUndoableAction(this, myProject, getDocument());
+    }
 
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
@@ -343,7 +349,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   private void processAllExpressions(@NotNull final TemplateImpl template) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    Runnable action = () -> {
       if (!template.isInline()) getDocument().insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
       for (int i = 0; i < template.getSegmentsCount(); i++) {
         int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
@@ -364,7 +370,9 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
 
       if (nextVariableNumber == -1) {
-        myEventPublisher.templateStarted(this);
+        if (requiresWriteAction()) {
+          myEventPublisher.templateStarted(this);
+        }
 
         finishTemplate(false);
       }
@@ -377,12 +385,19 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         focusCurrentExpression();
         fireCurrentVariableChanged(-1);
 
-        myEventPublisher.templateStarted(this);
+        if (requiresWriteAction()) {
+          myEventPublisher.templateStarted(this);
+        }
         if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }
       }
-    });
+    };
+    if (requiresWriteAction()) {
+      ApplicationManager.getApplication().runWriteAction(action);
+    } else {
+      action.run();
+    }
   }
 
   private String getRangesDebugInfo() {
@@ -402,7 +417,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       getSegments().setSegmentsGreedy(true);
       restoreEmptyVariables(indices);
     };
-    ApplicationManager.getApplication().runWriteAction(action);
+    if (requiresWriteAction()) {
+      ApplicationManager.getApplication().runWriteAction(action);
+    } else {
+      action.run();
+    }
   }
 
   public void setSegmentsGreedy(boolean greedy) {
@@ -532,6 +551,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument()) : null;
   }
 
+  boolean requiresWriteAction() {
+    PsiFile file = getPsiFile();
+    return file == null || file.isPhysical();
+  }
+
   private LookupElement @NotNull [] getCurrentExpressionLookupItems() {
     LookupElement[] elements = null;
     try {
@@ -585,7 +609,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
     fixOverlappedSegments(myCurrentSegmentNumber);
 
-    WriteCommandAction.runWriteCommandAction(myProject, null, null, () -> {
+    Runnable action = () -> {
       if (isDisposed()) {
         return;
       }
@@ -636,7 +660,12 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         }
       }
       while (!calcedSegments.isEmpty() && maxAttempts >= 0);
-    });
+    };
+    if (requiresWriteAction()) {
+      WriteCommandAction.runWriteCommandAction(myProject, null, null, action);
+    } else {
+      action.run();
+    }
   }
 
   private static final class TemplateDocumentChange {

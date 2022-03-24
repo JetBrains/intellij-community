@@ -6,6 +6,7 @@ fun foo() {
                 println("2")
                 return
             }
+
             3 -> break@Loop
         }
         println()

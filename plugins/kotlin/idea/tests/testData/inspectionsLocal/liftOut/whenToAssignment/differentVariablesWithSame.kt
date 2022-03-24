@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     val list: MutableList<String> = mutableListOf()

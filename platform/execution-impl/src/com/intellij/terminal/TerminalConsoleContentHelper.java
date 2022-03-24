@@ -7,13 +7,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class TerminalConsoleContentHelper implements Disposable {
@@ -21,8 +22,7 @@ class TerminalConsoleContentHelper implements Disposable {
   private static final int FLUSH_TIMEOUT = 200;
 
   private final Collection<ObservableConsoleView.ChangeListener> myChangeListeners = new CopyOnWriteArraySet<>();
-  private final Set<ConsoleViewContentType> myContentTypes = ContainerUtil.newConcurrentSet();
-  private final LinkedBlockingDeque<Pair<String, ConsoleViewContentType>> myTextContentTypes = new LinkedBlockingDeque<>();
+  private final BlockingQueue<Pair<String, ConsoleViewContentType>> myTextChunks = new LinkedBlockingQueue<>();
   private final Alarm myAlarm;
   private final AtomicBoolean myRequested = new AtomicBoolean(false);
   private volatile boolean myDisposed = false;
@@ -38,8 +38,7 @@ class TerminalConsoleContentHelper implements Disposable {
   }
 
   public void onContentTypePrinted(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    myContentTypes.add(contentType);
-    myTextContentTypes.add(Pair.create(text, contentType));
+    myTextChunks.add(Pair.create(text, contentType));
     if (myRequested.compareAndSet(false, true) && !myDisposed) {
       myAlarm.addRequest(this::flush, FLUSH_TIMEOUT);
     }
@@ -48,19 +47,15 @@ class TerminalConsoleContentHelper implements Disposable {
   private void flush() {
     if (myDisposed) return;
     myRequested.set(false);
-    List<ConsoleViewContentType> contentTypes = new ArrayList<>(myContentTypes);
-    myContentTypes.removeAll(contentTypes);
-    List<Pair<String, ConsoleViewContentType>> textContentTypes = new ArrayList<>(myTextContentTypes);
-    myTextContentTypes.removeAll(textContentTypes);
-    if (!contentTypes.isEmpty()) {
-      fireContentAdded(contentTypes, textContentTypes);
+    List<Pair<String, ConsoleViewContentType>> textChunks = new ArrayList<>(myTextChunks.size());
+    myTextChunks.drainTo(textChunks);
+    if (!textChunks.isEmpty()) {
+      fireTextAdded(textChunks);
     }
   }
 
-  private void fireContentAdded(@NotNull List<ConsoleViewContentType> contentTypes,
-                                @NotNull List<Pair<String, ConsoleViewContentType>> textContentTypes) {
+  private void fireTextAdded(@NotNull List<Pair<String, ConsoleViewContentType>> textContentTypes) {
     for (ObservableConsoleView.ChangeListener listener : myChangeListeners) {
-      listener.contentAdded(contentTypes);
       for (Pair<String, ConsoleViewContentType> pair : textContentTypes) {
         listener.textAdded(pair.first, pair.second);
       }

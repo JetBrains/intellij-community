@@ -31,8 +31,12 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
       }
       if (type != null && entityName != null) {
         val fileName = when {
-          type == ModuleEntity::class.java && (source as? JpsImportedEntitySource)?.storedExternally == true -> "$entityName.xml"
+          // At external storage libs and artifacts store in its own file and at [JpsLibrariesExternalFileSerializer]/[JpsArtifactEntitiesSerializer]
+          // we can distinguish them only by directly entity name
+          (type == LibraryEntity::class.java || type == ArtifactEntity::class.java) && (source as? JpsImportedEntitySource)?.storedExternally == true -> entityName
+          // Module file stored at external and internal modules.xml has .iml file extension
           type == ModuleEntity::class.java -> "$entityName.iml"
+          // In internal store (i.e. under `.idea` folder) each library or artifact has its own file, and we can distinguish them only by file name
           else -> FileUtil.sanitizeFileName(entityName) + ".xml"
         }
         sourcesMap[type to fileName] = getInternalFileSource(source) as JpsFileEntitySource.FileInDirectory

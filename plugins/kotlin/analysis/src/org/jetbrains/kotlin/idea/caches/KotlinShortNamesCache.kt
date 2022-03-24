@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -138,7 +139,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             override fun isSearchInModuleContent(aModule: Module) = true
             override fun compare(file1: VirtualFile, file2: VirtualFile) = 0
             override fun isSearchInLibraries() = true
-            override fun contains(file: VirtualFile) = file.fileType != KotlinBuiltInFileType
+            override fun contains(file: VirtualFile) = !FileTypeRegistry.getInstance().isFileOfType(file, KotlinBuiltInFileType)
         }
         return KotlinSourceFilterScope.sourceAndClassFiles(scope, project).intersectWith(noBuiltInsScope)
     }

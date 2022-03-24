@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.deobfuscator;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,7 +13,6 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -42,7 +41,7 @@ public final class ExceptionDeobfuscator {
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       boolean found = false;
       for (Range arr : lstRanges) {
-        if (arr.handler == range.getHandler() && InterpreterUtil.equalObjects(range.getUniqueExceptionsString(), arr.uniqueStr)) {
+        if (arr.handler == range.getHandler() && Objects.equals(range.getUniqueExceptionsString(), arr.uniqueStr)) {
           arr.protectedRange.addAll(range.getProtectedRange());
           found = true;
           break;
@@ -89,49 +88,46 @@ public final class ExceptionDeobfuscator {
 
                   if (!setrange_super.isEmpty()) {
 
-                    BasicBlock newblock = handler;
+                    BasicBlock newBlock = handler;
 
                     // split the handler
                     if (seq.length() > 1) {
-                      newblock = new BasicBlock(++graph.last_id);
-                      InstructionSequence newseq = new SimpleInstructionSequence();
-                      newseq.addInstruction(firstinstr.clone(), -1);
-
-                      newblock.setSeq(newseq);
-                      graph.getBlocks().addWithKey(newblock, newblock.id);
-
+                      InstructionSequence newSeq = new SimpleInstructionSequence();
+                      newSeq.addInstruction(firstinstr.clone(), -1);
+                      newBlock = new BasicBlock(++graph.last_id, newSeq);
+                      graph.getBlocks().addWithKey(newBlock, newBlock.id);
 
                       List<BasicBlock> lstTemp = new ArrayList<>();
-                      lstTemp.addAll(handler.getPreds());
-                      lstTemp.addAll(handler.getPredExceptions());
+                      lstTemp.addAll(handler.getPredecessors());
+                      lstTemp.addAll(handler.getPredecessorExceptions());
 
                       // replace predecessors
                       for (BasicBlock pred : lstTemp) {
-                        pred.replaceSuccessor(handler, newblock);
+                        pred.replaceSuccessor(handler, newBlock);
                       }
 
                       // replace handler
                       for (ExceptionRangeCFG range_ext : graph.getExceptions()) {
                         if (range_ext.getHandler() == handler) {
-                          range_ext.setHandler(newblock);
+                          range_ext.setHandler(newBlock);
                         }
                         else if (range_ext.getProtectedRange().contains(handler)) {
-                          newblock.addSuccessorException(range_ext.getHandler());
-                          range_ext.getProtectedRange().add(newblock);
+                          newBlock.addSuccessorException(range_ext.getHandler());
+                          range_ext.getProtectedRange().add(newBlock);
                         }
                       }
 
-                      newblock.addSuccessor(handler);
+                      newBlock.addSuccessor(handler);
                       if (graph.getFirst() == handler) {
-                        graph.setFirst(newblock);
+                        graph.setFirst(newBlock);
                       }
 
                       // remove the first pop in the handler
                       seq.removeInstruction(0);
                     }
 
-                    newblock.addSuccessorException(range_super.handler);
-                    range_super.rangeCFG.getProtectedRange().add(newblock);
+                    newBlock.addSuccessorException(range_super.handler);
+                    range_super.rangeCFG.getProtectedRange().add(newBlock);
 
                     handler = range.rangeCFG.getHandler();
                     seq = handler.getSeq();
@@ -161,7 +157,7 @@ public final class ExceptionDeobfuscator {
       graph.getBlocks().addWithKey(emptyblock, emptyblock.id);
 
       // only exception predecessors considered
-      List<BasicBlock> lstTemp = new ArrayList<>(handler.getPredExceptions());
+      List<BasicBlock> lstTemp = new ArrayList<>(handler.getPredecessorExceptions());
 
       // replace predecessors
       for (BasicBlock pred : lstTemp) {
@@ -268,8 +264,8 @@ public final class ExceptionDeobfuscator {
       if (range.getProtectedRange().contains(block) && engine.isDominator(block, start)) {
         lstRes.add(block);
 
-        List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccs());
-        lstSuccs.addAll(block.getSuccExceptions());
+        List<BasicBlock> lstSuccs = new ArrayList<>(block.getSuccessors());
+        lstSuccs.addAll(block.getSuccessorExceptions());
 
         for (BasicBlock succ : lstSuccs) {
           if (!setVisited.contains(succ)) {
@@ -292,7 +288,7 @@ public final class ExceptionDeobfuscator {
       Set<BasicBlock> setEntries = new HashSet<>();
 
       for (BasicBlock block : ent.getValue()) {
-        Set<BasicBlock> setTemp = new HashSet<>(block.getPreds());
+        Set<BasicBlock> setTemp = new HashSet<>(block.getPredecessors());
         setTemp.removeAll(ent.getValue());
 
         if (!setTemp.isEmpty()) {
@@ -357,7 +353,7 @@ public final class ExceptionDeobfuscator {
     Set<BasicBlock> setRange = new HashSet<>(range.getProtectedRange());
 
     for (BasicBlock block : range.getProtectedRange()) {
-      Set<BasicBlock> setPreds = new HashSet<>(block.getPreds());
+      Set<BasicBlock> setPreds = new HashSet<>(block.getPredecessors());
       setPreds.removeAll(setRange);
 
       if (!setPreds.isEmpty()) {
@@ -406,19 +402,17 @@ public final class ExceptionDeobfuscator {
       }
 
       for (ExceptionRangeCFG range : ranges) {
-
         // add some dummy instructions to prevent optimizing away the empty block
         SimpleInstructionSequence seq = new SimpleInstructionSequence();
         seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
         seq.addInstruction(Instruction.create(CodeConstants.opc_pop, false, CodeConstants.GROUP_GENERAL, bytecode_version, null), -1);
 
-        BasicBlock dummyBlock = new BasicBlock(++graph.last_id);
-        dummyBlock.setSeq(seq);
+        BasicBlock dummyBlock = new BasicBlock(++graph.last_id, seq);
 
         graph.getBlocks().addWithKey(dummyBlock, dummyBlock.id);
 
         // only exception predecessors from this range considered
-        List<BasicBlock> lstPredExceptions = new ArrayList<>(handler.getPredExceptions());
+        List<BasicBlock> lstPredExceptions = new ArrayList<>(handler.getPredecessorExceptions());
         lstPredExceptions.retainAll(range.getProtectedRange());
 
         // replace predecessors
@@ -429,9 +423,9 @@ public final class ExceptionDeobfuscator {
         // replace handler
         range.setHandler(dummyBlock);
         // add common exception edges
-        Set<BasicBlock> commonHandlers = new HashSet<>(handler.getSuccExceptions());
+        Set<BasicBlock> commonHandlers = new HashSet<>(handler.getSuccessorExceptions());
         for (BasicBlock pred : lstPredExceptions) {
-          commonHandlers.retainAll(pred.getSuccExceptions());
+          commonHandlers.retainAll(pred.getSuccessorExceptions());
         }
         // TODO: more sanity checks?
         for (BasicBlock commonHandler : commonHandlers) {

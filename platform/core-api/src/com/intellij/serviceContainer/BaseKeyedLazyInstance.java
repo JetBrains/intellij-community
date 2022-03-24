@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,6 +40,8 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
 
   // todo get rid of it - pluginDescriptor must be not null
   public @NotNull ClassLoader getLoaderForClass() {
-    return pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader();
+    return pluginDescriptor != null ?
+           pluginDescriptor.getClassLoader() :
+           getClass().getClassLoader();
   }
 }

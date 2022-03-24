@@ -17,9 +17,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
@@ -30,9 +34,9 @@ import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.forceHint
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurrentPsiModificationStamp;
 
 // TODO This pass should be rewritten with new API
-public class ParameterHintsPass extends EditorBoundHighlightingPass {
-  private final TIntObjectHashMap<List<HintData>> myHints = new TIntObjectHashMap<>();
-  private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
+public final class ParameterHintsPass extends EditorBoundHighlightingPass {
+  private final Int2ObjectMap<List<HintData>> myHints = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<String> myShowOnlyIfExistedBeforeHints = new Int2ObjectOpenHashMap<>();
   private final PsiElement myRootElement;
   private final HintInfoFilter myHintInfoFilter;
   private final boolean myForceImmediateUpdate;
@@ -66,24 +70,38 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   /**
    * Updates inlays recursively for a given element.
    * Use {@link NonBlockingReadActionImpl#waitForAsyncTaskCompletion() } in tests to wait for the results.
+   * <p>
+   * Return promise in EDT.
    */
   public static @NotNull CancellablePromise<?> asyncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
     MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
-    return ReadAction.nonBlocking(() -> {
-        try {
-          ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
-          pass.doCollectInformation(new ProgressIndicatorBase());
-          return pass;
-        }
-        catch (IndexNotReadyException e) {
-          return null; // cannot update now, hints will be updated after indexing ends by the complete pass
-        }
-      }).finishOnUiThread(ModalityState.defaultModalityState(), pass -> {
+    AsyncPromise<Object> promise = new AsyncPromise<>();
+    SmartPsiElementPointer<PsiElement> elementPtr = SmartPointerManager.getInstance(element.getProject())
+      .createSmartPsiElementPointer(element);
+    ReadAction.nonBlocking(() -> collectInlaysInPass(editor, filter, elementPtr))
+      .finishOnUiThread(ModalityState.any(), pass -> {
         if (pass != null) {
           pass.applyInformationToEditor();
         }
+        promise.setResult(null);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
+    return promise;
+  }
+
+  private static ParameterHintsPass collectInlaysInPass(Editor editor,
+                                                        MethodInfoExcludeListFilter filter,
+                                                        SmartPsiElementPointer<PsiElement> elementPtr) {
+    PsiElement element = elementPtr.getElement();
+    if (element == null || editor.isDisposed()) return null;
+    try {
+      ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
+      pass.doCollectInformation(new ProgressIndicatorBase());
+      return pass;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   @Override
@@ -152,7 +170,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   public void doApplyInformationToEditor() {
     EditorScrollingPositionKeeper.perform(myEditor, false, () -> {
       ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
-      List<Inlay> hints = hintsInRootElementArea(manager);
+      List<Inlay<?>> hints = hintsInRootElementArea(manager);
       ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate);
       updater.update();
     });
@@ -166,7 +184,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   }
 
   @NotNull
-  private List<Inlay> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
+  private List<Inlay<?>> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
     TextRange range = myRootElement.getTextRange();
     int elementStart = range.getStartOffset();
     int elementEnd = range.getEndOffset();

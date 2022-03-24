@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -16,26 +16,22 @@ public abstract class JarFileSystem extends ArchiveFileSystem implements JarCopy
     return (JarFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
-  @Nullable
-  public VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryFile) {
+  public @Nullable VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryFile) {
     return entryFile == null ? null : getLocalByEntry(entryFile);
   }
 
-  @Nullable
-  public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getJarRootForLocalFile(@NotNull VirtualFile file) {
     return getRootByLocal(file);
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  @Nullable
   @Override
-  public VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile) {
+  public @Nullable VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile) {
     return getVirtualFileForJar(entryVFile);
   }
 
-  @Nullable
   @Override
-  public VirtualFile findLocalVirtualFileByPath(@NotNull String path) {
+  public @Nullable VirtualFile findLocalVirtualFileByPath(@NotNull String path) {
     if (!path.contains(JAR_SEPARATOR)) {
       path += JAR_SEPARATOR;
     }

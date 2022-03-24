@@ -20,7 +20,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugProcess;
@@ -43,8 +43,8 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,13 +121,14 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored ->
-                   Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")
+                   Registry.get("python.use.targets.api").asBoolean()
                    ? createSessionUsingTargetsApi(state, environment)
                    : createSessionLegacy(state, environment));
   }
 
   @NotNull
-  private Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
+  private Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,
+                                                              @NotNull final ExecutionEnvironment environment) {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
     RunProfile profile = environment.getRunProfile();
     return Promises
@@ -152,8 +153,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
-                                                              PythonCommandLineState pyState,
-                                                              ServerSocket serverSocket, ExecutionResult result) throws ExecutionException {
+                                                     PythonCommandLineState pyState,
+                                                     ServerSocket serverSocket, ExecutionResult result) throws ExecutionException {
     return XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
         @Override
@@ -218,8 +219,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    *
    * @deprecated Override {@link #execute(ExecutionEnvironment, RunProfileState)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
     throws ExecutionException {
@@ -474,9 +474,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                                                         @NotNull PythonCommandLineState pyState,
                                                                         @NotNull PythonExecution originalPythonScript,
                                                                         @Nullable RunProfile runProfile,
-                                                                        @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    PythonScriptExecution debuggerScript = PythonScripts.prepareHelperScriptExecution(PythonHelper.DEBUGGER, targetEnvironmentRequest);
+                                                                        @NotNull HelpersAwareTargetEnvironmentRequest request) {
+    PythonScriptExecution debuggerScript = PythonScripts.prepareHelperScriptExecution(PythonHelper.DEBUGGER, request);
 
+    TargetEnvironmentRequest targetEnvironmentRequest = request.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(debuggerScript, originalPythonScript.getEnvs(), targetEnvironmentRequest.getTargetPlatform());
 
     debuggerScript.setWorkingDir(originalPythonScript.getWorkingDir());
@@ -595,7 +596,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           @NotNull GeneralCommandLine cmd) {
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection
-      debugParams.addParameter("--multiproc");
+      debugParams.addParameter(getMultiprocessDebugParameter());
     }
 
     configureCommonDebugParameters(project, debugParams);
@@ -607,10 +608,24 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           boolean debuggerScriptInServerMode) {
     if (pyState.isMultiprocessDebug() && !debuggerScriptInServerMode) {
       //noinspection SpellCheckingInspection
-      debuggerScript.addParameter("--multiproc");
+      debuggerScript.addParameter(getMultiprocessDebugParameter());
     }
 
     configureCommonDebugParameters(project, debuggerScript);
+  }
+
+  /**
+   * @deprecated the dispatcher code must be removed if no issues arise in Python debugger and this method must be replaced with
+   * {@link #MULTIPROCESS_PARAM} constant.
+   */
+  @Deprecated(forRemoval = true)
+  private static @NotNull String getMultiprocessDebugParameter() {
+    if (Registry.get("python.debugger.use.dispatcher").asBoolean()) {
+      return "--multiproc";
+    }
+    else {
+      return "--multiprocess";
+    }
   }
 
   /**
@@ -753,15 +768,17 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     @NotNull
     @Override
-    public PythonExecution build(@NotNull TargetEnvironmentRequest targetEnvironmentRequest, @NotNull PythonExecution pythonScript) {
+    public PythonExecution build(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                 @NotNull PythonExecution pythonScript) {
       TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(myIdeDebugServerLocalPort, null);
-      targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(ideServerPortBinding);
 
       Function<TargetEnvironment, HostPort> ideServerPortBindingValue =
         TargetEnvironmentFunctions.getTargetEnvironmentValue(ideServerPortBinding);
 
       PythonScriptExecution debuggerScript =
-        prepareDebuggerScriptExecution(myProject, ideServerPortBindingValue, myPyState, pythonScript, myProfile, targetEnvironmentRequest);
+        prepareDebuggerScriptExecution(myProject, ideServerPortBindingValue, myPyState, pythonScript, myProfile,
+                                       helpersAwareTargetRequest);
 
       // TODO [Targets API] We loose interpreter parameters here :(
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -24,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -68,8 +67,7 @@ public final class ActionUtil {
     DumbService.getInstance(project).showDumbModeNotification(getActionUnavailableMessage(actionNames));
   }
 
-  @NotNull
-  private static @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
+  private static @NotNull @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
     String message;
     if (actionNames.isEmpty()) {
       message = getUnavailableMessage("This action", false);
@@ -84,25 +82,27 @@ public final class ActionUtil {
     return message;
   }
 
-  @NotNull
-  public static @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
+  public static @NotNull @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
     if (plural) {
       return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
     }
     return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
   }
 
+  /** @deprecated Use {@link #performDumbAwareUpdate(AnAction, AnActionEvent, boolean)} instead */
+  @Deprecated(forRemoval = true)
+  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    return performDumbAwareUpdate(action, e, beforeActionPerformed);
+  }
+
   /**
-   * @param action action
-   * @param e action event
-   * @param beforeActionPerformed whether to call
-   * {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
-   * or
-   * {@link AnAction#update(AnActionEvent)}
+   * Calls {@link AnAction#update(AnActionEvent)} or {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
+   * depending on {@code beforeActionPerformed} value with all the required extra logic around it.
+   *
    * @return true if update tried to access indices in dumb mode
    */
-  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
-    final Presentation presentation = e.getPresentation();
+  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    Presentation presentation = e.getPresentation();
     if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
       presentation.setEnabledAndVisible(false);
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false);
@@ -111,21 +111,18 @@ public final class ActionUtil {
     }
 
     Boolean wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
-    final boolean dumbMode = isDumbMode(e.getProject());
+    boolean dumbMode = isDumbMode(e.getProject());
     if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null);
       presentation.setEnabled(wasEnabledBefore.booleanValue());
       presentation.setVisible(true);
     }
-    final boolean enabledBeforeUpdate = presentation.isEnabled();
-
-    boolean allowed = (!dumbMode || action.isDumbAware()) &&
-                      (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
+    boolean enabledBeforeUpdate = presentation.isEnabled();
+    boolean allowed = !dumbMode || action.isDumbAware();
 
     action.applyTextOverride(e);
-
     try {
-      ThrowableRunnable<RuntimeException> runnable = () -> {
+      Runnable runnable = () -> {
         e.setInjectedContext(action.isInInjectedContext());
         if (beforeActionPerformed) {
           action.beforeActionPerformedUpdate(e);
@@ -169,15 +166,6 @@ public final class ActionUtil {
   }
 
   /**
-   * @deprecated use {@link #performDumbAwareUpdate(boolean, AnAction, AnActionEvent, boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
-    return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
-  }
-
-  /**
    * Show a cancellable modal progress running the given computation under read action with the same {@link DumbService#isAlternativeResolveEnabled()}
    * as the caller. To be used in actions which need to perform potentially long-running computations synchronously without freezing UI.
    * @throws ProcessCanceledException if the user has canceled the progress. If the action can be safely stopped at this point
@@ -216,7 +204,7 @@ public final class ActionUtil {
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
     }
-    performDumbAwareUpdate(false, action, e, true);
+    performDumbAwareUpdate(action, e, true);
 
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
@@ -254,7 +242,7 @@ public final class ActionUtil {
     IndexNotReadyException indexError = null;
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
-    Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
@@ -302,8 +290,7 @@ public final class ActionUtil {
     }
   }
 
-  @NotNull
-  public static AnActionEvent createEmptyEvent() {
+  public static @NotNull AnActionEvent createEmptyEvent() {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
   }
 
@@ -337,8 +324,7 @@ public final class ActionUtil {
     }
   }
 
-  @NotNull
-  public static List<AnAction> getActions(@NotNull JComponent component) {
+  public static @NotNull List<AnAction> getActions(@NotNull JComponent component) {
     return ContainerUtil.notNullize(ComponentUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
   }
 
@@ -455,8 +441,7 @@ public final class ActionUtil {
     }
   }
 
-  @NotNull
-  public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
+  public static @NotNull ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
     return e -> {
       AnAction action = getAction(actionId);
       if (action == null) {
@@ -466,9 +451,8 @@ public final class ActionUtil {
     };
   }
 
-  @Nullable
-  public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
-    return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
+  public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
+    return KeymapUtil.getShortcutsForMnemonicCode(action.getTemplatePresentation().getMnemonic());
   }
 
   @ApiStatus.Experimental

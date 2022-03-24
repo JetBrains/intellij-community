@@ -9,18 +9,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.AnalysisFlag
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType.*
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.*
 import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
@@ -32,20 +37,13 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer.Companion.withOptions
 import org.jetbrains.kotlin.renderer.DescriptorRendererModifier.*
 import org.jetbrains.kotlin.renderer.OverrideRenderingPolicy
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
+import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
+import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
 import org.jetbrains.kotlin.resolve.descriptorUtil.setSingleOverridden
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
 interface OverrideMemberChooserObject : ClassMember {
-    sealed class BodyType(val requiresReturn: Boolean = true) {
-        object NO_BODY : BodyType()
-        object EMPTY_OR_TEMPLATE : BodyType(requiresReturn = false)
-        object FROM_TEMPLATE : BodyType(requiresReturn = false)
-        object SUPER : BodyType()
-        object QUALIFIED_SUPER : BodyType()
-
-        class Delegate(val receiverName: String) : BodyType()
-    }
 
     val descriptor: CallableMemberDescriptor
     val immediateSuper: CallableMemberDescriptor
@@ -108,12 +106,6 @@ interface OverrideMemberChooserObject : ClassMember {
     }
 }
 
-enum class MemberGenerateMode {
-    OVERRIDE,
-    ACTUAL,
-    EXPECT
-}
-
 fun OverrideMemberChooserObject.generateMember(
     targetClass: KtClassOrObject,
     copyDoc: Boolean
@@ -144,6 +136,12 @@ fun OverrideMemberChooserObject.generateMember(
             if (containingClass.kind == ClassKind.ANNOTATION_CLASS || containingClass.isInline || containingClass.isValue) {
                 renderPrimaryConstructorParametersAsProperties = true
             }
+        }
+
+        if (MemberGenerateMode.OVERRIDE != mode &&
+            project.getLanguageVersionSettings(targetClass?.module).explicitApiEnabled
+        ) {
+            if (!ExplicitApiDeclarationChecker.explicitVisibilityIsNotRequired(this@generateMember.descriptor)) renderDefaultVisibility = true
         }
     }
 
@@ -208,8 +206,8 @@ private val OVERRIDE_RENDERER = withOptions {
     renderUnabbreviatedType = false
     annotationFilter = {
         val annotations = it.type.constructor.declarationDescriptor?.annotations
-        annotations != null && (annotations.hasAnnotation(ExperimentalUsageChecker.REQUIRES_OPT_IN_FQ_NAME) ||
-                annotations.hasAnnotation(ExperimentalUsageChecker.OLD_EXPERIMENTAL_FQ_NAME))
+        annotations != null && (annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
+                annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME))
     }
     presentableUnresolvedTypes = true
     informativeErrorType = false
@@ -268,7 +266,7 @@ private fun generateProperty(
     project: Project,
     descriptor: PropertyDescriptor,
     renderer: DescriptorRenderer,
-    bodyType: OverrideMemberChooserObject.BodyType,
+    bodyType: BodyType,
     forceOverride: Boolean
 ): KtProperty {
     val newDescriptor = descriptor.wrap(forceOverride)
@@ -305,7 +303,7 @@ private fun generateFunction(
     project: Project,
     descriptor: FunctionDescriptor,
     renderer: DescriptorRenderer,
-    bodyType: OverrideMemberChooserObject.BodyType,
+    bodyType: BodyType,
     forceOverride: Boolean
 ): KtFunction {
     val newDescriptor = descriptor.wrap(forceOverride)
@@ -333,13 +331,10 @@ private fun generateFunction(
     }
 }
 
-private fun OverrideMemberChooserObject.BodyType.effectiveBodyType(canBeEmpty: Boolean): OverrideMemberChooserObject.BodyType =
-    if (!canBeEmpty && this == EMPTY_OR_TEMPLATE) FROM_TEMPLATE else this
-
 fun generateUnsupportedOrSuperCall(
     project: Project,
     descriptor: CallableMemberDescriptor,
-    bodyType: OverrideMemberChooserObject.BodyType,
+    bodyType: BodyType,
     canBeEmpty: Boolean = true
 ): String {
     when (bodyType.effectiveBodyType(canBeEmpty)) {

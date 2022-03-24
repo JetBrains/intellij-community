@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.FileTypeRegistrar;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
-                                                                                CustomSyntaxTableFileType, PlainTextLikeFileType {
+                                                                                CustomSyntaxTableFileType, PlainTextLikeFileType, AbstractFileTypeBase {
   private static final String SEMICOLON = ";";
   @NotNull
   private SyntaxTable mySyntaxTable;

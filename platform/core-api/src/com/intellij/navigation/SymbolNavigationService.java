@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -34,7 +35,15 @@ public interface SymbolNavigationService {
   @NotNull NavigationTarget psiFileNavigationTarget(@NotNull PsiFile file);
 
   /**
-   * Please use {@link TargetPresentation#builder}
+   * This method exists for compatibility. Use with care.
+   *
+   * @return a target instance which delegates its implementation to older PSI-based APIs
+   */
+  @Contract("_ -> new")
+  @NotNull NavigationTarget psiElementNavigationTarget(@NotNull PsiElement element);
+
+  /**
+   * Please use {@link TargetPresentation#builder(String)}
    */
   @ApiStatus.Internal
   @NotNull TargetPresentationBuilder presentationBuilder(@Nls @NotNull String presentableText);

@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(list: List<String>) {
     list.forEach { item ->
         println(item)

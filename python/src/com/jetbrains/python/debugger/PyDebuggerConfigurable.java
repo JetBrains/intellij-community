@@ -140,10 +140,6 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());
   }
 
-  @Override
-  public void disposeUIResources() {
-  }
-
   private void createUIComponents() {
     warningIcon = new JBLabel(AllIcons.General.BalloonWarning);
     IdeTooltipManager.getInstance().setCustomTooltip(

@@ -1,5 +1,5 @@
 // "Replace '@JvmField' with 'const'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 object Foo {
     private const val a = "Lorem ipsum"
 }

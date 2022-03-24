@@ -4,8 +4,10 @@
 // ACTION: Convert member to extension
 // ACTION: Convert property to function
 // ACTION: Move to companion object
+// ACTION: Specify type explicitly
 
 class A {
     val a<caret>
         get() = a
 }
+/* IGNORE_FIR */

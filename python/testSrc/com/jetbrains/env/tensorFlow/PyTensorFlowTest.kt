@@ -41,12 +41,6 @@ class PyTensorFlowTest : PyEnvTestCase() {
   }
 
   @Test
-  @EnvTestTagsRequired(tags = ["tensorflow2", "tensorflow_oldpaths"])
-  fun tensorFlow2ModulesOldPaths() {
-    runPythonTest(TensorFlowModulesTask("tf2old.txt", setOf("lite")))
-  }
-
-  @Test
   @EnvTestTagsRequired(tags = ["tensorflow2", "tensorflow_newpaths"])
   fun tensorFlow2ModulesNewPaths() {
     runPythonTest(TensorFlowModulesTask("tf2new.txt"))
@@ -58,7 +52,9 @@ class PyTensorFlowTest : PyEnvTestCase() {
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
       val actualModules = loadActualModules(createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS))
 
-      val expectedModules = loadModules(Files.readAllLines(Paths.get(PythonTestUtil.getTestDataPath(), "tensorflow", expectedModulesFile)))
+      val expectedModules = loadModules(
+        Files.readAllLines(Paths.get(PythonTestUtil.getTestDataPath(), "packages", "tensorflow", expectedModulesFile))
+      )
       TestCase.assertEquals(expectedModules, actualModules)
 
       runCompletion(actualModules.keys)
@@ -66,7 +62,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
     }
 
     private fun loadActualModules(sdk: Sdk): Map<String, String> {
-      val script = Paths.get(PythonTestUtil.getTestDataPath(), "tensorflow", "modules.py").toAbsolutePath().toString()
+      val script = Paths.get(PythonTestUtil.getTestDataPath(), "packages", "tensorflow", "modules.py").toAbsolutePath().toString()
       val env = PySdkUtil.activateVirtualEnv(sdk)
       val timeout = TimeUnit.SECONDS.toMillis(30).toInt()
 

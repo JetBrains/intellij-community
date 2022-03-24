@@ -3,13 +3,14 @@ package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.collaboration.auth.AccountsRepository
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 
 @State(name = "GithubAccounts", storages = [
   Storage(value = "github.xml"),
   Storage(value = "github_settings.xml", deprecated = true)
-], reportStatistic = false)
+], reportStatistic = false, category = SettingsCategory.TOOLS)
 internal class GHPersistentAccounts
   : AccountsRepository<GithubAccount>,
     PersistentStateComponent<Array<GithubAccount>> {

@@ -1,0 +1,53 @@
+{header}
+<title>{repo|escape}: branches</title>
+<link rel="alternate" type="application/atom+xml"
+   href="{url|urlescape}atom-branches" title="Atom feed for {repo|escape}: branches" />
+<link rel="alternate" type="application/rss+xml"
+   href="{url|urlescape}rss-branches" title="RSS feed for {repo|escape}: branches" />
+</head>
+<body>
+
+<div class="container">
+<div class="menu">
+<div class="logo">
+<a href="{logourl}">
+<img src="{staticurl|urlescape}{logoimg}" alt="mercurial" /></a>
+</div>
+<ul>
+<li><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">log</a></li>
+<li><a href="{url|urlescape}graph{sessionvars%urlparameter}">graph</a></li>
+<li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+<li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+<li class="active">branches</li>
+</ul>
+<ul>
+ <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+</ul>
+<div class="atom-logo">
+<a href="{url|urlescape}atom-branches" title="subscribe to atom feed">
+<img class="atom-logo" src="{staticurl|urlescape}feed-icon-14x14.png" alt="atom feed" />
+</a>
+</div>
+</div>
+
+<div class="main">
+<h2 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb}</h2>
+<h3>branches</h3>
+
+{searchform}
+
+<table class="bigtable">
+<thead>
+<tr>
+ <th>branch</th>
+ <th>node</th>
+</tr>
+</thead>
+<tbody class="stripes2">
+{entries % branchentry}
+</tbody>
+</table>
+</div>
+</div>
+
+{footer}

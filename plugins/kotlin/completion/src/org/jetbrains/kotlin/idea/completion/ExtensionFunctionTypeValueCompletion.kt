@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.idea.util.substituteExtensionIfCallable
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.resolve.calls.tasks.createSynthesizedInvokes
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import java.util.*
 
 class ExtensionFunctionTypeValueCompletion(
     private val receiverTypes: Collection<ReceiverType>,
@@ -63,10 +61,9 @@ class ExtensionFunctionTypeValueCompletion(
                                     }
                                 }
 
-                                override fun handleInsert(context: InsertionContext) {
-                                    insertHandler.handleInsert(context, this)
-                                }
+                                override fun getDecoratorInsertHandler() = insertHandler
                             }
+
                             return listOf(lookupElement)
                         }
 

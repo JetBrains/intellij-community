@@ -212,28 +212,27 @@ class C<
         >
 
 class G<
-        x : String, y : String, /* */
-        z : String,
+        x : String, y : String,
+        /* */ z : String,
         >
 
 class G<
-        x : String,
-        y : String,
-        /* */ /* */
-        z : String,
+        x : String, y : String,
+        /* */ /* */ z : String,
         >()
 
 class H<
-        x : String, /*
-    */
+        x : String,
+        /*
+           */
         y : String,
         z : String,
         >
 
 class J<
-        x : String, y : String,
-        z : String, /*
-     */
+        x : String, y : String, z : String,
+        /*
+            */
         >
 
 class K<
@@ -250,29 +249,30 @@ class C<
         >
 
 class G<
-        x : String, y : String, /* */
-        z : String, // adad
+        x : String, y : String,
+        /* */ z : String, // adad
         >
 
 class G<
-        x : String,
-        y : String,
-        /* */ /* */
-        z : String, /**/
+        x : String, y : String,
+        /* */ /* */ z : String, /**/
         >()
 
 class H<
-        x : String, /*
-    */
+        x : String,
+        /*
+           */
         y : String,
-        z : String, /*
-    */
+        z : String,
+        /*
+           */
         >
 
 class J<
-        x : String, y : String,
-        z : String, /*
-     */ /**/
+        x : String, y : String, z : String,
+        /*
+            */
+        /**/
         >
 
 class K<

@@ -14,6 +14,7 @@ from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
     should_evaluate_full_value, should_evaluate_shape
 
@@ -235,10 +236,11 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
 
-def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
+def frame_vars_to_xml(frame_f_locals, hidden_ns=None, user_type_renderers=None):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """
+
     xml = ""
 
     keys = dict_keys(frame_f_locals)
@@ -256,14 +258,14 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
 
             if k == RETURN_VALUES_DICT:
                 for name, val in dict_iter_items(v):
-                    return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"')
+                    return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"', user_type_renderers=user_type_renderers)
 
             else:
                 if hidden_ns is not None and k in hidden_ns:
                     xml += var_to_xml(v, str(k), additional_in_xml=' isIPythonHidden="True"',
-                                      evaluate_full_value=eval_full_val)
+                                      evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
                 else:
-                    xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val)
+                    xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
@@ -272,7 +274,35 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     return return_values_xml + xml
 
 
-def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True, format='%s'):
+def _get_default_var_string_representation(v, _type, typeName, format):
+    try:
+        str_from_provider = _str_from_providers(v, _type, typeName)
+        if str_from_provider is not None:
+            value = str_from_provider
+        elif hasattr(v, '__class__'):
+            if v.__class__ == frame_type:
+                value = pydevd_resolver.frameResolver.get_frame_name(v)
+
+            elif v.__class__ in (list, tuple, set, frozenset, dict):
+                if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
+                    value = '%s' % take_first_n_coll_elements(v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+                    value = value.rstrip(')]}') + '...'
+                else:
+                    value = '%s' % v
+            else:
+                value = format % v
+        else:
+            value = str(v)
+    except:
+        try:
+            value = repr(v)
+        except:
+            value = 'Unable to get repr for %s' % v.__class__
+
+    return value
+
+
+def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True, format='%s', user_type_renderers=None):
     """ single variable or dictionary to xml representation """
 
     try:
@@ -288,32 +318,21 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
 
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
+
+    type_renderer = None
+    if user_type_renderers is not None:
+        type_renderer = try_get_type_renderer_for_var(v, user_type_renderers)
+
+    var_custom_string_repr = None
+    value = None
     if not evaluate_full_value:
         value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
-    else:
-        try:
-            str_from_provider = _str_from_providers(v, _type, typeName)
-            if str_from_provider is not None:
-                value = str_from_provider
-            elif hasattr(v, '__class__'):
-                if v.__class__ == frame_type:
-                    value = pydevd_resolver.frameResolver.get_frame_name(v)
+    elif type_renderer is not None:
+        var_custom_string_repr = type_renderer.evaluate_var_string_repr(v)
+        value = var_custom_string_repr
 
-                elif v.__class__ in (list, tuple, set, frozenset, dict):
-                    if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
-                        value = '%s' % take_first_n_coll_elements(v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
-                        value = value.rstrip(')]}') + '...'
-                    else:
-                        value = '%s' % v
-                else:
-                    value = format % v
-            else:
-                value = str(v)
-        except:
-            try:
-                value = repr(v)
-            except:
-                value = 'Unable to get repr for %s' % v.__class__
+    if value is None:
+        value = _get_default_var_string_representation(v, _type, typeName, format)
 
     try:
         name = quote(name, '/>_= ')  # TODO: Fix PY-5834 without using quote
@@ -343,7 +362,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     except TypeError:  # in java, unicode is a function
         pass
 
-    if is_pandas_container(type_qualifier, typeName, v):
+    if is_pandas_container(type_qualifier, typeName, v) and var_custom_string_repr is None:
         value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
 
@@ -365,5 +384,10 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         else:
             xml_container = ''
 
-    return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, additional_in_xml, ' />\n'))
+    if type_renderer is not None:
+        xml_type_renderer_id = 'typeRendererId="%s"' % make_valid_xml_value(type_renderer.to_type)
+    else:
+        xml_type_renderer_id = ''
+
+    return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, xml_type_renderer_id, additional_in_xml, ' />\n'))
 

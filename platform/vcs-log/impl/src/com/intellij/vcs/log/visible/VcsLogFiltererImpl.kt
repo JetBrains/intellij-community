@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.index.IndexDataGetter
@@ -18,7 +16,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.history.EMPTY_HISTORY
+import com.intellij.vcs.log.history.FileHistory
 import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
@@ -133,11 +131,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return result
   }
 
-  fun createVisibleGraph(dataPack: DataPack,
-                         sortType: PermanentGraph.SortType,
-                         matchingHeads: Set<Int>?,
-                         matchingCommits: Set<Int>?,
-                         fileHistoryData: FileHistoryData? = null): VisibleGraph<Int> {
+  private fun createVisibleGraph(dataPack: DataPack,
+                                 sortType: PermanentGraph.SortType,
+                                 matchingHeads: Set<Int>?,
+                                 matchingCommits: Set<Int>?,
+                                 fileHistoryData: FileHistoryData?): VisibleGraph<Int> {
     if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
       return EmptyVisibleGraph.getInstance()
     }
@@ -150,7 +148,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
       val unmatchedRenames = matchingCommits?.let { fileHistoryData.getCommitsWithRenames().subtract(it) } ?: emptySet()
       val preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData,
-                                            EMPTY_HISTORY, unmatchedRenames)
+                                            FileHistory.EMPTY, unmatchedRenames,
+                                            removeTrivialMerges = FileHistoryBuilder.isRemoveTrivialMerges,
+                                            refine = FileHistoryBuilder.isRefine)
       return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits?.union(unmatchedRenames), preprocessor)
     }
 
@@ -486,8 +486,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getDetailsFromCache(commitIndex: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache.get(commitIndex) ?: UIUtil.invokeAndWaitIfNeeded(
-      Computable<VcsCommitMetadata> { commitDetailsGetter.getCommitDataIfAvailable(commitIndex) })
+    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
   }
 
   private fun Collection<CommitId>.toCommitIndexes(): Set<Int> {

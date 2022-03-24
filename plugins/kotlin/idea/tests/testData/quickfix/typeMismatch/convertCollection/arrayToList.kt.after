@@ -1,5 +1,5 @@
 // "Convert expression to 'List' by inserting '.toList()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: Array<String>) {
     bar(a.toList()<caret>)

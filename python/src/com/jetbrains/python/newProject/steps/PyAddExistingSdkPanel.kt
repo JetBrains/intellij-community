@@ -6,12 +6,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
@@ -27,6 +29,8 @@ import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.associatedModulePath
 import java.awt.BorderLayout
 import java.awt.Component
+import javax.swing.JComboBox
+import javax.swing.JComponent
 
 /**
  * @author vlan
@@ -46,7 +50,16 @@ class PyAddExistingSdkPanel(project: Project?,
   private var defaultMappings: List<PathMappingSettings.PathMapping>? = null
 
   override val sdk: Sdk?
-    get() = sdkChooserCombo.comboBox.selectedItem as? Sdk
+    get() = sdkComboBox.selectedItem as? Sdk
+
+  /**
+   * Either a [ComboBox] with "Add Interpreter" link component for targets-based UI or a combobox of the legacy [PythonSdkChooserCombo].
+   *
+   * The rollback to the latter option is possible by switching off *python.use.targets.api* registry key.
+   */
+  private val sdkComboBox: JComboBox<*>
+
+  private val addSdkChangedListener: (Runnable) -> Unit
 
   val remotePath: String?
     get() = if (remotePathField.mainPanel.isVisible) remotePathField.textField.text else null
@@ -54,11 +67,9 @@ class PyAddExistingSdkPanel(project: Project?,
   override var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
-      sdkChooserCombo.setNewProjectPath(value)
       updateRemotePathIfNeeded()
     }
 
-  private val sdkChooserCombo: PythonSdkChooserCombo
   private val remotePathField = PyRemotePathField().apply {
     addActionListener {
       val currentSdk = sdk ?: return@addActionListener
@@ -70,18 +81,37 @@ class PyAddExistingSdkPanel(project: Project?,
   init {
     layout = BorderLayout()
     val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null }
-    sdkChooserCombo = PythonSdkChooserCombo(project, module, sdksForNewProject, newProjectPath) {
-      it != null && it == preferredSdk
-    }.apply {
-      if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
-        putClientProperty("JButton.buttonType", null)
+    val interpreterComponent: JComponent
+    if (Registry.`is`("python.use.targets.api")) {
+      val preselectedSdk = sdksForNewProject.firstOrNull { it == preferredSdk }
+      val pythonSdkComboBox = createPythonSdkComboBox(sdksForNewProject, preselectedSdk)
+      pythonSdkComboBox.addActionListener { update() }
+      interpreterComponent = pythonSdkComboBox.withAddInterpreterLink(project, module)
+      sdkComboBox = pythonSdkComboBox
+      addSdkChangedListener = { runnable ->
+        sdkComboBox.addActionListener { runnable.run() }
       }
-      addChangedListener {
-        update()
+    }
+    else {
+      val legacySdkChooser = PythonSdkChooserCombo(project, module,
+                                                   sdksForNewProject) {
+        it != null && it == preferredSdk
+      }.apply {
+        if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
+          putClientProperty("JButton.buttonType", null)
+        }
+        addChangedListener {
+          update()
+        }
+      }
+      interpreterComponent = legacySdkChooser
+      sdkComboBox = legacySdkChooser.comboBox
+      addSdkChangedListener = { runnable ->
+        legacySdkChooser.addChangedListener { runnable.run() }
       }
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkChooserCombo)
+      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), interpreterComponent)
       .addComponent(remotePathField.mainPanel)
       .panel
     add(formPanel, BorderLayout.NORTH)
@@ -94,7 +124,7 @@ class PyAddExistingSdkPanel(project: Project?,
       .filterNotNull()
 
   override fun addChangeListener(listener: Runnable) {
-    sdkChooserCombo.addChangedListener { listener.run() }
+    addSdkChangedListener(listener)
     remotePathField.addTextChangeListener { listener.run() }
   }
 
@@ -105,7 +135,7 @@ class PyAddExistingSdkPanel(project: Project?,
       PythonSdkUtil.isInvalid(selectedSdk) -> PyBundle.message("python.sdk.choose.valid.interpreter")
       else -> return null
     }
-    return ValidationInfo(message, sdkChooserCombo)
+    return ValidationInfo(message, sdkComboBox)
   }
 
   private fun validateRemotePathField(): ValidationInfo? {

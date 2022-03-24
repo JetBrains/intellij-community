@@ -1,4 +1,4 @@
 // "Add initializer" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class A
 <caret>var label: A

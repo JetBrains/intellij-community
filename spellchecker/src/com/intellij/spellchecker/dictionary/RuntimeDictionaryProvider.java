@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  */
 public interface RuntimeDictionaryProvider {
   ExtensionPointName<RuntimeDictionaryProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.spellchecker.dictionary.runtimeDictionaryProvider");
+    new ExtensionPointName<>("com.intellij.spellchecker.dictionary.runtimeDictionaryProvider");
 
   Dictionary[] getDictionaries();
 }

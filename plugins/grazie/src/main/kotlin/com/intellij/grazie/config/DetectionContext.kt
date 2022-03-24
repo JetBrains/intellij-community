@@ -51,7 +51,7 @@ object DetectionContext {
       return langs.toSet()
     }
 
-    fun update(size: Int, details: ChainLanguageDetector.ChainDetectionResult) {
+    fun update(size: Int, wordsTotal: Int, details: ChainLanguageDetector.ChainDetectionResult) {
       val result = details.result
       val language = result.preferred
 
@@ -61,7 +61,7 @@ object DetectionContext {
       //Check threshold by text size is not met
       if (size < TEXT_SIZE_THRESHOLD) return
       //Check threshold by number of words is not met (if language has words at all)
-      if (language.hasWhitespaces && details.info.wordsTotal < WORDS_SIZE_THRESHOLD) return
+      if (language.hasWhitespaces && wordsTotal < WORDS_SIZE_THRESHOLD) return
 
       if (language in ListDetector.supported) {
         //Check if threshold by list detector is not met

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -40,6 +40,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -84,9 +85,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
-    EditorWithProviderComposite editorContainer =
-      ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject))
-        .createEditorComposite(editorInfo);
+    EditorComposite editorContainer = ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject)).createEditorComposite(editorInfo);
     TabInfo tabInfo = new TabInfo(editorContainer.getComponent())
       .setText(editorInfo.getFile().getPresentableName())
       .setIcon(getFileTypeIcon(editorInfo));
@@ -275,10 +274,10 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private static class TabEditorData {
-    private final @NotNull LightEditorInfo             editorInfo;
-    private final @NotNull EditorWithProviderComposite editorComposite;
+    private final @NotNull LightEditorInfo editorInfo;
+    private final @NotNull EditorComposite editorComposite;
 
-    private TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorWithProviderComposite editorComposite) {
+    private TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
       this.editorInfo = editorInfo;
       this.editorComposite = editorComposite;
     }
@@ -386,14 +385,14 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Nullable
-  public EditorWithProviderComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+  public EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
     VirtualFile virtualFile = fileEditor.getFile();
     if (virtualFile != null) {
       for (TabInfo tabInfo : getTabs()) {
         final Object data = tabInfo.getObject();
         if (data instanceof TabEditorData && virtualFile.equals(((TabEditorData)data).editorInfo.getFile())) {
-          EditorWithProviderComposite composite = ((TabEditorData)data).editorComposite;
-          if (ContainerUtil.exists(composite.getEditors(), editor->editor.equals(fileEditor))) {
+          EditorComposite composite = ((TabEditorData)data).editorComposite;
+          if (ContainerUtil.exists(composite.getAllEditors(), editor->editor.equals(fileEditor))) {
             return composite;
           }
         }
@@ -406,15 +405,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     if (getTabCount() > 1) {
       Component focusOwner = FocusManager.getCurrentManager().getFocusOwner();
       if (focusOwner instanceof EditorComponentImpl) {
-        int currIndex = getIndexOf(getSelectedInfo());
-        if (currIndex >= 0) {
-          if (navigationAction instanceof PreviousTabAction) {
-            return currIndex > 0;
-          }
-          else if (navigationAction instanceof NextTabAction) {
-            return currIndex < getTabCount() - 1;
-          }
-        }
+        return getIndexOf(getSelectedInfo()) >= 0 &&
+               (navigationAction instanceof PreviousTabAction || navigationAction instanceof NextTabAction);
       }
     }
     return false;
@@ -423,19 +415,16 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   void navigateToTab(@NotNull AnAction navigationAction) {
     int currIndex = getIndexOf(getSelectedInfo());
     if (currIndex >= 0) {
+      int newIndex = currIndex;
       if (navigationAction instanceof PreviousTabAction) {
-        if (currIndex > 0) {
-          currIndex --;
-          TabInfo newInfo = getTabAt(currIndex);
-          select(newInfo, true);
-        }
+        newIndex = (currIndex > 0 ? currIndex : getTabCount()) - 1;
       }
       else if (navigationAction instanceof NextTabAction) {
-        if (currIndex < getTabCount() - 1) {
-          currIndex ++;
-          TabInfo newInfo = getTabAt(currIndex);
-          select(newInfo, true);
-        }
+        newIndex = currIndex < getTabCount() - 1 ? currIndex + 1 : 0;
+      }
+      if (newIndex != currIndex) {
+        TabInfo newInfo = getTabAt(newIndex);
+        select(newInfo, true);
       }
     }
   }

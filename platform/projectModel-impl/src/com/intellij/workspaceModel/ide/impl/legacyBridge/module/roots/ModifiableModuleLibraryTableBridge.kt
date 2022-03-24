@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.BidirectionalMap
+import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -22,7 +22,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
   : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
-  private val copyToOriginal = BidirectionalMap<LibraryBridge, LibraryBridge>()
+  private val copyToOriginal = HashBiMap.create<LibraryBridge, LibraryBridge>()
 
   init {
     val storage = modifiableModel.moduleBridge.entityStorage.current
@@ -138,7 +138,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     library as LibraryBridge
 
     val libraryEntity = modifiableModel.diff.findLibraryEntity(library) ?: run {
-      copyToOriginal.getKeysByValue(library)?.first()?.let { libraryCopy ->  modifiableModel.diff.findLibraryEntity(libraryCopy) }
+      copyToOriginal.inverse()[library]?.let { libraryCopy -> modifiableModel.diff.findLibraryEntity(libraryCopy) }
     }
 
     if (libraryEntity == null) {

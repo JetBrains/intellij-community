@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
@@ -27,8 +27,8 @@ import org.jetbrains.plugins.github.ui.component.GHRepositorySelectorComponentFa
 import org.jetbrains.plugins.github.ui.util.getName
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager.ListChangeListener
 import java.awt.event.ActionEvent
-import java.beans.PropertyChangeEvent
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -36,9 +36,7 @@ import javax.swing.event.ListDataListener
 class GHPRRepositorySelectorComponentFactory(private val project: Project,
                                              private val authManager: GithubAuthenticationManager,
                                              private val repositoryManager: GHProjectRepositoriesManager) {
-
   fun create(disposable: Disposable, onSelected: (GHGitRepositoryMapping, GithubAccount) -> Unit): JComponent {
-
     val repositoriesModel = ComboBoxWithActionsModel<GHGitRepositoryMapping>().apply {
       //todo: add remote action
     }
@@ -74,10 +72,11 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       }
     }
 
-    val ctrl = Controller(project, authManager, repositoryManager,
-                          repositoriesModel, accountsModel,
-                          applyAction, githubLoginAction, tokenLoginAction, gheLoginAction)
-    Disposer.register(disposable, ctrl)
+    Controller(project = project, authManager = authManager, repositoryManager = repositoryManager,
+               repositoriesModel = repositoriesModel, accountsModel = accountsModel,
+               applyAction = applyAction, githubLoginAction = githubLoginAction, tokenLoginAction = tokenLoginAction,
+               gheLoginActon = gheLoginAction,
+               disposable = disposable)
 
     val repoCombo = GHRepositorySelectorComponentFactory().create(repositoriesModel).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
@@ -133,13 +132,19 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
                            private val applyAction: Action,
                            private val githubLoginAction: Action,
                            private val tokenLoginAction: Action,
-                           private val gheLoginActon: Action) : Disposable {
+                           private val gheLoginActon: Action,
+                           disposable: Disposable) {
 
     init {
-      repositoryManager.addRepositoryListChangedListener(this, ::updateRepositories)
-      authManager.addListener(this, object : AccountsListener<GithubAccount> {
+      ApplicationManager.getApplication().messageBus.connect(disposable)
+        .subscribe(GHProjectRepositoriesManager.LIST_CHANGES_TOPIC, object : ListChangeListener {
+          override fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project) {
+            updateRepositories()
+          }
+        })
+      authManager.addListener(disposable, object : AccountsListener<GithubAccount> {
         override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-          invokeAndWaitIfNeeded { updateAccounts() }
+          invokeAndWaitIfNeeded(runnable = ::updateAccounts)
         }
       })
 
@@ -234,9 +239,6 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       tokenLoginAction.visible = !hasAccounts && isGithubServer
       gheLoginActon.visible = !hasAccounts && !isGithubServer
     }
-
-    override fun dispose() {
-    }
   }
 
   companion object {
@@ -263,7 +265,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       label.isEnabled = action.isEnabled
       label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
 
-      action.addPropertyChangeListener { evt: PropertyChangeEvent? ->
+      action.addPropertyChangeListener {
         label.text = action.getName()
         label.isEnabled = action.isEnabled
         label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
@@ -278,8 +280,8 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
           if (e.index0 == -1 && e.index1 == -1) listener()
         }
 
-        override fun intervalAdded(e: ListDataEvent?) {}
-        override fun intervalRemoved(e: ListDataEvent?) {}
+        override fun intervalAdded(e: ListDataEvent) {}
+        override fun intervalRemoved(e: ListDataEvent) {}
       })
     }
 

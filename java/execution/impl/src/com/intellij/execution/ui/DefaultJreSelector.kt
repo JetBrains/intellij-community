@@ -56,6 +56,7 @@ abstract class DefaultJreSelector {
   open fun getVersion(): String? = null
   open fun addChangeListener(listener: Runnable) {
   }
+  open fun isValid(): Boolean = true
 
   @Nls
   fun getDescriptionString(): String {
@@ -67,6 +68,7 @@ abstract class DefaultJreSelector {
   class ProjectSdkSelector(val project: Project): DefaultJreSelector() {
     override fun getNameAndDescription(): Pair<String?, String> = Pair.create(ProjectRootManager.getInstance(project).projectSdkName, "project SDK")
     override fun getVersion(): String? = ProjectRootManager.getInstance(project).projectSdk?.versionString;
+    override fun isValid(): Boolean = !project.isDisposed
   }
 
   open class SdkFromModuleDependencies<T: ComboBox<*>>(val moduleComboBox: T, val getSelectedModule: (T) -> Module?, val productionOnly: () -> Boolean): DefaultJreSelector() {
@@ -93,6 +95,11 @@ abstract class DefaultJreSelector {
 
     override fun addChangeListener(listener: Runnable) {
       moduleComboBox.addActionListener { listener.run() }
+    }
+
+    override fun isValid(): Boolean = when (val module = getSelectedModule(moduleComboBox)) {
+      null -> true
+      else -> !module.isDisposed
     }
   }
 

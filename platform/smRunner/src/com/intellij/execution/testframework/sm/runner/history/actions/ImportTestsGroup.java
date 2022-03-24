@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.runners.PreferredPlace;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
@@ -39,7 +26,7 @@ public class ImportTestsGroup extends ActionGroup {
     super(() -> SmRunnerBundle.message("sm.test.runner.import.test.group.history"),
           () -> SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), AllIcons.Vcs.History);
     setPopup(true);
-    getTemplatePresentation().putClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP, true);
+    getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
   }
 
   public ImportTestsGroup(SMTRunnerConsoleProperties properties) {
@@ -62,7 +49,7 @@ public class ImportTestsGroup extends ActionGroup {
     final int historySize = fileNames.size();
     final AnAction[] actions = new AnAction[historySize];
     for (int i = 0; i < historySize; i++) {
-      actions[i] = new ImportTestsFromHistoryAction(project, fileNames.get(i).getName());
+      actions[i] = new ImportTestsFromHistoryAction(project, fileNames.get(i).getName(), myProperties != null ? myProperties.getExecutor() : null);
     }
     return actions;
   }

@@ -37,9 +37,10 @@ val x: (Pair<Int, Int>, Int) -> Unit = {
 
 val x: (Pair<Int, Int>, Int) -> Unit = {
     (
-            x, /* val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z, ->
-    println(x)
-}*/
+            x,
+            /* val x: (Pair<Int, Int>, Int) -> Unit = { (x, y), z, ->
+               println(x)
+           }*/
     ),
     z,
     ->

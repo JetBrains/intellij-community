@@ -21,6 +21,7 @@ import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,10 +45,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
   @Override
   public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     String caption = myDescriptor.getCaptionAboveOf(value);
-    boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
-    if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
-    if (hasSeparator) setSeparatorFont(list.getFont());
-
+    boolean hasSeparator = hasSeparator(value, index);
     Icon icon = getItemIcon(value, isSelected);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
@@ -56,6 +54,15 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     myRendererComponent.setBackground(list.getBackground());
     customizeComponent(list, value, isSelected);
     return result;
+  }
+
+  @ApiStatus.Internal
+  protected boolean hasSeparator(E value, int index) {
+    String caption = myDescriptor.getCaptionAboveOf(value);
+    if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) {
+      return false;
+    }
+    return myDescriptor.hasSeparatorAboveOf(value);
   }
 
   @Nullable

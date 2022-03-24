@@ -246,7 +246,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
           String downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
-          UpdateChecker.getNotificationGroup()
+          UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
             .setListener(NotificationListener.URL_OPENING_LISTENER)
             .setDisplayId("ide.patch.download.failed")
@@ -266,7 +266,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
             String message = IdeBundle.message("update.ready.message");
-            UpdateChecker.getNotificationGroup()
+            UpdateChecker.getNotificationGroupForIdeUpdateResults()
               .createNotification(title, message, NotificationType.INFORMATION)
               .setListener(new NotificationListener.Adapter() {
                 @Override
@@ -286,7 +286,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void restartLaterAndRunCommand(String[] command) {
-    IdeUpdateUsageTriggerCollector.trigger("dialog.update.started");
+    IdeUpdateUsageTriggerCollector.UPDATE_STARTED.log();
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     application.invokeLater(() -> application.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
@@ -309,7 +309,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
 
     String title = IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String message = IdeBundle.message("update.apply.manually.message", file);
-    IdeUpdateUsageTriggerCollector.trigger("dialog.manual.patch.prepared");
+    IdeUpdateUsageTriggerCollector.MANUAL_PATCH_PREPARED.log();
     ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(message, title));
   }
 }

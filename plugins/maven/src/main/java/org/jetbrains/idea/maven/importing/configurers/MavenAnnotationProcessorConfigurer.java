@@ -8,18 +8,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,14 +51,8 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null) {
       String versionString = sdk.getVersionString();
-      if (versionString != null) {
-        if (versionString.contains("1.5") ||
-            versionString.contains("1.4") ||
-            versionString.contains("1.3") ||
-            versionString.contains("1.2")) {
-          return;
-        }
-      }
+      LanguageLevel languageLevel = LanguageLevel.parse(versionString);
+      if (languageLevel != null && languageLevel.isLessThan(LanguageLevel.JDK_1_6)) return;
     }
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
@@ -93,11 +88,16 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
 
       if (moduleProfile == null) {
         moduleProfile = new ProcessorConfigProfileImpl(moduleProfileName);
+        moduleProfile.setEnabled(true);
         compilerConfiguration.addModuleProcessorProfile(moduleProfile);
       }
+      if (!moduleProfile.isEnabled()) return;
 
-      moduleProfile.setOutputRelativeToContentRoot(true);
-      moduleProfile.setEnabled(true);
+      if (MavenProjectImporter.isImportToTreeStructureEnabled(project)) {
+        moduleProfile.setOutputRelativeToContentRoot(false);
+      } else {
+        moduleProfile.setOutputRelativeToContentRoot(true);
+      }
       moduleProfile.setObtainProcessorsFromClasspath(true);
       moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
       moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
@@ -141,7 +141,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
     for (ProcessorConfigProfile p : profiles) {
       if (p != moduleProfile) {
         p.removeModuleName(module.getName());
-        if (p.getModuleNames().isEmpty()) {
+        if (p.getModuleNames().isEmpty() && p.getName().startsWith(PROFILE_PREFIX)) {
           compilerConfiguration.removeModuleProcessorProfile(p);
         }
       }
@@ -219,13 +219,18 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
   @Nullable
   private static String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest) {
     String annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(isTest);
-    File annotationProcessorDirectoryFile = new File(annotationProcessorDirectory);
+    Path annotationProcessorDirectoryFile = Path.of(annotationProcessorDirectory);
     if (!annotationProcessorDirectoryFile.isAbsolute()) {
       return annotationProcessorDirectory;
     }
 
     String absoluteProjectDirectory = mavenProject.getDirectory();
-    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), annotationProcessorDirectoryFile);
+    try {
+      return Path.of(absoluteProjectDirectory).relativize(annotationProcessorDirectoryFile).toString();
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   private static boolean shouldEnableAnnotationProcessors(MavenProject mavenProject) {

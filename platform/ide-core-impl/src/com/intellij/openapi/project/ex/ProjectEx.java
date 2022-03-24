@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.Disposable;
@@ -30,7 +30,6 @@ public interface ProjectEx extends Project {
    * Implementation of {@link Disposable#dispose} must be self-contained and isolated (getting services is forbidden, publishing to message bus is allowed only in tests).
    */
   @NotNull
-  @ApiStatus.Experimental
   @ApiStatus.Internal
   Disposable getEarlyDisposable();
 

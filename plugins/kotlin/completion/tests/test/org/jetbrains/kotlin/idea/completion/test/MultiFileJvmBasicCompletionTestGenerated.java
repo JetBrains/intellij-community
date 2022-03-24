@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -218,6 +218,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("testData/basic/multifile/NoGenericFunDuplication/");
     }
 
+    @TestMetadata("NotImportedClass")
+    public void testNotImportedClass() throws Exception {
+        runTest("testData/basic/multifile/NotImportedClass/");
+    }
+
     @TestMetadata("NotImportedExtensionForImplicitReceiver")
     public void testNotImportedExtensionForImplicitReceiver() throws Exception {
         runTest("testData/basic/multifile/NotImportedExtensionForImplicitReceiver/");
@@ -261,6 +266,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("NotImportedJavaClass")
     public void testNotImportedJavaClass() throws Exception {
         runTest("testData/basic/multifile/NotImportedJavaClass/");
+    }
+
+    @TestMetadata("NotImportedNestedClassFromPrivateClass")
+    public void testNotImportedNestedClassFromPrivateClass() throws Exception {
+        runTest("testData/basic/multifile/NotImportedNestedClassFromPrivateClass/");
     }
 
     @TestMetadata("NotImportedObject")
@@ -371,6 +381,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("SyntheticExtensionNonVoidSetter")
     public void testSyntheticExtensionNonVoidSetter() throws Exception {
         runTest("testData/basic/multifile/SyntheticExtensionNonVoidSetter/");
+    }
+
+    @TestMetadata("SyntheticPrimitiveJavaProperty")
+    public void testSyntheticPrimitiveJavaProperty() throws Exception {
+        runTest("testData/basic/multifile/SyntheticPrimitiveJavaProperty/");
     }
 
     @TestMetadata("TopLevelFunction")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -17,6 +17,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +53,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.TreeModelEvent;
@@ -61,6 +63,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -75,10 +78,18 @@ public class InspectionTree extends Tree {
   private boolean myQueueUpdate;
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
   private final InspectionResultsView myView;
-  private final Map<ProblemDescriptionNode, Promise<String>> scheduledTooltipTasks = new HashMap<>();
+  private final ConcurrentHashMap<ProblemDescriptionNode, CancellablePromise<String>> scheduledTooltipTasks = new ConcurrentHashMap<>();
 
   public InspectionTree(@NotNull InspectionResultsView view) {
     myView = view;
+    Disposer.register(myView, new Disposable() {
+      @Override
+      public void dispose() {
+        scheduledTooltipTasks.forEach((node, promise) -> promise.cancel());
+        scheduledTooltipTasks.clear();
+      }
+    });
+
     myModel = new InspectionTreeModel();
     Disposer.register(view, myModel);
     setModel(new AsyncTreeModel(myModel, false, view));
@@ -213,39 +224,27 @@ public class InspectionTree extends Tree {
 
     if (!node.needCalculateTooltip()) return node.getToolTipText();
 
-    Promise<@NlsContexts.Tooltip String> tooltipLazy;
-    synchronized (scheduledTooltipTasks) {
-      tooltipLazy = scheduledTooltipTasks.get(node);
-      if (tooltipLazy == null) {
-        final Runnable removeTask = () -> {
-          synchronized (scheduledTooltipTasks) {
-            scheduledTooltipTasks.remove(node);
-          }
-        };
+    Promise<@NlsContexts.Tooltip String> tooltipLazy = scheduledTooltipTasks.computeIfAbsent(node, key -> {
+      final var tooltipManager = IdeTooltipManager.getInstance();
+      final Component component = e.getComponent();
 
-        final var tooltipManager = IdeTooltipManager.getInstance();
-        final Component component = e.getComponent();
-        tooltipLazy = ReadAction.nonBlocking(() -> node.getToolTipText())
-          .finishOnUiThread(ModalityState.any(), tooltipText -> {
-            tooltipManager.updateShownTooltip(component);
-          })
-          .submit(AppExecutorUtil.getAppExecutorService())
-          .onError(throwable -> {
-            if (!(throwable instanceof CancellationException)) {
-              LOG.error("Exception in ProblemDescriptionNode#getToolTipText", throwable);
-            }
-            removeTask.run();
-          })
-          .onSuccess(tooltipText -> removeTask.run());
-        scheduledTooltipTasks.put(node, tooltipLazy);
-      }
-    }
+      return ReadAction.nonBlocking(() -> node.getToolTipText())
+        .finishOnUiThread(ModalityState.any(), tooltipText -> {
+          tooltipManager.updateShownTooltip(component);
+        })
+        .submit(AppExecutorUtil.getAppExecutorService())
+        .onError(throwable -> {
+          if (!(throwable instanceof CancellationException)) {
+            LOG.error("Exception in ProblemDescriptionNode#getToolTipText", throwable);
+          }
+          scheduledTooltipTasks.remove(node);
+        })
+        .onSuccess(tooltipText -> scheduledTooltipTasks.remove(node));
+    });
+
     if (tooltipLazy.isSucceeded()) {
       try {
         final String text = tooltipLazy.blockingGet(0);
-        synchronized (scheduledTooltipTasks) {
-          scheduledTooltipTasks.remove(node);
-        }
         return text;
       }
       catch (TimeoutException | ExecutionException error) {
@@ -285,8 +284,8 @@ public class InspectionTree extends Tree {
   }
 
   public void selectNode(InspectionTreeNode node) {
-    TreePath path = getPathFor(node);
-    TreeUtil.selectPath(this, path);
+    TreePath path = TreePathUtil.pathToTreeNode(node);
+    if (path != null) TreeUtil.promiseSelect(this, path);
   }
 
   private static void addElementsInNode(InspectionTreeNode node, Set<? super RefEntity> out) {
@@ -345,7 +344,7 @@ public class InspectionTree extends Tree {
       if (sortedByPosition) {
         stream = stream.sorted(DESCRIPTOR_COMPARATOR);
       }
-      descriptors.add(stream.toArray(CommonProblemDescriptor.ARRAY_FACTORY::create));
+      descriptors.add(stream.distinct().toArray(CommonProblemDescriptor.ARRAY_FACTORY::create));
     }
 
     return descriptors;
@@ -673,21 +672,5 @@ public class InspectionTree extends Tree {
       }
       return false;
     }
-  }
-
-  private TreePath getPathFor(InspectionTreeNode node) {
-    TreePath result = TreePathUtil.pathToTreeNode(node);
-
-    Stack<TreePath> s = new Stack<>();
-    TreePath current = result;
-    while (current != null) {
-      s.add(current);
-      current = current.getParentPath();
-    }
-    while (!s.isEmpty()) {
-      TreePath p = s.pop();
-      expandPath(p);
-    }
-    return result;
   }
 }

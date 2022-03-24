@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 import org.apache.tools.ant.taskdefs.condition.Os
+
 import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.30"
+  id "com.jetbrains.python.envs" version "0.0.31"
 }
 
 boolean isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
@@ -38,6 +40,7 @@ envs {
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.5"
+  String python310version = "3.10.0"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -126,6 +129,12 @@ envs {
                "python3.9\npython3\npytest\nxdist\npackaging",
                true)
 
+  createPython("python3.10",
+               python310version,
+               [],
+               "python3.10",
+               true)
+
   // For tox
   createPython("py36",
                python36version,
@@ -149,11 +158,6 @@ envs {
                python37version,
                ["tensorflow >= 1.15.0rc0, < 2.0.0a0"],
                "tensorflow1\ntensorflow_newpaths",
-               true)
-  createPython("py37_tensorflow2_oldpaths",
-               python37version,
-               ["tensorflow >= 2.0.0a0, < 2.0.0rc0"],
-               "tensorflow2\ntensorflow_oldpaths",
                true)
   createPython("py37_tensorflow2_newpaths",
                python37version,

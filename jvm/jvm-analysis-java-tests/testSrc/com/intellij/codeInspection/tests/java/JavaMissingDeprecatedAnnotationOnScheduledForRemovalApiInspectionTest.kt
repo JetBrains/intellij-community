@@ -10,7 +10,8 @@ private const val inspectionPath = "/codeInspection/missingDeprecatedAnnotationO
 class JavaMissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTest : MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase() {
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "java"
 
-  fun `test missing @Deprecated on @ScheduledForRemoval APIs`() = testHighlighting("missingDeprecatedAnnotations")
+  fun `test missing @Deprecated on @ScheduledForRemoval APIs`() {
+    myFixture.testHighlighting("missingDeprecatedAnnotations.java")
+  }
 }

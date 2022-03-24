@@ -24,7 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
@@ -1009,7 +1009,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
     Module module = getModule("project");
     String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
-    assertEquals("1.9", targetLevel);
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevel.parse(targetLevel));
   }
 
   @Test

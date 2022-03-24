@@ -1,27 +1,49 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.CompressionUtil
 import com.intellij.util.ConcurrencyUtil
-import it.unimi.dsi.fastutil.Hash
+import com.intellij.util.indexing.impl.IndexStorageUtil
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.ExecutorService
+import java.util.function.Function
+import java.util.zip.CRC32
+import java.util.zip.CheckedInputStream
+import java.util.zip.CheckedOutputStream
+import java.util.zip.Checksum
 
 private const val VERSION = 0
 
 internal enum class WalOpCode(internal val code: Int) {
   PUT(0),
   REMOVE(1),
-  APPEND(2)
+  APPEND(2);
+
+  companion object {
+    val size = values().size
+  }
 }
+
+private val checksumGen = { CRC32() }
+
+@Volatile
+var debugWalRecords = false
+
+private val log = logger<WalRecord>()
+
+private class CorruptionException(val reason: String): IOException(reason)
+
+private class EndOfLog: IOException()
 
 internal class PersistentEnumeratorWal<Data> @Throws(IOException::class) @JvmOverloads constructor(dataDescriptor: KeyDescriptor<Data>,
                                                                                                    useCompression: Boolean,
@@ -79,8 +101,6 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads 
     }
   }
 
-  private fun WalOpCode.write(outputStream: DataOutputStream): Unit = outputStream.writeByte(code)
-
   private fun ByteArray.write(outputStream: DataOutputStream) {
     if (useCompression) {
       CompressionUtil.writeCompressed(outputStream, this, 0, size)
@@ -97,30 +117,42 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads 
     return baos.toByteArray()
   }
 
+  private fun appendRecord(key: K, appender: AppendablePersistentMap.ValueDataAppender) = WalRecord.writeRecord(WalOpCode.APPEND) {
+    keyDescriptor.save(it, key)
+    appender.writeToByteArray().write(it)
+  }
+
+  private fun putRecord(key: K, value: V) = WalRecord.writeRecord(WalOpCode.PUT) {
+    keyDescriptor.save(it, key)
+    writeData(value, valueExternalizer).write(it)
+  }
+
+  private fun removeRecord(key: K) = WalRecord.writeRecord(WalOpCode.REMOVE) {
+    keyDescriptor.save(it, key)
+  }
+
+  private fun WalRecord.submitWrite() {
+    walIoExecutor.submit {
+      if (debugWalRecords) {
+        println("write: $this")
+      }
+      this.write(out)
+    }
+  }
+
   @Throws(IOException::class)
   fun appendData(key: K, appender: AppendablePersistentMap.ValueDataAppender) {
-    walIoExecutor.submit {
-      WalOpCode.APPEND.write(out)
-      keyDescriptor.save(out, key)
-      appender.writeToByteArray().write(out)
-    }
+    appendRecord(key, appender).submitWrite()
   }
 
   @Throws(IOException::class)
   fun put(key: K, value: V) {
-    walIoExecutor.submit {
-      WalOpCode.PUT.write(out)
-      keyDescriptor.save(out, key)
-      writeData(value, valueExternalizer).write(out)
-    }
+    putRecord(key, value).submitWrite()
   }
 
   @Throws(IOException::class)
   fun remove(key: K) {
-    walIoExecutor.submit {
-      WalOpCode.REMOVE.write(out)
-      keyDescriptor.save(out, key)
-    }
+    removeRecord(key).submitWrite()
   }
 
   @Throws(IOException::class) // todo rethrow io exception
@@ -149,6 +181,8 @@ private val integerExternalizer: EnumeratorIntegerDescriptor
   get() = EnumeratorIntegerDescriptor.INSTANCE
 
 sealed class WalEvent<K, V> {
+  abstract val key: K
+
   data class PutEvent<K, V>(override val key: K, val value: V): WalEvent<K, V>()
   data class RemoveEvent<K, V>(override val key: K): WalEvent<K, V>()
   data class AppendEvent<K, V>(override val key: K, val data: ByteArray): WalEvent<K, V>() {
@@ -171,7 +205,10 @@ sealed class WalEvent<K, V> {
     }
   }
 
-  abstract val key: K
+  object CorruptionEvent: WalEvent<Nothing, Nothing>() {
+    override val key: Nothing
+      get() = throw UnsupportedOperationException()
+  }
 }
 
 @Throws(IOException::class)
@@ -262,27 +299,19 @@ private fun <K, V> tryCompact(walFile: Path,
     return null
   }
 
-  val keyToLastEvent = Object2ObjectOpenCustomHashMap<K, IntSet>(object : Hash.Strategy<K> {
-    override fun equals(a: K?, b: K?): Boolean {
-      if (a == b) return true
-      if (a == null) return false
-      if (b == null) return false
-      return keyDescriptor.isEqual(a, b)
-    }
-
-    override fun hashCode(o: K?): Int = keyDescriptor.getHashCode(o)
-  })
+  val keyToLastEvent = IndexStorageUtil.createKeyDescriptorHashedMap<K, IntSet>(keyDescriptor)
 
   val shouldCompact = PersistentMapWalPlayer(keyDescriptor, valueExternalizer, walFile).use {
     var eventCount = 0
 
     for (walEvent in it.readWal()) {
       when (walEvent) {
-        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key, Function { IntLinkedOpenHashSet() }).add(eventCount)
         is WalEvent.PutEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet().also{ set -> set.add(eventCount) })
         is WalEvent.RemoveEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet())
+        is WalEvent.CorruptionEvent -> throw CorruptionException("wal has been corrupted")
       }
-      keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+      keyToLastEvent.computeIfAbsent(walEvent.key, Function { IntLinkedOpenHashSet() }).add(eventCount)
       eventCount++
     }
 
@@ -302,12 +331,77 @@ private fun <K, V> tryCompact(walFile: Path,
             is WalEvent.AppendEvent -> compactedWal.appendData(key, AppendablePersistentMap.ValueDataAppender { out -> out.write(walEvent.data) })
             is WalEvent.PutEvent -> compactedWal.put(key, walEvent.value)
             is WalEvent.RemoveEvent -> {/*do nothing*/}
+            is WalEvent.CorruptionEvent -> throw CorruptionException("wal has been corrupted")
           }
         }
       }
     }
   }
   return compactedWalFile
+}
+
+private class ChecksumOutputStream(delegate: OutputStream, checksumGen: () -> Checksum): CheckedOutputStream(delegate, checksumGen()) {
+  fun checksum() = checksum.value
+}
+
+private class ChecksumInputStream(delegate: InputStream, checksumGen: () -> Checksum): CheckedInputStream(delegate, checksumGen()) {
+  fun checksum() = checksum.value
+}
+
+/**
+ * +-------------+---------------+---------------------+---------+
+ * | OpCode (1b) | Checksum (8b) | Payload Length (4b) | Payload |
+ * +-------------+---------------+---------------------+---------+
+ *
+ * TODO it makes sense to add header for each record
+ */
+private class WalRecord(val opCode: WalOpCode,
+                        private val checksum: Long,
+                        val payload: ByteArraySequence) {
+  override fun toString(): String {
+    return "record($opCode, checksum = $checksum, len = ${payload.length()}, payload = ${StringUtil.toHexString(payload.toBytes())})"
+  }
+
+  @Throws(IOException::class)
+  fun write(target: DataOutputStream) {
+    target.writeByte(opCode.code)
+    DataInputOutputUtil.writeLONG(target, checksum)
+    DataInputOutputUtil.writeINT(target, payload.length)
+    target.write(payload.internalBuffer, payload.offset, payload.length)
+  }
+
+  companion object {
+    @Throws(IOException::class)
+    fun writeRecord(opCode: WalOpCode, writer: (DataOutputStream) -> Unit): WalRecord {
+      val baos = UnsyncByteArrayOutputStream()
+      val cos = ChecksumOutputStream(baos, checksumGen)
+      DataOutputStream(cos).use { writer(it) }
+      return WalRecord(opCode, cos.checksum(), baos.toByteArraySequence())
+    }
+
+    @Throws(IOException::class)
+    fun read(input: DataInputStream): WalRecord {
+      val code: Int
+      try {
+        code = input.readByte().toInt()
+      }
+      catch (e: EOFException) {
+        throw EndOfLog()
+      }
+      if (code >= WalOpCode.size) {
+        throw CorruptionException("no opcode present for code $code")
+      }
+      val checksum = DataInputOutputUtil.readLONG(input)
+      val payloadLength = DataInputOutputUtil.readINT(input)
+      val cis = ChecksumInputStream(input, checksumGen)
+      val data = cis.readNBytes(payloadLength)
+      val actualChecksum = cis.checksum()
+      if (actualChecksum != checksum) {
+        throw CorruptionException("checksum is wrong for log record: expected = $checksum but actual = $actualChecksum")
+      }
+      return WalRecord(WalOpCode.values()[code], checksum, ByteArraySequence(data))
+    }
+  }
 }
 
 private fun <V> readData(array: ByteArray, valueExternalizer: DataExternalizer<V>): V {
@@ -344,6 +438,7 @@ private fun <K, V, R> restoreFromWal(walFile: Path,
         }
         is WalEvent.PutEvent -> accumulator.put(walEvent.key, walEvent.value)
         is WalEvent.RemoveEvent -> accumulator.remove(walEvent.key)
+        is WalEvent.CorruptionEvent -> throw CorruptionException("wal has been corrupted")
       }
     }
     accumulator.result()
@@ -384,18 +479,26 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
 
   @Throws(IOException::class)
   private fun readNextEvent(): WalEvent<K, V>? {
-    val walOpCode: WalOpCode
+    val record: WalRecord
     try {
-      walOpCode = readNextOpCode(input)
+      record = WalRecord.read(input)
     }
-    catch (e: EOFException) {
+    catch (e: EndOfLog) {
       return null
     }
+    catch (e: IOException) {
+      return WalEvent.CorruptionEvent as WalEvent<K, V>
+    }
 
-    return when (walOpCode) {
-      WalOpCode.PUT -> WalEvent.PutEvent(keyDescriptor.read(input), readData(readByteArray(input), valueExternalizer))
-      WalOpCode.REMOVE -> WalEvent.RemoveEvent(keyDescriptor.read(input))
-      WalOpCode.APPEND -> WalEvent.AppendEvent(keyDescriptor.read(input), readByteArray(input))
+    if (debugWalRecords) {
+      println("read: $record")
+    }
+
+    val recordStream = record.payload.toInputStream()
+    return when (record.opCode) {
+      WalOpCode.PUT -> WalEvent.PutEvent(keyDescriptor.read(recordStream), readData(readByteArray(recordStream), valueExternalizer))
+      WalOpCode.REMOVE -> WalEvent.RemoveEvent(keyDescriptor.read(recordStream))
+      WalOpCode.APPEND -> WalEvent.AppendEvent(keyDescriptor.read(recordStream), readByteArray(recordStream))
     }
   }
 
@@ -407,7 +510,4 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
       return ByteArray(inputStream.readInt()).also { inputStream.readFully(it) }
     }
   }
-
-  private fun readNextOpCode(inputStream: DataInputStream): WalOpCode =
-    WalOpCode.values()[inputStream.readByte().toInt()]
 }

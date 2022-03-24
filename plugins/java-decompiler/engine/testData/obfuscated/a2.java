@@ -57,21 +57,21 @@ class a2 implements EntityResolver {
       while(true) {
          char var10004 = var4[var10003];
          byte var10005;
-         switch(var1 % 5) {
-         case 0:
-            var10005 = 123;
-            break;
-         case 1:
-            var10005 = 91;
-            break;
-         case 2:
-            var10005 = 104;
-            break;
-         case 3:
-            var10005 = 92;
-            break;
-         default:
-            var10005 = 15;
+         switch (var1 % 5) {
+            case 0:
+               var10005 = 123;
+               break;
+            case 1:
+               var10005 = 91;
+               break;
+            case 2:
+               var10005 = 104;
+               break;
+            case 3:
+               var10005 = 92;
+               break;
+            default:
+               var10005 = 15;
          }
 
          var4[var10003] = (char)(var10004 ^ var10005);

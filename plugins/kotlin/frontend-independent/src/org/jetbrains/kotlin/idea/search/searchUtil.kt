@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,16 +14,22 @@ import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
+import org.jetbrains.kotlin.load.java.propertyNamesBySetMethodName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName as getKotlinFqNameOriginal
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName as getKotlinFqNameOriginal
 
 infix fun SearchScope.and(otherScope: SearchScope): SearchScope = intersectWith(otherScope)
 infix fun SearchScope.or(otherScope: SearchScope): SearchScope = union(otherScope)
@@ -56,7 +62,7 @@ fun SearchScope.restrictByFileType(fileType: FileType): SearchScope = when (this
     is LocalSearchScope -> {
         val elements = scope.filter { it.containingFile.fileType == fileType }
         when (elements.size) {
-            0 -> GlobalSearchScope.EMPTY_SCOPE
+            0 -> LocalSearchScope.EMPTY
             scope.size -> this
             else -> LocalSearchScope(elements.toTypedArray())
         }
@@ -68,27 +74,63 @@ fun GlobalSearchScope.restrictToKotlinSources() = restrictByFileType(KotlinFileT
 
 fun SearchScope.restrictToKotlinSources() = restrictByFileType(KotlinFileType.INSTANCE)
 
-fun SearchScope.excludeKotlinSources(): SearchScope = excludeFileTypes(KotlinFileType.INSTANCE)
+fun SearchScope.excludeKotlinSources(project: Project): SearchScope = excludeFileTypes(project, KotlinFileType.INSTANCE)
 
-fun SearchScope.excludeFileTypes(vararg fileTypes: FileType): SearchScope {
+fun Project.everythingScopeExcludeFileTypes(vararg fileTypes: FileType): GlobalSearchScope {
+    return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.everythingScope(this), *fileTypes).not()
+}
+
+fun SearchScope.excludeFileTypes(project: Project, vararg fileTypes: FileType): SearchScope {
     return if (this is GlobalSearchScope) {
-        val includedFileTypes = FileTypeRegistry.getInstance().registeredFileTypes.filter { it !in fileTypes }.toTypedArray()
-        GlobalSearchScope.getScopeRestrictedByFileTypes(this, *includedFileTypes)
+        this.intersectWith(project.everythingScopeExcludeFileTypes(*fileTypes))
     } else {
         this as LocalSearchScope
         val filteredElements = scope.filter { it.containingFile.fileType !in fileTypes }
         if (filteredElements.isNotEmpty())
             LocalSearchScope(filteredElements.toTypedArray())
         else
-            GlobalSearchScope.EMPTY_SCOPE
+            LocalSearchScope.EMPTY
     }
+}
+
+/**
+ * `( *\\( *)` and `( *\\) *)` – to find parenthesis
+ * `( *, *(?![^\\[]*]))` – to find commas outside square brackets
+ */
+private val parenthesisRegex = Regex("( *\\( *)|( *\\) *)|( *, *(?![^\\[]*]))")
+
+private inline fun CharSequence.ifNotEmpty(action: (CharSequence) -> Unit) {
+    takeIf(CharSequence::isNotBlank)?.let(action)
+}
+
+fun SearchScope.toHumanReadableString(): String = buildString {
+    val scopeText = this@toHumanReadableString.toString()
+    var currentIndent = 0
+    var lastIndex = 0
+    for (parenthesis in parenthesisRegex.findAll(scopeText)) {
+        val subSequence = scopeText.subSequence(lastIndex, parenthesis.range.first)
+        subSequence.ifNotEmpty {
+            append(" ".repeat(currentIndent))
+            appendLine(it)
+        }
+
+        val value = parenthesis.value
+        when {
+            "(" in value -> currentIndent += 2
+            ")" in value -> currentIndent -= 2
+        }
+
+        lastIndex = parenthesis.range.last + 1
+    }
+
+    if (isEmpty()) append(scopeText)
 }
 
 // Copied from SearchParameters.getEffectiveSearchScope()
 fun ReferencesSearch.SearchParameters.effectiveSearchScope(element: PsiElement): SearchScope {
     if (element == elementToSearch) return effectiveSearchScope
     if (isIgnoreAccessScope) return scopeDeterminedByUser
-    val accessScope = PsiSearchHelper.getInstance(element.project).getUseScope(element)
+    val accessScope = element.useScope()
     return scopeDeterminedByUser.intersectWith(accessScope)
 }
 
@@ -96,7 +138,12 @@ fun isOnlyKotlinSearch(searchScope: SearchScope): Boolean {
     return searchScope is LocalSearchScope && searchScope.scope.all { it.containingFile is KtFile }
 }
 
+fun PsiElement.codeUsageScopeRestrictedToProject(): SearchScope = project.projectScope().intersectWith(codeUsageScope())
+fun PsiElement.useScope(): SearchScope = PsiSearchHelper.getInstance(project).getUseScope(this)
 fun PsiElement.codeUsageScope(): SearchScope = PsiSearchHelper.getInstance(project).getCodeUsageScope(this)
+
+// TODO: improve scope calculations
+fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsageScope().restrictToKotlinSources()
 
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,
@@ -111,10 +158,9 @@ fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn, progress)
 }
 
-fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor:(KtFile) -> Boolean): Boolean {
+fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {
     val project = declaration.project
-    val scope = PsiSearchHelper.getInstance(project).getUseScope(declaration) as? GlobalSearchScope
-        ?: return true
+    val scope = declaration.useScope() as? GlobalSearchScope ?: return true
 
     val name = declaration.name.takeIf { it?.isNotBlank() == true } ?: return true
     val collector = Processor<VirtualFile> { file ->
@@ -158,3 +204,52 @@ fun PsiElement?.isPotentiallyOperator(): Boolean {
     // TODO: it's fast PSI-based check, a proper check requires call to resolveDeclarationWithParents() that is not frontend-independent
     return true
 }
+
+private val PsiMethod.canBeGetter: Boolean
+    get() = JvmAbi.isGetterName(name) && parameters.isEmpty() && returnTypeElement?.textMatches("void") != true
+
+private val PsiMethod.canBeSetter: Boolean
+    get() = JvmAbi.isSetterName(name) && parameters.size == 1 && returnTypeElement?.textMatches("void") != false
+
+private val PsiMethod.probablyCanHaveSyntheticAccessors: Boolean
+    get() = canHaveOverride && !hasTypeParameters() && !isFinalProperty
+
+private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
+private val PsiMethod.setterNames: Collection<Name>? get() = propertyNamesBySetMethodName(Name.identifier(name)).takeIf { it.isNotEmpty() }
+
+private val PsiMethod.isFinalProperty: Boolean
+    get() {
+        val property = unwrapped as? KtProperty ?: return false
+        if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+        val containingClassOrObject = property.containingClassOrObject ?: return true
+        return containingClassOrObject is KtObjectDeclaration
+    }
+
+private val PsiMethod.isTopLevelDeclaration: Boolean get() = unwrapped?.isTopLevelKtOrJavaMember() == true
+
+val PsiMethod.syntheticAccessors: Collection<Name>
+    get() {
+        if (!probablyCanHaveSyntheticAccessors) return emptyList()
+
+        return when {
+            canBeGetter -> listOfNotNull(getterName)
+            canBeSetter -> setterNames.orEmpty()
+            else -> emptyList()
+        }
+    }
+
+val PsiMethod.canHaveSyntheticAccessors: Boolean get() = probablyCanHaveSyntheticAccessors && (canBeGetter || canBeSetter)
+
+val PsiMethod.canHaveSyntheticGetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeGetter
+
+val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeSetter
+
+val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticGetter) getterName else null
+
+val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticSetter) setterNames else null
+
+/**
+ * Attention: only language constructs are checked. For example: static member, constructor, top-level property
+ * @return `false` if constraints are found. Otherwise, `true`
+ */
+val PsiMethod.canHaveOverride: Boolean get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !isTopLevelDeclaration

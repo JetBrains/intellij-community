@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
@@ -47,6 +48,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
+  @SafeTypeForPreview
   private static final class CharsetOverload {
     static final CharsetOverload NONE = new CharsetOverload(null, Collections.emptyList());
 
@@ -59,7 +61,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
 
     InspectionGadgetsFix createFix(LanguageLevel level) {
-      return myMethod == null || Java15APIUsageInspection.getLastIncompatibleLanguageLevel(myMethod, level) != null
+      return myMethod == null || LanguageLevelUtil.getLastIncompatibleLanguageLevel(myMethod, level) != null
              ? null
              : new AddUtf8CharsetFix(this);
     }
@@ -216,7 +218,6 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     /**
      * Refers to the method but it is read-only
      */
-    @SafeFieldForPreview
     private final CharsetOverload myCharsetOverload;
 
     private AddUtf8CharsetFix(CharsetOverload charsetOverload) {

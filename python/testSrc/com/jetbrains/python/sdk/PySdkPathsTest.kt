@@ -74,6 +74,7 @@ class PySdkPathsTest {
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+    assertThat(getPathsToTransfer(sdk)).doesNotContain(moduleRoot)
   }
 
   @Test
@@ -87,6 +88,7 @@ class PySdkPathsTest {
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+    assertThat(getPathsToTransfer(sdk)).doesNotContain(moduleRoot)
   }
 
   @Test

@@ -2,9 +2,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +15,6 @@ import java.util.Collection;
  */
 public interface TreeStructureProvider {
   ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
-
-  /**
-   * @deprecated Use {@link #EP}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  ExtensionPointName<TreeStructureProvider> EP_NAME = ExtensionPointName.create("com.intellij.treeStructureProvider");
 
   /**
    * Allows a plugin to modify the list of children displayed for the specified node in the

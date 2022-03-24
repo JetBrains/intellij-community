@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // FIX: Replace negated 'isEmpty' with 'isNotEmpty'
 
 fun test() {

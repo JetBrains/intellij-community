@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // SUGGESTED_RETURN_TYPES: kotlin.Boolean?, kotlin.Boolean
 // PARAM_DESCRIPTOR: value-parameter it: kotlin.collections.Map.Entry<kotlin.Boolean!, kotlin.Boolean!> defined in test.<anonymous>
 // PARAM_TYPES: kotlin.collections.Map.Entry<kotlin.Boolean!, kotlin.Boolean!>

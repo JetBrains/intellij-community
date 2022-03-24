@@ -12,9 +12,16 @@ internal object IOCancellationCallbackHolder {
     if (allCallbacks.size > 1) {
       throw IllegalStateException("Few io cancellation callbacks are registered: ${allCallbacks.map { it.javaClass.name }}")
     }
-    return allCallbacks.firstOrNull() ?: IOCancellationCallback {  }
+    return allCallbacks.firstOrNull() ?: object : IOCancellationCallback {
+      override fun checkCancelled() = Unit
+
+      override fun interactWithUI() = Unit
+    }
   }
 
   @JvmStatic
   fun checkCancelled() = usedIoCallback.checkCancelled()
+
+  @JvmStatic
+  fun interactWithUI() = usedIoCallback.interactWithUI()
 }

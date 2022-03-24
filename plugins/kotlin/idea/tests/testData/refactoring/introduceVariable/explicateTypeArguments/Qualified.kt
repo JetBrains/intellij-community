@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun <T> String.ext(): List<T> = listOf()
 
 fun f() {

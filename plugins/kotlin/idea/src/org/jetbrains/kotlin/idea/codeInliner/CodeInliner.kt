@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.LocalSearchScope
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -19,8 +21,13 @@ import org.jetbrains.kotlin.idea.inspections.RedundantUnitExpressionInspection
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
+import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -29,7 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -42,6 +49,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CodeInliner<TCallElement : KtElement>(
+    private val languageVersionSettings: LanguageVersionSettings,
     private val usageExpression: KtSimpleNameExpression?,
     private val bindingContext: BindingContext,
     private val resolvedCall: ResolvedCall<out CallableDescriptor>,
@@ -200,10 +208,10 @@ class CodeInliner<TCallElement : KtElement>(
         lexicalScope: LexicalScope,
         endOfScope: Int,
     ) {
-        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope) }
+        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope, languageVersionSettings) }
         for (declaration in declarations) {
             val oldName = declaration.name
-            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope)) {
+            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
                 val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
                 for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
                     if (reference.element.startOffset < endOfScope) {
@@ -499,24 +507,22 @@ class CodeInliner<TCallElement : KtElement>(
         }
 
         for (pointer in pointers) {
-            val element = pointer.element ?: continue
+            restoreComments(pointer)
 
-            restoreComments(element)
+            introduceNamedArguments(pointer)
 
-            introduceNamedArguments(element)
-
-            restoreFunctionLiteralArguments(element)
+            restoreFunctionLiteralArguments(pointer)
 
             //TODO: do this earlier
-            dropArgumentsForDefaultValues(element)
+            dropArgumentsForDefaultValues(pointer)
 
-            removeRedundantLambdasAndAnonymousFunctions(element)
+            removeRedundantLambdasAndAnonymousFunctions(pointer)
 
-            simplifySpreadArrayOfArguments(element)
+            simplifySpreadArrayOfArguments(pointer)
 
-            removeExplicitTypeArguments(element)
+            removeExplicitTypeArguments(pointer)
 
-            removeRedundantUnitExpressions(element)
+            removeRedundantUnitExpressions(pointer)
         }
 
         val shortenFilter = { element: PsiElement ->
@@ -561,7 +567,8 @@ class CodeInliner<TCallElement : KtElement>(
         return if (newElements.isEmpty()) PsiChildRange.EMPTY else PsiChildRange(newElements.first(), newElements.last())
     }
 
-    private fun removeRedundantLambdasAndAnonymousFunctions(element: KtElement) {
+    private fun removeRedundantLambdasAndAnonymousFunctions(pointer: SmartPsiElementPointer<KtElement>) {
+        val element = pointer.element ?: return
         for (function in element.collectDescendantsOfType<KtFunction>().asReversed()) {
             val call = RedundantLambdaOrAnonymousFunctionInspection.findCallIfApplicableTo(function)
             if (call != null) {
@@ -570,23 +577,24 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun restoreComments(element: KtElement) {
-        element.forEachDescendantOfType<KtExpression> {
+    private fun restoreComments(pointer: SmartPsiElementPointer<KtElement>) {
+        pointer.element?.forEachDescendantOfType<KtExpression> {
             it.getCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY)?.restoreComments(it)
         }
     }
 
-    private fun removeRedundantUnitExpressions(result: KtElement) {
-        result.forEachDescendantOfType<KtReferenceExpression> {
+    private fun removeRedundantUnitExpressions(pointer: SmartPsiElementPointer<KtElement>) {
+        pointer.element?.forEachDescendantOfType<KtReferenceExpression> {
             if (RedundantUnitExpressionInspection.isRedundantUnit(it)) {
                 it.delete()
             }
         }
     }
 
-    private fun introduceNamedArguments(result: KtElement) {
+    private fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>) {
+        val element = pointer.element ?: return
         val callsToProcess = LinkedHashSet<KtCallExpression>()
-        result.forEachDescendantOfType<KtValueArgument> {
+        element.forEachDescendantOfType<KtValueArgument> {
             if (it[MAKE_ARGUMENT_NAMED_KEY] && !it.isNamed()) {
                 val callExpression = (it.parent as? KtValueArgumentList)?.parent as? KtCallExpression
                 callsToProcess.addIfNotNull(callExpression)
@@ -615,7 +623,8 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun dropArgumentsForDefaultValues(result: KtElement) {
+    private fun dropArgumentsForDefaultValues(pointer: SmartPsiElementPointer<KtElement>) {
+        val result = pointer.element ?: return
         val project = result.project
         val newBindingContext = result.analyze()
         val argumentsToDrop = ArrayList<ValueArgument>()
@@ -657,7 +666,8 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun removeExplicitTypeArguments(result: KtElement) {
+    private fun removeExplicitTypeArguments(pointer: SmartPsiElementPointer<KtElement>) {
+        val result = pointer.element ?: return
         for (typeArgumentList in result.collectDescendantsOfType<KtTypeArgumentList>(canGoInside = { !it[USER_CODE_KEY] }).asReversed()) {
             if (RemoveExplicitTypeArgumentsIntention.isApplicableTo(typeArgumentList, approximateFlexible = true)) {
                 typeArgumentList.delete()
@@ -665,7 +675,8 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun simplifySpreadArrayOfArguments(result: KtElement) {
+    private fun simplifySpreadArrayOfArguments(pointer: SmartPsiElementPointer<KtElement>) {
+        val result = pointer.element ?: return
         //TODO: test for nested
 
         val argumentsToExpand = ArrayList<Pair<KtValueArgument, Collection<KtValueArgument>>>()
@@ -699,7 +710,8 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun restoreFunctionLiteralArguments(expression: KtElement) {
+    private fun restoreFunctionLiteralArguments(pointer: SmartPsiElementPointer<KtElement>) {
+        val expression = pointer.element ?: return
         val callExpressions = ArrayList<KtCallExpression>()
 
         expression.forEachDescendantOfType<KtExpression>(fun(expr) {

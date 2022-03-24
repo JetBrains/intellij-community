@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -62,6 +62,11 @@ public class FirHighlightingPerformanceTestGenerated extends AbstractFirHighligh
     @TestMetadata("Functions.kt")
     public void testFunctions() throws Exception {
         runTest("idea/testData/highlighter/Functions.kt");
+    }
+
+    @TestMetadata("InaccessibleExpression.kt")
+    public void testInaccessibleExpression() throws Exception {
+        runTest("idea/testData/highlighter/InaccessibleExpression.kt");
     }
 
     @TestMetadata("InvokeCall.kt")

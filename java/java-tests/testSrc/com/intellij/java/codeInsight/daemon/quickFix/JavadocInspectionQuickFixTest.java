@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class JavadocInspectionQuickFixTest extends LightQuickFixParameterizedTestCase {
@@ -14,7 +16,7 @@ public class JavadocInspectionQuickFixTest extends LightQuickFixParameterizedTes
     inspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS = "param";
     inspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
     inspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
-    return new LocalInspectionTool[]{inspection, new JavaDocReferenceInspection()};
+    return new LocalInspectionTool[]{new MissingJavadocInspection(), new JavadocDeclarationInspection(), new JavaDocReferenceInspection()};
   }
 
   @Override

@@ -19,7 +19,6 @@ import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,16 +170,15 @@ public class CheckboxTreeBase extends Tree {
     }
 
     private State getNodeStatus(final CheckedTreeNode node) {
-      if (myIgnoreInheritance) return node.isChecked() ? State.SELECTED : State.NOT_SELECTED;
-      final boolean checked = node.isChecked();
-      if (node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) return checked ? State.SELECTED : State.NOT_SELECTED;
+      State ownState = node.isChecked() ? State.SELECTED : State.NOT_SELECTED;
+      if (myIgnoreInheritance || node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) {
+        return ownState;
+      }
 
       State result = null;
-
       for (int i = 0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
-        State childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) :
-                checked? State.SELECTED : State.NOT_SELECTED;
+        State childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) : ownState;
         if (childStatus == State.DONT_CARE) return State.DONT_CARE;
         if (result == null) {
           result = childStatus;
@@ -189,8 +187,7 @@ public class CheckboxTreeBase extends Tree {
           return State.DONT_CARE;
         }
       }
-
-      return result == null ? State.NOT_SELECTED : result;
+      return result == null ? ownState : result;
     }
 
     @Override
@@ -235,8 +232,7 @@ public class CheckboxTreeBase extends Tree {
      * @deprecated use {@link CheckboxTreeCellRendererBase#customizeRenderer(JTree, Object, boolean, boolean, boolean, int, boolean)}
      */
     @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -259,8 +255,7 @@ public class CheckboxTreeBase extends Tree {
    * @see State
    * @deprecated Don't use this enum. Left for API compatibility.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public enum NodeState {
     FULL, CLEAR, PARTIAL
   }

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -102,11 +101,11 @@ public class aj implements am {
             Iterator var5 = var2.entrySet().iterator();
 
             while(var5.hasNext()) {
-               Entry var6 = (Entry)var5.next();
+               Map.Entry var6 = (Map.Entry)var5.next();
                Long var7 = (Long)this.b.get(var6.getKey());
                if (var7 != null) {
                   double var8 = (double)(((Long)var6.getValue() - var7) * 10L) / (double)var3;
-                  var1.a((Object)(new ar(h[1], (String)var6.getKey(), "%", var8 * 100.0D)));
+                  var1.a((Object)(new ar(h[1], (String)var6.getKey(), "%", var8 * 100.0)));
                }
             }
          }
@@ -144,21 +143,21 @@ public class aj implements am {
          var8 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 71;
-            break;
-         case 1:
-            var10008 = 81;
-            break;
-         case 2:
-            var10008 = 80;
-            break;
-         case 3:
-            var10008 = 68;
-            break;
-         default:
-            var10008 = 11;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 71;
+               break;
+            case 1:
+               var10008 = 81;
+               break;
+            case 2:
+               var10008 = 80;
+               break;
+            case 3:
+               var10008 = 68;
+               break;
+            default:
+               var10008 = 11;
          }
       } else {
          var10004 = var10003;
@@ -187,21 +186,21 @@ public class aj implements am {
 
                while(true) {
                   var10007 = var8[var10006];
-                  switch(var1 % 5) {
-                  case 0:
-                     var10008 = 71;
-                     break;
-                  case 1:
-                     var10008 = 81;
-                     break;
-                  case 2:
-                     var10008 = 80;
-                     break;
-                  case 3:
-                     var10008 = 68;
-                     break;
-                  default:
-                     var10008 = 11;
+                  switch (var1 % 5) {
+                     case 0:
+                        var10008 = 71;
+                        break;
+                     case 1:
+                        var10008 = 81;
+                        break;
+                     case 2:
+                        var10008 = 80;
+                        break;
+                     case 3:
+                        var10008 = 68;
+                        break;
+                     default:
+                        var10008 = 11;
                   }
 
                   var8[var10006] = (char)(var10007 ^ var10008);
@@ -230,21 +229,21 @@ public class aj implements am {
                var8 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 71;
-                  break;
-               case 1:
-                  var10008 = 81;
-                  break;
-               case 2:
-                  var10008 = 80;
-                  break;
-               case 3:
-                  var10008 = 68;
-                  break;
-               default:
-                  var10008 = 11;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 71;
+                     break;
+                  case 1:
+                     var10008 = 81;
+                     break;
+                  case 2:
+                     var10008 = 80;
+                     break;
+                  case 3:
+                     var10008 = 68;
+                     break;
+                  default:
+                     var10008 = 11;
                }
             } else {
                var10004 = var10003;
@@ -273,21 +272,21 @@ public class aj implements am {
 
                      while(true) {
                         var10007 = var8[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 71;
-                           break;
-                        case 1:
-                           var10008 = 81;
-                           break;
-                        case 2:
-                           var10008 = 80;
-                           break;
-                        case 3:
-                           var10008 = 68;
-                           break;
-                        default:
-                           var10008 = 11;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 71;
+                              break;
+                           case 1:
+                              var10008 = 81;
+                              break;
+                           case 2:
+                              var10008 = 80;
+                              break;
+                           case 3:
+                              var10008 = 68;
+                              break;
+                           default:
+                              var10008 = 11;
                         }
 
                         var8[var10006] = (char)(var10007 ^ var10008);
@@ -316,21 +315,21 @@ public class aj implements am {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 71;
-                        break;
-                     case 1:
-                        var10008 = 81;
-                        break;
-                     case 2:
-                        var10008 = 80;
-                        break;
-                     case 3:
-                        var10008 = 68;
-                        break;
-                     default:
-                        var10008 = 11;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 71;
+                           break;
+                        case 1:
+                           var10008 = 81;
+                           break;
+                        case 2:
+                           var10008 = 80;
+                           break;
+                        case 3:
+                           var10008 = 68;
+                           break;
+                        default:
+                           var10008 = 11;
                      }
                   } else {
                      var10004 = var10003;
@@ -359,21 +358,21 @@ public class aj implements am {
 
                            while(true) {
                               var10007 = var8[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 71;
-                                 break;
-                              case 1:
-                                 var10008 = 81;
-                                 break;
-                              case 2:
-                                 var10008 = 80;
-                                 break;
-                              case 3:
-                                 var10008 = 68;
-                                 break;
-                              default:
-                                 var10008 = 11;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 71;
+                                    break;
+                                 case 1:
+                                    var10008 = 81;
+                                    break;
+                                 case 2:
+                                    var10008 = 80;
+                                    break;
+                                 case 3:
+                                    var10008 = 68;
+                                    break;
+                                 default:
+                                    var10008 = 11;
                               }
 
                               var8[var10006] = (char)(var10007 ^ var10008);
@@ -402,21 +401,21 @@ public class aj implements am {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         } else {
                            var10004 = var10003;
@@ -445,21 +444,21 @@ public class aj implements am {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 71;
-                                       break;
-                                    case 1:
-                                       var10008 = 81;
-                                       break;
-                                    case 2:
-                                       var10008 = 80;
-                                       break;
-                                    case 3:
-                                       var10008 = 68;
-                                       break;
-                                    default:
-                                       var10008 = 11;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 71;
+                                          break;
+                                       case 1:
+                                          var10008 = 81;
+                                          break;
+                                       case 2:
+                                          var10008 = 80;
+                                          break;
+                                       case 3:
+                                          var10008 = 68;
+                                          break;
+                                       default:
+                                          var10008 = 11;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -488,21 +487,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  var10004 = var10003;
@@ -532,21 +531,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var9 = var5[var6];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10 = 71;
-                                             break;
-                                          case 1:
-                                             var10 = 81;
-                                             break;
-                                          case 2:
-                                             var10 = 80;
-                                             break;
-                                          case 3:
-                                             var10 = 68;
-                                             break;
-                                          default:
-                                             var10 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10 = 71;
+                                                break;
+                                             case 1:
+                                                var10 = 81;
+                                                break;
+                                             case 2:
+                                                var10 = 80;
+                                                break;
+                                             case 3:
+                                                var10 = 68;
+                                                break;
+                                             default:
+                                                var10 = 11;
                                           }
 
                                           var5[var6] = (char)(var9 ^ var10);
@@ -588,21 +587,21 @@ public class aj implements am {
 
                                     while(true) {
                                        var9 = var5[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10 = 71;
-                                          break;
-                                       case 1:
-                                          var10 = 81;
-                                          break;
-                                       case 2:
-                                          var10 = 80;
-                                          break;
-                                       case 3:
-                                          var10 = 68;
-                                          break;
-                                       default:
-                                          var10 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10 = 71;
+                                             break;
+                                          case 1:
+                                             var10 = 81;
+                                             break;
+                                          case 2:
+                                             var10 = 80;
+                                             break;
+                                          case 3:
+                                             var10 = 68;
+                                             break;
+                                          default:
+                                             var10 = 11;
                                        }
 
                                        var5[var6] = (char)(var9 ^ var10);
@@ -625,21 +624,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
 
@@ -651,21 +650,21 @@ public class aj implements am {
                                        var10006 = var6;
                                        var8 = var10004;
                                        var10007 = var10004[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        if (var6 <= var1) {
@@ -693,21 +692,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var9 = var5[var6];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10 = 68;
-                                                   break;
-                                                default:
-                                                   var10 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10 = 68;
+                                                      break;
+                                                   default:
+                                                      var10 = 11;
                                                 }
 
                                                 var5[var6] = (char)(var9 ^ var10);
@@ -749,21 +748,21 @@ public class aj implements am {
 
                                           while(true) {
                                              var9 = var5[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10 = 71;
-                                                break;
-                                             case 1:
-                                                var10 = 81;
-                                                break;
-                                             case 2:
-                                                var10 = 80;
-                                                break;
-                                             case 3:
-                                                var10 = 68;
-                                                break;
-                                             default:
-                                                var10 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10 = 68;
+                                                   break;
+                                                default:
+                                                   var10 = 11;
                                              }
 
                                              var5[var6] = (char)(var9 ^ var10);
@@ -786,21 +785,21 @@ public class aj implements am {
                                        var8 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
                                  }
@@ -810,21 +809,21 @@ public class aj implements am {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         }
 
@@ -836,21 +835,21 @@ public class aj implements am {
                                  var10006 = var6;
                                  var8 = var10004;
                                  var10007 = var10004[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  if (var6 <= var1) {
@@ -877,21 +876,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -920,21 +919,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -964,21 +963,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var9 = var5[var6];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10 = 68;
-                                                   break;
-                                                default:
-                                                   var10 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10 = 68;
+                                                      break;
+                                                   default:
+                                                      var10 = 11;
                                                 }
 
                                                 var5[var6] = (char)(var9 ^ var10);
@@ -1020,21 +1019,21 @@ public class aj implements am {
 
                                           while(true) {
                                              var9 = var5[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10 = 71;
-                                                break;
-                                             case 1:
-                                                var10 = 81;
-                                                break;
-                                             case 2:
-                                                var10 = 80;
-                                                break;
-                                             case 3:
-                                                var10 = 68;
-                                                break;
-                                             default:
-                                                var10 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10 = 68;
+                                                   break;
+                                                default:
+                                                   var10 = 11;
                                              }
 
                                              var5[var6] = (char)(var9 ^ var10);
@@ -1057,21 +1056,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -1083,21 +1082,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -1125,21 +1124,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -1181,21 +1180,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -1218,21 +1217,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -1242,21 +1241,21 @@ public class aj implements am {
                                  var8 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
                            }
@@ -1266,21 +1265,21 @@ public class aj implements am {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 71;
-                        break;
-                     case 1:
-                        var10008 = 81;
-                        break;
-                     case 2:
-                        var10008 = 80;
-                        break;
-                     case 3:
-                        var10008 = 68;
-                        break;
-                     default:
-                        var10008 = 11;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 71;
+                           break;
+                        case 1:
+                           var10008 = 81;
+                           break;
+                        case 2:
+                           var10008 = 80;
+                           break;
+                        case 3:
+                           var10008 = 68;
+                           break;
+                        default:
+                           var10008 = 11;
                      }
                   }
 
@@ -1292,21 +1291,21 @@ public class aj implements am {
                            var10006 = var6;
                            var8 = var10004;
                            var10007 = var10004[var6];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         } else {
                            if (var6 <= var1) {
@@ -1333,21 +1332,21 @@ public class aj implements am {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 71;
-                                       break;
-                                    case 1:
-                                       var10008 = 81;
-                                       break;
-                                    case 2:
-                                       var10008 = 80;
-                                       break;
-                                    case 3:
-                                       var10008 = 68;
-                                       break;
-                                    default:
-                                       var10008 = 11;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 71;
+                                          break;
+                                       case 1:
+                                          var10008 = 81;
+                                          break;
+                                       case 2:
+                                          var10008 = 80;
+                                          break;
+                                       case 3:
+                                          var10008 = 68;
+                                          break;
+                                       default:
+                                          var10008 = 11;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -1376,21 +1375,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  var10004 = var10003;
@@ -1419,21 +1418,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -1462,21 +1461,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -1506,21 +1505,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var9 = var5[var6];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10 = 68;
-                                                   break;
-                                                default:
-                                                   var10 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10 = 68;
+                                                      break;
+                                                   default:
+                                                      var10 = 11;
                                                 }
 
                                                 var5[var6] = (char)(var9 ^ var10);
@@ -1562,21 +1561,21 @@ public class aj implements am {
 
                                           while(true) {
                                              var9 = var5[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10 = 71;
-                                                break;
-                                             case 1:
-                                                var10 = 81;
-                                                break;
-                                             case 2:
-                                                var10 = 80;
-                                                break;
-                                             case 3:
-                                                var10 = 68;
-                                                break;
-                                             default:
-                                                var10 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10 = 68;
+                                                   break;
+                                                default:
+                                                   var10 = 11;
                                              }
 
                                              var5[var6] = (char)(var9 ^ var10);
@@ -1599,21 +1598,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -1625,21 +1624,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -1667,21 +1666,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -1723,21 +1722,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -1760,21 +1759,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -1784,21 +1783,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
 
@@ -1810,21 +1809,21 @@ public class aj implements am {
                                        var10006 = var6;
                                        var8 = var10004;
                                        var10007 = var10004[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        if (var6 <= var1) {
@@ -1851,21 +1850,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -1894,21 +1893,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -1938,21 +1937,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -1994,21 +1993,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -2031,21 +2030,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -2057,21 +2056,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -2099,21 +2098,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -2155,21 +2154,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -2192,21 +2191,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -2216,21 +2215,21 @@ public class aj implements am {
                                        var8 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
                                  }
@@ -2240,21 +2239,21 @@ public class aj implements am {
                            var8 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         }
                      }
@@ -2264,21 +2263,21 @@ public class aj implements am {
                var8 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 71;
-                  break;
-               case 1:
-                  var10008 = 81;
-                  break;
-               case 2:
-                  var10008 = 80;
-                  break;
-               case 3:
-                  var10008 = 68;
-                  break;
-               default:
-                  var10008 = 11;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 71;
+                     break;
+                  case 1:
+                     var10008 = 81;
+                     break;
+                  case 2:
+                     var10008 = 80;
+                     break;
+                  case 3:
+                     var10008 = 68;
+                     break;
+                  default:
+                     var10008 = 11;
                }
             }
 
@@ -2290,21 +2289,21 @@ public class aj implements am {
                      var10006 = var6;
                      var8 = var10004;
                      var10007 = var10004[var6];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 71;
-                        break;
-                     case 1:
-                        var10008 = 81;
-                        break;
-                     case 2:
-                        var10008 = 80;
-                        break;
-                     case 3:
-                        var10008 = 68;
-                        break;
-                     default:
-                        var10008 = 11;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 71;
+                           break;
+                        case 1:
+                           var10008 = 81;
+                           break;
+                        case 2:
+                           var10008 = 80;
+                           break;
+                        case 3:
+                           var10008 = 68;
+                           break;
+                        default:
+                           var10008 = 11;
                      }
                   } else {
                      if (var6 <= var1) {
@@ -2331,21 +2330,21 @@ public class aj implements am {
 
                            while(true) {
                               var10007 = var8[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 71;
-                                 break;
-                              case 1:
-                                 var10008 = 81;
-                                 break;
-                              case 2:
-                                 var10008 = 80;
-                                 break;
-                              case 3:
-                                 var10008 = 68;
-                                 break;
-                              default:
-                                 var10008 = 11;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 71;
+                                    break;
+                                 case 1:
+                                    var10008 = 81;
+                                    break;
+                                 case 2:
+                                    var10008 = 80;
+                                    break;
+                                 case 3:
+                                    var10008 = 68;
+                                    break;
+                                 default:
+                                    var10008 = 11;
                               }
 
                               var8[var10006] = (char)(var10007 ^ var10008);
@@ -2374,21 +2373,21 @@ public class aj implements am {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         } else {
                            var10004 = var10003;
@@ -2417,21 +2416,21 @@ public class aj implements am {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 71;
-                                       break;
-                                    case 1:
-                                       var10008 = 81;
-                                       break;
-                                    case 2:
-                                       var10008 = 80;
-                                       break;
-                                    case 3:
-                                       var10008 = 68;
-                                       break;
-                                    default:
-                                       var10008 = 11;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 71;
+                                          break;
+                                       case 1:
+                                          var10008 = 81;
+                                          break;
+                                       case 2:
+                                          var10008 = 80;
+                                          break;
+                                       case 3:
+                                          var10008 = 68;
+                                          break;
+                                       default:
+                                          var10008 = 11;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -2460,21 +2459,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  var10004 = var10003;
@@ -2503,21 +2502,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -2546,21 +2545,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -2590,21 +2589,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var9 = var5[var6];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10 = 68;
-                                                   break;
-                                                default:
-                                                   var10 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10 = 68;
+                                                      break;
+                                                   default:
+                                                      var10 = 11;
                                                 }
 
                                                 var5[var6] = (char)(var9 ^ var10);
@@ -2646,21 +2645,21 @@ public class aj implements am {
 
                                           while(true) {
                                              var9 = var5[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10 = 71;
-                                                break;
-                                             case 1:
-                                                var10 = 81;
-                                                break;
-                                             case 2:
-                                                var10 = 80;
-                                                break;
-                                             case 3:
-                                                var10 = 68;
-                                                break;
-                                             default:
-                                                var10 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10 = 68;
+                                                   break;
+                                                default:
+                                                   var10 = 11;
                                              }
 
                                              var5[var6] = (char)(var9 ^ var10);
@@ -2683,21 +2682,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -2709,21 +2708,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -2751,21 +2750,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -2807,21 +2806,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -2844,21 +2843,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -2868,21 +2867,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
 
@@ -2894,21 +2893,21 @@ public class aj implements am {
                                        var10006 = var6;
                                        var8 = var10004;
                                        var10007 = var10004[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        if (var6 <= var1) {
@@ -2935,21 +2934,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -2978,21 +2977,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -3022,21 +3021,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -3078,21 +3077,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -3115,21 +3114,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -3141,21 +3140,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -3183,21 +3182,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -3239,21 +3238,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -3276,21 +3275,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -3300,21 +3299,21 @@ public class aj implements am {
                                        var8 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
                                  }
@@ -3324,21 +3323,21 @@ public class aj implements am {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         }
 
@@ -3350,21 +3349,21 @@ public class aj implements am {
                                  var10006 = var6;
                                  var8 = var10004;
                                  var10007 = var10004[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  if (var6 <= var1) {
@@ -3391,21 +3390,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -3434,21 +3433,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -3477,21 +3476,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -3520,21 +3519,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -3564,21 +3563,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -3620,21 +3619,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -3657,21 +3656,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -3683,21 +3682,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -3725,21 +3724,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -3781,21 +3780,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -3818,21 +3817,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -3842,21 +3841,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -3868,21 +3867,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -3909,21 +3908,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var10007 = var8[var10006];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10008 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10008 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10008 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10008 = 68;
-                                                         break;
-                                                      default:
-                                                         var10008 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10008 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10008 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10008 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10008 = 68;
+                                                            break;
+                                                         default:
+                                                            var10008 = 11;
                                                       }
 
                                                       var8[var10006] = (char)(var10007 ^ var10008);
@@ -3952,21 +3951,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    var10004 = var10003;
@@ -3996,21 +3995,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -4052,21 +4051,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -4089,21 +4088,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
 
@@ -4115,21 +4114,21 @@ public class aj implements am {
                                                          var10006 = var6;
                                                          var8 = var10004;
                                                          var10007 = var10004[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       } else {
                                                          if (var6 <= var1) {
@@ -4157,21 +4156,21 @@ public class aj implements am {
 
                                                                while(true) {
                                                                   var9 = var5[var6];
-                                                                  switch(var1 % 5) {
-                                                                  case 0:
-                                                                     var10 = 71;
-                                                                     break;
-                                                                  case 1:
-                                                                     var10 = 81;
-                                                                     break;
-                                                                  case 2:
-                                                                     var10 = 80;
-                                                                     break;
-                                                                  case 3:
-                                                                     var10 = 68;
-                                                                     break;
-                                                                  default:
-                                                                     var10 = 11;
+                                                                  switch (var1 % 5) {
+                                                                     case 0:
+                                                                        var10 = 71;
+                                                                        break;
+                                                                     case 1:
+                                                                        var10 = 81;
+                                                                        break;
+                                                                     case 2:
+                                                                        var10 = 80;
+                                                                        break;
+                                                                     case 3:
+                                                                        var10 = 68;
+                                                                        break;
+                                                                     default:
+                                                                        var10 = 11;
                                                                   }
 
                                                                   var5[var6] = (char)(var9 ^ var10);
@@ -4213,21 +4212,21 @@ public class aj implements am {
 
                                                             while(true) {
                                                                var9 = var5[var6];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10 = 11;
                                                                }
 
                                                                var5[var6] = (char)(var9 ^ var10);
@@ -4250,21 +4249,21 @@ public class aj implements am {
                                                          var8 = var10004;
                                                          var10006 = var1;
                                                          var10007 = var10004[var1];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       }
                                                    }
@@ -4274,21 +4273,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -4298,21 +4297,21 @@ public class aj implements am {
                                  var8 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
                            }
@@ -4322,21 +4321,21 @@ public class aj implements am {
                      var8 = var10004;
                      var10006 = var1;
                      var10007 = var10004[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 71;
-                        break;
-                     case 1:
-                        var10008 = 81;
-                        break;
-                     case 2:
-                        var10008 = 80;
-                        break;
-                     case 3:
-                        var10008 = 68;
-                        break;
-                     default:
-                        var10008 = 11;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 71;
+                           break;
+                        case 1:
+                           var10008 = 81;
+                           break;
+                        case 2:
+                           var10008 = 80;
+                           break;
+                        case 3:
+                           var10008 = 68;
+                           break;
+                        default:
+                           var10008 = 11;
                      }
                   }
                }
@@ -4346,21 +4345,21 @@ public class aj implements am {
          var8 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 71;
-            break;
-         case 1:
-            var10008 = 81;
-            break;
-         case 2:
-            var10008 = 80;
-            break;
-         case 3:
-            var10008 = 68;
-            break;
-         default:
-            var10008 = 11;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 71;
+               break;
+            case 1:
+               var10008 = 81;
+               break;
+            case 2:
+               var10008 = 80;
+               break;
+            case 3:
+               var10008 = 68;
+               break;
+            default:
+               var10008 = 11;
          }
       }
 
@@ -4372,21 +4371,21 @@ public class aj implements am {
                var10006 = var6;
                var8 = var10004;
                var10007 = var10004[var6];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 71;
-                  break;
-               case 1:
-                  var10008 = 81;
-                  break;
-               case 2:
-                  var10008 = 80;
-                  break;
-               case 3:
-                  var10008 = 68;
-                  break;
-               default:
-                  var10008 = 11;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 71;
+                     break;
+                  case 1:
+                     var10008 = 81;
+                     break;
+                  case 2:
+                     var10008 = 80;
+                     break;
+                  case 3:
+                     var10008 = 68;
+                     break;
+                  default:
+                     var10008 = 11;
                }
             } else {
                if (var6 <= var1) {
@@ -4413,21 +4412,21 @@ public class aj implements am {
 
                      while(true) {
                         var10007 = var8[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 71;
-                           break;
-                        case 1:
-                           var10008 = 81;
-                           break;
-                        case 2:
-                           var10008 = 80;
-                           break;
-                        case 3:
-                           var10008 = 68;
-                           break;
-                        default:
-                           var10008 = 11;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 71;
+                              break;
+                           case 1:
+                              var10008 = 81;
+                              break;
+                           case 2:
+                              var10008 = 80;
+                              break;
+                           case 3:
+                              var10008 = 68;
+                              break;
+                           default:
+                              var10008 = 11;
                         }
 
                         var8[var10006] = (char)(var10007 ^ var10008);
@@ -4456,21 +4455,21 @@ public class aj implements am {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 71;
-                        break;
-                     case 1:
-                        var10008 = 81;
-                        break;
-                     case 2:
-                        var10008 = 80;
-                        break;
-                     case 3:
-                        var10008 = 68;
-                        break;
-                     default:
-                        var10008 = 11;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 71;
+                           break;
+                        case 1:
+                           var10008 = 81;
+                           break;
+                        case 2:
+                           var10008 = 80;
+                           break;
+                        case 3:
+                           var10008 = 68;
+                           break;
+                        default:
+                           var10008 = 11;
                      }
                   } else {
                      var10004 = var10003;
@@ -4499,21 +4498,21 @@ public class aj implements am {
 
                            while(true) {
                               var10007 = var8[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 71;
-                                 break;
-                              case 1:
-                                 var10008 = 81;
-                                 break;
-                              case 2:
-                                 var10008 = 80;
-                                 break;
-                              case 3:
-                                 var10008 = 68;
-                                 break;
-                              default:
-                                 var10008 = 11;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 71;
+                                    break;
+                                 case 1:
+                                    var10008 = 81;
+                                    break;
+                                 case 2:
+                                    var10008 = 80;
+                                    break;
+                                 case 3:
+                                    var10008 = 68;
+                                    break;
+                                 default:
+                                    var10008 = 11;
                               }
 
                               var8[var10006] = (char)(var10007 ^ var10008);
@@ -4542,21 +4541,21 @@ public class aj implements am {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         } else {
                            var10004 = var10003;
@@ -4585,21 +4584,21 @@ public class aj implements am {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 71;
-                                       break;
-                                    case 1:
-                                       var10008 = 81;
-                                       break;
-                                    case 2:
-                                       var10008 = 80;
-                                       break;
-                                    case 3:
-                                       var10008 = 68;
-                                       break;
-                                    default:
-                                       var10008 = 11;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 71;
+                                          break;
+                                       case 1:
+                                          var10008 = 81;
+                                          break;
+                                       case 2:
+                                          var10008 = 80;
+                                          break;
+                                       case 3:
+                                          var10008 = 68;
+                                          break;
+                                       default:
+                                          var10008 = 11;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -4628,21 +4627,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  var10004 = var10003;
@@ -4671,21 +4670,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -4714,21 +4713,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -4758,21 +4757,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var9 = var5[var6];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10 = 68;
-                                                   break;
-                                                default:
-                                                   var10 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10 = 68;
+                                                      break;
+                                                   default:
+                                                      var10 = 11;
                                                 }
 
                                                 var5[var6] = (char)(var9 ^ var10);
@@ -4814,21 +4813,21 @@ public class aj implements am {
 
                                           while(true) {
                                              var9 = var5[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10 = 71;
-                                                break;
-                                             case 1:
-                                                var10 = 81;
-                                                break;
-                                             case 2:
-                                                var10 = 80;
-                                                break;
-                                             case 3:
-                                                var10 = 68;
-                                                break;
-                                             default:
-                                                var10 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10 = 68;
+                                                   break;
+                                                default:
+                                                   var10 = 11;
                                              }
 
                                              var5[var6] = (char)(var9 ^ var10);
@@ -4851,21 +4850,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -4877,21 +4876,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -4919,21 +4918,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -4975,21 +4974,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -5012,21 +5011,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -5036,21 +5035,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
 
@@ -5062,21 +5061,21 @@ public class aj implements am {
                                        var10006 = var6;
                                        var8 = var10004;
                                        var10007 = var10004[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        if (var6 <= var1) {
@@ -5103,21 +5102,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -5146,21 +5145,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -5190,21 +5189,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -5246,21 +5245,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -5283,21 +5282,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -5309,21 +5308,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -5351,21 +5350,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -5407,21 +5406,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -5444,21 +5443,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -5468,21 +5467,21 @@ public class aj implements am {
                                        var8 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
                                  }
@@ -5492,21 +5491,21 @@ public class aj implements am {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         }
 
@@ -5518,21 +5517,21 @@ public class aj implements am {
                                  var10006 = var6;
                                  var8 = var10004;
                                  var10007 = var10004[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  if (var6 <= var1) {
@@ -5559,21 +5558,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -5602,21 +5601,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -5645,21 +5644,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -5688,21 +5687,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -5732,21 +5731,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -5788,21 +5787,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -5825,21 +5824,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -5851,21 +5850,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -5893,21 +5892,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -5949,21 +5948,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -5986,21 +5985,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -6010,21 +6009,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -6036,21 +6035,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -6077,21 +6076,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var10007 = var8[var10006];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10008 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10008 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10008 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10008 = 68;
-                                                         break;
-                                                      default:
-                                                         var10008 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10008 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10008 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10008 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10008 = 68;
+                                                            break;
+                                                         default:
+                                                            var10008 = 11;
                                                       }
 
                                                       var8[var10006] = (char)(var10007 ^ var10008);
@@ -6120,21 +6119,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    var10004 = var10003;
@@ -6164,21 +6163,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -6220,21 +6219,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -6257,21 +6256,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
 
@@ -6283,21 +6282,21 @@ public class aj implements am {
                                                          var10006 = var6;
                                                          var8 = var10004;
                                                          var10007 = var10004[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       } else {
                                                          if (var6 <= var1) {
@@ -6325,21 +6324,21 @@ public class aj implements am {
 
                                                                while(true) {
                                                                   var9 = var5[var6];
-                                                                  switch(var1 % 5) {
-                                                                  case 0:
-                                                                     var10 = 71;
-                                                                     break;
-                                                                  case 1:
-                                                                     var10 = 81;
-                                                                     break;
-                                                                  case 2:
-                                                                     var10 = 80;
-                                                                     break;
-                                                                  case 3:
-                                                                     var10 = 68;
-                                                                     break;
-                                                                  default:
-                                                                     var10 = 11;
+                                                                  switch (var1 % 5) {
+                                                                     case 0:
+                                                                        var10 = 71;
+                                                                        break;
+                                                                     case 1:
+                                                                        var10 = 81;
+                                                                        break;
+                                                                     case 2:
+                                                                        var10 = 80;
+                                                                        break;
+                                                                     case 3:
+                                                                        var10 = 68;
+                                                                        break;
+                                                                     default:
+                                                                        var10 = 11;
                                                                   }
 
                                                                   var5[var6] = (char)(var9 ^ var10);
@@ -6381,21 +6380,21 @@ public class aj implements am {
 
                                                             while(true) {
                                                                var9 = var5[var6];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10 = 11;
                                                                }
 
                                                                var5[var6] = (char)(var9 ^ var10);
@@ -6418,21 +6417,21 @@ public class aj implements am {
                                                          var8 = var10004;
                                                          var10006 = var1;
                                                          var10007 = var10004[var1];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       }
                                                    }
@@ -6442,21 +6441,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -6466,21 +6465,21 @@ public class aj implements am {
                                  var8 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
                            }
@@ -6490,21 +6489,21 @@ public class aj implements am {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 71;
-                        break;
-                     case 1:
-                        var10008 = 81;
-                        break;
-                     case 2:
-                        var10008 = 80;
-                        break;
-                     case 3:
-                        var10008 = 68;
-                        break;
-                     default:
-                        var10008 = 11;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 71;
+                           break;
+                        case 1:
+                           var10008 = 81;
+                           break;
+                        case 2:
+                           var10008 = 80;
+                           break;
+                        case 3:
+                           var10008 = 68;
+                           break;
+                        default:
+                           var10008 = 11;
                      }
                   }
 
@@ -6516,21 +6515,21 @@ public class aj implements am {
                            var10006 = var6;
                            var8 = var10004;
                            var10007 = var10004[var6];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         } else {
                            if (var6 <= var1) {
@@ -6557,21 +6556,21 @@ public class aj implements am {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 71;
-                                       break;
-                                    case 1:
-                                       var10008 = 81;
-                                       break;
-                                    case 2:
-                                       var10008 = 80;
-                                       break;
-                                    case 3:
-                                       var10008 = 68;
-                                       break;
-                                    default:
-                                       var10008 = 11;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 71;
+                                          break;
+                                       case 1:
+                                          var10008 = 81;
+                                          break;
+                                       case 2:
+                                          var10008 = 80;
+                                          break;
+                                       case 3:
+                                          var10008 = 68;
+                                          break;
+                                       default:
+                                          var10008 = 11;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -6600,21 +6599,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               } else {
                                  var10004 = var10003;
@@ -6643,21 +6642,21 @@ public class aj implements am {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 71;
-                                             break;
-                                          case 1:
-                                             var10008 = 81;
-                                             break;
-                                          case 2:
-                                             var10008 = 80;
-                                             break;
-                                          case 3:
-                                             var10008 = 68;
-                                             break;
-                                          default:
-                                             var10008 = 11;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 71;
+                                                break;
+                                             case 1:
+                                                var10008 = 81;
+                                                break;
+                                             case 2:
+                                                var10008 = 80;
+                                                break;
+                                             case 3:
+                                                var10008 = 68;
+                                                break;
+                                             default:
+                                                var10008 = 11;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -6686,21 +6685,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        var10004 = var10003;
@@ -6729,21 +6728,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -6772,21 +6771,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -6816,21 +6815,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var9 = var5[var6];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10 = 68;
-                                                         break;
-                                                      default:
-                                                         var10 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10 = 68;
+                                                            break;
+                                                         default:
+                                                            var10 = 11;
                                                       }
 
                                                       var5[var6] = (char)(var9 ^ var10);
@@ -6872,21 +6871,21 @@ public class aj implements am {
 
                                                 while(true) {
                                                    var9 = var5[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10 = 68;
-                                                      break;
-                                                   default:
-                                                      var10 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10 = 68;
+                                                         break;
+                                                      default:
+                                                         var10 = 11;
                                                    }
 
                                                    var5[var6] = (char)(var9 ^ var10);
@@ -6909,21 +6908,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -6935,21 +6934,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -6977,21 +6976,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -7033,21 +7032,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -7070,21 +7069,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -7094,21 +7093,21 @@ public class aj implements am {
                                        var8 = var10003;
                                        var10006 = var1;
                                        var10007 = var10003[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
 
@@ -7120,21 +7119,21 @@ public class aj implements am {
                                              var10006 = var6;
                                              var8 = var10004;
                                              var10007 = var10004[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              if (var6 <= var1) {
@@ -7161,21 +7160,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var10007 = var8[var10006];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10008 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10008 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10008 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10008 = 68;
-                                                         break;
-                                                      default:
-                                                         var10008 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10008 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10008 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10008 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10008 = 68;
+                                                            break;
+                                                         default:
+                                                            var10008 = 11;
                                                       }
 
                                                       var8[var10006] = (char)(var10007 ^ var10008);
@@ -7204,21 +7203,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    var10004 = var10003;
@@ -7248,21 +7247,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -7304,21 +7303,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -7341,21 +7340,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
 
@@ -7367,21 +7366,21 @@ public class aj implements am {
                                                          var10006 = var6;
                                                          var8 = var10004;
                                                          var10007 = var10004[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       } else {
                                                          if (var6 <= var1) {
@@ -7409,21 +7408,21 @@ public class aj implements am {
 
                                                                while(true) {
                                                                   var9 = var5[var6];
-                                                                  switch(var1 % 5) {
-                                                                  case 0:
-                                                                     var10 = 71;
-                                                                     break;
-                                                                  case 1:
-                                                                     var10 = 81;
-                                                                     break;
-                                                                  case 2:
-                                                                     var10 = 80;
-                                                                     break;
-                                                                  case 3:
-                                                                     var10 = 68;
-                                                                     break;
-                                                                  default:
-                                                                     var10 = 11;
+                                                                  switch (var1 % 5) {
+                                                                     case 0:
+                                                                        var10 = 71;
+                                                                        break;
+                                                                     case 1:
+                                                                        var10 = 81;
+                                                                        break;
+                                                                     case 2:
+                                                                        var10 = 80;
+                                                                        break;
+                                                                     case 3:
+                                                                        var10 = 68;
+                                                                        break;
+                                                                     default:
+                                                                        var10 = 11;
                                                                   }
 
                                                                   var5[var6] = (char)(var9 ^ var10);
@@ -7465,21 +7464,21 @@ public class aj implements am {
 
                                                             while(true) {
                                                                var9 = var5[var6];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10 = 11;
                                                                }
 
                                                                var5[var6] = (char)(var9 ^ var10);
@@ -7502,21 +7501,21 @@ public class aj implements am {
                                                          var8 = var10004;
                                                          var10006 = var1;
                                                          var10007 = var10004[var1];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       }
                                                    }
@@ -7526,21 +7525,21 @@ public class aj implements am {
                                              var8 = var10004;
                                              var10006 = var1;
                                              var10007 = var10004[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
                                        }
@@ -7550,21 +7549,21 @@ public class aj implements am {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 71;
-                                    break;
-                                 case 1:
-                                    var10008 = 81;
-                                    break;
-                                 case 2:
-                                    var10008 = 80;
-                                    break;
-                                 case 3:
-                                    var10008 = 68;
-                                    break;
-                                 default:
-                                    var10008 = 11;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 71;
+                                       break;
+                                    case 1:
+                                       var10008 = 81;
+                                       break;
+                                    case 2:
+                                       var10008 = 80;
+                                       break;
+                                    case 3:
+                                       var10008 = 68;
+                                       break;
+                                    default:
+                                       var10008 = 11;
                                  }
                               }
 
@@ -7576,21 +7575,21 @@ public class aj implements am {
                                        var10006 = var6;
                                        var8 = var10004;
                                        var10007 = var10004[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     } else {
                                        if (var6 <= var1) {
@@ -7617,21 +7616,21 @@ public class aj implements am {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 71;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 81;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 80;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 68;
-                                                   break;
-                                                default:
-                                                   var10008 = 11;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 71;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 81;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 80;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 68;
+                                                      break;
+                                                   default:
+                                                      var10008 = 11;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -7660,21 +7659,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           } else {
                                              var10004 = var10003;
@@ -7703,21 +7702,21 @@ public class aj implements am {
 
                                                    while(true) {
                                                       var10007 = var8[var10006];
-                                                      switch(var1 % 5) {
-                                                      case 0:
-                                                         var10008 = 71;
-                                                         break;
-                                                      case 1:
-                                                         var10008 = 81;
-                                                         break;
-                                                      case 2:
-                                                         var10008 = 80;
-                                                         break;
-                                                      case 3:
-                                                         var10008 = 68;
-                                                         break;
-                                                      default:
-                                                         var10008 = 11;
+                                                      switch (var1 % 5) {
+                                                         case 0:
+                                                            var10008 = 71;
+                                                            break;
+                                                         case 1:
+                                                            var10008 = 81;
+                                                            break;
+                                                         case 2:
+                                                            var10008 = 80;
+                                                            break;
+                                                         case 3:
+                                                            var10008 = 68;
+                                                            break;
+                                                         default:
+                                                            var10008 = 11;
                                                       }
 
                                                       var8[var10006] = (char)(var10007 ^ var10008);
@@ -7746,21 +7745,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    var10004 = var10003;
@@ -7790,21 +7789,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var9 = var5[var6];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10 = 68;
-                                                               break;
-                                                            default:
-                                                               var10 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10 = 11;
                                                             }
 
                                                             var5[var6] = (char)(var9 ^ var10);
@@ -7846,21 +7845,21 @@ public class aj implements am {
 
                                                       while(true) {
                                                          var9 = var5[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10 = 68;
-                                                            break;
-                                                         default:
-                                                            var10 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10 = 68;
+                                                               break;
+                                                            default:
+                                                               var10 = 11;
                                                          }
 
                                                          var5[var6] = (char)(var9 ^ var10);
@@ -7883,21 +7882,21 @@ public class aj implements am {
                                                    var8 = var10003;
                                                    var10006 = var1;
                                                    var10007 = var10003[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
 
@@ -7909,21 +7908,21 @@ public class aj implements am {
                                                          var10006 = var6;
                                                          var8 = var10004;
                                                          var10007 = var10004[var6];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       } else {
                                                          if (var6 <= var1) {
@@ -7951,21 +7950,21 @@ public class aj implements am {
 
                                                                while(true) {
                                                                   var9 = var5[var6];
-                                                                  switch(var1 % 5) {
-                                                                  case 0:
-                                                                     var10 = 71;
-                                                                     break;
-                                                                  case 1:
-                                                                     var10 = 81;
-                                                                     break;
-                                                                  case 2:
-                                                                     var10 = 80;
-                                                                     break;
-                                                                  case 3:
-                                                                     var10 = 68;
-                                                                     break;
-                                                                  default:
-                                                                     var10 = 11;
+                                                                  switch (var1 % 5) {
+                                                                     case 0:
+                                                                        var10 = 71;
+                                                                        break;
+                                                                     case 1:
+                                                                        var10 = 81;
+                                                                        break;
+                                                                     case 2:
+                                                                        var10 = 80;
+                                                                        break;
+                                                                     case 3:
+                                                                        var10 = 68;
+                                                                        break;
+                                                                     default:
+                                                                        var10 = 11;
                                                                   }
 
                                                                   var5[var6] = (char)(var9 ^ var10);
@@ -8007,21 +8006,21 @@ public class aj implements am {
 
                                                             while(true) {
                                                                var9 = var5[var6];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10 = 11;
                                                                }
 
                                                                var5[var6] = (char)(var9 ^ var10);
@@ -8044,21 +8043,21 @@ public class aj implements am {
                                                          var8 = var10004;
                                                          var10006 = var1;
                                                          var10007 = var10004[var1];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       }
                                                    }
@@ -8068,21 +8067,21 @@ public class aj implements am {
                                              var8 = var10003;
                                              var10006 = var1;
                                              var10007 = var10003[var1];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10008 = 71;
-                                                break;
-                                             case 1:
-                                                var10008 = 81;
-                                                break;
-                                             case 2:
-                                                var10008 = 80;
-                                                break;
-                                             case 3:
-                                                var10008 = 68;
-                                                break;
-                                             default:
-                                                var10008 = 11;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10008 = 71;
+                                                   break;
+                                                case 1:
+                                                   var10008 = 81;
+                                                   break;
+                                                case 2:
+                                                   var10008 = 80;
+                                                   break;
+                                                case 3:
+                                                   var10008 = 68;
+                                                   break;
+                                                default:
+                                                   var10008 = 11;
                                              }
                                           }
 
@@ -8094,21 +8093,21 @@ public class aj implements am {
                                                    var10006 = var6;
                                                    var8 = var10004;
                                                    var10007 = var10004[var6];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 } else {
                                                    if (var6 <= var1) {
@@ -8135,21 +8134,21 @@ public class aj implements am {
 
                                                          while(true) {
                                                             var10007 = var8[var10006];
-                                                            switch(var1 % 5) {
-                                                            case 0:
-                                                               var10008 = 71;
-                                                               break;
-                                                            case 1:
-                                                               var10008 = 81;
-                                                               break;
-                                                            case 2:
-                                                               var10008 = 80;
-                                                               break;
-                                                            case 3:
-                                                               var10008 = 68;
-                                                               break;
-                                                            default:
-                                                               var10008 = 11;
+                                                            switch (var1 % 5) {
+                                                               case 0:
+                                                                  var10008 = 71;
+                                                                  break;
+                                                               case 1:
+                                                                  var10008 = 81;
+                                                                  break;
+                                                               case 2:
+                                                                  var10008 = 80;
+                                                                  break;
+                                                               case 3:
+                                                                  var10008 = 68;
+                                                                  break;
+                                                               default:
+                                                                  var10008 = 11;
                                                             }
 
                                                             var8[var10006] = (char)(var10007 ^ var10008);
@@ -8178,21 +8177,21 @@ public class aj implements am {
                                                          var8 = var10003;
                                                          var10006 = var1;
                                                          var10007 = var10003[var1];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       } else {
                                                          var10004 = var10003;
@@ -8222,21 +8221,21 @@ public class aj implements am {
 
                                                                while(true) {
                                                                   var9 = var5[var6];
-                                                                  switch(var1 % 5) {
-                                                                  case 0:
-                                                                     var10 = 71;
-                                                                     break;
-                                                                  case 1:
-                                                                     var10 = 81;
-                                                                     break;
-                                                                  case 2:
-                                                                     var10 = 80;
-                                                                     break;
-                                                                  case 3:
-                                                                     var10 = 68;
-                                                                     break;
-                                                                  default:
-                                                                     var10 = 11;
+                                                                  switch (var1 % 5) {
+                                                                     case 0:
+                                                                        var10 = 71;
+                                                                        break;
+                                                                     case 1:
+                                                                        var10 = 81;
+                                                                        break;
+                                                                     case 2:
+                                                                        var10 = 80;
+                                                                        break;
+                                                                     case 3:
+                                                                        var10 = 68;
+                                                                        break;
+                                                                     default:
+                                                                        var10 = 11;
                                                                   }
 
                                                                   var5[var6] = (char)(var9 ^ var10);
@@ -8278,21 +8277,21 @@ public class aj implements am {
 
                                                             while(true) {
                                                                var9 = var5[var6];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10 = 11;
                                                                }
 
                                                                var5[var6] = (char)(var9 ^ var10);
@@ -8315,21 +8314,21 @@ public class aj implements am {
                                                          var8 = var10003;
                                                          var10006 = var1;
                                                          var10007 = var10003[var1];
-                                                         switch(var1 % 5) {
-                                                         case 0:
-                                                            var10008 = 71;
-                                                            break;
-                                                         case 1:
-                                                            var10008 = 81;
-                                                            break;
-                                                         case 2:
-                                                            var10008 = 80;
-                                                            break;
-                                                         case 3:
-                                                            var10008 = 68;
-                                                            break;
-                                                         default:
-                                                            var10008 = 11;
+                                                         switch (var1 % 5) {
+                                                            case 0:
+                                                               var10008 = 71;
+                                                               break;
+                                                            case 1:
+                                                               var10008 = 81;
+                                                               break;
+                                                            case 2:
+                                                               var10008 = 80;
+                                                               break;
+                                                            case 3:
+                                                               var10008 = 68;
+                                                               break;
+                                                            default:
+                                                               var10008 = 11;
                                                          }
                                                       }
 
@@ -8341,21 +8340,21 @@ public class aj implements am {
                                                                var10006 = var6;
                                                                var8 = var10004;
                                                                var10007 = var10004[var6];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10008 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10008 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10008 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10008 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10008 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10008 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10008 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10008 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10008 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10008 = 11;
                                                                }
                                                             } else {
                                                                if (var6 <= var1) {
@@ -8383,21 +8382,21 @@ public class aj implements am {
 
                                                                      while(true) {
                                                                         var9 = var5[var6];
-                                                                        switch(var1 % 5) {
-                                                                        case 0:
-                                                                           var10 = 71;
-                                                                           break;
-                                                                        case 1:
-                                                                           var10 = 81;
-                                                                           break;
-                                                                        case 2:
-                                                                           var10 = 80;
-                                                                           break;
-                                                                        case 3:
-                                                                           var10 = 68;
-                                                                           break;
-                                                                        default:
-                                                                           var10 = 11;
+                                                                        switch (var1 % 5) {
+                                                                           case 0:
+                                                                              var10 = 71;
+                                                                              break;
+                                                                           case 1:
+                                                                              var10 = 81;
+                                                                              break;
+                                                                           case 2:
+                                                                              var10 = 80;
+                                                                              break;
+                                                                           case 3:
+                                                                              var10 = 68;
+                                                                              break;
+                                                                           default:
+                                                                              var10 = 11;
                                                                         }
 
                                                                         var5[var6] = (char)(var9 ^ var10);
@@ -8439,21 +8438,21 @@ public class aj implements am {
 
                                                                   while(true) {
                                                                      var9 = var5[var6];
-                                                                     switch(var1 % 5) {
-                                                                     case 0:
-                                                                        var10 = 71;
-                                                                        break;
-                                                                     case 1:
-                                                                        var10 = 81;
-                                                                        break;
-                                                                     case 2:
-                                                                        var10 = 80;
-                                                                        break;
-                                                                     case 3:
-                                                                        var10 = 68;
-                                                                        break;
-                                                                     default:
-                                                                        var10 = 11;
+                                                                     switch (var1 % 5) {
+                                                                        case 0:
+                                                                           var10 = 71;
+                                                                           break;
+                                                                        case 1:
+                                                                           var10 = 81;
+                                                                           break;
+                                                                        case 2:
+                                                                           var10 = 80;
+                                                                           break;
+                                                                        case 3:
+                                                                           var10 = 68;
+                                                                           break;
+                                                                        default:
+                                                                           var10 = 11;
                                                                      }
 
                                                                      var5[var6] = (char)(var9 ^ var10);
@@ -8476,21 +8475,21 @@ public class aj implements am {
                                                                var8 = var10004;
                                                                var10006 = var1;
                                                                var10007 = var10004[var1];
-                                                               switch(var1 % 5) {
-                                                               case 0:
-                                                                  var10008 = 71;
-                                                                  break;
-                                                               case 1:
-                                                                  var10008 = 81;
-                                                                  break;
-                                                               case 2:
-                                                                  var10008 = 80;
-                                                                  break;
-                                                               case 3:
-                                                                  var10008 = 68;
-                                                                  break;
-                                                               default:
-                                                                  var10008 = 11;
+                                                               switch (var1 % 5) {
+                                                                  case 0:
+                                                                     var10008 = 71;
+                                                                     break;
+                                                                  case 1:
+                                                                     var10008 = 81;
+                                                                     break;
+                                                                  case 2:
+                                                                     var10008 = 80;
+                                                                     break;
+                                                                  case 3:
+                                                                     var10008 = 68;
+                                                                     break;
+                                                                  default:
+                                                                     var10008 = 11;
                                                                }
                                                             }
                                                          }
@@ -8500,21 +8499,21 @@ public class aj implements am {
                                                    var8 = var10004;
                                                    var10006 = var1;
                                                    var10007 = var10004[var1];
-                                                   switch(var1 % 5) {
-                                                   case 0:
-                                                      var10008 = 71;
-                                                      break;
-                                                   case 1:
-                                                      var10008 = 81;
-                                                      break;
-                                                   case 2:
-                                                      var10008 = 80;
-                                                      break;
-                                                   case 3:
-                                                      var10008 = 68;
-                                                      break;
-                                                   default:
-                                                      var10008 = 11;
+                                                   switch (var1 % 5) {
+                                                      case 0:
+                                                         var10008 = 71;
+                                                         break;
+                                                      case 1:
+                                                         var10008 = 81;
+                                                         break;
+                                                      case 2:
+                                                         var10008 = 80;
+                                                         break;
+                                                      case 3:
+                                                         var10008 = 68;
+                                                         break;
+                                                      default:
+                                                         var10008 = 11;
                                                    }
                                                 }
                                              }
@@ -8524,21 +8523,21 @@ public class aj implements am {
                                        var8 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 71;
-                                          break;
-                                       case 1:
-                                          var10008 = 81;
-                                          break;
-                                       case 2:
-                                          var10008 = 80;
-                                          break;
-                                       case 3:
-                                          var10008 = 68;
-                                          break;
-                                       default:
-                                          var10008 = 11;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 71;
+                                             break;
+                                          case 1:
+                                             var10008 = 81;
+                                             break;
+                                          case 2:
+                                             var10008 = 80;
+                                             break;
+                                          case 3:
+                                             var10008 = 68;
+                                             break;
+                                          default:
+                                             var10008 = 11;
                                        }
                                     }
                                  }
@@ -8548,21 +8547,21 @@ public class aj implements am {
                            var8 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 71;
-                              break;
-                           case 1:
-                              var10008 = 81;
-                              break;
-                           case 2:
-                              var10008 = 80;
-                              break;
-                           case 3:
-                              var10008 = 68;
-                              break;
-                           default:
-                              var10008 = 11;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 71;
+                                 break;
+                              case 1:
+                                 var10008 = 81;
+                                 break;
+                              case 2:
+                                 var10008 = 80;
+                                 break;
+                              case 3:
+                                 var10008 = 68;
+                                 break;
+                              default:
+                                 var10008 = 11;
                            }
                         }
                      }
@@ -8572,21 +8571,21 @@ public class aj implements am {
                var8 = var10004;
                var10006 = var1;
                var10007 = var10004[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 71;
-                  break;
-               case 1:
-                  var10008 = 81;
-                  break;
-               case 2:
-                  var10008 = 80;
-                  break;
-               case 3:
-                  var10008 = 68;
-                  break;
-               default:
-                  var10008 = 11;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 71;
+                     break;
+                  case 1:
+                     var10008 = 81;
+                     break;
+                  case 2:
+                     var10008 = 80;
+                     break;
+                  case 3:
+                     var10008 = 68;
+                     break;
+                  default:
+                     var10008 = 11;
                }
             }
          }

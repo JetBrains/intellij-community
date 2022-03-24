@@ -2,30 +2,218 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.JUnit5AssertionsConverterInspectionTestBase
-import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.testFramework.TestDataPath
+import com.intellij.codeInspection.tests.ULanguage
 
-private const val inspectionPath = "/codeInspection/junit5assertionsconverter"
-
-@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase() {
-  override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
+  fun `test AssertArrayEquals`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import static org.junit.Assert.*;
 
-  override val fileExt: String = "java"
+      import org.junit.jupiter.api.Test;
 
-  fun `test AssertArrayEquals`() = testQuickFixAll("AssertArrayEquals")
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          assert<caret>ArrayEquals(new Object[] {}, null);
+        }
+      }
+    """.trimIndent(), """
+      import static org.junit.Assert.*;
 
-  fun `test AssertArrayEquals message`() = testQuickFixAll("AssertArrayEqualsMessage")
+      import org.junit.jupiter.api.Assertions;
+      import org.junit.jupiter.api.Test;
 
-  fun `test AssertEquals`() = testQuickFixAll("AssertEquals")
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          Assertions.assertArrayEquals(new Object[] {}, null);
+        }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
+  }
 
-  fun `test AssertNotEqualsWithDelta`() = testQuickFixUnavailableAll("AssertNotEqualsWithDelta")
+  fun `test AssertArrayEquals message`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import static org.junit.Assert.*;
 
-  fun `test AssertThat`() = testQuickFixAll("AssertThat")
+      import org.junit.jupiter.api.Test;
 
-  fun `test AssertTrue`() = testQuickFixAll("AssertTrue")
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          assert<caret>ArrayEquals("message", new Object[] {}, null);
+        }
+      }
+    """.trimIndent(), """
+      import static org.junit.Assert.*;
 
-  fun `test AssertTrue method reference`() = testQuickFixAll("AssertTrueMethodRef")
+      import org.junit.jupiter.api.Assertions;
+      import org.junit.jupiter.api.Test;
 
-  fun `test AssumeTrue`() = testQuickFixAll("AssumeTrue")
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          Assertions.assertArrayEquals(new Object[] {}, null, "message");
+        }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
+  }
+
+  fun `test AssertEquals`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import static org.junit.Assert.*;
+
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          assert<caret>Equals("message", "Expected", "actual");
+        }
+      }
+    """.trimIndent(), """
+      import static org.junit.Assert.*;
+
+      import org.junit.jupiter.api.Assertions;
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          Assertions.assertEquals("Expected", "actual", "message");
+        }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
+  }
+
+  fun `test AssertNotEqualsWithDelta`() {
+    myFixture.testQuickFixUnavailable(ULanguage.JAVA, """
+      import static org.junit.Assert.*;
+
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          assert<caret>NotEquals(1, 1, 1);
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test AssertThat`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import static org.junit.Assert.*;
+
+      import org.hamcrest.Matcher;
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst(Matcher matcher) throws Exception {
+          assert<caret>That("reason", "null", matcher);
+        }
+      }
+    """.trimIndent(), """
+      import static org.junit.Assert.*;
+
+      import org.hamcrest.Matcher;
+      import org.hamcrest.MatcherAssert;
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst(Matcher matcher) throws Exception {
+          MatcherAssert.assertThat("reason", "null", matcher);
+        }
+      }
+    """.trimIndent(), "Replace with 'org.hamcrest.MatcherAssert' method call")
+  }
+
+  fun `test AssertTrue`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import static org.junit.Assert.*;
+
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          assert<caret>True("message", false);
+        }
+      }
+    """.trimIndent(), """
+      import static org.junit.Assert.*;
+
+      import org.junit.jupiter.api.Assertions;
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          Assertions.assertTrue(false, "message");
+        }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
+  }
+
+  fun `test AssertTrue method reference`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import org.junit.Assert;
+      import org.junit.jupiter.api.Test;
+      
+      import java.util.ArrayList;
+      import java.util.List;
+      
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          List<Boolean> booleanList = new ArrayList<>();
+          booleanList.forEach(Assert::assert<caret>True);
+        }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.jupiter.api.Assertions;
+      import org.junit.jupiter.api.Test;
+
+      import java.util.ArrayList;
+      import java.util.List;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          List<Boolean> booleanList = new ArrayList<>();
+          booleanList.forEach(Assertions::assertTrue);
+        }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assertions' method call")
+  }
+
+  fun `test AssumeTrue`() {
+    myFixture.testQuickFix(ULanguage.JAVA, """
+      import static org.junit.Assume.*;
+
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          assume<caret>True("message", false);
+        }
+      }
+    """.trimIndent(), """
+      import static org.junit.Assume.*;
+
+      import org.junit.jupiter.api.Assumptions;
+      import org.junit.jupiter.api.Test;
+
+      class Test1 {
+        @Test
+        public void testFirst() throws Exception {
+          Assumptions.assumeTrue(false, "message");
+        }
+      }
+    """.trimIndent(), "Replace with 'org.junit.jupiter.api.Assumptions' method call")
+  }
 }

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +52,9 @@ public class MyLookupExpression extends Expression {
     if (names == null) {
       if (elementToRename == null) return LookupElement.EMPTY_ARRAY;
       names = new LinkedHashSet<>();
-      NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, names);
+      final LinkedHashSet<String> finalNames = names;
+      ActionUtil.underModalProgress(elementToRename.getProject(), RefactoringBundle.message("progress.title.collecting.suggested.names"),
+                                    () -> NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, finalNames));
     }
     final LookupElement[] lookupElements = new LookupElement[names.size()];
     final Iterator<String> iterator = names.iterator();

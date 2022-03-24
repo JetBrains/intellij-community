@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase
@@ -10,8 +10,8 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
 
@@ -89,9 +89,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
-    expected.event.addData("type", "close")
-    expected.event.addData("state", 1)
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2",
+      data = hashMapOf("type" to "close", "state" to 1))
 
     testLogger({ logger -> logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
@@ -102,10 +101,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("type" to "close", "state" to 1))
     expected.event.increment()
-    expected.event.addData("type", "close")
-    expected.event.addData("state", 1)
 
     testLogger(
       { logger ->
@@ -249,10 +246,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui", groupVersion = "3")
-    expected.event.addData("name", "myOption")
-    expected.event.addData("value", true)
-    expected.event.addData("default", false)
+    val expected = newStateEvent("settings", "ui", groupVersion = "3",
+      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
 
     testLogger({ logger -> logger.logAsync(EventLogGroup("settings", 3), "ui", data, true) }, expected)
   }
@@ -264,10 +259,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui", groupVersion = "5")
-    expected.event.addData("name", "myOption")
-    expected.event.addData("value", true)
-    expected.event.addData("default", false)
+    val expected = newStateEvent("settings", "ui", groupVersion = "5",
+      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
 
     testLogger(
       { logger ->

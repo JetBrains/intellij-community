@@ -25,7 +25,7 @@ import java.io.File;
 
 public class DetailController {
   private final MasterController myMasterController;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private DetailView myDetailView;
   private ItemWrapper mySelectedItem;
 

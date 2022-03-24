@@ -43,7 +43,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
 
     override fun getDialogTitle() = KotlinBundle.message("text.rename.parameters.title")
 
-    override fun getDialogDescription() = RefactoringBundle.message("rename.parameters.hierarchy")
+    override fun getDialogDescription() = RefactoringBundle.message("title.rename.parameters.hierarchy")
 
     override fun entityName() = KotlinBundle.message("text.parameter")
 

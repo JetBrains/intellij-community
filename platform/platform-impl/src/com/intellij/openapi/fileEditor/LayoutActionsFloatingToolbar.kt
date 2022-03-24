@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 
@@ -12,7 +12,7 @@ import com.intellij.ui.JBColor
 import java.awt.*
 import javax.swing.JComponent
 
-internal class LayoutActionsFloatingToolbar(
+class LayoutActionsFloatingToolbar(
   parentComponent: JComponent,
   actionGroup: ActionGroup
 ) : ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true), Disposable {
@@ -60,6 +60,11 @@ internal class LayoutActionsFloatingToolbar(
     finally {
       graphics.dispose()
     }
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    updateActionsImmediately(true)
   }
 
   override fun dispose() = Unit

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,11 +13,11 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class ExitExprent extends Exprent {
@@ -47,8 +47,8 @@ public class ExitExprent extends Exprent {
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
-    if (exitType == EXIT_RETURN && retType.type != CodeConstants.TYPE_VOID) {
-      result.addMinTypeExprent(value, VarType.getMinTypeInFamily(retType.typeFamily));
+    if (exitType == EXIT_RETURN && retType.getType() != CodeConstants.TYPE_VOID) {
+      result.addMinTypeExprent(value, VarType.getMinTypeInFamily(retType.getTypeFamily()));
       result.addMaxTypeExprent(value, retType);
     }
 
@@ -71,7 +71,7 @@ public class ExitExprent extends Exprent {
     if (exitType == EXIT_RETURN) {
       TextBuffer buffer = new TextBuffer("return");
 
-      if (retType.type != CodeConstants.TYPE_VOID) {
+      if (retType.getType() != CodeConstants.TYPE_VOID) {
         buffer.append(' ');
         ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
       }
@@ -126,7 +126,7 @@ public class ExitExprent extends Exprent {
 
     ExitExprent et = (ExitExprent)o;
     return exitType == et.getExitType() &&
-           InterpreterUtil.equalObjects(value, et.getValue());
+           Objects.equals(value, et.getValue());
   }
 
   public int getExitType() {

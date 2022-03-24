@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
@@ -33,6 +33,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
@@ -82,7 +82,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected final ParameterTableModel myParametersTableModel;
   protected final UpdateSignatureListener mySignatureUpdater = new UpdateSignatureListener();
   private MethodSignatureComponent mySignatureArea;
-  private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateSignatureAlarm = new Alarm();
 
   protected VisibilityPanelBase<Visibility> myVisibilityPanel;
 
@@ -211,7 +211,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 0, 1,
                                                     GridBagConstraints.WEST,
                                                     GridBagConstraints.HORIZONTAL,
-                                                    new Insets(0, 0, 0, 0),
+                                                    JBInsets.emptyInsets(),
                                                     0, 0);
 
     myNamePanel = new JPanel(new BorderLayout(0, 2));
@@ -229,8 +229,8 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     JPanel visibilityPanel = createVisibilityPanel();
 
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
-      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
-      visibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
+      ((ComboBoxVisibilityPanel<?>)myVisibilityPanel).registerUpDownActionsFor(myNameField);
+      visibilityPanel.setBorder(JBUI.Borders.emptyRight(8));
       panel.add(visibilityPanel, gbc);
       gbc.gridx++;
     }
@@ -239,12 +239,12 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
       JPanel typePanel = new JPanel(new BorderLayout(0, 2));
-      typePanel.setBorder(new EmptyBorder(0, 0, 0, 8));
+      typePanel.setBorder(JBUI.Borders.emptyRight(8));
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = createReturnTypeTextField(document);
-      ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myReturnTypeField);
+      ((ComboBoxVisibilityPanel<?>)myVisibilityPanel).registerUpDownActionsFor(myReturnTypeField);
       typeLabel.setLabelFor(myReturnTypeField);
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
@@ -317,8 +317,10 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
     else {
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
+      panel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
       tabbedPane.addTab(RefactoringBundle.message("parameters.border.title"), panel);
       for (Pair<@NlsContexts.TabTitle String, JPanel> extraPanel : panels) {
+        extraPanel.second.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
         tabbedPane.addTab(extraPanel.first, extraPanel.second);
       }
       main = new JPanel(new BorderLayout());
@@ -517,7 +519,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   /**
    * @deprecated override {@link #createParametersListTable} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected boolean isEmptyRow(ParameterTableModelItemBase<ParamInfo> row) {
     return false;
   }
@@ -525,7 +527,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   /**
    * @deprecated override {@link #createParametersListTable} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParamInfo> item, boolean selected, boolean focused) {
     return null;

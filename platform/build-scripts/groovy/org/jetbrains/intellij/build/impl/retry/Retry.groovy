@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.retry
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 
 import java.util.concurrent.TimeUnit
+import java.util.function.IntFunction
 
 @CompileStatic
-class Retry {
+final class Retry {
   private final int retries
   private final long delayMs
   private final BuildMessages log
@@ -16,13 +17,16 @@ class Retry {
     this.log = log
     this.delayMs = delayMs
     this.retries = retries
+    if (retries < 1) {
+      log.error("Retries number is lesser than one: $retries")
+    }
   }
 
-  def <T> T call(Closure<T> operation) {
-    def delayMs = delayMs
+  def <T> T call(IntFunction<T> operation) {
+    long delayMs = delayMs
     for (i in 1..retries) {
       try {
-        return operation(i)
+        return operation.apply(i)
       }
       catch (StopTrying e) {
         throw e.cause
@@ -31,7 +35,7 @@ class Retry {
         if (i == retries) {
           throw new RuntimeException("Failed all $retries attempts, see nested exception for details", e)
         }
-        if (i > 1) delayMs = backOff(delayMs, i, e)
+        delayMs = backOff(delayMs, i, e)
       }
     }
     throw new RuntimeException("Should not be reached")
@@ -40,16 +44,17 @@ class Retry {
   private static long backOffLimitMs = TimeUnit.MINUTES.toMillis(15)
   private static int backOffFactor = 2
   private static double backOffJitter = 0.1
-  private Random random = new Random()
+  private final Random random = new Random()
 
   private long backOff(long delayMs, int attempt, Exception e) {
-    delayMs = Math.min(delayMs, backOffLimitMs)
-    def nextDelay = Math.min(delayMs * backOffFactor, backOffLimitMs) +
-                    (random.nextGaussian() * delayMs * backOffJitter).toLong()
-    if (nextDelay > 0) {
-      log.info("Attempt $attempt of $retries failed with '$e.message'. Retrying in ${nextDelay}ms")
-      Thread.sleep(nextDelay)
+    def rawDelay = Math.min(delayMs, backOffLimitMs)
+    def jitter = (random.nextGaussian() * rawDelay * backOffJitter).toLong()
+
+    def effectiveDelay = rawDelay + jitter
+    if (effectiveDelay > 0) {
+      log.info("Attempt $attempt of $retries failed with '$e.message'. Retrying in ${effectiveDelay}ms")
+      Thread.sleep(effectiveDelay)
     }
-    return nextDelay
+    return effectiveDelay * backOffFactor
   }
 }

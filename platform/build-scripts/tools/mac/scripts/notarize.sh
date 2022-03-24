@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 APP_DIRECTORY=$1
 APPL_USER=$2
 APPL_PASSWORD=$3
+
 APP_NAME=$4
 BUNDLE_ID=$5
 FAKE_ROOT="${6:-fake-root}"
@@ -29,6 +31,18 @@ function publish-log() {
   curl -T "$file" "$ARTIFACTORY_URL/$id" || true
 }
 
+function check-itmstransporter() {
+  transporter="$(find /Applications -name 'iTMSTransporter' -print -quit)"
+  if [[ -z "$transporter" ]]; then
+    echo "iTMSTransporter not found"
+    exit 1
+  fi
+  if ! "$transporter" -v eXtreme; then
+    echo "iTMSTransporter failed to start"
+    exit 1
+  fi
+}
+
 function altool-upload() {
   # Since altool uses same file for upload token we have to trick it into using different folders for token file location
   # Also it copies zip into TMPDIR so we override it too, to simplify cleanup
@@ -43,6 +57,7 @@ function altool-upload() {
   if [[ -f "$shared_itmstransporter" ]]; then
     cp -r "$shared_itmstransporter" "$HOME/.itmstransporter"
   fi
+  check-itmstransporter
   # For some reason altool prints everything to stderr, not stdout
   set +e
   xcrun altool --notarize-app \
@@ -56,6 +71,8 @@ function altool-upload() {
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
+
+set -x
 
 file="$APP_NAME.zip"
 
@@ -116,7 +133,7 @@ while true; do
   issues=$(python -c "import sys, json; print(json.load(sys.stdin)['issues'])" < "$developer_log")
   if [ "$issues" != "None" ] && [ "$issues" != "[]" ]; then
     log "Notarization has issues"
-    ec=1
+    ec=23
   fi
   if [ $ec != 0 ]; then
     log "Publishing $developer_log"

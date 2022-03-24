@@ -43,7 +43,7 @@ import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class CompareBranchesDiffPanel extends JPanel {
         getPreferredSize();
       }
     };
-    myLabel.setEditorKit(UIUtil.getHTMLEditorKit());
+    myLabel.setEditorKit(HTMLEditorKitBuilder.simple());
     myLabel.setEditable(false);
     myLabel.setBackground(null);
     myLabel.setOpaque(false);
@@ -110,6 +110,11 @@ public class CompareBranchesDiffPanel extends JPanel {
   public void setCompareInfo(@NotNull CommitCompareInfo compareInfo) {
     myCompareInfo = compareInfo;
     refreshView();
+  }
+
+  @NotNull
+  public SimpleChangesBrowser getChangesBrowser() {
+    return myChangesBrowser;
   }
 
   private void refreshView() {

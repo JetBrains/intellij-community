@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 class BaseLayoutSpec {
@@ -12,8 +12,8 @@ class BaseLayoutSpec {
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
-  void withModule(String moduleName) {
-    layout.moduleJars.putValue("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar".toString(), moduleName)
+  final void withModule(String moduleName) {
+    layout.withModule(moduleName)
   }
 
   /**
@@ -25,13 +25,13 @@ class BaseLayoutSpec {
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
    */
   void withModule(String moduleName, String relativeJarPath) {
-    layout.moduleJars.putValue(relativeJarPath, moduleName)
-    layout.explicitlySetJarPaths.add(relativeJarPath)
+    layout.withModule(moduleName, relativeJarPath)
   }
 
   /**
    * @deprecated localizable resources are now put to the module JAR, so {@code localizableResourcesJars} parameter is ignored now
    */
+  @SuppressWarnings("unused")
   @Deprecated
   void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar) {
     withModule(moduleName, relativeJarPath)
@@ -40,10 +40,13 @@ class BaseLayoutSpec {
   /**
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
    * @relativeOutputPath path relative to 'lib' plugin directory
-   * @standalone do not merge library JAR file into uber JAR.
    */
-  void withProjectLibrary(String libraryName, String relativeOutputPath = "", boolean standalone = false) {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, standalone))
+  void withProjectLibrary(String libraryName, String outPath = null) {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, outPath, ProjectLibraryData.PackMode.MERGED))
+  }
+
+  void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, null, packMode))
   }
 
   /**
@@ -72,7 +75,7 @@ class BaseLayoutSpec {
    * to exclude 'foo' directory
    */
   void excludeFromModule(String moduleName, String excludedPattern) {
-    layout.moduleExcludes.putValue(moduleName, excludedPattern)
+    layout.excludeFromModule(moduleName, excludedPattern)
   }
 
   /**
@@ -88,6 +91,6 @@ class BaseLayoutSpec {
    * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
    */
   void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
-    layout.projectLibrariesToUnpack.putValue(jarName, libraryName)
+    layout.withProjectLibraryUnpackedIntoJar(libraryName, jarName)
   }
 }

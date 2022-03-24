@@ -1,3 +1,5 @@
+// AFTER-WARNING: Destructured parameter 'x' is never used
+// AFTER-WARNING: Destructured parameter 'y' is never used
 data class Declaration(val x: Int, val y: Int) {
     fun lambdaType(p: Declaration, f: (Declaration) -> Int) = f(p)
 }

@@ -192,7 +192,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
-        protected PsiElement[] create(@NotNull String newName) {
+        protected PsiElement @NotNull [] create(@NotNull String newName) {
           T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
           if (element != null) {
             created.set(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element));
@@ -207,7 +207,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         }
 
         @Override
-        protected String getActionName(String newName) {
+        protected @NotNull String getActionName(@NotNull String newName) {
           return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
         }
       };
@@ -297,7 +297,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       ElementCreator elementCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
-        protected PsiElement[] create(@NotNull String newName) {
+        protected PsiElement @NotNull [] create(@NotNull String newName) {
           T element = fileCreator.createFile(contentPanel.getEnteredName(), contentPanel.getSelectedTemplate());
           return element != null ? new PsiElement[]{element} : PsiElement.EMPTY_ARRAY;
         }
@@ -308,7 +308,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         }
 
         @Override
-        protected String getActionName(String newName) {
+        protected @NotNull String getActionName(@NotNull String newName) {
           return fileCreator.getActionName(newName, contentPanel.getSelectedTemplate());
         }
       };

@@ -10,13 +10,14 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vcs.changes.actions.diff.SimpleGoToChangePopupAction;
+import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,17 +50,36 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
   private static AnAction createGoToChangeAction(@NotNull List<? extends Producer> producers,
                                                  @NotNull Consumer<? super Integer> onSelected,
                                                  int defaultSelection) {
-    return new SimpleGoToChangePopupAction() {
+    return new PresentableGoToChangePopupAction<ProducerWrapper>() {
       @Override
-      protected @NotNull ListSelection<? extends PresentableChange> getChanges() {
-        return ListSelection.createAt(producers, defaultSelection);
+      protected @NotNull ListSelection<? extends ProducerWrapper> getChanges() {
+        List<ProducerWrapper> wrappers = new ArrayList<>();
+        for (int i = 0; i < producers.size(); i++) {
+          wrappers.add(new ProducerWrapper(producers.get(i), i));
+        }
+        return ListSelection.createAt(wrappers, defaultSelection);
       }
 
       @Override
-      protected void onSelected(@NotNull List<? extends PresentableChange> changes, @Nullable Integer selectedIndex) {
-        onSelected.consume(selectedIndex);
+      protected PresentableChange getPresentation(@NotNull ProducerWrapper change) {
+        return change.producer;
+      }
+
+      @Override
+      protected void onSelected(@NotNull ProducerWrapper change) {
+        onSelected.consume(change.index);
       }
     };
+  }
+
+  private static class ProducerWrapper {
+    public final @NotNull Producer producer;
+    public final int index;
+
+    private ProducerWrapper(@NotNull Producer producer, int index) {
+      this.producer = producer;
+      this.index = index;
+    }
   }
 
   public interface Producer extends DiffRequestProducer, PresentableChange {

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: FALSE
 fun Int.withIndex(): List<Pair<Int, Int>> = listOf<Pair<Int, Int>>()
 

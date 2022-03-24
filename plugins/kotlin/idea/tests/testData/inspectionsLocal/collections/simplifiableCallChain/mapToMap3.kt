@@ -1,5 +1,5 @@
 // FIX: Merge call chain to 'associateWith'
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getValue(i: Int): String = ""
 
 fun test(list: List<Int>) {

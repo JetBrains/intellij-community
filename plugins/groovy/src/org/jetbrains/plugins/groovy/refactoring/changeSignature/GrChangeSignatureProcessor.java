@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -76,7 +77,7 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
         throw new ConflictsInTestsException(conflictDescriptions.values());
       }
 
-      ConflictsDialog dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
+      ConflictsDialogBase dialog = prepareConflictsDialog(conflictDescriptions, usagesIn);
       if (!dialog.showAndGet()) {
         if (dialog.isShowConflicts()) prepareSuccessful();
         return false;

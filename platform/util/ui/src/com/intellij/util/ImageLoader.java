@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -31,10 +31,17 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -156,7 +163,7 @@ public final class ImageLoader {
         if (start != -1) {
           IconLoadMeasurer.addLoading(descriptor.isSvg, start);
         }
-        return convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, isHiDpiNeeded, descriptor.scale, descriptor.isSvg, originalUserSize);
+        return convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, isHiDpiNeeded, descriptor.scale, descriptor.isSvg);
       }
       catch (IOException e) {
         ioExceptionThrown = true;
@@ -184,8 +191,8 @@ public final class ImageLoader {
         if (image == null) {
           continue;
         }
-        return convertImage(image, Collections.emptyList(), flags, scaleContext, isUpScaleNeeded, isHiDpiNeeded, descriptor.scale, descriptor.isSvg,
-                            originalUserSize);
+        return convertImage(image, Collections.emptyList(), flags, scaleContext, isUpScaleNeeded, isHiDpiNeeded, descriptor.scale, descriptor.isSvg
+        );
       }
       catch (IOException ignore) {
       }
@@ -202,7 +209,7 @@ public final class ImageLoader {
                                                   @NotNull ImageCache imageCache,
                                                   @Nullable String ioMissCacheKey) throws IOException {
     CacheKey cacheKey = null;
-    if ((flags & USE_CACHE) == USE_CACHE && !SVGLoader.isSelectionContext()) {
+    if ((flags & USE_CACHE) == USE_CACHE && !SVGLoader.isColorRedefinitionContext()) {
       cacheKey = new CacheKey(descriptor.path, descriptor.isSvg ? descriptor.scale : 0);
       Pair<Image, Dimension2DDouble> pair = imageCache.imageCache.get(cacheKey);
       if (pair != null) {
@@ -250,9 +257,6 @@ public final class ImageLoader {
     if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
       URLConnection connection = new URL(descriptor.path).openConnection();
       if (connection instanceof HttpURLConnection) {
-        if (!descriptor.original) {
-          return null;
-        }
         connection.addRequestProperty("User-Agent", "IntelliJ");
       }
 
@@ -283,29 +287,34 @@ public final class ImageLoader {
     return image;
   }
 
-  static @Nullable InputStream getResourceData(@NotNull String path, @Nullable Class<?> resourceClass, @Nullable ClassLoader classLoader) {
+  static byte @Nullable [] getResourceData(@NotNull String path, @Nullable Class<?> resourceClass, @Nullable ClassLoader classLoader)
+    throws IOException {
     assert resourceClass != null || classLoader != null || path.startsWith("file://");
 
     if (classLoader != null) {
-      InputStream stream = classLoader.getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);
-      if (stream != null) {
-        return stream;
+      boolean isAbsolute = path.startsWith("/");
+      byte[] data = ResourceUtil.getResourceAsBytes(isAbsolute ? path.substring(1) : path, classLoader, true);
+      if (data != null || isAbsolute) {
+        return data;
       }
     }
 
     if (resourceClass != null) {
-      return resourceClass.getResourceAsStream(path);
+      try (InputStream stream = resourceClass.getResourceAsStream(path)) {
+        return stream == null ? null : stream.readAllBytes();
+      }
     }
 
-    if (path.startsWith("file://")) {
-      File file = new File(path.substring("file://".length()));
-      if (file.exists()) {
-        try {
-          return new FileInputStream(file);
-        }
-        catch (FileNotFoundException e) {
-          getLogger().warn(e);
-        }
+    if (path.startsWith("file:/")) {
+      Path nioPath = Path.of(URI.create(path));
+      try {
+        return Files.readAllBytes(nioPath);
+      }
+      catch (NoSuchFileException e) {
+        return null;
+      }
+      catch (IOException e) {
+        getLogger().warn(e);
       }
     }
     return null;
@@ -317,14 +326,11 @@ public final class ImageLoader {
                                                          @Nullable ClassLoader classLoader,
                                                          double scale,
                                                          @NotNull Dimension2DDouble originalUserSize) throws IOException {
-    InputStream stream = getResourceData(path, resourceClass, classLoader);
-    if (stream == null) {
+    byte[] data = getResourceData(path, resourceClass, classLoader);
+    if (data == null) {
       return null;
     }
-
-    try (stream) {
-      return loadPng(stream, scale, originalUserSize);
-    }
+    return loadPng(new ByteArrayInputStream(data), scale, originalUserSize);
   }
 
   @ApiStatus.Internal
@@ -362,7 +368,7 @@ public final class ImageLoader {
   }
 
   // originalUserSize - The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
-  // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
+  // Otherwise, it's the size of the original image divided by the image's scale (defined by the extension @2x).
   public static @Nullable Image convertImage(@NotNull Image image,
                                              @NotNull List<? extends ImageFilter> filters,
                                              @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
@@ -370,8 +376,7 @@ public final class ImageLoader {
                                              boolean isUpScaleNeeded,
                                              boolean isHiDpiNeeded,
                                              double imageScale,
-                                             boolean isSvg,
-                                             @NotNull ImageLoader.Dimension2DDouble originalUserSize) {
+                                             boolean isSvg) {
     if (isUpScaleNeeded && !isSvg) {
       double scale = adjustScaleFactor((flags & ALLOW_FLOAT_SCALING) == ALLOW_FLOAT_SCALING, (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE));
       if (imageScale > 1) {

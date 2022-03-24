@@ -40,6 +40,7 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -77,7 +78,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         && !isPythonInTemplateLanguages(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new Visitor(holder, session, ignoredPackages);
+    return new Visitor(holder, ignoredPackages, PyInspectionVisitor.getContext(session));
   }
 
   private boolean isPythonInTemplateLanguages(PsiFile psiFile) {
@@ -96,8 +97,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredPackages;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            Collection<String> ignoredPackages,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       myIgnoredPackages = ImmutableSet.copyOf(ignoredPackages);
     }
 

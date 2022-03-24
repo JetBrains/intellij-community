@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(collection: Collection<Int>): Collection<Int> {
     return collection.ifEmpty {
         listOf(1)

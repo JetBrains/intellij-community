@@ -3,12 +3,14 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 
-class DescriptionPanel(initialText: String? = null) : HtmlPanel() {
+class DescriptionPanel(@Nls initialText: String? = null) : HtmlPanel() {
+    @Nls
     private var bodyText: String? = initialText
 
-    fun updateText(text: String) {
+    fun updateText(@Nls text: String) {
         bodyText = text.asHtml()
         update()
     }

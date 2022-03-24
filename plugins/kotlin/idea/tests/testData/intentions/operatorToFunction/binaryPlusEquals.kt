@@ -1,3 +1,4 @@
+// AFTER-WARNING: Parameter 'arg' is never used
 class Bar {
     operator fun plusAssign(arg: Bar) {}
 }

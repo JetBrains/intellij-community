@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.AndroidConfigIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidModuleConfigurator
@@ -35,26 +36,35 @@ class ComposeAndroidTemplate : Template() {
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
 
 
-    override fun isApplicableTo(module: Module, projectKind: ProjectKind): Boolean =
-        module.configurator.moduleType == ModuleType.android && projectKind == ProjectKind.COMPOSE
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
+        module.configurator.moduleType == ModuleType.android
+                && projectKind == ProjectKind.COMPOSE
+                && module.kind == ModuleKind.singlePlatformAndroid
 
-    override fun isApplicableTo(reader: Reader, module: Module): Boolean =
-        module.kind == ModuleKind.singlePlatformAndroid
 
     override fun Writer.getIrsToAddToBuildFile(
         module: ModuleIR
     ) = irsList {
         +GradleOnlyPluginByNameIR("org.jetbrains.compose", version = Versions.JETBRAINS_COMPOSE)
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
-        +RepositoryIR(DefaultRepository.JCENTER)
         +RepositoryIR(DefaultRepository.GOOGLE)
         +Dependencies.ACTIVITY_COMPOSE
     }
 
-    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> = irs.filterNot {
-        it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> {
+        val androidIR = irs.firstNotNullOfOrNull { ir-> ir.takeIf { ir is AndroidConfigIR } }
+        if (androidIR != null && androidIR is AndroidConfigIR) {
+            androidIR.androidSdkVersion = "31"
+        }
+        return irs.filterNot {
+            it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+        }
     }
 
+
+    override fun Writer.getRequiredLibraries(module: ModuleIR): List<DependencyIR> = buildList {
+        +Dependencies.ACTIVITY_COMPOSE
+    }
 
     override fun Reader.updateModuleIR(module: ModuleIR): ModuleIR {
         val irs = module.irs.filterNot { ir ->
@@ -66,7 +76,7 @@ class ComposeAndroidTemplate : Template() {
     }
 
     override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> = compute {
-        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV).ensure()
+        BuildSystemPlugin.pluginRepositoreis.addValues(Repositories.JETBRAINS_COMPOSE_DEV, DefaultRepository.GOOGLE).ensure()
 
         //TODO hacky!
         TemplatesPlugin.fileTemplatesToRender.update { templates ->
@@ -106,5 +116,29 @@ class ComposeAndroidTemplate : Template() {
             version = Versions.COMPOSE.ANDROID_ACTIVITY_COMPOSE,
             dependencyType = DependencyType.MAIN,
         )
+    }
+}
+
+class ComposeCommonAndroidTemplate : Template() {
+    @NonNls
+    override val id: String = "composeCommonAndroid"
+
+    override val title: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.title")
+    override val description: String = KotlinNewProjectWizardBundle.message("module.template.compose.desktop.description")
+
+
+    override fun isApplicableTo(module: Module, projectKind: ProjectKind, reader: Reader): Boolean =
+        module.configurator.moduleType == ModuleType.common
+                && projectKind == ProjectKind.COMPOSE
+                && module.kind == ModuleKind.singlePlatformAndroid
+
+    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> {
+        val androidIR = irs.firstNotNullOfOrNull { it as? AndroidConfigIR }
+        if (androidIR != null) {
+            androidIR.androidSdkVersion = "31"
+        }
+        return irs.filterNot {
+            it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+        }
     }
 }

@@ -50,10 +50,6 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     return IdeaTestUtil.getMockJdk14();
   }
 
-  public void testPackageAndClassConflict12() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash1/pkg/sub.java", BASE_PATH + "/packageClassClash1", false, false);
-  }
-
   private EditorColorsScheme cloneColorSchema() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme globalScheme = manager.getGlobalScheme();

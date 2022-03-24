@@ -1,5 +1,8 @@
 // SET_TRUE: CALL_PARAMETERS_LPAREN_ON_NEXT_LINE
 // SET_TRUE: CALL_PARAMETERS_RPAREN_ON_NEXT_LINE
+// AFTER-WARNING: Parameter 'p1' is never used
+// AFTER-WARNING: Parameter 'p2' is never used
+// AFTER-WARNING: Parameter 'p3' is never used
 fun f() {
     foo(
         1,

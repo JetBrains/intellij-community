@@ -104,20 +104,20 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiPredicate;
-import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static org.junit.Assert.*;
 
-
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "TestOnlyProblems"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class PlatformTestUtil {
   private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
+
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
   private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
@@ -153,7 +153,7 @@ public final class PlatformTestUtil {
    */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
-                                        @NotNull List<T> newExtensions,
+                                        @NotNull List<? extends T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
@@ -171,18 +171,15 @@ public final class PlatformTestUtil {
     return String.valueOf(node);
   }
 
-  @NotNull
-  public static String print(@NotNull JTree tree, boolean withSelection) {
+  public static @NotNull String print(@NotNull JTree tree, boolean withSelection) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, null);
   }
 
-  @NotNull
-  public static String print(@NotNull JTree tree, @NotNull TreePath path, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
+  public static @NotNull String print(@NotNull JTree tree, @NotNull TreePath path, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  @NotNull
-  public static String print(@NotNull JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
+  public static @NotNull String print(@NotNull JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
@@ -192,18 +189,9 @@ public final class PlatformTestUtil {
                               boolean withSelection,
                               @Nullable Queryable.PrintInfo printInfo,
                               @Nullable Predicate<? super String> nodePrintCondition) {
-    return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
-  }
-
-  @NotNull
-  private static Collection<String> printAsList(@NotNull JTree tree,
-                                                @NotNull TreePath path,
-                                                boolean withSelection,
-                                                @Nullable Queryable.PrintInfo printInfo,
-                                                @Nullable Predicate<? super String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
-    return strings;
+    return String.join("\n", strings);
   }
 
   private static void printImpl(@NotNull JTree tree,
@@ -227,18 +215,18 @@ public final class PlatformTestUtil {
     boolean expanded = tree.isExpanded(path);
     int childCount = tree.getModel().getChildCount(pathComponent);
     if (childCount > 0) {
-      buff.append(expanded ? "-" : "+");
+      buff.append(expanded ? '-' : '+');
     }
 
     boolean selected = tree.getSelectionModel().isPathSelected(path);
     if (withSelection && selected) {
-      buff.append("[");
+      buff.append('[');
     }
 
     buff.append(nodeText);
 
     if (withSelection && selected) {
-      buff.append("]");
+      buff.append(']');
     }
 
     strings.add(buff.toString());
@@ -410,7 +398,7 @@ public final class PlatformTestUtil {
     final AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
     final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    final Alarm alarm = new Alarm();
     final Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
     ModalityState initialModality = ModalityState.current();
 
@@ -449,8 +437,7 @@ public final class PlatformTestUtil {
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
                                    "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
-                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue() +
-                                   "\n invocatorWtQueue=" + LaterInvocator.getLaterInvocatorWtQueue()
+                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue()
           );
         }
       }
@@ -484,8 +471,7 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread
+   * Dispatch all pending events (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
@@ -500,8 +486,7 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread
+   * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
     assertEventQueueDispatchThread();
@@ -513,22 +498,19 @@ public final class PlatformTestUtil {
     return event1;
   }
 
-  @NotNull
-  public static StringBuilder print(@NotNull AbstractTreeStructure structure,
-                                    @NotNull Object node, int currentLevel,
-                                    @Nullable Comparator<?> comparator,
-                                    int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
+  public static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure,
+                                             @NotNull Object node, int currentLevel,
+                                             @Nullable Comparator<?> comparator,
+                                             int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
     return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
   }
 
-  @NotNull
-  public static String print(@NotNull AbstractTreeStructure structure, @NotNull Object node, @NotNull Function<Object, String> nodePresenter) {
+  public static @NotNull String print(@NotNull AbstractTreeStructure structure, @NotNull Object node, @NotNull Function<Object, String> nodePresenter) {
     return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
   }
 
-  @NotNull
-  private static StringBuilder print(@NotNull AbstractTreeStructure structure, @NotNull Object node, int currentLevel, @Nullable Comparator<?> comparator,
-                                     int maxRowCount, char paddingChar, @NotNull Function<Object, String> nodePresenter) {
+  private static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure, @NotNull Object node, int currentLevel, @Nullable Comparator<?> comparator,
+                                              int maxRowCount, char paddingChar, @NotNull Function<Object, String> nodePresenter) {
     StringBuilder buffer = new StringBuilder();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
     return buffer;
@@ -564,18 +546,15 @@ public final class PlatformTestUtil {
     return currentLine;
   }
 
-  @NotNull
-  public static String print(Object @NotNull [] objects) {
+  public static @NotNull String print(Object @NotNull [] objects) {
     return print(Arrays.asList(objects));
   }
 
-  @NotNull
-  public static String print(@NotNull Collection<?> c) {
+  public static @NotNull String print(@NotNull Collection<?> c) {
     return c.stream().map(each -> toString(each, null)).collect(Collectors.joining("\n"));
   }
 
-  @NotNull
-  public static String print(@NotNull ListModel<?> model) {
+  public static @NotNull String print(@NotNull ListModel<?> model) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < model.getSize(); i++) {
       result.append(toString(model.getElementAt(i), null));
@@ -584,8 +563,7 @@ public final class PlatformTestUtil {
     return result.toString();
   }
 
-  @NotNull
-  public static String print(@NotNull JTree tree) {
+  public static @NotNull String print(@NotNull JTree tree) {
     return print(tree, false);
   }
 
@@ -632,10 +610,25 @@ public final class PlatformTestUtil {
   /**
    * An example: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  @NotNull
-  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
-    return new PerformanceTestInfo(test, expectedMs, what);
+  // to warn about not calling .assertTiming() in the end
+  @Contract(pure = true)
+  public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
+    return startPerformanceTestWithVariableInputSize(what, expectedMs, 1, () -> {
+      test.run();
+      return 1;
+    });
+  }
+
+  /**
+   * Starts a performance test which input (and therefore expected time to execute) may change, e.g. it depends on number of files in the project.
+   * <p>
+   * {@code expectedInputSize} parameter specifies size of the input for which the test is expected to finish in {@code expectedMs} milliseconds,
+   * {@code test} returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
+   * </p>
+   */
+  @Contract(pure = true)
+  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String what, int expectedMs, int expectedInputSize, @NotNull ThrowableComputable<Integer, ?> test) {
+    return new PerformanceTestInfo(test, expectedMs, expectedInputSize, what);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -708,8 +701,7 @@ public final class PlatformTestUtil {
     }
   }
 
-  @NotNull
-  private static Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files, @Nullable VirtualFileFilter filter) {
+  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files, @Nullable VirtualFileFilter filter) {
     Map<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
@@ -723,7 +715,9 @@ public final class PlatformTestUtil {
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
-  public static void assertDirectoriesEqual(@NotNull VirtualFile dirExpected, @NotNull VirtualFile dirActual, @Nullable VirtualFileFilter fileFilter) throws IOException {
+  public static void assertDirectoriesEqual(@NotNull VirtualFile dirExpected,
+                                            @NotNull VirtualFile dirActual,
+                                            @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile[] childrenAfter = dirExpected.getChildren();
@@ -866,7 +860,7 @@ public final class PlatformTestUtil {
   @SuppressWarnings("ImplicitDefaultCharsetUsage")
   public static void withStdErrSuppressed(@NotNull Runnable r) {
     PrintStream std = System.err;
-    System.setErr(new PrintStream(NULL));
+    System.setErr(new PrintStream(OutputStream.nullOutputStream()));
     try {
       r.run();
     }
@@ -874,12 +868,6 @@ public final class PlatformTestUtil {
       System.setErr(std);
     }
   }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static final OutputStream NULL = new OutputStream() {
-    @Override
-    public void write(int b) { }
-  };
 
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
     try {
@@ -1033,7 +1021,7 @@ public final class PlatformTestUtil {
   public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer<?> producer) {
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.PROJECT, element.getProject());
-    dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element));
+    dataContext.put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element));
     final Location<PsiElement> location = PsiLocation.fromPsiElement(element);
     dataContext.put(Location.DATA_KEY, location);
 
@@ -1046,53 +1034,65 @@ public final class PlatformTestUtil {
   /**
    * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for 60 seconds till process ends.
    */
-  @NotNull
-  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration)
+    throws InterruptedException {
     return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
   }
 
   /**
-   * Executing {@code runConfiguration} with executor {@code executoId} and wait for 60 seconds till process ends.
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for {@code timeoutInSeconds}
+   * seconds till process ends.
    */
-  @NotNull
-  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                 @NotNull String executorId) throws InterruptedException {
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration, long timeoutInSeconds)
+    throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID, timeoutInSeconds);
+  }
+
+  /**
+   * Executes {@code runConfiguration} with executor {@code executorId} and waits for 60 seconds till process ends.
+   */
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                          @NotNull String executorId) throws InterruptedException {
     return executeConfigurationAndWait(runConfiguration, executorId, 60);
   }
 
   /**
-   * Executing {@code runConfiguration} with executor {@code executoId} and wait for the {@code timeoutInSeconds} seconds till process ends.
+   * Executes {@code runConfiguration} with executor {@code executorId} and waits for the {@code timeoutInSeconds} seconds till process ends.
    */
-  @NotNull
-  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                 @NotNull String executorId,
-                                                                 long timeoutInSeconds) throws InterruptedException {
-    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                          @NotNull String executorId,
+                                                                          long timeoutInSeconds) throws InterruptedException {
+    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
-    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler, processHandler::isProcessTerminated, 60);
+    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
+                              processHandler::isProcessTerminated, 60);
     return result.first;
   }
 
-
-  @NotNull
-  public static Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                               @NotNull String executorId)
+  /**
+   * @see PlatformTestUtil#executeConfiguration(RunConfiguration, com.intellij.execution.Executor, java.util.function.Consumer)
+   */
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull String executorId,
+    @Nullable Consumer<? super RunContentDescriptor> contentDescriptorProcessor)
     throws InterruptedException {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertNotNull("Unable to find executor: " + executorId, executor);
-    return executeConfiguration(runConfiguration, executor);
+    return executeConfiguration(runConfiguration, executor, contentDescriptorProcessor);
   }
 
   /**
-   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
-   * {@link RunContentDescriptor}
+   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns a pair of {@link ExecutionEnvironment} and
+   * {@link RunContentDescriptor}.
+   *
+   * @param descriptorProcessor optional processor for the run content descriptor of executed configuration
    */
-  @NotNull
-  public static Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
-                                                                                               @NotNull Executor executor)
-    throws InterruptedException {
-
+  public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull Executor executor,
+    @Nullable Consumer<? super RunContentDescriptor> descriptorProcessor) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1109,6 +1109,9 @@ public final class PlatformTestUtil {
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
       LOG.debug("Process started");
+      if (descriptorProcessor != null) {
+        descriptorProcessor.accept(descriptor);
+      }
       ProcessHandler processHandler = descriptor.getProcessHandler();
       assertNotNull(processHandler);
       processHandler.addProcessListener(new ProcessAdapter() {
@@ -1138,20 +1141,33 @@ public final class PlatformTestUtil {
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
-  /**
-   * Wait and dispatch events during timeout
-   * @param errorMessage The error message if timeout happens
-   * @param condition Check whether finished
-   * @param timeoutInSeconds timeout in seconds
-   */
   public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+    waitWithEventsDispatching(() -> errorMessage, condition, timeoutInSeconds);
+  }
+
+  public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
+                                               @NotNull BooleanSupplier condition,
+                                               int timeoutInSeconds) {
+    waitWithEventsDispatching(errorMessageSupplier, condition, timeoutInSeconds, null);
+  }
+
+  /**
+   * Wait and dispatch events during timeout.
+   * A {@link Runnable} callback may be provided to be executed when {@code condition} gets satisfied or {@code timeoutInSeconds} runs out.
+   */
+  public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
+                                               @NotNull BooleanSupplier condition,
+                                               int timeoutInSeconds,
+                                               @Nullable Runnable callback) {
     long start = System.currentTimeMillis();
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
-          fail(errorMessage);
+          consumeIfNotNull(callback, Runnable::run);
+          fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
+          consumeIfNotNull(callback, Runnable::run);
           break;
         }
         dispatchAllEventsInIdeEventQueue();
@@ -1216,8 +1232,19 @@ public final class PlatformTestUtil {
     }
   }
 
+  @SuppressWarnings("deprecation")
   public static boolean isUnderCommunityClassPath() {
     // StdFileTypes.JSPX is assigned to PLAIN_TEXT in community
     return StdFileTypes.JSPX == FileTypes.PLAIN_TEXT;
+  }
+
+  public static <E extends Throwable> void withSystemProperty(@NotNull String key, String value, @NotNull ThrowableRunnable<E> task) throws E {
+    String original = System.setProperty(key, value);
+    try {
+      task.run();
+    }
+    finally {
+      SystemProperties.setProperty(key, original);
+    }
   }
 }

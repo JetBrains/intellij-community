@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.visibility;
 
@@ -435,18 +435,10 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (modifierList == null) return false;
     final PsiElement toElement = to.getPsiElement();
 
-    final boolean [] resolved = {false};
-    modifierList.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (resolved[0]) return;
-        super.visitReferenceExpression(expression);
-        if (expression.resolve() == toElement) {
-          resolved[0] = true;
-        }
-      }
-    });
-    return resolved[0];
+    return SyntaxTraverser.psiTraverser(modifierList)
+             .filter(PsiJavaCodeReferenceElement.class)
+             .filter(ref -> ref.isReferenceTo(toElement))
+             .first() != null;
   }
 
   private static boolean isInExtendsList(final RefJavaElement to, final PsiReferenceList extendsList) {
@@ -514,7 +506,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
           }
 
           @Override public void visitClass(@NotNull final RefClass refClass) {
-            if (!refClass.isAnonymous()) {
+            if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
               globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
                 ignoreElement(processor, refClass);
                 return false;

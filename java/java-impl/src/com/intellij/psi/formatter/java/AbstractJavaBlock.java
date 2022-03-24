@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -6,13 +6,13 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
@@ -52,7 +52,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected Alignment myReservedAlignment;
   protected Alignment myReservedAlignment2;
 
-  private final JavaWrapManager myWrapManager;
   private Map<IElementType, Wrap> myPreferredWraps;
   private AbstractJavaBlock myParentBlock;
 
@@ -88,7 +87,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull JavaCodeStyleSettings javaSettings,
                               @NotNull FormattingMode formattingMode)
   {
-    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, AlignmentStrategy.wrap(alignment), formattingMode);
+    this(node, wrap, indent, settings, javaSettings, AlignmentStrategy.wrap(alignment), formattingMode);
   }
 
   protected AbstractJavaBlock(@NotNull final ASTNode node,
@@ -99,7 +98,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               @NotNull JavaCodeStyleSettings javaSettings,
                               @NotNull FormattingMode formattingMode)
   {
-    this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, alignmentStrategy, formattingMode);
+    this(node, wrap, indent, settings, javaSettings, alignmentStrategy, formattingMode);
   }
 
   private AbstractJavaBlock(@NotNull ASTNode ignored,
@@ -111,7 +110,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myJavaSettings = javaSettings;
     myIndentSettings = commonSettings.getIndentOptions();
     myIndent = null;
-    myWrapManager = JavaWrapManager.INSTANCE;
     myAlignmentStrategy = AlignmentStrategy.getNullStrategy();
     myFormattingMode = formattingMode;
   }
@@ -121,7 +119,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                               final Indent indent,
                               @NotNull final CommonCodeStyleSettings settings,
                               @NotNull JavaCodeStyleSettings javaSettings,
-                              final JavaWrapManager wrapManager,
                               @NotNull final AlignmentStrategy alignmentStrategy,
                               @NotNull final FormattingMode formattingMode) {
     super(node, wrap, createBlockAlignment(alignmentStrategy, node));
@@ -129,7 +126,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myJavaSettings = javaSettings;
     myIndentSettings = settings.getIndentOptions();
     myIndent = indent;
-    myWrapManager = wrapManager;
     myAlignmentStrategy = alignmentStrategy;
     myFormattingMode = formattingMode;
   }
@@ -288,6 +284,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            || elementType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER
            || elementType == JavaElementType.CLASS_INITIALIZER
            || elementType == JavaElementType.SYNCHRONIZED_STATEMENT
+           || elementType == JavaElementType.SWITCH_LABELED_RULE
            || elementType == JavaElementType.FOREACH_STATEMENT;
   }
 
@@ -305,12 +302,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     final ASTNode prevElement = skipCommentsAndWhitespacesBackwards(child);
-    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST && !isMethodParameterAnnotation(prevElement)) {
+    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-     if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
@@ -335,15 +332,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       currNode = currNode.getTreePrev();
     }
     return currNode;
-  }
-
-  private static boolean isMethodParameterAnnotation(@NotNull ASTNode element) {
-    ASTNode parent = element.getTreeParent();
-    if (parent != null && parent.getElementType() == JavaElementType.PARAMETER) {
-      ASTNode lastChild = element.getLastChildNode();
-      return lastChild != null && lastChild.getElementType() == JavaElementType.ANNOTATION;
-    }
-    return false;
   }
 
   @Nullable
@@ -413,7 +401,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Wrap createChildWrap() {
     //when detecting indent we do not care about wraps
-    return isBuildIndentsOnly() ? null : myWrapManager.createChildBlockWrap(this, getSettings(), this);
+    return isBuildIndentsOnly() ? null : JavaFormatterUtil.createDefaultWrap(this, mySettings, myJavaSettings, this);
   }
 
   @Nullable
@@ -457,6 +445,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         defaultAlignment = myAlignment;
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
+    }
+    if (JavaFormatterUtil.isTopLevelTypeInCatchSection(nodeType, myNode)) {
+      return createAlignment(myJavaSettings.ALIGN_TYPES_IN_MULTI_CATCH, null);
     }
     if (isTextBlock(myNode.getPsi())) {
         return createAlignment(myJavaSettings.ALIGN_MULTILINE_TEXT_BLOCKS,null);
@@ -518,6 +509,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return processChild(result, child, alignmentStrategy, defaultWrap, childIndent, -1);
   }
 
+  /**
+   * Creates blocks for nodes starting from child.
+   * @param result mutable list of child blocks
+   * @param child current child to create block for
+   * @param defaultWrap default wrap returned by {@link AbstractJavaBlock#createChildWrap() }
+   * @return next node to handle
+   */
   @Nullable
   protected ASTNode processChild(@NotNull final List<Block> result,
                                  @NotNull ASTNode child,
@@ -585,6 +583,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
         child = myNode.getLastChildNode();
         result.addAll(newlyCreated);
+      }
+      else if (childType == JavaTokenType.OR && nodeType == JavaElementType.TYPE) {
+        // by default in "Foo | Bar | Baz" each child will have same (default) wrap, but we need to distinguish types and "|"
+        Wrap wrap = Wrap.createWrap(WrapType.NONE, false);
+        result.add(new SimpleJavaBlock(child, wrap, alignmentStrategy, childIndent, mySettings, myJavaSettings, myFormattingMode));
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARENTH_EXPRESSION) {
         child = processParenthesisBlock(result, child,
@@ -783,6 +786,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
     final ArrayList<ASTNode> nodes = new ArrayList<>();
     collectNodes(nodes, node);
+    if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) {
+      return
+        new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
+    }
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
   }
 
@@ -919,7 +926,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   protected Wrap arrangeChildWrap(final ASTNode child, Wrap defaultWrap) {
     //when detecting indent we do not care about wraps
-    return isBuildIndentsOnly() ? null : myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
+    return isBuildIndentsOnly() ? null : JavaFormatterUtil.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
   }
 
   @NotNull

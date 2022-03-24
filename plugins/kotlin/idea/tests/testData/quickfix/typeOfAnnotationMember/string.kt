@@ -1,4 +1,5 @@
 // "Replace array of boxed with array of primitive" "false"
+// WITH_STDLIB
 // ACTION: Add full qualifier
 // ACTION: Put parameters on one line
 // ACTION: Introduce import alias

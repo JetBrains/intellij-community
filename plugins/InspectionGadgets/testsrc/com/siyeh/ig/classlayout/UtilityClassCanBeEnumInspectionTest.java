@@ -25,7 +25,7 @@ public class UtilityClassCanBeEnumInspectionTest extends LightJavaInspectionTest
 
   public void testUtilityClassInstantiation() {
     doTest("class SmartStepClass {\n" +
-           "  public static final int a = Integer.valueOf(1);\n" +
+           "  public static final int a = 1;\n" +
            "  public static final String b = String.valueOf(2);\n" +
            "\n" +
            "  public static void main(String[] args) {\n" +

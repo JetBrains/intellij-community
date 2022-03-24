@@ -51,11 +51,20 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
     return null;
   }
 
+  /**
+   * Method customizing the default reference resolution and provides a way to return a different set of candidates, 
+   * comparing to the default ref.resolve() and ref.multiResolve() methods.
+   * The method is calling in places where the target element from the reference is required: e.g. GTD, GTTD, highlighting identifier pass and others  
+   */
   @Nullable
   public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     return null;
   }
 
+  /**
+   * Method customizing GTD navigation element. It is the last place where the navElement can be changed.
+   * @apiNote this method is called for all elements, including the ones from GTD direct provides
+   */
   @Nullable
   public PsiElement getGotoDeclarationTarget(@NotNull final PsiElement element, @Nullable final PsiElement navElement) {
     return null;

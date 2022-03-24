@@ -31,7 +31,7 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
 
   @Override
   @NotNull
-  public Set<Recompile> methodAnnotationsChanged(DependencyContext context, MethodRepr method, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff, Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff) {
+  public Set<Recompile> methodAnnotationsChanged(NamingContext context, ProtoMethodEntity method, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff, Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff) {
     //return RECOMPILE_NONE;
     return handleChanges(context, ContainerUtil.concat(
       annotationsDiff.added(),
@@ -43,7 +43,7 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
 
   @Override
   @NotNull
-  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, ProtoFieldEntity field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     //return RECOMPILE_NONE;
     return handleChanges(context, ContainerUtil.concat(annotationsDiff.added(), annotationsDiff.removed()));
   }

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 interface I<T> {
     fun xxx(): T
 }
@@ -10,5 +12,5 @@ fun foo(i1: I<Int>, i2: I<String>) {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "()", typeText: "String" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "()", typeText: "String", icon: "nodes/abstractMethod.svg"}
 // NOTHING_ELSE

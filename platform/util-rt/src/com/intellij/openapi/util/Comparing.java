@@ -33,7 +33,7 @@ public final class Comparing {
   }
 
   /** @deprecated same as {@link Arrays#equals(Object[], Object[])} */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated @ApiStatus.ScheduledForRemoval
   public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
     return Arrays.equals(arr1, arr2);
   }

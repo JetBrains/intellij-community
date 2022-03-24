@@ -6,6 +6,7 @@ import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectSet
 
 class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBase<MutableMap<K, V>>() {
   private val value: MutableMap<K, V> = value ?: MyMap()
@@ -70,6 +71,11 @@ class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBas
 private class MyMap<K: Any, V> : Object2ObjectOpenHashMap<K, V>() {
   @Volatile
   var modificationCount = 0L
+
+  //this override is needed to ensure that Kotlin compiler won't generate incorrect bridge methods which would lead to StackOverflowError (KT-48167)
+  @Suppress("UNCHECKED_CAST")
+  override val entries: ObjectSet<MutableMap.MutableEntry<K, V>>
+    get() = object2ObjectEntrySet() as ObjectSet<MutableMap.MutableEntry<K, V>>
 
   override fun put(key: K, value: V): V? {
     val oldValue = super.put(key, value)

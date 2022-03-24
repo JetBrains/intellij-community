@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -269,7 +270,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       GlobalSearchScope scope = new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(myProject)) {
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          return super.contains(file) && file.getFileType() != JavaFileType.INSTANCE;
+          return super.contains(file) && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE);
         }
       };
       PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(Jsr305Support.TYPE_QUALIFIER_NICKNAME, scope);
@@ -381,7 +382,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       for (PsiClass aClass : getAllNullabilityNickNames()) {
         String qName = aClass.getQualifiedName();
         if (qName != null) {
-          result.put(qName, Jsr305Support.getNickNamedNullability(aClass));
+          result.putIfAbsent(qName, Jsr305Support.getNickNamedNullability(aClass));
         }
       }
       NullabilityAnnotationDataHolder holder = new NullabilityAnnotationDataHolder() {
@@ -397,6 +398,17 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       };
       return CachedValueProvider.Result.create(holder, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  @Override
+  protected @NotNull Nullability correctNullability(@NotNull Nullability nullability, @NotNull PsiAnnotation annotation) {
+    if (nullability == Nullability.NOT_NULL && annotation.hasQualifiedName(Jsr305Support.JAVAX_ANNOTATION_NONNULL)) {
+      Nullability correctedNullability = Jsr305Support.extractNullityFromWhenValue(annotation);
+      if (correctedNullability != null) {
+        return correctedNullability;
+      }
+    }
+    return nullability;
   }
 
   @Override

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.goto
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
@@ -13,7 +14,7 @@ class KotlinExpectOrActualGotoRelatedProvider : GotoRelatedProvider() {
     private class ActualOrExpectGotoRelatedItem(element: PsiElement) : GotoRelatedItem(element) {
         override fun getCustomContainerName(): String? {
             val module = element?.module ?: return null
-            return "(in module ${module.name})"
+            return KotlinIdeaCompletionBundle.message("goto.related.provider.in.module.0", module.name)
         }
     }
 

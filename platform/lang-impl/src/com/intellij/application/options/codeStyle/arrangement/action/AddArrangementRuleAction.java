@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
@@ -22,14 +8,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.IconUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
  */
 public class AddArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
-  
   public AddArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.messagePointer("arrangement.action.rule.add.description"));
@@ -51,11 +36,11 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
     }
     
     control.hideEditor();
-    TIntArrayList rows = control.getSelectedModelRows();
+    IntList rows = control.getSelectedModelRows();
     ArrangementMatchingRulesModel model = control.getModel();
     int rowToEdit;
     if (rows.size() == 1) {
-      rowToEdit = rows.get(0) + 1;
+      rowToEdit = rows.getInt(0) + 1;
       model.insertRow(rowToEdit, new Object[] {createNewRule(control)});
     }
     else {

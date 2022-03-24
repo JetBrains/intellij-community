@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import io.opentelemetry.api.trace.SpanBuilder
 import junit.framework.AssertionFailedError
 import java.util.*
 import java.util.function.Supplier
@@ -48,9 +49,9 @@ class MockBuildMessages : BuildMessages {
   override fun setParameter(parameterName: String?, value: String?) {
   }
 
-  override fun <V : Any?> block(blockName: String, body: Supplier<V>): V {
-    return body.get()
-  }
+  override fun <V : Any?> block(blockName: String, task: Supplier<V>) = task.get()
+
+  override fun <V : Any?> block(spanBuilder: SpanBuilder, task: Supplier<V>) = task.get()
 
   override fun artifactBuilt(relativeArtifactPath: String?) {
   }

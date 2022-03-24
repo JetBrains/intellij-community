@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.vfs
 
-import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -25,7 +25,7 @@ abstract class CustomisableUniqueNameEditorTabTitleProvider : UniqueNameEditorTa
   @Nls
   private fun getBaseUniqueName(project: Project, file: VirtualFile): String? {
     var baseName = super.getEditorTabTitle(project, file)
-    if (baseName == null && instance.hideKnownExtensionInTabs && !file.isDirectory) {
+    if (baseName == null && UISettings.getInstance().hideKnownExtensionInTabs && !file.isDirectory) {
       baseName = file.nameWithoutExtension.ifEmpty { file.name }
     }
     if (baseName == file.presentableName) return null

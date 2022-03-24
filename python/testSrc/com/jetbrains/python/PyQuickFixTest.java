@@ -16,7 +16,7 @@ import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
-import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
+import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -294,7 +294,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1470
   public void testRedundantParentheses() {
-    String[] testFiles = new String[]{"RedundantParentheses.py"};
+    String[] testFiles = {"RedundantParentheses.py"};
     myFixture.enableInspections(PyRedundantParenthesesInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
@@ -609,7 +609,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testUnnecessaryBackslash() {
-    String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
+    String[] testFiles = {"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
@@ -625,7 +625,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testUnnecessaryBackslashInArgumentList() {
-    String[] testFiles = new String[]{"UnnecessaryBackslashInArguments.py"};
+    String[] testFiles = {"UnnecessaryBackslashInArguments.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
@@ -697,7 +697,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20452
   public void testRemoveRedundantEscapeInOnePartRegExp() {
-    myFixture.enableInspections(new RedundantEscapeInspection());
+    myFixture.enableInspections(new RegExpRedundantEscapeInspection());
     myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((<caret>\\/(?P<bar>.+))?))\")");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
@@ -712,7 +712,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20452
   public void testRemoveRedundantEscapeInMultiPartRegExp() {
-    myFixture.enableInspections(new RedundantEscapeInspection());
+    myFixture.enableInspections(new RegExpRedundantEscapeInspection());
     myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
                                                        "re.compile(\"(?P<foo>\"\n" +
                                                        "           \"((<caret>\\/(?P<bar>.+))?))\")");
@@ -798,7 +798,6 @@ public class PyQuickFixTest extends PyTestCase {
    * @param quickFixName    how the resulting fix should be named (the human-readable name users see)
    * @param applyFix        true if the fix needs to be applied
    * @param available       true if the fix should be available, false if it should be explicitly not available.
-   * @throws Exception
    */
   protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
                                   @NotNull Class<? extends LocalInspectionTool> inspectionClass,

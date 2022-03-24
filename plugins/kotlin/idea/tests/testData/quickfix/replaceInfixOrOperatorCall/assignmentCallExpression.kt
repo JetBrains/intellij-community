@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun bar() {
     val fff: (() -> Int)? = { 1 }

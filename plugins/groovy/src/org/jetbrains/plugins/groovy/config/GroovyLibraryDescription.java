@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -115,7 +114,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   public FileChooserDescriptor createFileChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (!super.isFileSelectable(file)) {
           return false;
         }
@@ -158,12 +157,6 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
       return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  public LibrariesContainer.LibraryLevel getDefaultLevel() {
-    return LibrariesContainer.LibraryLevel.PROJECT;
   }
 
   @Override

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     val d = dods {
         <caret>RuntimeException()

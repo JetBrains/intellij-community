@@ -49,9 +49,6 @@ public abstract class FontLayoutService {
   }
 
   private static final class DefaultFontLayoutService extends FontLayoutService {
-    // this flag is supported by JetBrains Runtime
-    private static final int LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT = 8;
-
     private final Method myHandleCharWidthMethod;
     private final Method myGetLatinCharWidthMethod;
 
@@ -70,8 +67,7 @@ public abstract class FontLayoutService {
     @Override
     public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext,
                                          char @NotNull [] chars, int start, int end, boolean isRtl) {
-      return font.layoutGlyphVector(fontRenderContext, chars, start, end, (isRtl ? Font.LAYOUT_RIGHT_TO_LEFT : Font.LAYOUT_LEFT_TO_RIGHT) |
-                                                                          LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT);
+      return font.layoutGlyphVector(fontRenderContext, chars, start, end, (isRtl ? Font.LAYOUT_RIGHT_TO_LEFT : Font.LAYOUT_LEFT_TO_RIGHT));
     }
 
     @Override

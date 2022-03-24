@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -45,6 +44,7 @@ import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.Chunk;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
@@ -141,7 +141,7 @@ public final class CompileDriver {
         ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
         task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
         result.set(exitStatus);
-        buildManager.allowBackgroundTasks();
+        buildManager.allowBackgroundTasks(false);
         if (!myProject.isDisposed()) {
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
@@ -191,9 +191,7 @@ public final class CompileDriver {
     return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
   }
 
-  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext,
-                                                    CompileScope scope,
-                                                    Collection<String> paths) {
+  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext, CompileScope scope, Collection<String> paths) {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     final boolean forceBuild = !compileContext.isMake();
     List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
@@ -204,7 +202,20 @@ public final class CompileDriver {
       CompileScopeUtil.addScopesForSourceSets(scope.getAffectedSourceSets(), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
-      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+      final Collection<ModuleSourceSet> sourceSets = scope.getAffectedSourceSets();
+      boolean includeTests = sourceSets.isEmpty();
+      for (ModuleSourceSet sourceSet : sourceSets) {
+        if (sourceSet.getType().isTest()) {
+          includeTests = true;
+          break;
+        }
+      }
+      if (includeTests) {
+        scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+      }
+      else {
+        scopes.add(CmdlineProtoUtil.createAllModulesProductionScope(forceBuild));
+      }
     }
     if (paths.isEmpty()) {
       scopes = mergeScopesFromProviders(scope, scopes, forceBuild);
@@ -364,7 +375,6 @@ public final class CompileDriver {
                                    status = ExitStatus.ERRORS;
                                    break;
                                  case SUCCESS:
-                                   status = ExitStatus.SUCCESS;
                                    break;
                                  case UP_TO_DATE:
                                    status = ExitStatus.UP_TO_DATE;
@@ -414,6 +424,7 @@ public final class CompileDriver {
     final String name = JavaCompilerBundle
       .message(
         isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
+    Tracer.Span span = Tracer.start(name + " preparation");
     final CompilerTask compileTask = new CompilerTask(
       myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
     );
@@ -428,8 +439,9 @@ public final class CompileDriver {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
-
+    span.complete();
     final Runnable compileWork = () -> {
+      Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
       if (indicator.isCanceled() || myProject.isDisposed()) {
         if (callback != null) {
@@ -461,11 +473,13 @@ public final class CompileDriver {
 
         TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         if (future != null) {
+          Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
             if (indicator.isCanceled()) {
               future.cancel(false);
             }
           }
+          compileInExternalProcessSpan.complete();
           if (!executeCompileTasks(compileContext, false)) {
             COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
           }
@@ -481,8 +495,13 @@ public final class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
-        buildManager.allowBackgroundTasks();
+        compileWorkSpan.complete();
+        buildManager.allowBackgroundTasks(
+          true // reset state on explicit build to compensate possibly unbalanced postpone/allow calls (e.g. via BatchFileChangeListener.start/stop)
+        );
+        Tracer.Span flushCompilerCaches = Tracer.start("flush compiler caches");
         compilerCacheManager.flushCaches();
+        flushCompilerCaches.complete();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
         CompilerUtil.logDuration(
@@ -575,14 +594,12 @@ public final class CompileDriver {
         final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
         final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
         if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
-          String toolWindowId = Registry.is("ide.jps.use.build.tool.window", true) ?
-                                BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
+          String toolWindowId = useBuildToolWindow() ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
           ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
         }
 
-        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE ?
-                                      HtmlChunk.link("#", statusMessage).toString() : statusMessage;
-        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+        String wrappedMessage = _status == ExitStatus.UP_TO_DATE ? statusMessage : HtmlChunk.link("#", statusMessage).toString();
+        Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
           .setListener(new BuildToolWindowActivationListener(compileContext))
           .setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);
@@ -651,7 +668,7 @@ public final class CompileDriver {
     }, null);
   }
 
-  private boolean executeCompileTasks(final CompileContext context, final boolean beforeTasks) {
+  private boolean executeCompileTasks(@NotNull final CompileContext context, final boolean beforeTasks) {
     if (myProject.isDisposed()) {
       return false;
     }
@@ -740,7 +757,7 @@ public final class CompileDriver {
         return false;
       }
 
-      //we do not trust the CompilerDriverUnknownSdkTracker, to extra check has to be done anyways
+      //we do not trust the CompilerDriverUnknownSdkTracker, to extra check has to be done anyway
       return validateJdks(scopeModules, false);
     }
     else {
@@ -885,7 +902,7 @@ public final class CompileDriver {
     }
   }
 
-  private static class BuildToolWindowActivationListener extends NotificationListener.Adapter {
+  private static final class BuildToolWindowActivationListener extends NotificationListener.Adapter {
     private final WeakReference<Project> myProjectRef;
     private final Object myContentId;
 
@@ -896,23 +913,23 @@ public final class CompileDriver {
 
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-      final Project project = myProjectRef.get();
-      boolean useBuildToolwindow = Registry.is("ide.jps.use.build.tool.window", true);
+      Project project = myProjectRef.get();
+      boolean useBuildToolwindow = useBuildToolWindow();
       String toolWindowId = useBuildToolwindow ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
-      if (project != null && !project.isDisposed()) {
-        if (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, myContentId)) {
-          final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
-          if (tw != null) {
-            tw.activate(null, false);
-          }
-        }
-        else {
-          notification.expire();
+      if (project != null && !project.isDisposed() &&
+          (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, myContentId))) {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          toolWindow.activate(null, false);
         }
       }
       else {
         notification.expire();
       }
     }
+  }
+
+  private static boolean useBuildToolWindow() {
+    return SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true);
   }
 }

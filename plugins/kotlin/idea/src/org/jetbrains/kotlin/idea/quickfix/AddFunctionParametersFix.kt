@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
@@ -247,6 +247,7 @@ class AddFunctionParametersFix(
             val element = DiagnosticFactory.cast(
                 this,
                 Errors.TYPE_MISMATCH,
+                Errors.TYPE_MISMATCH_WARNING,
                 Errors.CONSTANT_EXPECTED_TYPE_MISMATCH,
                 Errors.NULL_FOR_NONNULL_TYPE,
             ).psiElement

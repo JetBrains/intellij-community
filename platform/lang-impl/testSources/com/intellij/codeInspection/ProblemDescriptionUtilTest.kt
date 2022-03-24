@@ -49,7 +49,7 @@ class ProblemDescriptionUtilTest : LightPlatformTestCase() {
 
     val descriptorBase = object : ProblemDescriptorBase(psiElement, psiElement, message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                false, null, true, false) {
-      override fun assertPhysical(element: PsiElement?) {}
+      override fun assertPhysical(element: PsiElement) {}
     }
     
 

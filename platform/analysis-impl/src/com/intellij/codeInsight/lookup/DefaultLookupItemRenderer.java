@@ -23,7 +23,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,10 +46,8 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
   /**
    * @deprecated use {@link #getRawIcon(LookupElement)}
    */
-  @SuppressWarnings("unused")
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static Icon getRawIcon(final LookupElement item, boolean real) {
     return getRawIcon(item);
   }

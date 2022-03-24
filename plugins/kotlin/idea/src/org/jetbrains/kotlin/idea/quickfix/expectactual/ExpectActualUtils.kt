@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType.EMPTY_OR_TEMPLATE
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType.NO_BODY
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EMPTY_OR_TEMPLATE
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NO_BODY
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.Companion.create
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
@@ -41,9 +41,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -257,10 +257,10 @@ private fun KtPsiFactory.repairSuperTypeList(
 }
 
 private val forbiddenAnnotationFqNames = setOf(
-    ExpectedActualDeclarationChecker.OPTIONAL_EXPECTATION_FQ_NAME,
+    OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME,
     FqName("kotlin.ExperimentalMultiplatform"),
-    ExperimentalUsageChecker.OPT_IN_FQ_NAME,
-    ExperimentalUsageChecker.OLD_USE_EXPERIMENTAL_FQ_NAME
+    OptInNames.OPT_IN_FQ_NAME,
+    OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 )
 
 internal fun generateCallable(
@@ -439,9 +439,9 @@ fun TypeAccessibilityChecker.Companion.typesToString(types: Collection<FqName?>,
     }
 }
 
-fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): HashSet<String> {
+fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): Set<String> {
     var classes = elements.filterIsInstance<KtClassOrObject>()
-    while (true) {
+    while (classes.isNotEmpty()) {
         val existingNames = classes.mapNotNull { it.fqName?.asString() }.toHashSet()
         existingTypeNames = existingNames
 
@@ -450,4 +450,6 @@ fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<Kt
 
         classes = newExistingClasses
     }
+
+    return existingTypeNames
 }

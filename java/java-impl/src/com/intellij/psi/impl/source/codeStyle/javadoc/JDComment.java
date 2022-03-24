@@ -134,7 +134,7 @@ public class JDComment {
       }
     }
     else if (sb.length() == 0 && !StringUtil.isEmpty(myEndLine)) {
-      sb.append('\n').append('*').append('\n');
+      sb.append(prefix).append('\n');
     }
 
     if (myMultiLineComment && myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS

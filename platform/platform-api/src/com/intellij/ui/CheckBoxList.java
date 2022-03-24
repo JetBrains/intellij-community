@@ -279,7 +279,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
   }
 
   public void clear() {
-    ((DefaultListModel)getModel()).clear();
+    ((DefaultListModel<?>)getModel()).clear();
     myItemMap.clear();
   }
 

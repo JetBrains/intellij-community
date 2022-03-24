@@ -6,7 +6,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-abstract class JvmVariableDescriptor implements VariableDescriptor {
+public abstract class JvmVariableDescriptor implements VariableDescriptor {
   @Override
   public boolean alwaysEqualsToItself(@NotNull DfType type) {
     return !type.isSuperType(DfTypes.FLOAT_NAN) &&

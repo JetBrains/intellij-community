@@ -29,11 +29,11 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
   /**
    * A helper method to create the resulting states for linear instruction
    * 
-   * @param runner runner that interprets current IR
+   * @param interpreter interpreter that interprets current IR
    * @return an array of single instruction state containing the next instruction. 
    */
-  public DfaInstructionState[] nextStates(DataFlowInterpreter runner) {
-    return myInstruction.nextStates(runner, myBeforeMemoryState);
+  public DfaInstructionState[] nextStates(DataFlowInterpreter interpreter) {
+    return myInstruction.nextStates(interpreter, myBeforeMemoryState);
   }
 
   @NotNull

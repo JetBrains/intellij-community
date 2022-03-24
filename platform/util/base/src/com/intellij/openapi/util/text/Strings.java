@@ -4,13 +4,12 @@ package com.intellij.openapi.util.text;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 public final class Strings {
   private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
@@ -20,6 +19,11 @@ public final class Strings {
 
   public static boolean isAscii(char ch) {
     return ch < 128;
+  }
+
+  @Contract(pure = true)
+  public static boolean isDecimalDigit(char c) {
+    return c >= '0' && c <= '9';
   }
 
   @Contract(pure = true)
@@ -677,5 +681,123 @@ public final class Strings {
       builder.append(string);
     }
     return builder.toString();
+  }
+
+  @Contract(pure = true)
+  public static boolean isWhiteSpace(char c) {
+    return c == '\n' || c == '\t' || c == ' ';
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars) {
+    int h = 0;
+    for (int off = 0; off < chars.length(); off++) {
+      char c = chars.charAt(off);
+      if (!isWhiteSpace(c)) {
+        h = 31 * h + c;
+      }
+    }
+    return h;
+  }
+
+  @Contract(pure = true)
+  public static boolean equalsIgnoreWhitespaces(@Nullable CharSequence s1, @Nullable CharSequence s2) {
+    if (s1 == null ^ s2 == null) {
+      return false;
+    }
+
+    if (s1 == null) {
+      return true;
+    }
+
+    int len1 = s1.length();
+    int len2 = s2.length();
+
+    int index1 = 0;
+    int index2 = 0;
+    while (index1 < len1 && index2 < len2) {
+      if (s1.charAt(index1) == s2.charAt(index2)) {
+        index1++;
+        index2++;
+        continue;
+      }
+
+      boolean skipped = false;
+      while (index1 != len1 && isWhiteSpace(s1.charAt(index1))) {
+        skipped = true;
+        index1++;
+      }
+      while (index2 != len2 && isWhiteSpace(s2.charAt(index2))) {
+        skipped = true;
+        index2++;
+      }
+
+      if (!skipped) return false;
+    }
+
+    for (; index1 != len1; index1++) {
+      if (!isWhiteSpace(s1.charAt(index1))) return false;
+    }
+    for (; index2 != len2; index2++) {
+      if (!isWhiteSpace(s2.charAt(index2))) return false;
+    }
+
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    int start1 = 0;
+    int end1 = s1.length();
+    int end2 = s2.length();
+
+    while (start1 < end1) {
+      char c = s1.charAt(start1);
+      if (!isWhiteSpace(c)) break;
+      start1++;
+    }
+
+    while (start1 < end1) {
+      char c = s1.charAt(end1 - 1);
+      if (!isWhiteSpace(c)) break;
+      end1--;
+    }
+
+    int start2 = 0;
+    while (start2 < end2) {
+      char c = s2.charAt(start2);
+      if (!isWhiteSpace(c)) break;
+      start2++;
+    }
+
+    while (start2 < end2) {
+      char c = s2.charAt(end2 - 1);
+      if (!isWhiteSpace(c)) break;
+      end2--;
+    }
+
+    CharSequence ts1 = new CharSequenceSubSequence(s1, start1, end1);
+    CharSequence ts2 = new CharSequenceSubSequence(s2, start2, end2);
+
+    return StringUtilRt.equal(ts1, ts2, true);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text) {
+    return StringUtilRt.convertLineSeparators(text);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator);
+  }
+
+  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
 }

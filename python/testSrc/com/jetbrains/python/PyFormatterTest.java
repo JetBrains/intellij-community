@@ -46,6 +46,12 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-35936
+  public void testPep8MultipleStatementsOnOneLine() {
+    getPythonCodeStyleSettings().NEW_LINE_AFTER_COLON = true;
+    doTest();
+  }
+
   public void testUnaryMinus() {
     doTest();
   }

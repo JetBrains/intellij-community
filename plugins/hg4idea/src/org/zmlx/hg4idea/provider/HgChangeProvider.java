@@ -12,7 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,12 +37,17 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.*;
 
-public class HgChangeProvider implements ChangeProvider {
-
+public final class HgChangeProvider implements ChangeProvider {
   private final Project myProject;
   private final VcsKey myVcsKey;
 
-  private static final PluginId OUR_PLUGIN_ID = PluginManagerCore.getPluginByClassName(HgChangeProvider.class.getName());
+  private static final PluginId OUR_PLUGIN_ID;
+
+  static {
+    PluginDescriptor plugin = PluginManager.getPluginByClass(HgChangeProvider.class);
+    OUR_PLUGIN_ID = plugin == null ? null : plugin.getPluginId();
+  }
+
   public static final FileStatus COPIED
     = FileStatusFactory.getInstance().createFileStatus("COPIED",HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
   public static final FileStatus RENAMED
@@ -243,7 +249,7 @@ public class HgChangeProvider implements ChangeProvider {
             vcsKey
           );
         } else {
-          // The original file does not exists so this is a rename.
+          // The original file does not exist so this is a renamed.
           processChange(
             HgContentRevision.create(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),

@@ -5,4 +5,4 @@ import kotlin.text.capitalize as xxx
  */
 fun foo(){}
 
-// EXIST: { lookupString: "xxx", itemText: "xxx" }
+// EXIST: { lookupString: "xxx", itemText: "xxx", icon: "nodes/function.svg"}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
@@ -23,11 +23,13 @@ internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibra
     IndexingBundle.message("progress.text.additional.library.scanning.added.files", it)
   } ?: IndexingBundle.message("progress.text.additional.library.scanning.unknown.added.files")
 
-  override fun getOrigin(): IndexableSetOrigin = PartialAdditionalLibraryIndexableSetOrigin()
+  override fun getOrigin(): IndexableSetOrigin = PartialAdditionalLibraryIndexableSetOrigin(rootsToIndex)
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, fileFilter: VirtualFileFilter): Boolean {
     return iterateRoots(project, rootsToIndex, fileIterator, fileFilter, true)
   }
+
+  override fun getRootUrls(project: Project): Set<String> = rootsToIndex.map { it.url }.toSet()
 }
 
-private class PartialAdditionalLibraryIndexableSetOrigin : IndexableSetOrigin
+private data class PartialAdditionalLibraryIndexableSetOrigin(val rootsToIndex: Iterable<VirtualFile>) : IndexableSetOrigin

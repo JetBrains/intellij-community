@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,10 @@ public final class ComparisonUtils {
     return s_swappedComparisons.get(tokenType);
   }
 
+  /**
+   * @param expression the expression to check
+   * @return true, when this is an expression of the form {@code a == b} or {@code a != b}, false otherwise.
+   */
   public static boolean isEqualityComparison(@NotNull PsiExpression expression) {
     if (!(expression instanceof PsiPolyadicExpression)) {
       return false;

@@ -219,3 +219,13 @@ class FooBar {
 
   private static void doSmth(long var) {}
 }
+abstract class RedundantLocalInFor {
+
+  void iterate() {
+    for (RedundantLocalInFor child = this, parent; (parent = child.getParent()) != null; child = parent) {
+      System.out.println("q");
+    }
+  }
+
+  protected abstract RedundantLocalInFor getParent();
+}

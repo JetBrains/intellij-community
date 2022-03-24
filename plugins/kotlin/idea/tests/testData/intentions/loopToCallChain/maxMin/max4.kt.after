@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'maxOrNull()'"
 // IS_APPLICABLE_2: false
 fun getMaxLineWidth(list: List<Float>): Float {

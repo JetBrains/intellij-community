@@ -49,11 +49,6 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
   }
 
   @Override
-  public void registerMultiHostInjector(@NotNull MultiHostInjector injector) {
-
-  }
-
-  @Override
   public void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable) {
 
   }

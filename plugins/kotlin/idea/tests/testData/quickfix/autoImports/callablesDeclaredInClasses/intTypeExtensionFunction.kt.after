@@ -1,0 +1,14 @@
+// "Import" "true"
+package p
+
+import p.AObject.ext
+
+open class A {
+    fun Int.ext() {}
+}
+
+object AObject : A()
+
+fun usage() {
+    10.ext()
+}

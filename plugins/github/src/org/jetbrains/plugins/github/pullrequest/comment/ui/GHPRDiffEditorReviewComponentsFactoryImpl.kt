@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.comment.wrapComponentUsingRoundedPanel
+import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -10,30 +10,34 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
                      private val reviewDataProvider: GHPRReviewDataProvider,
-                     private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
+                     private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
+                     private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    GHPRReviewThreadComponent.create(project, thread, reviewDataProvider, avatarIconsProvider, currentUser).apply {
+    GHPRReviewThreadComponent.create(project, thread,
+                                     reviewDataProvider, avatarIconsProvider,
+                                     suggestedChangeHelper,
+                                     currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
-    }.let(::wrapComponentUsingRoundedPanel)
+    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldModel(project) {
+    val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       if (line == startLine) {
         val commitSha = createCommentParametersHelper.commitSha
@@ -54,7 +58,7 @@ internal constructor(private val project: Project,
   }
 
   override fun createNewReviewCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldModel(project) {
+    val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       val commitSha = createCommentParametersHelper.commitSha
       if (line == startLine) {
@@ -77,7 +81,7 @@ internal constructor(private val project: Project,
   }
 
   override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldModel(project) {
+    val textFieldModel = GHCommentTextFieldModel(project) {
       val filePath = createCommentParametersHelper.filePath
       if (line == startLine) {
         val commitSha = createCommentParametersHelper.commitSha
@@ -97,13 +101,13 @@ internal constructor(private val project: Project,
   }
 
   private fun createCommentComponent(
-    textFieldModel: GHSubmittableTextFieldModel,
+    textFieldModel: GHCommentTextFieldModel,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
   ): JComponent =
-    GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
+    GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
       hideCallback()
     }.apply {
       border = JBUI.Borders.empty(8)
-    }.let(::wrapComponentUsingRoundedPanel)
+    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 }

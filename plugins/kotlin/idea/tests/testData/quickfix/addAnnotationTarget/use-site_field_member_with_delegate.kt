@@ -1,5 +1,5 @@
 // "Add annotation target" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Convert to ordinary property
 // ACTION: Introduce import alias
 // ACTION: Make internal

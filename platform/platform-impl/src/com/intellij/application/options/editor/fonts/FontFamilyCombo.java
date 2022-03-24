@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -12,6 +12,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -308,7 +309,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       c.weightx = 1.0;
       c.gridx = 0;
       c.gridy = 0;
-      c.insets = JBUI.emptyInsets();
+      c.insets = JBInsets.emptyInsets();
       if (withTopLine) {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 2;

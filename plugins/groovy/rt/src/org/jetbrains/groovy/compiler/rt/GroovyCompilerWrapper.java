@@ -147,6 +147,11 @@ public class GroovyCompilerWrapper {
           compiledFiles.add(item);
         }
       }
+
+      @SuppressWarnings("RedundantMethodOverride")
+      public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
+        super.doPhaseOperation(unit);
+      }
     });
     return compiledFiles;
   }

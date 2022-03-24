@@ -17,11 +17,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
@@ -62,10 +64,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -123,7 +122,6 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
@@ -132,15 +130,6 @@ public abstract class UsefulTestCase extends TestCase {
 
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
-
-    try {
-      Element oldS = new Element("temp");
-      defaultSettings.writeExternal(oldS);
-      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   /**
@@ -400,17 +389,10 @@ public abstract class UsefulTestCase extends TestCase {
     new RunAll(
       () -> {
         try {
-          checkCodeInsightSettingsEqual(defaultSettings, settings);
+          checkCodeInsightSettingsNotOverwritten(settings);
         }
         catch (AssertionError error) {
-          CodeInsightSettings clean = new CodeInsightSettings();
-          for (Field field : clean.getClass().getFields()) {
-            try {
-              ReflectionUtil.copyFieldValue(clean, settings, field);
-            }
-            catch (Exception ignored) {
-            }
-          }
+          restoreCodeInsightSettingsToAvoidInducedErrors(settings);
           throw error;
         }
       },
@@ -426,14 +408,24 @@ public abstract class UsefulTestCase extends TestCase {
     ).run();
   }
 
+  private static void restoreCodeInsightSettingsToAvoidInducedErrors(@NotNull CodeInsightSettings settings) {
+    CodeInsightSettings clean = new CodeInsightSettings();
+    for (Field field : clean.getClass().getFields()) {
+      try {
+        ReflectionUtil.copyFieldValue(clean, settings, field);
+      }
+      catch (Exception ignored) {
+      }
+    }
+  }
+
   /**
    * Test root disposable is used for add an activity on test {@link #tearDown()}
    *
    * @see #disposeOnTearDown(Disposable)
    * @see #tearDown()
    */
-  @NotNull
-  public Disposable getTestRootDisposable() {
+  public @NotNull Disposable getTestRootDisposable() {
     Disposable disposable = myTestRootDisposable;
     if (disposable == null) {
       myTestRootDisposable = disposable = new TestDisposable();
@@ -554,6 +546,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    var testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
@@ -565,8 +558,12 @@ public abstract class UsefulTestCase extends TestCase {
         success = true;
         throw e;
       }
+      catch (Throwable t) {
+        TestLoggerFactory.logTestFailure(t);
+        throw t;
+      }
       finally {
-        TestLoggerFactory.onTestFinished(success);
+        TestLoggerFactory.onTestFinished(success, testDescription);
       }
     };
   }
@@ -586,8 +583,7 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
-  @NotNull
-  public static String toString(@NotNull Iterable<?> collection) {
+  public static @NotNull String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
       return "<empty>";
     }
@@ -745,8 +741,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(toString(collection), copy, expected);
   }
 
-  @NotNull
-  public static String toString(Object @NotNull [] collection, @NotNull String separator) {
+  public static @NotNull String toString(Object @NotNull [] collection, @NotNull String separator) {
     return toString(Arrays.asList(collection), separator);
   }
 
@@ -761,8 +756,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(collection, expected);
   }
 
-  @NotNull
-  public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
+  public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
     List<String> list = ContainerUtil.map2List(collection, String::valueOf);
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
@@ -842,8 +836,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Contract("null, _ -> fail")
-  @NotNull
-  public static <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
+  public static @NotNull <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
     Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
     Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
     @SuppressWarnings("unchecked") T t = (T)o;
@@ -912,8 +905,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @NotNull
-  protected <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
+  protected @NotNull <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
@@ -936,18 +928,15 @@ public abstract class UsefulTestCase extends TestCase {
     assertFalse("File should not exist " + file, file.exists());
   }
 
-  @NotNull
-  protected String getTestName(boolean lowercaseFirstLetter) {
+  protected @NotNull String getTestName(boolean lowercaseFirstLetter) {
     return getTestName(getName(), lowercaseFirstLetter);
   }
 
-  @NotNull
-  public static String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
+  public static @NotNull String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
-  @NotNull
-  protected String getTestDirectoryName() {
+  protected @NotNull String getTestDirectoryName() {
     final String testName = getTestName(true);
     return testName.replaceAll("_.*", "");
   }
@@ -973,7 +962,7 @@ public abstract class UsefulTestCase extends TestCase {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
-        VfsTestUtil.overwriteTestData(filePath, actualText);
+        VfsTestUtil.overwriteTestData(filePath, actualText, trimBeforeComparing);
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("File " + filePath + " created.");
       }
@@ -1027,28 +1016,36 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@SuppressWarnings("SameParameterValue") @NotNull CodeInsightSettings oldSettings,
-                                                    @NotNull CodeInsightSettings settings) {
-    if (!oldSettings.equals(settings)) {
+  private static void checkCodeInsightSettingsNotOverwritten(@NotNull CodeInsightSettings settings) {
+    if (!settings.equals(defaultSettings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);
+      Element oldS = new Element("temp");
+      defaultSettings.writeExternal(oldS);
+      String DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
       Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
     }
   }
 
-  public boolean isPerformanceTest() {
+  /**
+   * @return true for a test which performs A LOT of computations to test resources consumption, not correctness.
+   * Such test should avoid performing expensive consistency checks, e.g. data structure consistency complex validations.
+   * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
+   * For example: {@code public void testHighlightingPerformance()}
+   */
+  public final boolean isPerformanceTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 
   /**
-   * @return true for a test which performs A LOT of computations.
+   * @return true for a test which performs A LOT of computations, but which does care about correctness of operations it performs.
    * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
-  public boolean isStressTest() {
+  public final boolean isStressTest() {
     return isStressTest(getName(), getClass().getName());
   }
 
@@ -1067,32 +1064,6 @@ public abstract class UsefulTestCase extends TestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     });
-  }
-
-  /**
-   * Checks that code block throw corresponding exception.
-   *
-   * @param exceptionCase Block annotated with some exception type
-   * @deprecated Use {@link #assertThrows(Class, ThrowableRunnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase) {
-    assertThrows(exceptionCase.getExpectedExceptionClass(), null, ()-> exceptionCase.tryClosure());
-  }
-
-  /**
-   * Checks that code block throw corresponding exception with expected error msg.
-   * If expected error message is null it will not be checked.
-   *
-   * @param exceptionCase    Block annotated with some exception type
-   * @param expectedErrorMsg expected error message
-   * @deprecated Use {@link #assertThrows(Class, String, ThrowableRunnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase, @Nullable String expectedErrorMsg) {
-    assertThrows(exceptionCase.getExpectedExceptionClass(), expectedErrorMsg, ()->exceptionCase.tryClosure());
   }
 
   /**
@@ -1139,23 +1110,6 @@ public abstract class UsefulTestCase extends TestCase {
       if (!wasThrown) {
         fail(exceptionClass + " must be thrown.");
       }
-    }
-  }
-
-  /**
-   * Checks that code block doesn't throw corresponding exception.
-   *
-   * @param exceptionCase Block annotated with some exception type
-   * @deprecated Use {@link #assertNoException(Class, ThrowableRunnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected <T extends Throwable> void assertNoException(@NotNull AbstractExceptionCase<T> exceptionCase) throws T {
-    try {
-      assertNoException(exceptionCase.getExpectedExceptionClass(), () -> exceptionCase.tryClosure());
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
     }
   }
 
@@ -1212,8 +1166,7 @@ public abstract class UsefulTestCase extends TestCase {
     return false;
   }
 
-  @NotNull
-  protected String getHomePath() {
+  protected @NotNull String getHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }
 
@@ -1228,7 +1181,7 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static VirtualFile refreshAndFindFile(@NotNull final File file) {
+  public static VirtualFile refreshAndFindFile(final @NotNull File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
@@ -1267,6 +1220,25 @@ public abstract class UsefulTestCase extends TestCase {
     public String toString() {
       String testName = getTestName(false);
       return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
+    }
+  }
+
+  protected void setRegistryPropertyForTest(@NotNull String property, @NotNull String value) {
+    Registry.get(property).setValue(value);
+    Disposer.register(getTestRootDisposable(), () -> Registry.get(property).resetToDefault());
+  }
+
+  protected void allowAccessToDirsIfExists(@NotNull String @NotNull ... dirNames) {
+    for (String dirName : dirNames) {
+      final Path usrShareDir = Paths.get(dirName);
+      if (Files.exists(usrShareDir)) {
+        final String absolutePath = usrShareDir.toAbsolutePath().toString();
+        LOG.debug(usrShareDir.toString(), " exists, adding to the list of allowed root: ", absolutePath);
+        VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
+      }
+      else {
+        LOG.debug(usrShareDir.toString(), " does not exists");
+      }
     }
   }
 }

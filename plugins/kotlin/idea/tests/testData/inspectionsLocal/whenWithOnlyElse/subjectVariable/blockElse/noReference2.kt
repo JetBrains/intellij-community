@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     when<caret> (val a = 42) {
         else -> {

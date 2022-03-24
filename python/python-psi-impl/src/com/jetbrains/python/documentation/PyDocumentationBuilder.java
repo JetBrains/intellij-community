@@ -31,6 +31,7 @@ import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,7 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  public String build() {
+  public @Nls String build() {
     final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
 
     PsiElement elementDefinition = resolveToDocStringOwner();

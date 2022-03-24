@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -49,6 +50,9 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
     if (elementToMakeWritable != null &&
         !(EditorModificationUtil.checkModificationAllowed(editor) &&
           FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable))) {
+      return;
+    }
+    if (elementToMakeWritable instanceof PsiCompiledElement) {
       return;
     }
 

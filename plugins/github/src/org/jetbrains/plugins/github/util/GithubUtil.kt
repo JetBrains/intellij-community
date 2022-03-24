@@ -125,7 +125,7 @@ object GithubUtil {
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}", ReplaceWith("GithubGitHelper.findGitRepository(project, file)",
                                                      "org.jetbrains.plugins.github.util.GithubGitHelper"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun getGitRepository(project: Project, file: VirtualFile?): GitRepository? {
     return GithubGitHelper.findGitRepository(project, file)
   }
@@ -165,7 +165,7 @@ object GithubUtil {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
     return findGithubRemoteUrl(repository) != null
   }

@@ -8,7 +8,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 public class ComponentCategorizerTest extends LightPlatformTestCase {
   public void testGetCategoryFromAnnotation() {
     PersistentStateComponent component = ApplicationManager.getApplication().getService(AppEditorFontOptions.class);
-    ComponentCategory category = ComponentCategorizer.getCategory(component);
-    assertEquals(ComponentCategory.UI, category);
+    SettingsCategory category = ComponentCategorizer.getCategory(component);
+    assertEquals(SettingsCategory.UI, category);
   }
 }

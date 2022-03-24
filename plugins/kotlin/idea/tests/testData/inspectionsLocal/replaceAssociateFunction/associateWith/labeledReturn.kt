@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 fun getValue(i: Int): String = ""
 
 fun test(b: Boolean) {

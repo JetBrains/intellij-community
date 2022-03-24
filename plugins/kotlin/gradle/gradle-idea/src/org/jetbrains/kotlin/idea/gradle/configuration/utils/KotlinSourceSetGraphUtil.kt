@@ -1,13 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+@file:Suppress("UnstableApiUsage")
 package org.jetbrains.kotlin.idea.gradle.configuration.utils
 
 import com.google.common.graph.*
 import com.intellij.openapi.util.IntellijInternalApi
-import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
-import org.jetbrains.kotlin.gradle.KotlinPlatform
-import org.jetbrains.kotlin.gradle.KotlinSourceSet
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
-internal fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
+@IntellijInternalApi
+fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
     val graph = createSourceSetDependsOnGraph(model)
     graph.putInferredTestToProductionEdges()
     return graph.immutable
@@ -40,7 +43,7 @@ fun createSourceSetDependsOnGraph(
 fun MutableGraph<KotlinSourceSet>.putInferredTestToProductionEdges() {
     val sourceSets = this.nodes()
     for (sourceSet in sourceSets) {
-        if (sourceSet.isTestModule) {
+        if (sourceSet.isTestComponent) {
             @OptIn(UnsafeTestSourceSetHeuristicApi::class)
             val predictedMainSourceSetName = predictedProductionSourceSetName(sourceSet.name)
             val predictedMainSourceSet = sourceSets.firstOrNull { it.name == predictedMainSourceSetName } ?: continue
@@ -60,7 +63,7 @@ private fun getFixedDependsOnSourceSets(
     val implicitDependsOnEdgeForAndroid = if (
         sourceSet.actualPlatforms.contains(KotlinPlatform.ANDROID) && sourceSet.declaredDependsOnSourceSets.isEmpty()
     ) {
-        val commonSourceSetName = if (sourceSet.isTestModule) KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
+        val commonSourceSetName = if (sourceSet.isTestComponent) KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
         else KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME
         listOfNotNull(sourceSetsByName[commonSourceSetName])
     } else emptyList()
@@ -78,9 +81,11 @@ private fun getFixedDependsOnSourceSets(
 /**
  * @see Graphs.transitiveClosure
  */
-internal val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
+@IntellijInternalApi
+val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
 
 /**
  * @see ImmutableGraph.copyOf
  */
-internal val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)
+@IntellijInternalApi
+val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)

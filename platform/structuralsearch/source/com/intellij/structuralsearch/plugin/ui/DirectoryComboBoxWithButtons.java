@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
@@ -55,7 +55,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
       final ComboBox<?> source = (ComboBox<?>)e.getSource();
       if (directory == null) {
 
-        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", "error");
         final Balloon balloon = JBPopupFactory.getInstance()
           .createHtmlTextBalloonBuilder(SSRBundle.message("popup.content.directory"), AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
@@ -64,7 +63,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
         source.requestFocus();
       }
       else {
-        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", null);
       }
       if (myCallback != null && directory != null) {
@@ -122,7 +120,10 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
   }
 
-  public void setDirectory(@NotNull VirtualFile directory) {
+  public void setDirectory(@Nullable VirtualFile directory) {
+    if (directory == null) {
+      return;
+    }
     final String url = directory.getPresentableUrl();
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     comboBox.getEditor().setItem(url);

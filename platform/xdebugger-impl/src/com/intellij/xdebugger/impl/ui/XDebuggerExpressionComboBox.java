@@ -22,7 +22,6 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   @Override
   @Nullable
   public Editor getEditor() {
-    return myEditor.getEditorTextField().getEditor();
+    return myEditor.getEditorTextField().getEditor(true);
   }
 
   @Override
@@ -101,7 +100,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setEditor(myEditor);
     //myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
-    myComboBox.setMaximumRowCount(XDebuggerHistoryManager.MAX_RECENT_EXPRESSIONS);
+    myComboBox.setMaximumRowCount(10);
   }
 
   @Override

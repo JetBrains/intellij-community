@@ -40,7 +40,7 @@ TEST_FLASK = False
 try:
     import django
     version = [int(x) for x in django.get_version().split('.')][:2]
-    TEST_DJANGO = version == [1, 7] or version == [2, 1]
+    TEST_DJANGO = version == [1, 7] or version == [2, 2]
 except:
     pass
 
@@ -199,7 +199,7 @@ def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_ex
         name_to_value = {}
         for var in msg.var:
             name_to_value[var['name']] = var['value']
-        assert name_to_value == {'i': 'int: 6', 'last_i': 'int: 6'}
+        assert name_to_value == {'i': '6', 'last_i': '6'}
 
         writer.write_remove_breakpoint(breakpoint_id)
 
@@ -262,8 +262,8 @@ def test_case_suspend_thread(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'exit_while_loop()')
         writer.wait_for_evaluation([
             [
-                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier),
-                '<var name="exit_while_loop()" type="str"  value="str: ok"',  # jython
+                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier),
+                '<var name="exit_while_loop()" type="str"  value="ok"',  # jython
              ]
         ])
 
@@ -297,12 +297,12 @@ def test_case_suspend_all_thread(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit0.thread_id, hit0.frame_id, 'LOCAL'), 'exit_while_loop(1)')
         writer.wait_for_evaluation([
             [
-                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier)
+                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier)
             ]
         ])
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit1.thread_id, hit1.frame_id, 'LOCAL'), 'exit_while_loop(2)')
-        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier))
 
         writer.write_run_thread('*')
 
@@ -407,7 +407,7 @@ def test_case_7(case_setup):
 
         writer.wait_for_vars([
             [
-                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier),
+                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="10" />%0A</xml>'.format(builtin_qualifier),
                 '<var name="variable_for_test_1" type="int"  value="int',  # jython
             ]
         ])
@@ -420,8 +420,8 @@ def test_case_7(case_setup):
 
         writer.wait_for_vars([
             [
-                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="int%253A 20" />%0A</xml>'.format(builtin_qualifier),
-                '<var name="variable_for_test_1" type="int"  value="int%253A 10" />%0A<var name="variable_for_test_2" type="int"  value="int%253A 20" />%0A',  # jython
+                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="20" />%0A</xml>'.format(builtin_qualifier),
+                '<var name="variable_for_test_1" type="int"  value="10" />%0A<var name="variable_for_test_2" type="int"  value="20" />%0A',  # jython
             ]
         ])
 
@@ -811,7 +811,7 @@ def test_case_18(case_setup):
         hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=5)
 
         writer.write_change_variable(hit.thread_id, hit.frame_id, 'a', '40')
-        writer.wait_for_var('<xml><var name="" type="int" qualifier="{0}" value="int%253A 40" />%0A</xml>'.format(builtin_qualifier,))
+        writer.wait_for_var('<xml><var name="" type="int" qualifier="{0}" value="40" />%0A</xml>'.format(builtin_qualifier,))
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
@@ -828,7 +828,7 @@ def test_case_19(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a.__var')
         writer.wait_for_evaluation([
             [
-                '<var name="a.__var" type="int" qualifier="{0}" value="int'.format(builtin_qualifier),
+                '<var name="a.__var" type="int" qualifier="{0}" value="10'.format(builtin_qualifier),
                 '<var name="a.__var" type="int"  value="int',  # jython
             ]
         ])
@@ -2428,8 +2428,8 @@ def test_return_value(case_setup):
 
         writer.wait_for_vars([
             [
-                '<var name="method1" type="int" qualifier="%s" value="int: 1" isRetVal="True"' % (builtin_qualifier,),
-                '<var name="method1" type="int"  value="int%253A 1" isRetVal="True"',
+                '<var name="method1" type="int" qualifier="%s" value="1" isRetVal="True"' % (builtin_qualifier,),
+                '<var name="method1" type="int"  value="1" isRetVal="True"',
             ],
         ])
         writer.write_run_thread(hit.thread_id)

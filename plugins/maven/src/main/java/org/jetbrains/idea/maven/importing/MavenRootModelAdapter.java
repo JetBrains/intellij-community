@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -138,7 +137,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                IdeModifiableModelsProvider provider,
+                                                ModifiableModelsProviderProxy provider,
                                                 MavenProject project) {
     return myDelegate.addLibraryDependency(artifact, scope, provider, project);
   }
@@ -153,7 +152,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     myDelegate.setLanguageLevel(level);
   }
 
-  static boolean isChangedByUser(Library library) {
+  public static boolean isChangedByUser(Library library) {
     String[] classRoots = library.getUrls(
       OrderRootType.CLASSES);
     if (classRoots.length != 1) return true;
@@ -166,14 +165,10 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     if (dotPos == -1) return true;
     String pathToJar = classes.substring(0, dotPos);
 
-    if (MavenRootModelAdapter
-      .hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
+    if (hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
       return true;
     }
-    if (MavenRootModelAdapter
-      .hasUserPaths(
-        JavadocOrderRootType
-          .getInstance(), library, pathToJar)) {
+    if (hasUserPaths(JavadocOrderRootType.getInstance(), library, pathToJar)) {
       return true;
     }
 

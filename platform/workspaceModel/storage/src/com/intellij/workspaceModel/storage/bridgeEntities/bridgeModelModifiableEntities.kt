@@ -304,11 +304,13 @@ class ModifiableArtifactPropertiesEntity : ModifiableWorkspaceEntityBase<Artifac
 
 fun WorkspaceEntityStorageDiffBuilder.addArtifactPropertiesEntity(artifact: ArtifactEntity,
                                                                   providerType: String,
-                                                                  propertiesXmlTag: String?, source: EntitySource) = addEntity(
-  ModifiableArtifactPropertiesEntity::class.java, source) {
-  this.artifact = artifact
-  this.providerType = providerType
-  this.propertiesXmlTag = propertiesXmlTag
+                                                                  propertiesXmlTag: String?,
+                                                                  source: EntitySource): ArtifactPropertiesEntity {
+  return addEntity(ModifiableArtifactPropertiesEntity::class.java, source) {
+    this.artifact = artifact
+    this.providerType = providerType
+    this.propertiesXmlTag = propertiesXmlTag
+  }
 }
 
 abstract class ModifiableCompositePackagingElementEntity<T: CompositePackagingElementEntity>(clazz: Class<T>) : ModifiableWorkspaceEntityBase<T>() {

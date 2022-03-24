@@ -1,5 +1,5 @@
 // "Cast expression 'a.foo().single()' to 'Int'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class A {
     fun foo(): List<Any> = listOf()
 

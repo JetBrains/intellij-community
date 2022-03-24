@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +17,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
+/**
+ * Implement this interface and register the implementation as {@code directoryIndexExcludePolicy} extension in plugin.xml to specify files
+ * and directories which should be automatically
+ * <a href="https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders">excluded</a> from the project and its modules.
+ */
 public interface DirectoryIndexExcludePolicy {
   ExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME = ExtensionPointName.create("com.intellij.directoryIndexExcludePolicy");
 
   /**
    * @deprecated Override {@link #getExcludeUrlsForProject()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default VirtualFile @NotNull [] getExcludeRootsForProject() {
     return VirtualFile.EMPTY_ARRAY;
   }

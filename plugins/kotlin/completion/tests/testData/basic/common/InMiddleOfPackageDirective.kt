@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 package testdata.kotlin.data
 
 class TestSample() {

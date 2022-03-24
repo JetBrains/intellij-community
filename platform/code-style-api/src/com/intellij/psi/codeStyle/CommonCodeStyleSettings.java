@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +42,6 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
- *
- * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
   // Dev. notes:
@@ -173,7 +170,7 @@ public class CommonCodeStyleSettings {
   }
 
   public void writeExternal(Element element) {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
+    LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(getLanguage());
     if (provider != null) {
       writeExternal(element, provider);
     }
@@ -240,6 +237,9 @@ public class CommonCodeStyleSettings {
    * Tells if a space is added when commenting/uncommenting lines with a line comment.
    */
   public boolean LINE_COMMENT_ADD_SPACE = false;
+  public boolean BLOCK_COMMENT_ADD_SPACE = false;
+
+  public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
 
   public boolean KEEP_LINE_BREAKS = true;
 
@@ -1193,8 +1193,7 @@ public class CommonCodeStyleSettings {
   /**
    * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
     return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
   }

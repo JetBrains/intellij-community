@@ -1,3 +1,8 @@
-Unclassified 11 open class Z : A() {
-Unclassified 15 class U : Z() {
-Unclassified 3 open class B : A() {
+[kotlinClassDerivedClasses.1.kt] Unclassified 11 open class Z : A() {
+[kotlinClassDerivedClasses.1.kt] Unclassified 15 class U : Z() {
+[kotlinClassDerivedClasses.1.kt] Unclassified 3 open class B : A() {
+[kotlinClassDerivedClasses.2.kt] Unclassified 1 open class SimpleClass : A()
+[kotlinClassDerivedClasses.3.kt] Unclassified 1 object abc : A()
+[kotlinClassDerivedClasses.4.kt] Unclassified 2 val b = object : A() {
+[kotlinClassDerivedClasses.5.java] Unclassified 1 class D extends A {
+[kotlinClassDerivedClasses.6.kt] Unclassified 1 class Awdaw : SimpleClass()

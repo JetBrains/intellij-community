@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 public fun List<String>.fn() <selection>: List<String></selection><caret> = map {
     if (it.isEmpty()) return@map "<empty>"

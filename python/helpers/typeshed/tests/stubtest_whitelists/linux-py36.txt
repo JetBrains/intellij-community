@@ -1,4 +1,0 @@
-ctypes.wintypes
-pwd.getpwnam
-ssl.PROTOCOL_SSLv3  # Depends on openssl compilation
-ssl.RAND_egd  # Depends on openssl compilation

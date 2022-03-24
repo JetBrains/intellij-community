@@ -9,7 +9,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -32,16 +31,8 @@ public final class HgTestUtil {
    * @param content new file content
    */
   public static void printToFile(@NotNull VirtualFile file, String content) throws FileNotFoundException {
-    PrintStream centralPrinter = null;
-    try {
-      centralPrinter = new PrintStream(new FileOutputStream(file.getPath()));
+    try (PrintStream centralPrinter = new PrintStream(new FileOutputStream(file.getPath()))) {
       centralPrinter.print(content);
-      centralPrinter.close();
-    }
-    finally {
-      if (centralPrinter != null) {
-        centralPrinter.close();
-      }
     }
   }
 }

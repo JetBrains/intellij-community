@@ -19,7 +19,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title="Scope"/>
+        <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="reformat.scope.panel"/>
         <children>
           <component id="cea7f" class="javax.swing.JRadioButton" binding="myOnlyVCSChangedTextRb" default-binding="true">
             <constraints>
@@ -64,7 +64,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title="Options"/>
+        <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="reformat.options.panel"/>
         <children>
           <component id="9d93" class="javax.swing.JCheckBox" binding="myOptimizeImportsCb" default-binding="true">
             <constraints>

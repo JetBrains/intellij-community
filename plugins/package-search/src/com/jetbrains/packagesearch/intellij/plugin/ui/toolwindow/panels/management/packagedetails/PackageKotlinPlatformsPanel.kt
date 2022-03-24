@@ -8,16 +8,16 @@ import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.Platfor
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import javax.swing.BoxLayout
 
 internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
 
-    init {
-        layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        border = scaledEmptyBorder(top = 8)
-        background = PackageSearchUI.UsualBackgroundColor
-    }
+  init {
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    border = emptyBorder(top = 8)
+    background = PackageSearchUI.UsualBackgroundColor
+  }
 
     fun display(platforms: List<ApiStandardPackage.ApiPlatform>) {
         clear()
@@ -31,7 +31,7 @@ internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
                 HtmlChunk.li().addText(displayName).let { element ->
                     val canHaveTargets = type == PlatformType.JS || type == PlatformType.NATIVE
                     val targets = platform.targets
-                    if (canHaveTargets && targets != null && targets.isNotEmpty()) {
+                    if (canHaveTargets && !targets.isNullOrEmpty()) {
                         element.children(
                             HtmlChunk.br(),
                             HtmlChunk.span("font-style: italic;").addText(

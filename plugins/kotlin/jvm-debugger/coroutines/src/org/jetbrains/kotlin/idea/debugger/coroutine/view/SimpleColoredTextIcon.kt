@@ -93,28 +93,30 @@ interface CoroutineDebuggerColors {
 
 fun fromState(state: State): Icon =
     when (state) {
-        State.SUSPENDED -> AllIcons.Debugger.ThreadSuspended
+        State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
         State.RUNNING -> AllIcons.Debugger.ThreadRunning
         State.CREATED -> AllIcons.Debugger.ThreadStates.Idle
         else -> AllIcons.Debugger.ThreadStates.Daemon_sign
     }
 
 class SimpleColoredTextIconPresentationRenderer {
-    val log by logger
+    companion object {
+        val log by logger
+    }
+
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
 
     fun render(infoData: CoroutineInfoData): SimpleColoredTextIcon {
         val thread = infoData.activeThread
-        val name = thread?.name()?.substringBefore(" @${infoData.key.name}") ?: ""
+        val name = thread?.name()?.substringBefore(" @${infoData.descriptor.name}") ?: ""
         val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
 
-        val icon = fromState(infoData.key.state)
+        val icon = fromState(infoData.descriptor.state)
 
-        val hasChildren = infoData.stackTrace.isNotEmpty() || infoData.creationStackTrace.isNotEmpty()
-        val label = SimpleColoredTextIcon(icon, hasChildren)
+        val label = SimpleColoredTextIcon(icon, !infoData.isCreated())
         label.append("\"")
-        label.appendValue(infoData.key.formatName())
-        label.append("\": ${infoData.key.state}")
+        label.appendValue(infoData.descriptor.formatName())
+        label.append("\": ${infoData.descriptor.state}")
         if (name.isNotEmpty()) {
             label.append(" on thread \"")
             label.appendValue(name)
@@ -142,13 +144,13 @@ class SimpleColoredTextIconPresentationRenderer {
             label.append("" + DebuggerUtilsEx.getLineNumber(location, false))
         }
         if (settings.SHOW_CLASS_NAME) {
-            val name: String?
-            name = try {
+            val name = try {
                 val refType: ReferenceType = location.declaringType()
                 refType.name()
             } catch (e: InternalError) {
                 e.toString()
             }
+
             if (name != null) {
                 label.append(", ")
                 val dotIndex = name.lastIndexOf('.')
@@ -173,11 +175,9 @@ class SimpleColoredTextIconPresentationRenderer {
         return label
     }
 
-    fun renderCreationNode(infoData: CoroutineInfoData) =
+    fun renderCreationNode() =
         SimpleColoredTextIcon(
-            AllIcons.Debugger.ThreadSuspended,
-            true,
-            KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
+            null, true, KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
         )
 
     fun renderErrorNode(error: String) =

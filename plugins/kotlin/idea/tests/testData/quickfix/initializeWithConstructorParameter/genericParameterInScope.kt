@@ -1,5 +1,5 @@
 // "Initialize with constructor parameter" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class Form<T>(val name: String){
     var <caret>data: T?
         set(value){

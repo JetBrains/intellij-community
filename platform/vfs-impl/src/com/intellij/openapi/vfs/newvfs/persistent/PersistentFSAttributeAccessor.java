@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -15,6 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class PersistentFSAttributeAccessor {
   // Vfs small attrs: store inline:
@@ -25,6 +30,8 @@ final class PersistentFSAttributeAccessor {
   private final boolean myBulkAttrReadSupport;
   private final boolean myInlineAttributes;
   private final PersistentFSConnection myFSConnection;
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+  private final AtomicInteger myModCount = new AtomicInteger();
 
   PersistentFSAttributeAccessor(boolean bulkAttrReadSupport, boolean inlineAttributes, @NotNull PersistentFSConnection connection) {
     myBulkAttrReadSupport = bulkAttrReadSupport;
@@ -33,52 +40,79 @@ final class PersistentFSAttributeAccessor {
   }
 
   @Nullable
-  DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
-    PersistentFSConnection connection = myFSConnection;
-    PersistentFSConnection.ensureIdIsValid(fileId);
+  AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+    myLock.readLock().lock();
+    try {
+      PersistentFSConnection connection = myFSConnection;
+      PersistentFSConnection.ensureIdIsValid(fileId);
 
-    int recordId = connection.getRecords().getAttributeRecordId(fileId);
-    if (recordId == 0) return null;
-    int encodedAttrId = connection.getAttributeId(attribute.getId());
+      int recordId = getRecords().getAttributeRecordId(fileId);
+      if (recordId == 0) return null;
+      int encodedAttrId = connection.getAttributeId(attribute.getId());
 
-    Storage storage = connection.getAttributes();
+      Storage storage = connection.getAttributes();
 
-    int page = 0;
+      int page = 0;
 
-    try (DataInputStream attrRefs = storage.readStream(recordId)) {
-      if (myBulkAttrReadSupport) skipRecordHeader(attrRefs, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
+      try (DataInputStream attrRefs = storage.readStream(recordId)) {
+        if (myBulkAttrReadSupport) skipRecordHeader(attrRefs, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
 
-      while (attrRefs.available() > 0) {
-        final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
-        final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
+        while (attrRefs.available() > 0) {
+          final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
+          final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
 
-        if (attIdOnPage != encodedAttrId) {
-          if (myInlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-            attrRefs.skipBytes(attrAddressOrSize);
+          if (attIdOnPage != encodedAttrId) {
+            if (myInlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
+              attrRefs.skipBytes(attrAddressOrSize);
+            }
           }
-        }
-        else {
-          if (myInlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-            byte[] b = ArrayUtil.newByteArray(attrAddressOrSize);
-            attrRefs.readFully(b);
-            return new DataInputStream(new UnsyncByteArrayInputStream(b));
+          else {
+            if (myInlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
+              byte[] b = ArrayUtil.newByteArray(attrAddressOrSize);
+              attrRefs.readFully(b);
+              return new AttributeInputStream(new UnsyncByteArrayInputStream(b), myFSConnection.getEnumeratedAttributes());
+            }
+            page = myInlineAttributes ? attrAddressOrSize - MAX_SMALL_ATTR_SIZE : attrAddressOrSize;
+            break;
           }
-          page = myInlineAttributes ? attrAddressOrSize - MAX_SMALL_ATTR_SIZE : attrAddressOrSize;
-          break;
         }
       }
-    }
 
-    if (page == 0) {
-      return null;
+      if (page == 0) {
+        return null;
+      }
+      AttributeInputStream stream = new AttributeInputStream(connection.getAttributes().readStream(page), myFSConnection.getEnumeratedAttributes());
+      if (myBulkAttrReadSupport) skipRecordHeader(stream, encodedAttrId, fileId);
+      return stream;
     }
-    DataInputStream stream = connection.getAttributes().readStream(page);
-    if (myBulkAttrReadSupport) skipRecordHeader(stream, encodedAttrId, fileId);
-    return stream;
+    finally {
+      myLock.readLock().unlock();
+    }
   }
 
   boolean hasAttributePage(int fileId, @NotNull FileAttribute attr) throws IOException {
-    return findAttributePage(fileId, attr, false) != 0;
+    myLock.readLock().lock();
+    try {
+      return findAttributePage(fileId, attr, false) != 0;
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
+  @NotNull
+  AttributeOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
+    AttributeOutputStream stream = new AttributeOutputStream(new AttributeOutputStreamImpl(fileId, attribute),
+                                                             myFSConnection.getEnumeratedAttributes());
+    if (attribute.isVersioned()) {
+      try {
+        DataInputOutputUtil.writeINT(stream, attribute.getVersion());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return stream;
   }
 
   private int findAttributePage(int fileId,
@@ -87,7 +121,7 @@ final class PersistentFSAttributeAccessor {
     PersistentFSConnection connection = myFSConnection;
     PersistentFSConnection.ensureIdIsValid(fileId);
 
-    int recordId = connection.getRecords().getAttributeRecordId(fileId);
+    int recordId = getRecords().getAttributeRecordId(fileId);
     int encodedAttrId = connection.getAttributeId(attr.getId());
     boolean directoryRecord = false;
 
@@ -97,7 +131,7 @@ final class PersistentFSAttributeAccessor {
       if (!toWrite) return 0;
 
       recordId = storage.createNewRecord();
-      connection.getRecords().setAttributeRecordId(fileId, recordId);
+      getRecords().setAttributeRecordId(fileId, recordId);
       directoryRecord = true;
     }
     else {
@@ -148,51 +182,47 @@ final class PersistentFSAttributeAccessor {
     return 0;
   }
 
-  @NotNull
-  DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
-    DataOutputStream stream = new AttributeOutputStream(fileId, attribute);
-    if (attribute.isVersioned()) {
-      try {
-        DataInputOutputUtil.writeINT(stream, attribute.getVersion());
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return stream;
-  }
-
   void deleteAttributes(int id) throws IOException {
-    PersistentFSConnection connection = myFSConnection;
-    int attPage = connection.getRecords().getAttributeRecordId(id);
-    if (attPage != 0) {
-      try (final DataInputStream attStream = connection.getAttributes().readStream(attPage)) {
-        if (myBulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, id);
+    myLock.writeLock().lock();
+    try {
+      PersistentFSConnection connection = myFSConnection;
+      int attPage = getRecords().getAttributeRecordId(id);
+      if (attPage != 0) {
+        try (final DataInputStream attStream = connection.getAttributes().readStream(attPage)) {
+          if (myBulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, id);
 
-        while (attStream.available() > 0) {
-          DataInputOutputUtil.readINT(attStream);// Attribute ID;
-          int attAddressOrSize = DataInputOutputUtil.readINT(attStream);
+          while (attStream.available() > 0) {
+            DataInputOutputUtil.readINT(attStream);// Attribute ID;
+            int attAddressOrSize = DataInputOutputUtil.readINT(attStream);
 
-          if (myInlineAttributes) {
-            if (attAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-              attStream.skipBytes(attAddressOrSize);
-              continue;
+            if (myInlineAttributes) {
+              if (attAddressOrSize < MAX_SMALL_ATTR_SIZE) {
+                attStream.skipBytes(attAddressOrSize);
+                continue;
+              }
+              attAddressOrSize -= MAX_SMALL_ATTR_SIZE;
             }
-            attAddressOrSize -= MAX_SMALL_ATTR_SIZE;
+            connection.getAttributes().deleteRecord(attAddressOrSize);
           }
-          connection.getAttributes().deleteRecord(attAddressOrSize);
         }
+        connection.getAttributes().deleteRecord(attPage);
       }
-      connection.getAttributes().deleteRecord(attPage);
+    }
+    finally {
+      myLock.writeLock().unlock();
     }
   }
 
-  private final class AttributeOutputStream extends DataOutputStream {
+  public int getLocalModificationCount() {
+    return myModCount.get();
+  }
+
+  private final class AttributeOutputStreamImpl extends DataOutputStream {
     @NotNull
     private final FileAttribute myAttribute;
     private final int myFileId;
 
-    private AttributeOutputStream(final int fileId, @NotNull FileAttribute attribute) {
+    private AttributeOutputStreamImpl(final int fileId, @NotNull FileAttribute attribute) {
       super(new BufferExposingByteArrayOutputStream());
       myFileId = fileId;
       myAttribute = attribute;
@@ -201,35 +231,46 @@ final class PersistentFSAttributeAccessor {
     @Override
     public void close() throws IOException {
       super.close();
-      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-      if (myInlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
-        rewriteDirectoryRecordWithAttrContent(_out);
-        myFSConnection.incLocalModCount();
-      }
-      else {
-        myFSConnection.incLocalModCount();
-        int page = findAttributePage(myFileId, myAttribute, true);
-        if (myInlineAttributes && page < 0) {
-          rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
-          page = findAttributePage(myFileId, myAttribute, true);
-        }
+      myLock.writeLock().lock();
+      try {
+        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-        if (myBulkAttrReadSupport) {
-          BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-          out = stream;
-          writeRecordHeader(myFSConnection.getAttributeId(myAttribute.getId()), myFileId, this);
-          write(_out.getInternalBuffer(), 0, _out.size());
-          myFSConnection.getAttributes().writeBytes(page, stream.toByteArraySequence(), myAttribute.isFixedSize());
+        if (myInlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
+          rewriteDirectoryRecordWithAttrContent(_out);
+          myModCount.incrementAndGet();
         }
         else {
-          myFSConnection.getAttributes().writeBytes(page, _out.toByteArraySequence(), myAttribute.isFixedSize());
+          myModCount.incrementAndGet();
+          int page = findAttributePage(myFileId, myAttribute, true);
+          if (myInlineAttributes && page < 0) {
+            rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
+            page = findAttributePage(myFileId, myAttribute, true);
+          }
+
+          if (myBulkAttrReadSupport) {
+            BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+            out = stream;
+            writeRecordHeader(myFSConnection.getAttributeId(myAttribute.getId()), myFileId, this);
+            write(_out.getInternalBuffer(), 0, _out.size());
+            myFSConnection.getAttributes().writeBytes(page, stream.toByteArraySequence(), myAttribute.isFixedSize());
+          }
+          else {
+            myFSConnection.getAttributes().writeBytes(page, _out.toByteArraySequence(), myAttribute.isFixedSize());
+          }
         }
+      }
+      catch (Throwable t) {
+        FSRecords.handleError(t);
+        throw new RuntimeException(t);
+      }
+      finally {
+        myLock.writeLock().unlock();
       }
     }
 
-    void rewriteDirectoryRecordWithAttrContent(@NotNull BufferExposingByteArrayOutputStream _out) throws IOException {
-      int recordId = myFSConnection.getRecords().getAttributeRecordId(myFileId);
+    private void rewriteDirectoryRecordWithAttrContent(@NotNull BufferExposingByteArrayOutputStream _out) throws IOException {
+      int recordId = getRecords().getAttributeRecordId(myFileId);
       assert myInlineAttributes;
       int encodedAttrId = myFSConnection.getAttributeId(myAttribute.getId());
 
@@ -240,7 +281,7 @@ final class PersistentFSAttributeAccessor {
 
       if (recordId == 0) {
         recordId = storage.createNewRecord();
-        myFSConnection.getRecords().setAttributeRecordId(myFileId, recordId);
+        getRecords().setAttributeRecordId(myFileId, recordId);
         directoryRecord = true;
       }
       else {
@@ -330,12 +371,23 @@ final class PersistentFSAttributeAccessor {
   void checkAttributesStorageSanity(int id,
                                     @NotNull IntList usedAttributeRecordIds,
                                     @NotNull IntList validAttributeIds) throws IOException {
-    int attributeRecordId = myFSConnection.getRecords().getAttributeRecordId(id);
+    myLock.readLock().lock();
+    try {
+      int attributeRecordId = getRecords().getAttributeRecordId(id);
 
-    assert attributeRecordId >= 0;
-    if (attributeRecordId > 0) {
-      checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
+      assert attributeRecordId >= 0;
+      if (attributeRecordId > 0) {
+        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
+      }
     }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
+  @NotNull
+  private PersistentFSRecordsStorage getRecords() {
+    return myFSConnection.getRecords();
   }
 
   private void checkAttributesSanity(int attributeRecordId,

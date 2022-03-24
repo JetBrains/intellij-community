@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -62,16 +63,14 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
-    String title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
-
     if (!JBCefApp.isSupported()) {
-      String notificationTitle = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
       String name = ApplicationNamesInfo.getInstance().getFullProductName();
       String version = ApplicationInfo.getInstance().getShortVersion();
-      String content = IdeBundle.message("whats.new.notification.text", name, version, url);
-      UpdateChecker.getNotificationGroup()
-        .createNotification(notificationTitle, content, NotificationType.INFORMATION)
-        .setListener(NotificationListener.URL_OPENING_LISTENER)
+      UpdateChecker.getNotificationGroupForIdeUpdateResults()
+        .createNotification(IdeBundle.message("whats.new.notification.text", name, version), NotificationType.INFORMATION)
+        .setIcon(AllIcons.Nodes.PpWeb)
+        .setDisplayId("ide.whats.new")
+        .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("whats.new.notification.action"), () -> BrowserUtil.browse(url)))
         .notify(project);
     }
     else {
@@ -95,6 +94,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         Logger.getInstance(WhatsNewAction.class).error(e);
       }
 
+      String title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
       HTMLEditorProvider.openEditor(project, title, embeddedUrl, timeoutContent);
     }
   }

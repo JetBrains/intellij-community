@@ -22,7 +22,7 @@ class ExampleClassWithNoTypos<T>(val name: String) {
 }
 
 /**
- * It is <warning descr="BEEN_PART_AGREEMENT">friend</warning>
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend of human
  *
  * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
  *
@@ -66,3 +66,17 @@ class ForMultiLanguageSupport {
     // Das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // Das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
 }
+
+/**
+ * Returns `an true` if expression is part of when condition expression that looks like
+ * ```
+ * when {
+ * a && b -> ...
+ * a && !b -> ...
+ * }
+ * ```
+ * * This is <warning descr="EN_A_VS_AN">a</warning> error.
+ * ```
+ * An non-checked code fragment
+ * ```
+ */

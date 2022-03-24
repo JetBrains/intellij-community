@@ -124,8 +124,7 @@ public interface ProjectFileIndex extends FileIndex {
    * If you want to check if the file is ignored use {@link FileTypeRegistry#isFileIgnored(VirtualFile)}.
    * If you want to check if the file or one of its parents is ignored use {@link #isUnderIgnored(VirtualFile)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   boolean isIgnored(@NotNull VirtualFile file);
 
   /**

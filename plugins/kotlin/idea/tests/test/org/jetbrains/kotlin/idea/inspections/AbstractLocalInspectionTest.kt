@@ -4,33 +4,31 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
-import com.intellij.codeHighlighting.TextEditorHighlightingPass
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.*
 
 
 abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    private val inspectionFileName: String
+    protected open val inspectionFileName: String
         get() = ".inspection"
 
     private val afterFileNameSuffix: String
@@ -117,9 +115,10 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
             }
 
-            doTestFor(mainFile.name, inspection, fileText)
+            doTestFor(mainFile, inspection, fileText)
 
             checkForUnexpectedErrors()
+            PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         }
     }
 
@@ -127,8 +126,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val ktFile = file as? KtFile ?: return
         val fileText = ktFile.text
         if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
-            DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+            checkForUnexpectedErrors(fileText)
         }
+    }
+
+    protected open fun checkForUnexpectedErrors(fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
     }
 
     protected fun runInspectionWithFixesAndCheck(
@@ -159,16 +162,15 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             Pass.UPDATE_FOLDING,
             Pass.WOLF
         )
-        val passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myFixture.project)
-        // to exclude AbstractHighlightingPassBase instances based on their ids
-        passRegistrar.instantiatePasses(
-            file, editor, passIdsToIgnore.toIntArray()
-        ).filterIsInstance<AbstractHighlightingPassBase>().map(TextEditorHighlightingPass::getId).forEach(passIdsToIgnore::add)
 
         val caretOffset = myFixture.caretOffset
-        val highlightInfos = CodeInsightTestFixtureImpl.instantiateAndRun(
-            file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
-        ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
+        val highlightInfos: MutableList<HighlightInfo> = ArrayList()
+        // exclude AbstractHighlightingPassBase-derived passes in tests
+        AbstractHighlightingPassBase.ignoreThesePassesInTests {
+            highlightInfos.addAll(CodeInsightTestFixtureImpl.instantiateAndRun(
+                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
+            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset })
+        }
 
         Assert.assertTrue(
             if (!problemExpected)
@@ -235,7 +237,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         return true
     }
 
-    private fun doTestFor(mainFilePath: String, inspection: AbstractKotlinInspection, fileText: String) {
+    protected open fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
+        val mainFilePath = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
         )
@@ -251,6 +254,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
+        createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile)
         try {
             myFixture.checkResultByFile(canonicalPathToExpectedFile)
         } catch (e: ComparisonFailure) {
@@ -258,6 +262,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 File(testDataPath, canonicalPathToExpectedFile),
                 editor.document.text
             )
+        }
+    }
+
+    @OptIn(ExperimentalPathApi::class)
+    private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
+        val path = Path(testDataPath) / canonicalPathToExpectedFile
+
+        if (!Files.exists(path)) {
+            path.createFile().write(editor.document.text)
+            error("File $canonicalPathToExpectedFile was not found and thus was generated")
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +12,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -37,7 +38,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @deprecated Use {@link #PsiResolveHelperImpl(Project)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public PsiResolveHelperImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }
@@ -147,7 +148,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                  boolean dummyImplicitConstructor,
                                                                  final boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile) {
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile, new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<>()) {
       @Override
       protected boolean acceptVarargs() {
         return checkVarargs;

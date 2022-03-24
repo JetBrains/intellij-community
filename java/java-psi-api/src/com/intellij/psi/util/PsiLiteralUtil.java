@@ -534,6 +534,10 @@ public final class PsiLiteralUtil {
   private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<? super Character> charPredicate) {
     // \u1234 needs at least 6 positions
     if (index - 5 < 0) return -1;
+
+    int start = findSlashU(s, index - 4);
+    if (start < 0) return -1;
+
     try {
       int code = Integer.parseInt(s.substring(index - 3, index + 1), 16);
       if (!charPredicate.test((char) code)) return -1;
@@ -541,8 +545,11 @@ public final class PsiLiteralUtil {
     catch (NumberFormatException e) {
       return -1;
     }
-    if (s.charAt(index - 4) != 'u') return -1;
-    index -= 4;
+    return start;
+  }
+
+  private static int findSlashU(@NotNull String s, int index) {
+    if (s.charAt(index) != 'u') return -1;
     // 'u' can appear multiple times
     do {
       index--;

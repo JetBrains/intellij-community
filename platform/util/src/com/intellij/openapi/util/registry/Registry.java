@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -33,12 +33,18 @@ public final class Registry  {
   @NonNls
   public static final String REGISTRY_BUNDLE = "misc.registry";
 
+  private static final RegistryValueListener EMPTY_VALUE_LISTENER = new RegistryValueListener() {
+  };
+
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
   private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<>();
   private Map<String, RegistryKeyDescriptor> myContributedKeys = Collections.emptyMap();
 
   private static final Registry ourInstance = new Registry();
   private volatile boolean isLoaded;
+
+  @NotNull
+  private volatile RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
 
   public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);
@@ -59,7 +65,7 @@ public final class Registry  {
 
   public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.LAF_INITIALIZED.checkOccurred();
+      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
 
@@ -77,7 +83,7 @@ public final class Registry  {
 
   public static int intValue(@NonNls @NotNull String key, int defaultValue) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.LAF_INITIALIZED.checkOccurred();
+      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
 
@@ -295,5 +301,14 @@ public final class Registry  {
   public static synchronized void mutateContributedKeys(@NotNull Function<Map<String, RegistryKeyDescriptor>, Map<String, RegistryKeyDescriptor>> mutator) {
     // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
     ourInstance.myContributedKeys = mutator.apply(ourInstance.myContributedKeys);
+  }
+
+  @ApiStatus.Internal
+  public static void setValueChangeListener(@Nullable RegistryValueListener listener) {
+    ourInstance.valueChangeListener = listener == null ? EMPTY_VALUE_LISTENER : listener;
+  }
+
+  @NotNull RegistryValueListener getValueChangeListener() {
+    return valueChangeListener;
   }
 }

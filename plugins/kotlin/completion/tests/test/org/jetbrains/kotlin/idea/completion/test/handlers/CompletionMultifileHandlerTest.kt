@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTest
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -20,7 +20,7 @@ import java.io.File
 @TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("testData/handlers/multifile")
-class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
+open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCase() {
     fun testExtensionFunctionImport() = doTest()
     fun testExtensionPropertyImport() = doTest()
     fun testImportAlreadyImportedObject() = doTest()
@@ -47,7 +47,7 @@ class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
 
-    fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
+    open fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
         val fileNameBase = getTestName(false)
         val defaultFiles = listOf("$fileNameBase-1.kt", "$fileNameBase-2.kt")
         val filteredFiles = defaultFiles.filter { File(testDataDirectory, it).exists() }

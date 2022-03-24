@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PROBLEM: none
 // ERROR: Type mismatch: inferred type is Int? but Int was expected
 fun foo() {

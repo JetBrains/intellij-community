@@ -16,7 +16,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInspection.util.InspectionMessage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +51,7 @@ public abstract class Converter<T> {
   /**
    * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<>() {
     @Override
     public Integer fromString(final String s, final ConvertContext context) {
@@ -80,8 +78,7 @@ public abstract class Converter<T> {
   /**
    * @deprecated unnecessary
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final Converter<String> EMPTY_CONVERTER = new Converter<>() {
     @Override
     public String fromString(final String s, final ConvertContext context) {

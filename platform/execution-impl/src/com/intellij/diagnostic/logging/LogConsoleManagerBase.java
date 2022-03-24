@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -39,7 +40,8 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
                             @NotNull Charset charset,
                             final long skippedContent,
                             @NotNull RunConfigurationBase runConfiguration) {
-    doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false, mySearchScope) {
+    boolean useBuildInActions = Registry.is("debugger.new.tool.window.layout", false);
+    doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, useBuildInActions, mySearchScope) {
       @Override
       public boolean isActive() {
         return isConsoleActive(path);

@@ -16,10 +16,9 @@ import com.intellij.util.text.splitLineRanges
 import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.YAMLTokenTypes
 import org.jetbrains.yaml.YAMLUtil
-import org.jetbrains.yaml.psi.YAMLBlockScalar
 import kotlin.math.min
 
-abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBlockScalar {
+abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
   protected abstract val contentType: IElementType
 
   override fun isMultiline(): Boolean = true
@@ -45,13 +44,17 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
       }
     }
 
-    CachedValueProvider.Result.create((if (contentRanges.size == 1)
-      listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
-    else if (contentRanges.isEmpty())
-      emptyList()
-    else
-      contentRanges.tailOrEmpty()), PsiModificationTracker.MODIFICATION_COUNT)
+    CachedValueProvider.Result.create(
+      when {
+        !includeFirstLineInContent && contentRanges.size == 1 ->
+          listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
+        contentRanges.isEmpty() -> emptyList()
+        includeFirstLineInContent -> contentRanges
+        else -> contentRanges.tailOrEmpty()
+      }, PsiModificationTracker.MODIFICATION_COUNT)
   })
+
+  protected open val includeFirstLineInContent: Boolean get() = false
 
   fun hasExplicitIndent(): Boolean = explicitIndent != IMPLICIT_INDENT
 
@@ -80,7 +83,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
     if (indent != IMPLICIT_INDENT) {
       return indent
     }
-    val firstLine = getNthContentTypeChild(1)
+    val firstLine = getNthContentTypeChild(if (includeFirstLineInContent) 0 else 1)
     if (firstLine != null) {
       return YAMLUtil.getIndentInThisLine(firstLine.psi)
     }
@@ -96,14 +99,11 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
     return 0
   }) ?: IMPLICIT_INDENT
 
+  val indentString: String get() = StringUtil.repeatSymbol(' ', locateIndent())
+
   @Throws(IllegalArgumentException::class)
   override fun getEncodeReplacements(input: CharSequence): List<Pair<TextRange, String>> {
-    var indent = locateIndent()
-    if (indent == 0) {
-      indent = YAMLUtil.getIndentToThisElement(this) + DEFAULT_CONTENT_INDENT
-    }
-    val indentString = StringUtil.repeatSymbol(' ', indent)
-
+    val indentString = indentString
     return splitLineRanges(input).zipWithNext { a, b -> Pair.create(TextRange.create(a.endOffset, b.startOffset), indentString) }.toList()
   }
 
@@ -111,7 +111,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
     get() {
       val result: MutableList<List<ASTNode>> = SmartList()
       var currentLine: MutableList<ASTNode> = SmartList()
-      var child = node.firstChildNode
+      var child = firstContentNode
       while (child != null) {
         currentLine.add(child)
         if (isEol(child)) {
@@ -129,7 +129,8 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
   // YAML 1.2 standard does not allow more then 1 symbol in indentation number
   private val explicitIndent: Int
     get() {
-      val headerNode = getNthContentTypeChild(0)!!
+      if (includeFirstLineInContent) return IMPLICIT_INDENT
+      val headerNode = getNthContentTypeChild(0) ?: return IMPLICIT_INDENT
       val header = headerNode.text
       for (i in 0 until header.length) {
         if (Character.isDigit(header[i])) {

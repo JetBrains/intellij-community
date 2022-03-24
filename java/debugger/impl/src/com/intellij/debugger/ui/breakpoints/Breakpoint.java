@@ -27,6 +27,7 @@ import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -490,6 +491,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
       throw ex;
     }
+    catch (IndexNotReadyException ex) {
+      throw new EvaluateException(JavaDebuggerBundle.message("evaluation.error.during.indexing"), ex);
+    }
   }
 
   private PsiCodeFragment createConditionCodeFragment(PsiElement context) {
@@ -568,12 +572,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     FilteredRequestorImpl requestor = new FilteredRequestorImpl(myProject);
     requestor.readTo(parentNode, this);
     try {
-      setEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
+      setEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
     }
     catch (Exception ignored) {
     }
     try {
-      setLogEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
+      setLogEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
     }
     catch (Exception ignored) {
     }
@@ -583,13 +587,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
         XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XBreakpointActionsPanel.LOG_EXPRESSION_HISTORY_ID, expression);
         myXBreakpoint.setLogExpressionObject(expression);
-        ((XBreakpointBase)myXBreakpoint).setLogExpressionEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
+        ((XBreakpointBase<?, ?, ?>)myXBreakpoint).setLogExpressionEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
       }
     }
     catch (Exception ignored) {
     }
     try {
-      setRemoveAfterHit(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
+      setRemoveAfterHit(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
     }
     catch (Exception ignored) {
     }
@@ -768,6 +772,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected void fireBreakpointChanged() {
-    ((XBreakpointBase)myXBreakpoint).fireBreakpointChanged();
+    ((XBreakpointBase<?, ?, ?>)myXBreakpoint).fireBreakpointChanged();
   }
 }
