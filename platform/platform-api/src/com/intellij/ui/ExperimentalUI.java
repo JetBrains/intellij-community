@@ -238,7 +238,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");
     paths.put("icons/OpenTerminal_13x13.svg", "/expui/toolwindow/terminal.svg");
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
-    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/changes.svg");
+    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     paths.put("toolwindows/toolWindowFind.svg", "/expui/toolwindow/find.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
