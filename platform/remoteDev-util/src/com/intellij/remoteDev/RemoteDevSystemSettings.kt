@@ -20,11 +20,11 @@ object RemoteDevSystemSettings {
   //val DEFAULT_LOBBY_URL get() = URI("https://code-with-me.jetbrains.com")
   private const val productCodePlaceholder = "<PRODUCT_CODE>"
   private const val productsInfoUrlKey = "productsInfoUrl"
-  private const val clientDownloadUrlKey = "clientDownloadUrl"
-  private const val jreDownloadUrlKey = "jreDownloadUrl"
+  private const val clientDownloadLocationKey = "clientDownloadLocation"
+  private const val jreDownloadLocationKey = "jreDownloadLocation"
   private fun defaultProductsUrl(productCode: String) = "https://data.services.jetbrains.com/products?code=$productCode"
-  private const val defaultClientUrlLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
-  private const val defaultJreUrlLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/"
+  private const val defaultClientDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/"
+  private const val defaultJreDownloadLocation = "https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/"
 
   fun getProductsUrl(productCode: String): RemoteDevSystemSetting<String> {
     val systemValue = getFromOs(productsInfoUrlKey)
@@ -34,20 +34,20 @@ object RemoteDevSystemSettings {
     return RemoteDevSystemSetting(defaultProductsUrl(productCode), null)
   }
 
-  fun getClientDownloadUrl(): RemoteDevSystemSetting<URI> {
-    val systemValue = getFromOs(clientDownloadUrlKey)
+  fun getClientDownloadLocation(): RemoteDevSystemSetting<URI> {
+    val systemValue = getFromOs(clientDownloadLocationKey)
     if (systemValue != null) {
       return RemoteDevSystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
     }
-    return RemoteDevSystemSetting(URI(defaultClientUrlLocation), null)
+    return RemoteDevSystemSetting(URI(defaultClientDownloadLocation), null)
   }
 
-  fun getJreDownloadUrl(): RemoteDevSystemSetting<URI> {
-    val systemValue = getFromOs(jreDownloadUrlKey)
+  fun getJreDownloadLocation(): RemoteDevSystemSetting<URI> {
+    val systemValue = getFromOs(jreDownloadLocationKey)
     if (systemValue != null) {
       return RemoteDevSystemSetting(URI(systemValue.value), systemValue.osOriginLocation)
     }
-    return RemoteDevSystemSetting(URI(defaultJreUrlLocation), null)
+    return RemoteDevSystemSetting(URI(defaultJreDownloadLocation), null)
   }
 
   private fun getFromOs(key: String): RemoteDevSystemSetting<String>? {
