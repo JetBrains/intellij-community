@@ -27,7 +27,7 @@ import java.io.IOException;
 public class FileDeleteAction extends FileChooserAction {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    var visible = !isDisabled(e);
+    var visible = isEnabled(e);
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && !panel.selectedPaths().isEmpty());
   }
@@ -67,13 +67,13 @@ public class FileDeleteAction extends FileChooserAction {
     }
   }
 
-  private static boolean isDisabled(AnActionEvent e) {
-    return e.getData(FileChooserKeys.DELETE_ACTION_AVAILABLE) == Boolean.FALSE;
+  private static boolean isEnabled(AnActionEvent e) {
+    return e.getData(FileChooserKeys.DELETE_ACTION_AVAILABLE) != Boolean.FALSE;
   }
 
   @Override
   protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
-    boolean visible = !isDisabled(e);
+    boolean visible = isEnabled(e);
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(
       visible &&
