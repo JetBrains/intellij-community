@@ -15,6 +15,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +27,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.locks.LockSupport;
 
 public class PlaybackRunner {
   private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
@@ -149,7 +152,7 @@ public class PlaybackRunner {
     if (cmdIndex < myCommands.size()) {
       CommandDescriptor commandDescriptor = myCommands.get(cmdIndex);
       final PlaybackCommand cmd = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
-      if (myStopRequested) {
+      if (myStopRequested || cmd == null) {
         myCallback.message(null, "Stopped", StatusCallback.Type.message);
         myActionCallback.setRejected();
         return;
@@ -216,7 +219,20 @@ public class PlaybackRunner {
       cmdCallback
         .onSuccess(it -> {
           if (cmd.canGoFurther()) {
-            executeFrom(cmdIndex + 1, context.getBaseDir());
+            int delay = getDelay(cmd);
+            if (delay > 0) {
+              if (SwingUtilities.isEventDispatchThread()) {
+                new SingleAlarm(() -> {
+                  executeFrom(cmdIndex + 1, context.getBaseDir());
+                }, delay, myOnStop, Alarm.ThreadToUse.SWING_THREAD).request();
+              }
+              else {
+                LockSupport.parkUntil(System.currentTimeMillis() + delay);
+                executeFrom(cmdIndex + 1, context.getBaseDir());
+              }
+            } else {
+              executeFrom(cmdIndex + 1, context.getBaseDir());
+            }
           }
           else {
             myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
@@ -233,6 +249,10 @@ public class PlaybackRunner {
       myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
       myActionCallback.setDone();
     }
+  }
+
+  public int getDelay(@NotNull PlaybackCommand command) {
+    return command instanceof TypeCommand ? Registry.intValue("actionSystem.playback.typecommand.delay") : 0;
   }
 
   protected void setProject(@Nullable Project project) {
@@ -312,7 +332,7 @@ public class PlaybackRunner {
     }
   }
 
-  @NotNull
+  @Nullable
   protected PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
 
@@ -360,12 +380,16 @@ public class PlaybackRunner {
     }
     else {
       if(string.startsWith(AbstractCommand.CMD_PREFIX)){
+        cmd = null;
         LOG.error("Command " + string + " is not found");
       }
-      cmd = new AlphaNumericTypeCommand(string, line);
+      else {
+        cmd = new AlphaNumericTypeCommand(string, line);
+      }
     }
-
-    cmd.setScriptDir(scriptDir);
+    if (cmd != null) {
+      cmd.setScriptDir(scriptDir);
+    }
 
     return cmd;
   }

@@ -48,7 +48,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
       @Override
       protected String getElementText(Object element) {
         if (element instanceof Trinity) {
-          return (String)((Trinity)element).first;
+          return (String)((Trinity<?, ?, ?>)element).first;
         }
         return null;
       }

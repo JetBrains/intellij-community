@@ -18,7 +18,7 @@ class JavaUtilAbstractCollection(context: DefaultExecutionContext) :
     private val abstractList = JavaUtilAbstractList(context)
     private val sizeMethod by MethodDelegate<IntegerValue>("size")
 
-    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfJavaLangAbstractCollection? {
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfJavaLangAbstractCollection {
         val list = mutableListOf<ObjectReference>()
         val size = sizeMethod.value(value, context)?.intValue() ?: 0
         for (index in 0 until size) {
@@ -44,43 +44,28 @@ class WeakReference constructor(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfWeakReference>("java.lang.ref.WeakReference", context) {
     val get by MethodDelegate<ObjectReference>("get")
 
-    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfWeakReference? {
+    override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfWeakReference {
         return MirrorOfWeakReference(value, get.value(value, context))
     }
 }
 
 class StackTraceElement(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfStackTraceElement>("java.lang.StackTraceElement", context) {
-    private val declaringClassObjectField by FieldDelegate<ObjectReference>("declaringClass")
-    private val moduleNameField by FieldDelegate<StringReference>("moduleName")
-    private val moduleVersionField by FieldDelegate<StringReference>("moduleVersion")
     private val declaringClassField by FieldDelegate<StringReference>("declaringClass")
     private val methodNameField by FieldDelegate<StringReference>("methodName")
     private val fileNameField by FieldDelegate<StringReference>("fileName")
     private val lineNumberField by FieldDelegate<IntegerValue>("lineNumber")
-    private val formatField by FieldDelegate<ByteValue>("format")
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfStackTraceElement? {
-        val declaringClassObject = declaringClassObjectField.value(value)
-        val moduleName = moduleNameField.value(value)?.value()
-        val moduleVersion = moduleVersionField.value(value)?.value()
-        val declaringClass = declaringClassField.value(value)?.value()
-        val methodName = methodNameField.value(value)?.value()
+        val declaringClass = declaringClassField.value(value)?.value() ?: return null
+        val methodName = methodNameField.value(value)?.value() ?: return null
         val fileName = fileNameField.value(value)?.value()
         val lineNumber = lineNumberField.value(value)?.value()
-        val format = formatField.value(value)?.value()
         return MirrorOfStackTraceElement(
-                value,
-                declaringClassObject,
-                moduleName,
-                moduleVersion,
-                declaringClass,
-                methodName,
-                fileName,
-                lineNumber,
-                format
+            declaringClass,
+            methodName,
+            fileName,
+            lineNumber,
         )
     }
 }
-
-

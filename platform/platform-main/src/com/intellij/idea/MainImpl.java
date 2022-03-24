@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.util.PlatformUtils;
@@ -14,7 +14,7 @@ public final class MainImpl implements StartupUtil.AppStarter {
   }
 
   @Override
-  public @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<?> prepareUiFuture) {
+  public @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<Object> prepareUiFuture) {
     ApplicationLoader.initApplication(args, prepareUiFuture);
     return CompletableFuture.completedFuture(null);
   }

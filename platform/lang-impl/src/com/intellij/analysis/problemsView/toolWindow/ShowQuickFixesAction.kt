@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.impl.IntentionListStep
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
-import com.intellij.openapi.actionSystem.PlatformDataKeys.SELECTED_ITEM
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -82,19 +82,20 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
 
   private fun actionPerformed(event: AnActionEvent, problem: HighlightingProblem) {
     val intentions = getCachedIntentions(event, problem, true) ?: return
-    val editor = intentions.editor ?: return
+    val editor: Editor = intentions.editor ?: return
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
       object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions) {
         override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching, file: PsiFile, project: Project, editor: Editor?) {
           editor?.contentComponent?.requestFocus()
           // hack until doWhenFocusSettlesDown will work as expected
+          val modality = editor?.contentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
           getApplication().invokeLater(
             {
               IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
                 super.chooseActionAndInvoke(cachedAction, file, project, editor)
               }
-            }, ModalityState.NON_MODAL, project.disposed)
+            }, modality, project.disposed)
         }
       }
     ))

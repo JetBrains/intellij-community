@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import org.junit.Test;
 
 public class MavenPackagingCompletionTest extends MavenDomTestCase {
@@ -37,9 +38,13 @@ public class MavenPackagingCompletionTest extends MavenDomTestCase {
   public void testDoNotHighlightUnknownPackagingTypes() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                  "<version>1</version>");
 
-                  "<packaging>xxx</packaging>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<packaging>xxx</packaging>");
 
     checkHighlighting();
   }

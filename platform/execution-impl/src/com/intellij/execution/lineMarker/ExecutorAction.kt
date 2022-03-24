@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
@@ -54,10 +54,6 @@ class ExecutorAction private constructor(val origin: AnAction,
             super.actionPerformed(wrapEvent(e, order))
           }
 
-          override fun canBePerformed(context: DataContext): Boolean {
-            return super.canBePerformed(wrapContext(context, order))
-          }
-
           override fun getChildren(e: AnActionEvent?): Array<AnAction> {
             return super.getChildren(e?.let { wrapEvent(e, order)})
           }
@@ -92,8 +88,6 @@ class ExecutorAction private constructor(val origin: AnAction,
   override fun actionPerformed(e: AnActionEvent) {
     origin.actionPerformed(wrapEvent(e, order))
   }
-
-  override fun canBePerformed(context: DataContext) = origin !is ActionGroup || origin.canBePerformed(wrapContext(context, order))
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e?.let { wrapEvent(it, order) }) ?: AnAction.EMPTY_ARRAY
 

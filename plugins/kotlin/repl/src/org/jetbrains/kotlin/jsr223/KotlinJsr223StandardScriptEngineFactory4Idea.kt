@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.jsr223
 
 import org.jetbrains.kotlin.cli.common.repl.KotlinJsr223JvmScriptEngineFactoryBase
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
-import org.jetbrains.kotlin.script.util.KotlinJars
-import org.jetbrains.kotlin.script.util.scriptCompilationClasspathFromContextOrStlib
+import kotlin.script.experimental.jvm.util.KotlinJars
+import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 import javax.script.ScriptContext
 import javax.script.ScriptEngine
 
@@ -15,7 +15,7 @@ class KotlinJsr223StandardScriptEngineFactory4Idea : KotlinJsr223JvmScriptEngine
     override fun getScriptEngine(): ScriptEngine =
         KotlinJsr223JvmScriptEngine4Idea(
             this,
-            scriptCompilationClasspathFromContextOrStlib(wholeClasspath = true) + KotlinJars.kotlinScriptStandardJars,
+            scriptCompilationClasspathFromContextOrStdlib(wholeClasspath = true) + KotlinJars.kotlinScriptStandardJars,
             "kotlin.script.templates.standard.ScriptTemplateWithBindings",
             { ctx, argTypes -> ScriptArgsWithTypes(arrayOf(ctx.getBindings(ScriptContext.ENGINE_SCOPE)), argTypes ?: emptyArray()) },
             arrayOf(Map::class)

@@ -144,6 +144,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     int end = intervalEnd();
     if (DocumentUtil.isInsideCharacterPair(document, start)) {
       setIntervalStart(start - 1);
+      myEditor.getFoldingModel().myComplexDocumentChange = true;
     }
     if (DocumentUtil.isInsideCharacterPair(document, end)) {
       setIntervalEnd(end - 1);

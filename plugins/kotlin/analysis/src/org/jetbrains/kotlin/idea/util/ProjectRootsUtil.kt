@@ -65,6 +65,9 @@ val PsiFileSystemItem.sourceRoot: VirtualFile?
 
 object ProjectRootsUtil {
 
+    private fun List<ScriptAcceptedLocation>.containsAllowedLocations() =
+        contains(ScriptAcceptedLocation.Everywhere) || contains(ScriptAcceptedLocation.Project)
+
     @Suppress("DEPRECATION")
     @JvmStatic
     fun isInContent(
@@ -87,11 +90,9 @@ object ProjectRootsUtil {
         if (kotlinExcludeLibrarySources) return false
 
         val scriptDefinition = file.findScriptDefinition(project)
-        val scriptScope = scriptDefinition?.compilationConfiguration?.get(ScriptCompilationConfiguration.ide.acceptedLocations)
+        val scriptScope: List<ScriptAcceptedLocation>? = scriptDefinition?.compilationConfiguration?.get(ScriptCompilationConfiguration.ide.acceptedLocations)
         if (scriptScope != null) {
-            val includeAll = scriptScope.contains(ScriptAcceptedLocation.Everywhere)
-                    || scriptScope.contains(ScriptAcceptedLocation.Project)
-                    || ScratchUtil.isScratch(file)
+            val includeAll = scriptScope.containsAllowedLocations() || ScratchUtil.isScratch(file)
             val includeAllOrScriptLibraries = includeAll || scriptScope.contains(ScriptAcceptedLocation.Libraries)
             return isInContentWithoutScriptDefinitionCheck(
                 project,
@@ -140,8 +141,7 @@ object ProjectRootsUtil {
             }
             return file.findScriptDefinition(project)
                 ?.compilationConfiguration
-                ?.get(ScriptCompilationConfiguration.ide.acceptedLocations)
-                ?.contains(ScriptAcceptedLocation.Everywhere) == true
+                ?.get(ScriptCompilationConfiguration.ide.acceptedLocations)?.containsAllowedLocations() == true
         }
 
         if (!includeLibraryClasses && !includeLibrarySource) return false

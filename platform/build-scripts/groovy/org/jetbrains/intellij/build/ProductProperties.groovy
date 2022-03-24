@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
@@ -11,9 +12,10 @@ import java.nio.file.Path
 import java.util.function.BiPredicate
 
 /**
- * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
- * distribution of your product.
+ * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
+ * Refer to e.g. {@link PyCharmCommunityInstallersBuildTarget}
  */
+@SuppressWarnings('GroovyDocCheck')
 @CompileStatic
 abstract class ProductProperties {
   /**
@@ -116,6 +118,9 @@ abstract class ProductProperties {
    */
   boolean scrambleMainJar = false
 
+  @ApiStatus.Experimental
+  boolean useProductJar = true
+
   /**
    * If {@code false} names of private fields won't be scrambled (to avoid problems with serialization). This field is ignored if
    * {@link #scrambleMainJar} is {@code false}.
@@ -133,7 +138,7 @@ abstract class ProductProperties {
   ProductModulesLayout productLayout = new ProductModulesLayout()
 
   /**
-   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in {@link BuildPaths#artifacts}
+   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in {@link BuildPaths#artifactDir}
    * directory and have ".portable" suffix by default, override {@link #getCrossPlatformZipFileName} to change the file name.
    */
   boolean buildCrossPlatformDistribution = false
@@ -189,7 +194,7 @@ abstract class ProductProperties {
   /**
    * Determines sources of which modules should be included into the sources archive if {@link #buildSourcesArchive} is {@code true}
    */
-  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { true } as BiPredicate<JpsModule, BuildContext>
+  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true } as BiPredicate<JpsModule, BuildContext>
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
@@ -208,16 +213,7 @@ abstract class ProductProperties {
    */
   List<String> modulesToCompileTests = []
 
-  /**
-   * Specify list of modules on which some modules packaged into the main jar depend, but which aren't included into the main jar. These
-   * modules will be added to the classpath to properly scramble the main jar.
-   * <strong>This is a temporary hack added specifically for AppCode. It's strongly recommended to either include these modules into the
-   * main jar or get rid of such dependencies.</strong> <br>
-   * todo[nik] get rid of this
-   */
-  List<String> additionalModulesRequiredForScrambling = []
-
-  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.DCEVM
+  JetBrainsRuntimeDistribution runtimeDistribution = JetBrainsRuntimeDistribution.DCEVM
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
@@ -254,5 +250,18 @@ abstract class ProductProperties {
   /**
    * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
-  boolean addRemoteDevelopmentLibraries = true
+  @ApiStatus.Internal
+  boolean addRemoteDevelopmentLibraries() {
+    return productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+  }
+
+  /**
+   * Build steps which are always skipped for this product. Can be extended via {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} but not overridden.
+   */
+  List<String> incompatibleBuildSteps = []
+
+  /**
+   * Names of JARs inside IDE_HOME/lib directory which need to be added to the Xbootclasspath to start the IDE
+   */
+  List<String> xBootClassPathJarNames = []
 }

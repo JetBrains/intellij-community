@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +37,7 @@ public final class TabsUtil {
     UISettings uiSettings = UISettings.getInstance();
     Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
     if (uiSettings.getOverrideLafFonts()) {
-      return font.deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+      return font.deriveFont(uiSettings.getFontSize2D() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
     }
 
     return font;
@@ -82,5 +83,27 @@ public final class TabsUtil {
     if (bottomShape.contains(point)) return BOTTOM;
     if (topShape.contains(point)) return TOP;
     return component.getBounds().contains(point) ? CENTER : -1;
+  }
+
+  public static void updateBoundsWithDropSide(@NotNull Rectangle bounds,
+                                              @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1}) int dropSide) {
+    switch (dropSide) {
+      case TOP:
+        bounds.height /= 2;
+        break;
+      case LEFT:
+        bounds.width /= 2;
+        break;
+      case BOTTOM:
+        int h = bounds.height / 2;
+        bounds.height -= h;
+        bounds.y += h;
+        break;
+      case RIGHT:
+        int w = bounds.width / 2;
+        bounds.width -= w;
+        bounds.x += w;
+        break;
+    }
   }
 }

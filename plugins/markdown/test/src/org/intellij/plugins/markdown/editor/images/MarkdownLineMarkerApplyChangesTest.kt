@@ -6,7 +6,7 @@ import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImageImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import java.io.File
 
 class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
@@ -24,7 +24,7 @@ class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
       shouldConvertToHtml = false
     )
     markerProvider.applyChanges(imageElement, data)
-    val image = file.firstChild.firstChild.firstChild as MarkdownImageImpl
+    val image = file.firstChild.firstChild.firstChild as MarkdownImage
     assertEquals(data.path, image.linkDestination?.text)
     assertEquals(data.title, image.collectLinkTitleText() ?: "")
     assertEquals(data.description, image.collectLinkDescriptionText() ?: "")
@@ -65,7 +65,7 @@ class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
       shouldConvertToHtml = false
     )
     markerProvider.applyChanges(tag, data)
-    val image = file.firstChild.firstChild.firstChild as MarkdownImageImpl
+    val image = file.firstChild.firstChild.firstChild as MarkdownImage
     assertEquals(data.path, image.linkDestination?.text)
     assertEquals(data.description, image.collectLinkDescriptionText())
     assertEquals(data.title, image.collectLinkTitleText())
@@ -84,7 +84,7 @@ class MarkdownLineMarkerApplyChangesTest: LightPlatformCodeInsightTestCase() {
       shouldConvertToHtml = false
     )
     markerProvider.applyChanges(tag, data)
-    val image = file.firstChild.firstChild.firstChild as MarkdownImageImpl
+    val image = file.firstChild.firstChild.firstChild as MarkdownImage
     assertEquals(data.path, image.linkDestination?.text)
     assertEquals(data.description, image.collectLinkDescriptionText())
   }

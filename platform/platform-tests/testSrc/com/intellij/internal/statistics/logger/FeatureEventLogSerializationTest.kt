@@ -10,6 +10,7 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.internal.statistics.StatisticsTestEventValidator.assertLogEventIsValid
 import com.intellij.internal.statistics.StatisticsTestEventValidator.isValid
 import com.intellij.openapi.util.io.FileUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -24,8 +25,7 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventWithData() {
-    val event = newEvent(groupId = "test.group", eventId = "test.event")
-    event.event.addData("param", 23L)
+    val event = newEvent(groupId = "test.group", eventId = "test.event", data = hashMapOf("param" to 23L))
     testEventSerialization(event, false, "param")
   }
 
@@ -70,40 +70,35 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventDataWithTabInName() {
-    val event = newEvent()
-    event.event.addData("my key", "value")
+    val event = newEvent(data = hashMapOf("my key" to "value"))
     testEventSerialization(event, false, "my_key")
   }
 
   @Test
   fun testEventDataWithTabInValue() {
-    val event = newEvent()
-    event.event.addData("key", "my value")
+    val event = newEvent(data = hashMapOf("key" to "my value"))
     testEventSerialization(event, false, "key")
   }
 
   @Test
   fun testEventDataWithUnicodeInName() {
-    val event = newEvent()
-    event.event.addData("my\uFFFDkey", "value")
-    event.event.addData("some\u013C\u02BE\u037C", "value")
-    event.event.addData("\u013C\u037Ckey", "value")
+    val event = newEvent(data = hashMapOf("my\uFFFDkey" to "value",
+      "some\u013C\u02BE\u037C" to "value",
+      "\u013C\u037Ckey" to "value"))
     testEventSerialization(event, false, "my?key", "some???", "??key")
   }
 
   @Test
   fun testEventDataWithUnicodeInValue() {
-    val event = newEvent(groupId = "group-id", eventId = "test-event")
-    event.event.addData("first-key", "my\uFFFDvalue")
-    event.event.addData("second-key", "some\u013C\u02BE\u037C")
-    event.event.addData("third-key", "\u013C\u037Cvalue")
+    val event = newEvent(groupId = "group-id", eventId = "test-event", data = hashMapOf("first-key" to "my\uFFFDvalue",
+      "second-key" to "some\u013C\u02BE\u037C",
+      "third-key" to "\u013C\u037Cvalue"))
     testEventSerialization(event, false, "first-key", "second-key", "third-key")
   }
 
   @Test
   fun testEventDataWithListInValue() {
-    val event = newEvent(groupId = "group-id", eventId = "test-event")
-    event.event.addData("key", listOf("my value", "some value", "value"))
+    val event = newEvent(groupId = "group-id", eventId = "test-event", data = hashMapOf("key" to listOf("my value", "some value", "value")))
 
     testEventSerialization(event, false, "key")
   }
@@ -331,41 +326,32 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventDataWithObject() {
-    val event = newEvent()
-    event.event.addData("obj", mapOf("foo" to "fooValue", "bar" to "barValue"))
-
+    val event = newEvent(data = hashMapOf("obj" to mapOf("foo" to "fooValue", "bar" to "barValue")))
     testEventSerialization(event, false, "obj")
   }
 
   @Test
   fun testEventDataWithObjectList() {
-    val event = newEvent()
-    event.event.addData("objects", listOf(mapOf("foo" to "fooValue", "bar" to "barValue")))
-
+    val event = newEvent(data = hashMapOf("objects" to listOf(mapOf("foo" to "fooValue", "bar" to "barValue"))))
     testEventSerialization(event, false, "objects")
   }
 
   @Test
   fun testEventDataWithNestedObject() {
-    val event = newEvent()
-    event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to "fooValue")))
+    val event = newEvent(data = hashMapOf("obj1" to mapOf("obj2" to mapOf("foo" to "fooValue"))))
 
     testEventSerialization(event, false, "obj1")
   }
 
   @Test
   fun testEventDataWithLongInObject() {
-    val event = newEvent()
-    event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to 1L)))
-
+    val event = newEvent(data = hashMapOf("obj1" to mapOf("obj2" to mapOf("foo" to 1L))))
     testEventSerialization(event, false, "obj1")
   }
 
   @Test
   fun testEventDataWithDoubleInObject() {
-    val event = newEvent()
-    event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to 2.2)))
-
+    val event = newEvent(data = hashMapOf("obj1" to mapOf("obj2" to mapOf("foo" to 2.2))))
     testEventSerialization(event, false, "obj1")
   }
 

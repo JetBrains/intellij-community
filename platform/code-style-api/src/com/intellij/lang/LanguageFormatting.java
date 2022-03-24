@@ -7,6 +7,7 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +32,18 @@ public final class LanguageFormatting extends LanguageExtension<FormattingModelB
     if (builder == null) {
       builder = forLanguage(language);
     }
+    Formatter formatter = Formatter.getInstance();
     PsiFile file = context.getContainingFile();
-    return ExternalFormatProcessor.useExternalFormatter(file)
-           ? Formatter.getInstance().createExternalFormattingModelBuilder(file, builder)
-           : builder;
+
+    builder = ExternalFormatProcessor.useExternalFormatter(file)
+              ? formatter.createExternalFormattingModelBuilder(file, builder)
+              : builder;
+
+    builder = formatter.isEligibleForVirtualFormatting(context)
+              ? formatter.wrapForVirtualFormatting(context, builder)
+              : builder;
+
+    return builder;
   }
 
   @Nullable
@@ -46,5 +55,16 @@ public final class LanguageFormatting extends LanguageExtension<FormattingModelB
       }
     }
     return null;
+  }
+
+  /**
+   * Checks if automatic reformat is allowed for the given context element using {@link LanguageFormattingRestriction} extensions.
+   *
+   * @param context The element to check.
+   *
+   * @return True if formatting is allowed, false otherwise.
+   */
+  public boolean isAutoFormatAllowed(@NotNull PsiElement context) {
+    return ContainerUtil.and(LanguageFormattingRestriction.EP_NAME.getExtensionList(), each -> each.isAutoFormatAllowed(context));
   }
 }

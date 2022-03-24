@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -243,8 +244,10 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Defines whether a file can be chosen.
+   * @param file
    */
-  public boolean isFileSelectable(VirtualFile file) {
+  @Contract("null -> false")
+  public boolean isFileSelectable(@Nullable VirtualFile file) {
     if (file == null) return false;
 
     if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
@@ -340,7 +343,7 @@ public class FileChooserDescriptor implements Cloneable {
 
   @Nullable
   public <T> T getUserData(@NotNull DataKey<T> key) {
-    @SuppressWarnings({"unchecked"}) final T t = (T)myUserData.get(key.getName());
+    @SuppressWarnings("unchecked") T t = (T)myUserData.get(key.getName());
     return t;
   }
 

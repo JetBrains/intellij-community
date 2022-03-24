@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable
 import com.intellij.ui.RowIcon
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIconProviderBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -17,7 +18,7 @@ import javax.swing.Icon
 class KotlinMemberSelectionTable(
     memberInfos: List<KotlinMemberInfo>,
     memberInfoModel: MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>?,
-    abstractColumnHeader: String?
+    @Nls abstractColumnHeader: String?
 ) : AbstractMemberSelectionTable<KtNamedDeclaration, KotlinMemberInfo>(memberInfos, memberInfoModel, abstractColumnHeader) {
     override fun getAbstractColumnValue(memberInfo: KotlinMemberInfo): Any? {
         if (memberInfo.isStatic || memberInfo.isCompanionMember) return null

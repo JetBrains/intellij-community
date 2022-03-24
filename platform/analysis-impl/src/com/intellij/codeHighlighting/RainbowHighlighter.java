@@ -101,9 +101,9 @@ public class RainbowHighlighter {
   @NotNull private final TextAttributesScheme myColorsScheme;
   private final Color @NotNull [] myRainbowColors;
 
-  public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
-    myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
-    myRainbowColors = generateColorSequence(myColorsScheme, colorsScheme != null);
+  public RainbowHighlighter(@NotNull TextAttributesScheme colorsScheme) {
+    myColorsScheme = colorsScheme;
+    myRainbowColors = generateColorSequence(myColorsScheme);
   }
 
   public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
@@ -152,7 +152,7 @@ public class RainbowHighlighter {
   }
 
   public static void transferRainbowState(@NotNull SchemeMetaInfo dst, @NotNull SchemeMetaInfo src) {
-    final Properties dstProps = dst.getMetaProperties();
+    Properties dstProps = dst.getMetaProperties();
     dstProps.entrySet().removeIf(entry -> isRainbowKey(entry.getKey()));
     src.getMetaProperties().forEach((Object key, Object value) -> {
       if (isRainbowKey(key) && value instanceof String) {
@@ -174,8 +174,8 @@ public class RainbowHighlighter {
     for (int i = 0; i < RAINBOW_TEMP_KEYS.length; ++i) {
       sb.append(" ");
       sb.append("<").append(tagRainbow).append(">");
-      final String anchor = String.valueOf(i / stopCount + 1);
-      final String minor = String.valueOf(i % stopCount);
+      String anchor = String.valueOf(i / stopCount + 1);
+      String minor = String.valueOf(i % stopCount);
       sb.append(i % stopCount == 0 ? "Color#" + anchor : "SC" + anchor + "." + minor);
       sb.append("</").append(tagRainbow).append(">");
       if (needLineBreak && i == RAINBOW_TEMP_KEYS.length / 2) {
@@ -198,47 +198,45 @@ public class RainbowHighlighter {
     return myRainbowColors.length;
   }
 
-  private static Color @NotNull [] generateColorSequence(@NotNull TextAttributesScheme colorsScheme, boolean withCorrectionAndCaching) {
+  private static Color @NotNull [] generateColorSequence(@NotNull TextAttributesScheme colorsScheme) {
     String colorDump = ApplicationManager.getApplication().isUnitTestMode()
                        ? UNIT_TEST_COLORS
                        : Registry.get("rainbow.highlighter.colors").asString();
 
-    final List<String> registryColors = StringUtil.split(colorDump, ",");
+    List<String> registryColors = StringUtil.split(colorDump, ",");
     if (!registryColors.isEmpty()) {
       return registryColors.stream().map(s -> ColorUtil.fromHex(s.trim())).toArray(Color[]::new);
     }
 
-    if (withCorrectionAndCaching) {
-      Color[] colors = getColorsFromCache(colorsScheme);
-      if (colors != null) {
-        return colors;
-      }
+    Color[] colors = getColorsFromCache(colorsScheme);
+    if (colors != null) {
+      return colors;
     }
-    return generateColors(colorsScheme, withCorrectionAndCaching);
+    return generateColors(colorsScheme);
   }
 
   @TestOnly
   public static Color @NotNull [] testRainbowGenerateColors(@NotNull TextAttributesScheme colorsScheme) {
-    return generateColors(colorsScheme, true);
+    return generateColors(colorsScheme);
   }
 
-  private static Color @NotNull [] generateColors(@NotNull TextAttributesScheme colorsScheme, boolean withCorrectionAndCaching) {
+  private static Color @NotNull [] generateColors(@NotNull TextAttributesScheme colorsScheme) {
     List<Color> stopRainbowColors =
       ContainerUtil.map(RAINBOW_COLOR_KEYS, key -> getRainbowColorFromAttribute(colorsScheme.getAttributes(key)));
     List<Color> rainbowColors = ColorGenerator.generateLinearColorSequence(stopRainbowColors, RAINBOW_COLORS_BETWEEN);
 
-    if (withCorrectionAndCaching && colorsScheme instanceof EditorColorsScheme) {
-      final EditorColorPalette palette = EditorColorPaletteFactory
+    if (colorsScheme instanceof EditorColorsScheme) {
+      EditorColorPalette palette = EditorColorPaletteFactory
         .getInstance()
         .getPalette((EditorColorsScheme)colorsScheme, Language.ANY)
         .collectColorsWithFilter(attr -> getRainbowColorFromAttribute(attr), true);
 
 
-      final List<Pair<Color, Double>> colorCircles = new ArrayList<>();
-      final Color background = ((EditorColorsScheme)colorsScheme).getDefaultBackground();
-      final boolean schemeIsDark = ColorUtil.isDark(background);
-      final double minDistanceWithOrdinal = schemeIsDark ? 0.06 : 0.10;      
-      final double minDistanceWithDiagnostic = schemeIsDark ? 0.12 : 0.20;
+      List<Pair<Color, Double>> colorCircles = new ArrayList<>();
+      Color background = ((EditorColorsScheme)colorsScheme).getDefaultBackground();
+      boolean schemeIsDark = ColorUtil.isDark(background);
+      double minDistanceWithOrdinal = schemeIsDark ? 0.06 : 0.10;
+      double minDistanceWithDiagnostic = schemeIsDark ? 0.12 : 0.20;
       colorCircles.add(Pair.create(background, 0.24));
       
       palette.getEntries().forEach(entry -> colorCircles.add(Pair.create(entry.getKey(),
@@ -255,22 +253,22 @@ public class RainbowHighlighter {
     return rainbowColors.toArray(new Color[0]);
   }
 
-  private static Color resolveConflict(final @NotNull List<? extends Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
+  private static Color resolveConflict(@NotNull List<? extends Pair<Color, Double>> colorCircles, @NotNull Color sampleColor, int nestLevel) {
     if (nestLevel > 4) {
       return sampleColor;
     }
     for (Pair<Color, Double> circle: colorCircles) {
-      final Color paletteColor = circle.first;
-      final double distance = colorDistance01(sampleColor, paletteColor);
+      Color paletteColor = circle.first;
+      double distance = colorDistance01(sampleColor, paletteColor);
       if (distance < circle.second) {
-        final float[] rgb = rgbDiffColor(sampleColor, paletteColor);
-        final double factor = 256 * circle.second / getLength(rgb);
-        final int mod = nestLevel % 4; 
-        final int r = normalize(sampleColor.getRed() + rgb[0] * factor * (mod == 3 ? 2 : 1));          
-        final int g = normalize(sampleColor.getGreen() + rgb[1] * factor * (mod == 1 ? 2 : 1));
-        final int b = normalize(sampleColor.getBlue() + rgb[2] * factor * (mod == 2 ? 2 : 1));
-        final float[] hsbNew = Color.RGBtoHSB(r, g, b, null);
-        final float[] hsbOrig = Color.RGBtoHSB(sampleColor.getRed(), sampleColor.getGreen(), sampleColor.getBlue(), null);
+        float[] rgb = rgbDiffColor(sampleColor, paletteColor);
+        double factor = 256 * circle.second / getLength(rgb);
+        int mod = nestLevel % 4;
+        int r = normalize(sampleColor.getRed() + rgb[0] * factor * (mod == 3 ? 2 : 1));
+        int g = normalize(sampleColor.getGreen() + rgb[1] * factor * (mod == 1 ? 2 : 1));
+        int b = normalize(sampleColor.getBlue() + rgb[2] * factor * (mod == 2 ? 2 : 1));
+        float[] hsbNew = Color.RGBtoHSB(r, g, b, null);
+        float[] hsbOrig = Color.RGBtoHSB(sampleColor.getRed(), sampleColor.getGreen(), sampleColor.getBlue(), null);
         
         //System.out.println("#" + nestLevel + ":" + sampleColor + " diff:" + circle.second + " conflict:" + circle.first + " now:" +Color.getHSBColor(hsbNew[0], hsbNew[1], hsbOrig[2]));
         return resolveConflict(colorCircles,
@@ -315,7 +313,7 @@ public class RainbowHighlighter {
     List<Color> colors = new ArrayList<>();
     boolean validCache = true;
     for (TextAttributesKey tempKey : RAINBOW_TEMP_KEYS) {
-      final TextAttributes attributes = colorsScheme.getAttributes(tempKey);
+      TextAttributes attributes = colorsScheme.getAttributes(tempKey);
       if (attributes == null) {
         validCache = false;
         break;
@@ -337,7 +335,7 @@ public class RainbowHighlighter {
     attributes.setForegroundColor(rainbowColor);
   }
 
-  public TextAttributesKey @NotNull [] getRainbowTempKeys() {
+  public static TextAttributesKey @NotNull [] getRainbowTempKeys() {
     return RAINBOW_TEMP_KEYS;
   }
 

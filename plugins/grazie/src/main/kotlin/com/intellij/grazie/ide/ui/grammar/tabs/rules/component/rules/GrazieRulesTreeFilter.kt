@@ -18,13 +18,12 @@ internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : Fi
 
     (tree.model as DefaultTreeModel).reload()
 
-    TreeUtil.expandAll(tree)
-
     if (filter.isNullOrBlank()) {
       TreeUtil.collapseAll(tree, 0)
       expansionMonitor.restore()
     }
     else {
+      TreeUtil.expandAll(tree)
       expansionMonitor.unfreeze()
     }
   }
@@ -39,8 +38,9 @@ internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : Fi
       allRules().map { (lang, rules) ->
         lang to rules.filter {
           lang.nativeName.contains(filterString, true) ||
-          it.category.contains(filterString, true) ||
-          it.presentableName.contains(filterString, true)
+          it.categories.any { cat -> cat.contains(filterString, true) } ||
+          it.presentableName.contains(filterString, true) ||
+          it.searchableDescription.contains(filterString, true)
         }
       }.toMap().filterValues { it.isNotEmpty() }
     )

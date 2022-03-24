@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
@@ -126,16 +126,17 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         return;
       }
 
+      final HttpConfigurable settings = HttpConfigurable.getInstance();
       final String title = IdeBundle.message("dialog.title.check.proxy.settings");
-      final String answer =
+      final String url =
         Messages.showInputDialog(myMainPanel,
                                  IdeBundle.message("message.text.enter.url.to.check.connection"),
-                                 title, Messages.getQuestionIcon(), "http://", null);
-      if (StringUtil.isEmptyOrSpaces(answer)) {
+                                 title, Messages.getQuestionIcon(), settings.CHECK_CONNECTION_URL, null);
+      if (StringUtil.isEmptyOrSpaces(url)) {
         return;
       }
 
-      final HttpConfigurable settings = HttpConfigurable.getInstance();
+      settings.CHECK_CONNECTION_URL = url;
       try {
         apply(settings);
       }
@@ -146,7 +147,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
-          HttpRequests.request(answer).readTimeout(3 * 1000).tryConnect();
+          HttpRequests.request(url).readTimeout(3 * 1000).tryConnect();
         }
         catch (IOException e) {
           exceptionReference.set(e);

@@ -2,65 +2,57 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.tasks.HelpPluginKt
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.BiConsumer
 
 @CompileStatic
 final class BuiltInHelpPlugin {
   private static final String MODULE_NAME = "intellij.platform.builtInHelp"
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  static PluginLayout helpPlugin(BuildContext buildContext, String pluginVersion) {
-    def productName = buildContext.applicationInfo.productName
-    Path resourceRoot = buildContext.paths.projectHomeDir.resolve("help/plugin-resources")
-    if (!Files.exists(resourceRoot.resolve("topics/app.js"))) {
-      buildContext.messages.warning("Skipping $productName Help plugin because $resourceRoot/topics/app.js not present")
+  static PluginLayout helpPlugin(BuildContext context, String pluginVersion) {
+    String productName = context.applicationInfo.productName
+    Path resourceRoot = context.paths.projectHomeDir.resolve("help/plugin-resources")
+    if (Files.notExists(resourceRoot.resolve("topics/app.js"))) {
+      Span.current().addEvent("skip $productName Help plugin because $resourceRoot/topics/app.js not present")
       return null
     }
 
     return PluginLayout.plugin(MODULE_NAME) {
-      def productLowerCase = productName.replace(" ", "-").toLowerCase()
-      mainJarName = "$productLowerCase-help.jar"
-      directoryName = "${productName.replace(" ", "")}Help"
-      excludeFromModule(MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
-      doNotCopyModuleLibrariesAutomatically(["jsoup"])
-      withGeneratedResources({ BuildContext context ->
-        def helpModule = context.findRequiredModule(MODULE_NAME)
-        def ant = context.ant
-        context.messages.block("Indexing help topics..") {
-          ant.java(classname: "com.jetbrains.builtInHelp.indexer.HelpIndexer", fork: true, failonerror: true) {
-            jvmarg(line: "-ea -Xmx500m")
-            sysproperty(key: "java.awt.headless", value: true)
-            arg(path: "$resourceRoot/search")
-            arg(path: "$resourceRoot/topics")
-
-            classpath() {
-              context.getModuleRuntimeClasspath(helpModule, false).each {
-                pathelement(location: it)
-              }
-            }
-          }
-        }
-
-        Path patchedRoot = buildContext.paths.tempDir.resolve("patched-plugin-xml/$MODULE_NAME/META-INF")
-        Files.createDirectories(patchedRoot.resolve("services"))
-        Files.writeString(patchedRoot.resolve("services/org.apache.lucene.codecs.Codec"), "org.apache.lucene.codecs.lucene50.Lucene50Codec")
-        Files.writeString(patchedRoot.resolve("plugin.xml"), pluginXml(context, pluginVersion))
-
-        def jarName = "$buildContext.paths.temp/help/$productLowerCase-assets.jar"
-        ant.jar(destfile: jarName) {
-          ant.fileset(dir: resourceRoot.toString()) {
-            ant.include(name: "topics/**")
-            ant.include(name: "images/**")
-            ant.include(name: "search/**")
-          }
-        }
-        new File(jarName)
-                             }, "lib")
+      configure(delegate, pluginVersion, productName, resourceRoot)
     }
+  }
+
+  private static configure(PluginLayout.PluginLayoutSpec spec, String pluginVersion, String productName, Path resourceRoot) {
+    String productLowerCase = productName.replace(" ", "-").toLowerCase()
+    spec.mainJarName = "$productLowerCase-help.jar"
+    spec.directoryName = "${productName.replace(" ", "")}Help"
+    spec.excludeFromModule(MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
+    spec.doNotCopyModuleLibrariesAutomatically(List.of("jsoup"))
+    spec.withGeneratedResources(new BiConsumer<Path, BuildContext>() {
+      @Override
+      void accept(Path targetDir, BuildContext context) {
+        Path assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
+        HelpPluginKt.buildResourcesForHelpPlugin(
+          resourceRoot,
+          context.getModuleRuntimeClasspath(context.findRequiredModule(MODULE_NAME), false),
+          assetJar,
+          context.messages)
+      }
+    })
+    spec.withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
+      @Override
+      void accept(ModuleOutputPatcher patcher, BuildContext context) {
+        patcher.patchModuleOutput(MODULE_NAME,
+                                  "META-INF/services/org.apache.lucene.codecs.Codec",
+                                  "org.apache.lucene.codecs.lucene50.Lucene50Codec")
+        patcher.patchModuleOutput(MODULE_NAME, "META-INF/plugin.xml", pluginXml(context, pluginVersion), true)
+      }
+    })
   }
 
   private static String pluginXml(BuildContext buildContext, String version) {

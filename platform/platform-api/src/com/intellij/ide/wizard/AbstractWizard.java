@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -17,12 +17,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +34,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.*;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
@@ -79,7 +78,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = isNewWizard() ? createHelpButton(JBInsets.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
@@ -117,7 +116,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     int inset = isNewWizard() ? 15 : 0;
-    panel.setBorder(BorderFactory.createEmptyBorder(8, inset, 0, inset));
+    panel.setBorder(isNewWizard()
+                    ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
+                    : BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
     JPanel buttonPanel = new JPanel();
 
@@ -129,24 +130,28 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         myHelpButton.putClientProperty("JButton.buttonType", "help");
       }
 
-      int index = 0;
+      final List<JButton> touchbarButtons = new ArrayList<>();
       JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.contextHelpAvailable() && !isNewWizard()) {
+      if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
-        TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
+        touchbarButtons.add(myHelpButton);
       }
       leftPanel.add(myCancelButton);
-      TouchbarDataKeys.putDialogButtonDescriptor(myCancelButton, index++);
+      touchbarButtons.add(myCancelButton);
       panel.add(leftPanel, BorderLayout.WEST);
 
+      List<JButton> principalTouchbarButtons = new ArrayList<>();
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
-        TouchbarDataKeys.putDialogButtonDescriptor(myPreviousButton, index++).setMainGroup(true);
+        principalTouchbarButtons.add(myPreviousButton);
       }
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myNextButton);
-      TouchbarDataKeys.putDialogButtonDescriptor(myNextButton, index++).setMainGroup(true).setDefault(true);
+      principalTouchbarButtons.add(myNextButton);
+
+      if (SystemInfo.isMac)
+        Touchbar.setButtonActions(panel, touchbarButtons, principalTouchbarButtons, myNextButton);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);
@@ -165,7 +170,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
       if (helpAvailable) {
-        add(hGroup, vGroup, buttons, myHelpButton);
+        if (isNewWizard()) {
+          JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+          if (ApplicationInfo.contextHelpAvailable()) {
+            leftPanel.add(myHelpButton);
+            panel.add(leftPanel, BorderLayout.WEST);
+          }
+        } else {
+          add(hGroup, vGroup, buttons, myHelpButton);
+        }
       }
 
       layout.setHorizontalGroup(hGroup);
@@ -195,12 +208,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         }
       }
     );
-    myHelpButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        helpAction();
-      }
-    });
+
+    if (!isNewWizard()) {
+      myHelpButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          helpAction();
+        }
+      });
+    }
 
     return panel;
   }
@@ -477,22 +493,25 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    JComponent component = mySteps.get(getCurrentStep()).getPreferredFocusedComponent();
-    requestFocusTo(component != null ? component : myNextButton);
-  }
-
-  private static void requestFocusTo(final JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, () -> {
-      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-      focusManager.requestFocus(component, false);
+    UiNotifyConnector.doWhenFirstShown(myCurrentStepComponent, () -> {
+      requestFocusTo(getPreferredFocusedComponent());
     });
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    JComponent component = getCurrentStepObject().getPreferredFocusedComponent();
-    return component == null ? super.getPreferredFocusedComponent() : component;
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    var step = getCurrentStepObject();
+    var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
+    return ObjectUtils.chooseNotNull(component, myNextButton);
+  }
+
+  private static void requestFocusTo(@Nullable JComponent component) {
+    if (component != null) {
+      UiNotifyConnector.doWhenFirstShown(component, () -> {
+        var focusManager = IdeFocusManager.findInstanceByComponent(component);
+        focusManager.requestFocus(component, false);
+      });
+    }
   }
 
   protected boolean canGoNext() {
@@ -534,9 +553,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(!firstStep);
+    if (isNewWizard()) {
+      myPreviousButton.setVisible(!firstStep);
+    }
   }
 
-  private static boolean isNewWizard() {
+  public static boolean isNewWizard() {
     return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
@@ -567,8 +589,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected JButton getFinishButton() {
     return new JButton();
   }

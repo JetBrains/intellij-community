@@ -159,7 +159,7 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         private fun UnifiedBinaryExpression.dfs() = sequence { visit(this@dfs) }
 
         private fun KtExpression.flattenParentheses(): KtExpression? =
-            generateSequence(this) { (this as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
+            generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
 
         private val childToUnclearPrecedenceParentsMapping = listOf(
             Precedence.ELVIS to listOf(Precedence.EQUALITY, Precedence.COMPARISON, Precedence.IN_OR_IS),

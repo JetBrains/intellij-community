@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentMap;
  * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
  * <p>
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
@@ -74,12 +73,12 @@ public abstract class Language extends UserDataHolderBase {
     myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
-    Language prev = ourRegisteredLanguages.put(langClass, this);
+    Language prev = ourRegisteredLanguages.putIfAbsent(langClass, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
 
-    prev = ourRegisteredIDs.put(ID, this);
+    prev = ourRegisteredIDs.putIfAbsent(ID, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
     }

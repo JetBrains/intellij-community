@@ -45,7 +45,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     while (true) {
       delegate.putUserData(WRAPPING_CONSTRUCTOR_CALL, this);
       if (!(delegate instanceof LookupElementDecorator)) break;
-      delegate = ((LookupElementDecorator)delegate).getDelegate();
+      delegate = ((LookupElementDecorator<?>)delegate).getDelegate();
     }
   }
 

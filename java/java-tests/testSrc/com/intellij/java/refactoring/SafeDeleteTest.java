@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -81,7 +81,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeepDeleteParameterOtherTypeInBinaryExpression() throws Exception {
     doSingleFileTest();
   }
-  
+
   public void testDeepDeleteFieldAndAssignedParameter() throws Exception {
     doSingleFileTest();
   }
@@ -131,6 +131,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testDeleteMethodWithPropertyUsage() {
+    doTest("Foo");
+  }
+
+  public void testDeleteClassWithPropertyUsage() {
     doTest("Foo");
   }
 
@@ -263,7 +267,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testInterfaceAsTypeParameterBound() throws Exception {
-    doSingleFileTest();   
+    doSingleFileTest();
   }
 
   public void testNestedTypeParameterBounds() throws Exception {
@@ -336,7 +340,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testTypeParameterWithinMethodHierarchy() throws Exception {
     doSingleFileTest();
   }
-  
+
   public void testTypeParameterNoMethodHierarchy() throws Exception {
     doSingleFileTest();
   }
@@ -428,12 +432,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testSealedParent() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_17, getTestRootDisposable());
     doSingleFileTest();
   }
 
   public void testSealedGrandParent() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTest("Parent"));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest("Parent"));
   }
 
   public void testRecordImplementsInterface() throws Exception {

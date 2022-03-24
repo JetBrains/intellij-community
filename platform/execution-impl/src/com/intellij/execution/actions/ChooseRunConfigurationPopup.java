@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -337,7 +337,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (this == o) return true;
       if (!(o instanceof ItemWrapper)) return false;
 
-      if (!Objects.equals(myValue, ((ItemWrapper)o).myValue)) return false;
+      if (!Objects.equals(myValue, ((ItemWrapper<?>)o).myValue)) return false;
       return true;
     }
 
@@ -625,7 +625,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
               if (dynamic) {
                 manager.setTemporaryConfiguration(settings);
               }
-              manager.setSelectedConfiguration(settings);
+              if (!manager.isRunWidgetActive()) manager.setSelectedConfiguration(settings);
               ExecutionUtil.runConfiguration(settings, executor);
             }
           });
@@ -725,7 +725,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (myListPopup.getSpeedSearch().isHoldingFilter())
         return;
       for (final Object item : myListPopup.getListStep().getValues()) {
-        if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == myNumber) {
+        if (item instanceof ItemWrapper && ((ItemWrapper<?>)item).getMnemonic() == myNumber) {
           myListPopup.setFinalRunnable(() -> execute((ItemWrapper)item, myExecutor));
           myListPopup.closeOk(null);
         }
@@ -807,8 +807,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       final Object o = getListModel().get(index);
-      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
-        deleteConfiguration(ChooseRunConfigurationPopup.this, myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
+      if (o instanceof ItemWrapper && ((ItemWrapper<?>)o).canBeDeleted()) {
+        deleteConfiguration(ChooseRunConfigurationPopup.this, myProject, (RunnerAndConfigurationSettings)((ItemWrapper<?>)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
         values.remove(o);
@@ -1130,7 +1130,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
-                                                                                                         context, false);
+                                                                                                        context, false, true);
     if (producers == null) return;
 
     producers.sort(ConfigurationFromContext.NAME_COMPARATOR);

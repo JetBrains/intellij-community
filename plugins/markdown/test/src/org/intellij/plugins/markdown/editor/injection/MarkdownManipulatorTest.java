@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
 
 public class  MarkdownManipulatorTest extends BasePlatformTestCase {
   public void testSimpleCodeFence() {
@@ -170,11 +170,11 @@ public class  MarkdownManipulatorTest extends BasePlatformTestCase {
     int offset = myFixture.getCaretOffset();
 
     PsiElement element = myFixture.getFile().findElementAt(offset);
-    MarkdownCodeFenceImpl codeFence = (MarkdownCodeFenceImpl)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
+    MarkdownCodeFence codeFence = (MarkdownCodeFence)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
 
-    final MarkdownCodeFenceImpl.Manipulator manipulator = new MarkdownCodeFenceImpl.Manipulator();
-    MarkdownCodeFenceImpl newCodeFence =
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFenceImpl>)() -> manipulator
+    final MarkdownCodeFence.Manipulator manipulator = new MarkdownCodeFence.Manipulator();
+    MarkdownCodeFence newCodeFence =
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFence>)() -> manipulator
         .handleContentChange(codeFence, TextRange.from(element.getTextOffset(), element.getTextLength()), newContent));
 
     assertEquals(expectedText, newCodeFence != null ? newCodeFence.getText() : codeFence.getText());

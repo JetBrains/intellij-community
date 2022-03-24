@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
@@ -58,7 +59,9 @@ import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
+import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -69,6 +72,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -103,6 +107,17 @@ public abstract class PythonCommandLineState extends CommandLineState {
   //TODO: DOC ParametersListUtil
   public static final String GROUP_SCRIPT = "Script";
   public static final String MODULE_PARAMETER = "-m";
+
+  /**
+   * The port number to use for a server socket. '0' means the port will be automatically allocated.
+   */
+  private static final int SERVER_SOCKET_PORT = 0;
+
+  /**
+   * The length of the backlog to use for a server socket. '0' means the length of queue will be chosen by Java Platform.
+   */
+  private static final int SERVER_SOCKET_BACKLOG = 0;
+
   private final AbstractPythonRunConfiguration<?> myConfig;
 
   private Boolean myMultiprocessDebug = null;
@@ -119,8 +134,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      //noinspection SocketOpenedButNotSafelyClosed
-      serverSocket = new ServerSocket(0);
+      serverSocket = new ServerSocket(SERVER_SOCKET_PORT, SERVER_SOCKET_BACKLOG, InetAddress.getLoopbackAddress());
     }
     catch (IOException e) {
       throw new ExecutionException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);
@@ -146,7 +160,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    return execute(executor, (CommandLinePatcher[])null);
+    return execute(executor, new CommandLinePatcher[0]);
   }
 
   /**
@@ -292,33 +306,34 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ProcessHandler startProcess(@NotNull PythonScriptTargetedCommandLineBuilder builder)
     throws ExecutionException {
-    TargetEnvironmentRequest targetEnvironmentRequest = createTargetEnvironmentRequest();
+    HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
 
     Sdk sdk = getSdk();
     if (sdk != null) {
-      PythonRunConfigurationTargetEnvironmentAdjuster adjuster =
-        PythonRunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
+      RunConfigurationTargetEnvironmentAdjuster adjuster =
+        RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
       if (adjuster != null) {
-        adjuster.adjust(targetEnvironmentRequest, myConfig);
+        adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
       }
     }
 
     // The original Python script to be executed
-    PythonExecution pythonScript = buildPythonExecutionFinal(targetEnvironmentRequest);
+    PythonExecution pythonScript = buildPythonExecutionFinal(helpersAwareTargetRequest);
 
     // Python script that may be the debugger script that runs the original script
-    PythonExecution realPythonExecution = builder.build(targetEnvironmentRequest, pythonScript);
+    PythonExecution realPythonExecution = builder.build(helpersAwareTargetRequest, pythonScript);
 
     // TODO [Targets API] [major] Meaningful progress indicator should be taken
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
-    TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
+    TargetEnvironment targetEnvironment =
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
       PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, myConfig.getSdk(), interpreterParameters);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
-    ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
+    ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator, isDebug());
 
     // Attach extensions
     PythonRunConfigurationExtensionsManager.Companion.getInstance()
@@ -328,11 +343,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private PythonExecution buildPythonExecutionFinal(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    PythonExecution pythonExecution = buildPythonExecution(targetEnvironmentRequest);
+  private PythonExecution buildPythonExecutionFinal(HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
+    PythonExecution pythonExecution = buildPythonExecution(helpersAwareTargetRequest);
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
-    initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), targetEnvironmentRequest);
-    customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
+    initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), helpersAwareTargetRequest);
+    customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
+    PythonScripts.ensureProjectDirIsOnTarget(targetEnvironmentRequest, myConfig.getProject());
     return pythonExecution;
   }
 
@@ -378,9 +395,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   private static ProcessHandler doStartProcess(@NotNull TargetEnvironment targetEnvironment,
                                                @NotNull TargetedCommandLine commandLine,
-                                               @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+                                               @NotNull ProgressIndicator progressIndicator,
+                                               boolean isDebug) throws ExecutionException {
     final ProcessHandler processHandler;
-    processHandler = doCreateProcess(targetEnvironment, commandLine, progressIndicator);
+    processHandler = doCreateProcess(targetEnvironment, commandLine, progressIndicator, isDebug);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -444,10 +462,19 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   private static ProcessHandler doCreateProcess(@NotNull TargetEnvironment targetEnvironment,
                                                 @NotNull TargetedCommandLine commandLine,
-                                                @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+                                                @NotNull ProgressIndicator progressIndicator,
+                                                boolean isDebug) throws ExecutionException {
     Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
     // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
     String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
+    if (targetEnvironment instanceof LocalTargetEnvironment) {
+      // TODO This special treatment of local target must be replaced with a generalized approach
+      //  (f.e. with an ability of a target environment to match arbitrary local path to a target one)
+      if (isDebug) {
+        return new PyDebugProcessHandler(process, commandLineString, commandLine.getCharset());
+      }
+      return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
+    }
     return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(), targetEnvironment);
   }
 
@@ -484,11 +511,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * User volumes (including the volumes for project files) are expected to be
    * already requested.
    *
-   * @param targetEnvironment
+   * @param helpersAwareRequest the request
    * @return the representation of Python script or module execution
    */
   @NotNull
-  protected PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+  protected PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
     throw new UnsupportedOperationException("The implementation of Run Configuration based on Targets API is absent");
   }
 
@@ -574,9 +601,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void initEnvironment(@NotNull Project project,
                                      @NotNull PythonExecution commandLine,
                                      @NotNull PythonRunParams runParams,
-                                     @NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                     @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                      @Nullable PyRemotePathMapper pathMapper) {
-    initEnvironment(project, commandLine, runParams, pathMapper, false, targetEnvironmentRequest);
+    initEnvironment(project, commandLine, runParams, pathMapper, false, helpersAwareTargetRequest);
   }
 
   /**
@@ -588,7 +615,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       @NotNull PythonRunParams runParams,
                                       @Nullable PyRemotePathMapper pathMapper,
                                       boolean isDebug,
-                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+                                      @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
     Map<String, String> env = Maps.newHashMap();
 
     if (runParams.getEnvs() != null) {
@@ -601,6 +628,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // Carefully patch environment variables
     Map<String, Function<TargetEnvironment, String>> map =
       ContainerUtil.map2Map(env.entrySet(), e -> Pair.create(e.getKey(), TargetEnvironmentFunctions.constant(e.getValue())));
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(commandLine, map, targetEnvironmentRequest.getTargetPlatform());
 
     Charset charset = commandLine.getCharset();
@@ -610,7 +638,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     buildPythonPath(project, commandLine, runParams, pathMapper, isDebug, targetEnvironmentRequest);
 
-    // TODO [Targets API] [major] `PythonCommandLineEnvironmentProvider` is not applied and `PySciEnvironmentProvider` functionality is lost
+    for (PythonCommandLineTargetEnvironmentProvider envProvider : PythonCommandLineTargetEnvironmentProvider.EP_NAME.getExtensionList()) {
+      envProvider.extendTargetEnvironment(project, helpersAwareTargetRequest, commandLine, runParams);
+    }
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
@@ -645,9 +675,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
   }
 
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
   }
 
   /**
@@ -946,17 +976,22 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  private TargetEnvironmentRequest createTargetEnvironmentRequest() {
-    Sdk sdk = getSdk();
+  private HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() {
+    return getPythonTargetInterpreter(myConfig.getProject(), getSdk());
+  }
+
+  @NotNull
+  public static HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @Nullable Sdk sdk) {
     if (sdk == null) {
       throw new IllegalStateException("SDK is not defined for Run Configuration");
     }
     else {
-      TargetEnvironmentRequest environmentRequest = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk);
-      if (environmentRequest == null) {
+      HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest =
+        PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project);
+      if (helpersAwareTargetRequest == null) {
         throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
       }
-      return environmentRequest;
+      return helpersAwareTargetRequest;
     }
   }
 

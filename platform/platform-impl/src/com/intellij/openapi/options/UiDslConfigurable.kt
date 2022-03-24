@@ -3,10 +3,15 @@ package com.intellij.openapi.options
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("UiDslUnnamedConfigurable"))
 interface UiDslConfigurable : UnnamedConfigurable {
   fun RowBuilder.createComponentRow()
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("UiDslUnnamedConfigurable.Simple"))
   abstract class Simple : DslConfigurableBase(), UiDslConfigurable {
     final override fun createPanel(): DialogPanel {
       return panel {

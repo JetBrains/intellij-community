@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
+import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
@@ -24,8 +26,6 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
@@ -38,6 +38,11 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.util.*
 import com.intellij.util.containers.*
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -138,7 +143,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
   // See also notYetAppliedInitialSelectedConfigurationId, which helps when the initially selected RC is stored in some arbitrary *.run.xml file in project
-  private var selectedConfigurationId: String? = null
+  protected open var selectedConfigurationId: String? = null
   // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
   // This var helps if initially selected RC is a one from such file.
   // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
@@ -204,11 +209,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   init {
     val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) {
-        clearSelectedConfigurationIcon()
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+          clearSelectedConfigurationIcon()
 
-        deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+        }
       }
     })
 
@@ -225,6 +232,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     })
 
     BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(stringIdToBeforeRunProvider::drop, project)
+  }
+
+  override fun shouldSetRunConfigurationFromContext(): Boolean {
+    return Registry.`is`("select.run.configuration.from.context") && !isRunWidgetActive()
+  }
+
+  override fun isRunWidgetActive(): Boolean {
+    return RunToolbarSlotManager.getInstance(project).active
   }
 
   private fun clearSelectedConfigurationIcon() {
@@ -357,7 +372,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
 
     for (filePath in updatedFilePaths) {
-      val deletedAndAddedRunConfigs = lock.write { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
+      val deletedAndAddedRunConfigs = lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
         addConfiguration(runConfig)
@@ -407,8 +422,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     val newId = settings.uniqueID
     var existingId: String?
     lock.write {
-      listManager.immutableSortedSettingsList = null
-
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
       existingId = if (idToSettings.get(newId) === settings) newId else findExistingConfigurationId(settings)
@@ -423,6 +436,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
 
       idToSettings.put(newId, settings)
+      listManager.requestSort()
 
       if (existingId == null) {
         refreshUsagesList(settings)
@@ -573,6 +587,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
       eventPublisher.runConfigurationSelected(value)
     }
+
+  internal fun isFileContainsRunConfiguration(file: VirtualFile): Boolean {
+    val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }
+    return runConfigs.isNotEmpty()
+  }
 
   internal fun selectConfigurationStoredInFile(file: VirtualFile) {
     val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }
@@ -747,7 +766,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun loadState(parentNode: Element) {
-    config.migrateToRegistry()
+    config.migrateToAdvancedSettings()
     val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     if (isFirstLoadState) {
@@ -848,8 +867,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (selectedConfiguration == null) {
       // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: ""
-      selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+      selectAnyConfiguration()
     }
+  }
+
+  private fun selectAnyConfiguration() {
+    selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
   }
 
   fun readContext(parentNode: Element) {
@@ -1019,7 +1042,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     tempConfiguration.isTemporary = true
     addConfiguration(tempConfiguration)
-    if (Registry.`is`("select.run.configuration.from.context")) {
+    if (shouldSetRunConfigurationFromContext()) {
       selectedConfiguration = tempConfiguration
     }
   }
@@ -1251,7 +1274,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
     if (selectedConfigurationWasRemoved) {
-      selectedConfiguration = null
+      selectAnyConfiguration()
     }
 
     removed.forEach { eventPublisher.runConfigurationRemoved(it) }

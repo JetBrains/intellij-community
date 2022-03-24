@@ -1,0 +1,14 @@
+// "Import" "true"
+package p
+
+import p.RegObject.regularFun
+
+open class Reg {
+    fun regularFun() {}
+}
+
+object RegObject : Reg()
+
+fun usage() {
+    regularFun()
+}

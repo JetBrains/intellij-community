@@ -1,12 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
-
-import static com.intellij.openapi.util.io.FileUtil.delete;
-import static com.intellij.openapi.util.io.FileUtil.ensureExists;
-import static com.intellij.openapi.util.io.FileUtil.writeToFile;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.empty;
-import static org.junit.Assert.assertThat;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
@@ -16,15 +9,21 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.StatusType;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.status.StatusType;
+
+import static com.intellij.openapi.util.io.FileUtil.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.Assert.assertThat;
 
 // TODO Seems we could just apply corresponding patches with "svn patch" without custom code
 public class ConflictCreator {
@@ -120,7 +119,7 @@ public class ConflictCreator {
     }
     else if (StatusType.STATUS_ADDED.equals(fileData.myNodeStatus)) {
       if (fileData.myCopyFrom != null) {
-        myClientRunner.copy(root, fileData.myCopyFrom, fileData.myRelativePath);
+        myClientRunner.copyOrMove(root, fileData.myCopyFrom, fileData.myRelativePath, fileData.myIsMove);
       }
       else {
         createFile(fileData, target);

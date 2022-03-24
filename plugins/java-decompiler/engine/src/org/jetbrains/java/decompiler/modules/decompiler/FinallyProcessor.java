@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -24,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatemen
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -57,7 +59,7 @@ public class FinallyProcessor {
       Statement stat = stack.removeLast();
 
       Statement parent = stat.getParent();
-      if (parent != null && parent.type == Statement.TYPE_CATCHALL &&
+      if (parent != null && parent.type == StatementType.CATCH_ALL &&
           stat == parent.getFirst() && !parent.isCopied()) {
 
         CatchAllStatement fin = (CatchAllStatement)parent;
@@ -162,8 +164,8 @@ public class FinallyProcessor {
       if (node.block != null) {
         blockStatement = node.block;
       }
-      else if (node.preds.size() == 1) {
-        blockStatement = node.preds.get(0).block;
+      else if (node.predecessors.size() == 1) {
+        blockStatement = node.predecessors.get(0).block;
       }
 
       boolean isTrueExit = true;
@@ -213,8 +215,8 @@ public class FinallyProcessor {
 
                 Exprent next = null;
                 if (i == node.exprents.size() - 1) {
-                  if (node.succs.size() == 1) {
-                    DirectNode nd = node.succs.get(0);
+                  if (node.successors.size() == 1) {
+                    DirectNode nd = node.successors.get(0);
                     if (!nd.exprents.isEmpty()) {
                       next = nd.exprents.get(0);
                     }
@@ -248,8 +250,8 @@ public class FinallyProcessor {
       // find finally exits
       if (blockStatement != null && blockStatement.getBlock() != null) {
         Statement handler = fstat.getHandler();
-        for (StatEdge edge : blockStatement.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
-          if (edge.getType() != StatEdge.TYPE_REGULAR && handler.containsStatement(blockStatement)
+        for (StatEdge edge : blockStatement.getSuccessorEdges(EdgeType.DIRECT_ALL)) {
+          if (edge.getType() != EdgeType.REGULAR && handler.containsStatement(blockStatement)
               && !handler.containsStatement(edge.getDestination())) {
             Boolean existingFlag = mapLast.get(blockStatement.getBlock());
             // note: the dummy node is also processed!
@@ -261,11 +263,11 @@ public class FinallyProcessor {
         }
       }
 
-      stack.addAll(node.succs);
+      stack.addAll(node.successors);
     }
 
     // empty finally block?
-    if (fstat.getHandler().type == Statement.TYPE_BASICBLOCK) {
+    if (fstat.getHandler().type == StatementType.BASIC_BLOCK) {
 
       boolean isEmpty = false;
       boolean isFirstLast = mapLast.containsKey(firstBasicBlock);
@@ -315,7 +317,7 @@ public class FinallyProcessor {
 
     // disable semaphore at statement exit points
     for (BasicBlock block : setTry) {
-      List<BasicBlock> lstSucc = block.getSuccs();
+      List<BasicBlock> lstSucc = block.getSuccessors();
 
       for (BasicBlock dest : lstSucc) {
         // break out
@@ -326,25 +328,24 @@ public class FinallyProcessor {
           seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}), -1);
 
           // build a separate block
-          BasicBlock newblock = new BasicBlock(++graph.last_id);
-          newblock.setSeq(seq);
+          BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
 
           // insert between block and dest
-          block.replaceSuccessor(dest, newblock);
-          newblock.addSuccessor(dest);
-          setCopy.add(newblock);
-          graph.getBlocks().addWithKey(newblock, newblock.id);
+          block.replaceSuccessor(dest, newBlock);
+          newBlock.addSuccessor(dest);
+          setCopy.add(newBlock);
+          graph.getBlocks().addWithKey(newBlock, newBlock.id);
 
           // exception ranges
           // FIXME: special case synchronized
 
           // copy exception edges and extend protected ranges
-          for (int j = 0; j < block.getSuccExceptions().size(); j++) {
-            BasicBlock hd = block.getSuccExceptions().get(j);
-            newblock.addSuccessorException(hd);
+          for (int j = 0; j < block.getSuccessorExceptions().size(); j++) {
+            BasicBlock hd = block.getSuccessorExceptions().get(j);
+            newBlock.addSuccessorException(hd);
 
             ExceptionRangeCFG range = graph.getExceptionRange(hd, block);
-            range.getProtectedRange().add(newblock);
+            range.getProtectedRange().add(newBlock);
           }
         }
       }
@@ -355,38 +356,36 @@ public class FinallyProcessor {
     seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{1}), -1);
     seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}), -1);
 
-    BasicBlock newhead = new BasicBlock(++graph.last_id);
-    newhead.setSeq(seq);
+    BasicBlock newHead = new BasicBlock(++graph.last_id, seq);
 
-    insertBlockBefore(graph, head, newhead);
+    insertBlockBefore(graph, head, newHead);
 
-    // initialize semaphor with false
+    // initialize semaphore with false
     seq = new SimpleInstructionSequence();
     seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
     seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}), -1);
 
-    BasicBlock newheadinit = new BasicBlock(++graph.last_id);
-    newheadinit.setSeq(seq);
+    BasicBlock newHeadInit = new BasicBlock(++graph.last_id, seq);
 
-    insertBlockBefore(graph, newhead, newheadinit);
+    insertBlockBefore(graph, newHead, newHeadInit);
 
-    setCopy.add(newhead);
-    setCopy.add(newheadinit);
+    setCopy.add(newHead);
+    setCopy.add(newHeadInit);
 
-    for (BasicBlock hd : new HashSet<>(newheadinit.getSuccExceptions())) {
-      ExceptionRangeCFG range = graph.getExceptionRange(hd, newheadinit);
+    for (BasicBlock hd : new HashSet<>(newHeadInit.getSuccessorExceptions())) {
+      ExceptionRangeCFG range = graph.getExceptionRange(hd, newHeadInit);
 
       if (setCopy.containsAll(range.getProtectedRange())) {
-        newheadinit.removeSuccessorException(hd);
-        range.getProtectedRange().remove(newheadinit);
+        newHeadInit.removeSuccessorException(hd);
+        range.getProtectedRange().remove(newHeadInit);
       }
     }
   }
 
   private static void insertBlockBefore(ControlFlowGraph graph, BasicBlock oldblock, BasicBlock newblock) {
     List<BasicBlock> lstTemp = new ArrayList<>();
-    lstTemp.addAll(oldblock.getPreds());
-    lstTemp.addAll(oldblock.getPredExceptions());
+    lstTemp.addAll(oldblock.getPredecessors());
+    lstTemp.addAll(oldblock.getPredecessorExceptions());
 
     // replace predecessors
     for (BasicBlock pred : lstTemp) {
@@ -394,7 +393,7 @@ public class FinallyProcessor {
     }
 
     // copy exception edges and extend protected ranges
-    for (BasicBlock hd : oldblock.getSuccExceptions()) {
+    for (BasicBlock hd : oldblock.getSuccessorExceptions()) {
       newblock.addSuccessorException(hd);
 
       ExceptionRangeCFG range = graph.getExceptionRange(hd, oldblock);
@@ -423,7 +422,7 @@ public class FinallyProcessor {
     do {
       Statement st = lst.get(index);
 
-      if (st.type == Statement.TYPE_BASICBLOCK) {
+      if (st.type == StatementType.BASIC_BLOCK) {
         index++;
       }
       else {
@@ -464,7 +463,7 @@ public class FinallyProcessor {
     }
     else {
       if (first.getSeq().length() == 1 && finallytype > 0) {
-        BasicBlock firstsuc = first.getSuccs().get(0);
+        BasicBlock firstsuc = first.getSuccessors().get(0);
         if (catchBlocks.contains(firstsuc)) {
           first = firstsuc;
           skippedFirst = true;
@@ -475,7 +474,7 @@ public class FinallyProcessor {
     // identify start blocks
     Set<BasicBlock> startBlocks = new HashSet<>();
     for (BasicBlock block : tryBlocks) {
-      startBlocks.addAll(block.getSuccs());
+      startBlocks.addAll(block.getSuccessors());
     }
     // throw in the try body will point directly to the dummy exit
     // so remove dummy exit
@@ -578,16 +577,16 @@ public class FinallyProcessor {
         return null;
       }
 
-      if (blockSample.getSuccs().size() != blockCatch.getSuccs().size()) {
+      if (blockSample.getSuccessors().size() != blockCatch.getSuccessors().size()) {
         return null;
       }
 
       setSample.add(blockSample);
 
       // direct successors
-      for (int i = 0; i < blockCatch.getSuccs().size(); i++) {
-        BasicBlock sucCatch = blockCatch.getSuccs().get(i);
-        BasicBlock sucSample = blockSample.getSuccs().get(i);
+      for (int i = 0; i < blockCatch.getSuccessors().size(); i++) {
+        BasicBlock sucCatch = blockCatch.getSuccessors().get(i);
+        BasicBlock sucSample = blockSample.getSuccessors().get(i);
 
         if (catchBlocks.contains(sucCatch) && !setSample.contains(sucSample)) {
           stack.add(new BlockStackEntry(sucCatch, sucSample, entry.lstStoreVars));
@@ -599,10 +598,10 @@ public class FinallyProcessor {
         // do nothing, blockSample will be removed anyway
       }
       else {
-        if (blockCatch.getSuccExceptions().size() == blockSample.getSuccExceptions().size()) {
-          for (int i = 0; i < blockCatch.getSuccExceptions().size(); i++) {
-            BasicBlock sucCatch = blockCatch.getSuccExceptions().get(i);
-            BasicBlock sucSample = blockSample.getSuccExceptions().get(i);
+        if (blockCatch.getSuccessorExceptions().size() == blockSample.getSuccessorExceptions().size()) {
+          for (int i = 0; i < blockCatch.getSuccessorExceptions().size(); i++) {
+            BasicBlock sucCatch = blockCatch.getSuccessorExceptions().get(i);
+            BasicBlock sucSample = blockSample.getSuccessorExceptions().get(i);
 
             String excCatch = graph.getExceptionRange(sucCatch, blockCatch).getUniqueExceptionsString();
             String excSample = graph.getExceptionRange(sucSample, blockSample).getUniqueExceptionsString();
@@ -640,7 +639,7 @@ public class FinallyProcessor {
       }
 
       if (isLastBlock) {
-        Set<BasicBlock> setSuccs = new HashSet<>(blockSample.getSuccs());
+        Set<BasicBlock> setSuccs = new HashSet<>(blockSample.getSuccessors());
         setSuccs.removeAll(setSample);
 
         for (BlockStackEntry stackent : stack) {
@@ -679,7 +678,7 @@ public class FinallyProcessor {
           multiple = true;
         }
 
-        if (arr[1].getPreds().size() == 1) {
+        if (arr[1].getPredecessors().size() == 1) {
           next = arr[1];
         }
       }
@@ -690,7 +689,7 @@ public class FinallyProcessor {
         BasicBlock block = arr[1];
 
         if (block != next) {
-          if (InterpreterUtil.equalSets(next.getSuccs(), block.getSuccs())) {
+          if (InterpreterUtil.equalSets(next.getSuccessors(), block.getSuccessors())) {
             InstructionSequence seqNext = next.getSeq();
             InstructionSequence seqBlock = block.getSeq();
 
@@ -787,39 +786,38 @@ public class FinallyProcessor {
       LinkedList<Integer> oldOffsets = new LinkedList<>();
       for (int i = seqSample.length() - 1; i >= seqPattern.length(); i--) {
         seq.addInstruction(0, seqSample.getInstr(i), -1);
-        oldOffsets.addFirst(sample.getOldOffset(i));
+        oldOffsets.addFirst(sample.getOriginalOffset(i));
         seqSample.removeInstruction(i);
       }
 
-      BasicBlock newblock = new BasicBlock(++graph.last_id);
-      newblock.setSeq(seq);
-      newblock.getInstrOldOffsets().addAll(oldOffsets);
+      BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
+      newBlock.getOriginalOffsets().addAll(oldOffsets);
 
-      List<BasicBlock> lstTemp = new ArrayList<>(sample.getSuccs());
+      List<BasicBlock> lstTemp = new ArrayList<>(sample.getSuccessors());
 
       // move successors
       for (BasicBlock suc : lstTemp) {
         sample.removeSuccessor(suc);
-        newblock.addSuccessor(suc);
+        newBlock.addSuccessor(suc);
       }
 
-      sample.addSuccessor(newblock);
+      sample.addSuccessor(newBlock);
 
-      graph.getBlocks().addWithKey(newblock, newblock.id);
+      graph.getBlocks().addWithKey(newBlock, newBlock.id);
 
       Set<BasicBlock> setFinallyExits = graph.getFinallyExits();
       if (setFinallyExits.contains(sample)) {
         setFinallyExits.remove(sample);
-        setFinallyExits.add(newblock);
+        setFinallyExits.add(newBlock);
       }
 
       // copy exception edges and extend protected ranges
-      for (int j = 0; j < sample.getSuccExceptions().size(); j++) {
-        BasicBlock hd = sample.getSuccExceptions().get(j);
-        newblock.addSuccessorException(hd);
+      for (int j = 0; j < sample.getSuccessorExceptions().size(); j++) {
+        BasicBlock hd = sample.getSuccessorExceptions().get(j);
+        newBlock.addSuccessorException(hd);
 
         ExceptionRangeCFG range = graph.getExceptionRange(hd, sample);
-        range.getProtectedRange().add(newblock);
+        range.getProtectedRange().add(newBlock);
       }
     }
 
@@ -867,14 +865,14 @@ public class FinallyProcessor {
     }
 
     // collect common exception ranges of predecessors and successors
-    Set<BasicBlock> setCommonExceptionHandlers = new HashSet<>(next.getSuccExceptions());
-    for (BasicBlock pred : start.getPreds()) {
-      setCommonExceptionHandlers.retainAll(pred.getSuccExceptions());
+    Set<BasicBlock> setCommonExceptionHandlers = new HashSet<>(next.getSuccessorExceptions());
+    for (BasicBlock pred : start.getPredecessors()) {
+      setCommonExceptionHandlers.retainAll(pred.getSuccessorExceptions());
     }
 
     boolean is_outside_range = false;
 
-    Set<BasicBlock> setPredecessors = new HashSet<>(start.getPreds());
+    Set<BasicBlock> setPredecessors = new HashSet<>(start.getPredecessors());
 
     // replace start with next
     for (BasicBlock pred : setPredecessors) {
@@ -892,12 +890,12 @@ public class FinallyProcessor {
       // can belong to more than one area
       if (graph.getBlocks().containsKey(block.id)) {
 
-        if (!block.getSuccExceptions().containsAll(setCommonExceptionHandlers)) {
+        if (!block.getSuccessorExceptions().containsAll(setCommonExceptionHandlers)) {
           is_outside_range = true;
         }
 
         Set<ExceptionRangeCFG> setRemovedExceptionRanges = new HashSet<>();
-        for (BasicBlock handler : block.getSuccExceptions()) {
+        for (BasicBlock handler : block.getSuccessorExceptions()) {
           setRemovedExceptionRanges.add(graph.getExceptionRange(handler, block));
         }
 
@@ -909,9 +907,9 @@ public class FinallyProcessor {
         }
 
         // shift extern edges on splitted blocks
-        if (block.getSeq().isEmpty() && block.getSuccs().size() == 1) {
-          BasicBlock succs = block.getSuccs().get(0);
-          for (BasicBlock pred : new ArrayList<>(block.getPreds())) {
+        if (block.getSeq().isEmpty() && block.getSuccessors().size() == 1) {
+          BasicBlock succs = block.getSuccessors().get(0);
+          for (BasicBlock pred : new ArrayList<>(block.getPredecessors())) {
             if (!setBlocks.contains(pred)) {
               pred.replaceSuccessor(block, succs);
             }

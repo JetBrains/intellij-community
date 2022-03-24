@@ -345,7 +345,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
   @Nullable
   @NonNls
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "dependency.viewer.tool.window";
     }
     return null;

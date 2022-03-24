@@ -3,7 +3,7 @@
 // ACTION: Change type to mutable
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(otherMap: Map<Int, Int>) {
     var list = mapOf<Int, Int>(1 to 1, 2 to 2)
     foo()

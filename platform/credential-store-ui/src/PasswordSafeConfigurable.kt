@@ -27,6 +27,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
@@ -69,7 +72,6 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
     myPanel.reset()
 
-    @Suppress("IfThenToElvis")
     keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
   }
 
@@ -99,7 +101,6 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     @Suppress("CascadeIf")
     if (oldProviderType != providerType) {
-      @Suppress("NON_EXHAUSTIVE_WHEN")
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {
           // nothing else is required to setup
@@ -189,9 +190,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
   override fun getComponent(): JPanel {
     myPanel = panel {
-      row { label(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) }
-
-      buttonGroup(settings::providerType) {
+      buttonsGroup(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
             radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
@@ -201,6 +200,9 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
         row {
           @Suppress("DialogTitleCapitalization") // KeePass is a proper noun
           keepassRadioButton = radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
+        }
+
+        indent {
           row(CredentialStoreBundle.message("settings.password.database")) {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
               it.isDirectory || it.name.endsWith(".kdbx")
@@ -214,39 +216,38 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
                                                         }
                                                         return@textFieldWithBrowseButton File(path).path
                                                       })
+              .resizableColumn()
+              .horizontalAlign(HorizontalAlign.FILL)
+              .gap(RightGap.SMALL)
               .apply {
                 if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
               }.component
-            gearButton(
+            actionsButton(
               ClearKeePassDatabaseAction(),
               ImportKeePassDatabaseAction(),
               ChangeKeePassDatabaseMasterPasswordAction()
             )
           }
           row {
-            cell {
-              usePgpKey = checkBox(
-                usePgpKeyText(),
-                { !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
-                { if (!it) settings.state.pgpKeyId = null }
-              ).component
+            usePgpKey = checkBox(usePgpKeyText())
+              .bindSelected({ !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
+                            { if (!it) settings.state.pgpKeyId = null })
+              .gap(RightGap.SMALL)
+              .component
 
-              pgpKeyCombo = comboBox<PgpKey>(
-                pgpListModel,
-                { getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
-                { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null },
-                renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }
-              )
-                .growPolicy(GrowPolicy.MEDIUM_TEXT)
-                .enableIf(usePgpKey.selected)
-                .component
-            }
+            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer { value, _, _ ->
+              setText("${value.userId} (${value.keyId})")
+            }).bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
+                        { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
+              .columns(COLUMNS_MEDIUM)
+              .enabledIf(usePgpKey.selected)
+              .component
           }
-        }
+        }.enabledIf(keepassRadioButton.selected)
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
         }
-      }
+      }.bind(settings::providerType)
     }
     return myPanel
   }

@@ -1,23 +1,20 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.awt.CardLayout
 import java.awt.Point
 import javax.swing.JPanel
@@ -25,9 +22,9 @@ import javax.swing.JViewport
 import javax.swing.SwingConstants
 
 internal class PackageDetailsPanel(
-    operationFactory: PackageSearchOperationFactory,
+    project: Project,
     operationExecutor: OperationExecutor
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")), Displayable<PackageDetailsPanel.ViewModel> {
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")) {
 
     private var currentPanelName = EMPTY_STATE
 
@@ -35,7 +32,7 @@ internal class PackageDetailsPanel(
         border = emptyBorder()
     }
 
-    private val headerPanel = PackageDetailsHeaderPanel(operationFactory, operationExecutor)
+    private val headerPanel = PackageDetailsHeaderPanel(project, operationExecutor)
 
     private val infoPanel = PackageDetailsInfoPanel()
 
@@ -45,7 +42,7 @@ internal class PackageDetailsPanel(
     }
 
     private val emptyStatePanel = PackageSearchUI.borderPanel {
-        border = scaledEmptyBorder(12)
+        border = emptyBorder(12)
         addToCenter(
             PackageSearchUI.createLabel().apply {
                 text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.emptyState")
@@ -71,37 +68,36 @@ internal class PackageDetailsPanel(
     internal data class ViewModel(
         val selectedPackageModel: UiPackageModel<*>?,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        val allKnownRepositories: KnownRepositories.All,
         val targetModules: TargetModules,
         val onlyStable: Boolean,
         val invokeLaterScope: CoroutineScope
     )
 
-    override suspend fun display(viewModel: ViewModel): Unit = withContext(Dispatchers.AppUI) {
-        if (viewModel.selectedPackageModel != null) {
-            headerPanel.display(
-                PackageDetailsHeaderPanel.ViewModel(
-                    viewModel.selectedPackageModel,
-                    viewModel.knownRepositoriesInTargetModules,
-                    viewModel.allKnownRepositories,
-                    viewModel.targetModules,
-                    viewModel.onlyStable
-                )
-            )
-            infoPanel.display(
-                PackageDetailsInfoPanel.ViewModel(
-                    viewModel.selectedPackageModel.packageModel,
-                    viewModel.selectedPackageModel.selectedVersion,
-                    viewModel.allKnownRepositories
-                )
-            )
-
-            showPanel(CONTENT_PANEL)
-
-            viewModel.invokeLaterScope.launch(Dispatchers.AppUI) { scrollPanel.viewport.viewPosition = Point(0, 0) }
-        } else {
+    fun display(viewModel: ViewModel) {
+        if (viewModel.selectedPackageModel == null) {
             showPanel(EMPTY_STATE)
+            return
         }
+
+        headerPanel.display(
+            PackageDetailsHeaderPanel.ViewModel(
+                viewModel.selectedPackageModel,
+                viewModel.knownRepositoriesInTargetModules,
+                viewModel.targetModules,
+                viewModel.onlyStable
+            )
+        )
+        infoPanel.display(
+            PackageDetailsInfoPanel.ViewModel(
+                viewModel.selectedPackageModel.packageModel,
+                viewModel.selectedPackageModel.selectedVersion.originalVersion,
+                viewModel.knownRepositoriesInTargetModules.allKnownRepositories
+            )
+        )
+
+        showPanel(CONTENT_PANEL)
+
+        viewModel.invokeLaterScope.launch(Dispatchers.EDT) { scrollPanel.viewport.viewPosition = Point(0, 0) }
     }
 
     private fun showPanel(panelName: String) {

@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.wizard
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.util.projectWizard.ModuleNameGenerator
+import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
@@ -14,10 +14,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.comap
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
@@ -88,19 +90,13 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
           .withValidationOnInput { validateName() }
           .constraints(pushX)
           .focused()
-
-        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
-          val nameGeneratorUi = nameGenerator.getUi(getBuilderId()) { entityNameProperty.set(it) }
-          if (nameGeneratorUi != null) {
-            component(nameGeneratorUi)
-          }
-        }
+        installNameGenerators(getBuilderId(), entityNameProperty)
       }
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.label")) {
         val fileChooserDescriptor = createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-        val fileChosen = { file: VirtualFile -> getUiPath(file.path) }
+        val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        val property = locationProperty.map { getUiPath(it) }.comap { getModelPath(it) }
+        val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
         textFieldWithBrowseButton(property, title, context.project, fileChooserDescriptor, fileChosen)
           .withValidationOnApply { validateLocation() }
           .withValidationOnInput { validateLocation() }
@@ -150,10 +146,6 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
       }
     }
   }
-
-  private fun getUiPath(path: String): String = getLocationRelativeToUserHome(toSystemDependentName(path.trim()), false)
-
-  private fun getModelPath(path: String): String = toCanonicalPath(expandUserHome(path.trim()))
 
   protected open fun suggestName(): String {
     val projectFileDirectory = File(context.projectFileDirectory)

@@ -16,7 +16,7 @@ abstract class CreateGetSetFunctionActionFactory(private val isGet: Boolean) :
         return when (diagnostic.factory) {
             Errors.NO_GET_METHOD -> if (isGet) Errors.NO_GET_METHOD.cast(diagnostic).psiElement else null
             Errors.NO_SET_METHOD -> if (!isGet) Errors.NO_SET_METHOD.cast(diagnostic).psiElement else null
-            in Errors.TYPE_MISMATCH_ERRORS -> {
+            in Errors.TYPE_MISMATCH_ERRORS, Errors.TYPE_MISMATCH_WARNING -> {
                 val indicesNode = diagnostic.psiElement.parent as? KtContainerNode ?: return null
                 if (indicesNode.node.elementType != KtNodeTypes.INDICES) return null
                 val arrayAccess = indicesNode.parent as? KtArrayAccessExpression ?: return null

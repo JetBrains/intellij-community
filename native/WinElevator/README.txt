@@ -1,6 +1,3 @@
-This project consists of two tools: "launcher and elevator" and "appxreparse".
-
-
 Launcher and elevator:
 
 With UAC enabled, even an administrator has a limited access token and can't modify some folders like "Program Files".
@@ -20,14 +17,12 @@ But if std(out|err|in) are redirected to files or pipes, attaching to a console 
 In this case, the launcher creates named pipes, the elevator connects to them and provides their handlers as handlers for the newly created process.
 The launcher then creates threads to read/write them to the console.
 
-For "AppxReparse" see README inside the project.
 
 -------
 How to build.
 
 ToolChain: VisualStudio 2017
 SDK: 8.1 (for "launcher and elevator")
-Win10 10.0.18362 (for "appx reparse")
 
 You may open .sln from Visual Studio or use msbuild from VS command prompt:
  msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
@@ -56,5 +51,5 @@ Check no error
 
 --------
 How to check errors.
-Both tools report errors as error codes, stderr and event log under "Application".
+Tool reports errors as error codes, stderr and event log under "Application".
 No event ids are registered, but you can check eventId and find an appropriate ReportEvent call.

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class C(val v: String?) {
     fun foo(p: Array<String?>) {

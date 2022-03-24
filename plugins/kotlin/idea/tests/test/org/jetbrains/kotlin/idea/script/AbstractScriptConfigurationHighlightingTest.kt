@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.script
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.ComparisonFailure
 
 abstract class AbstractScriptConfigurationHighlightingTest : AbstractScriptConfigurationTest() {
@@ -24,13 +24,9 @@ abstract class AbstractScriptConfigurationHighlightingTest : AbstractScriptConfi
 
     fun doComplexTest(unused: String) {
         configureScriptFile(testDataFile())
-        assertException(object : AbstractExceptionCase<ComparisonFailure>() {
-            override fun getExpectedExceptionClass(): Class<ComparisonFailure> = ComparisonFailure::class.java
-
-            override fun tryClosure() {
-                checkHighlighting(editor, false, false)
-            }
-        })
+        assertThrows(ComparisonFailure::class.java) {
+            checkHighlighting(editor, false, false)
+        }
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
         checkHighlighting(editor, false, false)

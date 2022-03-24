@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.extract;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +14,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.util.Function;
-import java.util.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +27,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
@@ -59,11 +44,6 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   @Override
   protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
   }
 
   @Override
@@ -108,7 +88,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.ExtractManagedDependenciesAction);
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.EXTRACT_MANAGED_DEPENDENCIES);
       Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
       if (depAndParents == null) return;
 

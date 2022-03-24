@@ -24,7 +24,7 @@ class TestDependenciesResolver : AsyncDependenciesResolver {
         }
 
         javaClass.classLoader
-            .loadClass("org.jetbrains.kotlin.idea.script.ScriptConfigurationLoadingTest")
+            .loadClass("org.jetbrains.kotlin.idea.script.ScriptConfigurationLoadingTest8")
             .methods.single { it.name == "loadingScriptConfigurationCallback" }
             .invoke(null)
 

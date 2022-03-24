@@ -38,4 +38,10 @@ class A {
     /* abc */ init {
 
     }
+
+    fun foo5() {}
+
+    init {
+
+    }
 }

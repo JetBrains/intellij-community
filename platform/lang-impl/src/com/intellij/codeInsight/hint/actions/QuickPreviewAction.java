@@ -6,7 +6,7 @@ import com.intellij.codeInsight.hint.ImplementationViewSessionFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -39,13 +39,8 @@ public class QuickPreviewAction extends ShowImplementationsAction {
     }
   }
 
-  @Override
-  protected boolean isSearchDeep() {
-    return false;
-  }
-
   protected boolean isQuickPreviewAvailableFor(AnActionEvent e) {
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JTree || component instanceof JList) {
       SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)component);
 

@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 public class LocalQuickFixWrapper extends QuickFixAction {
-  private final QuickFix myFix;
+  private final QuickFix<?> myFix;
 
-  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
+  public LocalQuickFixWrapper(@NotNull QuickFix<?> fix, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     super(fix.getName(), toolWrapper);
     myFix = fix;
     setText(StringUtil.escapeMnemonics(myFix.getName()));
@@ -42,13 +42,13 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @NotNull
-  public QuickFix getFix() {
+  public QuickFix<?> getFix() {
     return myFix;
   }
 
   @Nullable
-  private QuickFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
-    for (QuickFix fix : fixes) {
+  private QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
+    for (QuickFix<?> fix : fixes) {
       if (fix.getFamilyName().equals(myFix.getFamilyName())) {
         return fix;
       }
@@ -90,7 +90,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     boolean restart = false;
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) continue;
-      final QuickFix[] fixes = descriptor.getFixes();
+      final QuickFix<?>[] fixes = descriptor.getFixes();
       if (fixes != null) {
         final QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test() {
     List(emptyList<Pair<Int, Int>>().size) { index ->
         emptyList<String>().mapIndexed { number, s ->

@@ -17,5 +17,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.notebooks.visualization" />
+    <orderEntry type="module" module-name="intellij.jupyter.core" />
   </component>
 </module>

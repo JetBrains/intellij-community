@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.idea.TestFor;
@@ -24,11 +24,25 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
   private final DumbServiceMergingTaskQueue myQueue = new DumbServiceMergingTaskQueue();
 
   private void runAllTasks() {
-    while(true) {
+    while (true) {
       try (@Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask()) {
         if (nextTask == null) return;
         nextTask.executeTask();
       }
+    }
+  }
+
+  static abstract class MyDumbModeTask extends DumbModeTask {
+    private final @NotNull Object myEquivalenceObject;
+
+    MyDumbModeTask(@NotNull Object object) { myEquivalenceObject = object; }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue.getClass().equals(getClass()) && ((MyDumbModeTask)taskFromQueue).myEquivalenceObject.equals(myEquivalenceObject)) {
+        return this;
+      }
+      return null;
     }
   }
 
@@ -37,7 +51,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       int taskId = i;
-      myQueue.addTask(new DumbModeTask("child") {
+      myQueue.addTask(new MyDumbModeTask("child") {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -56,17 +70,46 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
   }
 
+  public void testTasksWithOverwrittenTryMergeAreMerged() {
+    List<Integer> disposeLog = new ArrayList<>();
+    List<Integer> childLog = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      int taskId = i;
+      myQueue.addTask(new DumbModeTask() {
+        @Override
+        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+          childLog.add(taskId);
+        }
+
+        @Override
+        public DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+          return this;//always merges
+        }
+
+        @Override
+        public void dispose() {
+          disposeLog.add(taskId);
+        }
+      });
+    }
+
+    runAllTasks();
+
+    Assert.assertEquals("Only one child task should run, but were: " + childLog, 1, childLog.size());
+    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
+  }
+
   public void testDifferentClassesWithSameEquivalentAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
     final String commonEquivalence = "child";
-    DumbModeTask taskA = new DumbModeTask(commonEquivalence) {
+    DumbModeTask taskA = new MyDumbModeTask(commonEquivalence) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         childLog.add(1);
       }
     };
 
-    DumbModeTask taskB = new DumbModeTask(commonEquivalence) {
+    DumbModeTask taskB = new MyDumbModeTask(commonEquivalence) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         childLog.add(-1);
@@ -84,7 +127,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       int taskId = i;
-      myQueue.addTask(new DumbModeTask("child" + i) {
+      myQueue.addTask(new MyDumbModeTask("child" + i) {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -95,13 +138,29 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     Assert.assertEquals("Every child task are not unique, all must be executed: " + childLog, 100, childLog.size());
   }
 
+  public void testTasksAreNotMergedByDefault() {
+    List<Integer> childLog = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      int taskId = i;
+      myQueue.addTask(new DumbModeTask() {
+        @Override
+        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+          childLog.add(taskId);
+        }
+      });
+    }
+    runAllTasks();
+    Assert.assertEquals("Every child task are not unique, all must be executed: " + childLog, 100, childLog.size());
+  }
+
+
   public void testNewTaskIsRunWhenMerged() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
     for (int i = 0; i < 3; i++) {
       int taskId = i;
-      myQueue.addTask(new DumbModeTask("child") {
+      myQueue.addTask(new MyDumbModeTask("child") {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -119,11 +178,49 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 3, disposeLog.size());
   }
 
+  public void testMergedTaskIsRunWhenMerged() {
+    List<String> disposeLog = new ArrayList<>();
+    List<String> childLog = new ArrayList<>();
+
+    class DumbModeTaskWithId extends DumbModeTask {
+      protected final String taskId;
+
+      DumbModeTaskWithId(String taskId) {
+        this.taskId = taskId;
+      }
+
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        childLog.add(taskId);
+      }
+
+      @Override
+      public void dispose() {
+        disposeLog.add(taskId);
+      }
+
+      @Nullable
+      @Override
+      public DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+        if (!(taskFromQueue instanceof DumbModeTaskWithId)) return null;
+        String newId = ((DumbModeTaskWithId)taskFromQueue).taskId + " " + taskId;
+        return new DumbModeTaskWithId(newId);
+      }
+    }
+    for (int i = 0; i < 3; i++) {
+      myQueue.addTask(new DumbModeTaskWithId(String.valueOf(i)));
+    }
+
+    runAllTasks();
+    Assert.assertEquals("The last child task should run, but were: " + childLog, Collections.singletonList("0 1 2"), childLog);
+    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 3, disposeLog.size());
+  }
+
   public void testCancelledTask() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
-    DumbModeTask task = new DumbModeTask("child") {
+    DumbModeTask task = new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         childLog.add(1);
@@ -149,7 +246,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
     for (int i = 0; i < 3; i++) {
       int taskId = i;
-      myQueue.addTask(new DumbModeTask("child") {
+      myQueue.addTask(new MyDumbModeTask("child") {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -175,7 +272,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
-    DumbModeTask task = new DumbModeTask("child") {
+    DumbModeTask task = new MyDumbModeTask("child") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         childLog.add(1);
@@ -204,7 +301,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
     for (int i = 1; i <= 3; i++) {
       int taskId = i;
-      myQueue.addTask(new DumbModeTask("child") {
+      myQueue.addTask(new MyDumbModeTask("child") {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -216,7 +313,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
         }
       });
 
-      myQueue.addTask(new DumbModeTask("boss-" + i) {
+      myQueue.addTask(new MyDumbModeTask("boss-" + i) {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
           childLog.add(-taskId);
@@ -237,7 +334,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
   @TestFor(issues = "IDEA-241378")
   public void testRunningTaskShouldNotBeDisposed() {
     AtomicReference<Boolean> isDisposed = new AtomicReference<>();
-    myQueue.addTask(new DumbModeTask("any") {
+    myQueue.addTask(new MyDumbModeTask("any") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) { }
 
@@ -266,7 +363,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
   public void testRunningTaskIndicatorShouldBeCancelledOnDisposeRunningTasks() {
     CyclicBarrier b = new CyclicBarrier(2);
     AtomicReference<Boolean> isRun = new AtomicReference<>();
-    myQueue.addTask(new DumbModeTask("any") {
+    myQueue.addTask(new MyDumbModeTask("any") {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         for (int i = 0; i < 2; i++) {
@@ -305,7 +402,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   public void testNoLeaks() {
     for(int i = 0; i < 1000; i++) {
-      DumbModeTask task = new DumbModeTask("q-" + i) {
+      DumbModeTask task = new MyDumbModeTask("q-" + i) {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         }
@@ -329,7 +426,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   public void testNoDisposeLeaksOnClose() {
     final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
-    DumbModeTask task = new DumbModeTask(this) {
+    DumbModeTask task = new MyDumbModeTask(this) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
       }
@@ -349,7 +446,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   public void testNoDisposeLeaksOnClose2() {
     final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
-    DumbModeTask task = new DumbModeTask(this) {
+    DumbModeTask task = new MyDumbModeTask(this) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
       }
@@ -370,7 +467,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   public void testNoDisposeLeaksOnClose3() {
     final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
-    DumbModeTask task = new DumbModeTask(this) {
+    DumbModeTask task = new MyDumbModeTask(this) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
       }

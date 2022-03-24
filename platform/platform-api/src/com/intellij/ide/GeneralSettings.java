@@ -14,7 +14,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.SystemDependent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), category = ComponentCategory.SYSTEM)
+@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), category = SettingsCategory.SYSTEM)
 public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final String IDE_GENERAL_XML = "ide.general.xml";
 
@@ -58,7 +57,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private boolean myShowWelcomeScreen = true;
-  private int myConfirmOpenNewProject = PlatformUtils.isPyCharmDs() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
+  private int myConfirmOpenNewProject = PlatformUtils.isDataSpell() ? OPEN_PROJECT_SAME_WINDOW_ATTACH : OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
   private String myDefaultProjectDirectory = "";
 
@@ -218,8 +217,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
    * @deprecated unused
    */
   @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isConfirmExtractFiles() {
     return true;
   }
@@ -227,9 +225,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
+  @Deprecated(forRemoval = true)
+  public void setConfirmExtractFiles(boolean value) { }
 
   public boolean isConfirmExit() {
     return myConfirmExit;

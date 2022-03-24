@@ -1,2 +1,0 @@
-os.sendfile
-select.epoll.register

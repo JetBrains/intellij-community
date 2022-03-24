@@ -7,7 +7,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -45,7 +45,7 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
       return Collections.emptyList();
     }
 
-    Module module = context.getData(LangDataKeys.MODULE);
+    Module module = context.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       return Collections.emptyList();
     }

@@ -15,15 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
 public class GroovyIfStatementWithTooManyBranchesInspection extends GroovyIfStatementWithTooManyBranchesInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message("if.statement.with.too.many.branches.max.option"),
       this,

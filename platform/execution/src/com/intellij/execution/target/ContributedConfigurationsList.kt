@@ -3,6 +3,7 @@ package com.intellij.execution.target
 
 import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
+import com.intellij.execution.target.ContributedConfigurationsList.ContributedStateBase.Companion.deserializeState
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.Logger
@@ -95,16 +96,11 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
   }
 
   protected open fun fromOneState(state: ContributedStateBase): C? {
-    val type = extPoint.extensionList.firstOrNull { it.id == state.typeId }
-    val defaultConfig = type?.createDefaultConfig()
-    return defaultConfig?.also {
-      it.displayName = state.name ?: ""
-      ComponentSerializationUtil.loadComponentState(it.getSerializer(), state.innerState)
-    }
+    return extPoint.deserializeState(state)
   }
 
   companion object {
-    private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
+    fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
   }
 
   /**
@@ -137,7 +133,17 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
 
     companion object {
       private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
+
+      fun <T, C> ExtensionPointName<T>.deserializeState(state: ContributedStateBase): C?
+        where C : ContributedConfigurationBase, T : ContributedTypeBase<out C> {
+
+        val type = extensionList.firstOrNull { it.id == state.typeId }
+        val defaultConfig = type?.createDefaultConfig()
+        return defaultConfig?.also {
+          it.displayName = state.name ?: ""
+          ComponentSerializationUtil.loadComponentState(it.getSerializer(), state.innerState)
+        }
+      }
     }
   }
-
 }

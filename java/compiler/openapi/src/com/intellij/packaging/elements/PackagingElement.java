@@ -147,4 +147,15 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       }
     }
   }
+
+  protected @NotNull PackagingElementEntity getThisEntity() {
+    assert myStorage != null;
+    WorkspaceEntityStorage base = myStorage.getBase();
+    ExternalEntityMapping<Object> externalMapping = base.getExternalMapping("intellij.artifacts.packaging.elements");
+    PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(externalMapping.getEntities(this));
+    if (entity == null) {
+      throw new RuntimeException("Cannot find an entity");
+    }
+    return entity;
+  }
 }

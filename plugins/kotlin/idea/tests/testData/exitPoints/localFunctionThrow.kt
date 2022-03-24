@@ -15,4 +15,5 @@ fun f(a: Int): Int {
 }
 
 //HIGHLIGHTED: return
+//HIGHLIGHTED: localFun
 //HIGHLIGHTED: throw Error()

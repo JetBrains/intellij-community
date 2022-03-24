@@ -43,6 +43,7 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.message;
 import static com.intellij.openapi.ui.Messages.YES;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.GitNotificationIdsHolder.BRANCH_OPERATION_ERROR;
 import static git4idea.GitNotificationIdsHolder.UNRESOLVED_CONFLICTS;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE;
@@ -64,6 +65,12 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myProgressIndicator = indicator;
+  }
+
+  @Override
+  public void notifyError(@NotNull @NlsContexts.NotificationTitle String title,
+                          @NotNull @NlsContexts.NotificationContent String message) {
+    VcsNotifier.getInstance(myProject).notifyError(BRANCH_OPERATION_ERROR, title, message);
   }
 
   @Override

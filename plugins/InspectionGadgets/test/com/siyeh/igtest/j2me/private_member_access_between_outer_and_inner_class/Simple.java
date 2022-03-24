@@ -9,9 +9,9 @@ public class Simple {
     private void foo() {}
     
     class Inner {{
-        new <warning descr="Access to private member of class 'Simple' requires synthetic accessor">Simple</warning>();
-        System.out.println(<warning descr="Access to private member of class 'Simple' requires synthetic accessor">i</warning>);
-        <warning descr="Access to private member of class 'Simple' requires synthetic accessor">foo</warning>();
+        new <warning descr="Access to 'private' member of class 'Simple' requires synthetic accessor">Simple</warning>();
+        System.out.println(<warning descr="Access to 'private' member of class 'Simple' requires synthetic accessor">i</warning>);
+        <warning descr="Access to 'private' member of class 'Simple' requires synthetic accessor">foo</warning>();
     }}
 }
 class Other {

@@ -1,5 +1,5 @@
 // SUGGESTED_NAMES: pair, intIntPair, intPair
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
@@ -25,6 +25,7 @@ private fun pair(a: Int, b: Int, c: Int): Pair<Int, Int> {
         a > 0 -> {
             b1 += a
         }
+
         else -> {
             c1 -= a
         }

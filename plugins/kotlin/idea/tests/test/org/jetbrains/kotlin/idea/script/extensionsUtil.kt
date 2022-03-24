@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 
-fun <T> addExtensionPointInTest(
+fun <T : Any> addExtensionPointInTest(
     pointName: ProjectExtensionPointName<T>,
     project: Project,
     provider: T,

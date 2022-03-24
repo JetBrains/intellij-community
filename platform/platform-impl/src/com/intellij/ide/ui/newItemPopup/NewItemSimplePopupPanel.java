@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -18,6 +18,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +39,13 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   protected Consumer<? super InputEvent> myApplyAction;
 
   public NewItemSimplePopupPanel() {
+    this(false);
+  }
+
+  public NewItemSimplePopupPanel(boolean liveValidation) {
     super(new BorderLayout());
 
-    myTextField = createTextField();
+    myTextField = createTextField(liveValidation);
     add(myTextField, BorderLayout.NORTH);
 
     myErrorShowPoint = new RelativePoint(myTextField, new Point(0, myTextField.getHeight()));
@@ -83,7 +88,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   }
 
   @NotNull
-  protected ExtendableTextField createTextField() {
+  protected ExtendableTextField createTextField(boolean liveErrorValidation) {
     ExtendableTextField res = new ExtendableTextField();
 
     Dimension minSize = res.getMinimumSize();
@@ -113,11 +118,15 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     res.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        setError(null);
+        if (!liveErrorValidation) setError(null);
       }
     });
 
     return res;
+  }
+  
+  public boolean hasError() {
+    return myErrorPopup != null;
   }
 
   private static final class ErrorBorder implements Border {
@@ -134,7 +143,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBUI.emptyInsets();
+      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBInsets.emptyInsets();
     }
 
     @Override

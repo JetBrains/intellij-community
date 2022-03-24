@@ -1,13 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -18,24 +17,27 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.search.projectScope
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.findFirstPsiJavaModule
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -47,7 +49,7 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
-const val LAST_SNAPSHOT_VERSION = "1.5.255-SNAPSHOT"
+val LAST_SNAPSHOT_VERSION: IdeKotlinVersion = IdeKotlinVersion.get("1.5.255-SNAPSHOT")
 
 val SNAPSHOT_REPOSITORY = RepositoryDescription(
     "sonatype.oss.snapshots",
@@ -65,10 +67,10 @@ val DEFAULT_GRADLE_PLUGIN_REPOSITORY = RepositoryDescription(
     isSnapshot = false
 )
 
-fun devRepository(version: String) = RepositoryDescription(
+fun devRepository(version: IdeKotlinVersion) = RepositoryDescription(
     "teamcity.kotlin.dev",
     "Teamcity Repository of Kotlin Development Builds",
-    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Compiler),number:$version,branch:(default:any)/artifacts/content/maven",
+    "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate),number:${version.rawVersion},branch:(default:any)/artifacts/content/maven",
     null,
     isSnapshot = false
 )
@@ -101,9 +103,9 @@ fun RepositoryDescription.toGroovyRepositorySnippet() = "maven { url '$url' }"
  */
 fun RepositoryDescription.toKotlinRepositorySnippet() = "maven(\"$url\")"
 
-fun getRepositoryForVersion(version: String): RepositoryDescription? = when {
-    isSnapshot(version) -> SNAPSHOT_REPOSITORY
-    isDev(version) -> devRepository(version)
+fun getRepositoryForVersion(version: IdeKotlinVersion): RepositoryDescription? = when {
+    version.isSnapshot -> SNAPSHOT_REPOSITORY
+    version.isDev -> devRepository(version)
     else -> null
 }
 
@@ -120,27 +122,43 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  * DO NOT CALL THIS ON AWT THREAD
  */
 @RequiresBackgroundThread
-fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
-    if (!isUnitTestMode() && ApplicationManager.getApplication().isDispatchThread) {
+fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
+    if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    val disposable = KotlinPluginDisposable.getInstance(project)
-    val kotlinFiles = ReadAction.nonBlocking<Collection<VirtualFile>> {
-        return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
+    val projectScope = project.projectScope()
+    // nothing to configure if there is no Kotlin files in entire project
+    val anyKotlinFileInProject = project.syncNonBlockingReadAction {
+        FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
-        .inSmartMode(project)
-        .expireWith(disposable)
-        .executeSynchronously()
+    if (!anyKotlinFileInProject) {
+        return emptyList()
+    }
 
     val projectFileIndex = ProjectFileIndex.getInstance(project)
-    val modules = kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
-        project.runReadActionInSmartMode {
-            if (projectFileIndex.isInSourceContent(ktFile)) {
-                projectFileIndex.getModuleForFile(ktFile)
-            } else null
+
+    val modules =
+        if (modulesWithKotlinFacets.isNullOrEmpty()) {
+            val kotlinFiles = project.syncNonBlockingReadAction {
+                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+            }
+
+            kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+                if (projectFileIndex.isInSourceContent(ktFile)) {
+                    projectFileIndex.getModuleForFile(ktFile)
+                } else null
+            }
+        } else {
+            // filter modules with Kotlin facet AND have at least a single Kotlin file in them
+            project.syncNonBlockingReadAction {
+                modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
+                    if (module.isDisposed) return@filterTo false
+
+                    FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, module.moduleScope)
+                }
+            }
         }
-    }
     return modules
 }
 
@@ -206,9 +224,22 @@ fun allConfigurators(): Array<KotlinProjectConfigurator> {
 }
 
 fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): List<Module> {
-    return ModuleSourceRootMap(project).groupByBaseModules(project.allModules())
-        .filter { configurator.canConfigure(it) }
-        .map { it.baseModule }
+    val allModules = project.allModules()
+    val result = mutableListOf<Module>()
+    val progressIndicator = ProgressManager.getGlobalProgressIndicator()
+    ModuleSourceRootMap(project).groupByBaseModules(allModules).withIndex().forEach { (index, module) ->
+        if (!isUnitTestMode()) {
+            progressIndicator?.let {
+                it.checkCanceled()
+                it.fraction = index * 1.0 / allModules.size
+                it.text2 = KotlinJvmBundle.message("lookup.module.0.configuration.progress.text", module.baseModule.name)
+            }
+        }
+        if (configurator.canConfigure(module)) {
+            result.add(module.baseModule)
+        }
+    }
+    return result
 }
 
 private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: ModuleSourceRootGroup) =
@@ -268,25 +299,29 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
-    return module.project.runReadActionInSmartMode {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
-                hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
-                hasKotlinCommonRuntimeInScope(scope)
+    return module.project.syncNonBlockingReadAction {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
+                    hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
+                    hasKotlinCommonRuntimeInScope(scope)
+        })
     }
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
-    return runReadAction {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+    return module.project.syncNonBlockingReadAction {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+        })
     }
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
-    return module.project.runReadActionInSmartMode {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(hasKotlinFilesOnlyInTests(module))
-        hasKotlinJsKjsmFile(module.project, LibraryKindSearchScope(module, scope, JSLibraryKind))
+    return module.project.syncNonBlockingReadAction {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind))
     }
 }
 
@@ -309,18 +344,27 @@ class LibraryKindSearchScope(
     }
 }
 
-fun addStdlibToJavaModuleInfo(module: Module, collector: NotificationMessageCollector): Boolean {
+fun addStdlibToJavaModuleInfo(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>? = null): Boolean {
     if (module.sdk?.version?.isAtLeast(JavaSdkVersion.JDK_1_9) != true) return false
 
     val project = module.project
     val javaModule: PsiJavaModule = findFirstPsiJavaModule(module) ?: return false
 
-    val success = WriteCommandAction.runWriteCommandAction(project, Computable<Boolean> {
-        KotlinAddRequiredModuleFix.addModuleRequirement(javaModule, KOTLIN_STDLIB_MODULE_NAME)
-    })
+    val writeAction: () -> Boolean = {
+        val success = WriteCommandAction.runWriteCommandAction(project, Computable<Boolean> {
+            KotlinAddRequiredModuleFix.addModuleRequirement(javaModule, KOTLIN_STDLIB_MODULE_NAME)
+        })
 
-    if (!success) return false
+        if (success) {
+            collector.addMessage(KotlinJvmBundle.message("added.0.requirement.to.module.info.in.1", KOTLIN_STDLIB_MODULE_NAME, module.name))
+        }
+        success
+    }
 
-    collector.addMessage(KotlinJvmBundle.message("added.0.requirement.to.module.info.in.1", KOTLIN_STDLIB_MODULE_NAME, module.name))
-    return true
+    return if (writeActions != null) {
+        writeActions.add { writeAction() }
+        true
+    } else {
+        writeAction()
+    }
 }

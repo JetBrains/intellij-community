@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup
 
 import com.intellij.configurationStore.checkUnknownMacros
+import com.intellij.ide.IdeCoreBundle
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +20,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor
 internal class CheckProjectActivity : StartupActivity.DumbAware {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || ApplicationManager.getApplication().isUnitTestMode) {
-      throw ExtensionNotApplicableException.INSTANCE
+      throw ExtensionNotApplicableException.create()
     }
   }
 
@@ -58,7 +58,7 @@ internal class CheckProjectActivity : StartupActivity.DumbAware {
     if (manualWatchRoots.isNotEmpty()) {
       val unwatched = roots.filter { root -> root.isInLocalFileSystem && manualWatchRoots.any { VfsUtilCore.isAncestorOrSelf(it, root) } }
       if (unwatched.isNotEmpty()) {
-        val message = ApplicationBundle.message("watcher.non.watchable.project", ApplicationNamesInfo.getInstance().fullProductName)
+        val message = IdeCoreBundle.message("watcher.non.watchable.project", ApplicationNamesInfo.getInstance().fullProductName)
         watcher.notifyOnFailure(message, null)
         logger.info("unwatched roots: ${unwatched.map { it.presentableUrl }}")
         logger.info("manual watches: ${manualWatchRoots}")

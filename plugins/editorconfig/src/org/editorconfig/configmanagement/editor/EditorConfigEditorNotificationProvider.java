@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,11 +6,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationProvider;
 import org.editorconfig.language.filetype.EditorConfigFileType;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
@@ -18,47 +17,38 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Function;
 
-public class EditorConfigEditorNotificationProvider extends EditorNotifications.Provider<JPanel> {
-  private static final Key<JPanel> KEY = Key.create("org.editorconfig.config.management.editor.notification.provider");
-
-  private final Project myProject;
-
-  public EditorConfigEditorNotificationProvider(@NotNull Project project) {
-    myProject = project;
-  }
+final class EditorConfigEditorNotificationProvider implements EditorNotificationProvider {
 
   @Override
-  public @NotNull Key<JPanel> getKey() {
-    return KEY;
+  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                @NotNull VirtualFile file) {
+    return file.getFileType().equals(EditorConfigFileType.INSTANCE) &&
+           !getEditorConfigSettings(project).ENABLED ?
+           fileEditor -> new MyPanel(fileEditor, project) :
+           CONST_NULL;
   }
 
-  @Nullable
-  @Override
-  public JPanel createNotificationPanel(@NotNull VirtualFile file,
-                                        @NotNull FileEditor fileEditor,
-                                        @NotNull Project project) {
-    if (file.getFileType().equals(EditorConfigFileType.INSTANCE)) {
-      if (!CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class).ENABLED) {
-        return new MyPanel(fileEditor);
-      }
-    }
-    return null;
-  }
+  private static final class MyPanel extends EditorNotificationPanel {
 
-  private final class MyPanel extends EditorNotificationPanel {
-    private MyPanel(@NotNull FileEditor fileEditor) {
+    private MyPanel(@NotNull FileEditor fileEditor,
+                    @NotNull Project project) {
       super(fileEditor);
       setText(EditorConfigBundle.message("editor.notification.disabled"));
 
       createActionLabel(EditorConfigBundle.message("editor.notification.enable"), () -> {
-        CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED = true;
-        CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
+        getEditorConfigSettings(project).ENABLED = true;
+        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged();
       });
 
       createActionLabel(EditorConfigBundle.message("editor.notification.open.settings"), () -> {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, IdeBundle.message("configurable.CodeStyle.display.name"));
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, IdeBundle.message("configurable.CodeStyle.display.name"));
       });
     }
+  }
+
+  private static @NotNull EditorConfigSettings getEditorConfigSettings(@NotNull Project project) {
+    return CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
   }
 }

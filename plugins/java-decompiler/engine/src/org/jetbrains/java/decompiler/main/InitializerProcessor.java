@@ -90,7 +90,7 @@ public final class InitializerProcessor {
         Exprent exprent = firstData.getExprents().get(0);
         if (exprent.type == Exprent.EXPRENT_INVOCATION) {
           InvocationExprent invExpr = (InvocationExprent)exprent;
-          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getLstParameters().isEmpty()) {
+          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getParameters().isEmpty()) {
             firstData.getExprents().remove(0);
           }
         }

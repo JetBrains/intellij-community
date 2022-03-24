@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.kotlin.util.firstNotNullResult
 
 class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -60,10 +60,7 @@ class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), Cleanu
                 visibilityModifier,
                 KotlinBundle.message("redundant.visibility.modifier"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                IntentionWrapper(
-                    RemoveModifierFix(declaration, redundantVisibility, isRedundant = true),
-                    declaration.containingFile
-                )
+                IntentionWrapper(RemoveModifierFix(declaration, redundantVisibility, isRedundant = true))
             )
         })
     }

@@ -1,4 +1,4 @@
-from django.forms.forms import BoundField
+from django.forms.boundfield import BoundField
 class BaseForm(object):
     """
     This is the main implementation of all the Form logic. Note that this

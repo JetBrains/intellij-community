@@ -15,9 +15,9 @@ try:
             from _pydevd_frame_eval import pydevd_frame_evaluator as mod
     else:
         try:
-            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_py39 as mod
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_py39_and_above as mod
         except ImportError:
-            from _pydevd_frame_eval import pydevd_frame_evaluator_py39 as mod
+            from _pydevd_frame_eval import pydevd_frame_evaluator_py39_and_above as mod
 
 except ImportError:
     try:

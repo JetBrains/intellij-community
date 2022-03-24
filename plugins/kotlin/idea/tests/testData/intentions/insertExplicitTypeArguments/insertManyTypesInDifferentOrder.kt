@@ -1,4 +1,9 @@
 // IS_APPLICABLE: true
+// AFTER-WARNING: Parameter 'k' is never used
+// AFTER-WARNING: Parameter 'r' is never used
+// AFTER-WARNING: Parameter 't' is never used
+// AFTER-WARNING: Parameter 'v' is never used
+// AFTER-WARNING: Variable 'z' is never used
 fun foo() {
       val z = <caret>bar("1", 1, 2, "x")
 }

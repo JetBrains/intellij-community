@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -163,26 +164,34 @@ sealed class KotlinTest(
 
     object Junit : KotlinTest(
         "junit",
-        File("${PathManager.getHomePath().replace(File.separatorChar, '/')}/lib/junit-4.12.jar"),
+        File("$IDEA_TEST_DATA_DIR/lib/junit-4.12.jar"),
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 }
 
+interface ResolveSdk
 
 object FullJdk : ResolveLibrary(
     "full-jdk",
     File("fake file for full jdk"),
     JvmPlatforms.defaultJvmPlatform,
     null
-)
+), ResolveSdk
 
 object MockJdk : ResolveLibrary(
     "mock-jdk",
     File("fake file for mock jdk"),
     JvmPlatforms.defaultJvmPlatform,
     null
-)
+), ResolveSdk
+
+object KotlinSdk : ResolveLibrary(
+    "kotlin-sdk",
+    File("fake file for kotlin sdk"),
+    CommonPlatforms.defaultCommonPlatform,
+    null,
+), ResolveSdk
 
 open class ResolveDependency(val to: ResolveModule, val kind: Kind) {
     open class Builder {

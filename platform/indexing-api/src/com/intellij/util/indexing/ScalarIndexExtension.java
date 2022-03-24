@@ -18,8 +18,7 @@ public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K,
    *
    * @deprecated use {@link VoidDataExternalizer#INSTANCE}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = VoidDataExternalizer.INSTANCE;
 
   @NotNull

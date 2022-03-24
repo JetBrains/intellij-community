@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
@@ -7,7 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.Document;
@@ -24,9 +24,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.util.PopupUtilsKt.getBestPopupPosition;
 
@@ -66,13 +65,7 @@ public class InheritorChooser {
 
       final List<PsiClass> classes = new ArrayList<>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));
-        ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
-          if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
-            classes.add(aClass);
-          }
-          return true;
-        });
+        collectClasses(containingClass, classes, new HashSet<>());
       }, ExecutionBundle.message("search.for.0.inheritors", containingClass.getQualifiedName()), true, containingClass.getProject())) {
         return true;
       }
@@ -82,7 +75,7 @@ public class InheritorChooser {
         return true;
       }
       if (classes.isEmpty()) return false;
-      final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context.getDataContext());
+      final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context.getDataContext());
       if (fileEditor instanceof TextEditor) {
         final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
         final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
@@ -134,7 +127,31 @@ public class InheritorChooser {
         .show(getBestPopupPosition(context.getDataContext()));
       return true;
     }
+    
+    if (containingClass != null) {
+      return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass.getContainingClass(), acceptAbstractCondition);
+    }
     return false;
+  }
+
+  private static void collectClasses(PsiClass containingClass, List<PsiClass> classes, HashSet<PsiClass> visited) {
+    if (!visited.add(containingClass)) return;
+    Set<PsiClass> containers = new HashSet<>();
+    final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));
+    ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
+      PsiClass container = aClass.getContainingClass();
+      if (container != null && container.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        containers.add(container);
+      }
+      else if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
+        classes.add(aClass);
+      }
+      return true;
+    });
+
+    for (PsiClass container : containers) {
+      collectClasses(container, classes, visited);
+    }
   }
 
   private void chooseAndPerform(Object[] values,
@@ -164,6 +181,25 @@ public class InheritorChooser {
         }
       }
       runForClasses(selectedClasses, psiMethod, context, performRunnable);
+    }
+  }
+
+  public static void chooseAbstractClassInheritors(final ConfigurationContext context,
+                                                   final PsiClass psiClass,
+                                                   final Consumer<List<PsiClass>> onClassesChosen) {
+    InheritorChooser inheritorChooser = new InheritorChooser() {
+      @Override
+      protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
+        onClassesChosen.accept(classes);
+      }
+
+      @Override
+      protected void runForClass(PsiClass aClass, PsiMethod psiMethod, ConfigurationContext context, Runnable performRunnable) {
+        onClassesChosen.accept(List.of(aClass));
+      }
+    };
+    if (!inheritorChooser.runMethodInAbstractClass(context, () -> {}, null, psiClass)) {
+      onClassesChosen.accept(List.of(psiClass));
     }
   }
 }

@@ -92,7 +92,9 @@ public class KotlinFunctionBreakpointType
             buffer.append(breakpoint.getProperties().myMethodName);
         }
 
-        return buffer.toString();
+        @SuppressWarnings("HardCodedStringLiteral")
+        String s = buffer.toString();
+        return s;
     }
 
     @Nullable
@@ -153,9 +155,7 @@ public class KotlinFunctionBreakpointType
             if (element instanceof KtFunction) {
                 KtFunction function = (KtFunction) element;
                 return ApplicabilityResult.maybe(
-                        function.hasBody()
-                        && !KtPsiUtil.isLocal(function)
-                        && !BreakpointTypeUtilsKt.isInlineOnly(function)
+                        !KtPsiUtil.isLocal(function) && !BreakpointTypeUtilsKt.isInlineOnly(function)
                 );
             }
 

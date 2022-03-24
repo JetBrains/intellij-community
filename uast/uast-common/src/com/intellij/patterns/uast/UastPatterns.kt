@@ -7,14 +7,15 @@ package com.intellij.patterns.uast
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.*
 import com.intellij.patterns.PsiJavaPatterns.psiClass
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.*
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
@@ -40,6 +41,10 @@ fun injectionHostOrReferenceExpression(): UExpressionPattern.Capture<UExpression
 fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
 fun uExpression(): UExpressionPattern.Capture<UExpression> = expressionCapture(UExpression::class.java)
+
+fun uMethod(): UDeclarationPattern<UMethod> = UDeclarationPattern(UMethod::class.java)
+
+fun uClass(): UDeclarationPattern<UClass> = UDeclarationPattern(UClass::class.java)
 
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
@@ -114,15 +119,9 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
   if (uBinaryExpression.operator != UastBinaryOperator.ASSIGN) return false
 
-  val uastReference = when (val leftOperand = uBinaryExpression.leftOperand) {
-    is UQualifiedReferenceExpression -> leftOperand.selector
-    is UReferenceExpression -> leftOperand
-    else -> return false
-  }
-  val references = RecursionManager.doPreventingRecursion(argument, false) {
-    uastReference.sourcePsi?.references // via `sourcePsi` because of KT-27385
-  } ?: return false
-  return references.any { methodPattern.accepts(it.resolve(), context) }
+  val uastReference = uBinaryExpression.leftOperand.castSafelyTo<UReferenceExpression>() ?: return false
+  val resolved = uastReference.resolve()
+  return methodPattern.accepts(resolved, context)
 }
 
 class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {
@@ -245,6 +244,26 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
     receiverClassPattern.accepts(receiverClass, context)
   }
 
+  fun inside(strict: Boolean, parentPattern: ElementPattern<out UElement>): Self {
+    return this.with(object : PatternCondition<T>("inside") {
+      override fun accepts(element: T, context: ProcessingContext?): Boolean {
+        if (strict) {
+          return parentPattern.accepts(element.uastParent)
+        }
+
+        var parent = element.uastParent
+        while (parent != null) {
+          if (parentPattern.accepts(parent)) {
+            return true
+          }
+          parent = parent.uastParent
+        }
+
+        return false
+      }
+    })
+  }
+
   open class Capture<T : UExpression>(clazz: Class<T>) : UExpressionPattern<T, Capture<T>>(clazz)
 }
 
@@ -256,3 +275,18 @@ fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<Stri
       annotationQualifiedName.accepts(it, context)
     } ?: false
   }
+
+open class UDeclarationPattern<T : UDeclaration>(clazz: Class<T>) : UElementPattern<T, UDeclarationPattern<T>>(clazz) {
+
+  fun annotatedWith(@NotNull annotationQualifiedNames: List<String>): UDeclarationPattern<T> {
+    return this.with(object : PatternCondition<UDeclaration>("annotatedWith") {
+      override fun accepts(uDeclaration: UDeclaration, context: ProcessingContext?): Boolean {
+        return uDeclaration.uAnnotations.any { uAnno ->
+          annotationQualifiedNames.any { annoFqn ->
+            annoFqn == uAnno.qualifiedName
+          }
+        }
+      }
+    })
+  }
+}

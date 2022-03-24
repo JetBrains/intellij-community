@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -40,11 +39,12 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) return;
-    if (myAction instanceof ActionGroup && !((ActionGroup)myAction).canBePerformed(event.getDataContext())) {
+    if (myAction instanceof ActionGroup &&
+        !(event.getPresentation().isPerformGroup() || ((ActionGroup)myAction).canBePerformed(event.getDataContext()))) {
       ActionGroup group = (ActionGroup)myAction;
       JBPopupFactory.getInstance().createActionGroupPopup(
         group.getTemplatePresentation().getText(), group, event.getDataContext(),

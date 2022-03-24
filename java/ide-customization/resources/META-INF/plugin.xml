@@ -6,6 +6,12 @@
   <description>Provides customization for IDEs which main language is Java (e.g. IntelliJ IDEA).</description>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
+  <incompatible-with>com.intellij.modules.appcode</incompatible-with>
+
+  <content>
+    <module name="intellij.java.ide.customization/training"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>

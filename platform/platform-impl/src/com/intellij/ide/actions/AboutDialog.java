@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.AboutPopupDescriptionProvider;
@@ -93,8 +93,9 @@ public class AboutDialog extends DialogWrapper {
   @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
-    myCancelAction = new DialogWrapperAction(IdeBundle.message("button.copy")) {
+    myOKAction = new OkAction() {
       {
+        putValue(Action.NAME, IdeBundle.message("button.copy"));
         putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
       }
 
@@ -104,6 +105,7 @@ public class AboutDialog extends DialogWrapper {
         close(OK_EXIT_CODE);
       }
     };
+    myCancelAction.putValue(Action.NAME, IdeBundle.message("action.close"));
   }
 
   private void copyAboutInfoToClipboard() {

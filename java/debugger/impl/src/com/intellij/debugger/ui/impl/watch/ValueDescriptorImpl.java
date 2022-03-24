@@ -5,13 +5,13 @@ import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.utils.NamesUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
@@ -28,16 +28,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -435,7 +441,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
 
       @Override
-      public <T> T getUserData(Key<T> key) {
+      public <T> T getUserData(@NotNull Key<T> key) {
         return ValueDescriptorImpl.this.getUserData(key);
       }
     };
@@ -572,7 +578,55 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       });
     }
 
-    return ReadAction.compute(() -> CompletableFuture.completedFuture(getDescriptorEvaluation(context)));
+    Promise<PsiElement> res;
+    try {
+      PsiElement result = ReadAction.nonBlocking(() -> getDescriptorEvaluation(context)).executeSynchronously();
+      res = Promises.resolvedPromise(result);
+    }
+    catch (Exception wrapper) {
+      if (!(wrapper.getCause() instanceof EvaluateException)) throw wrapper;
+      if (!(wrapper.getCause() instanceof NeedMarkException)) throw (EvaluateException) wrapper.getCause();
+      NeedMarkException e = (NeedMarkException) wrapper.getCause();
+
+      XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
+      if (markers != null) {
+        ValueMarkup existing = markers.getMarkup(value);
+        String markName;
+        Promise<Object> promise;
+        if (existing != null) {
+          markName = existing.getText();
+          promise = Promises.resolvedPromise();
+        }
+        else {
+          markName = e.getMarkName();
+          promise = markers.markValueAsync(value, new ValueMarkup(markName, new JBColor(0, 0), null));
+        }
+        res = promise.then(__ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
+          .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
+                                    PositionUtil.getContextElement(context))).executeSynchronously());
+      } else {
+        res = Promises.resolvedPromise(null);
+      }
+    }
+    return Promises.asCompletableFuture(res);
+  }
+
+  protected static class NeedMarkException extends EvaluateException {
+    private final String myMarkName;
+
+    public NeedMarkException(ObjectReference reference) {
+      super(null);
+      myMarkName = NamesUtils.getUniqueName(reference).replace("@", "");
+    }
+
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
+    }
+
+    public String getMarkName() {
+      return myMarkName;
+    }
   }
 
   private static class DebuggerTreeNodeMock implements DebuggerTreeNode {

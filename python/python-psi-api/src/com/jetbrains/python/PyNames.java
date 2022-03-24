@@ -174,7 +174,6 @@ public final class PyNames {
   public static final String DUNDER_AWAIT = "__await__";
   public static final String SIZEOF = "__sizeof__";
   public static final String INIT_SUBCLASS = "__init_subclass__";
-  public static final String FSPATH = "__fspath__";
   public static final String COMPLEX = "__complex__";
   public static final String FLOAT = "__float__";
   public static final String INT = "__int__";
@@ -595,7 +594,7 @@ public final class PyNames {
    * @param name what to check
    * @return true iff the name is either a keyword or a reserved name, like None.
    */
-  public static boolean isReserved(@NonNls String name) {
+  public static boolean isReserved(@Nullable @NonNls String name) {
     return name != null && KEYWORDS.contains(name) || NONE.equals(name);
   }
 

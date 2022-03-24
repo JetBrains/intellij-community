@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenIndexUtils;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -30,11 +32,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdatingState.IDLE;
+import static org.jetbrains.idea.maven.indices.MavenIndexUpdateManager.IndexUpdatingState.IDLE;
 
-public class MavenRepositoriesHolder {
-  private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
-  private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+public final class MavenRepositoriesHolder {
+  private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID = "Unindexed maven repositories gradle detection";
+  private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID);
   private final Project myProject;
 
   private volatile Set<MavenRemoteRepository> myRemoteRepositories;
@@ -52,7 +54,7 @@ public class MavenRepositoriesHolder {
     if (repositories.isEmpty()) {
       myNotIndexedUrls = Collections.emptySet();
       ExternalSystemNotificationManager.getInstance(myProject).clearNotifications(
-        UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
+        UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
     }
     else {
       myNotIndexedUrls = new HashSet<>(repositories);
@@ -70,7 +72,7 @@ public class MavenRepositoriesHolder {
     if (notificationManager.isNotificationActive(NOTIFICATION_KEY)) return;
 
     final MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
-    for (MavenSearchIndex index : indicesManager.getIndices()) {
+    for (MavenSearchIndex index : indicesManager.getIndex().getIndices()) {
       if (indicesManager.getUpdatingState(index) != IDLE) return;
     }
 
@@ -81,13 +83,13 @@ public class MavenRepositoriesHolder {
       NotificationCategory.INFO,
       NotificationSource.PROJECT_SYNC);
     notificationData.setBalloonNotification(true);
-    notificationData.setBalloonGroup(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+    notificationData.setBalloonGroup(NotificationGroupManager.getInstance().getNotificationGroup(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID));
     notificationData.setListener("#update", new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
         List<MavenIndex> notIndexed =
-          ContainerUtil.filter(indicesManager.getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
-        indicesManager.scheduleUpdate(myProject, notIndexed).onSuccess(aVoid -> {
+          ContainerUtil.filter(indicesManager.getIndex().getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
+        indicesManager.scheduleUpdateContent(notIndexed).thenRun(() -> {
           if (myNotIndexedUrls.isEmpty()) return;
           for (MavenSearchIndex index : notIndexed) {
             if (index.getUpdateTimestamp() != -1 || index.getFailureMessage() != null) {
@@ -105,13 +107,13 @@ public class MavenRepositoriesHolder {
         final int result =
           Messages.showYesNoDialog(myProject,
                                    GradleBundle.message("gradle.integrations.maven.notification.to.be.disabled",
-                                                        UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP),
+                                                        UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID),
                                    GradleBundle.message("gradle.integrations.maven.notification.detection"),
                                    GradleBundle.message("gradle.integrations.maven.notification.disable.text"),
                                    CommonBundle.getCancelButtonText(),
                                    Messages.getWarningIcon());
         if (result == Messages.YES) {
-          NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
+          NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID,
                                                                           NotificationDisplayType.NONE, false, false);
 
           notification.hideBalloon();
@@ -135,17 +137,17 @@ public class MavenRepositoriesHolder {
   }
 
   public boolean contains(String url) {
-    final String pathOrUrl = MavenIndex.normalizePathOrUrl(url);
+    final String pathOrUrl = MavenIndexUtils.normalizePathOrUrl(url);
     for (MavenRemoteRepository repository : myRemoteRepositories) {
-      if (MavenIndex.normalizePathOrUrl(repository.getUrl()).equals(pathOrUrl)) return true;
+      if (MavenIndexUtils.normalizePathOrUrl(repository.getUrl()).equals(pathOrUrl)) return true;
     }
     return false;
   }
 
   public boolean isNotIndexed(String url) {
-    final String pathOrUrl = MavenIndex.normalizePathOrUrl(url);
+    final String pathOrUrl = MavenIndexUtils.normalizePathOrUrl(url);
     for (String repository : myNotIndexedUrls) {
-      if (MavenIndex.normalizePathOrUrl(repository).equals(pathOrUrl)) return true;
+      if (MavenIndexUtils.normalizePathOrUrl(repository).equals(pathOrUrl)) return true;
     }
     return false;
   }

@@ -11,84 +11,83 @@ import com.intellij.ide.DataManager
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.options.DslConfigurableBase
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import javax.swing.JComponent
 
-class JavaAutoImportOptions(val project: Project) : DslConfigurableBase(), AutoImportOptionsProvider {
+class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
   private val excludeTable = ExcludeTable(project)
 
-  override fun createPanel(): DialogPanel {
+  override fun Panel.createContent() {
     excludeTable.tableView.setShowGrid(false)
     val dcaSettings = DaemonCodeAnalyzerSettings.getInstance()
     val ciSettings = CodeInsightSettings.getInstance()
     val ciWorkspaceSettings = CodeInsightWorkspaceSettings.getInstance(project)
     lateinit var dataContextOwner: JComponent
-    return panel {
-      titledRow(JavaLanguage.INSTANCE.displayName) {
-        row {
-          cell {
-            label(JavaBundle.message("label.show.import.popup.for"))
-            checkBox(JavaBundle.message("show.import.popup.for.classes"), { dcaSettings.isImportHintEnabled },
-                     { dcaSettings.isImportHintEnabled = it })
-            checkBox(JavaBundle.message("show.import.popup.for.static.methods.and.fields"), ciSettings::ADD_MEMBER_IMPORTS_ON_THE_FLY)
+
+    group(JavaLanguage.INSTANCE.displayName) {
+      row(JavaBundle.message("label.show.import.popup.for")) {
+        checkBox(JavaBundle.message("show.import.popup.for.classes"))
+          .bindSelected({ dcaSettings.isImportHintEnabled }, { dcaSettings.isImportHintEnabled = it })
+        checkBox(JavaBundle.message("show.import.popup.for.static.methods.and.fields"))
+          .bindSelected(ciSettings::ADD_MEMBER_IMPORTS_ON_THE_FLY)
+      }.layout(RowLayout.INDEPENDENT)
+      row(JavaBundle.message("combobox.paste.insert.imports")) {
+        comboBox(
+          CollectionComboBoxModel(listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK)),
+          listCellRenderer { value, _, _ ->
+            setText(when (value) {
+                      CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
+                      CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
+                      CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
+                      else -> ""
+                    })
           }
-        }
-        row {
-          cell {
-            label(JavaBundle.message("combobox.paste.insert.imports"))
-            comboBox(
-              CollectionComboBoxModel(listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK)),
-              ciSettings::ADD_IMPORTS_ON_PASTE,
-              listCellRenderer { value, _, _ ->
-                setText(when (value) {
-                          CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
-                          CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
-                          CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
-                          else -> ""
-                        })
-              }
-            )
+        ).bindItem(ciSettings::ADD_IMPORTS_ON_PASTE.toNullableProperty())
+      }
+      row {
+        checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"))
+          .bindSelected(ciSettings::ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
+          .gap(RightGap.SMALL)
+        contextHelp(ApplicationBundle.message("help.add.unambiguous.imports"))
+      }
+      row {
+        checkBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))
+          .bindSelected({ ciWorkspaceSettings.isOptimizeImportsOnTheFly }, { ciWorkspaceSettings.isOptimizeImportsOnTheFly = it })
+          .also { dataContextOwner = it.component }
+          .gap(RightGap.SMALL)
+        cell(ContextHelpLabel.createWithLink(
+          null,
+          ApplicationBundle.message("help.optimize.imports.on.the.fly"),
+          ApplicationBundle.message("help.link.optimize.imports.on.the.fly")
+        ) { openJavaImportSettings(dataContextOwner) })
+          .gap(RightGap.SMALL)
+        icon(AllIcons.General.ProjectConfigurable)
+          .applyToComponent {
+            toolTipText = IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip")
           }
-        }
-        row {
-          cell {
-            checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"),
-                     ciSettings::ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-            ContextHelpLabel.create(ApplicationBundle.message("help.add.unambiguous.imports"))()
-          }
-        }
-        row {
-          cell {
-            checkBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"), { ciWorkspaceSettings.isOptimizeImportsOnTheFly },
-                     { ciWorkspaceSettings.isOptimizeImportsOnTheFly = it }).also { dataContextOwner = it.component }
-            ContextHelpLabel.createWithLink(
-              null,
-              ApplicationBundle.message("help.optimize.imports.on.the.fly"),
-              ApplicationBundle.message("help.link.optimize.imports.on.the.fly")
-            ) { openJavaImportSettings(dataContextOwner) }()
-            val label = JBLabel(AllIcons.General.ProjectConfigurable)
-            label.toolTipText = IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip")
-            component(label)
-          }
-        }
-        row {
-          label(JavaBundle.message("exclude.from.completion.group"))
-        }
-        row {
-          excludeTable.component(CCFlags.grow, comment = JavaBundle.message("exclude.import.wildcard.comment"))
-            .onApply { excludeTable.apply() }
-            .onReset { excludeTable.reset() }
-            .onIsModified { excludeTable.isModified }
-        }
+      }
+      row {
+        cell(excludeTable.component)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .label(JavaBundle.message("exclude.from.completion.group"), LabelPosition.TOP)
+          .comment(JavaBundle.message("exclude.import.wildcard.comment"))
+          .onApply { excludeTable.apply() }
+          .onReset { excludeTable.reset() }
+          .onIsModified { excludeTable.isModified }
+      }
+    }
+    onApply {
+      for (project in ProjectManager.getInstance().openProjects) {
+        DaemonCodeAnalyzer.getInstance(project).restart()
       }
     }
   }
@@ -100,13 +99,6 @@ class JavaAutoImportOptions(val project: Project) : DslConfigurableBase(), AutoI
           configurable.selectTab(ApplicationBundle.message("title.imports"))
         }
       }
-    }
-  }
-
-  override fun apply() {
-    super.apply()
-    for (project in ProjectManager.getInstance().openProjects) {
-      DaemonCodeAnalyzer.getInstance(project).restart()
     }
   }
 

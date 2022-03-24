@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -10,8 +10,8 @@ import java.util.function.BiPredicate
 
 /**
  * Specifies how Maven artifacts for IDE modules should be generated.
- * Public artifacts are generated under {@link BuildPaths#artifacts}/maven-artifacts directory.
- * Proprietary artifacts are generated under {@link BuildPaths#artifacts}/proprietary-maven-artifacts directory.
+ * Public artifacts are generated under {@link BuildPaths#artifactDir}/maven-artifacts directory.
+ * Proprietary artifacts are generated under {@link BuildPaths#artifactDir}/proprietary-maven-artifacts directory.
  * @see ProductProperties#mavenArtifacts
  * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder#generateMavenArtifacts
  */
@@ -26,6 +26,13 @@ class MavenArtifactsProperties {
    * Names of additional modules for which Maven artifacts should be generated.
    */
   List<String> additionalModules = []
+
+  /**
+   * Names of modules for which Maven artifacts should be generated, that will create all its module-dependencies in a single jar.
+   *
+   * Initially, it's introduced for having `util-base` artifact which will include `util-rt` in it to avoid JPMS package-split.
+   */
+  List<String> squashedModules = []
 
   /**
    * Names of proprietary modules for which Maven artifacts should be generated.

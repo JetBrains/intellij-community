@@ -1,0 +1,1 @@
+open class Main(open val <caret>prop: Int)

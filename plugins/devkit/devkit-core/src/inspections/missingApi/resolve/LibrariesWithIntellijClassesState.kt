@@ -71,7 +71,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
     IntelliJPlatformProduct.GOIDE -> "com.jetbrains.intellij.goland" to "goland"
 
     IntelliJPlatformProduct.RUBYMINE,
-    IntelliJPlatformProduct.PYCHARM_DS,
+    IntelliJPlatformProduct.DATASPELL,
     IntelliJPlatformProduct.PYCHARM_EDU,
     IntelliJPlatformProduct.PHPSTORM,
     IntelliJPlatformProduct.WEBSTORM,
@@ -80,6 +80,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
     IntelliJPlatformProduct.DBE,
     IntelliJPlatformProduct.ANDROID_STUDIO,
     IntelliJPlatformProduct.CWM_GUEST,
+    IntelliJPlatformProduct.JETBRAINS_CLIENT,
     IntelliJPlatformProduct.GATEWAY,
     IntelliJPlatformProduct.IDEA_IE -> null
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.analysis
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.IntRef
@@ -98,8 +100,18 @@ internal class DependencyGraphBuilder private constructor(
       val argument = node.getArgumentForParameter(i) ?: continue
       if (argument is UExpressionList && argument.kind == UastSpecialExpressionKind.VARARGS) {
         argument.expressions.forEach {
+          val componentType = (parameter.type as? PsiArrayType)?.componentType
+          if (componentType == null) {
+            logger<DependencyGraphBuilder>().error(
+              "Incorrect `parameter.type` = ${parameter.type} for argument.kind == UastSpecialExpressionKind.VARARGS",
+              Attachment("call.txt", kotlin.runCatching { node.sourcePsi?.text ?: "<null>" }.getOrElse { it.stackTraceToString() }),
+              Attachment("parameter.txt", "${parameter} of type ${parameter.javaClass}"),
+              Attachment(node.sourcePsi?.containingFile?.name ?: "file.txt",
+                         kotlin.runCatching { node.sourcePsi?.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
+            )
+          }
           registerDependency(
-            Dependent.CallExpression(i, node, (parameter.type as PsiArrayType).componentType),
+            Dependent.CallExpression(i, node, componentType ?: parameter.type),
             Dependency.ArgumentDependency(it, node)
           )
         }
@@ -363,6 +375,9 @@ internal class DependencyGraphBuilder private constructor(
     val visitor = createVisitor(child)
 
     for (expression in node.expressions) {
+      if (expression.getExpressionType() != null) { // it is real expression, not statement
+        registerEmptyDependency(expression)
+      }
       expression.accept(visitor)
     }
 
@@ -477,6 +492,10 @@ internal class DependencyGraphBuilder private constructor(
     scope.clearPotentialReferences(TEMP_VAR_NAME)
   }
 
+  private fun registerEmptyDependency(element: UElement) {
+    dependents.putIfAbsent(element, mutableSetOf())
+  }
+
   private fun registerDependency(dependent: Dependent, dependency: Dependency) {
     if (dependency !is Dependency.PotentialSideEffectDependency) {
       for (el in dependency.elements) {
@@ -582,8 +601,11 @@ private class LocalScopeContext(
 
   fun setLastPotentialUpdate(variable: String, updateElement: UElement) {
     lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
-      SideEffectChangeCandidate(updateElement, DependencyEvidence(),
-                                dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
+      SideEffectChangeCandidate(
+        updateElement,
+        DependencyEvidence(),
+        dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable)
+      )
     )
     for ((reference, evidenceAndWitness) in referencesModel.getAllPossiblyEqualReferences(variable)) {
       val (evidence, witness) = evidenceAndWitness

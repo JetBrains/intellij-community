@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -38,18 +39,6 @@ import org.jetbrains.kotlin.utils.checkWithAttachment
 open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     private val psiManager: PsiManager = PsiManager.getInstance(project)
     private val languageVersionSettings = project.getLanguageVersionSettings()
-
-    protected open fun createLightClassForSourceDeclaration(classOrObject: KtClassOrObject): KtLightClass? =
-        KtLightClassForSourceDeclaration.create(classOrObject, languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
-
-    protected open fun createLightClassForScript(script: KtScript): KtLightClass? =
-        KtLightClassForScript.create(script)
-
-    protected open fun createLightClassForFacade(
-        manager: PsiManager,
-        facadeClassFqName: FqName,
-        searchScope: GlobalSearchScope
-    ): KtLightClass? = KtLightClassForFacade.createForFacade(psiManager, facadeClassFqName, searchScope)
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         val facadeFilesInPackage = project.runReadActionInSmartMode {
@@ -113,8 +102,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             KotlinSourceFilterScope.sourceAndClassFiles(
                 scope,
                 project
-            ),
-            project
+            )
         )
     }
 
@@ -125,7 +113,6 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                 scope,
                 project
             ),
-            project,
             MemberScope.ALL_NAME_FILTER
         )
     }
@@ -151,7 +138,10 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         if (virtualFile != null) {
             when {
                 ProjectRootsUtil.isProjectSourceFile(project, virtualFile) ->
-                    return createLightClassForSourceDeclaration(classOrObject)
+                    return KtLightClassForSourceDeclaration.create(
+                        classOrObject,
+                        languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
+                    )
                 ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
                     return getLightClassForDecompiledClassOrObject(classOrObject)
                 ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
@@ -164,7 +154,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             classOrObject.containingFile.originalFile.virtualFile != null
         ) {
             // explicit request to create light class from dummy.kt
-            return createLightClassForSourceDeclaration(classOrObject)
+            return KtLightClassForSourceDeclaration.create(classOrObject, languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
         }
         return null
     }
@@ -174,7 +164,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             return null
         }
 
-        return createLightClassForScript(script)
+        return KtLightClassForScript.create(script)
     }
 
     override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
@@ -224,7 +214,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         }
     }
 
-    fun createLightClassForFileFacade(
+    private fun createLightClassForFileFacade(
         facadeFqName: FqName,
         facadeFiles: List<KtFile>,
         moduleInfo: IdeaModuleInfo
@@ -241,7 +231,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     private fun tryCreateFacadesForSourceFiles(moduleInfo: IdeaModuleInfo, facadeFqName: FqName): PsiClass? {
         if (moduleInfo !is ModuleSourceInfo && moduleInfo !is PlatformModuleInfo) return null
-        return createLightClassForFacade(psiManager, facadeFqName, moduleInfo.contentScope())
+        return KtLightClassForFacadeImpl.createForFacade(psiManager, facadeFqName, moduleInfo.contentScope())
     }
 
     override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> {
@@ -250,6 +240,11 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         }
     }
 
+    override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass =
+        KtDescriptorBasedFakeLightClass(classOrObject)
+
+    override fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): PsiClass =
+        KtLightClassForFacadeImpl.createForSyntheticFile(facadeClassFqName, file)
 
     // NOTE: this is a hacky solution to the following problem:
     // when building this light class resolver will be built by the first file in the list
@@ -288,10 +283,10 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                 innerClass != null,
                 { "Could not find corresponding inner/nested class " + relativeFqName + " in class " + decompiledClassOrObject.fqName + "\nFile: " + decompiledClassOrObject.containingKtFile.virtualFile.name },
                 {
-                    it.withAttachment("decompiledClassOrObject", decompiledClassOrObject.text)
+                    it.withPsiAttachment("decompiledClassOrObject", decompiledClassOrObject)
                     it.withAttachment("fileClass", decompiledClassOrObject.containingFile::class)
-                    it.withAttachment("file", decompiledClassOrObject.containingFile.text)
-                    it.withAttachment("root", rootLightClassForDecompiledFile.text)
+                    it.withPsiAttachment("file", decompiledClassOrObject.containingFile)
+                    it.withPsiAttachment("root", rootLightClassForDecompiledFile)
                 },
             )
 

@@ -2,14 +2,39 @@
 
 package org.jetbrains.kotlin.idea
 
+import com.intellij.codeInsight.highlighting.PairedBraceAndAnglesMatcher
 import com.intellij.codeInsight.hint.DeclarationRangeUtil
 import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
+
+class KotlinPairedBraceMatcher :
+    PairedBraceAndAnglesMatcher(
+        KotlinPairMatcher(),
+        KotlinLanguage.INSTANCE,
+        KotlinFileType.INSTANCE,
+        TYPE_TOKENS_INSIDE_ANGLE_BRACKETS
+    ) {
+    override fun lt(): IElementType = KtTokens.LT
+    override fun gt(): IElementType = KtTokens.GT
+}
+
+private val TYPE_TOKENS_INSIDE_ANGLE_BRACKETS = TokenSet.orSet(
+    KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET,
+    TokenSet.create(
+        KtTokens.IDENTIFIER, KtTokens.COMMA,
+        KtTokens.AT,
+        KtTokens.RBRACKET, KtTokens.LBRACKET,
+        KtTokens.IN_KEYWORD, KtTokens.OUT_KEYWORD, KtTokens.MUL,
+        KtTokens.COLON, KtTokens.COLONCOLON, KtTokens.LPAR, KtTokens.RPAR,
+        KtTokens.CLASS_KEYWORD, KtTokens.DOT
+    )
+)
 
 class KotlinPairMatcher : PairedBraceMatcher {
     private val pairs = arrayOf(

@@ -3,9 +3,9 @@ import java.util.function.Supplier;
 
 class A{
   void test(){
-    Object container = null;
+    Object container = Math.random() > 0.5 ? "" : null;
     Supplier<String> r = () -> {
-        if (container == null) {
+        if (Math.random() > 0.5) {
             assert container != null;
             return container.toString();
         } else {

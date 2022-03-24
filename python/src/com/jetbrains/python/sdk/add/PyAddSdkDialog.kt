@@ -91,7 +91,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private fun createPanels(sdks: List<Sdk>): List<PyAddSdkView> {
     val venvPanel = createVirtualEnvPanel(project, module, sdks)
     val condaPanel = createAnacondaPanel(project, module)
-    val systemWidePanel = PyAddSystemWideInterpreterPanel(module, existingSdks, context)
+    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context)
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
       listOf(condaPanel, venvPanel, systemWidePanel)
     }

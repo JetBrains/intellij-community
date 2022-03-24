@@ -83,7 +83,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     TreeElementWrapper last = (TreeElementWrapper)elements[elements.length - 1];
     Collection<AbstractTreeNode<?>> children = last.getChildren();
     assertEquals(1, children.size());
-    assertEquals(3, ((AbstractTreeNode<?>)((List)children).get(0)).getChildren().size());
+    assertEquals(3, ((AbstractTreeNode<?>)((List<?>)children).get(0)).getChildren().size());
   }
 
   private Object[] getElements() {
@@ -308,6 +308,21 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       "  -CustRegionTest\n" +
       "   -Another\n" +
       "    foo(): void"
+    );
+  }
+
+  public void testRecordComponents() {
+    doTest(
+      "// region Test\n" +
+      "package com.company;\n" +
+      "\n" +
+      "record R(String s, int i) {}",
+
+      "-Test.java\n" +
+      " -Test\n" +
+      "  -R\n" +
+      "   s: String\n" +
+      "   i: int"
     );
   }
 
@@ -623,7 +638,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
-  private void doTest(String classText, String expected) {
+  private void doTest(String classText, @Language("TEXT") String expected) {
     doTest(classText, expected, false, false);
   }
 

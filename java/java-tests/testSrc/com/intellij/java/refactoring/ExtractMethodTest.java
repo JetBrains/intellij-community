@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -942,7 +943,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testPatternVariable() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testPatternVariableIntroduced() throws Exception {
@@ -954,7 +955,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
@@ -1571,7 +1572,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     if (elements.length == 0) {
-      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      final PsiExpression expression = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
       if (expression != null) {
         elements = new PsiElement[]{expression};
       }

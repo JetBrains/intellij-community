@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.project.Project;
@@ -6,16 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 public final class StructuralSearchPlugin {
-  private boolean searchInProgress;
   private DialogWrapper myDialog;
-
-  public boolean isSearchInProgress() {
-    return searchInProgress;
-  }
-
-  public void setSearchInProgress(boolean searchInProgress) {
-    this.searchInProgress = searchInProgress;
-  }
 
   public DialogWrapper getDialog() {
     return myDialog;

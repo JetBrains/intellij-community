@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -15,10 +15,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +71,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     final String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
-    method = IntroduceParameterHandler.chooseEnclosingMethod(method);
+    method = CommonJavaRefactoringUtil.chooseEnclosingMethod(method);
     if (method == null) return;
 
     method = SuperMethodWarningUtil.checkSuperMethod(method);
@@ -90,8 +90,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[0]);
       String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      ChangeSignatureProcessor processor =
-        new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
+      var processor = JavaRefactoringFactory.getInstance(project)
+        .createChangeSignatureProcessor(method, false, modifier, method.getName(), method.getReturnType(), array, null, null, null, null);
       processor.run();
     }
     else {

@@ -1,8 +1,9 @@
 <html>
 <body>
-<p>Reports the methods <code>writeObject()</code>, <code>readObject()</code>, <code>readObjectNoData()</code>, <code>writeExternal()</code>, and
-  <code>readExternal()</code> or the field <code>serialPersistentFields</code> defined in a <code>record</code> class.
-  These members are not used for the serialization or deserialization of records.</p>
+Reports serialization methods or fields defined in a <code>record</code> class.
+Serialization methods include <code>writeObject()</code>, <code>readObject()</code>, <code>readObjectNoData()</code>, <code>writeExternal()</code>, and
+  <code>readExternal()</code> and the field <code>serialPersistentFields</code>.
+  These members are not used for the serialization or deserialization of records and therefore unnecessary.
 <p><b>Examples:</b></p>
 <pre><code>
   record R1() implements Serializable {
@@ -30,7 +31,7 @@
   }
 </code></pre>
 <!-- tooltip end -->
-<p>This inspection applies to the language level 14 or higher.</p>
+<p>This inspection only reports if the language level of the project or module is 14 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

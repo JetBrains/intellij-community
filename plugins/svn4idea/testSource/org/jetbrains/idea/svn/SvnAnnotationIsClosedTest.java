@@ -195,9 +195,9 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), file);
     annotation.setCloser(() -> {
       closer.run();
-      listener.unregisterAnnotation(file, annotation);
+      listener.unregisterAnnotation(annotation);
     });
-    listener.registerAnnotation(file, annotation);
+    listener.registerAnnotation(annotation);
   }
 
   private void assertRevision(@NotNull VirtualFile file, final long number) {

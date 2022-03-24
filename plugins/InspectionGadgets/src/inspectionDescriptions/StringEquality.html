@@ -6,17 +6,17 @@ Reports code that uses of <b>==</b> or <b>!=</b> to compare strings.
   In most cases, strings should be compared using <code>equals()</code>,
   which does a character-by-character comparison when the strings are different objects.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   void foo(String s, String t) {
     final boolean b = t == s;
   }
-</pre>
+</code></pre>
 <p>If <code>t</code> is known to be non-null, then it's safe to apply the "unsafe" quick-fix and get the result similar to the following:</p>
-<pre>
+<pre><code>
   void foo(String s, String t) {
     final boolean b = t.equals(s);
   }
-</pre>
+</code></pre>
 
 <!-- tooltip end -->
 <p>

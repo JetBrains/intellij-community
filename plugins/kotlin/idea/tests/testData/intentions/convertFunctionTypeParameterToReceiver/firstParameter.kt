@@ -1,3 +1,6 @@
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'f' is never used
+// AFTER-WARNING: Parameter 'i' is never used
 fun foo(f: (<caret>Int, Boolean) -> String) {
     f(1, false)
     bar(f)

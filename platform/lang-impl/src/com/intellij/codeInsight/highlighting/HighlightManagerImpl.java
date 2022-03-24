@@ -114,15 +114,6 @@ public final class HighlightManagerImpl extends HighlightManager {
   @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
                                       PsiReference @NotNull [] occurrences,
-                                      @NotNull TextAttributes attributes,
-                                      boolean hideByTextChange,
-                                      Collection<? super RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, occurrences, attributes, null, hideByTextChange, outHighlighters);
-  }
-
-  @Override
-  public void addOccurrenceHighlights(@NotNull Editor editor,
-                                      PsiReference @NotNull [] occurrences,
                                       @NotNull TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
                                       Collection<? super RangeHighlighter> outHighlighters) {
@@ -186,6 +177,8 @@ public final class HighlightManagerImpl extends HighlightManager {
     addOccurrenceHighlight(editor, start, end, null, attributesKey, flags, outHighlighters, null);
   }
 
+  public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
+
   private void addOccurrenceHighlight(@NotNull Editor editor,
                                       int start,
                                       int end,
@@ -195,7 +188,7 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                       @Nullable Color scrollMarkColor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.SELECTION - 1,
+    markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
                                                        HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
 
         HighlightFlags info = new HighlightFlags(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
@@ -347,14 +340,15 @@ public final class HighlightManagerImpl extends HighlightManager {
     Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
     if (map == null) return false;
 
-    boolean done = false;
+    boolean hidden = false;
     List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
-    for (RangeHighlighter highlighter : map.keySet()) {
-      HighlightFlags info = map.get(highlighter);
-      if (!InjectedLanguageEditorUtil.getTopLevelEditor(info.editor).equals(InjectedLanguageEditorUtil.getTopLevelEditor(editor))) continue;
-      if ((info.flags & mask) != 0) {
+    for (Map.Entry<RangeHighlighter, HighlightFlags> entry : map.entrySet()) {
+      HighlightFlags info = entry.getValue();
+      RangeHighlighter highlighter = entry.getKey();
+      if ((info.flags & mask) != 0 &&
+          InjectedLanguageEditorUtil.getTopLevelEditor(info.editor).equals(InjectedLanguageEditorUtil.getTopLevelEditor(editor))) {
         highlightersToRemove.add(highlighter);
-        done = true;
+        hidden = true;
       }
     }
 
@@ -362,7 +356,7 @@ public final class HighlightManagerImpl extends HighlightManager {
       removeSegmentHighlighter(editor, highlighter);
     }
 
-    return done;
+    return hidden;
   }
 
   boolean hasHideByEscapeHighlighters(@NotNull Editor editor) {

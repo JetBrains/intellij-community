@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 
 fun <T> Iterable<T>.intersect(other: Iterable<T>): Set<T> = other.toSet()

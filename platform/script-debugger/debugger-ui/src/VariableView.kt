@@ -2,6 +2,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -112,7 +113,7 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
-    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP) {
+    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP && value.type != ValueType.NULL) {
       setObjectPresentation(value as ObjectValue, icon, node)
       return
     }
@@ -142,7 +143,9 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   override fun computeChildren(node: XCompositeNode) {
-    computeChildren(0, node)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      computeChildren(0, node)
+    }
   }
 
   private fun computeChildren(remainingChildrenOffset: Int, node: XCompositeNode) {

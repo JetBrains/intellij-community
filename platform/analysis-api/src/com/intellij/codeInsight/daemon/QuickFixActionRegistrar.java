@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,6 @@ public interface QuickFixActionRegistrar {
    * it should be fixed to provide its own EP, so it's possible to plug into the fix directly
    * instead of filtering it with this method
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void unregister(@NotNull Condition<? super IntentionAction> condition) {}
 }

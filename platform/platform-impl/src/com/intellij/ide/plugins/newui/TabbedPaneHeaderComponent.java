@@ -34,7 +34,6 @@ import java.awt.event.ComponentEvent;
 public class TabbedPaneHeaderComponent extends JPanel {
   private final JBValue myHeight = new JBValue.Float(30);
   private final JBValue myGap = new JBValue.Float(10);
-  private final JBValue myYOffset = new JBValue.Float(32);
 
   private final JBTabbedPane myTabbedPane = new JBTabbedPane() {
     @Override
@@ -76,7 +75,7 @@ public class TabbedPaneHeaderComponent extends JPanel {
         int height = parent.getHeight();
         int gap = myGap.get();
         int x = (parent.getWidth() - width - gap - toolbarSize.width) / 2 - width / 4;
-        int y = height > 0 ? height - myYOffset.get() : 0;
+        int y = height > 0 ? height - JBUI.CurrentTheme.TabbedPane.TAB_HEIGHT.get() : 0;
         int toolbarY = (y + height - toolbarSize.height) / 2;
 
         tabbedPane.setBounds(x, y, width, height - y);
@@ -89,10 +88,7 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.setOpaque(false);
 
     add(myTabbedPane);
-    add(createToolbar(actions,
-                      IdeBundle.message("plugin.manager.tooltip"),
-                      AllIcons.General.GearPlain),
-        BorderLayout.EAST);
+    add(createToolbar(actions, IdeBundle.message("plugin.manager.tooltip"), AllIcons.General.GearPlain), BorderLayout.EAST);
   }
 
   static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,
@@ -177,6 +173,10 @@ public class TabbedPaneHeaderComponent extends JPanel {
       Component tab = myTabbedPane.getTabComponentAt(myTabbedPane.getTabCount() - 1);
       ((JLabel)tab).setHorizontalTextPosition(SwingConstants.LEFT);
     }
+  }
+
+  public void setTabTooltip(int index, @Nullable @Nls String tooltip) {
+    myTabbedPane.setToolTipTextAt(index, tooltip);
   }
 
   public int getSelectionTab() {

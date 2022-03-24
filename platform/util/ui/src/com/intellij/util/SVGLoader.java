@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -16,6 +16,7 @@ import com.intellij.ui.svg.SvgCacheManager;
 import com.intellij.ui.svg.SvgDocumentFactoryKt;
 import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.ui.svg.SvgTranscoder;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.ImageUtil;
 import org.apache.batik.transcoder.TranscoderException;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,15 +38,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+/**
+ * Plugins should use {@link ImageLoader#loadFromResource(String, Class)}.
+ */
 @ApiStatus.Internal
 public final class SVGLoader {
   private static final byte[] DEFAULT_THEME = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   private static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
 
   private static SvgElementColorPatcherProvider ourColorPatcher;
-  private static SvgElementColorPatcherProvider ourColorPatcherForSelection;
+  private static SvgElementColorPatcherProvider selectionColorPatcher;
+  private static SvgElementColorPatcherProvider contextColorPatcher;
 
-  private static volatile boolean ourIsSelectionContext = false;
+  private static volatile boolean isColorRedefinitionContext;
 
   private static final class SvgCache {
     private static final SvgCacheManager persistentCache;
@@ -54,20 +59,20 @@ public final class SVGLoader {
     static {
       SvgPrebuiltCacheManager prebuiltCache;
       try {
-        Path dbFile = null;
+        Path dbDir = null;
         if (USE_CACHE) {
           String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
           if (!"false".equals(dbPath)) {
             if (dbPath == null || dbPath.isEmpty()) {
-              dbFile = Path.of(PathManager.getBinPath() + "/icons.db");
+              dbDir = Path.of(PathManager.getBinPath() + "/icons");
             }
             else {
-              dbFile = Path.of(dbPath);
+              dbDir = Path.of(dbPath);
             }
           }
         }
 
-        prebuiltCache = dbFile != null && Files.exists(dbFile) ? new SvgPrebuiltCacheManager(dbFile) : null;
+        prebuiltCache = dbDir != null && Files.isDirectory(dbDir) ? new SvgPrebuiltCacheManager(dbDir) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error("Cannot use prebuilt svg cache", e);
@@ -78,7 +83,7 @@ public final class SVGLoader {
 
       SvgCacheManager cache;
       try {
-        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v3.db")) : null;
+        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v6.db")) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error(e);
@@ -114,57 +119,54 @@ public final class SVGLoader {
   public static @Nullable Image loadFromClassResource(@Nullable Class<?> resourceClass,
                                                       @Nullable ClassLoader classLoader,
                                                       @NotNull String path,
-                                                      long rasterizedCacheKey,
+                                                      int rasterizedCacheKey,
                                                       float scale,
                                                       boolean isDark,
                                                       @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    byte[] svgBytes = null;
-    byte[] theme ;
-    InputStream stream = null;
+    byte[] themeDigest;
+    byte[] data = null;
 
-    if (USE_CACHE && !isSelectionContext()) {
+    if (USE_CACHE && !isColorRedefinitionContext()) {
       @SuppressWarnings("DuplicatedCode")
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
-      theme = DEFAULT_THEME;
+      themeDigest = DEFAULT_THEME;
 
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
         SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
         if (subPatcher != null) {
-          theme = subPatcher.digest();
+          themeDigest = subPatcher.digest();
         }
       }
 
-      if (theme != null) {
+      if (themeDigest != null) {
         Image image;
-        if (theme == DEFAULT_THEME && rasterizedCacheKey != 0) {
+        if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
           SvgPrebuiltCacheManager cache = SvgCache.prebuiltPersistentCache;
           if (cache != null) {
-            image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
+            try {
+              image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
+            }
+            catch (Throwable e) {
+              Logger.getInstance(SVGLoader.class).error("cannot load from prebuilt icon cache", e);
+              image = null;
+            }
             if (image != null) {
               return image;
             }
           }
         }
 
-        stream = ImageLoader.getResourceData(path, resourceClass, classLoader);
-        if (stream == null) {
+        data = ImageLoader.getResourceData(path, resourceClass, classLoader);
+        if (data == null) {
           return null;
         }
-        try {
-          svgBytes = stream.readAllBytes();
-        }
-        finally {
-          stream.close();
-        }
 
-        image = SvgCache.persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+        image = SvgCache.persistentCache.loadFromCache(themeDigest, data, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
-
-        stream = new ByteArrayInputStream(svgBytes);
       }
 
       if (start != -1) {
@@ -172,16 +174,16 @@ public final class SVGLoader {
       }
     }
     else {
-      theme = null;
+      themeDigest = null;
     }
 
-    if (stream == null) {
-      stream = ImageLoader.getResourceData(path, resourceClass, classLoader);
-      if (stream == null) {
+    if (data == null) {
+      data = ImageLoader.getResourceData(path, resourceClass, classLoader);
+      if (data == null) {
         return null;
       }
     }
-    return loadAndCache(path, stream, scale, docSize, theme, svgBytes);
+    return loadAndCache(path, data, scale, docSize, themeDigest);
   }
 
   @ApiStatus.Internal
@@ -194,47 +196,51 @@ public final class SVGLoader {
       docSize = new ImageLoader.Dimension2DDouble(0, 0);
     }
 
-    byte[] theme = null;
-    byte[] svgBytes = null;
+    byte[] themeDigest = null;
+    byte[] data;
     Image image;
 
-    if (USE_CACHE && !isSelectionContext()) {
+    if (USE_CACHE && !isColorRedefinitionContext()) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      theme = DEFAULT_THEME;
+      themeDigest = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
         SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
         if (subPatcher != null) {
-          theme = subPatcher.digest();
+          themeDigest = subPatcher.digest();
         }
       }
 
-      if (theme != null) {
-        svgBytes = stream.readAllBytes();
-        image = SvgCache.persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+      if (themeDigest == null) {
+        data = null;
+      }
+      else {
+        data = stream.readAllBytes();
+        image = SvgCache.persistentCache.loadFromCache(themeDigest, data, scale, isDark, docSize);
         if (image != null) {
           return image;
         }
-        stream = new ByteArrayInputStream(svgBytes);
       }
 
       if (start != -1) {
         IconLoadMeasurer.svgCacheRead.end(start);
       }
     }
-    return loadAndCache(path, stream, scale, docSize, theme, svgBytes);
+    else {
+      data = stream.readAllBytes();
+    }
+    return loadAndCache(path, data, scale, docSize, themeDigest);
   }
 
   private static @NotNull BufferedImage loadAndCache(@Nullable String path,
-                                                     @NotNull InputStream stream,
+                                                     byte[] data,
                                                      float scale,
                                                      @NotNull ImageLoader.Dimension2DDouble docSize,
-                                                     byte[] theme,
-                                                     byte[] svgBytes) throws IOException {
+                                                     byte[] themeDigest) throws IOException {
     long decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
     BufferedImage bufferedImage;
     try {
-      bufferedImage = SvgTranscoder.createImage(scale, createDocument(path, stream), docSize);
+      bufferedImage = SvgTranscoder.createImage(scale, createDocument(path, data), docSize);
     }
     catch (TranscoderException e) {
       docSize.setSize(0, 0);
@@ -245,10 +251,10 @@ public final class SVGLoader {
       IconLoadMeasurer.svgDecoding.end(decodingStart);
     }
 
-    if (theme != null) {
+    if (themeDigest != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-        SvgCache.persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
+        SvgCache.persistentCache.storeLoadedImage(themeDigest, data, scale, bufferedImage);
         IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
       }
       catch (Exception e) {
@@ -329,6 +335,12 @@ public final class SVGLoader {
     return document;
   }
 
+  private static @NotNull Document createDocument(@Nullable String url, byte[] data) {
+    Document document = SvgDocumentFactoryKt.createSvgDocument(url, data);
+    patchColors(url, document);
+    return document;
+  }
+
   private static void patchColors(@Nullable String url, @NotNull Document document) {
     SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
     if (colorPatcher != null) {
@@ -337,8 +349,8 @@ public final class SVGLoader {
         patcher.patchColors(document.getDocumentElement());
       }
     }
-    if (isSelectionContext()) {
-      SvgElementColorPatcherProvider selectionPatcherProvider = getSelectionPatcherProvider();
+    if (isColorRedefinitionContext()) {
+      SvgElementColorPatcherProvider selectionPatcherProvider = getColorPatcherProvider();
       if (selectionPatcherProvider != null) {
         SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forPath(url);
         if (selectionPatcher != null) {
@@ -348,19 +360,12 @@ public final class SVGLoader {
     }
   }
 
-  public static void setColorPatcherForSelection(@Nullable SvgElementColorPatcherProvider provider) {
-    ourColorPatcherForSelection = provider;
+  public static void setContextColorPatcher(@Nullable SvgElementColorPatcherProvider provider) {
+    contextColorPatcher = provider;
   }
 
-  private static SvgElementColorPatcherProvider getSelectionPatcherProvider() {
-    //todo[kb] move this code to a common place for LaFs and themes.
-    //HashMap<String, String> map = new HashMap<>();
-    //map.put("#f26522", "#e2987c");
-    //HashMap<String, Integer> alpha = new HashMap<>();
-    //alpha.put("#e2987c", 255);
-    //
-    //return newPatcher(null, map, alpha);
-    return ourColorPatcherForSelection;
+  private static SvgElementColorPatcherProvider getColorPatcherProvider() {
+    return contextColorPatcher;
   }
 
   @Nullable
@@ -397,7 +402,7 @@ public final class SVGLoader {
         if (!Strings.isEmpty(color)) {
           int alpha = 255;
           try {
-            alpha = (int)Math.ceil(255f * Float.valueOf(opacity));
+            alpha = (int)Math.ceil(255f * Float.parseFloat(opacity));
           }catch (Exception ignore){}
           String newColor = null;
           String key = toCanonicalColor(color);
@@ -433,24 +438,36 @@ public final class SVGLoader {
     IconLoader.clearCache();
   }
 
-  public static void setIsSelectionContext(boolean isSelectionContext) {
-    ourIsSelectionContext = isSelectionContext;
+  public static void setSelectionColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
+    selectionColorPatcher = colorPatcher;
+    IconLoader.clearCache();
   }
 
-  public static boolean isSelectionContext() {
-    return ourColorPatcherForSelection != null
-           && EventQueue.isDispatchThread()
-           && ourIsSelectionContext
+  public static void setColorRedefinitionContext(boolean isColorRedefinitionContext) {
+    SVGLoader.isColorRedefinitionContext = isColorRedefinitionContext;
+  }
+
+  public static boolean isColorRedefinitionContext() {
+    return contextColorPatcher != null
+           && isColorRedefinitionContext
+           && EDT.isCurrentThreadEdt()
            && Registry.is("ide.patch.icons.on.selection", false);
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
-    try {
-      setIsSelectionContext(true);
+    if (selectionColorPatcher == null) {
       icon.paintIcon(c, g, x, y);
     }
-    finally {
-      setIsSelectionContext(false);
+    else {
+      try {
+        setContextColorPatcher(selectionColorPatcher);
+        setColorRedefinitionContext(true);
+        icon.paintIcon(c, g, x, y);
+      }
+      finally {
+        setContextColorPatcher(null);
+        setColorRedefinitionContext(false);
+      }
     }
   }
 

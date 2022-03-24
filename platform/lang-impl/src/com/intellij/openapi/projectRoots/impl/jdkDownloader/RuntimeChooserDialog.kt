@@ -65,7 +65,7 @@ class RuntimeChooserDialog(
         CopyPasteManager.getInstance().contents?.getTransferData(DataFlavor.stringFlavor) as? String
       }.getOrNull()
 
-      if (newPath != null && newPath.isNotBlank() && knownPaths.add(newPath)) {
+      if (!newPath.isNullOrBlank() && knownPaths.add(newPath)) {
         RuntimeChooserCustom.importDetectedItem(newPath.trim(), model)
       }
     }

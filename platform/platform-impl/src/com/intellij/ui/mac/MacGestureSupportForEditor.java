@@ -7,27 +7,28 @@ import com.apple.eawt.event.PressureListener;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.PressureShortcut;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 public final class MacGestureSupportForEditor {
 
-  public MacGestureSupportForEditor(JComponent component) {
+  public MacGestureSupportForEditor(JComponent component, AWTEventListener listener) {
     GestureUtilities.addGestureListenerTo(component, new PressureListener() {
       @Override
       public void pressure(PressureEvent e) {
         if (e.getStage() != 2) return;
         InputEvent inputEvent = new ForceTouchEvent(component, e);
-        try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
+        ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(()-> {
+          if (listener != null) listener.eventDispatched(inputEvent);
           IdeEventQueue.getInstance().getMouseEventDispatcher().processEvent(
             inputEvent, 0, ActionPlaces.FORCE_TOUCH, new PressureShortcut(e.getStage()), component, false);
-        }
+        });
       }
     });
   }

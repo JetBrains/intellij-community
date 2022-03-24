@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -220,7 +220,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
   /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
     PsiElement directory = manager.findDirectory(root);
     if (directory == null) return null;
@@ -280,7 +280,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
    * <p>Please note that the result may not be a valid module name when the source contains a sequence that starts with a digit
    * (e.g. "org.7gnomes..."). One may validate the result with {@link PsiNameHelper#isValidModuleName}.</p>
    *
-   * @param name a .jar file name without extension
+   * @param name a .jar file name without the extension
    * @see <a href="http://docs.oracle.com/javase/9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
    */
   public static @NotNull String moduleName(@NotNull String name) {
@@ -303,7 +303,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
   private static class Patterns {
     private static final Pattern VERSION = Pattern.compile("-(\\d+(\\.|$))");
-    private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
+    private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z\\d]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public interface ExtensionsArea  {
@@ -34,7 +33,6 @@ public interface ExtensionsArea  {
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NonNls @NotNull String extensionPointName);
 
-  @Nullable
   <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName);
 
   @NotNull

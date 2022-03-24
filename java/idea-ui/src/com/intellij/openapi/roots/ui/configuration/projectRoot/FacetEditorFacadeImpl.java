@@ -181,7 +181,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
       return (Module)selected;
     }
     if (selected instanceof Facet) {
-      return ((Facet)selected).getModule();
+      return ((Facet<?>)selected).getModule();
     }
     return null;
   }

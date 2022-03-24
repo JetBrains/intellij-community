@@ -3,16 +3,55 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class JavaHomeFinder {
+  public static class SystemInfoProvider {
+    @Nullable
+    public String getEnvironmentVariable(@NotNull String name) {
+      return EnvironmentUtil.getValue(name);
+    }
+
+    @NotNull
+    public Path getPath(String path, String... more) {
+      return Path.of(path, more);
+    }
+
+    @Nullable
+    public Path getUserHome() {
+      return Path.of(SystemProperties.getUserHome());
+    }
+
+    @NotNull
+    public Collection<@NotNull Path> getFsRoots() {
+      Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
+      return rootDirectories != null ? ContainerUtil.newArrayList(rootDirectories) : Collections.emptyList();
+    }
+
+    public String getPathSeparator() {
+      return File.pathSeparator;
+    }
+
+    public boolean isFileSystemCaseSensitive() {
+      return SystemInfoRt.isFileSystemCaseSensitive;
+    }
+  }
+
   /**
    * Tries to find existing Java SDKs on this computer.
    * If no JDK found, returns possible directories to start file chooser.
@@ -43,20 +82,26 @@ public abstract class JavaHomeFinder {
   private static JavaHomeFinderBasic getFinder(boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
+    return getFinder().checkEmbeddedJava(forceEmbeddedJava);
+  }
+
+  public static @NotNull JavaHomeFinderBasic getFinder() {
+    SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
+
     if (SystemInfo.isWindows) {
-      return new JavaHomeFinderWindows(forceEmbeddedJava);
+      return new JavaHomeFinderWindows(true, true, systemInfoProvider);
     }
     if (SystemInfo.isMac) {
-      return new JavaHomeFinderMac(forceEmbeddedJava);
+      return new JavaHomeFinderMac(systemInfoProvider);
     }
     if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(forceEmbeddedJava, DEFAULT_JAVA_LINUX_PATHS);
+      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
     }
     if (SystemInfo.isSolaris) {
-      return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/jdk");
+      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths("/usr/jdk");
     }
 
-    return new JavaHomeFinderBasic(forceEmbeddedJava);
+    return new JavaHomeFinderBasic(systemInfoProvider);
   }
 
   public static @Nullable String defaultJavaLocation() {

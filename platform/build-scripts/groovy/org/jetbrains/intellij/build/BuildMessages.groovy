@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.trace.SpanBuilder
+import org.jetbrains.annotations.NotNull
 
 import java.util.function.Supplier
 
@@ -36,7 +38,9 @@ interface BuildMessages extends System.Logger {
 
   void setParameter(String parameterName, String value)
 
-  def <V> V block(String blockName, Supplier<V> task)
+  def <V> V block(@NotNull String blockName, @NotNull Supplier<V> task)
+
+  def <V> V block(@NotNull SpanBuilder spanBuilder, @NotNull Supplier<V> task)
 
   void artifactBuilt(String relativeArtifactPath)
 

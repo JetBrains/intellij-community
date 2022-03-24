@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.documentation;
 
@@ -6,12 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +100,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
 
   @NotNull
   @Override
-  public String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
+  public @Nls String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
       if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
         LOG.debug("fetchExternalDocumentation: ", provider);
@@ -110,7 +112,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.getQuickNavigateInfo(element, originalElement);
       if (result != null) {
@@ -134,7 +136,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.generateDoc(element, originalElement);
       if (result != null) {
@@ -146,7 +148,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.generateHoverDoc(element, originalElement);
       if (result != null) {
@@ -158,7 +160,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.generateRenderedDoc(comment);
       if (result != null) {
@@ -225,7 +227,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     for (DocumentationProvider provider : getAllProviders()) {
       if (provider instanceof ExternalDocumentationProvider) {
         final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls, onHover);

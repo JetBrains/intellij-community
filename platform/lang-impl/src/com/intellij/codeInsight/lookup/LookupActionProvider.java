@@ -15,15 +15,26 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.util.Consumer;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * Allows providing custom actions for {@link LookupElement} that are available
+ * on context actions hotkey (like Alt+Enter).
+ *
+ * @see LookupElementAction
  */
 public interface LookupActionProvider {
   ExtensionPointName<LookupActionProvider> EP_NAME = ExtensionPointName.create("com.intellij.lookup.actionProvider");
 
-  void fillActions(LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer);
+  /**
+   * Generates actions for the specified lookup element and passes them to the consumer.
+   *
+   * @param element element to generate actions for
+   * @param lookup current lookup
+   * @param consumer a consumer to pass the resulting actions to
+   */
+  void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer);
 
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
@@ -52,13 +53,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.Advertiser;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +69,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -157,8 +155,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
-    myAdComponent = new Advertiser();
-    myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    if (ExperimentalUI.isNewUI()) {
+      myAdComponent = new NewUILookupAdvertiser();
+    }
+    else {
+      myAdComponent = new Advertiser();
+      myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    }
 
     myOffsets = new LookupOffsets(myEditor);
 
@@ -601,10 +604,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     final Editor hostEditor = editor;
     hostEditor.getCaretModel().runForEachCaret(__ -> {
-      EditorModificationUtil.deleteSelectedText(hostEditor);
+      EditorModificationUtilEx.deleteSelectedText(hostEditor);
       final int caretOffset = hostEditor.getCaretModel().getOffset();
 
-      int offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+      int offset;
+      try {
+        offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+      }
+      catch (AssertionError ae) {
+        String classes = StreamEx.iterate(
+          item, Objects::nonNull, i -> i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null)
+          .map(le -> le.getClass().getName()).joining(" -> ");
+        LOG.error("When completing " + item + " (" + classes + ")", ae);
+        return;
+      }
       hostEditor.getCaretModel().moveToOffset(offset);
       hostEditor.getSelectionModel().removeSelection();
     });
@@ -693,7 +706,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myAdComponent.clearAdvertisements();
     }
 
-    myUi = new LookupUi(this, myAdComponent, myList);//, myProject);
+    Boolean showBottomPanel = myEditor.getUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI);
+    myUi = new LookupUi(this, myAdComponent, myList, showBottomPanel == null || showBottomPanel);
     myUi.setCalculating(myCalculating);
     Point p = myUi.calculatePosition().getLocation();
     if (ScreenReader.isActive()) {
@@ -1239,5 +1253,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   FontPreferences getFontPreferences() {
     return myFontPreferences;
+  }
+
+  private static class NewUILookupAdvertiser extends Advertiser {
+
+    private NewUILookupAdvertiser() {
+      setBorder(JBUI.Borders.empty());
+      setForeground(JBUI.CurrentTheme.CompletionPopup.Advertiser.foreground());
+      setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
+    }
+
+    @Override
+    protected Font adFont() {
+      Font font = StartupUiUtil.getLabelFont();
+      RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.CompletionPopup.Advertiser.fontSizeOffset());
+      return relativeFont.derive(font);
+    }
   }
 }

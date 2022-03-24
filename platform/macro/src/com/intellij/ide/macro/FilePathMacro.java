@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class FilePathMacro extends Macro {
+public final class FilePathMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

@@ -71,11 +71,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.debug.tool.window.view")) {
-      tab = new XDebugSessionTab2(session, icon, environment);
-    }
-    else if (Registry.is("debugger.new.tool.window.layout")) {
+    if (Registry.is("debugger.new.tool.window.layout")) {
       tab = new XDebugSessionTab3(session, icon, environment);
+    }
+    else if (Registry.is("debugger.new.debug.tool.window.view")) {
+      tab = new XDebugSessionTab2(session, icon, environment);
     }
     else {
       tab = new XDebugSessionTab(session, icon, environment, true);
@@ -108,15 +108,20 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
+    focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_FINISH));
     myUi.getOptions().setAdditionalFocusActions(focus).setMinimizeActionEnabled(true).setMoveToGridActionEnabled(true);
 
     initListeners(myUi);
     rebuildViews();
   }
 
-  private void initFocusingVariablesFromFramesView() {
-    XFramesView framesView = ObjectUtils.tryCast(myViews.get(DebuggerContentInfo.FRAME_CONTENT), XFramesView.class);
-    XVariablesViewBase variablesView = ObjectUtils.tryCast(myViews.get(DebuggerContentInfo.VARIABLES_CONTENT), XVariablesViewBase.class);
+  protected @Nullable <T> T getView(String viewId, Class<T> viewClass) {
+    return ObjectUtils.tryCast(myViews.get(viewId), viewClass);
+  }
+
+  protected void initFocusingVariablesFromFramesView() {
+    XFramesView framesView = getView(DebuggerContentInfo.FRAME_CONTENT, XFramesView.class);
+    XVariablesViewBase variablesView = getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
     if (framesView == null || variablesView == null) return;
 
     framesView.onFrameSelectionKeyPressed(frame -> {
@@ -217,7 +222,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
-      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
     } else {
       variablesView = new XVariablesView(session);
     }

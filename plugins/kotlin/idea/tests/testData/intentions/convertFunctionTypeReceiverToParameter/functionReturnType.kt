@@ -1,3 +1,8 @@
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'i' is never used, could be renamed to _
+// AFTER-WARNING: Parameter 'i' is never used, could be renamed to _
+// AFTER-WARNING: Parameter 'it' is never used, could be renamed to _
+// AFTER-WARNING: Parameter 'it' is never used, could be renamed to _
 open class Foo {
     open fun foo(f: Int.(Boolean) -> String): In<caret>t.(Boolean) -> String {
         return bar(f)

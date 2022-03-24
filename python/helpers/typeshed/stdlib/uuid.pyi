@@ -1,13 +1,13 @@
 import sys
-from typing import Any, Optional, Tuple
 
 # Because UUID has properties called int and bytes we need to rename these temporarily.
 _Int = int
 _Bytes = bytes
-_FieldsType = Tuple[int, int, int, int, int, int]
+_FieldsType = tuple[int, int, int, int, int, int]
 
 if sys.version_info >= (3, 7):
     from enum import Enum
+
     class SafeUUID(Enum):
         safe: int
         unsafe: int
@@ -17,12 +17,12 @@ class UUID:
     if sys.version_info >= (3, 7):
         def __init__(
             self,
-            hex: Optional[str] = ...,
-            bytes: Optional[_Bytes] = ...,
-            bytes_le: Optional[_Bytes] = ...,
-            fields: Optional[_FieldsType] = ...,
-            int: Optional[_Int] = ...,
-            version: Optional[_Int] = ...,
+            hex: str | None = ...,
+            bytes: _Bytes | None = ...,
+            bytes_le: _Bytes | None = ...,
+            fields: _FieldsType | None = ...,
+            int: _Int | None = ...,
+            version: _Int | None = ...,
             *,
             is_safe: SafeUUID = ...,
         ) -> None: ...
@@ -31,13 +31,14 @@ class UUID:
     else:
         def __init__(
             self,
-            hex: Optional[str] = ...,
-            bytes: Optional[_Bytes] = ...,
-            bytes_le: Optional[_Bytes] = ...,
-            fields: Optional[_FieldsType] = ...,
-            int: Optional[_Int] = ...,
-            version: Optional[_Int] = ...,
+            hex: str | None = ...,
+            bytes: _Bytes | None = ...,
+            bytes_le: _Bytes | None = ...,
+            fields: _FieldsType | None = ...,
+            int: _Int | None = ...,
+            version: _Int | None = ...,
         ) -> None: ...
+
     @property
     def bytes(self) -> _Bytes: ...
     @property
@@ -69,16 +70,16 @@ class UUID:
     @property
     def variant(self) -> str: ...
     @property
-    def version(self) -> Optional[_Int]: ...
+    def version(self) -> _Int | None: ...
     def __int__(self) -> _Int: ...
-    def __eq__(self, other: Any) -> bool: ...
-    def __lt__(self, other: Any) -> bool: ...
-    def __le__(self, other: Any) -> bool: ...
-    def __gt__(self, other: Any) -> bool: ...
-    def __ge__(self, other: Any) -> bool: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __lt__(self, other: UUID) -> bool: ...
+    def __le__(self, other: UUID) -> bool: ...
+    def __gt__(self, other: UUID) -> bool: ...
+    def __ge__(self, other: UUID) -> bool: ...
 
 def getnode() -> int: ...
-def uuid1(node: Optional[_Int] = ..., clock_seq: Optional[_Int] = ...) -> UUID: ...
+def uuid1(node: _Int | None = ..., clock_seq: _Int | None = ...) -> UUID: ...
 def uuid3(namespace: UUID, name: str) -> UUID: ...
 def uuid4() -> UUID: ...
 def uuid5(namespace: UUID, name: str) -> UUID: ...

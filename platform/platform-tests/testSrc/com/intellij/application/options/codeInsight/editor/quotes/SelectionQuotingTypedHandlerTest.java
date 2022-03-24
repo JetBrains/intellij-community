@@ -93,7 +93,7 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
   public void testMultipleCarets() {
     doTest("\"",
            "aa<caret>a <selection><caret>bbb</selection> c<selection>c<caret>c</selection>",
-           "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection><caret>cc</selection>\"");
+           "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection>cc<caret></selection>\"");
   }
 
   public void testUpdatePairQuote() {

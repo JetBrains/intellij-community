@@ -17,7 +17,7 @@ Suggested files are listed as <b>People who change the files in the active chang
   <actions>
     <action id="ChangesView.ViewOptions.ShowRelatedFiles"
             class="com.jetbrains.changeReminder.changes.ChangeReminderCheckAction"
-            icon="AllIcons.Actions.ShowHiddens">
+            icon="AllIcons.Actions.ToggleVisibility">
       <add-to-group group-id="ChangesView.ViewOptions"/>
     </action>
   </actions>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -737,11 +737,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrCaseSection createSwitchSection(@NotNull String text) {
     final GrStatement statement = createStatementFromText("switch (a) {\n" + text + "\n}");
-    if (!(statement instanceof GrSwitchStatement)) {
+    if (!(statement instanceof GrSwitchElement)) {
       throw new IncorrectOperationException("Cannot create switch section from text: " + text);
     }
 
-    final GrCaseSection[] sections = ((GrSwitchStatement)statement).getCaseSections();
+    final GrCaseSection[] sections = ((GrSwitchElement)statement).getCaseSections();
     if (sections.length != 1) throw new IncorrectOperationException("Cannot create switch section from text: " + text);
     return sections[0];
   }
@@ -992,6 +992,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrTraitTypeDefinition createTrait(@NotNull String name) {
     return (GrTraitTypeDefinition)createTypeDefinition("trait " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public GrTraitTypeDefinition createRecord(@NotNull String name) {
+    return (GrTraitTypeDefinition)createTypeDefinition("record " + name + "() {}");
   }
 
   @NotNull

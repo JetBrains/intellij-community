@@ -59,7 +59,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>${dlr}{junit.version}</junit.version>
+              <junit.version>5.8.2</junit.version>
           </properties>
 
           <dependencies>
@@ -93,7 +93,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.apache.maven.plugins</groupId>
                       <artifactId>maven-compiler-plugin</artifactId>
-                      <version>3.8.1</version>
+                      <version>3.10.1</version>
                       <configuration>
                           <source>11</source>
                           <target>11</target>
@@ -102,13 +102,19 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.openjfx</groupId>
                       <artifactId>javafx-maven-plugin</artifactId>
-                      <version>0.0.6</version>
+                      <version>0.0.8</version>
                       <executions>
                           <execution>
                               <!-- Default configuration for running with: mvn clean javafx:run -->
                               <id>default-cli</id>
                               <configuration>
                                   <mainClass>com.example.demo/com.example.demo.HelloApplication</mainClass>
+                                  <launcher>app</launcher>
+                                  <jlinkZipName>app</jlinkZipName>
+                                  <jlinkImageName>app</jlinkImageName>
+                                  <noManPages>true</noManPages>
+                                  <stripDebug>true</stripDebug>
+                                  <noHeaderFiles>true</noHeaderFiles>
                               </configuration>
                           </execution>
                       </executions>
@@ -144,12 +150,13 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           }
       }
     """.trimIndent())
-
+    val dlr = "\$"
     expectFile("build.gradle", """
       plugins {
           id 'java'
           id 'application'
           id 'org.openjfx.javafxplugin' version '0.0.10'
+          id 'org.beryx.jlink' version '2.24.1'
       }
 
       group 'com.example'
@@ -178,11 +185,23 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
       dependencies {
 
-          testImplementation('org.testng:testng:7.4.0')
+          testImplementation('org.testng:testng:7.5')
       }
 
       test {
           useTestNG()
+      }
+      
+      jlink {
+          imageZip = project.file("${dlr}{buildDir}/distributions/app-${dlr}{javafx.platform.classifier}.zip")
+          options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+          launcher {
+              name = 'app'
+          }
+      }
+
+      jlinkZip {
+          group = 'distribution'
       }
     """.trimIndent())
 

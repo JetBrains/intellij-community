@@ -387,7 +387,7 @@ abstract class KtAbstractContainerWrapper(internal val fqName: FqName, private v
         InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass)
 
     override fun isAnnotationType() = false
-    override fun findMethodsAndTheirSubstitutorsByName(name: String?, checkBases: Boolean) =
+    override fun findMethodsAndTheirSubstitutorsByName(name: String, checkBases: Boolean) =
         PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases)
 
     override fun getInnerClasses() = PsiClass.EMPTY_ARRAY

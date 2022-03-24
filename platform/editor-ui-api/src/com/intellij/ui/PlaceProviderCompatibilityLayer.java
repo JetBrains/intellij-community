@@ -7,7 +7,7 @@ package com.intellij.ui;
  * be used directly.
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface PlaceProviderCompatibilityLayer {
   Object getPlace();
 }

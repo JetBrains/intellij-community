@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -39,8 +38,7 @@ import java.util.List;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   protected final Project myProject;
 
@@ -77,13 +75,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
+    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode<?>)nodeDescriptor).isAlwaysShowPlus();
   }
 
   @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getParentDescriptor() == null ||
-           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
+           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode<?>)nodeDescriptor).isAlwaysExpand();
   }
 
   @Override
@@ -101,7 +99,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private static VirtualFile getFileToRefresh(Object element) {
     Object object = element;
     if (element instanceof AbstractTreeNode) {
-      object = ((AbstractTreeNode)element).getValue();
+      object = ((AbstractTreeNode<?>)element).getValue();
     }
 
     return object instanceof PsiDirectory
@@ -131,8 +129,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   /**
    * @deprecated Use {@link #selectAsync}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
     return Promises.toActionCallback(_select(element, file, requestFocus, Conditions.alwaysTrue()));
@@ -271,7 +268,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       return async;
     }
 
-    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) {
+    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode<?>)root).contains(file)) {
       async.setError("not applicable");
       return async;
     }

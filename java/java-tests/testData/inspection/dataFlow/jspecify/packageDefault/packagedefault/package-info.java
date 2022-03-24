@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-@DefaultNonNull
+@NullMarked
 package packagedefault;
 
-import org.jspecify.annotations.DefaultNonNull;
+import org.jspecify.nullness.NullMarked;

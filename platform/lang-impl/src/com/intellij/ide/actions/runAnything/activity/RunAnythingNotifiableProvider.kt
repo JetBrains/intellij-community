@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity
 
 import com.intellij.icons.AllIcons.Actions.Run_anything
@@ -7,7 +7,7 @@ import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.ERROR
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.SUCCESS
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType.INFORMATION
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -22,8 +22,7 @@ import com.intellij.openapi.util.NlsActions
  */
 abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
 
-  private val RUN_ANYTHING_GROUP_ID = NotificationGroup.createIdWithTitle("Run Anything", IdeBundle.message(
-    "run.anything.custom.activity.notification.group.id"))
+  private val runAnythingGroup = NotificationGroupManager.getInstance().getNotificationGroup("Run Anything")
 
   private val notificationConfigurators = LinkedHashMap<ExecutionStatus, NotificationBuilder.() -> Unit>()
 
@@ -72,7 +71,7 @@ abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
     }
 
     fun build(): Notification {
-      val notification = Notification(RUN_ANYTHING_GROUP_ID, content, INFORMATION).setIcon(Run_anything).setTitle(title, subtitle)
+      val notification = runAnythingGroup.createNotification(content, INFORMATION).setIcon(Run_anything).setTitle(title, subtitle)
       for (actionData in actions) {
         val action = object : AnAction(actionData.name) {
           override fun actionPerformed(e: AnActionEvent) {

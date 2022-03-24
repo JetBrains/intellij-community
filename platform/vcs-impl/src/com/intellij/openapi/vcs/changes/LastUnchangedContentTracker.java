@@ -90,11 +90,11 @@ public final class LastUnchangedContentTracker {
 
     long stamp = file.getTimeStamp();
     try {
-      try (DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file)) {
+      try (DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeFileAttribute(file)) {
         contentStream.writeInt(contentId);
       }
 
-      try (DataOutputStream tsStream = LAST_TS_ATTR.writeAttribute(file)) {
+      try (DataOutputStream tsStream = LAST_TS_ATTR.writeFileAttribute(file)) {
         tsStream.writeLong(stamp);
       }
 
@@ -120,7 +120,7 @@ public final class LastUnchangedContentTracker {
     }
 
     Integer oldContentId = null;
-    try(final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file)) {
+    try(final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readFileAttribute(file)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("getSavedContentId for " + file + "; stream=" + stream);
       }
@@ -142,7 +142,7 @@ public final class LastUnchangedContentTracker {
   private static Long getLastSavedStamp(VirtualFile file) {
     Long l = file.getUserData(LAST_TS_KEY);
     if (l == null) {
-      try (final DataInputStream stream = LAST_TS_ATTR.readAttribute(file)) {
+      try (final DataInputStream stream = LAST_TS_ATTR.readFileAttribute(file)) {
         if (stream != null) {
           l = stream.readLong();
         }

@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 // test that sinple prefix matching is used for keywords
 
 p<caret>

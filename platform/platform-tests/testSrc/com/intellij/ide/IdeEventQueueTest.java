@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -173,7 +173,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {
     assert SwingUtilities.isEventDispatchThread();
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.INSTANCE, null); // ControlFlowException silently ignored
+    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.create(), null); // ControlFlowException silently ignored
     throwInIdeEventQueueDispatch(new ProcessCanceledException(), null);  // ControlFlowException silently ignored
     Error error = new Error();
     throwInIdeEventQueueDispatch(error, error);
@@ -186,23 +186,18 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       ExceptionUtil.rethrow(toThrow);
     });
     AtomicReference<Throwable> error = new AtomicReference<>();
-    LoggedErrorProcessor old = LoggedErrorProcessor.getInstance();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
         assertNull(error.get());
         error.set(t);
         return false;
       }
+    }, () -> {
+      IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
+      ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
     });
 
-    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    try {
-      ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(old);
-    }
     assertTrue(run.get());
     assertSame(expectedToBeLogged, error.get());
   }

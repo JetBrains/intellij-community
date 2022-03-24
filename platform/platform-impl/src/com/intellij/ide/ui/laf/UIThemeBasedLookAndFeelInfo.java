@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 /**
@@ -45,6 +46,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
+    SVGLoader.setSelectionColorPatcherProvider(myTheme.getSelectionColorPatcher());
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = myTheme.getColorPatcher();
     if (colorPatcher != null) {
@@ -56,6 +58,11 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       installEditorScheme();
     }
     myInitialised = true;
+  }
+
+  public void uninstallTheme() {
+    myInitialised = false;
+    myTheme.setProviderClassLoader(null);
   }
 
   public boolean isInitialised() {
@@ -95,7 +102,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       }
 
       try (stream) {
-        Files.copy(stream, tmpImage);
+        Files.copy(stream, tmpImage, StandardCopyOption.REPLACE_EXISTING);
       }
 
       Object transparency = backgroundProps.get("transparency");

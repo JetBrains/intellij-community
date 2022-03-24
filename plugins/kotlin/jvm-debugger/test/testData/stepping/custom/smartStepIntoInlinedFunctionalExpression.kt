@@ -11,6 +11,18 @@ fun main(args: Array<String>) {
     myClass.f1(fun () { test() })
            .f2(fun () { test() })
 
+    // RESUME: 1
+    //Breakpoint!
+    test()
+    // STEP_OVER: 1
+    // SMART_STEP_INTO_BY_INDEX: 2
+    // smart step into f1.invoke(), one-line lambda
+    myClass.f1(fun () { test() })
+        .f2(fun () { test() })
+
+    // RESUME: 1
+    //Breakpoint!
+    test()
     // STEP_OVER: 1
     // SMART_STEP_INTO_BY_INDEX: 2
     // smart step into map.invoke(), multiline lambda
@@ -18,6 +30,9 @@ fun main(args: Array<String>) {
         return it * 2
     })
 
+    // RESUME: 1
+    //Breakpoint!
+    test()
     // STEP_OVER: 1
     // SMART_STEP_INTO_BY_INDEX: 4
     // smart step into filter.invoke()
@@ -26,6 +41,20 @@ fun main(args: Array<String>) {
             return it > 2
          })
 
+    // RESUME: 1
+    //Breakpoint!
+    test()
+    // STEP_OVER: 1
+    // SMART_STEP_INTO_BY_INDEX: 2
+    // smart step into map.invoke()
+    array.map(fun (it): Int { return it * 2 })
+        .filter(fun (it): Boolean {
+            return it > 2
+        })
+
+    // RESUME: 1
+    //Breakpoint!
+    test()
     // STEP_OVER: 1
     // SMART_STEP_INTO_BY_INDEX: 2
     myClass.f3(fun () = myClass.f3 {

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.ui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -161,7 +160,7 @@ public class TerminalContainer {
   }
 
   private void processSingleTerminalCompleted() {
-    if (myForceHideUiWhenSessionEnds || TerminalOptionsProvider.getInstance().closeSessionOnLogout()) {
+    if (myForceHideUiWhenSessionEnds || TerminalOptionsProvider.getInstance().getCloseSessionOnLogout()) {
       myTerminalView.closeTab(myContent);
     }
     else {

@@ -12,66 +12,18 @@ tests under TeamCity build.
 """
 
 import os
-import pprint
-import sys
 import re
+import sys
 import traceback
 from datetime import timedelta
 
-from teamcity.messages import TeamcityServiceMessages
-from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
-from teamcity import is_running_under_teamcity
 from teamcity import diff_tools
+from teamcity import is_running_under_teamcity
+from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
+from teamcity.messages import TeamcityServiceMessages
 
 diff_tools.patch_unittest_diff()
-
-
-def unformat_pytest_explanation(s):
-    """
-    Undo _pytest.assertion.util.format_explanation
-    """
-    return s.replace("\\n", "\n")
-
-
-def fetch_diff_error_from_message(err_message, swap_diff):
-    line_with_diff = None
-    diff_error_message = None
-    lines = err_message.split("\n")
-    if err_message.startswith("AssertionError: assert"):
-        # Everything in one line
-        line_with_diff = lines[0][len("AssertionError: assert "):]
-    elif len(err_message.split("\n")) > 1:
-        err_line = lines[1]
-        line_with_diff = err_line[len("assert "):]
-        diff_error_message = lines[0]
-
-    if line_with_diff and line_with_diff.count("==") == 1:
-        parts = [x.strip() for x in line_with_diff.split("==")]
-        parts = [s[1:-1] if s.startswith("'") or s.startswith('"') else s for s in parts]
-        # Pytest cuts too long lines, no need to check is_too_big
-        expected, actual = parts[1], parts[0]
-
-        if swap_diff:
-            expected, actual = actual, expected
-
-        expected = unformat_pytest_explanation(expected)
-        actual = unformat_pytest_explanation(actual)
-
-        return diff_tools.EqualsAssertionError(expected, actual, diff_error_message)
-    else:
-        return None
-
-
-def _is_bool_supported():
-    """
-    Type "bool" is not supported before 2.9
-    """
-    try:
-        from pytest import __version__
-        from distutils import version
-        return version.LooseVersion(str(__version__)) >= version.LooseVersion("2.9")
-    except ImportError:
-        return False
+_ASSERTION_FAILURE_KEY = '_teamcity_assertion_failure'
 
 
 def pytest_addoption(parser):
@@ -84,8 +36,7 @@ def pytest_addoption(parser):
     parser.addoption('--jb-swapdiff', action="store_true", dest="swapdiff", default=False, help="Swap actual/expected in diff")
 
     kwargs = {"help": "skip output of passed tests for JetBrains TeamCity service messages"}
-    if _is_bool_supported():
-        kwargs.update({"type": "bool"})
+    kwargs.update({"type": "bool"})
 
     parser.addini("skippassedoutput", **kwargs)
     parser.addini("swapdiff", **kwargs)
@@ -137,6 +88,7 @@ class EchoTeamCityMessages(object):
 
         self.teamcity = TeamcityServiceMessages()
         self.test_start_reported_mark = set()
+        self.current_test_item = None
 
         self.max_reported_output_size = 1 * 1024 * 1024
         self.reported_output_chunk_size = 50000
@@ -221,6 +173,10 @@ class EchoTeamCityMessages(object):
             test_name = str(test_name).split(".")[-1]
         self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name)
 
+    def pytest_runtest_protocol(self, item):
+        self.current_test_item = item
+        return None  # continue to next hook
+
     def ensure_test_start_reported(self, test_id, metainfo=None):
         if test_id not in self.test_start_reported_mark:
             if self.output_capture_enabled:
@@ -277,13 +233,12 @@ class EchoTeamCityMessages(object):
                 serialized_data = err_message[err_message.index(diff_name) + len(diff_name) + 1:]
                 diff_error = diff_tools.deserialize_error(serialized_data)
 
-            # AssertionError is patched in py.test, we can try to fetch diff from it
-            # In general case message starts with "AssertionError: ", but can also starts with "assert" for top-level
-            # function. To support both cases we unify them
-            if err_message.startswith("assert"):
-                err_message = "AssertionError: " + err_message
-            if err_message.startswith("AssertionError:"):
-                diff_error = fetch_diff_error_from_message(err_message, self.swap_diff)
+            assertion_tuple = getattr(self.current_test_item, _ASSERTION_FAILURE_KEY, None)
+            if assertion_tuple:
+                op, left, right = assertion_tuple
+                if self.swap_diff:
+                    left, right = right, left
+                diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
         except Exception:
             pass
 
@@ -302,7 +257,7 @@ class EchoTeamCityMessages(object):
                 strace = strace[0:strace.index(data_postfix)].strip()
                 if strace.endswith(":") and diff_error.real_exception:
                     strace += " " + type(diff_error.real_exception).__name__
-            self.teamcity.testFailed(test_id, diff_error.msg if diff_error.msg else message, strace,
+            self.teamcity.testFailed(test_id, diff_error.msg or message, strace,
                                      flowId=test_id,
                                      comparison_failure=diff_error
                                      )
@@ -327,8 +282,7 @@ class EchoTeamCityMessages(object):
         self.report_test_finished(test_id, duration)
 
     def pytest_assertrepr_compare(self, config, op, left, right):
-        if op in ('==', '!='):
-            return ['{0} {1} {2}'.format(pprint.pformat(left), op, pprint.pformat(right))]
+        setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, left, right))
 
     def pytest_runtest_logreport(self, report):
         """

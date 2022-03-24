@@ -5,7 +5,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
@@ -171,7 +171,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
         return List.of((DataProvider)this::getSlowData);
       }
       return null;

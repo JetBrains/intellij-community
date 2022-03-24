@@ -1,7 +1,0 @@
-{
-    "mainFile": "Main.kt",
-    "usages": [
-        "Doo.kt",
-        "Foo.kt"
-    ]
-}

@@ -97,6 +97,12 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     if (arrayPsiVar != null) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement(arrayPsiVar, index);
       if (constantArrayElement != null) {
+        PsiType elementType = constantArrayElement.getType();
+        if (componentType instanceof DfReferenceType && elementType instanceof PsiPrimitiveType &&
+            !TypeConstraint.fromDfType(componentType).isPrimitiveWrapper()) {
+          componentType = DfTypes.typedObject(((PsiPrimitiveType)elementType).getBoxedType(constantArrayElement), Nullability.UNKNOWN)
+            .meet(componentType);
+        }
         return getAdvancedExpressionDfaValue(factory, constantArrayElement, componentType);
       }
     }

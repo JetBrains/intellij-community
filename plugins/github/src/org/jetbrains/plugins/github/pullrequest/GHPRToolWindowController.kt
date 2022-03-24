@@ -1,27 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 
 @Service
 internal class GHPRToolWindowController(private val project: Project) : Disposable {
-  private val repositoryManager = project.service<GHProjectRepositoriesManager>()
-
-  init {
-    repositoryManager.addRepositoryListChangedListener(this) {
-      ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.isAvailable = isAvailable()
-    }
-  }
-
   @RequiresEdt
-  fun isAvailable(): Boolean = repositoryManager.knownRepositories.isNotEmpty()
+  fun isAvailable(): Boolean {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID) ?: return false
+    return toolWindow.isAvailable
+  }
 
   @RequiresEdt
   fun activate(onActivated: ((GHPRToolWindowTabController) -> Unit)? = null) {
@@ -34,9 +27,11 @@ internal class GHPRToolWindowController(private val project: Project) : Disposab
     }
   }
 
-  fun getTabController(): GHPRToolWindowTabController? = ToolWindowManager.getInstance(project)
-    .getToolWindow(GHPRToolWindowFactory.ID)
-    ?.let { it.contentManagerIfCreated?.selectedContent?.getUserData(GHPRToolWindowTabController.KEY) }
+  fun getTabController(): GHPRToolWindowTabController? {
+    return ToolWindowManager.getInstance(project)
+      .getToolWindow(GHPRToolWindowFactory.ID)
+      ?.let { it.contentManagerIfCreated?.selectedContent?.getUserData(GHPRToolWindowTabController.KEY) }
+  }
 
   override fun dispose() {
   }

@@ -164,12 +164,15 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
     ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
-      .subscribe(EditorHintListener.TOPIC, (project, newHint, newHintFlags) -> {
-        // Ex: if popup re-shown by ToggleByWordDiffAction
-        if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel) {
-          LineStatusMarkerPopupPanel newPopupPanel = (LineStatusMarkerPopupPanel)newHint.getComponent();
-          if (newPopupPanel.getEditor().equals(editor)) {
-            hint.hide();
+      .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+        @Override
+        public void hintShown(Project project, @NotNull LightweightHint newHint, int flags) {
+          // Ex: if popup re-shown by ToggleByWordDiffAction
+          if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel) {
+            LineStatusMarkerPopupPanel newPopupPanel = (LineStatusMarkerPopupPanel)newHint.getComponent();
+            if (newPopupPanel.getEditor().equals(editor)) {
+              hint.hide();
+            }
           }
         }
       });
@@ -278,16 +281,34 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   public static void installMasterEditorWordHighlighters(@NotNull Editor editor,
-                                                         int currentStartOffset,
+                                                         int startLine,
+                                                         int endLine,
                                                          @NotNull List<? extends DiffFragment> wordDiff,
                                                          @NotNull Disposable parentDisposable) {
-    final List<RangeHighlighter> highlighters = new ArrayList<>();
+    TextRange currentTextRange = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
+
+    DiffDrawUtil.setupLayeredRendering(editor, startLine, endLine,
+                                       DiffDrawUtil.LAYER_PRIORITY_LST, parentDisposable);
+
+    int currentStartOffset = currentTextRange.getStartOffset();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
+
+    highlighters.addAll(
+      new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
+        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+        .withIgnored(true)
+        .withHideStripeMarkers(true)
+        .withHideGutterMarkers(true)
+        .done());
+
     for (DiffFragment fragment : wordDiff) {
       int currentStart = currentStartOffset + fragment.getStartOffset2();
       int currentEnd = currentStartOffset + fragment.getEndOffset2();
       TextDiffType type = getDiffType(fragment);
 
-      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
+      highlighters.addAll(new DiffDrawUtil.InlineHighlighterBuilder(editor, currentStart, currentEnd, type)
+                            .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+                            .done());
     }
 
     Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));

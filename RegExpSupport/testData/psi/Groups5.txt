@@ -5,7 +5,7 @@ REGEXP_FILE
         PsiElement(GROUP_BEGIN)('(')
         RegExpPatternImpl: <*>
           RegExpBranchImpl: <*>
-            PsiErrorElement:Dangling metacharacter
+            PsiErrorElement:Dangling quantifier '*'
               <empty list>
             PsiElement(STAR)('*')
         PsiElement(GROUP_END)(')')

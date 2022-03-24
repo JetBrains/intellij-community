@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -14,15 +14,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,11 +28,12 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
-
   companion object {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
@@ -44,6 +43,9 @@ class IndexDiagnosticDumper : Disposable {
     private const val fileNamePrefix = "diagnostic-"
 
     @JvmStatic
+    val projectIndexingHistoryListenerEpName = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
+
+    @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
@@ -51,12 +53,30 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
       get() =
-        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 300)
 
     @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+
+    @JvmStatic
+    val shouldDumpProviderRootPaths: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
+
+    /**
+     * Some processes may be done in multiple threads, like content loading,
+     * see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.doIndexFiles]
+     * Such processes have InAllThreads time and visible time, see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.indexFiles],
+     * [ProjectIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
+     *
+     * This property allows to provide more details on those times and ratio in html
+     */
+    @JvmStatic
+    val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
 
     @JvmStatic
     @TestOnly
@@ -70,6 +90,14 @@ class IndexDiagnosticDumper : Disposable {
 
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
       jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
+
+    fun clearDiagnostic() {
+      if (indexingDiagnosticDir.exists()) {
+        indexingDiagnosticDir.directoryStreamIfExists { dirStream ->
+          dirStream.forEach { FileUtil.deleteWithRenaming(it) }
+        }
+      }
+    }
 
     val indexingDiagnosticDir: Path by lazy {
       val logPath = PathManager.getLogPath()
@@ -85,21 +113,11 @@ class IndexDiagnosticDumper : Disposable {
 
   private var isDisposed = false
 
-  interface ProjectIndexingHistoryListener {
-    companion object {
-      val EP_NAME = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
-    }
-
-    fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
-
-    fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
-  }
-
-  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistory) {
+  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
   }
 
-  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistory) {
+  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
@@ -107,6 +125,7 @@ class IndexDiagnosticDumper : Disposable {
       if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
+      projectIndexingHistory.indexingFinished()
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
     }
     finally {
@@ -116,7 +135,7 @@ class IndexDiagnosticDumper : Disposable {
 
   private fun runAllListenersSafely(block: ProjectIndexingHistoryListener.() -> Unit) {
     val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
-      ProjectIndexingHistoryListener.EP_NAME.extensionList
+      projectIndexingHistoryListenerEpName.extensionList
     }
     for (listener in listeners) {
       try {
@@ -133,7 +152,7 @@ class IndexDiagnosticDumper : Disposable {
   }
 
   @Synchronized
-  private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
+  private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
       check(!isDisposed)
 
@@ -148,8 +167,9 @@ class IndexDiagnosticDumper : Disposable {
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
       val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
+      val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(projectIndexingHistory.project)
       indexDiagnosticDirectory.resolve("report.html").write(
-        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents)
+        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
       )
     }
     catch (e: Exception) {

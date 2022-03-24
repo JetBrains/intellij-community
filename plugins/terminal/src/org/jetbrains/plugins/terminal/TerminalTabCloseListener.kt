@@ -28,7 +28,8 @@ class TerminalTabCloseListener(val content: Content,
     if (widget == null || !widget.isSessionRunning) {
       return true
     }
-    val connector = ShellTerminalWidget.getProcessTtyConnector(widget.ttyConnector);    try {
+    val connector = ShellTerminalWidget.getProcessTtyConnector(widget.ttyConnector)
+    try {
       if (connector != null && !TerminalUtil.hasRunningCommands(connector)) {
         return true
       }

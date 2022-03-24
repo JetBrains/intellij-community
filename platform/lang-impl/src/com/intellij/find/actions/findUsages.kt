@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
@@ -7,10 +7,8 @@ import com.intellij.find.FindSettings
 import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
-import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
-import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
@@ -34,20 +32,7 @@ private fun <O> findUsages(showDialog: Boolean,
                            target: SearchTarget,
                            handler: UsageHandler<O>,
                            selectedScope: SearchScope) {
-  val persistedOptions: PersistedSearchOptions = getSearchOptions(SearchVariant.FIND_USAGES, target)
-  val allOptions = AllSearchOptions(
-    options = UsageOptions.createOptions(persistedOptions.usages, selectedScope),
-    textSearch = if (target.hasTextSearchStrings()) persistedOptions.textSearch else null,
-    customOptions = handler.getCustomOptions(UsageHandler.UsageAction.FIND_USAGES)
-  )
-  findUsages(showDialog, project, target, handler, allOptions)
-}
-
-private fun <O> findUsages(showDialog: Boolean,
-                           project: Project,
-                           target: SearchTarget,
-                           handler: UsageHandler<O>,
-                           allOptions: AllSearchOptions<O>) {
+  val allOptions = getSearchOptions(SearchVariant.FIND_USAGES, target, handler, selectedScope)
   if (showDialog) {
     val canReuseTab = canReuseTab(project)
     val dialog = UsageOptionsDialog(project, target.displayString, handler, allOptions, target.showScopeChooser(), canReuseTab)

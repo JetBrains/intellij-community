@@ -32,7 +32,7 @@ public abstract class FileStatusManager {
   /**
    * @deprecated Please use overload with parent disposable
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
 
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);

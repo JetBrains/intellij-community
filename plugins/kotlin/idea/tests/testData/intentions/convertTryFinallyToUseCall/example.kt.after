@@ -1,4 +1,9 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// TODO: seems a bug
+// AFTER-WARNING: Name shadowed: reader
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Parameter 'reader' is never used, could be renamed to _
+
 import java.io.File
 
 fun main(args: Array<String>) {

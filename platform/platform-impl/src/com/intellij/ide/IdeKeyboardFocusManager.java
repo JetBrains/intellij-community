@@ -15,31 +15,47 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
+import javax.swing.*;
+import javax.swing.FocusManager;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.function.Consumer;
+/**
+ * We extend the obsolete {@link DefaultFocusManager} class here instead of {@link KeyboardFocusManager} to prevent unwanted overwriting of
+ * the default focus traversal policy by careless clients. In case they use the obsolete {@link FocusManager#getCurrentManager} method
+ * instead of {@link KeyboardFocusManager#getCurrentKeyboardFocusManager()}, the former will override the default focus traversal policy,
+ * if current focus manager doesn't extend {@link FocusManager}. We choose to extend {@link DefaultFocusManager}, not just
+ * {@link FocusManager} for the reasons described in {@link DelegatingDefaultFocusManager}'s javadoc - just in case some legacy code expects
+ * it.
+ */
+class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above */ {
+  private static final Logger LOG = Logger.getInstance(IdeKeyboardFocusManager.class);
 
-class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
-  private Consumer<KeyEvent> onTypeaheadFinished = __ -> {};
-
-  public void setTypeaheadHandler(@NotNull Consumer<KeyEvent> onTypeaheadFinished) {
-    this.onTypeaheadFinished = onTypeaheadFinished;
-  }
-
-  @NotNull
-  protected Consumer<KeyEvent> getOnTypeaheadFinishedHandler () {
-    return onTypeaheadFinished;
-  }
+  // Don't inline this field, it's here to prevent policy override by parent's constructor. Don't make it final either.
+  @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"}) private boolean parentConstructorExecuted = true;
 
   @Override
   public boolean dispatchEvent(AWTEvent e) {
-    try (AccessToken ignore = EventQueue.isDispatchThread() ? IdeEventQueue.startActivity(e) : null) {
+    if (EventQueue.isDispatchThread()) {
+      boolean[] result = {false};
+      IdeEventQueue.performActivity(e, () -> result[0] = super.dispatchEvent(e));
+      return result[0];
+    }
+    else {
       return super.dispatchEvent(e);
+    }
+  }
+
+  @Override
+  public void setDefaultFocusTraversalPolicy(FocusTraversalPolicy defaultPolicy) {
+    if (parentConstructorExecuted) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("setDefaultFocusTraversalPolicy: " + defaultPolicy, new Throwable());
+      }
+      super.setDefaultFocusTraversalPolicy(defaultPolicy);
     }
   }
 

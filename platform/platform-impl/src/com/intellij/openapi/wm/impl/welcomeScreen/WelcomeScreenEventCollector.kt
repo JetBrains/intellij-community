@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.keymap.Keymap
@@ -16,7 +17,7 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
 
   internal companion object {
 
-    private val GROUP = EventLogGroup("welcomescreen.interaction", 2)
+    private val GROUP = EventLogGroup("welcomescreen.interaction", 3)
 
     private val shown = GROUP.registerEvent("screen.shown", EventFields.Boolean("first_start"), EventFields.Boolean("config_imported"))
 
@@ -28,9 +29,14 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
     private val lafChanged = GROUP.registerEvent("laf.changed", EventFields.StringValidatedByEnum("theme_name", "look_and_feel"),
                                                  EventFields.Boolean("sync_os"))
 
-    private val ideFontChanged = GROUP.registerEvent("ide.font.changed", EventFields.Int("old_font_size"), EventFields.Int("new_font_size"))
-    private val editorFontChanged = GROUP.registerEvent("editor.font.changed", EventFields.Int("old_font_size"),
-                                                        EventFields.Int("new_font_size"))
+    private val OLD_FONT_SIZE = EventFields.Int("old_font_size")
+    private val NEW_FONT_SIZE = EventFields.Int("new_font_size")
+    private val OLD_FONT_SIZE_2D = EventFields.Float("old_font_size_2d")
+    private val NEW_FONT_SIZE_2D = EventFields.Float("new_font_size_2d")
+    private val ideFontChanged = GROUP.registerVarargEvent("ide.font.changed",
+                                                           OLD_FONT_SIZE, NEW_FONT_SIZE, OLD_FONT_SIZE_2D, NEW_FONT_SIZE_2D)
+    private val editorFontChanged = GROUP.registerVarargEvent("editor.font.changed",
+                                                              OLD_FONT_SIZE, NEW_FONT_SIZE, OLD_FONT_SIZE_2D, NEW_FONT_SIZE_2D)
     private val colorBlindnessChanged = GROUP.registerEvent("color.blindness.changed", EventFields.Boolean("enabled"))
     private val keymapChanged = GROUP.registerEvent("keymap.changed", EventFields.StringValidatedByEnum("keymap_name", "keymaps"))
     private val pluginsModified = GROUP.registerEvent("plugins.modified")
@@ -53,9 +59,13 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
 
     fun logLafChanged(laf: UIManager.LookAndFeelInfo, osSync: Boolean) = lafChanged.log(laf.name, osSync)
 
-    fun logIdeFontChanged(oldSize: Int, newSize: Int) = ideFontChanged.log(oldSize, newSize)
+    fun logIdeFontChanged(oldSize: Float, newSize: Float) = ideFontChanged.log(
+      OLD_FONT_SIZE.with((oldSize + 0.5).toInt()), NEW_FONT_SIZE.with((newSize + 0.5).toInt()),
+      OLD_FONT_SIZE_2D.with(oldSize), NEW_FONT_SIZE_2D.with(newSize))
 
-    fun logEditorFontChanged(oldSize: Int, newSize: Int) = editorFontChanged.log(oldSize, newSize)
+    fun logEditorFontChanged(oldSize: Float, newSize: Float) = editorFontChanged.log(
+      OLD_FONT_SIZE.with((oldSize + 0.5).toInt()), NEW_FONT_SIZE.with((newSize + 0.5).toInt()),
+      OLD_FONT_SIZE_2D.with(oldSize), NEW_FONT_SIZE_2D.with(newSize))
 
     fun logColorBlindnessChanged(enabled: Boolean) = colorBlindnessChanged.log(enabled)
 

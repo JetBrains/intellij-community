@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +32,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
     private JLabel myFieldVisibilityCb;
     private JLabel myMethodVisibilityCb;
     private JLabel myMethodParameterVisibilityCb;
+    private JCheckBox myCheckParameterExcludingHierarchyCheckBox;
     private JCheckBox myInnerClassesCheckBox;
     private JLabel myInnerClassVisibilityCb;
 
@@ -55,6 +43,8 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckMethodsCheckBox.setSelected(METHOD);
       myInnerClassesCheckBox.setSelected(INNER_CLASS);
       myCheckParametersCheckBox.setSelected(PARAMETER);
+      myCheckParameterExcludingHierarchyCheckBox.setSelected(myCheckParameterExcludingHierarchy);
+      myCheckParameterExcludingHierarchyCheckBox.setBorder(JBUI.Borders.emptyLeft(5));
       myAccessors.setSelected(!isIgnoreAccessors());
       updateEnableState();
 
@@ -68,6 +58,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           METHOD = myCheckMethodsCheckBox.isSelected();
           setIgnoreAccessors(!myAccessors.isSelected());
           PARAMETER = myCheckParametersCheckBox.isSelected();
+          setCheckParameterExcludingHierarchy(myCheckParameterExcludingHierarchyCheckBox.isSelected());
 
           updateEnableState();
         }
@@ -77,6 +68,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckMethodsCheckBox.addActionListener(listener);
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
+      myCheckParameterExcludingHierarchyCheckBox.addActionListener(listener);
       myInnerClassesCheckBox.addActionListener(listener);
       myAccessors.addActionListener(listener);
      }
@@ -87,6 +79,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
       UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
       UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
+      setEnabledExcludingHierarchyCheckbox(getParameterVisibility());
       myAccessors.setEnabled(METHOD);
     }
 
@@ -114,7 +107,10 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
 
       myMethodParameterVisibilityCb = new VisibilityModifierChooser(() -> PARAMETER,
                                                                     myParameterVisibility,
-                                                                    modifier -> setParameterVisibility(modifier));
+                                                                    modifier -> {
+                                                                      setParameterVisibility(modifier);
+                                                                      setEnabledExcludingHierarchyCheckbox(modifier);
+                                                                    });
 
       myAccessors = new JCheckBox() {
         @Override
@@ -122,6 +118,10 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
           super.setEnabled(b && METHOD);
         }
       };
+    }
+
+    private void setEnabledExcludingHierarchyCheckbox(@Nullable String modifier) {
+      myCheckParameterExcludingHierarchyCheckBox.setVisible(!PsiModifier.PRIVATE.equals(modifier));
     }
   }
 

@@ -23,11 +23,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 
 public class MavenArchetype implements Serializable {
-  public final String groupId;
-  public final String artifactId;
-  public final String version;
-  public final String repository;
-  public final String description;
+  public final @NotNull String groupId;
+  public final @NotNull String artifactId;
+  public final @NotNull String version;
+  public final @Nullable String repository;
+  public final @Nullable String description;
 
   public MavenArchetype(@NotNull String groupId,
                        @NotNull String artifactId,

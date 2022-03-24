@@ -22,7 +22,6 @@ class WithExpressionPrefixInsertHandler(val prefix: String) : InsertHandler<Look
     fun postHandleInsert(context: InsertionContext) {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
-        psiDocumentManager.commitAllDocuments()
 
         val offset = context.startOffset
         val token = context.file.findElementAt(offset)!!

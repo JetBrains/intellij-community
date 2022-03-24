@@ -1,16 +1,43 @@
 <html>
 <body>
-Reports any fields that can be safely made <code>final</code>.
-<p>Using the <code>final</code> variable makes code more error-prone. It may also be helpful for compiler optimisations
-  that make your program run faster.</p>
-<p>A field may be safely made <code>final</code> only if it has the <code>private</code> access modifier
-  (or it is defined in a local / anonymous class) and:<p>
+Reports fields that can be safely made <code>final</code>.
+All <code>final</code> fields have a value and this value does not change, which can make the code easier to reason about.
+<p>To avoid too expensive analysis, this inspection only reports if the field has a <code>private</code> modifier
+  or it is defined in a local or anonymous class.
+  A field can be <code>final</code> if:
 <ul>
-  <li>It is <code>static</code> and initialized either in its declaration or in one static class initializer.</li>
-  <li>It is non-static and initialized either in its declaration or in one non-static class initializer or in all constructors.</li>
+  <li>It is <code>static</code> and initialized once in its declaration or in one <code>static</code> initializer.</li>
+  <li>It is non-<code>static</code> and initialized once in its declaration, in one instance initializer or in every constructor</li>
 </ul>
+And it is not modified anywhere else.
+<p><b>Example:</b></p>
+<pre><code>
+  public class Person {
+    private String name; // can be final
+
+    Person(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  public class Person {
+    private final String name;
+
+    Person(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
-
-
 </body>
 </html>

@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 
 public class ConcurrentBitSetTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ConcurrentBitSetTest.class);
+
   public void testSanity() {
     ConcurrentBitSet bitSet = ConcurrentBitSet.create();
     assertEquals(0, bitSet.nextClearBit(0));
@@ -70,11 +71,6 @@ public class ConcurrentBitSetTest extends TestCase {
         assertFalse(bitSet.get(i));
       }
     }
-    bitSet.set(100, true);
-    assertEquals(100, bitSet.nextSetBit(0));
-
-    bitSet.clear();
-    assertEquals(-1, bitSet.nextSetBit(0));
   }
 
   public void testStressFineGrainedSmallSet() {

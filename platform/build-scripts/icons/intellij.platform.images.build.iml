@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
@@ -22,7 +23,12 @@
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="batik-transcoder" level="project" />
-    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="PROVIDED" />
+    <orderEntry type="library" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
+    <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
   </component>
 </module>

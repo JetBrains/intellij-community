@@ -27,7 +27,7 @@ fun <T : UElement> UElement.getParentOfType(parentClass: Class<out T>, strict: B
 }
 
 fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out UElement>): UElement? {
-  var element = (if (strict) uastParent else this)  ?: return null
+  var element = (if (strict) uastParent else this) ?: return null
   while (true) {
     if (!parentClasses.any { it.isInstance(element) }) {
       return element
@@ -143,9 +143,9 @@ fun UElement.tryResolveNamed(): PsiNamedElement? = (this as? UResolvable)?.resol
 fun UReferenceExpression?.getQualifiedName(): String? = (this?.resolve() as? PsiClass)?.qualifiedName
 
 /**
- * Returns the String expression value, or null if the value can't be calculated or if the calculated value is not a String.
+ * Returns the String expression value, or null if the value can't be calculated, or if the calculated value is not a String or an integral literal.
  */
-fun UExpression.evaluateString(): String? = evaluate() as? String
+fun UExpression.evaluateString(): String? = evaluate().takeIf { it is String || isIntegralLiteral() }?.toString()
 
 fun UExpression.skipParenthesizedExprDown(): UExpression? {
   var expression = this
@@ -170,7 +170,7 @@ fun skipParenthesizedExprUp(elem: UElement?): UElement? {
 fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
 @Deprecated("use UastFacade", ReplaceWith("UastFacade"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Suppress("Deprecation")
 tailrec fun UElement.getUastContext(): UastContext {
   val psi = this.sourcePsi
@@ -182,6 +182,7 @@ tailrec fun UElement.getUastContext(): UastContext {
 }
 
 @Deprecated("could unexpectedly throw exception", ReplaceWith("UastFacade.findPlugin"))
+@ApiStatus.ScheduledForRemoval
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   val psi = this.sourcePsi
   if (psi != null) {
@@ -215,7 +216,6 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
   return parameters.withIndex().find { (i, p) ->
     val argumentForParameter = getArgumentForParameter(i) ?: return@find false
     if (wrapULiteral(argumentForParameter) == wrapULiteral(arg)) return@find true
-    if (arg is ULambdaExpression && arg.sourcePsi?.parent == argumentForParameter.sourcePsi) return@find true // workaround for KT-25297
     if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
     return@find false
   }?.value
@@ -231,7 +231,7 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
   }
 
 fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
-  val annotation : UAnnotation? = getParentOfType(UAnnotation::class.java, true)
+  val annotation: UAnnotation? = getParentOfType(UAnnotation::class.java, true)
   val fqn = annotation?.qualifiedName ?: return null
   val annotationSrc = annotation.sourcePsi
   if (annotationSrc == null) return null

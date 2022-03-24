@@ -6,11 +6,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
 import org.jdesktop.swingx.VerticalLayout
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.util.isDev
-import org.jetbrains.kotlin.idea.util.isEap
-import org.jetbrains.kotlin.idea.util.isSnapshot
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 
@@ -85,8 +83,8 @@ class ExperimentalFeaturesPanel : JPanel(VerticalLayout(5)) {
 
     companion object {
         fun shouldBeShown(): Boolean {
-            val version = KotlinCompilerVersion.VERSION
-            return isEap(version) || isDev(version) || isSnapshot(version)
+            val kotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+            return kotlinVersion.isPreRelease && kotlinVersion.kind !is IdeKotlinVersion.Kind.ReleaseCandidate
         }
     }
 }

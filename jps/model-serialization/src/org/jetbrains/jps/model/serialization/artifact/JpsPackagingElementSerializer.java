@@ -42,7 +42,7 @@ public abstract class JpsPackagingElementSerializer<E extends JpsPackagingElemen
    * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public void save(E element, Element tag) {
   }
 }

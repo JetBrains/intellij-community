@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -98,6 +98,25 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
 
   public void testParameterNameEqualsFieldName() {    // IDEADEV-10629
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class), new RefactoringTestUtil.MemberDescriptor("b", PsiField.class));
+  }
+
+
+  public void testDependentFields() {
+    doTest("Test", "TestSubclass",
+           new RefactoringTestUtil.MemberDescriptor("b", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("a", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("c", PsiField.class)
+           );
+  }
+  
+  public void testAccessibleClasses() {
+    doTest("a.Test", "TestSubclass", null, "a",
+           new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
+  }
+
+  public void testAbstractInSuper() {
+    doTest("Test", "TestSubclass",
+           new RefactoringTestUtil.MemberDescriptor("y", PsiMethod.class, true));
   }
 
   public void testSameTypeParameterName() {
@@ -202,14 +221,14 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       }
       final HashSet<String> expectedConflicts = new HashSet<>(Arrays.asList(conflicts));
       final HashSet<String> actualConflicts = new HashSet<>(conflictsMap.values());
-      assertEquals(expectedConflicts.size(), actualConflicts.size());
+      assertEquals(actualConflicts.toString(), expectedConflicts.size(), actualConflicts.size());
       for (String actualConflict : actualConflicts) {
         if (!expectedConflicts.contains(actualConflict)) {
           fail("Unexpected conflict: " + actualConflict);
         }
       }
     } else if (!conflictsMap.isEmpty()) {
-      fail("Unexpected conflicts!!!");
+      fail("Unexpected conflicts!!!" + conflictsMap.toString());
     }
     processor.run();
   }

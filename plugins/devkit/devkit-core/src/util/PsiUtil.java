@@ -1,17 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.components.JBList;
@@ -35,8 +33,8 @@ public final class PsiUtil {
   private static final @NonNls String[] IDEA_PROJECT_MARKER_FILES = {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
-  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES =
-    ContainerUtil.immutableList("intellij.idea.community.main", "intellij.platform.commercial");
+  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
+                                                                               "intellij.platform.commercial");
 
   private PsiUtil() { }
 
@@ -102,7 +100,9 @@ public final class PsiUtil {
   }
 
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) return false;
+    if (project == null) {
+      return false;
+    }
 
     Boolean flag = project.getUserData(IDEA_PROJECT);
     if (flag == null) {
@@ -173,19 +173,12 @@ public final class PsiUtil {
   }
 
   private static boolean checkIdeaProject(@NotNull Project project) {
-    boolean foundMarkerModule = false;
     for (String moduleName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
       if (ModuleManager.getInstance(project).findModuleByName(moduleName) != null) {
-        foundMarkerModule = true;
-        break;
+        return true;
       }
     }
-    if (!foundMarkerModule) return false;
-
-    return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
-      GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
-      return JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) != null;
-    });
+    return false;
   }
 
   public static boolean isPluginXmlPsiElement(@NotNull PsiElement element) {

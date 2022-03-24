@@ -2,13 +2,13 @@
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.ui.getModelPath
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getCanonicalPath
 
 class ExternalSystemWorkingDirectoryInfo(project: Project, externalSystemId: ProjectSystemId) : WorkingDirectoryInfo {
   private val readableName = externalSystemId.readableName
@@ -28,11 +28,11 @@ class ExternalSystemWorkingDirectoryInfo(project: Project, externalSystemId: Pro
       val localSettings = ExternalSystemApiUtil.getLocalSettings<AbstractExternalSystemLocalSettings<*>>(project, externalSystemId)
       val uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId)
       for ((parent, children) in localSettings.availableProjects) {
-        val parentPath = getModelPath(parent.path)
+        val parentPath = getCanonicalPath(parent.path)
         val parentName = uiAware.getProjectRepresentationName(project, parentPath, null)
         add(ExternalProject(parentName, parentPath))
         for (child in children) {
-          val childPath = getModelPath(child.path)
+          val childPath = getCanonicalPath(child.path)
           if (parentPath == childPath) continue
           val childName = uiAware.getProjectRepresentationName(project, childPath, parentPath)
           add(ExternalProject(childName, childPath))

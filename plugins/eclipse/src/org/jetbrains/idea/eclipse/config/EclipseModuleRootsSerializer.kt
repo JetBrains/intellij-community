@@ -6,6 +6,7 @@ import com.intellij.configurationStore.getOrCreateVirtualFile
 import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
@@ -14,11 +15,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Function
+import com.intellij.util.io.exists
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -28,6 +33,7 @@ import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader.expandLinkedResourcesPath
 import org.jetbrains.idea.eclipse.EclipseXml
 import org.jetbrains.idea.eclipse.IdeaXml
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper
 import org.jetbrains.idea.eclipse.conversion.EJavadocUtil
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
@@ -403,6 +409,13 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     @Suppress("UNCHECKED_CAST")
     val contentRoots = entities[ContentRootEntity::class.java] as List<ContentRootEntity>? ?: emptyList()
     val entitySource = contentRoots.asSequence().map { it.entitySource }.filterIsInstance<EclipseProjectFile>().firstOrNull() ?: return
+
+    val dotProjectFile = entitySource.classpathFile.toPath().parent.resolve(EclipseXml.PROJECT_FILE)
+    if (!dotProjectFile.exists()) {
+      val content = DotProjectFileHelper.generateProjectFileContent(ModuleTypeManager.getInstance().findByID(module.type), module.name)
+      saveXmlFile(dotProjectFile, content)
+    }
+
     val classpathFile = VirtualFileManager.getInstance().findFileByUrl(entitySource.classpathFile.url)
     val oldClasspath = classpathFile?.inputStream?.use { JDOMUtil.load(it) }
     val pathShortener = ModulePathShortener(storage)

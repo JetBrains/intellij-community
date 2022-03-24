@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.diagnostic.PluginException;
@@ -43,13 +43,17 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   private static @NotNull <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
-    ClassLoader classLoader = pluginDescriptor == null ? AbstractExtensionPointBean.class.getClassLoader() : pluginDescriptor.getPluginClassLoader();
+    ClassLoader classLoader = pluginDescriptor != null ?
+                              pluginDescriptor.getClassLoader() :
+                              AbstractExtensionPointBean.class.getClassLoader();
     //noinspection unchecked
     return (Class<T>)Class.forName(className, true, classLoader);
   }
 
   public @NotNull ClassLoader getLoaderForClass() {
-    return myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
+    return myPluginDescriptor != null ?
+           myPluginDescriptor.getClassLoader() :
+           getClass().getClassLoader();
   }
 
   public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {

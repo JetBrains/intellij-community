@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -11,25 +11,23 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.SmartList
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
-abstract class KotlinSSRReplaceTest : BasePlatformTestCase() {
+abstract class KotlinSSRReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
     private val searchConfiguration = SearchConfiguration().apply {
         name = "SSR"
         matchOptions.setFileType(KotlinFileType.INSTANCE)
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinLightProjectDescriptor()
-
     protected fun doTest(
         searchPattern: String,
         replacePattern: String,
-        match: String,
-        result: String,
+        @Language("kotlin") match: String,
+        @Language("kotlin") result: String,
         reformat: Boolean = false,
         shortenFqNames: Boolean = false,
         context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT
@@ -44,7 +42,6 @@ abstract class KotlinSSRReplaceTest : BasePlatformTestCase() {
         val matcher = Matcher(project, matchOptions)
         val sink = CollectingMatchResultSink()
         matcher.findMatches(sink)
-        assert(sink.matches.size > 0) { "Amount of matches should be greater than 0." }
         val replaceOptions = ReplaceConfiguration(searchConfiguration).replaceOptions.apply {
             isToReformatAccordingToStyle = reformat
             isToShortenFQN = shortenFqNames

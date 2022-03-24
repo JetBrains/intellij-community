@@ -2,9 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface ExternalSystemProjectAware {
 
   val projectId: ExternalSystemProjectId
@@ -16,7 +14,7 @@ interface ExternalSystemProjectAware {
    */
   val settingsFiles: Set<String>
 
-  fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable)
+  fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable)
 
   fun reloadProject(context: ExternalSystemProjectReloadContext)
 }

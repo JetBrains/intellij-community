@@ -1,4 +1,10 @@
 <idea-plugin>
+    <extensionPoints>
+      <extensionPoint
+              qualifiedName="org.jetbrains.kotlin.idea.kotlinJvmDebuggerFacade"
+              interface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
+              dynamic="true"/>
+    </extensionPoints>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">
         <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>

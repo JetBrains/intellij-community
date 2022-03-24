@@ -551,16 +551,6 @@ public final class SvnUtil {
     return null;
   }
 
-  /**
-   * @deprecated Use {@link SvnUtil#getWorkingCopyRoot(File)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nullable
-  public static File getWorkingCopyRootNew(@NotNull File file) {
-    return getWorkingCopyRoot(file);
-  }
-
   @Nullable
   public static File getParentWithDb(@NotNull File file) {
     File current = file;

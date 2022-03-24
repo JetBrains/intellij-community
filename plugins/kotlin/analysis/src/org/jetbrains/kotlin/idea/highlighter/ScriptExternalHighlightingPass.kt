@@ -8,19 +8,20 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
@@ -32,7 +33,7 @@ class ScriptExternalHighlightingPass(
     override fun doCollectInformation(progress: ProgressIndicator) = Unit
 
     override fun doApplyInformationToEditor() {
-        val document = document ?: return
+        val document = document
 
         if (!file.isScript()) return
 
@@ -42,6 +43,7 @@ class ScriptExternalHighlightingPass(
             val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: (0 to 0)
             val exception = scriptDiagnostic.exception
             val exceptionMessage = if (exception != null) " ($exception)" else ""
+            @Suppress("HardCodedStringLiteral")
             val message = scriptDiagnostic.message + exceptionMessage
             val annotation = Annotation(
                 startOffset,
@@ -64,7 +66,7 @@ class ScriptExternalHighlightingPass(
         }
 
         val infos = annotations.map { HighlightInfo.fromAnnotation(it) }
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument!!, 0, file.textLength, infos, colorsScheme, id)
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
     }
 
     private fun computeOffsets(document: Document, position: SourceCode.Location): Pair<Int, Int> {
@@ -92,11 +94,11 @@ class ScriptExternalHighlightingPass(
             ScriptDiagnostic.Severity.ERROR -> ERROR
             ScriptDiagnostic.Severity.WARNING -> WARNING
             ScriptDiagnostic.Severity.INFO -> INFORMATION
-            ScriptDiagnostic.Severity.DEBUG -> if (ApplicationManager.getApplication().isInternal) INFORMATION else null
+            ScriptDiagnostic.Severity.DEBUG -> if (isApplicationInternalMode()) INFORMATION else null
         }
     }
 
-    private fun showNotification(file: KtFile, message: String) {
+    private fun showNotification(file: KtFile, @NlsContexts.PopupContent message: String) {
         UIUtil.invokeLaterIfNeeded {
             val ideFrame = WindowManager.getInstance().getIdeFrame(file.project)
             if (ideFrame != null) {

@@ -1,0 +1,20 @@
+/* Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. */
+.code-fence-highlighter-copy-button {
+  float: right;
+  display: flex;
+}
+
+.code-fence-highlighter-copy-button-icon {
+  max-width: 1em;
+}
+
+.code-fence:hover .code-fence-highlighter-copy-button-icon {
+  /*noinspection CssUnknownTarget*/
+  content: url("copy-button-copy-icon.png");
+}
+
+.code-fence:hover .code-fence-highlighter-copy-button:hover .code-fence-highlighter-copy-button-icon {
+  /*noinspection CssUnknownTarget*/
+  content: url("copy-button-copy-icon-hovered.png");
+  cursor: pointer;
+}

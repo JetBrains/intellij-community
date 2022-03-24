@@ -189,7 +189,7 @@ public final class PluginPriceService {
     Object value = jsonObject.get(key);
 
     if (value instanceof Map) {
-      Object subscription = ((Map)value).get("subscription");
+      Object subscription = ((Map<?, ?>)value).get("subscription");
       if (subscription instanceof Map) {
         return new double[]{parsePriceValue((Map)subscription, "monthly"), parsePriceValue((Map)subscription, "annual")};
       }

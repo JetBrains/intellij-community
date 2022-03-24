@@ -128,7 +128,7 @@ interface MethodReturnInferenceResult {
         return Mutability.UNKNOWN
       }
       return delegateCalls.stream().map { range -> getDelegateMutability(method, range, body()) }.reduce(
-        Mutability::unite).orElse(
+        Mutability::join).orElse(
         Mutability.UNKNOWN)
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.Disposable;
@@ -7,12 +7,11 @@ import com.intellij.openapi.components.*;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "CachedDictionaryState",
-  storages = @Storage(value = "cachedDictionary.xml", roamingType = RoamingType.DISABLED),
+  storages = @Storage(value = StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED),
   reportStatistic = false
 )
 @Service(Service.Level.APP)
@@ -25,8 +24,7 @@ public final class CachedDictionaryState extends DictionaryState implements Pers
     name = DEFAULT_NAME;
   }
 
-  @NotNull
-  public static CachedDictionaryState getInstance() {
+  public static @NotNull CachedDictionaryState getInstance() {
     return ApplicationManager.getApplication().getService(CachedDictionaryState.class);
   }
 
@@ -43,13 +41,6 @@ public final class CachedDictionaryState extends DictionaryState implements Pers
     }
     super.loadState(state);
     myDictListenerEventDispatcher.getMulticaster().dictChanged(getDictionary());
-  }
-
-  /** @deprecated Use {@link CachedDictionaryState#addCachedDictListener(DictionaryStateListener, Disposable)} instead.*/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") // Use overload with parentDisposable
-  public void addCachedDictListener(DictionaryStateListener listener) {
-    myDictListenerEventDispatcher.addListener(listener);
   }
 
   public void addCachedDictListener(DictionaryStateListener listener, Disposable parentDisposable) {

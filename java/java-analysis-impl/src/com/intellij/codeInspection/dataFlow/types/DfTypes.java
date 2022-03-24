@@ -339,6 +339,17 @@ public final class DfTypes {
   }
 
   /**
+   * Returns a non-primitive constant
+   *
+   * @param constant constant value
+   * @param constraint value type constraint
+   * @return a constant type that contains only given constant
+   */
+  public static @NotNull DfConstantType<?> referenceConstant(@NotNull Object constant, @NotNull TypeConstraint constraint) {
+    return new DfReferenceConstantType(constant, constraint, false);
+  }
+
+  /**
    * Returns a primitive constant
    *
    * @param constant constant value
@@ -431,6 +442,9 @@ public final class DfTypes {
     TypeConstraint constraint = TypeConstraints.instanceOf(type);
     if (constraint == TypeConstraints.BOTTOM) {
       return nullability == Nullability.NOT_NULL ? DfType.BOTTOM : NULL;
+    }
+    if (constraint.isSingleton() && nullability == Nullability.NOT_NULL) {
+      return new DfReferenceConstantType(constraint, constraint, false);
     }
     return new DfGenericObjectType(Set.of(), constraint,
                                    DfaNullability.fromNullability(nullability), Mutability.UNKNOWN, null, DfType.BOTTOM, false);

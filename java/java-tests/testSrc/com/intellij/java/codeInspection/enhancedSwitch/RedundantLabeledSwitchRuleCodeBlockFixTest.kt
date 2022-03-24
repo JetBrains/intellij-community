@@ -9,7 +9,8 @@ import com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCode
  * @author Pavel.Dolgov
  */
 class RedundantLabeledSwitchRuleCodeBlockFixTest  : LightQuickFixParameterizedTestCase() {
-  override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(RedundantLabeledSwitchRuleCodeBlockInspection())
+  override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(
+    RedundantLabeledSwitchRuleCodeBlockInspection())
 
 
   override fun getBasePath() = "/inspection/redundantLabeledSwitchRuleCodeBlockFix"

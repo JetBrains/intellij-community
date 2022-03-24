@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
@@ -81,8 +81,11 @@ open class GroovyInferenceSessionBuilder constructor(
   }
 }
 
-fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession =
-  GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false).apply { addExpression(place) }
+fun buildTopLevelSession(place: PsiElement,
+                         skipClosureBlock: Boolean = false,
+                         expressionPredicates: Set<ExpressionPredicate> = emptySet()): GroovyInferenceSession =
+  GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, skipClosureBlock, expressionPredicates)
+    .apply { addExpression(place) }
 
 fun InferenceSession.addExpression(place : PsiElement) {
   val expression = findExpression(place) ?: return

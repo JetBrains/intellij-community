@@ -22,7 +22,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.model.DomModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -38,16 +37,6 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
   protected final Set<XmlFile> myConfigFiles;
   private Class<T> myClass;
   private Project myProject;
-
-  /**
-   * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public DomModelImpl(T mergedModel, @NotNull Set<XmlFile> configFiles) {
-    myMergedModel = DomUtil.getFileElement(mergedModel);
-    myConfigFiles = configFiles;
-  }
 
   public DomModelImpl(DomFileElement<T> mergedModel, @NotNull Set<XmlFile> configFiles) {
     myMergedModel = DomUtil.getFileElement(mergedModel);

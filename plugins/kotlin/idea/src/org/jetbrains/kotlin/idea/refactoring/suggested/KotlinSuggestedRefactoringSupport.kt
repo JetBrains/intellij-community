@@ -11,33 +11,33 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class KotlinSuggestedRefactoringSupport : SuggestedRefactoringSupport {
-    override fun isDeclaration(psiElement: PsiElement): Boolean {
+    override fun isAnchor(psiElement: PsiElement): Boolean {
         if (psiElement !is KtDeclaration) return false
         if (psiElement is KtParameter && psiElement.ownerFunction != null) return false
         return true
     }
     
-    override fun signatureRange(declaration: PsiElement): TextRange? {
-        when (declaration) {
-            is KtPrimaryConstructor -> return declaration.textRange
+    override fun signatureRange(anchor: PsiElement): TextRange? {
+        when (anchor) {
+            is KtPrimaryConstructor -> return anchor.textRange
 
-            is KtSecondaryConstructor -> return declaration.valueParameterList?.textRange
+            is KtSecondaryConstructor -> return anchor.valueParameterList?.textRange
 
             is KtCallableDeclaration -> {
-                if (isOnlyRenameSupported(declaration)) {
-                    return declaration.nameIdentifier?.textRange
+                if (isOnlyRenameSupported(anchor)) {
+                    return anchor.nameIdentifier?.textRange
                 }
 
-                val start = declaration.receiverTypeReference?.textRange?.startOffset
-                    ?: declaration.nameIdentifier?.textRange?.startOffset
+                val start = anchor.receiverTypeReference?.textRange?.startOffset
+                    ?: anchor.nameIdentifier?.textRange?.startOffset
                     ?: return null
-                val end = (declaration.typeReference ?: declaration.valueParameterList ?: declaration.nameIdentifier)
+                val end = (anchor.typeReference ?: anchor.valueParameterList ?: anchor.nameIdentifier)
                     ?.textRange?.endOffset
                     ?: return null
                 return TextRange(start, end)
             }
 
-            is KtNamedDeclaration -> return declaration.nameIdentifier?.textRange
+            is KtNamedDeclaration -> return anchor.nameIdentifier?.textRange
 
             else -> return null
         }
@@ -47,23 +47,23 @@ class KotlinSuggestedRefactoringSupport : SuggestedRefactoringSupport {
         return (psiFile as KtFile).importList?.textRange
     }
 
-    override fun nameRange(declaration: PsiElement): TextRange? {
-        val identifier = when (declaration) {
-            is KtPrimaryConstructor -> declaration.containingClassOrObject?.nameIdentifier
-            is KtSecondaryConstructor -> declaration.getConstructorKeyword()
-            is KtNamedDeclaration -> declaration.nameIdentifier
+    override fun nameRange(anchor: PsiElement): TextRange? {
+        val identifier = when (anchor) {
+            is KtPrimaryConstructor -> anchor.containingClassOrObject?.nameIdentifier
+            is KtSecondaryConstructor -> anchor.getConstructorKeyword()
+            is KtNamedDeclaration -> anchor.nameIdentifier
             else -> null
         }
         return identifier?.textRange
     }
 
-    override fun hasSyntaxError(declaration: PsiElement): Boolean {
-        if (super.hasSyntaxError(declaration)) return true
+    override fun hasSyntaxError(anchor: PsiElement): Boolean {
+        if (super.hasSyntaxError(anchor)) return true
 
         // do not suggest renaming of local variable which has neither type nor initializer
         // it's important because such variable declarations may appear on typing "val name = " before an expression
-        if (declaration is KtProperty && declaration.isLocal) {
-            if (declaration.typeReference == null && declaration.initializer == null) return true
+        if (anchor is KtProperty && anchor.isLocal) {
+            if (anchor.typeReference == null && anchor.initializer == null) return true
         }
 
         return false

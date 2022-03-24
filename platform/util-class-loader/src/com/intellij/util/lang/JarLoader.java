@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
-public class JarLoader extends Loader {
+final class JarLoader implements Loader {
+  public enum Attribute {
+    SPEC_TITLE, SPEC_VERSION, SPEC_VENDOR, CLASS_PATH, IMPL_TITLE, IMPL_VERSION, IMPL_VENDOR
+  }
+
   @SuppressWarnings("unchecked")
   private static final Map.Entry<Attribute, Attributes.Name>[] PACKAGE_FIELDS = new Map.Entry[]{
     new AbstractMap.SimpleImmutableEntry<>(Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
@@ -32,26 +35,31 @@ public class JarLoader extends Loader {
     new AbstractMap.SimpleImmutableEntry<>(Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR)
   };
 
-  protected final ClassPath configuration;
+  final ClassPath configuration;
   final URL url;
-  protected final ResourceFile zipFile;
-  private volatile Map<Loader.Attribute, String> attributes;
+  final ResourceFile zipFile;
+  private final Path path;
 
-  JarLoader(@NotNull Path file, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {
-    super(file);
+  JarLoader(@NotNull Path path, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {
+    this.path = path;
 
     this.configuration = configuration;
     this.zipFile = zipFile;
-    url = new URL("jar", "", -1, fileToUri(file) + "!/");
+    url = new URL("jar", "", -1, fileToUri(path) + "!/");
   }
 
   @Override
-  public final Map<Attribute, String> getAttributes() throws IOException {
-    return loadManifestAttributes(zipFile);
+  public Path getPath() {
+    return path;
   }
 
   @Override
-  final @Nullable Class<?> findClass(@NotNull String fileName, String className, @NotNull ClassPath.ClassDataConsumer classConsumer) throws IOException {
+  public boolean containsName(String name) {
+    return true;
+  }
+
+  @Override
+  public @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
     return zipFile.findClass(fileName, className, this, classConsumer);
   }
 
@@ -73,21 +81,17 @@ public class JarLoader extends Loader {
     }
   }
 
-  final @Nullable String getClassPathManifestAttribute() throws IOException {
-    return loadManifestAttributes(zipFile).get(Attribute.CLASS_PATH);
-  }
-
-  private static @NotNull Map<Loader.Attribute, String> getAttributes(@NotNull Attributes attributes) {
+  static @NotNull Map<JarLoader.Attribute, String> getAttributes(@NotNull Attributes attributes) {
     if (attributes.isEmpty()) {
       return Collections.emptyMap();
     }
 
-    Map<Loader.Attribute, String> map = null;
-    for (Map.Entry<Loader.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+    Map<JarLoader.Attribute, String> map = null;
+    for (Map.Entry<JarLoader.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
       String value = attributes.getValue(p.getValue());
       if (value != null) {
         if (map == null) {
-          map = new EnumMap<>(Loader.Attribute.class);
+          map = new EnumMap<>(JarLoader.Attribute.class);
         }
         map.put(p.getKey(), value);
       }
@@ -95,64 +99,27 @@ public class JarLoader extends Loader {
     return map == null ? Collections.emptyMap() : map;
   }
 
-  private @NotNull Map<Loader.Attribute, String> loadManifestAttributes(@NotNull ResourceFile resourceFile) throws IOException {
-    Map<Loader.Attribute, String> result = attributes;
-    if (result != null) {
-      return result;
-    }
-
-    synchronized (this) {
-      result = attributes;
-      if (result != null) {
-        return result;
-      }
-
-      result = configuration.getManifestData(path);
-      if (result == null) {
-        Attributes manifestAttributes = resourceFile.loadManifestAttributes();
-        result = manifestAttributes == null ? Collections.emptyMap() : getAttributes(manifestAttributes);
-        configuration.cacheManifestData(path, result);
-      }
-      attributes = result;
-    }
-    return result;
-  }
-
   @Override
-  public final @NotNull ClasspathCache.IndexRegistrar buildData() throws IOException {
-    return zipFile.buildClassPathCacheData();
-  }
-
-  @Override
-  final @Nullable Resource getResource(@NotNull String name) {
+  public @Nullable Resource getResource(@NotNull String name) {
     try {
       return zipFile.getResource(name, this);
     }
     catch (IOException e) {
-      error("url: " + path, e);
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
       return null;
     }
   }
 
   @Override
-  void processResources(@NotNull String dir,
-                        @NotNull Predicate<? super String> fileNameFilter,
-                        @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
+  public void processResources(@NotNull String dir,
+                               @NotNull Predicate<? super String> fileNameFilter,
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     zipFile.processResources(dir, fileNameFilter, consumer);
   }
 
-  protected final void error(@NotNull String message, @NotNull Throwable t) {
-    LoggerRt logger = LoggerRt.getInstance(JarLoader.class);
-    if (configuration.errorOnMissingJar) {
-      logger.error(message, t);
-    }
-    else {
-      logger.warn(message, t);
-    }
-  }
-
   @Override
-  public final String toString() {
-    return "JarLoader [" + path + "]";
+  public String toString() {
+    return "JarLoader(path=" + path + ")";
   }
 }

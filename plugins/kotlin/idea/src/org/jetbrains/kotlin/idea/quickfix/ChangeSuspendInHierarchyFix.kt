@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -67,7 +68,7 @@ class ChangeSuspendInHierarchyFix(
 
             val name = (baseClass as? PsiNamedElement)?.name ?: return@forEach
             progressIndicator.text = KotlinBundle.message("fix.change.progress.looking.inheritors", name)
-            val classes = listOf(baseClass) + HierarchySearchRequest(baseClass, baseClass.useScope).searchInheritors()
+            val classes = listOf(baseClass) + HierarchySearchRequest(baseClass, baseClass.useScope()).searchInheritors()
             classes.mapNotNullTo(result) {
                 val subClass = it.unwrapped as? KtClassOrObject ?: return@mapNotNullTo null
                 val classDescriptor = subClass.unsafeResolveToDescriptor() as ClassDescriptor

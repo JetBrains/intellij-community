@@ -1029,11 +1029,11 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                    isRemoveFilesFromShelf());
   }
 
-  private void unshelveSilentlyAsynchronously(@NotNull final Project project,
-                                              @NotNull final List<ShelvedChangeList> selectedChangeLists,
-                                              @NotNull final List<ShelvedChange> selectedChanges,
-                                              @NotNull final List<? extends ShelvedBinaryFile> selectedBinaryChanges,
-                                              @Nullable final LocalChangeList forcePredefinedOneChangelist, boolean removeFilesFromShelf) {
+  public void unshelveSilentlyAsynchronously(@NotNull final Project project,
+                                             @NotNull final List<ShelvedChangeList> selectedChangeLists,
+                                             @NotNull final List<ShelvedChange> selectedChanges,
+                                             @NotNull final List<? extends ShelvedBinaryFile> selectedBinaryChanges,
+                                             @Nullable final LocalChangeList forcePredefinedOneChangelist, boolean removeFilesFromShelf) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("unshelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

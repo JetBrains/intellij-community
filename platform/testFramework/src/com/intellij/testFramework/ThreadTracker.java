@@ -74,12 +74,14 @@ public final class ThreadTracker {
       "AWT-Shutdown",
       "AWT-Windows",
       "Batik CleanerThread",
+      "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
       "CompilerThread0",
       "dockerjava-netty",
       "External compiler",
       "Finalizer",
       FlushingDaemon.NAME,
+      "HttpClient-", // any usage of HttpClient (from JDK) may leave a thread pool. It's ok since it's not supposed to be disposed to reuse connections
       "IDEA Test Case Thread",
       "Image Fetcher ",
       "InnocuousThreadGroup",
@@ -94,6 +96,7 @@ public final class ThreadTracker {
       "ObjectCleanerThread",
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
+      "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
       "RMI TCP ",

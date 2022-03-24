@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -42,21 +42,19 @@ import java.util.*;
  */
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
-
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
-  @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
+  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
 
-  @NotNull
   @Override
-  public Key<LibraryData> getTargetDataKey() {
+  public @NotNull Key<LibraryData> getTargetDataKey() {
     return ProjectKeys.LIBRARY;
   }
 
   @Override
   public void importData(final @NotNull Collection<? extends DataNode<LibraryData>> toImport,
-                         @Nullable final ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
+                         final @Nullable ProjectData projectData,
+                         final @NotNull Project project,
+                         final @NotNull IdeModifiableModelsProvider modelsProvider) {
     Map<String, LibraryData> processedLibraries = new HashMap<>();
     for (DataNode<LibraryData> dataNode: toImport) {
       LibraryData libraryData = dataNode.getData();
@@ -75,7 +73,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  private void importLibrary(@NotNull final LibraryData toImport, @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  private void importLibrary(final @NotNull LibraryData toImport, final @NotNull IdeModifiableModelsProvider modelsProvider) {
     Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
     final String libraryName = toImport.getInternalName();
@@ -90,8 +88,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
   }
 
-  @NotNull
-  public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
+  public @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
       OrderRootType orderRootType = ExternalLibraryPathTypeMapper.getInstance().map(pathType);
@@ -232,9 +229,9 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  private static void syncPaths(@NotNull final LibraryData externalLibrary,
-                                @NotNull final Library ideLibrary,
-                                @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  private static void syncPaths(final @NotNull LibraryData externalLibrary,
+                                final @NotNull Library ideLibrary,
+                                final @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (externalLibrary.isUnresolved()) {
       return;
     }

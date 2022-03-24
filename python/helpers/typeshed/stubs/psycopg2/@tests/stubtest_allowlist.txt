@@ -1,0 +1,5 @@
+psycopg2.connection
+psycopg2.cursor
+psycopg2.pool.AbstractConnectionPool.closeall
+psycopg2.pool.AbstractConnectionPool.getconn
+psycopg2.pool.AbstractConnectionPool.putconn

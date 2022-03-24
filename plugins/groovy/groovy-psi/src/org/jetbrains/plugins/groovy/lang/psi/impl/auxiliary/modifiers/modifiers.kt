@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
@@ -24,8 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
 private val visibilityModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
@@ -79,7 +81,9 @@ private fun GrModifierList.isAbstract(): Boolean {
 }
 
 private fun GrMethod.isAbstractMethod(): Boolean =
-  containingClass?.let { it.isInterface && !GrTraitUtil.isTrait(it) } ?: false
+  containingClass?.let { it.isInterface && !it.isCodeTrait() && !this.modifierList.hasExplicitModifier(PsiModifier.DEFAULT) } ?: false
+
+private fun PsiClass.isCodeTrait() : Boolean = this is GrTypeDefinition && this.isTrait
 
 private fun GrTypeDefinition.isAbstractClass(): Boolean {
   if (isEnum) {
@@ -100,7 +104,7 @@ private fun GrModifierList.isFinal(): Boolean {
 }
 
 private fun GrTypeDefinition.isFinalClass(): Boolean {
-  return isEnum && codeFields.none { it is GrEnumConstant && it.initializingClass != null }
+  return this is GrRecordDefinition || (isEnum && codeFields.none { it is GrEnumConstant && it.initializingClass != null })
 }
 
 private fun GrVariableDeclaration.isFinalField(modifierList: GrModifierList): Boolean {
@@ -128,6 +132,7 @@ private fun getImplicitVisibility(grModifierList: GrModifierList): String? {
     is GrMethod -> {
       val containingClass = owner.containingClass as? GrTypeDefinition ?: return null
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
+      if (containingClass is GrRecordDefinition && owner.isCompactConstructor()) return null
       val targetName = if (owner.isConstructor) "CONSTRUCTORS" else "METHODS"
       return if (grModifierList.hasPackageScope(containingClass, targetName)) PsiModifier.PACKAGE_LOCAL else PsiModifier.PUBLIC
     }

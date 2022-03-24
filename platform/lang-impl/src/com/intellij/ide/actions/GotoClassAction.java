@@ -58,7 +58,7 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
     DumbService.getInstance(project).showDumbModeNotification(message);
     AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
     InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     ActionManager.getInstance().tryToExecute(action, event, component, e.getPlace(), true);
   }
 

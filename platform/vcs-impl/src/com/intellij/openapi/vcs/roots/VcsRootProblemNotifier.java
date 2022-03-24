@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.configurable.VcsMappingConfigurable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -25,6 +24,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -146,7 +146,7 @@ public final class VcsRootProblemNotifier {
   private NotificationAction getConfigureNotificationAction() {
     return NotificationAction.create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"), (event, notification) -> {
       if (!myProject.isDisposed()) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
+        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, VcsMappingConfigurable.class);
 
         BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
           Collection<VcsRootError> errorsAfterPossibleFix = new VcsRootProblemNotifier(myProject).scan();
@@ -182,6 +182,13 @@ public final class VcsRootProblemNotifier {
   private boolean isExplicitlyIgnoredPath(@NotNull VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return false;
     return mySettings.isIgnoredUnregisteredRoot(mapping.getDirectory());
+  }
+
+  private boolean conflictsWithExistingMapping(@NotNull VcsDirectoryMapping mapping) {
+    if (mapping.isDefaultMapping()) return false;
+    return exists(myVcsManager.getDirectoryMappings(), it -> {
+      return Objects.equals(mapping.getDirectory(), it.getDirectory());
+    });
   }
 
   private void expireNotification() {
@@ -286,7 +293,8 @@ public final class VcsRootProblemNotifier {
       return error.getType() == UNREGISTERED_ROOT &&
              isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
-             !isExplicitlyIgnoredPath(mapping);
+             !isExplicitlyIgnoredPath(mapping) &&
+             !conflictsWithExistingMapping(mapping);
     });
   }
 

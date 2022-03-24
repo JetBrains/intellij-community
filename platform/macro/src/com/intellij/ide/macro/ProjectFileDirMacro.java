@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ProjectFileDirMacro extends Macro {
+public final class ProjectFileDirMacro extends Macro implements PathMacro {
   @NotNull
   @Override
   public String getName() {

@@ -87,6 +87,9 @@ public class a {
       private void method() {}
       private int myI;
     };
+    new Object() {
+      static void f() {}
+    }.f();
   }
 }
 

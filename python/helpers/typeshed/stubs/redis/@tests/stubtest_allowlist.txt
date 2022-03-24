@@ -1,0 +1,3 @@
+redis.client.Pipeline.transaction  # instance attribute has same name as superclass method
+redis.commands.search.commands.SearchCommands.explain  # https://github.com/redis/redis-py/pull/1997
+redis.ocsp  # requires cryptography to be installed

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.BuildView
@@ -19,12 +19,22 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.runAsync
 
 @ApiStatus.Internal
-abstract class UnresolvedDependencyIssue(dependencyName: String) : BuildIssue {
-  override val title: String = "Could not resolve $dependencyName"
+abstract class UnresolvedDependencyIssue(
+  dependencyName: String,
+  private val dependencyOwner: String? = null,
+) : BuildIssue {
+  override val title: String = "Could not resolve $dependencyName" + if (dependencyOwner != null) " for $dependencyOwner" else ""
+
   override fun getNavigatable(project: Project): Navigatable? = null
 
   fun buildDescription(failureMessage: String?, isOfflineMode: Boolean, offlineModeQuickFixText: String): String {
-    val issueDescription = StringBuilder(failureMessage?.trim())
+    val issueDescription = StringBuilder()
+    if(dependencyOwner != null) {
+      issueDescription.append(dependencyOwner)
+      issueDescription.append(": ")
+    }
+
+    issueDescription.append(failureMessage?.trim())
     val noRepositoriesDefined = failureMessage?.contains("no repositories are defined") ?: false
 
     issueDescription.append("\n\nPossible solution:\n")
@@ -44,10 +54,13 @@ abstract class UnresolvedDependencyIssue(dependencyName: String) : BuildIssue {
 }
 
 @ApiStatus.Experimental
-class UnresolvedDependencySyncIssue(dependencyName: String,
-                                    failureMessage: String?,
-                                    projectPath: String,
-                                    isOfflineMode: Boolean) : UnresolvedDependencyIssue(dependencyName) {
+data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
+  private val dependencyName: String,
+  private val failureMessage: String?,
+  private val projectPath: String,
+  private val isOfflineMode: Boolean,
+  private val dependencyOwner: String? = null,
+) : UnresolvedDependencyIssue(dependencyName, dependencyOwner) {
   override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndReimport(projectPath)) else emptyList()
   override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and reload the project")
 

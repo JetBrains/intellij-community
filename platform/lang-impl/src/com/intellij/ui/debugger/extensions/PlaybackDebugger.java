@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -456,7 +455,8 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
   @State(
     name = "PlaybackDebugger",
-    storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS)
+    storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS),
+    category = SettingsCategory.TOOLS
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
     @Attribute

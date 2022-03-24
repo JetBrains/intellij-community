@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHel
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
+import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
@@ -87,6 +88,17 @@ internal class JavaFieldRenderer(
     // setup actual modifiers
     for (modifier in modifiersToRender.map(JvmModifier::toPsiModifier)) {
       PsiUtil.setModifierProperty(field, modifier, true)
+    }
+
+    field.modifierList?.let { modifierList ->
+      for (annRequest in request.annotations) {
+        modifierList.addAnnotation(annRequest.qualifiedName)
+      }
+    }
+
+    val requestInitializer = request.initializer
+    if (requestInitializer is JvmLong) {
+      field.initializer = PsiElementFactory.getInstance(project).createExpressionFromText("${requestInitializer.longValue}L", null)
     }
 
     return field

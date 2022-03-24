@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -25,6 +26,7 @@ open class AddAnnotationFix(
         val annotationCall = annotationFqName.shortName().asString() + annotationArguments
         return when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
+            Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
             is Kind.Declaration -> KotlinBundle.message("fix.add.annotation.text.declaration", annotationCall, kind.name ?: "?")
             is Kind.ContainingClass -> KotlinBundle.message("fix.add.annotation.text.containing.class", annotationCall, kind.name ?: "?")
         }
@@ -41,6 +43,7 @@ open class AddAnnotationFix(
             val psiFactory = KtPsiFactory(declaration)
             annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
                 ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
+            ShortenReferences.DEFAULT.process(annotationEntry)
         } else {
             declaration.addAnnotation(annotationFqName, annotationInnerText)
         }
@@ -48,6 +51,7 @@ open class AddAnnotationFix(
 
     sealed class Kind {
         object Self : Kind()
+        object Constructor : Kind()
         class Declaration(val name: String?) : Kind()
         class ContainingClass(val name: String?) : Kind()
     }

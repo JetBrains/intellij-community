@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
@@ -170,34 +169,28 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     myUpdateSession = newUpdateSession();
   }
 
+  public enum MatchedValueType { ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION }
+
   public static class MatchedValue {
     @NotNull public final Object value;
+    @NotNull final MatchedValueType type;
     @NotNull final String pattern;
     final int matchingDegree;
-    final boolean isAbbreviation;
 
-    MatchedValue(@NotNull Object value, @NotNull String pattern) {
+    MatchedValue(@NotNull Object value, @NotNull String pattern, @NotNull MatchedValueType type) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = calcMatchingDegree();
-      this.isAbbreviation = false;
+      this.type = type;
     }
 
-    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree) {
+    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree, @NotNull MatchedValueType type) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = degree;
-      this.isAbbreviation = false;
-    }
-
-    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree, boolean isAbbreviation) {
-      assert value instanceof OptionDescription || value instanceof ActionWrapper;
-      this.value = value;
-      this.pattern = pattern;
-      matchingDegree = degree;
-      this.isAbbreviation = isAbbreviation;
+      this.type = type;
     }
 
     @Nullable
@@ -216,8 +209,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return matchingDegree;
     }
 
-    public boolean isAbbreviation() {
-      return isAbbreviation;
+    @NotNull
+    public MatchedValueType getType() {
+      return type;
+    }
+
+    public int getValueTypeWeight() {
+      return getTypeWeight(value);
     }
 
     private int calcMatchingDegree() {
@@ -325,16 +323,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
     return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
-  }
-
-  /**
-   * @deprecated Please use {@link GotoActionModel#defaultActionForeground(boolean, boolean, Presentation)} instead.
-   * This method may be removed in future versions
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
-    return defaultActionForeground(isSelected, true, presentation);
   }
 
   public static Color defaultActionForeground(boolean isSelected, boolean hasFocus, @Nullable Presentation presentation) {
@@ -766,7 +754,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (myUseListFont) {
         nameComponent.setFont(list.getFont());
       }
-      nameComponent.setBackground(bg);
+      nameComponent.setOpaque(false);
       panel.add(nameComponent, BorderLayout.CENTER);
 
       if (matchedValue instanceof String) { //...
@@ -836,8 +824,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
-          Color descriptorBg =
-            StartupUiUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
+          Color descriptorBg;
+          if (StartupUiUtil.isUnderDarcula()) {
+            descriptorBg = ColorUtil.brighter(UIUtil.getListBackground(), 1);
+          }
+          else {
+            descriptorBg = JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND;
+          }
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);
         }

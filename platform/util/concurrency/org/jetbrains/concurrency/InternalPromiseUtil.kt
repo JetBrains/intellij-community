@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
-
-internal val OBSOLETE_ERROR: RuntimeException = MessageError("Obsolete", false)
 
 internal fun isHandlerObsolete(handler: Any): Boolean {
   return handler is Obsolescent && handler.isObsolete
@@ -43,13 +41,9 @@ internal class PromiseValue<T> private constructor(val result: T?, val error: Th
   val state: Promise.State
     get() = if (error == null) Promise.State.SUCCEEDED else Promise.State.REJECTED
 
-  val isCancelled: Boolean
-    get() = error === OBSOLETE_ERROR
-
   fun getResultOrThrowError(): T? {
-    return when {
-      error == null -> result
-      error === OBSOLETE_ERROR -> null
+    return when (error) {
+      null -> result
       else -> throw error.cause ?: error
     }
   }

@@ -1,5 +1,5 @@
 // "Specify override for 'isEmpty(): Boolean' explicitly" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import java.util.*
 

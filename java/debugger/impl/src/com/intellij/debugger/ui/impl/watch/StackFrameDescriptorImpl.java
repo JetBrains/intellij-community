@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
@@ -14,10 +19,7 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
@@ -42,7 +45,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private SourcePosition mySourcePosition;
 
-  private Icon myIcon = AllIcons.Debugger.Frame;
+  private Icon myIcon = EmptyIcon.ICON_16;
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
     myFrame = frame;
@@ -66,6 +69,51 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
+  }
+
+  private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   @Nullable Method method,
+                                   @NotNull MethodsTracker tracker) {
+    myFrame = frame;
+
+    try {
+      myUiIndex = frame.getFrameIndex();
+      myLocation = frame.location();
+      if (!getValueMarkers().isEmpty()) {
+        getThisObject(); // init this object for markup
+      }
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, method);
+      myIsSynthetic = DebuggerUtils.isSynthetic(method);
+      mySourcePosition = ContextUtil.getSourcePosition(this);
+      PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
+      myIsInLibraryContent =
+        DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
+    }
+    catch (InternalException | EvaluateException e) {
+      LOG.info(e);
+      myLocation = null;
+      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
+      myIsSynthetic = false;
+      myIsInLibraryContent = false;
+    }
+  }
+
+  public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
+                                                                        @NotNull MethodsTracker tracker) {
+      return frame.locationAsync()
+        .thenCompose(DebuggerUtilsAsync::method)
+        .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker))
+        .exceptionally(throwable -> {
+          Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
+          if (exception instanceof EvaluateException) {
+            // TODO: simplify when only async method left
+            if (!(exception.getCause() instanceof InvalidStackFrameException)) {
+              LOG.error(exception);
+            }
+            return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
+          }
+          throw (RuntimeException)throwable;
+        });
   }
 
   public int getUiIndex() {
@@ -107,17 +155,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   private Map<?, ValueMarkup> getValueMarkers() {
-    DebugProcess process = myFrame.getVirtualMachine().getDebugProcess();
-    if (process instanceof DebugProcessImpl) {
-      XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
-      if (session instanceof XDebugSessionImpl) {
-        XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
-        if (markers != null) {
-          return markers.getAllMarkers();
-        }
-      }
-    }
-    return Collections.emptyMap();
+    XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(getDebugProcess());
+    return markers != null ? markers.getAllMarkers() : Collections.emptyMap();
   }
 
   @Override
@@ -125,11 +164,15 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myName;
   }
 
+  public void setName(@NotNull String name) {
+    myName = name;
+  }
+
   @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    myIcon = calcIcon();
+    calcIconLater(descriptorLabelListener);
 
     if (myLocation == null) {
       return "";
@@ -138,7 +181,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     @NlsSafe StringBuilder label = new StringBuilder();
     Method method = myMethodOccurrence.getMethod();
     if (method != null) {
-      myName = method.name();
+      if (myName == null) {
+        myName = method.name();
+      }
       label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
     }
     if (settings.SHOW_LINE_NUMBER) {
@@ -201,16 +246,19 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return mySourcePosition;
   }
 
-  private Icon calcIcon() {
+  private void calcIconLater(DescriptorLabelListener descriptorLabelListener) {
     try {
-      if(myFrame.isObsolete()) {
-        return AllIcons.Debugger.Db_obsolete;
-      }
+      myFrame.isObsolete()
+        .thenAccept(res -> {
+          if (res) {
+            myIcon = AllIcons.Debugger.Db_obsolete;
+            descriptorLabelListener.labelChanged();
+          }
+        })
+        .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
     }
     catch (EvaluateException ignored) {
     }
-    //AllIcons.Debugger.StackFrame;
-    return JBUIScale.scaleIcon(EmptyIcon.create(6));
   }
 
   public Icon getIcon() {

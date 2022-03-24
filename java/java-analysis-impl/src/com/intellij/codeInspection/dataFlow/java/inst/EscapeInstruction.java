@@ -18,19 +18,17 @@ import java.util.Set;
  * Marks given variables as escaped (usually necessary for captured variables in lambdas/local classes)
  */
 public class EscapeInstruction extends Instruction {
-  private final Set<DfaVariableValue> myEscapedVars;
+  private final @NotNull Set<@NotNull DfaVariableValue> myEscapedVars;
 
-  public EscapeInstruction(Set<DfaVariableValue> escapedVars) {myEscapedVars = escapedVars;}
+  public EscapeInstruction(@NotNull Set<@NotNull DfaVariableValue> escapedVars) {myEscapedVars = escapedVars;}
 
-  public Set<DfaVariableValue> getEscapedVars() {
+  public @NotNull Set<@NotNull DfaVariableValue> getEscapedVars() {
     return myEscapedVars;
   }
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
   }
 
   @Override

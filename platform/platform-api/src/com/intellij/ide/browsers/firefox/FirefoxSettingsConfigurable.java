@@ -48,8 +48,8 @@ public class FirefoxSettingsConfigurable implements Configurable {
   public static FileChooserDescriptor createProfilesIniChooserDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return file.getName().equals(FirefoxUtil.PROFILES_INI_FILE) && super.isFileSelectable(file);
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && file.getName().equals(FirefoxUtil.PROFILES_INI_FILE) && super.isFileSelectable(file);
       }
     }.withShowHiddenFiles(SystemInfo.isUnix);
   }

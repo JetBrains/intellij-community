@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.java.refactoring.ChangeSignatureBaseTest;
@@ -14,6 +14,10 @@ public class ChangeSignatureTouchLambdaTest extends ChangeSignatureBaseTest {
 
   public void testMethodArgument() {
     doTest(null, null, null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
+  }
+
+  public void testLambdaHierarchy() {
+    doTest(null, null, null, new ParameterInfoImpl[0] , new ThrownExceptionInfo[0], false);
   }
 
   public void testDefaultMethodTouched() {

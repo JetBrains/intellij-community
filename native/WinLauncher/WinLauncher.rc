@@ -56,4 +56,5 @@ BEGIN
   IDS_ERROR_LAUNCHING_APP           "-"
   IDS_VM_OPTIONS                    "-"
   IDS_CLASSPATH_LIBS                "-"
+  IDS_BOOTCLASSPATH_LIBS            "-"
 END

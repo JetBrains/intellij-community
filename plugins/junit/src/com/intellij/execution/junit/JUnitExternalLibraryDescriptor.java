@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public final class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
   public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("3", "3.8.2");
   public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("4", "4.13.1");
-  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter", "5.7.0",
-                                                                                            "5.7.0");
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter", "5.8.1",
+                                                                                            "5.8.1");
   private final String myVersion;
 
   private JUnitExternalLibraryDescriptor(String baseVersion, String preferredVersion) {

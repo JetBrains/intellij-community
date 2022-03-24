@@ -65,6 +65,11 @@ public abstract class VcsTreeModelData {
   }
 
   @NotNull
+  public static VcsTreeModelData allUnder(@NotNull ChangesBrowserNode node) {
+    return new AllUnderData(node);
+  }
+
+  @NotNull
   public static VcsTreeModelData selectedUnderTag(@NotNull JTree tree, @NotNull Object tag) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
     return new SelectedTagData(tree, tag);

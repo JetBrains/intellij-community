@@ -27,6 +27,23 @@ public final class GitHandlerInputProcessorUtil {
     return writeLines(lines, DEFAULT_SEPARATOR, charset, false);
   }
 
+  /**
+   * Creates an input processor for {@link GitHandler} which sends provided lines to the process input stream.
+   * <p/>
+   * When {@code endWithSecondSeparator} parameter is set to {@code true} on Windows os, the output stream is not closed.
+   * This allows {@link com.intellij.execution.process.WinRunnerMediator} to send Ctrl+C
+   * through process's stdin in order to softly kill it.
+   *
+   * @see GitHandler#setInputProcessor(ThrowableConsumer)
+   * @see com.intellij.execution.process.WinRunnerMediator#sendCtrlEventThroughStream
+   *
+   * @param lines data to send to the stream
+   * @param separator string to separate lines with
+   * @param charset charset to use
+   * @param endWithSecondSeparator send an additional separator to the output to indicate the end of data.
+   *                               On Windows, the output stream won't be closed when this parameter is set to {@code true}.
+   * @return an input processor (a {@link ThrowableConsumer} instance) that writes provided lines to the {@link OutputStream} passed to it.
+   */
   @NotNull
   public static ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines,
                                                                         @NotNull String separator,
@@ -51,11 +68,8 @@ public final class GitHandlerInputProcessorUtil {
   @NotNull
   public static ThrowableConsumer<OutputStream, IOException> redirectStream(@NotNull InputStream stream) {
     return outputStream -> {
-      try {
+      try (outputStream) {
         FileUtil.copy(stream, outputStream);
-      }
-      finally {
-        outputStream.close();
       }
     };
   }

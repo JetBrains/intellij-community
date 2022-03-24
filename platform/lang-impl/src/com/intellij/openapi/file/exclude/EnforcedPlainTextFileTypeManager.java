@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Rustam Vishnyakov
  * @deprecated use {@link OverrideFileTypeManager} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @Service
 public final class EnforcedPlainTextFileTypeManager {
   public static EnforcedPlainTextFileTypeManager getInstance() {
@@ -24,7 +24,7 @@ public final class EnforcedPlainTextFileTypeManager {
   /**
    * @deprecated use {@link OverrideFileTypeManager#removeFile(VirtualFile)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void resetOriginalFileType(@NotNull Project project, @NotNull VirtualFile @NotNull ... files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);

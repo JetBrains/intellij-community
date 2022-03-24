@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.AbstractBundle;
@@ -45,7 +45,7 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
       return null;
     }
 
-    ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
+    ResourceBundle bundle = DynamicBundle.getResourceBundle(getLoaderForClass(), baseName);
     String[] keys = categoryKey.split("/");
     if (keys.length > 1) {
       String[] result = new String[keys.length];

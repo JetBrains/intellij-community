@@ -10,11 +10,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtStatementExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isUnit
@@ -27,7 +28,7 @@ class IntroduceVariableIntention : SelfTargetingRangeIntention<PsiElement>(
         val startElement = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace::class.java) ?: element
         return startElement.parentsWithSelf
             .filterIsInstance<KtExpression>()
-            .takeWhile { it !is KtDeclarationWithBody }
+            .takeWhile { it !is KtDeclarationWithBody && it !is KtStatementExpression }
             .firstOrNull {
                 val parent = it.parent
                 parent is KtBlockExpression || parent is KtDeclarationWithBody && !parent.hasBlockBody() && parent.bodyExpression == it
@@ -36,7 +37,7 @@ class IntroduceVariableIntention : SelfTargetingRangeIntention<PsiElement>(
 
     override fun applicabilityRange(element: PsiElement): TextRange? {
         val expression = getExpressionToProcess(element) ?: return null
-        val type = expression.analyze().getType(expression)
+        val type = expression.safeAnalyzeNonSourceRootCode().getType(expression)
         if (type == null || type.isUnit() || type.isNothing()) return null
         return element.textRange
     }
@@ -46,5 +47,9 @@ class IntroduceVariableIntention : SelfTargetingRangeIntention<PsiElement>(
         KotlinIntroduceVariableHandler.doRefactoring(
             element.project, editor, expression, isVar = false, occurrencesToReplace = null, onNonInteractiveFinish = null
         )
+    }
+
+    override fun startInWriteAction(): Boolean {
+        return false
     }
 }

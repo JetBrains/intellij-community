@@ -537,7 +537,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
   private void checkCanApply(FileTemplateTab list) throws ConfigurationException {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    final List<String> allNames = new ArrayList<>();
+    final Set<String> allNames = new HashSet<>();
     FileTemplate itemWithError = null;
     String errorString = null;
     for (FileTemplate template : templates) {
@@ -547,12 +547,11 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
         errorString = IdeBundle.message("error.please.specify.template.name");
         break;
       }
-      if (allNames.contains(currName)) {
+      if (!allNames.add(currName + "." + template.getExtension())) {
         itemWithError = template;
         errorString = LangBundle.message("dialog.message.template.with.name.already.exists", currName);
         break;
       }
-      allNames.add(currName);
     }
 
     if (itemWithError != null) {

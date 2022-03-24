@@ -18,6 +18,7 @@ typealias AnySetting = Setting<*, *>
 interface Setting<out V : Any, out T : SettingType<V>> : Entity, ActivityCheckerOwner, Validatable<V> {
     val title: String
     val description: String?
+    val tooltipText: String?
     val defaultValue: SettingDefaultValue<V>?
     val isRequired: Boolean
     val isSavable: Boolean
@@ -30,6 +31,7 @@ data class InternalSetting<out V : Any, out T : SettingType<V>>(
     override val path: String,
     override val title: String,
     override val description: String?,
+    override val tooltipText: String?,
     override val defaultValue: SettingDefaultValue<V>?,
     override val isAvailable: Checker,
     override val isRequired: Boolean,

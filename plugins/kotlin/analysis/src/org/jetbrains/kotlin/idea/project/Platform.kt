@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
 import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.name.Name
@@ -33,7 +34,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.kotlin.utils.JavaTypeEnhancementState
+import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import java.io.File
 
 val KtElement.platform: TargetPlatform
@@ -43,6 +44,11 @@ val KtElement.builtIns: KotlinBuiltIns
     get() = getResolutionFacade().moduleDescriptor.builtIns
 
 var KtFile.forcedTargetPlatform: TargetPlatform? by UserDataProperty(Key.create("FORCED_TARGET_PLATFORM"))
+
+fun Project.isKotlinLanguageVersionConfigured(): Boolean =
+    KotlinCommonCompilerArgumentsHolder.getInstance(this).settings.run {
+        this.languageVersion != null && apiVersion != null
+    }
 
 fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
     val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)
@@ -112,7 +118,7 @@ fun Project.getLanguageVersionSettings(
     val languageVersion =
         kotlinFacetSettings?.languageLevel ?: LanguageVersion.fromVersionString(arguments.languageVersion)
         ?: contextModule?.getAndCacheLanguageLevelByDependencies()
-        ?: VersionView.RELEASED_VERSION
+        ?: KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
     val apiVersion = ApiVersion.createByLanguageVersion(LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion)
     val compilerSettings = KotlinCompilerSettings.getInstance(this).settings
 
@@ -123,14 +129,14 @@ fun Project.getLanguageVersionSettings(
 
     val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE)
 
-    val extraAnalysisFlags = additionalArguments.configureAnalysisFlags(MessageCollector.NONE).apply {
+    val extraAnalysisFlags = additionalArguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion).apply {
         if (javaTypeEnhancementState != null) put(JvmAnalysisFlags.javaTypeEnhancementState, javaTypeEnhancementState)
         initIDESpecificAnalysisSettings(this@getLanguageVersionSettings)
     }
 
     return LanguageVersionSettingsImpl(
         languageVersion, apiVersion,
-        arguments.configureAnalysisFlags(MessageCollector.NONE) + extraAnalysisFlags,
+        arguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion) + extraAnalysisFlags,
         arguments.configureLanguageFeatures(MessageCollector.NONE) + extraLanguageFeatures
     )
 }
@@ -207,7 +213,7 @@ private fun Module.computeLanguageVersionSettings(): LanguageVersionSettings {
 
     val analysisFlags = facetSettings
         ?.mergedCompilerArguments
-        ?.configureAnalysisFlags(MessageCollector.NONE)
+        ?.configureAnalysisFlags(MessageCollector.NONE, languageVersion)
         ?.apply { initIDESpecificAnalysisSettings(project) }
         .orEmpty()
 
@@ -220,9 +226,6 @@ private fun Module.computeLanguageVersionSettings(): LanguageVersionSettings {
 }
 
 private fun MutableMap<AnalysisFlag<*>, Any>.initIDESpecificAnalysisSettings(project: Project) {
-    if (KotlinMultiplatformAnalysisModeComponent.getMode(project) == KotlinMultiplatformAnalysisModeComponent.Mode.COMPOSITE) {
-        put(AnalysisFlags.useTypeRefinement, true)
-    }
     if (KotlinLibraryToSourceAnalysisComponent.isEnabled(project)) {
         put(AnalysisFlags.libraryToSourceAnalysis, true)
     }
@@ -255,7 +258,7 @@ private fun parseArguments(
 }
 
 fun MutableMap<LanguageFeature, LanguageFeature.State>.configureMultiplatformSupport(
-    platformKind: IdePlatformKind<*>?,
+    platformKind: IdePlatformKind?,
     module: Module?
 ) {
     if (platformKind.isCommon || module?.implementsCommonModule == true) {

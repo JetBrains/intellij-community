@@ -234,7 +234,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
       if (evaluator == null) {
         @SuppressWarnings("ConstantConditions")
         Location location = context.getFrameProxy().location();
-        evaluator = myEvaluatorCache.get(location);
+        evaluator = location == null ? null : myEvaluatorCache.get(location);
         if (evaluator == null && !StringUtil.isEmpty(myExpression)) {
           evaluator = ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);

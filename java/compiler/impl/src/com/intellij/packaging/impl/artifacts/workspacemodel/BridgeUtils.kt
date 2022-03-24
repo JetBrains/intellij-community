@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.configurationStore.serialize
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.artifacts.ArtifactType
 import com.intellij.packaging.elements.CompositePackagingElement
@@ -92,4 +95,14 @@ internal fun PackagingElementEntity.sameTypeWith(type: PackagingElementType<out 
     is CustomPackagingElementEntity -> this.typeId == type.id
     else -> error("Unexpected branch. $this")
   }
+}
+
+internal fun ArtifactProperties<*>.propertiesTag(): String? {
+  val state = state
+  return if (state != null) {
+    val element = serialize(state) ?: return null
+    element.name = "options"
+    JDOMUtil.write(element)
+  }
+  else null
 }

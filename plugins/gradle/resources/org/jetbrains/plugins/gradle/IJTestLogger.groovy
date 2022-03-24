@@ -48,7 +48,7 @@ class IJTestEventLogger {
     xml.event(type: testEventType) {
       test(id: testDescriptor.id, parentId: testDescriptor.parent?.id ?: '') {
         if (testDescriptor) {
-          descriptor(name: getName(testDescriptor) ?: '', className: testDescriptor.className ?: '')
+          descriptor(name: testDescriptor.name ?: '', displayName: getName(testDescriptor) ?: '', className: testDescriptor.className ?: '')
         }
         if (testEvent) {
           def message = escapeCdata(testEvent.message)
@@ -153,7 +153,7 @@ class IJTestEventLogger {
 
   static def getName(TestDescriptor descriptor) {
     try {
-      return descriptor.getDisplayName()
+      return descriptor.getDisplayName() // available starting from ver. 4.10.3
     } catch (Throwable ignore) {
       return descriptor.getName()
     }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -10,7 +11,6 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -62,7 +62,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
       final boolean hasClassInitializer = ((PsiEnumConstant)myPsiElement).getInitializingClass() != null;
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement,
+      final JavaOverrideImplementMemberChooser chooser = chooseMethodsToImplement(editor, startElement,
                                                                               ((PsiEnumConstant)myPsiElement).getContainingClass(),
                                                                               hasClassInitializer);
       if (chooser == null) return;
@@ -73,7 +73,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
       WriteCommandAction.writeCommandAction(project, file).run(() -> {
         final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
         OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                     chooser.isInsertOverrideAnnotation());
+                                                                     chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc());
       });
     }
     else {
@@ -89,14 +89,14 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
 
   @Nullable
-  protected static MemberChooser<PsiMethodMember> chooseMethodsToImplement(Editor editor,
-                                                                           PsiElement startElement,
-                                                                           PsiClass aClass,
-                                                                           boolean implemented) {
+  protected static JavaOverrideImplementMemberChooser chooseMethodsToImplement(Editor editor,
+                                                                               PsiElement startElement,
+                                                                               PsiClass aClass,
+                                                                               boolean implemented) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
 
     final Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMapToOverrideImplement(aClass, true, implemented).values();
     return OverrideImplementUtil
-      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, new ArrayList<>());
+      .showJavaOverrideImplementChooser(editor, startElement, true, overrideImplement, new ArrayList<>());
   }
 }

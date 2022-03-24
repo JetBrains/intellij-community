@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -584,14 +584,13 @@ public final class GrClassImplUtil {
 
   private static GrAccessorMethod @NotNull [] doGetGetters(GrField field) {
     PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) return GrAccessorMethod.EMPTY_ARRAY;
+    if (!(containingClass instanceof GrTypeDefinition)) return GrAccessorMethod.EMPTY_ARRAY;
 
     GrAccessorMethod getter = null;
     GrAccessorMethod booleanGetter = null;
 
-    PsiMethod[] getters = containingClass.findMethodsByName(GroovyPropertyUtils.getGetterNameNonBoolean(field.getName()), false);
-    for (PsiMethod method : getters) {
-      if (method instanceof GrAccessorMethod) {
+    for (PsiMethod method : containingClass.getMethods()) {
+      if (method instanceof GrAccessorMethod && !((GrAccessorMethod)method).isSetter() && ((GrAccessorMethod)method).getProperty() == field) {
         getter = (GrAccessorMethod)method;
         break;
       }

@@ -10,9 +10,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
@@ -227,11 +229,13 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 }
 
-internal class FilteringBranchesTree(project: Project,
-                                     val component: BranchesTreeComponent,
-                                     private val uiController: BranchesDashboardController,
-                                     rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)))
-  : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
+internal class FilteringBranchesTree(
+  project: Project,
+  val component: BranchesTreeComponent,
+  private val uiController: BranchesDashboardController,
+  rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
+  disposable: Disposable
+) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
 
   private val expandedPaths = HashSet<TreePath>()
 
@@ -245,6 +249,7 @@ internal class FilteringBranchesTree(project: Project,
 
   private var localNodeExist = false
   private var remoteNodeExist = false
+  private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
   private val treeStateHolder: BranchesTreeStateHolder get() = project.service()
 
@@ -322,15 +327,15 @@ internal class FilteringBranchesTree(project: Project,
     component.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
         expandedPaths.add(event.path)
-        treeStateHolder.storeState(this@FilteringBranchesTree)
+        treeStateHolder.setStateProvider(treeStateProvider)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
         expandedPaths.remove(event.path)
-        treeStateHolder.storeState(this@FilteringBranchesTree)
+        treeStateHolder.setStateProvider(treeStateProvider)
       }
     })
-    component.addTreeSelectionListener { treeStateHolder.storeState(this@FilteringBranchesTree) }
+    component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
@@ -413,7 +418,7 @@ internal class FilteringBranchesTree(project: Project,
   }
 
   private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {
-    val treeState = if (loadSaved) treeStateHolder.treeState else TreeState.createOn(tree, root)
+    val treeState = if (loadSaved) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
     runnable()
     if (treeState != null) {
       treeState.applyTo(tree)
@@ -477,21 +482,43 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
 @State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 @Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
-  private lateinit var _treeState: TreeState
-  val treeState get() = if (::_treeState.isInitialized) _treeState else null
+  private var treeStateProvider: BranchesTreeStateProvider? = null
+  private var _treeState: TreeState? = null
+
+  fun getInitialTreeState(): TreeState? = state
 
   override fun getState(): TreeState? {
-    if (::_treeState.isInitialized) {
-      return _treeState
-    }
-    return null
+    return treeStateProvider?.getState() ?: _treeState
   }
 
   override fun loadState(state: TreeState) {
     _treeState = state
   }
 
-  fun storeState(branchesTree: FilteringBranchesTree) {
-    _treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
+  fun setStateProvider(provider: BranchesTreeStateProvider) {
+    treeStateProvider = provider
+  }
+}
+
+internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable: Disposable) {
+  private var tree: FilteringBranchesTree? = tree
+  private var state: TreeState? = null
+
+  init {
+    Disposer.register(disposable) {
+      persistTreeState()
+      this.tree = null
+    }
+  }
+
+  fun getState(): TreeState {
+    persistTreeState()
+    return state!!
+  }
+
+  private fun persistTreeState() {
+    tree?.let {
+      state = TreeState.createOn(it.tree, it.root)
+    }
   }
 }

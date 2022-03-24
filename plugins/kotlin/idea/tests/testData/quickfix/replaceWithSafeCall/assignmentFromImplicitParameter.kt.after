@@ -1,5 +1,5 @@
 // "Replace with safe (this?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 var i = 0
 
 fun foo(a: String?) {

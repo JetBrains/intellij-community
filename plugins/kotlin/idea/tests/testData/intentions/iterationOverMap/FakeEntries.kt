@@ -1,4 +1,6 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'key' is never used
+// AFTER-WARNING: Variable 'value' is never used
 
 class MyMap {
     val entries = listOf<Map.Entry<Int, Int>>()

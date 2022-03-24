@@ -3,3 +3,4 @@
 public interface Foo {
     <T> void <caret>baz(T foo);
 }
+// FIR_COMPARISON

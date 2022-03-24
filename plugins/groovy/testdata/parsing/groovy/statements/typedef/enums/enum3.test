@@ -6,7 +6,7 @@ enum a implements A.B.C {
     native def String a = b = 4
      Integer getInteger() {
        a = 3
-     } 
+     }
   }
 }
 -----
@@ -79,6 +79,8 @@ Groovy script
                   <empty list>
                 Implements clause
                   <empty list>
+                Permits clause
+                  <empty list>
                 PsiWhiteSpace(' ')
                 Type definition body
                   PsiElement({)('{')
@@ -150,7 +152,6 @@ Groovy script
                       PsiElement(Integer)('3')
                   PsiElement(new line)('\n     ')
                   PsiElement(})('}')
-              PsiWhiteSpace(' ')
               PsiElement(new line)('\n  ')
               PsiElement(})('}')
       PsiElement(new line)('\n')

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
@@ -125,10 +124,9 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
 
     GitLineHandler handler = GitLogUtil.createGitHandler(project, root);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, TREE);
-    GitVcs vcs = GitVcs.getInstance(project);
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty());
-    handler.addParameters(GitLogUtil.getNoWalkParameter(vcs));
+    handler.addParameters(GitLogUtil.getNoWalkParameter(project));
     handler.addParameters(GitLogUtil.STDIN);
     handler.endOptions();
 

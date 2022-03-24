@@ -467,7 +467,7 @@ class IronPythonInteractiveConsole(IronPythonInteractiveInterpreter):
         more = self.runsource(source, self.filename)
         if not more:
             self.resetbuffer()
-        return more
+        return more, False
 
     def raw_input(self, prompt=""):
         """Write a prompt and read a line.

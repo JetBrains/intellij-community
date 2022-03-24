@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -92,7 +92,7 @@ public final class AboutPopup {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
     final PopupPanel panel = new PopupPanel(new BorderLayout());
-    Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl(), AboutPopup.class);
+    Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl(), AboutPopup.class.getClassLoader());
     if (appInfo.showLicenseeInfo()) {
       final InfoSurface infoSurface = new InfoSurface(image, showDebugInfo);
       infoSurface.setPreferredSize(new Dimension(image.getIconWidth(), image.getIconHeight()));
@@ -675,6 +675,10 @@ public final class AboutPopup {
 
     extraInfo += "Cores: " + Runtime.getRuntime().availableProcessors() + "\n";
 
+    if (SystemInfo.isMetalRendering) {
+      extraInfo += "Metal Rendering is ON\n";
+    }
+
     Collector<CharSequence, ?, String> joiner = Collectors.joining("\n");
 
     String registryKeys = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
@@ -832,7 +836,7 @@ public final class AboutPopup {
 
   public static @NotNull @NlsSafe String getAboutText() {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-    InfoSurface infoSurface = new InfoSurface(IconLoader.getIcon(appInfo.getAboutImageUrl(), AboutPopup.class), false);
+    InfoSurface infoSurface = new InfoSurface(IconLoader.getIcon(appInfo.getAboutImageUrl(), AboutPopup.class.getClassLoader()), false);
     return infoSurface.getText();
   }
 }

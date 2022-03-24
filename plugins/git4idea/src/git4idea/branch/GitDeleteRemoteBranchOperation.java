@@ -107,7 +107,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
 
   @NotNull
   @Override
-  public String getSuccessMessage() {
+  protected String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 

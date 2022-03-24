@@ -270,7 +270,7 @@ public final class IdeMouseEventDispatcher {
       DataContext context = DataManager.getInstance().getDataContext(component);
       IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
         event, place, context, actions,
-        newActionProcessor(modifiers), myPresentationFactory);
+        newActionProcessor(modifiers), myPresentationFactory, shortcut);
     }
   }
 

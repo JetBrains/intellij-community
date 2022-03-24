@@ -31,7 +31,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
    * @deprecated You must pass plugin descriptor, use {@link LanguageExtensionPoint#LanguageExtensionPoint(String, Object)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public LanguageExtensionPoint() {
   }
 

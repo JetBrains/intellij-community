@@ -18,12 +18,14 @@ import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
+import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.coroutines.Continuation
-import org.jetbrains.org.objectweb.asm.Type as AsmType
 import com.sun.jdi.Type as JdiType
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class VariableFinder(val context: ExecutionContext) {
     private val frameProxy = context.frameProxy
@@ -261,7 +263,9 @@ class VariableFinder(val context: ExecutionContext) {
         kind: VariableKind,
         namePredicate: (String) -> Boolean
     ): Result? {
-        val inlineDepth = getInlineDepth(variables)
+        val inlineDepth =
+            frameProxy.safeAs<InlineStackFrameProxyImpl>()?.inlineDepth
+            ?: getInlineDepth(variables)
 
         findLocalVariable(variables, kind, inlineDepth, namePredicate)?.let { return it }
 

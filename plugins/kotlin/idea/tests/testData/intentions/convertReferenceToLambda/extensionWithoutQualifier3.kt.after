@@ -1,4 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'body' is never used
+// AFTER-WARNING: Parameter 'i' is never used
+// AFTER-WARNING: Parameter 's' is never used
 
 fun doo(i: Int, s: String): String = "42"
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
+import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -44,6 +45,7 @@ import java.util.TreeMap;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_ANNOTATOR_DOWNLOADED_EVENT_ID;
 
@@ -198,18 +200,22 @@ public final class ShShellcheckUtil {
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
     if (!isNewVersionAvailable()) return;
-    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.shellcheck.update.question"),
+    Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.update.question"),
                                                  NotificationType.INFORMATION);
+    notification.setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK);
+    notification.setSuggestionType(true);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.shellcheck.success.update"),
-                                            NotificationType.INFORMATION)),
+                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.success.update"),
+                                            NotificationType.INFORMATION)
+                             .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_SUCCESS)),
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
-                                            NotificationType.ERROR)),
+                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
+                                            NotificationType.ERROR)
+                             .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_ERROR)),
                  true);
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {

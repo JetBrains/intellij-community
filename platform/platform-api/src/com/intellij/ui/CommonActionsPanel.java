@@ -288,7 +288,7 @@ public final class CommonActionsPanel extends JPanel {
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
         final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel()
-                                                             : ((JList)c).getSelectionModel();
+                                                             : ((JList<?>)c).getSelectionModel();
         final int size = c instanceof JTable ? ((JTable)c).getRowCount()
                                              : ((JList)c).getModel().getSize();
         final int min = model.getMinSelectionIndex();

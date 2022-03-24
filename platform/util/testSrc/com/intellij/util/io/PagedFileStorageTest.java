@@ -24,7 +24,7 @@ public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private final StorageLockContext lock = new StorageLockContext(true);
+  private final StorageLockContext lock = new StorageLockContext();
   private Path f;
   private PagedFileStorage s;
 

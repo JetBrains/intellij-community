@@ -18,15 +18,17 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.internal.PsiArrayToUElementListMappingView
 import org.jetbrains.uast.psi.UElementWithLocation
 
+@ApiStatus.Internal
 class JavaUCallExpression(
   override val sourcePsi: PsiMethodCallExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UElementWithLocation, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UCallExpression, UElementWithLocation, UMultiResolvable {
   override val kind: UastCallKind
     get() {
       val element = nameReferenceElement
@@ -127,10 +129,11 @@ class JavaUCallExpression(
     }
 }
 
+@ApiStatus.Internal
 class JavaConstructorUCallExpression(
   override val sourcePsi: PsiNewExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
   override val kind: UastCallKind by lz {
     when {
       sourcePsi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
@@ -199,10 +202,11 @@ class JavaConstructorUCallExpression(
   }
 }
 
+@ApiStatus.Internal
 class JavaArrayInitializerUCallExpression(
   override val sourcePsi: PsiArrayInitializerExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
   override val methodIdentifier: UIdentifier?
     get() = null
 
@@ -239,10 +243,11 @@ class JavaArrayInitializerUCallExpression(
     get() = null
 }
 
+@ApiStatus.Internal
 class JavaAnnotationArrayInitializerUCallExpression(
   override val sourcePsi: PsiArrayInitializerMemberValue,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
+) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 

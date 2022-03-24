@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.changeClassSignature;
 
 import com.intellij.JavaTestUtil;
@@ -20,6 +6,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
+import com.intellij.refactoring.changeClassSignature.Existing;
+import com.intellij.refactoring.changeClassSignature.New;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +28,13 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
 
   public void testNoParams() {
     doTest(aClass -> new TypeParameterInfo[]{
-      new TypeParameterInfo.New(aClass, "T", "java.lang.String", "")
+      new New(aClass, "T", "java.lang.String", "")
     });
   }
 
   public void testInstanceOf() {
     doTest(aClass -> new TypeParameterInfo[]{
-      new TypeParameterInfo.New(aClass, "T", "java.lang.String", "")
+      new New(aClass, "T", "java.lang.String", "")
     });
   }
 
@@ -60,35 +48,35 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
 
   public void testReorderParams() {
     doTest(aClass -> new TypeParameterInfo[] {
-      new TypeParameterInfo.Existing(1),
-      new TypeParameterInfo.Existing(0)
+      new Existing(1),
+      new Existing(0)
     });
   }
 
   public void testAddParam() {
     doTest(aClass -> new TypeParameterInfo[] {
-      new TypeParameterInfo.Existing(0),
-      new TypeParameterInfo.New(aClass, "E", "L<T>", "")
+      new Existing(0),
+      new New(aClass, "E", "L<T>", "")
     });
   }
 
   public void testAddParamDiamond() {
     doTest(aClass -> new TypeParameterInfo[] {
-      new TypeParameterInfo.Existing(0),
-      new TypeParameterInfo.New(aClass, "I", "Integer", "")
+      new Existing(0),
+      new New(aClass, "I", "Integer", "")
     });
   }
 
   public void testAddOneFirst() {
     doTest(aClass -> new TypeParameterInfo[]{
-      new TypeParameterInfo.New(aClass, "T", "java.lang.String", "")
+      new New(aClass, "T", "java.lang.String", "")
     }, "Zero.java", "OneString.java");
   }
 
   public void testAddManyFirst() {
     doTest(aClass -> new TypeParameterInfo[]{
-      new TypeParameterInfo.New(aClass, "U", "SubjectFace", ""),
-      new TypeParameterInfo.New(aClass, "V", "java.util.Set<java.lang.Object>", "")
+      new New(aClass, "U", "SubjectFace", ""),
+      new New(aClass, "V", "java.util.Set<java.lang.Object>", "")
     }, "Zero.java", "TwoSubjectFaceSetObject.java");
   }
 
@@ -102,14 +90,14 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
 
   public void testModifyWithBound() {
     doTest(aClass -> new TypeParameterInfo[]{
-      new TypeParameterInfo.New(aClass, "T", "java.util.List", "java.util.Collection"),
-      new TypeParameterInfo.Existing(0)
+      new New(aClass, "T", "java.util.List", "java.util.Collection"),
+      new Existing(0)
     });
   }
 
   public void testAddWithBound() {
     doTest(aClass -> new TypeParameterInfo[]{
-      new TypeParameterInfo.New(aClass, "T", "java.util.List", "java.util.Collection")
+      new New(aClass, "T", "java.util.List", "java.util.Collection")
     });
   }
 
@@ -118,9 +106,9 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
       final PsiFile context = aClass.getContainingFile();
       return new TypeParameterInfo[]{
-        new TypeParameterInfo.New("T",
-                                  factory.createTypeFromText("Some", context),
-                                  PsiIntersectionType.createIntersection(factory.createTypeFromText("java.lang.Runnable", context),
+        new New("T",
+                factory.createTypeFromText("Some", context),
+                PsiIntersectionType.createIntersection(factory.createTypeFromText("java.lang.Runnable", context),
                                                                          factory.createTypeFromText("java.io.Serializable", context)))
       };
     });

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
-import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -15,9 +14,9 @@ import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.ContentInfo
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.TrackerContent
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
+import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitUtil
@@ -87,8 +86,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     try {
       val bytes = GitFileUtils.getFileContent(project, repository.root, GitUtil.HEAD,
                                               VcsFileUtil.relativePath(repository.root, status.path(ContentVersion.HEAD)))
-      val charset: Charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath)
-      val headContent = CharsetToolkit.decodeString(bytes, charset)
+      val headContent = VcsImplUtil.loadTextFromBytes(project, bytes, filePath)
       val correctedText = StringUtil.convertLineSeparators(headContent)
 
       return StagedTrackerContent(correctedText, indexDocument)

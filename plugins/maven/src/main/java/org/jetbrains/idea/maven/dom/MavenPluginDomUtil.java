@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public final class MavenPluginDomUtil {
 
@@ -93,9 +93,9 @@ public final class MavenPluginDomUtil {
 
   @Nullable
   private static VirtualFile getPluginXmlFile(Project project, String groupId, String artifactId, String version) {
-    File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(),
-                                                  groupId, artifactId, version, "jar");
-    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    Path file = MavenArtifactUtil.getArtifactNioPath(MavenProjectsManager.getInstance(project).getLocalRepository(),
+                                                     groupId, artifactId, version, "jar");
+    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByNioFile(file);
     if (pluginFile == null) return null;
 
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);

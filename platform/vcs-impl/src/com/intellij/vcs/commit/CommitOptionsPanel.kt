@@ -97,7 +97,7 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
   }
 
   companion object {
-    private fun verticalPanel() = JPanel(VerticalFlowLayout(0, 0))
+    fun verticalPanel() = JPanel(VerticalFlowLayout(0, 0))
 
     fun verticalPanel(title: @Nls String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)

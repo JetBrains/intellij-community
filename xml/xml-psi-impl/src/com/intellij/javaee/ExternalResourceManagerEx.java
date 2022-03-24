@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +39,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   /**
    * @deprecated Use {@link #addIgnoredResources(List, Disposable)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addIgnoredResource(@NotNull String url);
 
   public abstract void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable);

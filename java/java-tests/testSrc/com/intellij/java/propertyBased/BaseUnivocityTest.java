@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -23,9 +24,14 @@ public abstract class BaseUnivocityTest extends AbstractApplyAndRevertTestCase {
     WriteAction.run(() -> {
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
-      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
+      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(projectLanguageLevel());
     });
     CompilerTestUtil.saveApplicationSettings();
+  }
+
+  @NotNull
+  protected LanguageLevel projectLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
@@ -33,7 +34,8 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
                                 kind: MessageEvent.Kind,
                                 virtualFile: VirtualFile?,
                                 navigatable: Navigatable?): BuildIssue? {
-    val mavenManager = MavenProjectsManager.getInstance(project);
+    if (project.isDisposed) return null
+    val mavenManager = MavenProjectsManager.getInstance(project)
     if (!mavenManager.isMavenizedProject) return null
 
     if (moduleNames.size != 1) {
@@ -126,7 +128,7 @@ class SetupModuleSdkQuickFix(val moduleName: String, val isSdkInherited: Boolean
       ProjectSettingsService.getInstance(project).openProjectSettings()
     }
     else {
-      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, null)
+      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, ClasspathEditor.getName())
     }
     return CompletableFuture.completedFuture<Any>(null)
   }

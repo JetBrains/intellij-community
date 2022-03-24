@@ -1,18 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +37,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +65,34 @@ public class IntentionDescriptionPanel {
 
     myDescriptionBrowser.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        BrowserUtil.browse(e.getURL());
+        try {
+          URI url = new URI(e.getDescription());
+          if (url.getScheme().equals("settings")) {
+            DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+              if (context != null) {
+                Settings settings = Settings.KEY.getData(context);
+                SearchTextField searchTextField = SearchTextField.KEY.getData(context);
+                String configId = url.getHost();
+                String search = url.getQuery();
+                if (settings != null) {
+                  Configurable configurable = settings.find(configId);
+                  settings.select(configurable).doWhenDone(() -> {
+                    if (searchTextField != null && search != null) searchTextField.setText(search);
+                  });
+                } else {
+                  final Project project = context.getData(CommonDataKeys.PROJECT);
+                  ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
+                }
+              }
+            });
+          }
+          else {
+            BrowserUtil.browse(url);
+          }
+        }
+        catch (URISyntaxException ex) {
+          LOG.error(ex);
+        }
       }
     });
   }
@@ -120,10 +156,9 @@ public class IntentionDescriptionPanel {
       readHTML(toHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory)));
       setupPoweredByPanel(null);
 
-      String pathForPackage = getClass().getPackage().getName().replace('.', '/');
-      TextDescriptor beforeTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + BEFORE_TEMPLATE);
+      TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
-      TextDescriptor afterTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + AFTER_TEMPLATE);
+      TextDescriptor afterTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());

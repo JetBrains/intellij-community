@@ -144,9 +144,10 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       catch (SerializationException e) {
         throw new InvalidDataException(e);
       }
-      String enabled = extension.getAttributeValue("enabled");
-      if (Boolean.parseBoolean(enabled)) {
+      if (Boolean.parseBoolean(extension.getAttributeValue("enabled"))) {
         myDisabledShortNames.remove(shortName);
+      } else {
+        myDisabledShortNames.add(shortName);
       }
     }
   }

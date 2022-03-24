@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
@@ -52,7 +53,7 @@ class InlineFunctionHyperLinkInfo(
             return file?.let { OpenFileDescriptor(project, file.file, file.line, 0) }
         }
 
-    sealed class InlineInfo(val prefix: String, val file: VirtualFile, val line: Int) {
+    sealed class InlineInfo(@Nls val prefix: String, val file: VirtualFile, val line: Int) {
         class CallSiteInfo(file: VirtualFile, line: Int) :
             InlineInfo(KotlinDebuggerCoreBundle.message("filters.text.inline.function.call.site"), file, line)
 

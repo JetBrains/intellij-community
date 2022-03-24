@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="proxy-vole" type="repository">
-    <properties maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.0.15">
+    <properties maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.0.16">
       <exclude>
         <dependency maven-id="net.java.dev.jna:jna" />
         <dependency maven-id="net.java.dev.jna:jna-platform" />
@@ -11,7 +11,7 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.0.15/proxy-vole-1.0.15.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.0.16/proxy-vole-1.0.16.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.15/delight-rhino-sandbox-0.0.15.jar!/" />
     </CLASSES>
     <JAVADOC />

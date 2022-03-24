@@ -256,6 +256,45 @@ class JdkVariantDetectorTest {
        |component_catalog="..."
     """.trimMargin()
 
+  @Suppress("SpellCheckingInspection") private val RELEASE_SEMERU_16_0_2 =
+    """|IMPLEMENTOR="International Business Machines Corporation"
+       |IMPLEMENTOR_VERSION="16.0.2.0"
+       |JAVA_VERSION="16.0.2"
+       |JAVA_VERSION_DATE="2021-07-20"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE="OpenJDK:34df42439f3 OpenJ9:1851b0074 OMR:9db1c870d"
+       |BUILD_SOURCE="git:03546ff"
+       |FULL_VERSION="16.0.2+7"
+       |SEMANTIC_VERSION="16.0.2+7"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G9216"
+       |JVM_VARIANT="Openj9"
+       |JVM_VERSION="openj9-0.27.0"
+       |HEAP_SIZE="Standard"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  @Suppress("SpellCheckingInspection") private val RELEASE_TEMURIN_17_0_1 =
+    """|IMPLEMENTOR="Eclipse Adoptium"
+       |IMPLEMENTOR_VERSION="Temurin-17.0.1+12"
+       |JAVA_VERSION="17.0.1"
+       |JAVA_VERSION_DATE="2021-10-19"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="x86_64"
+       |OS_NAME="Darwin"
+       |SOURCE=".:git:571f1238bb46"
+       |BUILD_SOURCE="git:732e6ff"
+       |FULL_VERSION="17.0.1+12"
+       |SEMANTIC_VERSION="17.0.1+12"
+       |BUILD_INFO="OS: Mac OS X Version: 10.14.6 18G84"
+       |JVM_VARIANT="Hotspot"
+       |JVM_VERSION="17.0.1+12"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
   @Rule @JvmField val tempDir = TempDirectory()
 
   @Test fun `Oracle OpenJDK 8`() = assertVariant(Unknown, RELEASE_ORACLE_OPEN_1_8_0_41, MANIFEST_ORACLE_OPEN_1_8_0_41)  // no vendor info
@@ -274,6 +313,8 @@ class JdkVariantDetectorTest {
   @Test fun `IBM JDK 11`() = assertVariant(IBM, RELEASE_IBM_11_0_11)
   @Test fun `GraalVM 8`() = assertVariant(GraalVM, RELEASE_GRAALVM_1_8_0_292)
   @Test fun `GraalVM 16`() = assertVariant(GraalVM, RELEASE_GRAALVM_16_0_1)
+  @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
+  @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
 
   private fun assertVariant(expectedVariant: JdkVersionDetector.Variant, releaseText: String, manifestText: String = "") {
     tempDir.newFile("release", releaseText.toByteArray())

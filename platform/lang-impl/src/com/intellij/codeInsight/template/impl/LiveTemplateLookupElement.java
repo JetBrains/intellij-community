@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,7 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
   public void renderElement(LookupElementPresentation presentation) {
     presentation.setItemText(getItemText());
     presentation.setTypeText(myDescription);
+    presentation.setIcon(AllIcons.Nodes.Template);
   }
 
   @Override

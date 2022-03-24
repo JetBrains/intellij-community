@@ -7,10 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class TerminalSelectAllAction extends DumbAwareAction {
 
-  public TerminalSelectAllAction() {
-    getTemplatePresentation().setEnabled(false);
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);

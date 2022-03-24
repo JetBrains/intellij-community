@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
@@ -76,14 +76,13 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                     WrapWithCoroutineScopeFix(removeReceiver = false, wrapCallOnly = true)
                 )
                 fixes += WrapWithCoroutineScopeFix(removeReceiver = extensionOfCoroutineScope, wrapCallOnly = false)
-                val file = function.containingKtFile
                 if (extensionOfCoroutineScope) {
-                    fixes += IntentionWrapper(ConvertReceiverToParameterIntention(), file)
+                    fixes += IntentionWrapper(ConvertReceiverToParameterIntention())
                 }
                 if (memberOfCoroutineScope) {
                     val containingDeclaration = function.containingClassOrObject
                     if (containingDeclaration is KtClass && !containingDeclaration.isInterface() && function.hasBody()) {
-                        fixes += IntentionWrapper(MoveMemberToCompanionObjectIntention(), file)
+                        fixes += IntentionWrapper(MoveMemberToCompanionObjectIntention())
                     }
                 }
 

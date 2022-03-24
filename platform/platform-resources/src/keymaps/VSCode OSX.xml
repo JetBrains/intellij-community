@@ -291,7 +291,7 @@
         <keyboard-shortcut first-keystroke="meta n" />
     </action>
     <action id="FileChooser.NewFolder" />
-    <action id="FileChooser.TogglePathShowing" />
+    <action id="FileChooser.TogglePathBar" />
     <action id="FileStructurePopup">
         <keyboard-shortcut first-keystroke="meta alt o" />
         <keyboard-shortcut first-keystroke="shift meta o" />
@@ -499,7 +499,9 @@
         <keyboard-shortcut first-keystroke="shift meta h" />
     </action>
     <action id="RestoreDefaultLayout" />
-    <action id="Resume" />
+    <action id="Resume">
+      <keyboard-shortcut first-keystroke="f5"/>
+    </action>
     <action id="RevealIn">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="r" />
     </action>

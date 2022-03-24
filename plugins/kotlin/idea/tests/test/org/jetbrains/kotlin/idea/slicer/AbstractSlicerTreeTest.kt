@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.slicer.SliceRootNode
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractSlicerTreeTest : AbstractSlicerTest() {

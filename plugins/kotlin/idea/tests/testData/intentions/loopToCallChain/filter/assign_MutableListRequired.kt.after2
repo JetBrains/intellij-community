@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'filter{}.toMutableList()'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().filter{}.toMutableList()'"
 import java.util.ArrayList

@@ -46,6 +46,8 @@ import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -98,14 +100,16 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return home.exists() && getBuildNumber(path) != null && getPlatformApiJar(path) != null;
   }
 
-  @Nullable
-  private static File getPlatformApiJar(String home) {
-    final File libDir = new File(home, LIB_DIR_NAME);
-    File f = new File(libDir, "platform-api.jar");
-    if (f.exists()) return f;
-    //in 173.* and earlier builds all IDEs included platform modules into openapi.jar (see org.jetbrains.intellij.build.ProductModulesLayout.platformApiModules)
-    f = new File(libDir, "openapi.jar");
-    if (f.exists()) return f;
+  private static @Nullable Path getPlatformApiJar(String home) {
+    Path libDir = Path.of(home, LIB_DIR_NAME);
+    // in 173.* and earlier builds all IDEs included platform modules into openapi.jar
+    // (see org.jetbrains.intellij.build.ProductModulesLayout.platformApiModules)
+    for (String name : List.of("app.jar", "platform-api.jar", "openapi.jar")) {
+      Path result = libDir.resolve(name);
+      if (Files.exists(result)) {
+        return result;
+      }
+    }
     return null;
   }
 
@@ -262,16 +266,15 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return false;
   }
 
-  @Nullable
-  private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
+  private static @Nullable JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
     if (PsiUtil.isPathToIntelliJIdeaSources(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
-    File apiJar = getPlatformApiJar(ideaSdk.getHomePath());
+    Path apiJar = getPlatformApiJar(ideaSdk.getHomePath());
     return apiJar != null ? ClsParsingUtil.getJdkVersionByBytecode(getIdeaClassFileVersion(apiJar)) : null;
   }
 
-  private static int getIdeaClassFileVersion(File apiJar) {
+  private static int getIdeaClassFileVersion(Path apiJar) {
     try {
-      try (ZipFile zipFile = new ZipFile(apiJar)) {
+      try (ZipFile zipFile = new ZipFile(apiJar.toFile())) {
         ZipEntry entry = zipFile.getEntry(ApplicationStarter.class.getName().replace('.', '/') + ".class");
         if (entry != null) {
           try (DataInputStream stream = new DataInputStream(zipFile.getInputStream(entry))) {
@@ -353,7 +356,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
         ProgressManager.checkCanceled();
         JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
-        if (library == null || library.getName().equals("jps-build-script-dependencies-bootstrap")) continue;
+        if (library == null) continue;
 
         // do not check extension.getScope(), plugin projects need tests too
         //JpsLibraryType<?> libraryType = library == null ? null : library.getType();

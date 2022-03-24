@@ -2,15 +2,15 @@
 <body>
 Reports expressions that can be replaced with "magic" constants.
 <p>Example 1:</p>
-<pre>
+<pre><code>
   // Bare literal "2" is used, warning:
   Font font = new Font("Arial", 2)
-</pre>
+</code></pre>
 <p>Example 2:</p>
-<pre>
+<pre><code>
   // Predefined constant is used, good:
   Font font = new Font("Arial", Font.ITALIC)
-</pre>
+</code></pre>
 <p>
   When possible, the quick-fix inserts an appropriate predefined constant.
 </p>

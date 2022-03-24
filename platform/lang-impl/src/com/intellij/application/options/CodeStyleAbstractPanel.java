@@ -3,6 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
+import com.intellij.formatting.service.AbstractDocumentFormattingService;
 import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -46,7 +47,6 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.PresentableEnumUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,6 +219,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
+        Document document = myEditor.getDocument();
+        AbstractDocumentFormattingService.setDocument(psiFile, document);
+
         applySettingsToModel();
         final Ref<PsiFile> formatted = Ref.create();
         CodeStyle.doWithTemporarySettings(
@@ -229,7 +232,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
             myEditor.getSettings().setTabSize(settings.getTabSize(getFileType()));
             formatted.set(doReformat(project, psiFile));
           });
-        Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.get().getText());
         DocumentReference docRef = DocumentReferenceManager.getInstance().create(document);
         UndoManager.getInstance(project).nonundoableActionPerformed(docRef, false);
@@ -303,8 +305,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @deprecated Do not override this method. Use LanguageCodeStyleSettingsProvider.createFileFromText() instead.
    * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected PsiFile createFileFromText(Project project, String text) {
     Language language = getDefaultLanguage();
     if (language != null) {
@@ -632,7 +633,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     copyMenu.removeAll();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCopyFromMenuAvailable() {
     return false;
   }

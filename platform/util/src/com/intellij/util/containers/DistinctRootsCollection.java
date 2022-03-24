@@ -70,7 +70,7 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
   }
 
   @Override
-  public boolean add(T o) {
+  public synchronized boolean add(T o) {
     Collection<T> toRemove = new ArrayList<>();
     for (T existing : myCollection) {
       if (isAncestor(existing, o)) {

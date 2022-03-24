@@ -3,23 +3,32 @@ package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.util.Disposer
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Before
 import org.junit.Test
 
 class ServiceContainerTest {
   @Test
   fun `cyclic detection`() {
-    val componentManager = TestComponentManager()
-    val pluginDescriptor = DefaultPluginDescriptor("test")
-    componentManager.registerServiceInstance(ComponentManager::class.java, componentManager, pluginDescriptor)
+    val disposable = Disposer.newDisposable()
+    com.intellij.openapi.diagnostic.DefaultLogger.disableStderrDumping(disposable)
+    try {
+      val componentManager = TestComponentManager()
+      val pluginDescriptor = DefaultPluginDescriptor("test")
+      componentManager.registerServiceInstance(ComponentManager::class.java, componentManager, pluginDescriptor)
 
-    componentManager.registerService(C1::class.java, C1::class.java, pluginDescriptor, override = false)
-    componentManager.registerService(C2::class.java, C2::class.java, pluginDescriptor, override = false)
+      componentManager.registerService(C1::class.java, C1::class.java, pluginDescriptor, override = false)
+      componentManager.registerService(C2::class.java, C2::class.java, pluginDescriptor, override = false)
 
-    assertThatThrownBy {
-      componentManager.getService(C1::class.java)
+      assertThatThrownBy {
+        componentManager.getService(C1::class.java)
+      }
+        .hasMessageContaining("Cyclic service initialization")
     }
-      .hasMessageContaining("Cyclic service initialization")
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   @Test

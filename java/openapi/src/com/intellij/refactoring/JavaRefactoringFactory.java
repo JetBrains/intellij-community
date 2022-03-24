@@ -1,11 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -32,7 +39,14 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
    */
   public abstract MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot);
 
-  public abstract MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements, MoveDestination moveDestination);
+  public MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements, MoveDestination moveDestination) {
+    return createMoveClassesOrPackages(elements, moveDestination, true, true);
+  }
+
+  public abstract MoveClassesOrPackagesRefactoring createMoveClassesOrPackages(PsiElement[] elements,
+                                                                               MoveDestination moveDestination,
+                                                                               boolean searchInComments, 
+                                                                               boolean searchInNonJavaFiles);
 
   public abstract MoveMembersRefactoring createMoveMembers(PsiMember[] elements,
                                                            String targetClassQualifiedName,
@@ -46,7 +60,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public abstract MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
                                                                           boolean replaceUsages,
                                                                           String classParameterName,
-                                                                          PsiField[] fields,
+                                                                          @NotNull PsiField[] fields,
                                                                           String[] names);
 
   public abstract MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,
@@ -77,4 +91,18 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
                                                      boolean exhaustive,
                                                      boolean cookObjects,
                                                      boolean cookToWildcards);
+  
+  public abstract ChangeClassSignatureRefactoring createChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
+  
+  public abstract ChangeSignatureRefactoring createChangeSignatureProcessor(PsiMethod method,
+                                                                            boolean generateDelegate,
+                                                                            @Nullable // null means unchanged
+                                                                            @PsiModifier.ModifierConstant String newVisibility,
+                                                                            String newName,
+                                                                            PsiType newReturnType,
+                                                                            ParameterInfo @NotNull [] parameterInfo,
+                                                                            ThrownExceptionInfo[] thrownExceptions,
+                                                                            Set<PsiMethod> propagateParametersMethods,
+                                                                            Set<PsiMethod> propagateExceptionsMethods,
+                                                                            Consumer<? super List<ParameterInfo>> callback);
 }

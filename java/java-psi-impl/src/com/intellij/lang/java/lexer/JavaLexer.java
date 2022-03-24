@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.LexerBase;
@@ -38,13 +38,9 @@ public final class JavaLexer extends LexerBase {
     return id != null &&
            (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
             level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
-            level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && RECORD.contentEquals(id) ||
+            level.isAtLeast(LanguageLevel.JDK_16) && RECORD.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
-            (isSealedAvailable(level) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
-  }
-
-  public static boolean isSealedAvailable(@NotNull LanguageLevel level) {
-    return level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (level.isAtLeast(LanguageLevel.JDK_17) || level.isPreview());
+            (level.isAtLeast(LanguageLevel.JDK_17) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
   }
 
   private final _JavaLexer myFlexLexer;

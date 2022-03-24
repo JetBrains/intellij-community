@@ -105,10 +105,6 @@ public abstract class ProjectFileNodeUpdater {
         updateFromElement(event.getOldParent());
         updateFromElement(event.getNewParent());
       }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-      }
     }, invoker);
     RootType.ROOT_EP.addChangeListener(this::updateFromRoot, project);
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, new VirtualFileAppearanceListener() {

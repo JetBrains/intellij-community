@@ -25,25 +25,25 @@ public interface ApplicationListener extends EventListener {
   }
 
   /**
-   * Is called before action start.
+   * Is called before the {@code action} is started, when the write-lock is not acquired yet.
    */
   default void beforeWriteActionStart(@NotNull Object action) {
   }
 
   /**
-   * Is called on action start.
+   * Is called before the {@code action} is started, when the write-lock is acquired.
    */
   default void writeActionStarted(@NotNull Object action) {
   }
 
   /**
-   * Is called on before action finish, while while lock is still being hold
+   * Is called after the {@code action} executed, while the write-lock is still acquired.
    */
   default void writeActionFinished(@NotNull Object action) {
   }
 
   /**
-   * Is called after action finish and lock is released
+   * Is called after {@code action} is finished and the write-lock is released.
    */
   default void afterWriteActionFinished(@NotNull Object action) {
   }

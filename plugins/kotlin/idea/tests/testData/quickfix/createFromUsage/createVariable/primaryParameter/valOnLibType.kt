@@ -2,7 +2,7 @@
 // ACTION: Create extension property 'Int.foo'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A<T>(val n: T)
 

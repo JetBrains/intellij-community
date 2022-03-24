@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
-  static final Logger LOG = Logger.getInstance(RangeMarkerTree.class);
+  static final Logger LOG = Logger.getInstance(IntervalTreeImpl.class);
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
   final ReadWriteLock l = new ReentrantReadWriteLock();
@@ -955,8 +955,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @Override
   public boolean removeInterval(@NotNull T interval) {
     if (!((RangeMarkerEx)interval).isValid()) return false;
+    l.writeLock().lock();
     try {
-      l.writeLock().lock();
       incModCount();
 
       if (!((RangeMarkerEx)interval).isValid()) return false;
@@ -970,12 +970,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       beforeRemove(interval, "Explicit Dispose");
 
       node.removeInterval(interval);
-      setNode(interval, null);
-
-      checkMax(true);
       return true;
     }
     finally {
+      setNode(interval, null);
       l.writeLock().unlock();
     }
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +131,12 @@ public interface EditorSettings {
   boolean isUseSoftWraps();
   void setUseSoftWraps(boolean use);
   boolean isAllSoftWrapsShown();
+
+  default boolean isPaintSoftWraps() {
+    return true;
+  }
+  default void setPaintSoftWraps(boolean val) {}
+
   boolean isUseCustomSoftWrapIndent();
   void setUseCustomSoftWrapIndent(boolean useCustomSoftWrapIndent);
   int getCustomSoftWrapIndent();
@@ -167,4 +172,7 @@ public interface EditorSettings {
 
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
+
+  @Nullable Boolean isShowVisualFormattingLayer();
+  void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer);
 }

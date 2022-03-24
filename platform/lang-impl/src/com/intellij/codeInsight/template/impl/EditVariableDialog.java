@@ -10,11 +10,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -97,12 +96,19 @@ class EditVariableDialog extends DialogWrapper {
     Stream<String> availableMacroNames = Arrays.stream(MacroFactory.getMacros()).filter(isAcceptableInContext).map(Macro::getPresentableName).sorted();
     Set<String> uniqueNames = availableMacroNames.collect(Collectors.toCollection(LinkedHashSet::new));
 
-    ComboBox<String> comboField = new ComboBox<>(ArrayUtilRt.toStringArray(uniqueNames));
-    comboField.setEditable(true);
-    DefaultCellEditor cellEditor = new DefaultCellEditor(comboField);
+    DefaultCellEditor cellEditor = new ComboBoxCellEditor() {
+      @Override
+      protected List<String> getComboBoxItems() {
+        return new ArrayList<>(uniqueNames);
+      }
+
+      @Override
+      protected boolean isComboboxEditable() {
+        return true;
+      }
+    };
     cellEditor.setClickCountToStart(1);
     myTable.getColumn(names[1]).setCellEditor(cellEditor);
-    myTable.setRowHeight(comboField.getPreferredSize().height);
 
     JTextField textField = new JTextField();
 

@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
@@ -28,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -61,9 +60,9 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.xml.stream.XMLStreamException;
@@ -78,9 +77,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
-  static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+  private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
@@ -90,9 +88,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public String myProfileName;
   public String myProfilePath;
   public boolean myRunWithEditorSettings;
-  public boolean myRunGlobalToolsOnly;
+  boolean myRunGlobalToolsOnly;
   public boolean myAnalyzeChanges;
-  boolean myPathProfiling;
+  private boolean myPathProfiling;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -100,11 +98,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public String myOutputFormat;
   public InspectionProfileImpl myInspectionProfile;
 
-  public String myTargets;
+  String myTargets;
   public boolean myErrorCodeRequired = true;
-  public String myScopePattern;
-  Map<Path, Long> myCompleteProfile;
-
+  String myScopePattern;
   public void startup() {
     if (myProjectPath == null) {
       reportError("Project to inspect is not defined");
@@ -118,11 +114,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
     try {
+      header();
       execute();
     }
     catch (Throwable e) {
       LOG.error(e);
-      reportError(e.getMessage());
+      reportError(e);
       gracefulExit();
       return;
     }
@@ -137,12 +134,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     myPathProfiling = true;
   }
 
-  public Map<Path, Long> getPathProfile() {
-    return myCompleteProfile;
-  }
+  public void header(){}
 
   public void execute() throws Exception {
-    final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                           appInfo.getFullApplicationName() +
                                                           " (build " +
@@ -191,12 +186,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public @NotNull Predicate<Path> getFilesFilter() {
-        return Predicates.alwaysTrue();
+        return __->true;
       }
 
       @Override
       public @NotNull Predicate<VirtualFile> getVirtualFilesFilter() {
-        return Predicates.alwaysTrue();
+        return __->true;
       }
     };
   }
@@ -228,8 +223,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.opening.project"));
     ConversionService conversionService = ConversionService.getInstance();
-    if (conversionService != null && conversionService.convertSilently(projectPath, createConversionListener()).openingIsCanceled()) {
-      gracefulExit();
+    StringBuilder convertErrorBuffer = new StringBuilder();
+    if (conversionService != null &&
+        conversionService.convertSilently(projectPath, createConversionListener(convertErrorBuffer)).openingIsCanceled()) {
+      onFailure(convertErrorBuffer.toString());
       return null;
     }
 
@@ -249,15 +246,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     AtomicReference<Project> projectRef = new AtomicReference<>();
     ProgressManager.getInstance().runProcess(
-      () -> {
-        projectRef.set(ProjectUtil.openOrImport(projectPath));
-      },
+      () -> projectRef.set(ProjectUtil.openOrImport(projectPath)),
       createProcessIndicator()
     );
     Project project = projectRef.get();
     if (project == null) {
-      reportError("Unable to open project");
-      gracefulExit();
+      onFailure(InspectionsBundle.message("inspection.application.unable.open.project"));
       return null;
     }
     waitAllStartupActivitiesPassed(project);
@@ -275,7 +269,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   @Nullable
-  protected AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  @VisibleForTesting
+  public AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
@@ -303,8 +298,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         }
       }
       else if (mySourceDirectory == null) {
-        final String scopeName = System.getProperty("idea.analyze.scope");
-        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+        String scopeName = System.getProperty("idea.analyze.scope");
+        NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
         scope = namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
       }
       else {
@@ -346,18 +341,13 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
-                         new AdditionalLibraryRootsListener() {
-                           @Override
-                           public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
-                                                           @NotNull Collection<? extends VirtualFile> oldRoots,
-                                                           @NotNull Collection<? extends VirtualFile> newRoots,
-                                                           @NotNull String libraryNameForDebug) {
-                             updateProjectStructure(counter, reportConverter, project, rootLogDir);
-                           }
-                         });
+                         (__, __1, __2, __3) -> updateProjectStructure(counter, reportConverter, project, rootLogDir));
   }
 
-  private static void updateProjectStructure(AtomicInteger counter, InspectionsReportConverter reportConverter, Project project, Path rootLogDir) {
+  private static void updateProjectStructure(AtomicInteger counter,
+                                             InspectionsReportConverter reportConverter,
+                                             Project project,
+                                             Path rootLogDir) {
     int i = counter.incrementAndGet();
     reportConverter.projectData(project, rootLogDir.resolve("state" + i));
     LOG.info("Project structure update written. Change number " + i);
@@ -398,8 +388,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  public @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
-    final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
+  @NotNull
+  private GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
+    InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
     if (myPathProfiling) {
@@ -409,10 +400,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return context;
   }
 
-  public void runAnalysisOnScope(Path projectPath,
-                                 @NotNull Disposable parentDisposable,
-                                 Project project,
-                                 InspectionProfileImpl inspectionProfile, AnalysisScope scope)
+  private void runAnalysisOnScope(Path projectPath,
+                                  @NotNull Disposable parentDisposable,
+                                  Project project,
+                                  InspectionProfileImpl inspectionProfile, AnalysisScope scope)
     throws IOException {
     reportMessage(1, InspectionsBundle.message("inspection.done"));
 
@@ -426,7 +417,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       reportConverter = new XSLTReportConverter(myOutputFormat);
     }
 
-    final Path resultsDataPath;
+    Path resultsDataPath;
     try {
       resultsDataPath = ReportConverterUtil.getResultsDataPath(parentDisposable, reportConverter, myOutPath);
     }
@@ -441,6 +432,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
+
+    for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
+      CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
+      configurator.preConfigureProject(project,context);
+    }
+
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       if (configurator.isApplicable(context)) {
@@ -485,7 +482,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       throw new IOException(e);
     }
     inspectionsResults.add(descriptionsFile);
-    saveProfile(context);
     // convert report
     if (reportConverter != null) {
       try {
@@ -504,19 +500,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  private void saveProfile(GlobalInspectionContextEx context) {
-    if (!myPathProfiling) return;
-    Map<Path, Long> profile = context.getPathProfile();
-    Map<Path, Long> completeProfile = new HashMap<>();
-    profile.forEach((path, millis) -> {
-      while (path != null) {
-        completeProfile.merge(path, millis, Long::sum);
-        path = path.getParent();
-      }
-    });
-    myCompleteProfile = completeProfile;
-  }
-
   public @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,
                                                                 GlobalInspectionContextEx context,
                                                                 Runnable analysisRunner) {
@@ -531,8 +514,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         isMappingLoaded.blockingGet(60000);
       }
       catch (TimeoutException | ExecutionException e) {
-        reportError("Cannot initialize vcs mapping");
-        gracefulExit();
+        onFailure(InspectionsBundle.message("inspection.application.cannot.initialize.vcs.mapping"));
       }
     }
     runAnalysisAfterShelvingSync(
@@ -685,8 +667,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
       })) {
-        gracefulExit();
-        return;
+        onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
       }
       context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
       reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
@@ -697,51 +678,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private @NotNull ProgressIndicatorBase createProcessIndicator() {
-    return new ProgressIndicatorBase() {
-      private String lastPrefix = "";
-      private int myLastPercent = -1;
-
-      {
-        setText("");
-      }
-
-      @Override
-      public void setText(String text) {
-        if (myVerboseLevel == 0) return;
-
-        if (myVerboseLevel == 1) {
-          if (text == null) {
-            return;
-          }
-          String prefix = getPrefix(text);
-          if (prefix.equals(lastPrefix)) {
-            reportMessageNoLineBreak(1, ".");
-            return;
-          }
-          lastPrefix = prefix;
-          reportMessage(1, "");
-          reportMessage(1, prefix);
-          return;
-        }
-
-        if (myVerboseLevel == 3) {
-          if (text == null) {
-            return;
-          }
-          if (!isIndeterminate() && getFraction() > 0) {
-            final int percent = (int)(getFraction() * 100);
-            if (myLastPercent == percent) return;
-            String prefix = getPrefix(text);
-            myLastPercent = percent;
-            String msg = prefix + " " + percent + "%";
-            reportMessage(2, msg);
-          }
-          return;
-        }
-
-        reportMessage(2, text);
-      }
-    };
+    return new InspectionProgressIndicator();
   }
 
   private static void runAnalysisAfterShelvingSync(Project project, List<? extends VirtualFile> files,
@@ -800,12 +737,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (profileName != null && !profileName.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
       if (inspectionProfile == null) {
-        reportError("Profile with configured name (" +
-                    profileName +
-                    ") was not found (neither in project nor in config directory). Configured by: " +
-                    configSource);
-        gracefulExit();
-        return null;
+        onFailure(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
       }
       return inspectionProfile;
     }
@@ -813,9 +745,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (profilePath != null && !profilePath.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
-        reportError("Failed to load profile from '" + profilePath + "'. Configured by: " + configSource);
-        gracefulExit();
-        return null;
+        onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
       }
       return inspectionProfile;
     }
@@ -825,7 +755,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
     InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded profile '" + inspectionProfile.getName() + "' from file '" + profilePath + "'");
+      reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
     }
     return inspectionProfile;
   }
@@ -835,14 +765,14 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded shared project profile '" + profileName + "'");
+      reportMessage(1, "Loaded the '" + profileName +"' shared project profile");
     }
     else {
       //check if ide profile is used for project
       for (InspectionProfileImpl profile : profileManager.getProfiles()) {
         if (Comparing.strEqual(profile.getName(), profileName)) {
           inspectionProfile = profile;
-          reportMessage(1, "Loaded local profile '" + profileName + "'");
+          reportMessage(1, "Loaded the '" + profileName + "' local profile");
           break;
         }
       }
@@ -852,7 +782,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
 
-  private ConversionListener createConversionListener() {
+  private ConversionListener createConversionListener(StringBuilder errorBuffer) {
     return new ConversionListener() {
       @Override
       public void conversionNeeded() {
@@ -868,7 +798,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public void error(@NotNull String message) {
-        reportError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
+        errorBuffer.append(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message))
+          .append(System.lineSeparator());
       }
 
       @Override
@@ -877,13 +808,15 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         for (Path file : readonlyFiles) {
           files.append(file.toString()).append("; ");
         }
-        reportError(InspectionsBundle
-                      .message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0", files.toString()));
+        errorBuffer.append(InspectionsBundle
+                             .message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0",
+                                      files.toString()))
+          .append(System.lineSeparator());
       }
     };
   }
 
-  public static @NotNull String getPrefix(final @NotNull String text) {
+  public static @NotNull String getPrefix(@NotNull String text) {
     int idx = text.indexOf(" in ");
     if (idx == -1) {
       idx = text.indexOf(" of ");
@@ -901,6 +834,15 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     if (myVerboseLevel >= minVerboseLevel) {
       System.out.print(message);
     }
+  }
+
+  public void reportError(@NotNull Throwable e) {
+    reportError(e.getMessage());
+  }
+
+  public void onFailure(@NotNull String message) {
+    reportError(message);
+    gracefulExit();
   }
 
   @Override
@@ -930,13 +872,62 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       String oldContent = revision.getContent();
       if (oldContent == null) return Collections.emptyList();
       String newContent = VfsUtilCore.loadText(virtualFile);
-      return Lists.newArrayList(
+      return ContainerUtil.newArrayList(
         RangesBuilder.compareLines(newContent, oldContent, LineOffsetsUtil.create(newContent), LineOffsetsUtil.create(oldContent))
           .iterateUnchanged());
     }
     catch (VcsException | IOException e) {
       LOG.error("Couldn't load content", e);
       return Collections.emptyList();
+    }
+  }
+
+  private class InspectionProgressIndicator extends ProgressIndicatorBase implements ProgressIndicatorWithDelayedPresentation {
+    private String lastPrefix = "";
+    private int myLastPercent = -1;
+
+    private InspectionProgressIndicator() {
+      setText("");
+    }
+
+    @Override
+    public void setText(String text) {
+      if (text.equals(getText())) {
+        return;
+      }
+      super.setText(text);
+      if (myVerboseLevel == 0) return;
+
+      if (myVerboseLevel == 1) {
+        String prefix = getPrefix(text);
+        if (prefix.equals(lastPrefix)) {
+          reportMessageNoLineBreak(1, ".");
+          return;
+        }
+        lastPrefix = prefix;
+        reportMessage(1, "");
+        reportMessage(1, prefix);
+        return;
+      }
+
+      if (myVerboseLevel == 3) {
+        if (!isIndeterminate() && getFraction() > 0) {
+          int percent = (int)(getFraction() * 100);
+          if (myLastPercent == percent) return;
+          String prefix = getPrefix(text);
+          myLastPercent = percent;
+          String msg = prefix + " " + percent + "%";
+          reportMessage(2, msg);
+        }
+        return;
+      }
+
+      reportMessage(2, text);
+    }
+
+    @Override
+    public void setDelayInMillis(int delayInMillis) {
+
     }
   }
 }

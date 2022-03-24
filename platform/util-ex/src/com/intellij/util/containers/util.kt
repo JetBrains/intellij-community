@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
@@ -26,6 +27,11 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   }
 }
 
+@Deprecated(
+  message = "Use 'isNullOrEmpty()' from Kotlin standard library.",
+  level = DeprecationLevel.WARNING,
+  replaceWith = ReplaceWith("isNullOrEmpty()", imports = ["kotlin.collections.isNullOrEmpty"])
+)
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
 @Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
@@ -66,7 +72,10 @@ fun <T> List<T>.init(): List<T> {
   return subList(0, size - 1)
 }
 
-fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
+fun <T> List<T>?.nullize(): List<T>? {
+  @Suppress("DEPRECATION")
+  return if (isNullOrEmpty()) null else this
+}
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
   return iterator().forEachGuaranteed(operation)
@@ -147,11 +156,11 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 }
 
 fun <T> MutableList<T>.addIfNotNull(e: T?) {
-  e?.let { add(it) }
+  e?.let(::add)
 }
 
 fun <T> MutableList<T>.addAllIfNotNull(vararg elements: T?) {
-  elements.forEach { e -> e?.let { add(it) } }
+  elements.forEach { e -> e?.let(::add) }
 }
 
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {

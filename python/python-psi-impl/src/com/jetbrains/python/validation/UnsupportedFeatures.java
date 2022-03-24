@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
@@ -52,16 +53,22 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   @Override
   protected void registerProblem(@NotNull PsiElement node,
                                  @NotNull TextRange range,
-                                 @NotNull @InspectionMessage String message,
-                                 @Nullable LocalQuickFix localQuickFix,
-                                 boolean asError) {
+                                 @NotNull String message,
+                                 boolean asError,
+                                 LocalQuickFix @NotNull ... fixes) {
     if (range.isEmpty()) {
       return;
     }
 
     HighlightSeverity severity = asError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
-    if (localQuickFix != null) {
-      getHolder().newAnnotation(severity, message).range(range).withFix(createIntention(node, message, localQuickFix)).create();
+    if (fixes.length > 0) {
+      AnnotationBuilder annotationBuilder = getHolder().newAnnotation(severity, message).range(range);
+      for (LocalQuickFix fix: fixes) {
+        if (fix != null) {
+          annotationBuilder = annotationBuilder.withFix(createIntention(node, message, fix));
+        }
+      }
+      annotationBuilder.create();
     }
     else {
       getHolder().newAnnotation(severity, message).range(range).create();

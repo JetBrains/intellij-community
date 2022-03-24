@@ -212,6 +212,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
+  public <T extends Configurable> boolean editConfigurable(Project project, @NotNull T configurable, @NotNull Consumer<T> advancedInitialization) {
+    return editConfigurable(null, project, configurable, advancedInitialization, createDimensionKey(configurable), isWorthToShowApplyButton(configurable));
+  }
+
+  @Override
   public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable) {
     return editConfigurable(parent, configurable, null);
   }
@@ -242,8 +247,18 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           @Nullable Project project,
                                           @NotNull Configurable configurable,
                                           @NotNull String dimensionKey,
-                                          @Nullable final Runnable advancedInitialization,
+                                          @Nullable Runnable advancedInitialization,
                                           boolean showApplyButton) {
+    Consumer<Configurable> consumer = advancedInitialization != null ? it -> advancedInitialization.run() : null;
+    return editConfigurable(parent, project, configurable, consumer, dimensionKey, showApplyButton);
+  }
+
+  private static <T extends Configurable> boolean editConfigurable(@Nullable Component parent,
+                                                                   @Nullable Project project,
+                                                                   @NotNull T configurable,
+                                                                   @Nullable final Consumer<T> advancedInitialization,
+                                                                   @NotNull String dimensionKey,
+                                                                   boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
       editor = SettingsDialogFactory.getInstance().create(project, dimensionKey, configurable, showApplyButton, false);
@@ -255,7 +270,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
-          advancedInitialization.run();
+          advancedInitialization.accept(configurable);
         }
       });
     }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorPackageConverter;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginPackageConverter;
 
 import java.util.List;
 
@@ -80,7 +80,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
-  @Convert(ModuleDescriptorPackageConverter.ForIdeaPlugin.class)
+  @Convert(IdeaPluginPackageConverter.class)
   GenericAttributeValue<PsiPackage> getPackage();
 
   @NotNull
@@ -195,7 +195,7 @@ public interface IdeaPlugin extends DomElement {
    * @deprecated not used anymore
    */
   @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   List<Helpset> getHelpsets();
 }

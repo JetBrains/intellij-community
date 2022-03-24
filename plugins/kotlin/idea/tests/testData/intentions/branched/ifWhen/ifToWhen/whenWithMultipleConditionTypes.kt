@@ -1,3 +1,5 @@
+// AFTER-WARNING: Check for instance is always 'false'
+// AFTER-WARNING: Check for instance is always 'true'
 fun test(n: Int): String {
     return <caret>if (n !is Int) "???"
     else if (n in 0..10) "small"

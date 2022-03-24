@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,11 +20,9 @@ import com.intellij.util.Function;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.*;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -31,10 +30,14 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
+import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +55,8 @@ import java.util.concurrent.Future;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
 import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 
 /**
  * Communication with Python console backend using Thrift services.
@@ -605,14 +610,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+  public @Nullable XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
-          final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
-                                                   : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
+          final String name = variable.getOffset() == 0 ? GetVariableCommand.composeName(variable)
+                                                        : variable.getOffset() + "\t" + GetVariableCommand.composeName(variable);
           List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
-          return parseVars(ret, var, this);
+          return parseVars(ret, variable, this);
         },
         true,
         createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
@@ -621,6 +626,24 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
     else {
       return new XValueChildrenList();
+    }
+  }
+
+  @Override
+  public @Nullable XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+    PyUserNodeRenderer typeRenderer = getTypeRenderer(var);
+    if (typeRenderer != null) {
+      return executeBackgroundTask(
+        () -> {
+          return loadTypeRendererChildren(this, var, typeRenderer);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
+        "Error in loadVariable():"
+      );
+    }
+    else {
+      return loadVariableDefaultView(var);
     }
   }
 
@@ -761,6 +784,39 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
+  @Override
+  public void setUserTypeRenderersSettings() {
+    if (!isCommunicationClosed()) {
+      try {
+        executeBackgroundTask(
+          () -> {
+            PyUserTypeRenderersSettings settings = PyUserTypeRenderersSettings.getInstance();
+            if (settings == null) {
+              return false;
+            }
+            List<PyUserTypeRenderer> renderers = settings.getApplicableRenderers();
+            if (renderers.isEmpty()) {
+              return false;
+            }
+            final String renderersMessage = SetUserTypeRenderersCommand.createMessage(renderers);
+            return getPythonConsoleBackendClient().setUserTypeRenderers(renderersMessage);
+          },
+          false,
+          createRuntimeMessage(PyBundle.message("console.setting.user.type.renderers")),
+          "Error in setUserTypeRenderersSettings():"
+        );
+      }
+      catch (PyDebuggerException e) {
+        LOG.warn("Failed to send Type Renderers", e);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
+  }
+
   public void setDebugCommunication(PythonDebugConsoleCommunication debugCommunication) {
     myDebugCommunication = debugCommunication;
   }
@@ -791,7 +847,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
 
     @Override
-    public void notifyFinished(boolean needsMoreInput) {
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
+      if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        // notify the CommandQueue service that the command has been completed without exceptions
+        // and it must be removed from the queue
+        // or clear queue if exception occurred
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+          .removeCommand(PydevConsoleCommunication.this, exceptionOccurred);
+      }
       execNotifyFinished(needsMoreInput);
     }
 
@@ -834,6 +897,13 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     @Override
     public boolean IPythonEditor(String path, String line) {
       return execIPythonEditor(path);
+    }
+
+    @Override
+    public void sendRichOutput(Map<String, String> data) throws TException {
+      if (myConsoleView == null) return;
+      if (data.isEmpty()) return;
+      PyConsoleOutputCustomizer.Companion.getInstance().showRichOutput(myConsoleView, data);
     }
   }
 

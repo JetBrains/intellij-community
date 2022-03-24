@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-public class VarType {  // TODO: optimize switch
+import java.util.Objects;
+
+public class VarType implements Type {  // TODO: optimize switch
 
   public static final VarType[] EMPTY_ARRAY = {};
 
@@ -30,12 +31,12 @@ public class VarType {  // TODO: optimize switch
   public static final VarType VARTYPE_SHORT_OBJ = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Short");
   public static final VarType VARTYPE_VOID = new VarType(CodeConstants.TYPE_VOID);
 
-  public final int type;
-  public final int arrayDim;
-  public final String value;
-  public final int typeFamily;
-  public final int stackSize;
-  public final boolean falseBoolean;
+  private final int type;
+  private final int arrayDim;
+  private final String value;
+  private final int typeFamily;
+  private final int stackSize;
+  private final boolean falseBoolean;
 
   public VarType(int type) {
     this(type, 0);
@@ -99,6 +100,29 @@ public class VarType {  // TODO: optimize switch
     this.typeFamily = getFamily(type, arrayDim);
     this.stackSize = getStackSize(type, arrayDim);
     this.falseBoolean = false;
+  }
+
+  @Override
+  public int getType() {
+    return type;
+  }
+
+  @Override
+  public int getArrayDim() {
+    return arrayDim;
+  }
+
+  @Override
+  public String getValue() {
+    return value;
+  }
+
+  public int getTypeFamily() {
+    return typeFamily;
+  }
+
+  public int getStackSize() {
+    return stackSize;
   }
 
   private static String getChar(int type) {
@@ -188,8 +212,8 @@ public class VarType {  // TODO: optimize switch
   }
 
   public VarType decreaseArrayDim() {
-    if (arrayDim > 0) {
-      return new VarType(type, arrayDim - 1, value);
+    if (getArrayDim() > 0) {
+      return new VarType(getType(), getArrayDim() - 1, getValue());
     }
     else {
       //throw new RuntimeException("array dimension equals 0!"); FIXME: investigate this case
@@ -198,7 +222,7 @@ public class VarType {  // TODO: optimize switch
   }
 
   public VarType resizeArrayDim(int newArrayDim) {
-    return new VarType(type, newArrayDim, value, typeFamily, stackSize, falseBoolean);
+    return new VarType(getType(), newArrayDim, getValue(), getTypeFamily(), getStackSize(), isFalseBoolean());
   }
 
   public VarType copy() {
@@ -206,7 +230,7 @@ public class VarType {  // TODO: optimize switch
   }
 
   public VarType copy(boolean forceFalseBoolean) {
-    return new VarType(type, arrayDim, value, typeFamily, stackSize, falseBoolean || forceFalseBoolean);
+    return new VarType(getType(), getArrayDim(), getValue(), getTypeFamily(), getStackSize(), isFalseBoolean() || forceFalseBoolean);
   }
 
   public boolean isFalseBoolean() {
@@ -218,22 +242,22 @@ public class VarType {  // TODO: optimize switch
   }
 
   public boolean isStrictSuperset(VarType val) {
-    int valType = val.type;
+    int valType = val.getType();
 
-    if (valType == CodeConstants.TYPE_UNKNOWN && type != CodeConstants.TYPE_UNKNOWN) {
+    if (valType == CodeConstants.TYPE_UNKNOWN && getType() != CodeConstants.TYPE_UNKNOWN) {
       return true;
     }
 
-    if (val.arrayDim > 0) {
+    if (val.getArrayDim() > 0) {
       return this.equals(VARTYPE_OBJECT);
     }
-    else if (arrayDim > 0) {
+    else if (getArrayDim() > 0) {
       return (valType == CodeConstants.TYPE_NULL);
     }
 
     boolean res = false;
 
-    switch (type) {
+    switch (getType()) {
       case CodeConstants.TYPE_INT:
         res = (valType == CodeConstants.TYPE_SHORT || valType == CodeConstants.TYPE_CHAR);
       case CodeConstants.TYPE_SHORT:
@@ -270,27 +294,27 @@ public class VarType {  // TODO: optimize switch
     }
 
     VarType vt = (VarType)o;
-    return type == vt.type && arrayDim == vt.arrayDim && InterpreterUtil.equalObjects(value, vt.value);
+    return getType() == vt.getType() && getArrayDim() == vt.getArrayDim() && Objects.equals(getValue(), vt.getValue());
   }
 
   @Override
   public String toString() {
     StringBuilder res = new StringBuilder();
-    for (int i = 0; i < arrayDim; i++) {
+    for (int i = 0; i < getArrayDim(); i++) {
       res.append('[');
     }
-    if (type == CodeConstants.TYPE_OBJECT) {
-      res.append('L').append(value).append(';');
+    if (getType() == CodeConstants.TYPE_OBJECT) {
+      res.append('L').append(getValue()).append(';');
     }
     else {
-      res.append(value);
+      res.append(getValue());
     }
     return res.toString();
   }
 
   // type1 and type2 must not be null
   public static VarType getCommonMinType(VarType type1, VarType type2) {
-    if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
+    if (type1.getType() == CodeConstants.TYPE_BOOLEAN && type2.getType() == CodeConstants.TYPE_BOOLEAN) { // special case booleans
       return type1.isFalseBoolean() ? type2 : type1;
     }
 
@@ -300,11 +324,11 @@ public class VarType {  // TODO: optimize switch
     else if (type2.isSuperset(type1)) {
       return type1;
     }
-    else if (type1.typeFamily == type2.typeFamily) {
-      switch (type1.typeFamily) {
+    else if (type1.getTypeFamily() == type2.getTypeFamily()) {
+      switch (type1.getTypeFamily()) {
         case CodeConstants.TYPE_FAMILY_INTEGER:
-          if ((type1.type == CodeConstants.TYPE_CHAR && type2.type == CodeConstants.TYPE_SHORT)
-              || (type1.type == CodeConstants.TYPE_SHORT && type2.type == CodeConstants.TYPE_CHAR)) {
+          if ((type1.getType() == CodeConstants.TYPE_CHAR && type2.getType() == CodeConstants.TYPE_SHORT)
+              || (type1.getType() == CodeConstants.TYPE_SHORT && type2.getType() == CodeConstants.TYPE_CHAR)) {
             return VARTYPE_SHORTCHAR;
           }
           else {
@@ -320,7 +344,7 @@ public class VarType {  // TODO: optimize switch
 
   // type1 and type2 must not be null
   public static VarType getCommonSupertype(VarType type1, VarType type2) {
-    if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
+    if (type1.getType() == CodeConstants.TYPE_BOOLEAN && type2.getType() == CodeConstants.TYPE_BOOLEAN) { // special case booleans
       return type1.isFalseBoolean() ? type1 : type2;
     }
 
@@ -330,11 +354,11 @@ public class VarType {  // TODO: optimize switch
     else if (type2.isSuperset(type1)) {
       return type2;
     }
-    else if (type1.typeFamily == type2.typeFamily) {
-      switch (type1.typeFamily) {
+    else if (type1.getTypeFamily() == type2.getTypeFamily()) {
+      switch (type1.getTypeFamily()) {
         case CodeConstants.TYPE_FAMILY_INTEGER:
-          if ((type1.type == CodeConstants.TYPE_SHORTCHAR && type2.type == CodeConstants.TYPE_BYTE)
-              || (type1.type == CodeConstants.TYPE_BYTE && type2.type == CodeConstants.TYPE_SHORTCHAR)) {
+          if ((type1.getType() == CodeConstants.TYPE_SHORTCHAR && type2.getType() == CodeConstants.TYPE_BYTE)
+              || (type1.getType() == CodeConstants.TYPE_BYTE && type2.getType() == CodeConstants.TYPE_SHORTCHAR)) {
             return VARTYPE_SHORT;
           }
           else {

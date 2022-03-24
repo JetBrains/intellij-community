@@ -17,6 +17,7 @@ public class UnmodifiableHashMapTest {
     UnmodifiableHashMap<Object, Object> empty = UnmodifiableHashMap.empty();
     assertEquals(0, empty.size());
     assertTrue(empty.isEmpty());
+    //noinspection ConstantConditions
     assertFalse(empty.containsKey("foo"));
     //noinspection RedundantOperationOnEmptyContainer
     assertNull(empty.get("foo"));
@@ -37,6 +38,7 @@ public class UnmodifiableHashMapTest {
   @SuppressWarnings("deprecation")
   @Test(expected = UnsupportedOperationException.class)
   public void testPutAll() {
+    //noinspection RedundantCollectionOperation
     UnmodifiableHashMap.empty().putAll(Collections.singletonMap("foo", "bar"));
   }
 

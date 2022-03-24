@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 {
   "note": "May https://vega.github.io/vega/docs/ be with you",
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
@@ -118,247 +123,66 @@
             "sum_other_doc_count" : 0,
             "buckets" : [
               {
-                "key" : "allKtFilesIn-kotlin",
-                "doc_count" : 1805,
-                "buildId" : {
-                  "doc_count_error_upper_bound" : 0,
-                  "sum_other_doc_count" : 0,
-                  "buckets" : [
-                    {
-                      "key" : 122583347,
-                      "doc_count" : 901,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-03T00:00:00.000Z",
-                            "key" : 1622678400000,
-                            "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 215.33333333333331,
-                                "50.0" : 839.0,
-                                "80.0" : 1966.6000000000001,
-                                "95.0" : 3934.9499999999935,
-                                "99.0" : 6307.070000000003
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1h"
-                      }
-                    },
-                    {
-                      "key" : 122724969,
-                      "doc_count" : 901,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-03T20:03:38.000Z",
-                            "key" : 1622750618000,
-                            "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 223.7222222222222,
-                                "50.0" : 841.0416666666666,
-                                "80.0" : 1968.5333333333335,
-                                "95.0" : 3817.099999999999,
-                                "99.0" : 6111.0
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1s"
-                      }
-                    },
-                    {
-                      "key" : 122889625,
-                      "doc_count" : 3,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-04T20:03:59.000Z",
-                            "key" : 1622837039000,
-                            "doc_count" : 3,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 4498.0,
-                                "50.0" : 4651.0,
-                                "80.0" : 11340.700000000003,
-                                "95.0" : 12084.0,
-                                "99.0" : 12084.0
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1s"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "key" : "allKtFilesIn-emptyProfile-space",
-                "doc_count" : 1802,
-                "buildId" : {
-                  "doc_count_error_upper_bound" : 0,
-                  "sum_other_doc_count" : 0,
-                  "buckets" : [
-                    {
-                      "key" : 122583349,
-                      "doc_count" : 901,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-03T02:00:00.000Z",
-                            "key" : 1622685600000,
-                            "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 104.68939393939395,
-                                "50.0" : 431.66666666666663,
-                                "80.0" : 2149.0000000000005,
-                                "95.0" : 4442.599999999995,
-                                "99.0" : 8317.480000000001
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1h"
-                      }
-                    },
-                    {
-                      "key" : 122726181,
-                      "doc_count" : 901,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-04T00:30:48.000Z",
-                            "key" : 1622766648000,
-                            "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 103.10833333333332,
-                                "50.0" : 398.0,
-                                "80.0" : 2108.8,
-                                "95.0" : 4356.399999999995,
-                                "99.0" : 8103.200000000001
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1s"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "key" : "allKtFilesIn-space",
-                "doc_count" : 1802,
-                "buildId" : {
-                  "doc_count_error_upper_bound" : 0,
-                  "sum_other_doc_count" : 0,
-                  "buckets" : [
-                    {
-                      "key" : 122583370,
-                      "doc_count" : 901,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-03T03:00:00.000Z",
-                            "key" : 1622689200000,
-                            "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 105.04285714285713,
-                                "50.0" : 436.71999999999997,
-                                "80.0" : 2201.5000000000005,
-                                "95.0" : 4637.699999999993,
-                                "99.0" : 8536.66
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1h"
-                      }
-                    },
-                    {
-                      "key" : 122726204,
-                      "doc_count" : 901,
-                      "values" : {
-                        "buckets" : [
-                          {
-                            "key_as_string" : "2021-06-04T03:03:10.000Z",
-                            "key" : 1622775790000,
-                            "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 101.33333333333333,
-                                "50.0" : 384.84,
-                                "80.0" : 2076.0000000000005,
-                                "95.0" : 4324.149999999992,
-                                "99.0" : 8067.92
-                              }
-                            }
-                          }
-                        ],
-                        "interval" : "1s"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
                 "key" : "allKtFilesIn-intellij",
-                "doc_count" : 1306,
-                "buildId" : {
+                "doc_count" : 5406,
+                "branch" : {
                   "doc_count_error_upper_bound" : 0,
-                  "sum_other_doc_count" : 0,
+                  "sum_other_doc_count" : 3604,
                   "buckets" : [
                     {
-                      "key" : 122726093,
-                      "doc_count" : 901,
-                      "values" : {
+                      "key" : "kt-212-1.6.0",
+                      "doc_count" : 1802,
+                      "buildId" : {
+                        "doc_count_error_upper_bound" : 0,
+                        "sum_other_doc_count" : 0,
                         "buckets" : [
                           {
-                            "key_as_string" : "2021-06-03T21:29:56.000Z",
-                            "key" : 1622755796000,
+                            "key" : 145918610,
                             "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 215.3125,
-                                "50.0" : 405.0,
-                                "80.0" : 2261.3000000000006,
-                                "95.0" : 4750.149999999997,
-                                "99.0" : 10093.630000000001
-                              }
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-27T19:31:00.000Z",
+                                  "key" : 1635363060000,
+                                  "doc_count" : 901,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 155.26190476190476,
+                                      "50.0" : 315.54545454545456,
+                                      "80.0" : 2253.7522222222233,
+                                      "95.0" : 4687.699999999997,
+                                      "98.0" : 9755.76
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
                             }
-                          }
-                        ],
-                        "interval" : "1s"
-                      }
-                    },
-                    {
-                      "key" : 122582874,
-                      "doc_count" : 405,
-                      "values" : {
-                        "buckets" : [
+                          },
                           {
-                            "key_as_string" : "2021-06-03T00:00:00.000Z",
-                            "key" : 1622678400000,
-                            "doc_count" : 405,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 122.5,
-                                "50.0" : 202.0,
-                                "80.0" : 377.0,
-                                "95.0" : 575.5,
-                                "99.0" : 1630.999999999998
-                              }
+                            "key" : 146085424,
+                            "doc_count" : 901,
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-27T21:34:07.000Z",
+                                  "key" : 1635370447000,
+                                  "doc_count" : 901,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 153.83333333333331,
+                                      "50.0" : 313.03663003663,
+                                      "80.0" : 2240.076666666667,
+                                      "95.0" : 4766.849999999997,
+                                      "98.0" : 10039.04
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
                             }
                           }
-                        ],
-                        "interval" : "1m"
+                        ]
                       }
                     }
                   ]
@@ -366,32 +190,65 @@
               },
               {
                 "key" : "allKtFilesIn-emptyProfile-intellij",
-                "doc_count" : 901,
-                "buildId" : {
+                "doc_count" : 3604,
+                "branch" : {
                   "doc_count_error_upper_bound" : 0,
-                  "sum_other_doc_count" : 0,
+                  "sum_other_doc_count" : 1802,
                   "buckets" : [
                     {
-                      "key" : 122726183,
-                      "doc_count" : 901,
-                      "values" : {
+                      "key" : "kt-212-master",
+                      "doc_count" : 1802,
+                      "buildId" : {
+                        "doc_count_error_upper_bound" : 0,
+                        "sum_other_doc_count" : 0,
                         "buckets" : [
                           {
-                            "key_as_string" : "2021-06-04T02:09:12.000Z",
-                            "key" : 1622772552000,
+                            "key" : 145848616,
                             "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 102.37962962962963,
-                                "50.0" : 225.92222222222222,
-                                "80.0" : 1097.3000000000002,
-                                "95.0" : 1932.8999999999999,
-                                "99.0" : 4584.62000000001
-                              }
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-27T02:26:35.000Z",
+                                  "key" : 1635301595000,
+                                  "doc_count" : 901,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 47.55357142857143,
+                                      "50.0" : 140.25,
+                                      "80.0" : 999.4466666666672,
+                                      "95.0" : 1882.35,
+                                      "98.0" : 3973.2300000000014
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
+                            }
+                          },
+                          {
+                            "key" : 146085479,
+                            "doc_count" : 901,
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-28T01:46:14.000Z",
+                                  "key" : 1635385574000,
+                                  "doc_count" : 901,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 44.45,
+                                      "50.0" : 135.125,
+                                      "80.0" : 991.45,
+                                      "95.0" : 1879.749999999999,
+                                      "98.0" : 3898.0600000000018
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
                             }
                           }
-                        ],
-                        "interval" : "1s"
+                        ]
                       }
                     }
                   ]
@@ -399,32 +256,174 @@
               },
               {
                 "key" : "allKtFilesIn-emptyProfile-kotlin",
-                "doc_count" : 901,
-                "buildId" : {
+                "doc_count" : 1802,
+                "branch" : {
                   "doc_count_error_upper_bound" : 0,
                   "sum_other_doc_count" : 0,
                   "buckets" : [
                     {
-                      "key" : 122726179,
-                      "doc_count" : 901,
-                      "values" : {
+                      "key" : "master",
+                      "doc_count" : 1802,
+                      "buildId" : {
+                        "doc_count_error_upper_bound" : 0,
+                        "sum_other_doc_count" : 0,
                         "buckets" : [
                           {
-                            "key_as_string" : "2021-06-03T23:03:06.000Z",
-                            "key" : 1622761386000,
+                            "key" : 145848612,
                             "doc_count" : 901,
-                            "percentiles" : {
-                              "values" : {
-                                "25.0" : 223.95,
-                                "50.0" : 842.0619047619048,
-                                "80.0" : 1963.5666666666668,
-                                "95.0" : 3977.2499999999973,
-                                "99.0" : 6314.730000000001
-                              }
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-27T03:15:31.000Z",
+                                  "key" : 1635304531000,
+                                  "doc_count" : 901,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 375.2142857142857,
+                                      "50.0" : 1488.7576923076922,
+                                      "80.0" : 3451.1375000000007,
+                                      "95.0" : 6886.699999999999,
+                                      "98.0" : 9623.390000000009
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
+                            }
+                          },
+                          {
+                            "key" : 146085617,
+                            "doc_count" : 901,
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-28T02:39:28.000Z",
+                                  "key" : 1635388768000,
+                                  "doc_count" : 901,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 381.5,
+                                      "50.0" : 1479.1200000000001,
+                                      "80.0" : 3434.1200000000003,
+                                      "95.0" : 6909.449999999996,
+                                      "98.0" : 10076.540000000008
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
                             }
                           }
-                        ],
-                        "interval" : "1s"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key" : "allKtFilesIn-emptyProfile-space",
+                "doc_count" : 925,
+                "branch" : {
+                  "doc_count_error_upper_bound" : 0,
+                  "sum_other_doc_count" : 0,
+                  "buckets" : [
+                    {
+                      "key" : "master",
+                      "doc_count" : 925,
+                      "buildId" : {
+                        "doc_count_error_upper_bound" : 0,
+                        "sum_other_doc_count" : 0,
+                        "buckets" : [
+                          {
+                            "key" : 145848624,
+                            "doc_count" : 841,
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-27T05:36:21.000Z",
+                                  "key" : 1635312981000,
+                                  "doc_count" : 841,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 177.9375,
+                                      "50.0" : 1153.3311688311687,
+                                      "80.0" : 4256.8200000000015,
+                                      "95.0" : 9398.999999999978,
+                                      "98.0" : 17311.690000000068
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
+                            }
+                          },
+                          {
+                            "key" : 146085655,
+                            "doc_count" : 84,
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-28T06:44:46.000Z",
+                                  "key" : 1635403486000,
+                                  "doc_count" : 84,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 3977.0,
+                                      "50.0" : 9301.0,
+                                      "80.0" : 16860.5,
+                                      "95.0" : 25928.99999999998,
+                                      "98.0" : 47614.259999999995
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key" : "allKtFilesIn-kotlin",
+                "doc_count" : 382,
+                "branch" : {
+                  "doc_count_error_upper_bound" : 0,
+                  "sum_other_doc_count" : 0,
+                  "buckets" : [
+                    {
+                      "key" : "master",
+                      "doc_count" : 382,
+                      "buildId" : {
+                        "doc_count_error_upper_bound" : 0,
+                        "sum_other_doc_count" : 0,
+                        "buckets" : [
+                          {
+                            "key" : 145848634,
+                            "doc_count" : 382,
+                            "values" : {
+                              "buckets" : [
+                                {
+                                  "key_as_string" : "2021-10-27T08:38:07.000Z",
+                                  "key" : 1635323887000,
+                                  "doc_count" : 382,
+                                  "percentiles" : {
+                                    "values" : {
+                                      "25.0" : 3160.0,
+                                      "50.0" : 5288.6,
+                                      "80.0" : 8606.000000000002,
+                                      "95.0" : 16671.199999999986,
+                                      "98.0" : 113430.8000000001
+                                    }
+                                  }
+                                }
+                              ],
+                              "interval" : "1s"
+                            }
+                          }
+                        ]
                       }
                     }
                   ]
@@ -435,10 +434,10 @@
         }
       },
       "url": {
-        //"comment": "source index pattern",
+        // "comment": "source index pattern",
         "index": "kotlin_ide_benchmarks*",
-        //"comment": "it's a body of ES _search query to check query place it into `POST /kotlin_ide_benchmarks*/_search`",
-        //"comment": "it uses Kibana specific %timefilter% for time frame selection",
+        // "comment": "it's a body of ES _search query to check query place it into `POST /kotlin_ide_benchmarks*/_search`",
+        // "comment": "it uses Kibana specific %timefilter% for time frame selection",
         "body": {
             "size": 0,
             "query": {
@@ -464,27 +463,36 @@
                   "size": 500
                 },
                 "aggs": {
-                  "buildId": {
+                  "branch": {
                     "terms": {
-                      "field": "buildId"
+                      "size": 10,
+                      "field": "buildBranch.keyword"
                     },
+
                     "aggs": {
-                      "values": {
-                        "auto_date_histogram": {
-                            "buckets": 1,
-                            "field": "buildTimestamp"
+                      "buildId": {
+                        "terms": {
+                          "field": "buildId"
                         },
                         "aggs": {
-                          "percentiles": {
-                            "percentiles": {
-                              "field": "metricValue",
-                              "percents": [
-                                25,
-                                50,
-                                80,
-                                95,
-                                99
-                              ]
+                          "values": {
+                            "auto_date_histogram": {
+                                "buckets": 1,
+                                "field": "buildTimestamp"
+                            },
+                            "aggs": {
+                              "percentiles": {
+                                "percentiles": {
+                                  "field": "metricValue",
+                                  "percents": [
+                                    25,
+                                    50,
+                                    80,
+                                    95,
+                                    98
+                                  ]
+                                }
+                              }
                             }
                           }
                         }
@@ -500,17 +508,19 @@
       "transform": [
         {"type": "project", "fields": ["benchmarks"]},
         {"type": "flatten", "fields": ["benchmarks.buckets"], "as": ["benchmark_buckets"]},
-        {"type": "project", "fields": ["benchmark_buckets.key", "benchmark_buckets.buildId"], "as": ["benchmark", "benchmark_buckets_buildId"]},
-        {"type": "flatten", "fields": ["benchmark_buckets_buildId.buckets"], "as": ["buildId_buckets"]},
-        {"type": "project", "fields": ["benchmark", "buildId_buckets.key", "buildId_buckets.values.buckets"], "as": ["benchmark", "buildId", "buildId_buckets_buckets"]},
-        {"type": "flatten", "fields": ["buildId_buckets_buckets"], "as": ["buildId_buckets_buckets_values"]},
-        {"type": "project", "fields": ["benchmark", "buildId", "buildId_buckets_buckets_values.key_as_string", "buildId_buckets_buckets_values.percentiles.values"], "as": ["benchmark", "buildId", "buildTimestamp", "percentiles"]},
-        {"type": "project", "fields": ["benchmark", "buildId", "buildTimestamp", "percentiles[25.0]", "percentiles[50.0]", "percentiles[80.0]", "percentiles[95.0]", "percentiles[99.0]"], "as":["benchmark", "buildId", "buildTimestamp", "p25", "p50", "p80", "p95", "p99"]},
+        {"type": "project", "fields": ["benchmark_buckets.key", "benchmark_buckets.branch"], "as": ["benchmark", "benchmark_buckets_branch"]},
+        {"type": "flatten", "fields": ["benchmark_buckets_branch.buckets"], "as": ["branch_buckets"]},
+        {"type": "project", "fields": ["benchmark", "branch_buckets.key", "branch_buckets.buildId.buckets"], "as": ["benchmark", "branch", "branch_buildId_buckets"]},
+        {"type": "flatten", "fields": ["branch_buildId_buckets"], "as": ["buildId_branches"]},
+        {"type": "project", "fields": ["benchmark", "branch", "buildId_branches.key", "buildId_branches.values.buckets"], "as": ["benchmark", "branch", "buildId", "buildId_branches_buckets"]},
+        {"type": "flatten", "fields": ["buildId_branches_buckets"], "as": ["buildId_branches_buckets_values"]},
+        {"type": "project", "fields": ["benchmark", "branch", "buildId",  "buildId_branches_buckets_values.key_as_string", "buildId_branches_buckets_values.percentiles.values"], "as": ["benchmark", "branch", "buildId", "buildTimestamp", "percentiles"]},
+        {"type": "project", "fields": ["benchmark", "branch", "buildId", "buildTimestamp", "percentiles[25.0]", "percentiles[50.0]", "percentiles[80.0]", "percentiles[95.0]", "percentiles[98.0]"], "as":["benchmark", "branch", "buildId", "buildTimestamp", "p25", "p50", "p80", "p95", "p98"]},
         {
         "type": "fold",
-        "fields": ["p25", "p50", "p80", "p95", "p99"]
+        "fields": ["p25", "p50", "p80", "p95", "p98"]
         },
-        {"type": "project", "fields": ["benchmark", "buildId", "buildTimestamp", "key", "value"], "as":["benchmark", "buildId", "buildTimestamp", "percentile", "metricValue"]},
+        {"type": "project", "fields": ["benchmark", "branch",  "buildId", "buildTimestamp", "key", "value"], "as":["benchmark", "branch", "buildId", "buildTimestamp", "percentile", "metricValue"]},
         {
           "type": "formula",
           "as": "timestamp",
@@ -519,7 +529,12 @@
         {
           "type": "formula",
           "as": "metricName",
-          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2$1') + ' ' + datum.percentile"
+          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2$1') + ' ['  + datum.branch + '] '  + datum.percentile"
+        },
+        {
+          "type": "formula",
+          "as": "projectName",
+          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2$1')"
         },
         {
           "type": "formula",
@@ -531,6 +546,14 @@
     },
     {
       "name": "selected",      "on": [
+        {"trigger": "clear", "remove": true},
+        {"trigger": "!shift", "remove": true},
+        {"trigger": "!shift && clicked", "insert": "clicked"},
+        {"trigger": "shift && clicked", "toggle": "clicked"}
+      ]
+    },
+    {
+      "name": "selectedProject",      "on": [
         {"trigger": "clear", "remove": true},
         {"trigger": "!shift", "remove": true},
         {"trigger": "!shift && clicked", "insert": "clicked"},
@@ -592,9 +615,15 @@
       "domain": {"data": "table", "field": "metricValue"}
     },
     {
-      "name": "color",
+      "name": "projectColor",
       "type": "ordinal",
-      "range": {"scheme": "category20"},
+      "range": {"scheme": "category10"},
+      "domain": {"data": "table", "field": "projectName"}
+    },
+    {
+      "name": "caseColor",
+      "type": "ordinal",
+      "range": {"scheme": "category10"},
       "domain": {"data": "table", "field": "metricName"}
     },
     {
@@ -610,13 +639,55 @@
       "name": "branchColor",
       "type": "ordinal",
       "domain": {"data": "table", "field": "branch"},
-      "range": "category"
+      "range": {"scheme": "dark2"}
     }
   ],
   "legends": [
     {
+      "title": "Project",
+      "stroke": "projectColor",
+      "strokeColor": "#ccc",
+      "padding": 8,
+      "cornerRadius": 4,
+      "symbolLimit": 50,
+      "labelLimit": 300,
+      "encode": {
+        "symbols": {
+          "name": "legendSymbol",
+          "interactive": true,
+          "update": {
+            "fill": {"value": "transparent"},
+            "strokeWidth": {"value": 2},
+            "opacity": [
+              {
+                "comment": "here `datum` is `selectedProject` data set",
+                "test": "!length(data('selectedProject')) || indata('selectedProject', 'value', datum.value)",
+                "value": 0.7
+              },
+              {"value": 0.15}
+            ],
+            "size": {"value": 64}
+          }
+        },
+        "labels": {
+          "name": "legendLabel",
+          "interactive": true,
+          "update": {
+            "opacity": [
+              {
+                "comment": "here `datum` is `selectedProject` data set",
+                "test": "!length(data('selectedProject')) || indata('selectedProject', 'value', datum.value)",
+                "value": 1
+              },
+              {"value": 0.25}
+            ]
+          }
+        }
+      }
+    },
+    {
       "title": "Cases",
-      "stroke": "color",
+      "stroke": "caseColor",
       "strokeColor": "#ccc",
       "padding": 8,
       "cornerRadius": 4,
@@ -753,15 +824,15 @@
               "strokeWidth": {"value": 2},
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 0.7
                 },
                 {"value": 0.15}
               ],
               "stroke": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
-                  "scale": "color",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
+                  "scale": "caseColor",
                   "field": "metricName"
                 },
                 {"value": "#ccc"}
@@ -783,7 +854,7 @@
               "strokeWidth": {"value": 1},
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && datum.hasError && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && datum.hasError && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 1
                 },
                 {"value": 0.15}
@@ -792,7 +863,7 @@
             "update": {
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain))  && datum.hasError && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain))  && datum.hasError && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 1
                 },
                 {"value": 0.15}
@@ -815,12 +886,12 @@
               "x": {"scale": "x", "field": {"signal": "timestamp ? 'timestamp' : 'buildId'"}},
               "y": {"scale": "y", "field": "metricValue"},
               "strokeWidth": {"value": 1},
-              "fill": {"scale": "color", "field": "metricName"}
+              "fill": {"scale": "caseColor", "field": "metricName"}
             },
             "update": {
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 1
                 },
                 {"value": 0.15}

@@ -2,13 +2,15 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 
 @Suppress("ComponentNotRegistered")
-open class MoreActionGroup @JvmOverloads constructor(horizontal: Boolean = true) : DefaultActionGroup() {
+open class MoreActionGroup @JvmOverloads constructor(
+  horizontal: Boolean = true
+) : DefaultActionGroup({ ActionsBundle.groupText("MoreActionGroup") }, true) {
 
   init {
-    isPopup = true
     templatePresentation.icon = if (horizontal) AllIcons.Actions.More else AllIcons.Actions.MoreHorizontal
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }

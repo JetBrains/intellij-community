@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // PARAM_TYPES: Foo<T>
 // PARAM_TYPES: kotlin.String
 // PARAM_DESCRIPTOR: internal final class Foo<T> defined in root package in file typeParameterNotResolvableInTargetScope.kt

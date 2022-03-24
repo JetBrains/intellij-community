@@ -17,4 +17,7 @@ class EditorConfigValidParsingTest : EditorConfigParsingTestBase("valid") {
   fun testComplexHeader() = doTest()
   fun testQualifiedKey() = doTest()
   fun testCharclassInEnumeration() = doTest()
+  fun testOptionWithSimpleRawValue() = doTest()
+  fun testOptionWithComplexRawValue() = doTest()
+  fun testOptionWithEmptyRawValue() = doTest()
 }

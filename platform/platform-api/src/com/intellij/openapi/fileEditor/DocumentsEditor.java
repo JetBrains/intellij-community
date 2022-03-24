@@ -20,5 +20,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface DocumentsEditor extends FileEditor {
   @NotNull
-  Document[] getDocuments();
+  Document @NotNull [] getDocuments();
 }

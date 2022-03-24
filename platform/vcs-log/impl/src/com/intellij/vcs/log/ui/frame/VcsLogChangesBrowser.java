@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -20,7 +20,10 @@ import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
@@ -36,7 +39,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -45,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 import java.util.function.Consumer;
@@ -110,6 +112,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       });
     }
 
+    hideViewerBorder();
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
   }
@@ -129,12 +132,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     }
     return centerPanel;
-  }
-
-  @NotNull
-  @Override
-  protected Border createViewerBorder() {
-    return IdeBorderFactory.createBorder(SideBorder.TOP);
   }
 
   public void setToolbarHeightReferent(@NotNull JComponent referent) {
@@ -165,7 +162,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
-      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)
+      ActionManager.getInstance().getAction(VcsLogActionIds.CHANGES_BROWSER_POPUP_ACTION_GROUP)
     );
   }
 
@@ -275,7 +272,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
-          ChangesBrowserNode<?> parentNode = new ChangesBrowserParentNode(commitId);
+          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
+                                                                       SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
           parentNode.markAsHelperNode();
 
           builder.insertSubtreeRoot(parentNode);
@@ -426,7 +424,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return myEditorDiffPreview;
   }
 
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+  public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
+    selectObjectWithTag(myViewer, userObject, tag);
+  }
+
+  public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
     CommitId parentId = null;
     for (CommitId commitId : myChangesToParents.keySet()) {
       if (myChangesToParents.get(commitId).contains(change)) {
@@ -435,8 +437,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       }
     }
 
-    if (parentId != null) {
-      RootTag tag = new RootTag(parentId.getHash(), getText(parentId));
+    if (parentId == null) return null;
+    return new ParentTag(parentId.getHash(), getText(parentId));
+  }
+
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+    ChangesBrowserNode.Tag tag = getTag(change);
+    if (tag != null) {
       context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
     }
   }
@@ -451,24 +458,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
     context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
-  }
-
-  class ChangesBrowserParentNode extends ChangesBrowserStringNode {
-    @NotNull private final CommitId myCommitId;
-
-    protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
-      super(getText(commitId));
-      myCommitId = commitId;
-    }
-
-    @Override
-    public boolean shouldExpandByDefault() {
-      return false;
-    }
-
-    RootTag wrap() {
-      return new RootTag(myCommitId.getHash(), getUserObject());
-    }
   }
 
   @NotNull
@@ -486,31 +475,17 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     void onModelUpdated();
   }
 
-  private static class RootTag implements ChangesBrowserNode.Tag {
-    private final @NotNull Hash myCommit;
+  private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {
     private final @NotNull @Nls String myText;
 
-    RootTag(@NotNull Hash commit, @NotNull @Nls String text) {
-      myCommit = commit;
+    ParentTag(@NotNull Hash commit, @NotNull @Nls String text) {
+      super(commit);
       myText = text;
     }
 
     @Override
     public String toString() {
       return myText;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      RootTag tag = (RootTag)o;
-      return Objects.equals(myCommit, tag.myCommit);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myCommit);
     }
   }
 }

@@ -6,21 +6,28 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 
 public class OverwriteEqualsInsertHandler implements InsertHandler<LookupElement> {
-  public static OverwriteEqualsInsertHandler INSTANCE = new OverwriteEqualsInsertHandler();
+  public final static OverwriteEqualsInsertHandler INSTANCE = new OverwriteEqualsInsertHandler();
+
+  private OverwriteEqualsInsertHandler() { }
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     if (context.getCompletionChar() != Lookup.REPLACE_SELECT_CHAR) {
       return;
     }
+    String lookupString = item.getLookupString();
     Document doc = context.getDocument();
     int tailOffset = context.getTailOffset();
-    if (tailOffset < doc.getCharsSequence().length() && doc.getCharsSequence().charAt(tailOffset) == '=') {
-      doc.deleteString(tailOffset, tailOffset+1);
+    if (lookupString.endsWith("=") && CharArrayUtil.regionMatches(doc.getCharsSequence(), tailOffset, "=")) {
+      doc.deleteString(tailOffset, tailOffset + 1);
+    }
+    else if (lookupString.endsWith(" = ") && CharArrayUtil.regionMatches(doc.getCharsSequence(), tailOffset, " = ")) {
+      doc.deleteString(tailOffset, tailOffset + 3);
     }
   }
 }

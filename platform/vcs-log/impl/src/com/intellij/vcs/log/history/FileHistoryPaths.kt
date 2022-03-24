@@ -1,16 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.visible.VisiblePack
 
 object FileHistoryPaths {
+  private val FILE_HISTORY = Key.create<FileHistory>("FILE_HISTORY")
+
   val VcsLogDataPack.fileHistory: FileHistory
     get() {
-      if (this !is VisiblePack) return EMPTY_HISTORY
-      return this.getAdditionalData<Any>() as? FileHistory ?: EMPTY_HISTORY
+      if (this !is VisiblePack) return FileHistory.EMPTY
+      return FILE_HISTORY.get(this) ?: FileHistory.EMPTY
     }
 
   private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
@@ -19,7 +22,12 @@ object FileHistoryPaths {
   @JvmStatic
   fun VcsLogDataPack.hasPathsInformation(): Boolean {
     if (this !is VisiblePack) return false
-    return this.getAdditionalData<Any>() is FileHistory
+    return FILE_HISTORY.isIn(this)
+  }
+
+  fun VisiblePack.withFileHistory(fileHistory: FileHistory): VisiblePack {
+    putUserData(FILE_HISTORY, fileHistory)
+    return this
   }
 
   @JvmStatic

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -64,18 +65,29 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
   }
 
   @Override
-  public GrCaseLabel @NotNull [] getCaseLabels() {
-    final List<GrCaseLabel> labels = findChildrenByType(GroovyElementTypes.CASE_LABEL);
-    return labels.toArray(new GrCaseLabel[0]);
+  public GrExpression @NotNull [] getExpressions() {
+    final List<GrExpressionList> labels = findChildrenByType(GroovyElementTypes.EXPRESSION_LIST);
+    if (labels.isEmpty() || labels.get(0) == null) {
+      return GrExpression.EMPTY_ARRAY;
+    } else {
+      return labels.get(0).getExpressions().toArray(GrExpression.EMPTY_ARRAY);
+    }
   }
 
   @Override
   public boolean isDefault() {
-    final List<GrCaseLabel> labels = findChildrenByType(GroovyElementTypes.CASE_LABEL);
-    for (GrCaseLabel label : labels) {
-      if (label.isDefault()) return true;
-    }
-    return false;
+    PsiElement label = getFirstChild();
+    return org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEFAULT.equals(label.getNode().getElementType());
+  }
+
+  @Override
+  public @Nullable PsiElement getArrow() {
+    return findChildByType(org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ARROW);
+  }
+
+  @Override
+  public @Nullable PsiElement getColon() {
+    return findChildByType(org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COLON);
   }
 
   @Override

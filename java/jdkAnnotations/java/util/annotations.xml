@@ -9,6 +9,18 @@
   <item name='java.util.AbstractCollection java.lang.Object[] toArray()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.AbstractCollection boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection boolean removeAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection boolean retainAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.AbstractMap java.util.Collection&lt;V&gt; values()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -1887,11 +1899,6 @@
   <item name="java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.util.Collection boolean removeIf(java.util.function.Predicate&lt;? super E&gt;)'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;this&quot;"/>
-    </annotation>
-  </item>
   <item name="java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt;)">
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -3138,6 +3145,11 @@
   <item name='java.util.List void sort(java.util.Comparator&lt;? super E&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map int size()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>

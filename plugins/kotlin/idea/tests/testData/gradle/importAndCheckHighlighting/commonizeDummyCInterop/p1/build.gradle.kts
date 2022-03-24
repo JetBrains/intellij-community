@@ -16,7 +16,7 @@ kotlin {
     arm64Main.dependsOn(nativeMain)
 
     sourceSets.all {
-        languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
+        languageSettings.optIn("kotlin.RequiresOptIn")
     }
 
     x64.compilations.getByName("main").cinterops.create("dummy")

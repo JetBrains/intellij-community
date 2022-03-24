@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -12,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
@@ -90,16 +90,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
-  public void deselectNotify() {
-
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
@@ -111,14 +101,13 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
 
   @Nullable
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+  public FileEditorLocation getCurrentLocation() {
     return null;
   }
 
-  @Nullable
   @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
+  public @NotNull VirtualFile getFile() {
+    return myPreviewFile;
   }
 
   @Override

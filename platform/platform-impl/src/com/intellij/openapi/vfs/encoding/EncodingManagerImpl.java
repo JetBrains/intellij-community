@@ -6,6 +6,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@State(name = "Encoding", storages = @Storage("encoding.xml"))
+@State(name = "Encoding", storages = @Storage("encoding.xml"), category = SettingsCategory.CODE)
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
 
@@ -263,7 +264,20 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Nullable
   private static Project guessProject(@Nullable VirtualFile virtualFile) {
-    return ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    Project project = virtualFile == null ? null : ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    if (project != null) {
+      return project;
+    }
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
+    if (projectManager == null) {
+      return null;
+    }
+
+    Project[] openProjects = projectManager.getOpenProjects();
+    if (openProjects.length == 1) {
+      return openProjects[0];
+    }
+    return null;
   }
 
   @Override

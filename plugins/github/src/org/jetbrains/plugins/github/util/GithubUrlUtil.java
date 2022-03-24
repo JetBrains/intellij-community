@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
@@ -62,8 +61,7 @@ public final class GithubUrlUtil {
    *
    * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static String getHostFromUrl(@NotNull String url) {
     String path = removeProtocolPrefix(url).replace(':', '/');
@@ -79,8 +77,7 @@ public final class GithubUrlUtil {
   /**
    * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
     GHRepositoryPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);

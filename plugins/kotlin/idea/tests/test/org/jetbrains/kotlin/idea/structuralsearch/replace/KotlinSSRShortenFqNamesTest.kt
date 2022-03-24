@@ -25,6 +25,73 @@ class KotlinSSRShortenFqNamesTest : KotlinSSRReplaceTest() {
             replacePattern = "var '_ID : java.io.File)",
             match = "fun main() { var foo: String }",
             result = "fun main() { var foo : java.io.File }",
+            shortenFqNames = false
+        )
+    }
+
+    fun testExtensionFunctionReplacement() {
+        myFixture.addFileToProject("Utils.kt", """
+            package foo.bar
+            
+            fun Int.searchCall() { }
+            fun Int.replaceCall() { }
+        """.trimIndent())
+        doTest(
+            searchPattern = "'_REC.searchCall()",
+            replacePattern = "'_REC.foo.bar.replaceCall()",
+            match = """
+                package test
+
+                import foo.bar.searchCall
+
+                fun main() {               
+                  0.searchCall()
+                }
+            """.trimIndent(),
+            result = """
+                package test
+
+                import foo.bar.searchCall
+                import foo.bar.replaceCall
+
+                fun main() {               
+                  0.replaceCall()
+                }
+            """.trimIndent(),
+            shortenFqNames = true
+        )
+    }
+
+    // Resulting replacement is not valid Kotlin code but it makes more sense to do this replacement
+    fun testExtensionFunctionNoFqReplacement() {
+        myFixture.addFileToProject("Utils.kt", """
+            package foo.bar
+            
+            fun Int.searchCall() { }
+            fun Int.replaceCall() { }
+        """.trimIndent())
+        doTest(
+            searchPattern = "'_REC.searchCall()",
+            replacePattern = "'_REC.foo.bar.replaceCall()",
+            match = """
+                package test
+
+                import foo.bar.searchCall
+
+                fun main() {               
+                  0.searchCall()
+                }
+            """.trimIndent(),
+            result = """
+                package test
+  
+                import foo.bar.searchCall
+
+                fun main() {               
+                  0.foo.bar.replaceCall()
+                }
+            """.trimIndent(),
+            shortenFqNames = false
         )
     }
 }

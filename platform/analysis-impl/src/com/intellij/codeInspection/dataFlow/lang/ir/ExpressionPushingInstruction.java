@@ -30,33 +30,33 @@ public abstract class ExpressionPushingInstruction extends Instruction {
   /**
    * Push result of this instruction to memory state stack (to be used by inheritors)
    * 
-   * @param runner runner that interprets this instruction
+   * @param interpreter interpreter that interprets this instruction
    * @param state memory state to push to
    * @param value value to push (will be wrapped into {@link com.intellij.codeInspection.dataFlow.value.DfaTypeValue})
    * @param inputArgs input arguments used to calculate the resulting value
    */
-  protected final void pushResult(@NotNull DataFlowInterpreter runner,
+  protected final void pushResult(@NotNull DataFlowInterpreter interpreter,
                                   @NotNull DfaMemoryState state,
                                   @NotNull DfType value,
                                   @NotNull DfaValue @NotNull ... inputArgs) {
-    pushResult(runner, state, runner.getFactory().fromDfType(value), inputArgs);
+    pushResult(interpreter, state, interpreter.getFactory().fromDfType(value), inputArgs);
   }
 
   /**
    * Push result of this instruction to memory state stack (to be used by inheritors)
    *
-   * @param runner runner that interprets this instruction
+   * @param interpreter interpreter that interprets this instruction
    * @param state memory state to push to
    * @param value value to push
    * @param inputArgs input arguments used to calculate the resulting value
    */
-  protected final void pushResult(@NotNull DataFlowInterpreter runner,
+  protected final void pushResult(@NotNull DataFlowInterpreter interpreter,
                                   @NotNull DfaMemoryState state,
                                   @NotNull DfaValue value,
                                   @NotNull DfaValue @NotNull ... inputArgs) {
     DfaAnchor anchor = getDfaAnchor();
     if (anchor != null) {
-      runner.getListener().beforePush(inputArgs, value, anchor, state);
+      interpreter.getListener().beforePush(inputArgs, value, anchor, state);
     }
     state.push(value);
   }

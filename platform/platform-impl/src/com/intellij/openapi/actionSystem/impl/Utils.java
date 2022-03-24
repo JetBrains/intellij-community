@@ -2,20 +2,25 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -25,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
@@ -53,8 +59,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-public final class Utils extends DataContextUtils {
+@ApiStatus.Internal
+public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
@@ -63,17 +71,21 @@ public final class Utils extends DataContextUtils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
-      return new PreCachedDataContext(component);
+      return newPreCachedDataContext(component);
     }
     else if (dataContext instanceof SimpleDataContext && component != null) {
-      PreCachedDataContext wrapped = new PreCachedDataContext(component);
+      DataContext wrapped = newPreCachedDataContext(component);
       LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
       LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
       return wrapped;
     }
     return dataContext;
+  }
+
+  private static @NotNull DataContext newPreCachedDataContext(@Nullable Component component) {
+    return new PreCachedDataContext(component);
   }
 
   public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
@@ -83,7 +95,8 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
-    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
+    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) :
+           dataContext;
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
@@ -96,64 +109,100 @@ public final class Utils extends DataContextUtils {
            dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
   }
 
+  static void clearAllCachesAndUpdates() {
+    ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
+    ActionUpdater.waitForAllUpdatesToFinish();
+    PreCachedDataContext.clearAllCaches();
+  }
+
   @ApiStatus.Internal
-  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
-                                                                          @NotNull ActionGroup group,
+  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull ActionGroup group,
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
   @ApiStatus.Internal
-  public static List<AnAction> expandActionGroupWithTimeout(boolean isInModalContext,
-                                                            @NotNull ActionGroup group,
+  public static List<AnAction> expandActionGroupWithTimeout(@NotNull ActionGroup group,
                                                             @NotNull PresentationFactory presentationFactory,
                                                             @NotNull DataContext context,
                                                             @NotNull String place,
                                                             int timeoutMs) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
+  /** @deprecated Use {@link #expandActionGroup(ActionGroup, PresentationFactory, DataContext, String)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull List<AnAction> expandActionGroup(boolean isInModalContext,
                                                           @NotNull ActionGroup group,
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,
                                                           @NotNull String place) {
-    return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
-                                 place, ActionPlaces.isPopupPlace(place), null, null);
-
+    return expandActionGroup(group, presentationFactory, context, place);
   }
 
-  private static @NotNull List<AnAction> expandActionGroupImpl(boolean isInModalContext,
-                                                               @NotNull ActionGroup group,
+  public static @NotNull List<AnAction> expandActionGroup(@NotNull ActionGroup group,
+                                                          @NotNull PresentationFactory presentationFactory,
+                                                          @NotNull DataContext context,
+                                                          @NotNull String place) {
+    RelativePoint point = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null ? null :
+                          JBPopupFactory.getInstance().guessBestPopupLocation(context);
+    Runnable removeIcon = addLoadingIcon(point, place);
+    return computeWithRetries(
+      () -> expandActionGroupImpl(group, presentationFactory,
+                                  context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
+      null, removeIcon);
+  }
+
+  private static int ourExpandActionGroupImplEDTLoopLevel;
+
+  private static @NotNull List<AnAction> expandActionGroupImpl(@NotNull ActionGroup group,
                                                                @NotNull PresentationFactory presentationFactory,
                                                                @NotNull DataContext context,
                                                                @NotNull String place,
                                                                boolean isContextMenu,
                                                                @Nullable Runnable onProcessed,
-                                                               @Nullable JComponent sourceComponent) {
+                                                               @Nullable JComponent menuItem) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+      presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+    ActionGroupExpander expander = ActionGroupExpander.getInstance();
+    Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
     if (async) {
-      Set<String> missedKeys = new HashSet<>();
-      list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
-      if (list != null && missedKeys.isEmpty()) {
+      if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
+        Set<String> missedKeys = new HashSet<>();
+        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+        if (list != null && missedKeys.isEmpty()) {
+          if (onProcessed != null) onProcessed.run();
+          return list;
+        }
+      }
+      int maxLoops = Math.max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20));
+      if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
+        LOG.warn("Maximum number of recursive EDT loops reached (" + maxLoops +") at '" + place + "'");
         if (onProcessed != null) onProcessed.run();
-        return list;
+        ActionUpdater.cancelAllUpdates("recursive EDT loops limit reached at '" + place + "'");
+        throw new ProcessCanceledException();
       }
       IdeEventQueue queue = IdeEventQueue.getInstance();
-      CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
-      if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
+      CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
+        project, context, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
+      if (onProcessed != null) {
+        promise.onSuccess(__ -> onProcessed.run());
+        promise.onError(ex -> {
+          if (!canRetryOnThisException(ex)) onProcessed.run();
+        });
+      }
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
+        ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -164,6 +213,9 @@ public final class Utils extends DataContextUtils {
             queue.dispatchEvent(event);
           }
         });
+      }
+      finally {
+        ourExpandActionGroupImplEDTLoopLevel--;
       }
       if (promise.isCancelled()) {
         // to avoid duplicate "Nothing Here" items in menu bar
@@ -188,13 +240,16 @@ public final class Utils extends DataContextUtils {
   }
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable JComponent sourceComponent) {
+                                                                 @Nullable Component contextComponent,
+                                                                 @Nullable Component menuItem) {
+    Window window = contextComponent == null ? null : SwingUtilities.getWindowAncestor(contextComponent);
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
-          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
+          ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION &&
+           window != null && window == SwingUtilities.getWindowAncestor(((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
-            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != sourceComponent ) {
+            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != menuItem ) {
         ActionUpdater.cancelPromise(promise, event);
       }
       return null;
@@ -231,21 +286,24 @@ public final class Utils extends DataContextUtils {
                        @NotNull String place,
                        boolean isWindowMenu,
                        boolean useDarkIcons,
-                       @Nullable RelativePoint relativePoint) {
+                       @Nullable RelativePoint progressPoint,
+                       @Nullable BooleanSupplier expire) {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
-    Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
-    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true,
-                                                removeIcon, component);
+    Runnable removeIcon = addLoadingIcon(progressPoint, place);
+    List<AnAction> list = computeWithRetries(
+      () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
+      expire, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
 
-  static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull DataContext context, @NotNull String place) {
+  private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull String place) {
+    if (!Registry.is("actionSystem.update.actions.async")) return EmptyRunnable.getInstance();
     JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
     JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-    if (glassPane == null || !isAsyncDataContext(context)) return EmptyRunnable.getInstance();
+    if (glassPane == null) return EmptyRunnable.getInstance();
     Component comp = point.getOriginalComponent();
     if (comp instanceof ActionMenu && comp.getParent() instanceof IdeMenuBar ||
         ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
@@ -287,6 +345,8 @@ public final class Utils extends DataContextUtils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
+    final @Nullable Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
+    if (nativePeer != null) nativePeer.beginFill();
     final ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -307,18 +367,20 @@ public final class Utils extends DataContextUtils {
           JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
           children.add(separator);
+          if (nativePeer != null) nativePeer.add(null);
         }
       }
-      else if (action instanceof ActionGroup &&
-               !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
+      else if (action instanceof ActionGroup && !isSubmenuSuppressed(presentation)) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
+        if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
       }
       else {
         ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
         component.add(each);
         children.add(each);
+        if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
       }
     }
 
@@ -354,6 +416,10 @@ public final class Utils extends DataContextUtils {
         }
       }
     }
+  }
+
+  public static boolean isSubmenuSuppressed(@NotNull Presentation presentation) {
+    return Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL));
   }
 
   private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
@@ -423,12 +489,14 @@ public final class Utils extends DataContextUtils {
     UpdateSession updater = e.getUpdateSession();
     if (updater == null) {
       ActionUpdater actionUpdater = new ActionUpdater(
-        LaterInvocator.isInModalContext(), new PresentationFactory(), e.getDataContext(),
+        new PresentationFactory(), e.getDataContext(),
         e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
       updater = actionUpdater.asUpdateSession();
     }
     return updater;
   }
+
+  private static boolean ourInUpdateSessionForInputEventEDTLoop;
 
   @ApiStatus.Internal
   public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
@@ -438,6 +506,15 @@ public final class Utils extends DataContextUtils {
                                                               @NotNull PresentationFactory factory,
                                                               @Nullable Consumer<? super AnActionEvent> eventTracker,
                                                               @NotNull Function<? super UpdateSession, ? extends T> function) {
+    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
+      LOG.error("Actions cannot be updated when write-action is running or pending");
+      return null;
+    }
+    if (ourInUpdateSessionForInputEventEDTLoop) {
+      LOG.warn("Recursive shortcut processing invocation is ignored");
+      return null;
+    }
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
@@ -445,7 +522,7 @@ public final class Utils extends DataContextUtils {
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater actionUpdater = new ActionUpdater(
-      LaterInvocator.isInModalContext(), factory, dataContext,
+      factory, dataContext,
       place, false, false, event -> {
         AnActionEvent transformed = actionProcessor.createEvent(
           inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());
@@ -457,29 +534,34 @@ public final class Utils extends DataContextUtils {
     if (async) {
       ActionUpdater.cancelAllUpdates("'" + place + "' invoked");
       AsyncPromise<T> promise = ActionUpdater.newPromise(place);
+      ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
           Ref<UpdateSession> sessionRef = Ref.create();
           Runnable runnable = () -> {
-            Set<String> missedKeys = ContainerUtil.newConcurrentSet();
-            UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-            T fastResult = function.apply(fastSession);
-            sessionRef.set(fastSession);
-            if (fastResult != null) {
+            Set<String> missedKeys = Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
+            if (missedKeys != null) {
+              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
+              T fastResult = function.apply(fastSession);
               ref.set(fastResult);
+              sessionRef.set(fastSession);
             }
-            else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+            if (ref.isNull() && (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)))) {
               UpdateSession slowSession = actionUpdater.asUpdateSession();
               T slowResult = function.apply(slowSession);
               ref.set(slowResult);
               sessionRef.set(slowSession);
             }
           };
-          boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
+          ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
+          promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
-              ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable), new EmptyProgressIndicator());
+            ProgressManager.getInstance().executeProcessUnderProgress(() ->
+              ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+                applicationEx,
+                () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
+                () -> applicationEx.tryRunReadAction(runnable)), indicator);
             return ref.get();
           });
           queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
@@ -489,10 +571,17 @@ public final class Utils extends DataContextUtils {
           promise.setError(e);
         }
       });
-      result = runLoopAndWaitForFuture(promise, null, false, () -> {
-        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-        if (runnable != null) runnable.run();
-      });
+      try {
+        ourInUpdateSessionForInputEventEDTLoop = true;
+        result = runLoopAndWaitForFuture(promise, null, false, () -> {
+          Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+          if (runnable != null) runnable.run();
+          if (parentIndicator != null) parentIndicator.checkCanceled();
+        });
+      }
+      finally {
+        ourInUpdateSessionForInputEventEDTLoop = false;
+      }
     }
     else {
       result = function.apply(actionUpdater.asUpdateSession());
@@ -512,6 +601,8 @@ public final class Utils extends DataContextUtils {
     while (!promise.isDone()) {
       try {
         pumpRunnable.run();
+      }
+      catch (ProcessCanceledException ignore) {
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -542,19 +633,17 @@ public final class Utils extends DataContextUtils {
     return result[0];
   }
 
-  static void performWithRetries(@NotNull Runnable runnable, @NotNull BooleanSupplier expire) {
-    Utils.ProcessCanceledWithReasonException lastCancellation = null;
+  private static <T> T computeWithRetries(@NotNull Supplier<T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
+    ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {
-      if (expire.getAsBoolean()) return;
       try {
-        runnable.run();
-        return;
+        return computable.get();
       }
       catch (Utils.ProcessCanceledWithReasonException ex) {
         lastCancellation = ex;
-        String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
-        if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+        if (canRetryOnThisException(ex) &&
+            (expire == null || !expire.getAsBoolean())) {
           continue;
         }
         throw ex;
@@ -562,11 +651,23 @@ public final class Utils extends DataContextUtils {
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
       }
+      finally {
+        if (onProcessed != null) {
+          onProcessed.run();
+        }
+      }
     }
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
     }
     throw Objects.requireNonNull(lastCancellation);
+  }
+
+  private static boolean canRetryOnThisException(Throwable ex) {
+    Object reason = ex instanceof ProcessCanceledWithReasonException ? ((ProcessCanceledWithReasonException)ex).reason : null;
+    String reasonStr = reason instanceof String ? (String)reason : "";
+    return reasonStr.contains("write-action") ||
+           reasonStr.contains("fast-track") && StringUtil.containsIgnoreCase(reasonStr, "toolbar");
   }
 
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {

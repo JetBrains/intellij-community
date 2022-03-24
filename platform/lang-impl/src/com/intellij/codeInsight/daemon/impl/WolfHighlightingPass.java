@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -33,9 +32,9 @@ class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
   }
 
   @Override
-  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+  protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     if (!Registry.is("wolf.the.problem.solver")) return;
-    final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
+    WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
     if (solver instanceof WolfTheProblemSolverImpl) {
       ((WolfTheProblemSolverImpl)solver).startCheckingIfVincentSolvedProblemsYet(progress, this);
     }

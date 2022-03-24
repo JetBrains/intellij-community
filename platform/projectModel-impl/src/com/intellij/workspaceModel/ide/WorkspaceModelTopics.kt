@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.diagnostic.ActivityCategory
@@ -28,7 +28,7 @@ class WorkspaceModelTopics : Disposable {
   companion object {
     /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
     @Topic.ProjectLevel
-    private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE)
+    private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()

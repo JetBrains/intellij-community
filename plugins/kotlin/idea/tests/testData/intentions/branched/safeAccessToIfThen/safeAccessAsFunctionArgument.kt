@@ -1,3 +1,5 @@
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Parameter 's' is never used
 fun f(s: Int?) {
 }
 

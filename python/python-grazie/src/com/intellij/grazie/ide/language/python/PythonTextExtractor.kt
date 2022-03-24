@@ -8,23 +8,22 @@ import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
-import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.elementType
+import com.intellij.psi.util.PsiUtilCore
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PyTokenTypes.FSTRING_TEXT
 import com.jetbrains.python.psi.PyFormattedStringElement
 
 internal class PythonTextExtractor : TextExtractor() {
   override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextContent.TextDomain>): TextContent? {
-    val elementType = root.elementType
+    val elementType = PsiUtilCore.getElementType(root)
     if (elementType in PyTokenTypes.STRING_NODES) {
       val domain = if (elementType == PyTokenTypes.DOCSTRING) TextContent.TextDomain.DOCUMENTATION else TextContent.TextDomain.LITERALS
-      return TextContentBuilder.FromPsi.removingIndents(" \t").withUnknown(this::isUnknownFragment).build(root.parent, domain)
+      return TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t").withUnknown(this::isUnknownFragment).build(root.parent, domain)
     }
 
     if (root is PsiCommentImpl) {
       val siblings = getNotSoDistantSimilarSiblings(root) { it is PsiCommentImpl }
-      return TextContent.joinWithWhitespace(siblings.mapNotNull { TextContent.builder().build(it, TextContent.TextDomain.COMMENTS) })
+      return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { TextContent.builder().build(it, TextContent.TextDomain.COMMENTS) })
     }
 
     return null

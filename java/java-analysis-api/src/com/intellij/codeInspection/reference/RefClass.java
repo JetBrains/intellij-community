@@ -6,10 +6,11 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UClass;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public interface RefClass extends RefJavaElement {
+public interface RefClass extends RefJavaElement, RefOverridable {
 
   @NotNull
   Set<RefClass> getBaseClasses();
@@ -23,7 +24,7 @@ public interface RefClass extends RefJavaElement {
   @NotNull
   Set<RefElement> getInTypeReferences();
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   default Set<RefElement> getInstanceReferences() {
     throw new UnsupportedOperationException();
@@ -51,7 +52,7 @@ public interface RefClass extends RefJavaElement {
   boolean isLocalClass();
 
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean isSelfInheritor(PsiClass psiClass) {
     throw new UnsupportedOperationException();
   }
@@ -69,5 +70,15 @@ public interface RefClass extends RefJavaElement {
   @Override
   default PsiClass getElement() {
     return ObjectUtils.tryCast(getPsiElement(), PsiClass.class);
+  }
+
+  @Override
+  default @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
+    return getSubClasses();
+  }
+  
+  @Override
+  default void addDerivedReference(@NotNull RefOverridable reference) {
+    // do nothing
   }
 }

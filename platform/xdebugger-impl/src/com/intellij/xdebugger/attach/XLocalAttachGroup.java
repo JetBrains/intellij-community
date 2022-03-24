@@ -15,19 +15,16 @@
  */
 package com.intellij.xdebugger.attach;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link XAttachProcessPresentationGroup} (will be removed in 2020.1)
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
    * @deprecated will be removed in 2020.1
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated @NotNull
+  @Deprecated(forRemoval = true) @NotNull
   XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
 }

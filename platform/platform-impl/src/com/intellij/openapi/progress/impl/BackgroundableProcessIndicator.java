@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.progress.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -16,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private StatusBarEx myStatusBar;
@@ -32,10 +32,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   /**
    * @deprecated use {@link #BackgroundableProcessIndicator(Project, TaskInfo)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public BackgroundableProcessIndicator(@Nullable Project project,
                                         @NotNull TaskInfo info,
-                                        @SuppressWarnings("unused") @NotNull PerformInBackgroundOption option) {
+                                        @NotNull PerformInBackgroundOption option) {
     this(project, info);
   }
 
@@ -83,7 +83,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Deprecated
   public BackgroundableProcessIndicator(@Nullable Project project,
                                         @NlsContexts.ProgressTitle final String progressTitle,
-                                        @SuppressWarnings("unused") @NotNull PerformInBackgroundOption option,
+                                        @NotNull PerformInBackgroundOption option,
                                         @Nullable @NlsContexts.Button final String cancelButtonText,
                                         @NlsContexts.Tooltip final String backgroundStopTooltip,
                                         final boolean cancellable) {

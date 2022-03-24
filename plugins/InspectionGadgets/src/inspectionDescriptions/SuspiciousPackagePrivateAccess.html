@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports a code fragment that uses or overrides a package-private member declared in the same package but in another module.
+Reports usages of package-private members declared in the same package but in a different module.
 <p>If the declaring classes are loaded by different loaders, the code that accesses a package-private member will fail with
   <code>IllegalAccessError</code> at runtime.</p>
 <p>If a method overrides a package-private method from a class that is loaded by a different loader, it won't be invoked when the super

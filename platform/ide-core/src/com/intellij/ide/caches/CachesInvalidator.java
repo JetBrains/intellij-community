@@ -5,6 +5,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Provides an ability to perform additional actions (e.g.: mark custom persistent data as corrupted)
+ * when <a href='https://www.jetbrains.com/help/idea/invalidate-caches.html'>"Invalidate & Restart"</a> action is performed.
+ */
 public abstract class CachesInvalidator {
   public static final ExtensionPointName<CachesInvalidator> EP_NAME = new ExtensionPointName<>("com.intellij.cachesInvalidator");
 

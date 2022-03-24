@@ -4,15 +4,11 @@ package com.intellij.execution.process;
 import com.intellij.execution.process.AnsiStreamingLexer.AnsiElementType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.execution.process.AnsiStreamingLexer.SGR;
-import static com.intellij.execution.process.AnsiStreamingLexer.TEXT;
 
 /**
  * See <a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code</a>.
@@ -116,8 +112,7 @@ public class AnsiEscapeDecoder {
   /**
    * @deprecated use {@link ColoredTextAcceptor} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {
     void coloredChunksAvailable(@NotNull List<Pair<String, Key>> chunks);
   }

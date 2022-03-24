@@ -24,25 +24,25 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   @NonNls protected static final String END_MARKER = "<!-- end marker -->";
 
 
-  DaemonTooltipRenderer(final @Tooltip String text, Object[] comparable) {
+  DaemonTooltipRenderer(@Tooltip String text, Object[] comparable) {
     super(text, comparable);
   }
 
-  DaemonTooltipRenderer(final @Tooltip String text, final int width, Object[] comparable) {
+  DaemonTooltipRenderer(@Tooltip String text, int width, Object[] comparable) {
     super(text, width, comparable);
   }
 
   @NotNull
   @Override
-  protected @Tooltip String dressDescription(@NotNull final Editor editor, @NotNull @Tooltip String tooltipText, boolean expand) {
+  protected @Tooltip String dressDescription(@NotNull Editor editor, @NotNull @Tooltip String tooltipText, boolean expand) {
     if (!expand) {
       return super.dressDescription(editor, tooltipText, false);
     }
 
-    final List<@Tooltip String> problems = getProblems(tooltipText);
+    List<@Tooltip String> problems = getProblems(tooltipText);
     @Tooltip StringBuilder text = new StringBuilder();
     for (@Tooltip String problem : problems) {
-      final String ref = getLinkRef(problem);
+      String ref = getLinkRef(problem);
       if (ref != null) {
         String description = TooltipLinkHandlerEP.getDescription(ref, editor);
         if (description != null) {
@@ -86,10 +86,10 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   @Nullable
   protected static String getLinkRef(@NonNls String text) {
     final String linkWithRef = "<a href=\"";
-    final int linkStartIdx = text.indexOf(linkWithRef);
+    int linkStartIdx = text.indexOf(linkWithRef);
     if (linkStartIdx >= 0) {
-      final String ref = text.substring(linkStartIdx + linkWithRef.length());
-      final int quoteIdx = ref.indexOf('"');
+      String ref = text.substring(linkStartIdx + linkWithRef.length());
+      int quoteIdx = ref.indexOf('"');
       if (quoteIdx > 0) {
         return ref.substring(0, quoteIdx);
       }
@@ -104,7 +104,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
 
   @NotNull
   @Override
-  public LineTooltipRenderer createRenderer(@Nullable String text, final int width) {
+  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
     return new DaemonTooltipRenderer(text, width, getEqualityObjects());
   }
 }

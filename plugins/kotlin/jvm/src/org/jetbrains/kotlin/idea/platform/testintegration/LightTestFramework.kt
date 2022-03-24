@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 interface LightTestFramework {
     val name: @NlsSafe String
 
+    val slowProvider: Boolean
+
     fun qualifiedName(namedDeclaration: KtNamedDeclaration): String?
     fun detectFramework(namedDeclaration: KtNamedDeclaration): LightTestFrameworkResult
 

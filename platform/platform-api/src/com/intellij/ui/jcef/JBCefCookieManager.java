@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.cef.callback.CefCookieVisitor;
@@ -14,38 +15,49 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.Clock.getTime;
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
- * A wrapper over {@link CefCookieManager}. Most of underlying native methods are asynchronous.
+ * A wrapper over {@link CefCookieManager}.
  * <p>
- * Use {@link #getCookies()} and others for retrieving cookies synchronously.
+ * Use {@link #getCookies(String, Boolean)} for retrieving cookies.
  * <p>
- * Use {@link #setCookie(String, JBCefCookie, boolean)} and others for setting cookie. Can be used both with synchronization or without one.
+ * Use {@link #setCookie(String, JBCefCookie)} for setting cookie.
  * <p>
- * Use {@link #deleteCookies(boolean)} and others for deleting cookies. Can be used both with synchronization or without one.
+ * Use {@link #deleteCookies(String, String)} for deleting cookies.
  *
  * @author Aleksey.Rostovskiy
+ * @author tav
  */
 public final class JBCefCookieManager {
-  private static final int DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION = 200;
+  private static final int DEFAULT_TIMEOUT_MS = 200;
+  private static final int BOUNCE_TIMEOUT_MS = 50;
+
   private static final Logger LOG = Logger.getInstance(JBCefCookieManager.class);
 
   private final ReentrantLock myLock = new ReentrantLock();
   private final ExecutorService myExecutorService = AppExecutorUtil.getAppScheduledExecutorService();
 
-  @NotNull private final CefCookieManager myCefCookieManager;
+  private final @NotNull CefCookieManager myCefCookieManager;
+
+  static {
+    // assure initialized
+    JBCefApp.getInstance();
+  }
 
   public JBCefCookieManager() {
     this(CefCookieManager.getGlobalManager());
   }
 
-  private JBCefCookieManager(@NotNull CefCookieManager cefCookieManager) {
+  JBCefCookieManager(@NotNull CefCookieManager cefCookieManager) {
     myCefCookieManager = cefCookieManager;
   }
 
@@ -56,38 +68,65 @@ public final class JBCefCookieManager {
   }
 
   /**
-   * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
+   * Retrieves cookies asynchronously.
+   *
+   * @param url             filter by the given url scheme, host, domain and path.
+   * @param includeHttpOnly include only true HTTP-only cookies.
+   * @return a future with the list of {@link JBCefCookie} which can be empty if cookies cannot be accessed or do not exist
    */
-  public @Nullable List<JBCefCookie> getCookies() {
+  public @NotNull Future<@NotNull List<JBCefCookie>> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly) {
+    JBCookieVisitor cookieVisitor = new JBCookieVisitor();
+    boolean result;
+    if (url != null) {
+      result = myCefCookieManager.visitUrlCookies(url, notNull(includeHttpOnly, Boolean.FALSE), cookieVisitor);
+    }
+    else {
+      result = myCefCookieManager.visitAllCookies(cookieVisitor);
+    }
+    if (!result) {
+      LOG.debug("Cookies cannot be accessed");
+      return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+    Ref<Future<@NotNull List<JBCefCookie>>> futureRef = new Ref<>();
+    futureRef.set(myExecutorService.submit(() -> cookieVisitor.get(() -> futureRef.get() == null || !futureRef.get().isDone())));
+    return futureRef.get();
+  }
+
+  /**
+   * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
+   * @deprecated use {@link #getCookies(String, Boolean)}
+   */
+  @Deprecated
+  public @NotNull List<JBCefCookie> getCookies() {
     return getCookies(null, false, null);
   }
 
   /**
    * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
+   * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  public @Nullable List<JBCefCookie> getCookies(@NotNull String url) {
+  @Deprecated
+  public @NotNull List<JBCefCookie> getCookies(@NotNull String url) {
     return getCookies(url, false, null);
   }
 
   /**
+   * WARNING: the method can lead to a freeze when called from a browser callback.
+   *
    * Gets cookies. Underlying native method is asynchronous.
    * This method is executed with synchronization and can take up to `maxTimeToWait` ms.
    *
    * @param url             filter by the given url scheme, host, domain and path.
    * @param includeHttpOnly include only true HTTP-only cookies.
-   * @param maxTimeToWait   time to wait getting cookies in ms, default value is
-   *                        {@link JBCefCookieManager#DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION}.
+   * @param maxTimeToWait   time to wait getting cookies in ms, or default
    * @return list of {@link JBCefCookie} or null if cookies cannot be accessed
+   *
+   * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  public @Nullable List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
-    long startTime = getTime();
-
-    boolean httpOnly = includeHttpOnly != null ? includeHttpOnly : false;
-    int timeout = maxTimeToWait != null ? maxTimeToWait : DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION;
-
-    final CountDownLatch countDownLatch = new CountDownLatch(1);
-    final JBCookieVisitor cookieVisitor = new JBCookieVisitor(countDownLatch);
-
+  @Deprecated
+  public @NotNull List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
+    boolean httpOnly = notNull(includeHttpOnly, Boolean.FALSE);
+    JBCookieVisitor cookieVisitor = new JBCookieVisitor();
     boolean result;
     if (url != null) {
       result = myCefCookieManager.visitUrlCookies(url, httpOnly, cookieVisitor);
@@ -95,34 +134,53 @@ public final class JBCefCookieManager {
     else {
       result = myCefCookieManager.visitAllCookies(cookieVisitor);
     }
-
     if (!result) {
       LOG.debug("Cookies cannot be accessed");
-      countDownLatch.countDown();
-      return null;
+      return Collections.emptyList();
     }
+    return cookieVisitor.get(notNull(maxTimeToWait, DEFAULT_TIMEOUT_MS));
+  }
 
-    try {
-      result = countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
+  /**
+   * Sets a cookie asynchronously given a valid URL and explicit user-provided cookie attributes.
+   * The method expects each attribute to be well-formed. It will check for disallowed characters
+   * (e.g. the ';' character is disallowed within the cookie value attribute) and fail without setting
+   * the cookie if such characters are found.
+   *
+   * It's recommended that a caller of the method either waits for the returned {@code future} to complete
+   * or cancels it when no confirmation of the success is required. Otherwise, it is possible that
+   * the confirmation task performs infinitely in case something went wrong with the setting.
+   *
+   * @param url the cookie URL (should match the cookie's domain)
+   * @param jbCefCookie the cookie
+   * @return a future with false if an invalid URL is specified or if cookies cannot be accessed.
+   */
+  public @NotNull Future<@NotNull Boolean> setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie) {
+    if (!checkArgs(url, jbCefCookie)) {
+      return CompletableFuture.completedFuture(false);
     }
-    catch (InterruptedException e) {
-      LOG.error("Cookie visiting is interrupted");
+    if (!myCefCookieManager.setCookie(url, jbCefCookie.getCefCookie())) {
+      LOG.error("Posting task to set cookie is failed");
+      return CompletableFuture.completedFuture(false);
     }
-
-    long timeSpent = getTime() - startTime;
-    if (!result) {
-      LOG.debug("Timeout for cookie visiting is reached, " + timeSpent + " ms time spent");
-    }
-    else {
-      LOG.debug("Cookie getting took " + timeSpent + " ms");
-    }
-
-    return cookieVisitor.getCookies();
+    Ref<Future<@NotNull Boolean>> futureRef = new Ref<>();
+    futureRef.set(myExecutorService.submit(() -> {
+      while (futureRef.get() == null || !futureRef.get().isDone()) {
+        if (getCookies(url, null, BOUNCE_TIMEOUT_MS).contains(jbCefCookie)) {
+          return true;
+        }
+      }
+      return false;
+    }));
+    return futureRef.get();
   }
 
   /**
    * @see JBCefCookieManager#setCookie(String, JBCefCookie, Integer)
+   *
+   * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
+  @Deprecated
   public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, boolean doSync) {
     if (doSync) {
       return setCookie(url, jbCefCookie, null);
@@ -133,44 +191,24 @@ public final class JBCefCookieManager {
   }
 
   /**
+   * WARNING: the method can lead to a freeze when called from a browser callback.
+   *
    * Sets a cookie given a valid URL and explicit user-provided cookie attributes.
    * Underlying native method {@link CefCookieManager#setCookie(String, CefCookie)} is asynchronous.
    * This method is synchronous and will wait up to `maxTimeToWait` ms.
    *
-   * @param maxTimeToWait time to wait setting cookie in ms, default value is
-   *                      {@link JBCefCookieManager#DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION} ms.
+   * @param maxTimeToWait time to wait setting cookie in ms, or default
    * @return true if setting the cookie was successful.
+   *
+   * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
+  @Deprecated
   public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
-    try {
-      URI uri = new URI(url);
-      String scheme = uri.getScheme();
-      String domain = uri.getHost();
-      domain = domain.startsWith("www") ? domain : "." + domain;
+    if (!checkArgs(url, jbCefCookie)) return false;
 
-      if (scheme.equals("http") && jbCefCookie.isSecure()) {
-        LOG.warn("Cannot set cookie without secure flag for HTTPS web-site");
-        return false;
-      }
-      if (!domain.contains(jbCefCookie.getDomain())) {
-        LOG.warn("Cookie domain `" + jbCefCookie.getDomain() + "` doesn't match URL host `" + domain + "`");
-        return false;
-      }
-    }
-    catch (URISyntaxException e) {
-      LOG.error(e);
-      return false;
-    }
+    int timeout = notNull(maxTimeToWait, DEFAULT_TIMEOUT_MS);
 
-    int timeout = maxTimeToWait != null ? maxTimeToWait : DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION;
-
-    IntFunction<Boolean> checkFunction = (timeoutForCheck) -> {
-      List<JBCefCookie> cookies = getCookies(url, null, timeoutForCheck);
-      if (cookies == null) {
-        return false;
-      }
-      return cookies.contains(jbCefCookie);
-    };
+    IntFunction<Boolean> checkFunction = (timeoutForCheck) -> getCookies(url, null, timeoutForCheck).contains(jbCefCookie);
 
     myLock.lock();
     try {
@@ -211,21 +249,74 @@ public final class JBCefCookieManager {
     }
   }
 
+  private static boolean checkArgs(@NotNull String url, @NotNull JBCefCookie jbCefCookie) {
+    try {
+      URI uri = new URI(url);
+      String scheme = uri.getScheme();
+      String domain = uri.getHost();
+      domain = domain.startsWith("www") ? domain : "." + domain;
+
+      if (scheme.equals("https") && !jbCefCookie.isSecure()) {
+        LOG.warn("Cannot set cookie without secure flag for HTTPS web-site");
+        return false;
+      }
+      if (!domain.contains(jbCefCookie.getDomain())) {
+        LOG.warn("Cookie domain `" + jbCefCookie.getDomain() + "` doesn't match URL host `" + domain + "`");
+        return false;
+      }
+    }
+    catch (URISyntaxException e) {
+      LOG.error(e);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Deletes asynchronously all cookies that match the specified parameters. If both {@code url] and {@code cookieName} values
+   * are specified all host and domain cookies matching both will be deleted. If only {@code url} is
+   * specified all host cookies (but not domain cookies) irrespective of path will be deleted. If
+   * {@code url} is empty all cookies for all hosts and domains will be deleted. Cookies can alternately
+   * be deleted using the visit*Cookies() methods.
+   *
+   * It's recommended that a caller of the method either waits for the returned {@code future} to complete
+   * or cancels it when no confirmation of the success is required. Otherwise, it is possible that
+   * the confirmation task performs infinitely in case something went wrong with the deletion.
+   *
+   * @param url The cookie URL to delete or null.
+   * @param cookieName The cookie name to delete or null.
+   * @return a future with false if a non-empty invalid URL is specified or if cookies cannot be accessed.
+   */
+  public @NotNull Future<@NotNull Boolean> deleteCookies(@Nullable String url, @Nullable String cookieName) {
+    if (!myCefCookieManager.deleteCookies(url, cookieName)) {
+      LOG.error("Posting task to delete cookies is failed");
+      return CompletableFuture.completedFuture(false);
+    }
+    Ref<Future<@NotNull Boolean>> futureRef = new Ref<>();
+    futureRef.set(myExecutorService.submit(() -> {
+      while (futureRef.get() == null || !futureRef.get().isDone()) {
+        if (!ContainerUtil.exists(getCookies(url, false, BOUNCE_TIMEOUT_MS),
+                                  cookie -> cookie.getName().equals(cookieName)))
+        {
+          return true;
+        }
+      }
+      return false;
+    }));
+    return futureRef.get();
+  }
+
   /**
    * Deletes all cookies for all hosts and domains.
    *
    * @param doSync if false - underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
    *               true - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
+   * @deprecated use {@link #deleteCookies(String, String)}
    */
+  @Deprecated
   public boolean deleteCookies(boolean doSync) {
     if (doSync) {
-      return deleteCookies("", "", (timeout) -> {
-        List<JBCefCookie> cookies = getCookies(null, false, timeout);
-        if (cookies == null) {
-          return false;
-        }
-        return cookies.isEmpty();
-      }, null);
+      return deleteCookies(null, null, (timeout) -> getCookies(null, false, timeout).isEmpty(), null);
     }
     else {
       return myCefCookieManager.deleteCookies("", "");
@@ -237,16 +328,13 @@ public final class JBCefCookieManager {
    *
    * @param doSync if false - underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
    *               true - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
+   *
+   * @deprecated use {@link #deleteCookies(String, String)}
    */
-  public boolean deleteCookies(@NotNull String url, boolean doSync) {
+  @Deprecated
+  public boolean deleteCookies(@Nullable String url, boolean doSync) {
     if (doSync) {
-      return deleteCookies(url, "", (timeout) -> {
-        List<JBCefCookie> cookies = getCookies(url, false, timeout);
-        if (cookies == null) {
-          return false;
-        }
-        return cookies.isEmpty();
-      }, null);
+      return deleteCookies(url, "", (timeout) -> getCookies(url, false, timeout).isEmpty(), null);
     }
     else {
       return myCefCookieManager.deleteCookies(url, "");
@@ -258,8 +346,14 @@ public final class JBCefCookieManager {
    *
    * @param doSync if false - underlying asynchronous native method {@link CefCookieManager#deleteCookies(String, String)} is used,
    *               true - synchronous {@link JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)}.
+   *
+   * @deprecated use {@link #deleteCookies(String, String)}
    */
-  public boolean deleteCookies(@NotNull String url, @NotNull String cookieName, boolean doSync) {
+  @Deprecated
+  public boolean deleteCookies(@Nullable String url,
+                               @Nullable String cookieName,
+                               boolean doSync)
+  {
     if (doSync) {
       return deleteCookies(url, cookieName, null);
     }
@@ -272,13 +366,16 @@ public final class JBCefCookieManager {
    * Deletes synchronously all host and domain cookies matching |url| and |cookieName| values with specified timeout.
    *
    * @see JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)
+   *
+   * @deprecated use {@link #deleteCookies(String, String)}
    */
-  public boolean deleteCookies(@NotNull String url, @NotNull String cookieName, @Nullable Integer maxTimeToWait) {
+  @Deprecated
+  public boolean deleteCookies(@Nullable String url,
+                               @Nullable String cookieName,
+                               @Nullable Integer maxTimeToWait)
+  {
     IntFunction<Boolean> checkFunction = (timeout) -> {
       List<JBCefCookie> cookies = getCookies(url, false, timeout);
-      if (cookies == null) {
-        return false;
-      }
       return !ContainerUtil.exists(cookies, cefCookie -> cefCookie.getName().equals(cookieName));
     };
 
@@ -294,14 +391,14 @@ public final class JBCefCookieManager {
    *
    * @param checkFunction function will be used for checking whether cookie deleted
    * @param maxTimeToWait time to wait setting cookie in ms, default value is
-   *                      {@link JBCefCookieManager#DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION} ms.
+   *                      {@link JBCefCookieManager#DEFAULT_TIMEOUT_MS} ms.
    * @return true if deleting cookies was successful.
    */
-  private boolean deleteCookies(@NotNull String url,
-                                @NotNull String cookieName,
+  private boolean deleteCookies(@Nullable String url,
+                                @Nullable String cookieName,
                                 @NotNull IntFunction<Boolean> checkFunction,
                                 @Nullable Integer maxTimeToWait) {
-    int timeout = maxTimeToWait != null ? maxTimeToWait : DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION;
+    int timeout = notNull(maxTimeToWait, DEFAULT_TIMEOUT_MS);
     myLock.lock();
 
     try {
@@ -343,11 +440,12 @@ public final class JBCefCookieManager {
   }
 
   private static class JBCookieVisitor implements CefCookieVisitor {
-    final List<JBCefCookie> myCefCookies = new ArrayList<>();
-    final CountDownLatch myCountDownLatch;
+    final @NotNull List<JBCefCookie> myCefCookies = Collections.synchronizedList(new ArrayList<>());
+    final @NotNull CountDownLatch myCountDownLatch;
+    long myStartTime = getTime();
 
-    JBCookieVisitor(CountDownLatch countDownLatch) {
-      myCountDownLatch = countDownLatch;
+    JBCookieVisitor() {
+      myCountDownLatch = new CountDownLatch(1);
     }
 
     @Override
@@ -355,14 +453,44 @@ public final class JBCefCookieManager {
     //  So CountDownLatch can't countDown() well except timeout.
     public boolean visit(CefCookie cookie, int count, int total, BoolRef delete) {
       myCefCookies.add(new JBCefCookie(cookie));
-      if (count >= total - 1) {
-        // last element
+      if (myCefCookies.size() >= total) {
         myCountDownLatch.countDown();
       }
       return true;
     }
 
-    public List<JBCefCookie> getCookies() {
+    public @NotNull List<JBCefCookie> get(@NotNull Supplier<Boolean> condition) {
+      while (condition.get()) {
+        try {
+          if (myCountDownLatch.await(BOUNCE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            return myCefCookies;
+          }
+        }
+        catch (InterruptedException e) {
+          LOG.error("Cookie visiting is interrupted");
+          break;
+        }
+      }
+      return Collections.emptyList();
+    }
+
+    public @NotNull List<JBCefCookie> get(int timeout) {
+      boolean result;
+      try {
+        result = myCountDownLatch.await(timeout, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException e) {
+        LOG.error("Cookie visiting is interrupted");
+        return Collections.emptyList();
+      }
+
+      long timeSpent = getTime() - myStartTime;
+      if (!result) {
+        LOG.debug("Timeout for cookie visiting is reached, " + timeSpent + " ms time spent");
+      }
+      else {
+        LOG.debug("Cookie getting took " + timeSpent + " ms");
+      }
       return myCefCookies;
     }
   }

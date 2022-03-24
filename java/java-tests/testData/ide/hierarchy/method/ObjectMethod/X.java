@@ -1,5 +1,5 @@
 class Foo {
-  int hashCode() {
+  public int hashCode() {
     return 0;
   }
 }

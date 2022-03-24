@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="aalto-xml" type="repository">
-    <properties maven-id="com.fasterxml:aalto-xml:1.3.0" />
+    <properties maven-id="com.fasterxml:aalto-xml:1.3.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.0/aalto-xml-1.3.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.1/aalto-xml-1.3.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2/stax2-api-4.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.0/aalto-xml-1.3.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.1/aalto-xml-1.3.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2/stax2-api-4.2-sources.jar!/" />
     </SOURCES>
   </library>

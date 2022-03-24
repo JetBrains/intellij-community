@@ -15,21 +15,25 @@
  */
 package com.intellij.testFramework.codeInsight.hierarchy;
 
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import groovy.lang.GroovyObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.function.Supplier;
 
 /**
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
-public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
+public abstract class HierarchyViewTestBase extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -42,11 +46,12 @@ public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
 
   protected abstract String getBasePath();
 
-  protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
+  protected void doHierarchyTest(@NotNull Supplier<? extends HierarchyTreeStructure> treeStructure,
+                                 @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                                  String @NotNull ... fileNames) throws IOException {
     configure(fileNames);
-    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
-    HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), new File(verificationFilePath));
+    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/verification.xml";
+    HierarchyViewTestFixture.doHierarchyTest(treeStructure.get(), comparator, new File(verificationFilePath));
   }
 
   private void configure(String @NotNull [] fileNames) {
@@ -55,5 +60,7 @@ public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
       relFilePaths[i] = "/" + getBasePath() + "/" + fileNames[i];
     }
     configureByFiles(null, relFilePaths);
+    ExpectedHighlightingData expectedHighlightingData = new ExpectedHighlightingData(myEditor.getDocument(), false, false, false);
+    checkHighlighting(expectedHighlightingData); // ensure there are no syntax errors because they can interfere with hierarchy calculation correctness
   }
 }

@@ -42,7 +42,7 @@ class KotlinPushDownDialog(
 
     override fun getDimensionServiceKey() = "#" + this::class.java.name
 
-    override fun createNorthPanel(): JComponent? {
+    override fun createNorthPanel(): JComponent {
         val gbConstraints = GridBagConstraints()
 
         val panel = JPanel(GridBagLayout())
@@ -65,7 +65,7 @@ class KotlinPushDownDialog(
         return panel
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
         val panel = JPanel(BorderLayout())
         val memberSelectionPanel = KotlinMemberSelectionPanel(
             RefactoringBundle.message("members.to.be.pushed.down.panel.title"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.goto
 
@@ -97,11 +97,3 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
 }
 
 class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.KEY)
-
-// TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation becomes public in compiler
-private fun JvmFileClassUtil.getLiteralStringFromAnnotation(annotation: KtAnnotationEntry): String? {
-    val argumentExpression = annotation.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
-    val stringTemplate = argumentExpression as? KtStringTemplateExpression ?: return null
-    val singleEntry = stringTemplate.entries.singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
-    return singleEntry.text
-}

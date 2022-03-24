@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-public final class ClasspathMacro extends Macro {
+public final class ClasspathMacro extends Macro implements PathListMacro {
   @NotNull
   @Override
   public String getName() {

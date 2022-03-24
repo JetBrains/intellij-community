@@ -5,7 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ui.Gray;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -20,7 +20,7 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class MacIntelliJTextBorder extends DarculaTextBorder {
   private static final Color OUTLINE_COLOR = Gray.xBC;
-  private static final Insets PADDINGS = JBUI.emptyInsets();
+  private static final Insets PADDINGS = JBInsets.emptyInsets();
 
   static final JBValue MINIMUM_HEIGHT = new JBValue.Float(21);
   static final JBValue BW = new JBValue.Float(3);

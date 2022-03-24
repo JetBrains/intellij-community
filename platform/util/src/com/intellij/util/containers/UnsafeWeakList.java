@@ -112,6 +112,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   @Override
+  public boolean contains(Object o) {
+    return !isEmpty() && super.contains(o);
+  }
+
+  @Override
   public void clear() {
     processQueue();
     myList.clear();
@@ -126,7 +131,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
 
   @NotNull
   @Override
-  public Iterator<T> iterator() {
+  public Iterator<@NotNull T> iterator() {
     return new MyIterator();
   }
 
@@ -212,7 +217,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     return super.removeAll(c);
   }
 
-  public @NotNull List<T> toStrongList() {
+  public @NotNull List<@NotNull T> toStrongList() {
     if (myList.isEmpty()) {
       return Collections.emptyList();
     }
@@ -262,7 +267,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
    * this method considered dangerous, misleading, error-inducing and is not supported.
    */
   @Deprecated
-  public T get(@SuppressWarnings("unused") int index) {
+  public T get(int index) {
     throwNotAllowedException();
     return null;
   }

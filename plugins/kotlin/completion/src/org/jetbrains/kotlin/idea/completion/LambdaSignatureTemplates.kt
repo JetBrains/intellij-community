@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -59,9 +59,15 @@ object LambdaSignatureTemplates {
                             }
                         }
 
-                        context.editor.caretModel.moveToOffset(startOffset)
+                        context.editor.caretModel.currentCaret.moveToOffset(startOffset)
                         val template = buildTemplate(lambdaType, signatureOnly, explicitParameterTypes, context.project)
-                        TemplateManager.getInstance(context.project).startTemplate(context.editor, template)
+                        TemplateManager.getInstance(context.project).startTemplate(
+                            /* editor = */ context.editor,
+                            /* template = */ template,
+                            /* inSeparateCommand = */ false,
+                            /* predefinedVarValues = */ null,
+                            /* listener = */ null,
+                        )
                     }
                 } finally {
                     rangeMarker.dispose()
@@ -97,8 +103,9 @@ object LambdaSignatureTemplates {
         return functionParameterTypes(lambdaType).joinToString(", ", transform = ::parameterPresentation) + " ->"
     }
 
-    fun explicitParameterTypesRequired(file: KtFile, placeholderRange: TextRange, lambdaType: KotlinType): Boolean {
-        PsiDocumentManager.getInstance(file.project).commitAllDocuments()
+    fun explicitParameterTypesRequired(context: InsertionContext, placeholderRange: TextRange, lambdaType: KotlinType): Boolean {
+        val file = context.file as? KtFile ?: return false
+        PsiDocumentManager.getInstance(file.project).commitDocument(context.document)
         val expression =
             PsiTreeUtil.findElementOfClassAtRange(file, placeholderRange.startOffset, placeholderRange.endOffset, KtExpression::class.java)
                 ?: return false

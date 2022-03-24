@@ -37,7 +37,7 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
 
   @Override
   @Nullable
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyBundle.message("checkbox.inspect.anonymous.closures"), "inspectClosures");
     return optionsPanel;

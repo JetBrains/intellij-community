@@ -446,9 +446,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
            new Class[] {UInjectionHost.class};
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "nls";
   }
 
@@ -613,7 +612,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           fixes.addAll(IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(fqn)), sourcePsi.getContainingFile()));
           if (addNullSafe) {
             for (IntentionAction action : JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(NlsInfo.NLS_SAFE))) {
-              fixes.add(new IntentionWrapper(action, sourcePsi.getContainingFile()) {
+              fixes.add(new IntentionWrapper(action) {
                 @Override
                 public @NotNull String getFamilyName() {
                   return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");

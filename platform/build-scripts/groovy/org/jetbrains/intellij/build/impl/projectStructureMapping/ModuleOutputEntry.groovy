@@ -1,21 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
+
+import java.nio.file.Path
 
 /**
  * Represents production classes of a module
  */
 @CompileStatic
-@AutoClone
 final class ModuleOutputEntry extends DistributionFileEntry {
-  final String moduleName
-  final int size
+  public final String moduleName
+  public final int size
+  public final String reason
 
-  ModuleOutputEntry(String path, String moduleName, int size) {
+  ModuleOutputEntry(Path path, String moduleName, int size, String reason = null) {
     super(path, "module-output")
+
     this.moduleName = moduleName
     this.size = size
+    this.reason = reason
   }
 }

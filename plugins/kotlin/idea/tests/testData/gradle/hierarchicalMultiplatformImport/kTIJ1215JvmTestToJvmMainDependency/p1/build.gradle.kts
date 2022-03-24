@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdkVersion({{compile_sdk_version}})
 }
 
 kotlin {

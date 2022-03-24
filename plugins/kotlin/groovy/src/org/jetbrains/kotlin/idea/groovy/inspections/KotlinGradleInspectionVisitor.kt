@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.inspections.gradle
+package org.jetbrains.kotlin.idea.groovy.inspections
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
@@ -10,10 +9,12 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.roots.findGradleProjectStructure
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
@@ -25,7 +26,7 @@ abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
 
         val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
 
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
+        if (!isUnitTestMode()) {
             val module = fileIndex.getModuleForFile(file.virtualFile) ?: return
             if (!module.isGradleModule()) return
         }
@@ -36,10 +37,15 @@ abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
     }
 }
 
-fun getResolvedKotlinGradleVersion(file: PsiFile) =
-    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { getResolvedKotlinGradleVersion(it) }
+fun findResolvedKotlinGradleVersion(file: PsiFile): IdeKotlinVersion? =
+    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { findResolvedKotlinGradleVersion(it) }
 
+@Deprecated("Use findResolvedKotlinGradleVersion() instead.", ReplaceWith("findResolvedKotlinGradleVersion(module)?.rawVersion"))
 fun getResolvedKotlinGradleVersion(module: Module): String? {
+    return findResolvedKotlinGradleVersion(module)?.rawVersion
+}
+
+fun findResolvedKotlinGradleVersion(module: Module): IdeKotlinVersion? {
     val projectStructureNode = findGradleProjectStructure(module) ?: return null
     val gradleFacade = KotlinGradleFacade.instance ?: return null
 

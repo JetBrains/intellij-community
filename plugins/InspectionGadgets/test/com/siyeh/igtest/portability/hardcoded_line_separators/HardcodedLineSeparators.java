@@ -8,4 +8,9 @@ public class HardcodedLineSeparators {
   final char newLineChar = '<warning descr="Hardcoded line separator '\12'">\12</warning>';
   final char newLineChar2 = '<warning descr="Hardcoded line separator '\012'">\012</warning>';
   final char returnChar = '<warning descr="Hardcoded line separator '\15'">\15</warning>';
+
+  final String TEXT = """
+                     The quick brown fox \
+                     jumps over the lazy dog.\
+                     """;
 }

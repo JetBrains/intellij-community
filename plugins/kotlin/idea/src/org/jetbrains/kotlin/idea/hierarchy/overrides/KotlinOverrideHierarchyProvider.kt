@@ -25,7 +25,7 @@ class KotlinOverrideHierarchyProvider : HierarchyProvider {
         KotlinOverrideHierarchyBrowser(target.project, target)
 
     override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {
-        (hierarchyBrowser as HierarchyBrowserBaseEx).changeView(MethodHierarchyBrowserBase.METHOD_TYPE)
+        (hierarchyBrowser as HierarchyBrowserBaseEx).changeView(MethodHierarchyBrowserBase.getMethodType())
     }
 
     private fun getOverrideHierarchyElement(element: PsiElement?): PsiElement? =

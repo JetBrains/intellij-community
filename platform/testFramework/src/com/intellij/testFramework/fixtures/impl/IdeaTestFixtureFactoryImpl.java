@@ -54,17 +54,18 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return createLightFixtureBuilder(null);
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName) {
+    return createLightFixtureBuilder(null, projectName);
   }
 
   @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
+                                                                              @NotNull String projectName) {
     if (projectDescriptor == null) {
       projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
     }
-    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(projectDescriptor));
+    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(projectDescriptor, projectName));
   }
 
   @NotNull
@@ -89,6 +90,11 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   @Override
   public BareTestFixture createBareFixture() {
     return new BareTestFixtureImpl();
+  }
+
+  @Override
+  public @NotNull SdkTestFixture createSdkFixture() {
+    return new SdkTestFixtureImpl();
   }
 
   public static final class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {

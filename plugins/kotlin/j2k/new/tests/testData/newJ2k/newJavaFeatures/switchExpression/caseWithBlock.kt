@@ -5,11 +5,13 @@ fun foo(a: Int): Int {
             println(x)
             1
         }
+
         2 -> {
             val x = 2
             println(x)
             2
         }
+
         3 -> {
             println(3)
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
@@ -33,10 +34,12 @@ import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -55,12 +58,12 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
   public static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
-    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null, null);
+    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null);
   });
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 89;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = Runtime.version().feature() >= 17 ? 89 : 97;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 5;
 
@@ -172,13 +175,13 @@ public final class JBCefApp {
     }
     if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
 
-    // Add possibility to disable GPU (see IDEA-248140)
     if (Registry.is("ide.browser.jcef.gpu.disable")) {
-      // NOTE: also can try
-      // --override-use-software-gl-for-tests - Forces the use of software GL instead of hardware gpu.
-      // --disable-gpu-rasterization - 	Disable GPU rasterization, i.e. rasterize on the CPU only. Overrides the kEnableGpuRasterization flag.
+      // Add possibility to disable GPU (see IDEA-248140)
       args = ArrayUtil.mergeArrays(args, "--disable-gpu", "--disable-gpu-compositing");
     }
+
+    final boolean trackGPUCrashes = Registry.is("ide.browser.jcef.gpu.infinitecrash");
+    if (trackGPUCrashes) args = ArrayUtil.mergeArrays(args, "--disable-gpu-process-crash-limit");
 
     // Sometimes it's useful to be able to pass any additional keys (see IDEA-248140)
     // NOTE: List of keys: https://peter.sh/experiments/chromium-command-line-switches/
@@ -191,7 +194,7 @@ public final class JBCefApp {
       }
     }
 
-    CefApp.addAppHandler(new MyCefAppHandler(args));
+    CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
@@ -305,7 +308,7 @@ public final class JBCefApp {
       if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
         return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
       }
-      if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+      if (GraphicsEnvironment.isHeadless() &&
           !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
       {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
@@ -420,8 +423,13 @@ public final class JBCefApp {
   }
 
   private static class MyCefAppHandler extends CefAppHandlerAdapter {
-    MyCefAppHandler(String @Nullable[] args) {
+    private final int myGPUCrashLimit;
+    private int myGPUCrashCounter = 0;
+    private boolean myNotificationShown = false;
+
+    MyCefAppHandler(String @Nullable[] args, boolean trackGPUCrashes) {
       super(args);
+      myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }
 
     @Override
@@ -451,6 +459,37 @@ public final class JBCefApp {
 
       getInstance().myCefApp.registerSchemeHandlerFactory(
         JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
+    }
+
+    //@Override
+    public void onBeforeChildProcessLaunch(String command_line) {
+      if (myGPUCrashLimit >= 0 && command_line != null && command_line.contains("--type=gpu-process")) {
+        if (++myGPUCrashCounter > myGPUCrashLimit && !myNotificationShown) {
+          Notification notification = NOTIFICATION_GROUP.getValue().createNotification(
+            IdeBundle.message("notification.content.jcef.gpucrash.title"),
+            IdeBundle.message("notification.content.jcef.gpucrash.message"),
+            NotificationType.ERROR);
+          //noinspection DialogTitleCapitalization
+          notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.restart")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              ApplicationManager.getApplication().restart();
+            }
+          });
+          //noinspection DialogTitleCapitalization
+          if (!Registry.is("ide.browser.jcef.gpu.disable")) {
+            notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.disable")) {
+              @Override
+              public void actionPerformed(@NotNull AnActionEvent e) {
+                Registry.get("ide.browser.jcef.gpu.disable").setValue(true);
+                ApplicationManager.getApplication().restart();
+              }
+            });
+          }
+          notification.notify(null);
+          myNotificationShown = true;
+        }
+      }
     }
   }
 

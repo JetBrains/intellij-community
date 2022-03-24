@@ -74,11 +74,14 @@ public class FoldingModelSupport {
   private boolean myDuringSynchronize;
   private final boolean[] myShouldUpdateLineNumbers;
 
+  private boolean myEnabled;
+
   public FoldingModelSupport(@Nullable Project project, EditorEx @NotNull [] editors, @NotNull Disposable disposable) {
     myProject = project;
     myEditors = editors;
     myCount = myEditors.length;
     myShouldUpdateLineNumbers = new boolean[myCount];
+    myEnabled = true;
 
     MyDocumentListener documentListener = new MyDocumentListener();
     List<Document> documents = ContainerUtil.map(myEditors, EditorEx::getDocument);
@@ -124,6 +127,7 @@ public class FoldingModelSupport {
   public void install(@Nullable final Data data,
                       @Nullable final UserDataHolder context,
                       @NotNull final Settings settings) {
+    if (!myEnabled) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     for (FoldedBlock folding : getFoldedBlocks()) {
@@ -154,6 +158,14 @@ public class FoldingModelSupport {
       }
       return lineCount;
     });
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 
   private static final class FoldingBuilder extends FoldingBuilderBase {

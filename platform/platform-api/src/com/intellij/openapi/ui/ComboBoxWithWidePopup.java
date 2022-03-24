@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.ui.SimpleColoredComponent;
@@ -10,9 +10,7 @@ import java.awt.*;
 public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   private int myMinLength = 20;
 
-  public ComboBoxWithWidePopup() {
-
-  }
+  public ComboBoxWithWidePopup() { }
 
   public ComboBoxWithWidePopup(@NotNull ComboBoxModel<E> model) {
     super(model);
@@ -22,13 +20,21 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     super(items);
   }
 
+  @SuppressWarnings("unchecked")
+  public E getItem() {
+    return (E)getSelectedItem();
+  }
+
+  public void setItem(E item) {
+    setSelectedItem(item);
+  }
+
   @Override
   public void setRenderer(ListCellRenderer<? super E> renderer) {
     if (renderer instanceof SimpleColoredComponent) {
       SimpleColoredComponent scc = (SimpleColoredComponent)renderer;
       scc.getIpad().top = scc.getIpad().bottom = 0;
     }
-
     super.setRenderer(new AdjustingListCellRenderer(renderer));
   }
 
@@ -44,14 +50,14 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   }
 
   /**
-   * @return minimum width of a popup that is wide enough to show all the combobox's items horizontally
+   * @return minimum width of a popup that is wide enough to show all the combobox items horizontally
    */
+  @SuppressWarnings({"SpellCheckingInspection", "StructuralWrap"})
   public int getMinimumPopupWidth() {
-    // Original preferred size of JComboBox is calculated as max of all pref sizes of combobox's items.
-    // See javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()
-    //
-    // Please note that "getPreferredSize().width" cannot be used as getPreferredSize might be overridden
-    // to return a value different to "max of all pref sizes of comboBox's items".
+    // The original preferred size of `JComboBox` is calculated as a max of combobox items preferred sizes
+    // (see `javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize`).
+    // Please note that `getPreferredSize().width` cannot be used, because `getPreferredSize` might be overridden
+    // to return a value different from "a max of combobox items preferred sizes".
     return super.getPreferredSize().width;
   }
 

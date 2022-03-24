@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<>();
   private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myUndoTransparentCount;
+  private boolean myAllowMergeGlobalCommands;
 
   private final CommandListener eventPublisher;
 
@@ -389,6 +391,27 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files) {
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public Boolean isMergeGlobalCommandsAllowed() {
+    return myAllowMergeGlobalCommands;
+  }
+
+  @Override
+  public void allowMergeGlobalCommands(@NotNull Runnable action) {
+    ApplicationManager.getApplication().assertIsWriteThread();
+    if (myAllowMergeGlobalCommands) {
+      action.run();
+    }
+
+    myAllowMergeGlobalCommands = true;
+    try {
+      action.run();
+    } finally {
+      myAllowMergeGlobalCommands = false;
+    }
   }
 
   private void fireCommandStarted() {

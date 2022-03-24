@@ -75,7 +75,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       final String streamApiMethod = element.getAttributeValue(STREAM_API_METHOD_ATTR);
       final PseudoLambdaReplaceTemplate.LambdaRole lambdaRole =
         PseudoLambdaReplaceTemplate.LambdaRole.valueOf(element.getAttributeValue(LAMBDA_ROLE_ATTR));
-      final boolean acceptsDefault = Boolean.valueOf(element.getAttributeValue(ACCEPTS_DEFAULT_ATTR));
+      final boolean acceptsDefault = Boolean.parseBoolean(element.getAttributeValue(ACCEPTS_DEFAULT_ATTR));
       final boolean toDelete = element.getAttribute(DELETE_ATTR) != null;
       final PipelineElement pipelineElement = new PipelineElement(fqn, method, new PseudoLambdaReplaceTemplate(streamApiMethod, lambdaRole, acceptsDefault));
       if (toDelete) {

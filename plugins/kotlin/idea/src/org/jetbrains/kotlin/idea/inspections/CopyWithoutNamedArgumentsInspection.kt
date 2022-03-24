@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class CopyWithoutNamedArgumentsInspection : AbstractKotlinInspection() {
@@ -37,7 +37,7 @@ class CopyWithoutNamedArgumentsInspection : AbstractKotlinInspection() {
                 expression.calleeExpression ?: return,
                 KotlinBundle.message("copy.method.of.data.class.is.called.without.named.arguments"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(AddNamesToCallArgumentsIntention(), expression.containingKtFile)
+                IntentionWrapper(AddNamesToCallArgumentsIntention())
             )
         })
     }

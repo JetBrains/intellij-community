@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author maxim
  * @deprecated use {@link LookupElement#renderElement}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface LookupValueWithUIHint extends PresentableLookupValue {
   @Nullable
   String getTypeHint();

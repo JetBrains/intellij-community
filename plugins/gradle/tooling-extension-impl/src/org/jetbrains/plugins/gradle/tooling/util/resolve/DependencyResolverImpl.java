@@ -62,20 +62,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
   @NotNull
   private final SourceSetCachedFinder mySourceSetFinder;
 
-  /**
-   * @deprecated use constructor below
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public DependencyResolverImpl(@NotNull Project project,
-                                boolean isPreview,
-                                boolean downloadJavadoc,
-                                boolean downloadSources,
-                                SourceSetCachedFinder sourceSetFinder) {
-    this(project, downloadJavadoc, downloadSources, sourceSetFinder);
-  }
-
   public DependencyResolverImpl(@NotNull Project project,
                                 boolean downloadJavadoc,
                                 boolean downloadSources,
@@ -195,6 +181,18 @@ public final class DependencyResolverImpl implements DependencyResolver {
     if (configuration == null) {
       return emptySet();
     }
+
+    // following statement should trigger parallel resolution of configurations artifacts
+    // all subsequent iteration are expected to use cached results.
+    try {
+      configuration.getIncoming().artifactView(new Action<ArtifactView.ViewConfiguration>() {
+        @Override
+        public void execute(@NotNull ArtifactView.ViewConfiguration configuration) {
+          configuration.setLenient(true);
+        }
+      }).getArtifacts().getArtifacts();
+    } catch (Exception ignore) {}
+
     LenientConfiguration lenientConfiguration = configuration.getResolvedConfiguration().getLenientConfiguration();
     ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
     List<ComponentIdentifier> components = new ArrayList<ComponentIdentifier>();
@@ -600,7 +598,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   }
 
   private Collection<ExternalDependency> getDependencies(@NotNull Iterable<?> fileCollections, @NotNull String scope) {
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
     for (Object fileCollection : fileCollections) {
       if (fileCollection instanceof FileCollection) {
         result.addAll(getDependencies((FileCollection)fileCollection, scope));

@@ -2,17 +2,19 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
@@ -28,10 +30,14 @@ import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibraryConfigurator() {
+open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<RepositoryLibraryProperties>() {
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !hasBrokenJsRuntime(module)
     }
+
+    override val libraryType: RepositoryLibraryType get() = RepositoryLibraryType.getInstance()
+
+    override val libraryProperties: RepositoryLibraryProperties get() = libraryJarDescriptor.repositoryLibraryProperties
 
     override fun isConfigured(module: Module): Boolean {
         return hasKotlinJvmRuntimeInScope(module)
@@ -43,10 +49,8 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
     override val dialogTitle: String
         get() = JavaRuntimeLibraryDescription.DIALOG_TITLE
 
-    override val libraryCaption: String
-        get() = JavaRuntimeLibraryDescription.LIBRARY_CAPTION
-
     override val messageForOverrideDialog: String
+        @Nls
         get() = JavaRuntimeLibraryDescription.JAVA_RUNTIME_LIBRARY_CREATION
 
     override val presentableText: String
@@ -61,25 +65,7 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
     @Suppress("DEPRECATION_ERROR", "OverridingDeprecatedMember")
     override fun getTargetPlatform() = JvmPlatforms.CompatJvmPlatform
 
-    override fun getLibraryJarDescriptors(sdk: Sdk?): List<LibraryJarDescriptor> {
-        val result = mutableListOf(
-            LibraryJarDescriptor.RUNTIME_JAR,
-            LibraryJarDescriptor.RUNTIME_SRC_JAR,
-            LibraryJarDescriptor.REFLECT_JAR,
-            LibraryJarDescriptor.REFLECT_SRC_JAR,
-            LibraryJarDescriptor.TEST_JAR,
-            LibraryJarDescriptor.TEST_SRC_JAR
-        )
-        val sdkVersion = sdk?.version ?: return result
-        if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-            result += listOf(LibraryJarDescriptor.RUNTIME_JDK7_JAR, LibraryJarDescriptor.RUNTIME_JDK7_SOURCES_JAR)
-        }
-        if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) {
-            result += listOf(LibraryJarDescriptor.RUNTIME_JDK8_JAR, LibraryJarDescriptor.RUNTIME_JDK8_SOURCES_JAR)
-        }
-
-        return result
-    }
+    override val libraryJarDescriptor get() = LibraryJarDescriptor.RUNTIME_JDK8_JAR
 
     override val libraryMatcher: (Library, Project) -> Boolean =
         { library, _ -> JavaRuntimeDetectionUtil.getRuntimeJar(library.getFiles(OrderRootType.CLASSES).asList()) != null }
@@ -101,7 +87,7 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
                     try {
                         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
                         val facetSettings = facet.configuration.settings
-                        facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm18)
+                        facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm8)
                         (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = "1.8"
                     } finally {
                         modelsProvider.dispose()
@@ -111,16 +97,9 @@ open class KotlinJavaModuleConfigurator protected constructor() : KotlinWithLibr
         }
     }
 
-    override fun configureModule(
-        module: Module,
-        classesPath: String,
-        sourcesPath: String,
-        collector: NotificationMessageCollector,
-        forceJarState: FileState?,
-        useBundled: Boolean
-    ) {
-        super.configureModule(module, classesPath, sourcesPath, collector, forceJarState, useBundled)
-        addStdlibToJavaModuleInfo(module, collector)
+    override fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
+        super.configureModule(module, collector, writeActions)
+        addStdlibToJavaModuleInfo(module, collector, writeActions)
     }
 
     companion object {

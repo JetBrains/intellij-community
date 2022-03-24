@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.core.CoreBundle
@@ -10,15 +10,15 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
-import com.intellij.openapi.externalSystem.test.TestExternalSystemManager
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -39,13 +39,15 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
 
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
 
-  private lateinit var testDisposable: Disposable
-  private val notificationAware get() = ProjectNotificationAware.getInstance(myProject)
+  protected lateinit var testDisposable: Disposable
+  private val notificationAware get() =  AutoImportProjectNotificationAware.getInstance(myProject)
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
 
@@ -183,10 +185,11 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   protected fun VirtualFile.delete() =
     runWriteAction { delete(null) }
 
-  fun VirtualFile.modify(modificationType: ModificationType = ModificationType.INTERNAL) {
+  fun VirtualFile.modify(modificationType: ExternalSystemModificationType = INTERNAL) {
     when (modificationType) {
-      ModificationType.INTERNAL -> appendLine("println 'hello'")
-      ModificationType.EXTERNAL -> appendLineInIoFile("println 'hello'")
+      INTERNAL -> appendLine("println 'hello'")
+      ExternalSystemModificationType.EXTERNAL -> appendLineInIoFile("println 'hello'")
+      ExternalSystemModificationType.UNKNOWN -> throw UnsupportedOperationException()
     }
   }
 
@@ -240,21 +243,17 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   protected fun remove(projectId: ExternalSystemProjectId) = projectTracker.remove(projectId)
 
-  protected fun refreshProject() = projectTracker.scheduleProjectRefresh()
+  protected fun scheduleProjectReload() = projectTracker.scheduleProjectRefresh()
 
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
-
-  protected fun forceRefreshProject(projectId: ExternalSystemProjectId) {
-    markDirty(projectId)
-    refreshProject()
-  }
 
   protected fun enableAsyncExecution() {
     projectTracker.isAsyncChangesProcessing = true
   }
 
-  protected fun setAutoReloadDelay(delay: Int) {
-    projectTracker.setAutoReloadDelay(delay)
+  @Suppress("SameParameterValue")
+  protected fun setDispatcherMergingSpan(delay: Int) {
+    projectTracker.setDispatcherMergingSpan(delay)
   }
 
   protected fun setAutoReloadType(type: AutoReloadType) {
@@ -345,7 +344,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     simpleTest("settings.groovy", "") {
       assertState(
         refresh = 1,
-        settingsAccess = 2,
+        settingsAccess = 1,
         notified = false,
         subscribe = 2,
         unsubscribe = 0,
@@ -438,7 +437,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun markDirty() = markDirty(projectAware.projectId)
 
-    fun forceRefreshProject() = forceRefreshProject(projectAware.projectId)
+    fun forceRefreshProject() = projectAware.forceReloadProject()
 
     fun registerProjectAware() = register(projectAware)
 
@@ -450,10 +449,18 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
     fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.duringRefresh(times, action)
+    fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) =
+      projectAware.duringRefresh(action, parentDisposable)
+
     fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.onceAfterRefresh(action)
     fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.afterRefresh(times, action)
+    fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) =
+      projectAware.afterRefresh(action, parentDisposable)
+
     fun onceBeforeRefresh(action: () -> Unit) = projectAware.onceBeforeRefresh(action)
     fun beforeRefresh(times: Int, action: () -> Unit) = projectAware.beforeRefresh(times, action)
+    fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) =
+      projectAware.beforeRefresh(action, parentDisposable)
 
     fun setRefreshStatus(status: ExternalSystemRefreshStatus) = projectAware.refreshStatus.set(status)
 
@@ -497,11 +504,9 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       Disposer.newDisposable(testDisposable, "waitForProjectRefresh").use { parentDisposable ->
         val promise = AsyncPromise<ExternalSystemRefreshStatus>()
         val uncompletedRefreshes = AtomicInteger(expectedRefreshes)
-        projectAware.subscribe(object : ExternalSystemProjectRefreshListener {
-          override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
-            if (uncompletedRefreshes.decrementAndGet() == 0) {
-              promise.setResult(status)
-            }
+        afterRefresh({ status ->
+          if (uncompletedRefreshes.decrementAndGet() == 0) {
+            promise.setResult(status)
           }
         }, parentDisposable)
         action()
@@ -512,13 +517,13 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     }
   }
 
-  fun mockProjectAware(projectId: ExternalSystemProjectId) = MockProjectAware(projectId, myProject)
+  fun mockProjectAware(projectId: ExternalSystemProjectId) = MockProjectAware(projectId, myProject, testDisposable)
 
   protected inner class SimpleModificationTestBench(
     projectAware: MockProjectAware,
     private val settingsFile: VirtualFile
   ) : SimpleTestBench(projectAware) {
-    fun modifySettingsFile(modificationType: ModificationType = ModificationType.INTERNAL) = settingsFile.modify(modificationType)
+    fun modifySettingsFile(modificationType: ExternalSystemModificationType = INTERNAL) = settingsFile.modify(modificationType)
   }
 
   inner class DummyExternalSystemTestBench(val projectAware: ProjectAwareWrapper) {

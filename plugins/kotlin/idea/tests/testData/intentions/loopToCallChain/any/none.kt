@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'none{}'"
 // IS_APPLICABLE_2: false
 fun foo(list: List<String>): Boolean {

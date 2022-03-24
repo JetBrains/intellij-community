@@ -1,0 +1,6 @@
+UFile (package = )
+    UClass (name = Record)
+        UField (name = x)
+        UMethod (name = x)
+        UMethod (name = Record)
+            UParameter (name = x)

@@ -6,5 +6,5 @@ internal data class DependencyUsageInfo(
     val projectModule: ProjectModule,
     val version: PackageVersion,
     val scope: PackageScope,
-    val availableScopes: List<PackageScope>
+    val userDefinedScopes: List<PackageScope>
 )

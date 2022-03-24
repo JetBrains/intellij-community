@@ -151,14 +151,15 @@ val x = { x: String, y: String, /* */ z: String
 }
 
 val x = { x: String, y: String
-        /* */, /* */ z: String
+          /* */, /* */ z: String
     ->
     println("1")
 }()
 
 val x = {
-    x: String, /*
-    */
+    x: String,
+    /*
+       */
     y: String,
     z: String,
     ->
@@ -166,9 +167,9 @@ val x = {
 }
 
 val x = {
-    x: String, y: String,
-    z: String, /*
-     */
+    x: String, y: String, z: String,
+    /*
+        */
     ->
     println("1")
 }

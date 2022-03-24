@@ -150,7 +150,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
           if (provider != null) {
             Object o = myBuilder.getUi().getElementFor(value);
             if (o instanceof AbstractTreeNode) {
-              o = ((AbstractTreeNode)o).getValue();
+              o = ((AbstractTreeNode<?>)o).getValue();
             }
             provider.customizeRenderer(this, tree, o, selected, expanded, leaf, row, hasFocus);
             return;
@@ -265,7 +265,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
       return (PsiElement)element;
     }
     else if (element instanceof SmartPsiElementPointer) {
-      return ((SmartPsiElementPointer)element).getElement();
+      return ((SmartPsiElementPointer<?>)element).getElement();
     }
     else if (element != null) {
       for (FavoriteNodeProvider provider : FavoriteNodeProvider.EP_NAME.getExtensions(myProject)) {
@@ -307,7 +307,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "reference.toolWindows.favorites";
     }
     if (LangDataKeys.NO_NEW_ACTION.is(dataId)) {
@@ -443,7 +443,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
       if (selectedNodeDescriptor != null) {
         Object value = selectedNodeDescriptor.getElement().getValue();
         if (value instanceof SmartPsiElementPointer) {
-          value = ((SmartPsiElementPointer)value).getElement();
+          value = ((SmartPsiElementPointer<?>)value).getElement();
         }
         result.add(value);
       }
@@ -518,7 +518,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
       final ArrayList<AbstractTreeNode<?>> nodes = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof SmartPsiElementPointer) {
-          element = ((SmartPsiElementPointer)element).getElement();
+          element = ((SmartPsiElementPointer<?>)element).getElement();
         }
         final Collection<AbstractTreeNode<?>> tmp = AddToFavoritesAction
           .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());

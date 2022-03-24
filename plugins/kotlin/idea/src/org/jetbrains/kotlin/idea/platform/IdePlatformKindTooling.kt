@@ -9,14 +9,15 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.extensions.ApplicationExtensionDescriptor
-import org.jetbrains.kotlin.gradle.KotlinPlatform
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.Icon
 
 abstract class IdePlatformKindTooling {
-    abstract val kind: IdePlatformKind<*>
+    abstract val kind: IdePlatformKind
 
     abstract fun compilerArgumentsForProject(project: Project): CommonCompilerArguments?
 
@@ -27,9 +28,13 @@ abstract class IdePlatformKindTooling {
 
     abstract val libraryKind: PersistentLibraryKind<*>?
     abstract fun getLibraryDescription(project: Project): CustomLibraryDescription?
-    abstract fun getLibraryVersionProvider(project: Project): (Library) -> String?
+    abstract fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion?
 
-    abstract fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon?
+    abstract fun getTestIcon(
+        declaration: KtNamedDeclaration,
+        descriptorProvider: () -> DeclarationDescriptor?,
+        includeSlowProviders: Boolean? = null
+    ): Icon?
 
     abstract fun acceptsAsEntryPoint(function: KtFunction): Boolean
 
@@ -61,7 +66,7 @@ abstract class IdePlatformKindTooling {
             ALL_TOOLING_SUPPORT.flatMap { tooling -> tooling.gradlePlatformIds.map { it to tooling } }.toMap()
         }
 
-        fun getTooling(kind: IdePlatformKind<*>): IdePlatformKindTooling {
+        fun getTooling(kind: IdePlatformKind): IdePlatformKindTooling {
             return TOOLING_SUPPORT_BY_KIND[kind] ?: error("Unknown platform $kind")
         }
 
@@ -78,5 +83,5 @@ abstract class IdePlatformKindTooling {
     }
 }
 
-val IdePlatformKind<*>.tooling: IdePlatformKindTooling
+val IdePlatformKind.tooling: IdePlatformKindTooling
     get() = IdePlatformKindTooling.getTooling(this)

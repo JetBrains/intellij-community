@@ -40,8 +40,6 @@ class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class
         removeBraces(element, block, editor)
     }
 
-    override fun allowCaretInsideElement(element: PsiElement) = element !is KtBlockExpression || element.parent is KtWhenEntry
-
     companion object {
         fun isApplicableTo(block: KtBlockExpression): Boolean {
             val singleStatement = block.statements.singleOrNull() ?: return false
@@ -114,4 +112,6 @@ class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class
             }
         }
     }
+
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement) = element is KtBlockExpression && element.parent !is KtWhenEntry
 }

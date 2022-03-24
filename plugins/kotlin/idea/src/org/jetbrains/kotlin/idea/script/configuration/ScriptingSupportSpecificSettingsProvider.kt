@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.script.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.UnnamedConfigurable
+import org.jetbrains.annotations.Nls
 
 abstract class ScriptingSupportSpecificSettingsProvider {
 
+    @get:Nls
     abstract val title: String
 
     abstract fun createConfigurable(): UnnamedConfigurable

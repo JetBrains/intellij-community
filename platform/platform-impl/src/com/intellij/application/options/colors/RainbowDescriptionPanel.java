@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -15,7 +15,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +83,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   @NotNull
   @Contract(pure = true)
   private static String checkRightArrow(@NotNull String str) {
-    return str.replaceAll("->", FontUtil.rightArrow(UIUtil.getLabelFont()));
+    return str.replaceAll("->", FontUtil.rightArrow(StartupUiUtil.getLabelFont()));
   }
 
   @NotNull

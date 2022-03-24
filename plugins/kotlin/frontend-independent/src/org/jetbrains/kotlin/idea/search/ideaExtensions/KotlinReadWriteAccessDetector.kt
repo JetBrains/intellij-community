@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -7,11 +7,11 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.references.ReferenceAccess
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
 class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
     companion object {
@@ -29,8 +29,7 @@ class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
 
         val refTarget = reference.resolve()
         if (refTarget is KtLightMethod) {
-            val origin = refTarget.kotlinOrigin
-            val declaration: KtNamedDeclaration = when (origin) {
+            val declaration = when (val origin = refTarget.kotlinOrigin) {
                 is KtPropertyAccessor -> origin.getNonStrictParentOfType<KtProperty>()
                 is KtProperty, is KtParameter -> origin as KtNamedDeclaration
                 else -> null

@@ -1,5 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom;
+
+import com.intellij.navigation.NavigationRequest;
+import com.intellij.navigation.NavigationService;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an instance which can be shown in the IDE (e.g. a file, a specific location inside a file, etc).
@@ -10,6 +17,20 @@ package com.intellij.pom;
 public interface Navigatable {
 
   Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[0];
+
+  /**
+   * Computes and returns the data necessary for the navigation.
+   * Actual navigation is performed by the platform, which means {@link #navigate} is not called
+   * unless the returned request is {@link NavigationService#rawNavigationRequest raw}.
+   *
+   * @return navigation request, or {@code null} if navigation cannot be performed for any reason
+   */
+  @Experimental
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @Nullable NavigationRequest navigationRequest() {
+    return NavigationService.instance().rawNavigationRequest(this);
+  }
 
   /**
    * Open editor and select/navigate to the object there if possible.

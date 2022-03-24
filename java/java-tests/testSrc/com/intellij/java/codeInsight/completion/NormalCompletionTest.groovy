@@ -1661,9 +1661,36 @@ class XInternalError {}
   }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
-  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
-  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
+  void testDontGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
+  void testDontGenerateToStringOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters and setters)")
   void testAccessorViaCompletion() {
@@ -2368,8 +2395,8 @@ class Abc {
     assert myFixture.lookupElementStrings == [
       "StriFoo", // non-final project class
       "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter", // non-final library classes
-      "StriBar", // final project class (red)
-      "StringBufferInputStream"] // deprecated library class
+      "StringBufferInputStream", // deprecated library class
+      "StriBar"] // final project class (red)
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -2590,5 +2617,46 @@ class Abc {
                           "      }\n" +
                           "  }\n" +
                           "}")
+  }
+
+  void testVariableIntoScopeInAnnotation() {
+    String source = "public class Demo {\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "        @SuppressWarnings(<caret>)\n" +
+                    "        final String code = \"println('Hello world')\";\n" +
+                    "    }\n" +
+                    "}"
+    myFixture.configureByText("Test.java", source)
+    myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == []
+    myFixture.checkResult(source)
+  }
+
+  void testLookupUpDownActions() {
+    myFixture.configureByText("Test.java", "class Test {<caret>}")
+    myFixture.completeBasic() // 'abstract' selected
+    myFixture.assertPreferredCompletionItems(0, "abstract", "boolean", "byte", "char", "class")
+    myFixture.performEditorAction("EditorLookupSelectionDown") // 'boolean' selected
+    myFixture.performEditorAction("EditorLookupSelectionDown") // 'byte' selected
+    myFixture.performEditorAction("EditorLookupSelectionUp") // 'boolean' selected
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {boolean}")
+  }
+
+  void testPinyinMatcher() {
+    myFixture.configureByText("Test.java", "class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;nh<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == ['\u4F60\u597D', 'get\u4F60\u597D']
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;\u4F60\u597D}}")
+  }
+
+  void testPinyinMatcher2() {
+    myFixture.configureByText("Test.java", "class Test {static void test() {int \u89D2\u8272 = 3;gj<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == []
+    myFixture.type('\b')
+    myFixture.completeBasic()
+    myFixture.checkResult("class Test {static void test() {int \u89D2\u8272 = 3;\u89D2\u8272}}")
   }
 }

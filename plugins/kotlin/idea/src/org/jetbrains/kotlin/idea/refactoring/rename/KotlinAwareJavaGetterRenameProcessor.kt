@@ -1,47 +1,58 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiType
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReferenceDescriptorImpl
+import org.jetbrains.kotlin.idea.search.canHaveSyntheticGetter
+import org.jetbrains.kotlin.idea.search.canHaveSyntheticSetter
+import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.syntheticGetter
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     override fun canProcessElement(element: PsiElement) =
-        element is PsiMethod && element !is KtLightMethod && JvmAbi.isGetterName(element.name)
+        super.canProcessElement(element) && element !is KtLightMethod && element.cast<PsiMethod>().canHaveSyntheticGetter
 
     override fun findReferences(
         element: PsiElement,
         searchScope: SearchScope,
         searchInCommentsAndStrings: Boolean
     ): Collection<PsiReference> {
-        val getterReferences = super.findReferences(element, searchScope, searchInCommentsAndStrings)
-        val getter = element as? PsiMethod ?: return getterReferences
-        val propertyName = SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(Name.identifier(getter.name))
-            ?: return getterReferences
+        val getters = super.findReferences(element, searchScope, searchInCommentsAndStrings)
+        val setters = findSetterReferences(element, searchScope, searchInCommentsAndStrings).orEmpty()
+        return getters + setters
+    }
+
+    private fun findSetterReferences(
+        element: PsiElement,
+        searchScope: SearchScope,
+        searchInCommentsAndStrings: Boolean
+    ): Collection<PsiReference>? {
+        val getter = element as? PsiMethod ?: return null
+        val propertyName = getter.syntheticGetter ?: return null
+        val containingClass = getter.containingClass ?: return null
         val setterName = JvmAbi.setterName(propertyName.asString())
-        val containingClass = getter.containingClass ?: return getterReferences
-        val setterReferences = containingClass
-            .findMethodsByName(setterName, true)
-            .filter { it.parameters.size == 1 && it.returnType == PsiType.VOID }
+        val restrictedToKotlinScope by lazy { searchScope.restrictToKotlinSources() }
+        return containingClass
+            .findMethodsByName(setterName, false)
+            .filter { it.canHaveSyntheticSetter }
+            .asSequence()
             .flatMap {
-                super.findReferences(it, searchScope, searchInCommentsAndStrings)
+                super.findReferences(it, restrictedToKotlinScope, searchInCommentsAndStrings)
                     .filterIsInstanceWithChecker<SyntheticPropertyAccessorReference> { accessor -> !accessor.getter }
             }
-            .ifEmpty { return getterReferences }
-        return ArrayList<PsiReference>(getterReferences.size + setterReferences.size).apply {
-            addAll(getterReferences)
-            setterReferences.mapTo(this) { SyntheticPropertyAccessorReferenceDescriptorImpl(it.expression, getter = true) }
-        }
+            .map {
+                SyntheticPropertyAccessorReferenceDescriptorImpl(it.expression, getter = true)
+            }
+            .toList()
     }
 }

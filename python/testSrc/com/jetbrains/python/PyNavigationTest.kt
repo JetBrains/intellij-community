@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import junit.framework.TestCase
 
 class PyNavigationTest : PyTestCase() {
 
@@ -185,6 +186,36 @@ class PyNavigationTest : PyTestCase() {
 
     val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
     assertFalse(PyiUtil.isOverload(foo, context))
+  }
+
+  // PY-38636
+  fun testClassInPyiAssignedToFunctionInPy() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    TestCase.assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    checkPyNotPyi(target?.containingFile)
+  }
+
+  // PY-38636
+  fun testStubInUserCode() {
+    myFixture.copyDirectoryToProject("importFile", "")
+    myFixture.configureByFile("test.py")
+    runWithAdditionalClassEntryInSdkRoots(myFixture.findFileInTempDir("addRoots")) {
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+      checkPyNotPyi(target?.containingFile)
+    }
+  }
+
+  // PY-38636
+  fun testClassInPyiClassInPy() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    TestCase.assertNotNull(target)
+    assertInstanceOf(target, PyFunction::class.java)
+    checkPyNotPyi(target?.containingFile)
   }
 
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {

@@ -9,11 +9,14 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 
 open class QuickFixWithDelegateFactory(
     private val delegateFactory: () -> IntentionAction?
 ) : IntentionAction {
+    @Nls
     private val familyName: String
+    @Nls
     private val text: String
     private val startInWriteAction: Boolean
 

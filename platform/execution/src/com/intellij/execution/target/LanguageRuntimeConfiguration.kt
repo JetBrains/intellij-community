@@ -9,7 +9,9 @@ import com.intellij.execution.target.LanguageRuntimeType.VolumeType
 import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironment.UploadRoot
 import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeData
+import com.intellij.openapi.components.BaseState
 import com.intellij.util.text.nullize
+import com.intellij.util.xmlb.annotations.Transient
 import java.nio.file.Path
 
 /**
@@ -41,7 +43,8 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
   fun getTargetPath(volumeDescriptor: VolumeDescriptor): TargetPath {
     return TargetPath.Temporary(hint = volumeDescriptor.type.id,
                                 parentDirectory = getTargetPathValue(volumeDescriptor)?.nullize()
-                                                  ?: volumeDescriptor.defaultPath.nullize())
+                                                  ?: volumeDescriptor.defaultPath.nullize(),
+                                prefix = volumeDescriptor.directoryPrefix)
   }
 
   fun setTargetPath(volumeDescriptor: VolumeDescriptor, targetPath: String?) {
@@ -50,6 +53,21 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
 
   @Throws(RuntimeConfigurationException::class)
   open fun validateConfiguration() = Unit
+
+  protected fun saveInState(volumeDescriptor: VolumeDescriptor, doSave: (VolumeState?) -> Unit) {
+    val volumeState = VolumeState().also {
+      it.remotePath = getTargetPathValue(volumeDescriptor)
+      it.targetSpecificData = getTargetSpecificData(volumeDescriptor)
+    }
+    doSave(volumeState)
+  }
+
+  protected fun loadVolumeState(volumeDescriptor: VolumeDescriptor, volumeState: VolumeState?) {
+    volumeState?.let {
+      setTargetPath(volumeDescriptor, it.remotePath)
+      setTargetSpecificData(volumeDescriptor, it.targetSpecificData)
+    }
+  }
 
   companion object {
     private fun <K, V> MutableMap<K, V>.putOrClear(key: K, value: V?) {
@@ -60,6 +78,24 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
         this[key] = value
       }
     }
+  }
+
+  /**
+   * Proposed serialization format for the volume data, including both the target path and target specific data configured by the user
+   */
+  class VolumeState : BaseState() {
+    var remotePath by string()
+    var targetSpecificBits by map<String, String>()
+
+    var targetSpecificData: TargetSpecificVolumeData?
+      @Transient
+      get() = object : TargetSpecificVolumeData {
+        override fun toStorableMap(): Map<String, String> = targetSpecificBits.toMap()
+      }
+      set(data) {
+        val dataAsMap = data?.toStorableMap() ?: emptyMap()
+        targetSpecificBits = dataAsMap.toMutableMap()
+      }
   }
 }
 

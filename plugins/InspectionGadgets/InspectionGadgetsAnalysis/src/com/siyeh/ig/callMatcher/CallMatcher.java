@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -163,7 +163,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   }
 
   /**
-   * Matches given expression if its a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
+   * Matches given expression if it's a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
    *
    * @param expression expression to match
    * @return PsiReferenceExpression if match is successful, null otherwise
@@ -295,9 +295,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       String name = methodRef.getReferenceName();
       if (name == null || !myNames.contains(name)) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
-      if (!methodMatches(method)) return false;
-      PsiParameterList parameterList = method.getParameterList();
-      return parametersMatch(parameterList);
+      return methodMatches(method);
     }
 
     @Contract(value = "null -> false", pure = true)

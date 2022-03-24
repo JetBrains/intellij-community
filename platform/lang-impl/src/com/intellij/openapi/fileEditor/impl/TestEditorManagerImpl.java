@@ -40,8 +40,8 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(TestEditorManagerImpl.class);
@@ -334,10 +334,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  public void updateFilePresentation(@NotNull VirtualFile file) {
-  }
-
-  @Override
   public void unsplitWindow() {
 
   }
@@ -531,7 +527,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     Pair<FileEditor, FileEditorProvider> editorAndProvider = myTestEditorSplitter.getEditorAndProvider(file);
 
     FileEditor[] fileEditor = FileEditor.EMPTY_ARRAY;
-    FileEditorProvider[] fileEditorProvider= new FileEditorProvider[0];
+    FileEditorProvider[] fileEditorProvider= FileEditorProvider.EMPTY_ARRAY;
     if (editorAndProvider != null) {
       fileEditor = new FileEditor[] {editorAndProvider.first};
       fileEditorProvider = new FileEditorProvider[]{editorAndProvider.second};

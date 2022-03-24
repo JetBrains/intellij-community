@@ -22,15 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.containers.ContainerUtil;
-
-import java.util.*;
-
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.*;
 
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
@@ -62,9 +60,10 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
   }
 
   public static class SuppressTreeAction extends KeyAwareInspectionViewAction {
+    @NotNull
     private final SuppressIntentionAction mySuppressAction;
 
-    public SuppressTreeAction(final SuppressIntentionAction suppressAction) {
+    public SuppressTreeAction(final @NotNull SuppressIntentionAction suppressAction) {
       super(suppressAction.getText());
       mySuppressAction = suppressAction;
     }

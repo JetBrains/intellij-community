@@ -16,13 +16,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
+ * Classes extending this class define filter user interfaces elements in the Structural Search dialog.
+ * For example the count filter or text filter, which can be added to $variables$ in the template.
+ *
  * @author Bas Leijdekkers
  */
 public abstract class FilterAction extends DumbAwareAction implements Filter {
 
   /**
    * This extension points causes memory leaks and other problems, because FilterActions have state.
-   * @deprecated Please use {@link com.intellij.structuralsearch.plugin.ui.filters.FilterProvider} instead.
+   * @deprecated Please use {@link FilterProvider} instead.
    */
   @Deprecated(forRemoval = true)
   public static final ExtensionPointName<FilterAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
@@ -50,6 +53,11 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
     return myPosition;
   }
 
+  /**
+   * The text displayed in the template editor inlays for this filter.
+   * @param variable  variable from which the value of the filter text to be displayed can be retrieved.
+   * @return a short text to display as editor inlay.
+   */
   @NotNull
   public String getShortText(NamedScriptableDefinition variable) {
     return "";

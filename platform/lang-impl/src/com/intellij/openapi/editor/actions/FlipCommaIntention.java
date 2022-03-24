@@ -16,6 +16,9 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
+
+
 public class FlipCommaIntention implements IntentionAction {
   @NotNull
   @Override
@@ -132,10 +135,6 @@ public class FlipCommaIntention implements IntentionAction {
   @Nullable
   private static PsiElement rightElement(@NotNull Editor editor, @NotNull PsiFile file) {
     return file.findElementAt(editor.getCaretModel().getOffset());
-  }
-
-  private static boolean isComma(@Nullable PsiElement element) {
-    return element != null && element.textMatches(",");
   }
 
   @NotNull

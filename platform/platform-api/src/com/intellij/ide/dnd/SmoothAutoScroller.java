@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -134,7 +135,7 @@ public final class SmoothAutoScroller {
         Point location = new Point(event.getLocation());
         SwingUtilities.convertPointToScreen(location, component);
         if (Registry.is("ide.dnd.to.front")) {
-          Window window = UIUtil.getWindow(component);
+          Window window = ComponentUtil.getWindow(component);
           if (window != null) window.toFront();
         }
         this.screen.setLocation(location);

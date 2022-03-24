@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.Macro.ExecutionCancelledException;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,6 +27,8 @@ public final class MacroManager {
   private final List<Macro> predefinedMacros = new ArrayList<>();
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("\\$.+\\$");
+
+  public static final DataKey<MacroPathConverter> PATH_CONVERTER_KEY = DataKey.create("MacroPathConverter");
 
   public static MacroManager getInstance() {
     return ApplicationManager.getApplication().getService(MacroManager.class);
@@ -180,6 +183,7 @@ public final class MacroManager {
       return null;
     }
 
+    MacroPathConverter converter = dataContext.getData(PATH_CONVERTER_KEY);
     while (macros.hasNext()) {
       Macro macro = macros.next();
       if (macro instanceof SecondQueueExpandMacro && firstQueueExpand) continue;
@@ -199,6 +203,7 @@ public final class MacroManager {
           if (expanded == null) {
             return null;
           }
+          expanded = convertPathIfNeeded(converter, macro, expanded);
           str = str.substring(0, index) + expanded + str.substring(index + name.length());
           //noinspection AssignmentToForLoopParameter
           index += expanded.length();
@@ -220,6 +225,7 @@ public final class MacroManager {
             if (expanded == null) {
               return null;
             }
+            expanded = convertPathIfNeeded(converter, macro, expanded);
             toReplace.put(macroNameWithParamStart + param + macroNameWithParamEnd, expanded);
             i = j + macroNameWithParamEnd.length();
           }
@@ -235,5 +241,18 @@ public final class MacroManager {
       }
     }
     return str;
+  }
+
+  private static String convertPathIfNeeded(@Nullable MacroPathConverter converter, @NotNull Macro macro, @NotNull String expandedValue) {
+    if (converter == null) {
+      return expandedValue;
+    }
+    if (macro instanceof PathMacro) {
+      return converter.convertPath(expandedValue);
+    }
+    if (macro instanceof PathListMacro) {
+      return converter.convertPathList(expandedValue);
+    }
+    return expandedValue;
   }
 }

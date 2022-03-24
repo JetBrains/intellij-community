@@ -25,7 +25,7 @@ class ThrottlingListenerWrapper implements SESearcher.Listener {
   private final Buffer myBuffer = new Buffer();
   private final BiConsumer<List<SearchEverywhereFoundElementInfo>, List<SearchEverywhereFoundElementInfo>> myFlushConsumer;
 
-  private final Alarm flushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm flushAlarm = new Alarm();
   private boolean flushScheduled;
 
   ThrottlingListenerWrapper(int throttlingDelay, SESearcher.Listener delegateListener, Executor delegateExecutor) {

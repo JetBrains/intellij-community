@@ -7,13 +7,12 @@ import com.intellij.serialization.WriteConfiguration
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.io.InputStream
 import java.io.OutputStream
 
-class IonSerializer(virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
+class IonSerializer(@Suppress("UNUSED_PARAMETER") virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   override val serializerDataFormatVersion: String = "v1"
 
   override fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage): SerializationResult {
@@ -36,7 +35,8 @@ class IonSerializer(virtualFileManager: VirtualFileUrlManager) : EntityStorageSe
     return SerializationResult.Success
   }
 
-  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
+  @Suppress("UNCHECKED_CAST")
+  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder {
     val configuration = ReadConfiguration(allowAnySubTypes = true)
     val ion = ObjectSerializer.instance
 
@@ -48,11 +48,11 @@ class IonSerializer(virtualFileManager: VirtualFileUrlManager) : EntityStorageSe
 
     val entityId2VirtualFileUrlInfo = ion.read(Object2ObjectOpenHashMap::class.java, stream, configuration) as EntityId2Vfu
     val vfu2VirtualFileUrlInfo = ion.read(Object2ObjectOpenHashMap::class.java, stream, configuration) as Vfu2EntityId
-    val entityId2JarDir = ion.read(BidirectionalMultiMap::class.java, stream, configuration) as BidirectionalMultiMap<EntityId, VirtualFileUrl>
+    val entityId2JarDir = ion.read(BidirectionalMultiMap::class.java, stream, configuration) as EntityId2JarDir
     val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
     val entitySourceIndex = ion.read(EntityStorageInternalIndex::class.java, stream, configuration) as EntityStorageInternalIndex<EntitySource>
-    val persistentIdIndex = ion.read(EntityStorageInternalIndex::class.java, stream, configuration) as PersistentIdInternalIndex
+    val persistentIdIndex = ion.read(PersistentIdInternalIndex::class.java, stream, configuration)
     val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
     val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)

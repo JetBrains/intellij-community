@@ -12,6 +12,7 @@ class PyCharmMacDistributionCustomizer extends MacDistributionCustomizer {
   @CompileStatic(TypeCheckingMode.SKIP)
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+    super.copyAdditionalFiles(context, targetDirectory)
     def underTeamCity = System.getProperty("teamcity.buildType.id") != null
 
     context.ant.copy(todir: "$targetDirectory/skeletons", failonerror: underTeamCity) {

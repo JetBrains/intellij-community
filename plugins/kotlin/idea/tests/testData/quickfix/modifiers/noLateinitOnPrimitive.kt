@@ -1,4 +1,5 @@
 // "Add 'lateinit' modifier" "false"
+// WITH_STDLIB
 // ACTION: Add initializer
 // ACTION: Add full qualifier
 // ACTION: Introduce import alias

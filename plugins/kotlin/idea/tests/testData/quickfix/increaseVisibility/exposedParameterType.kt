@@ -1,6 +1,9 @@
 // "Make 'Nested' internal" "true"
+// ACTION: Convert parameter to receiver
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Make 'Nested' internal
 // ACTION: Make 'Nested' public
-// ACTION: Make 'foo' private
+// ACTION: Remove parameter 'arg'
 
 class Outer {
     private class Nested

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorDropHandler;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -83,11 +83,11 @@ public class FileDropHandler implements EditorDropHandler {
       final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx) FileEditorManager.getInstance(project);
       final EditorWindow[] windows = fileEditorManager.getWindows();
       for (EditorWindow window : windows) {
-        final EditorWithProviderComposite composite = window.findFileComposite(file);
+        final EditorComposite composite = window.getComposite(file);
         if (composite == null) {
           continue;
         }
-        for (FileEditor editor : composite.getEditors()) {
+        for (FileEditor editor : composite.getAllEditors()) {
           if (editor instanceof TextEditor && ((TextEditor)editor).getEditor() == myEditor) {
             return window;
           }

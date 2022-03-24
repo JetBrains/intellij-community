@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
@@ -23,6 +23,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
+
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author gregsh
@@ -50,6 +52,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     myComboBox.addItemListener(this);
     myComboBox.addAncestorListener(this);
     myComboBox.addPropertyChangeListener(this);
+  }
+
+  @ApiStatus.Internal
+  public ComboBoxPopup<T> getPopup() {
+    return myPopup;
   }
 
   @Nullable
@@ -121,6 +128,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     list.setFont(myComboBox.getFont());
     list.setForeground(myComboBox.getForeground());
     list.setBackground(myComboBox.getBackground());
+    list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, myComboBox.getClientProperty(ANIMATION_IN_RENDERER_ALLOWED));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun x() {
     listOf<Int>()
         .take(10)

@@ -1,0 +1,37 @@
+LineBreakpoint created at smartStepWithInlineClass.kt:11
+LineBreakpoint created at smartStepWithInlineClass.kt:31
+LineBreakpoint created at smartStepWithInlineClass.kt:59
+LineBreakpoint created at smartStepWithInlineClass.kt:66
+LineBreakpoint created at smartStepWithInlineClass.kt:73
+LineBreakpoint created at smartStepWithInlineClass.kt:80
+LineBreakpoint created at smartStepWithInlineClass.kt:87
+LineBreakpoint created at smartStepWithInlineClass.kt:94
+Run Java
+Connected to the target VM
+smartStepWithInlineClass.kt:59
+smartStepWithInlineClass.kt:60
+smartStepWithInlineClass.kt:60
+smartStepWithInlineClass.kt:11
+smartStepWithInlineClass.kt:12
+smartStepWithInlineClass.kt:12
+smartStepWithInlineClass.kt:66
+smartStepWithInlineClass.kt:67
+smartStepWithInlineClass.kt:67
+smartStepWithInlineClass.kt:31
+smartStepWithInlineClass.kt:32
+smartStepWithInlineClass.kt:32
+smartStepWithInlineClass.kt:73
+smartStepWithInlineClass.kt:74
+smartStepWithInlineClass.kt:16
+smartStepWithInlineClass.kt:80
+smartStepWithInlineClass.kt:81
+smartStepWithInlineClass.kt:43
+smartStepWithInlineClass.kt:87
+smartStepWithInlineClass.kt:88
+smartStepWithInlineClass.kt:88
+smartStepWithInlineClass.kt:94
+smartStepWithInlineClass.kt:95
+smartStepWithInlineClass.kt:51
+Disconnected from the target VM
+
+Process finished with exit code 0

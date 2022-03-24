@@ -33,20 +33,12 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementProvider;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
   private final Class<T> myChildElementClass;
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public DefaultGenerateElementProvider(@Nls final String name, Class<T> childElementClass) {
-    this(name, name, childElementClass);
-  }
 
   public DefaultGenerateElementProvider(@ActionText String text, @ActionDescription String description,
                                         Class<T> childElementClass) {

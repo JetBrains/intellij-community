@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
     @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS, deprecated = true),
     @Storage("abbrevs.xml")
   },
-  category = ComponentCategory.KEYMAP)
+  category = SettingsCategory.KEYMAP)
 public final class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new HashMap<>();
   private final Map<String, Set<String>> myActionId2Abbreviations = new HashMap<>();

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,7 @@ public final class QuickFixAction {
   }
 
   /** @deprecated This is used by TeamCity plugin */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
                                             @Nullable IntentionAction action,
                                             @Nullable List<IntentionAction> options,

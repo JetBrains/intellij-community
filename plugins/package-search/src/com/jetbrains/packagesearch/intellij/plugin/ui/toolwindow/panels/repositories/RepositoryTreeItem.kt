@@ -17,7 +17,8 @@ internal sealed class RepositoryTreeItem {
 
     data class Repository(val repositoryModel: RepositoryModel) : RepositoryTreeItem(), DataProvider, CopyProvider {
 
-        override fun toSimpleIdentifier(): String = "GROUP:${repositoryModel.id}:${repositoryModel.name}:${repositoryModel.url}".toLowerCase()
+        override fun toSimpleIdentifier(): String =
+            "GROUP:${repositoryModel.id}:${repositoryModel.name}:${repositoryModel.url}".lowercase(Locale.getDefault())
 
         private fun getTextForCopy() = buildString {
             repositoryModel.id?.let { appendLine("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.id", it)}") }
@@ -39,6 +40,6 @@ internal sealed class RepositoryTreeItem {
 
     data class Module(val usageInfo: RepositoryUsageInfo) : RepositoryTreeItem() {
 
-        override fun toSimpleIdentifier(): String = usageInfo.projectModule.name.toLowerCase(Locale.ROOT)
+        override fun toSimpleIdentifier(): String = usageInfo.projectModule.name.lowercase(Locale.ROOT)
     }
 }

@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
@@ -135,7 +136,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
-    int scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
+    float scaledSize = UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     FontPreferencesTest.checkState(myScheme.getFontPreferences(),
                                    Collections.singletonList(fontName1),
@@ -143,14 +144,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
                                    fontName1,
                                    fontName1, scaledSize);
     assertEquals(fontName1, myScheme.getEditorFontName());
-    assertEquals(scaledSize, myScheme.getEditorFontSize());
+    assertEquals(scaledSize, myScheme.getEditorFontSize2D());
     FontPreferencesTest.checkState(myScheme.getConsoleFontPreferences(),
                                    Collections.singletonList(fontName2),
                                    Collections.singletonList(fontName2),
                                    fontName2,
                                    fontName2, scaledSize);
     assertEquals(fontName2, myScheme.getConsoleFontName());
-    assertEquals(scaledSize, myScheme.getConsoleFontSize());
+    assertEquals(scaledSize, myScheme.getConsoleFontSize2D());
   }
 
   public void testSetSize() {
@@ -321,6 +322,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testPreventCyclicTextAttributeDependency() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
@@ -334,7 +336,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
     catch (IllegalArgumentException e) {
       String s = e.getMessage();
-      assertTrue(s.contains("B->C->D"));
+      assertTrue(s, s.matches(".*B.*->C.*->.*D.*"));
 
       try {
         editorColorsScheme.getAttributes(keyA);
@@ -352,6 +354,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
     TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
     TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
@@ -389,7 +392,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = targetScheme.getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes == AbstractColorsScheme.INHERITED_ATTRS_MARKER);
+      assertSame(AbstractColorsScheme.INHERITED_ATTRS_MARKER, targetAttributes);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
@@ -416,7 +419,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     boolean nonDefaultRainbow = !RainbowHighlighter.DEFAULT_RAINBOW_ON;
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, nonDefaultRainbow);
-    assertTrue(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null) == nonDefaultRainbow);
+    assertEquals(nonDefaultRainbow, (boolean)RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
@@ -424,7 +427,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serializeWithFixedMeta(editorColorsScheme));
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, nonDefaultRainbow);
-    assertTrue(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY) == nonDefaultRainbow);
+    assertEquals(nonDefaultRainbow, (boolean)RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow " + Language.ANY.getID() + "\">" + nonDefaultRainbow + "</property>\n" +
@@ -434,7 +437,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, null);
     assertNull(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
-    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY) == nonDefaultRainbow);
+    assertEquals(nonDefaultRainbow, RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
@@ -442,8 +445,10 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serializeWithFixedMeta(editorColorsScheme));
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, RainbowHighlighter.DEFAULT_RAINBOW_ON);
-    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, null) == RainbowHighlighter.DEFAULT_RAINBOW_ON);
-    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY) == RainbowHighlighter.DEFAULT_RAINBOW_ON);
+    assertEquals((boolean)RainbowHighlighter.DEFAULT_RAINBOW_ON,
+                 RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, null));
+    assertEquals((boolean)RainbowHighlighter.DEFAULT_RAINBOW_ON,
+                 RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN + END,
       serializeWithFixedMeta(editorColorsScheme));

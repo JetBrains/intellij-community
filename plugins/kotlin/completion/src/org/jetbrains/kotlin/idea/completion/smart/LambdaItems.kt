@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.smart
 
@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.resolve.calls.util.getValueParametersCountFromFunctionType
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
 
 object LambdaItems {
     fun collect(functionExpectedInfos: Collection<ExpectedInfo>): Collection<LookupElement> {
@@ -36,6 +35,7 @@ object LambdaItems {
                 .suppressAutoInsertion()
                 .assignSmartCompletionPriority(SmartCompletionItemPriority.LAMBDA_NO_PARAMS)
                 .addTailAndNameSimilarity(functionExpectedInfos)
+
             collection.add(lookupElement)
         }
 
@@ -47,7 +47,7 @@ object LambdaItems {
                             functionType,
                             functionExpectedInfos,
                             LambdaSignatureTemplates.SignaturePresentation.NAMES_OR_TYPES,
-                            explicitParameterTypes = true
+                            explicitParameterTypes = true,
                         )
                     )
 
@@ -57,15 +57,16 @@ object LambdaItems {
                             functionType,
                             functionExpectedInfos,
                             LambdaSignatureTemplates.SignaturePresentation.NAMES_AND_TYPES,
-                            explicitParameterTypes = true
+                            explicitParameterTypes = true,
                         )
                     )
+
                     collection.add(
                         createLookupElement(
                             functionType,
                             functionExpectedInfos,
                             LambdaSignatureTemplates.SignaturePresentation.NAMES,
-                            explicitParameterTypes = false
+                            explicitParameterTypes = false,
                         )
                     )
                 }
@@ -77,21 +78,17 @@ object LambdaItems {
         functionType: KotlinType,
         functionExpectedInfos: List<ExpectedInfo>,
         signaturePresentation: LambdaSignatureTemplates.SignaturePresentation,
-        explicitParameterTypes: Boolean
+        explicitParameterTypes: Boolean,
     ): LookupElement {
         val lookupString = LambdaSignatureTemplates.lambdaPresentation(functionType, signaturePresentation)
         return LookupElementBuilder.create(lookupString)
             .withInsertHandler { context, _ ->
-                val offset = context.startOffset
-                val placeholder = "{}"
-                context.document.replaceString(offset, context.tailOffset, placeholder)
-                val placeholderRange = TextRange(offset, offset + placeholder.length)
                 LambdaSignatureTemplates.insertTemplate(
                     context,
-                    placeholderRange,
+                    TextRange(context.startOffset, context.tailOffset),
                     functionType,
                     explicitParameterTypes,
-                    signatureOnly = false
+                    signatureOnly = false,
                 )
             }
             .suppressAutoInsertion()

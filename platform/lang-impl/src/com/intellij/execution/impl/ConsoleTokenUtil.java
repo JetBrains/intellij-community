@@ -125,18 +125,27 @@ class ConsoleTokenUtil {
                                           @NotNull Project project,
                                           @NotNull ConsoleViewContentType contentType,
                                           int startOffset,
-                                          int endOffset) {
+                                          int endOffset,
+                                          boolean mergeWithThePreviousSameTypeToken) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
+    if (mergeWithThePreviousSameTypeToken && startOffset > 0) {
+      RangeMarker prevMarker = findTokenMarker(editor, project, startOffset - 1);
+      ConsoleViewContentType prevMarkerType = prevMarker == null ? null : getTokenType(prevMarker);
+      if (contentType.equals(prevMarkerType)) {
+        startOffset = prevMarker.getStartOffset();
+        prevMarker.dispose();
+      }
+    }
     model.addRangeHighlighterAndChangeAttributes(
       contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
-      ex -> {
+      rm -> {
         // fallback for contentTypes which provide only attributes
-        if (ex.getTextAttributesKey() == null) {
-          ex.setTextAttributes(contentType.getAttributes());
+        if (rm.getTextAttributesKey() == null) {
+          rm.setTextAttributes(contentType.getAttributes());
         }
-        saveTokenType(ex, contentType);
+        saveTokenType(rm, contentType);
       });
   }
 
@@ -198,7 +207,7 @@ class ConsoleTokenUtil {
       if (info != null) {
         hyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
       }
-      createTokenRangeHighlighter(editor, project, token.contentType, start, offset);
+      createTokenRangeHighlighter(editor, project, token.contentType, start, offset, false);
       offset = start;
       tokenLength = 0;
     }

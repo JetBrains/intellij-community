@@ -4,3 +4,4 @@ class My {
     val x: String
         get() = "abc"
 }
+/* IGNORE_FIR */

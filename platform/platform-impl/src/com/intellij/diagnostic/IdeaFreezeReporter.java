@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -51,7 +51,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
     if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
@@ -156,8 +156,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         myDumpTask.stop();
       }
       reset();
-      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
-                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000) {
+      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms", 100),
+                                    Registry.intValue("freeze.reporter.dump.duration.s", 180) * 1000) {
         @Override
         public void stop() {
           super.stop();
@@ -215,28 +215,29 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return;
     }
     myDumpTask.stop();
-
-    List<Attachment> extraAttachments = new ArrayList<>();
-    if (reportDir != null) {
-      EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.getAttachments(reportDir)));
-    }
-
     cleanup(reportDir);
+  }
+
+  @Override
+  public void uiFreezeRecorded(long durationMs, @Nullable File reportDir) {
+    if (myDumpTask == null) {
+      return;
+    }
 
     if (Registry.is("freeze.reporter.enabled")) {
       PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
 
-      if ((int)(durationMs / 1000) > FREEZE_THRESHOLD &&
-          !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+      if ((int)(durationMs / 1000) > FREEZE_THRESHOLD && !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
         // check that we have at least half of the dumps required
         long dumpingDurationMs = durationMs - performanceWatcher.getUnresponsiveInterval();
         long dumpsCount = Math.min(performanceWatcher.getMaxDumpDuration(), dumpingDurationMs / 2) / performanceWatcher.getDumpInterval();
 
-        if (myDumpTask.isValid(dumpingDurationMs) ||
-            myCurrentDumps.size() >= Math.max(3, dumpsCount)) {
+        if (myDumpTask.isValid(dumpingDurationMs) || myCurrentDumps.size() >= Math.max(3, dumpsCount)) {
           List<Attachment> attachments = new ArrayList<>();
           addDumpsAttachments(myCurrentDumps, ThreadDump::getRawDump, attachments);
-          attachments.addAll(extraAttachments);
+          if (reportDir != null) {
+            EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(reportDir)));
+          }
 
           report(createEvent(durationMs, attachments, reportDir, performanceWatcher, true));
         }

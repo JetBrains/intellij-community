@@ -22,8 +22,9 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
+   * @deprecated please use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine commandLine)}
    */
+  @Deprecated(forRemoval = true)
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     super(KillableProcessHandler.mediate(commandLine, withMediator, false));
     setShouldKillProcessSoftly(true);
@@ -45,18 +46,17 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/
-                                       String commandLine,
-                                       @NotNull Charset charset) {
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     this(process, commandLine, charset, null);
   }
 
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine,
+  public KillableColoredProcessHandler(@NotNull Process process,
+                                       /*@NotNull*/ String commandLine,
                                        @NotNull Charset charset,
-                                       @Nullable Set<? extends File> filesToDelete) {
+                                       @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
   }
@@ -66,13 +66,12 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
       super(commandLine);
     }
 
-    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDetele) {
-      super(process, commandLine, charset, filesToDetele);
+    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
+      super(process, commandLine, charset, filesToDelete);
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       return BaseOutputReader.Options.forMostlySilentProcess();
     }
   }

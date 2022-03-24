@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.resolve.*
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkType
+import java.util.*
 
 
 interface ContextAnchor {
@@ -89,7 +90,7 @@ data class QNameResolveContext(
  * @return qname part relative to root
  */
 fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
-  if (!toString().startsWith(root.toString())) {
+  if (Collections.indexOfSubList(components, root.components) == -1) {
     return null
   }
   return subQualifiedName(root.componentCount, componentCount)

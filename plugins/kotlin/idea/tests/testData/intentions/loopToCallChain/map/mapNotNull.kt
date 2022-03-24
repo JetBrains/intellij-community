@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // INTENTION_TEXT: "Replace with 'mapNotNull{}.mapTo(){}'"
 // INTENTION_TEXT_2: "Replace with 'asSequence().mapNotNull{}.mapTo(){}'"
 fun foo(list: List<String?>, target: MutableList<String>) {

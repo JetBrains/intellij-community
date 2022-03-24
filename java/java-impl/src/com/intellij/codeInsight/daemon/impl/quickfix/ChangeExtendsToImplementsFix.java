@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * changes 'class a extends b' to 'class a implements b' or vice versa
  */
-public class ChangeExtendsToImplementsFix extends ExtendsListFix {
+public class ChangeExtendsToImplementsFix extends ExtendsListFix implements HighPriorityAction {
   private final @IntentionName String myName;
 
   public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {

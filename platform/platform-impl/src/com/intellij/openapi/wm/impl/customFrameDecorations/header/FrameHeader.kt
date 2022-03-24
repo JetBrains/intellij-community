@@ -9,15 +9,13 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBFont
+import com.jetbrains.CustomWindowDecoration.*
 import java.awt.Font
 import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
-import javax.swing.Action
-import javax.swing.JFrame
-import javax.swing.JPopupMenu
-import javax.swing.JSeparator
+import javax.swing.*
 
 internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(frame) {
   private val iconifyAction: Action = CustomFrameAction(ActionsBundle.message("action.MinimizeCurrentWindow.text"),
@@ -108,10 +106,14 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
+    val buttons = buttonPanes as ResizableCustomFrameTitleButtons
     return listOf(
-      RelativeRectangle(productIcon),
-      RelativeRectangle(buttonPanes.getView())
+      Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT),
+      Pair(RelativeRectangle(buttons.minimizeButton), MINIMIZE_BUTTON),
+      Pair(RelativeRectangle(buttons.maximizeButton), MAXIMIZE_BUTTON),
+      Pair(RelativeRectangle(buttons.restoreButton), MAXIMIZE_BUTTON),
+      Pair(RelativeRectangle(buttons.closeButton), CLOSE_BUTTON)
     )
   }
 }

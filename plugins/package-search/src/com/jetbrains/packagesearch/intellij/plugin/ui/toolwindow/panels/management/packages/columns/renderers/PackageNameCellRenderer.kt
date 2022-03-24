@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.TagComponent
@@ -16,7 +17,6 @@ import net.miginfocom.layout.DimConstraint
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.UnitValue
 import net.miginfocom.swing.MigLayout
-import org.apache.commons.lang3.StringUtils
 import java.awt.Dimension
 import java.awt.Graphics
 import javax.swing.JLabel
@@ -45,10 +45,10 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         )
     }
 
-    private val tagForeground = JBColor(0x808080, 0x9C9C9C)
-    private val tagBackground = JBColor(0xE5E5E5, 0x666B6E)
-    private val tagForegroundSelected = JBColor(0xFFFFFF, 0xFFFFFF)
-    private val tagBackgroundSelected = JBColor(0x4395E2, 0x78ADE2)
+    private val tagForeground = JBColor.namedColor("PackageSearch.PackageTag.foreground", 0x808080, 0x9C9C9C)
+    private val tagBackground = JBColor.namedColor("PackageSearch.PackageTag.background", 0xE5E5E5, 0x666B6E)
+    private val tagForegroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.foreground", 0xFFFFFF, 0xFFFFFF)
+    private val tagBackgroundSelected = JBColor.namedColor("PackageSearch.PackageTagSelected.background", 0x4395E2, 0x78ADE2)
 
     private fun componentConstraint(x: Int = 0, y: Int = 0, gapAfter: Int? = null): CC = CC().apply {
         cellX = x
@@ -70,7 +70,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             is PackagesTableItem.InstalledPackage -> {
                 val packageModel = value.packageModel
 
-                val name: String? = StringUtils.normalizeSpace(packageModel.remoteInfo?.name)
+                val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
                 createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
@@ -80,7 +80,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             is PackagesTableItem.InstallablePackage -> {
                 val packageModel = value.packageModel
 
-                val name: String? = StringUtils.normalizeSpace(packageModel.remoteInfo?.name)
+                val name: String? = packageModel.remoteInfo?.name.normalizeWhitespace()
                 val rawIdentifier = packageModel.identifier.rawValue
 
                 createNamePanel(columnWidth, name, rawIdentifier, packageModel.isKotlinMultiplatform, isSelected).apply {
@@ -153,7 +153,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
                 color = background
                 fillRect(tagX - componentGapX, 0, columnWidth - tagX, height)
 
-                // Then we manually translate the tag to the right hand side of the row and paint it
+                // Then we manually translate the tag to the right-hand side of the row and paint it
                 translate(tagX, tagY)
                 tagComponent.apply {
                     isVisible = true

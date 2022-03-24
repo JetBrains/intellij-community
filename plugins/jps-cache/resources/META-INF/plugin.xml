@@ -18,12 +18,6 @@
   <depends>Git4Idea</depends>
   <depends>com.intellij.modules.java</depends>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension"
-                    interface="com.intellij.jps.cache.client.JpsServerAuthExtension"
-                    dynamic="true"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
     <postStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
@@ -31,6 +25,9 @@
     <notificationGroup id="Compile Output Loader: Event Log" displayType="NONE"/>
     <notificationGroup id="Compile Output Loader: Attention" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Compile Output Loader: Standard" displayType="BALLOON"/>
+
+    <registryKey key="jps.cache.check.internet.connection" defaultValue="false"
+                 description="Enable checking for internet connection if download retry is executed"/>
   </extensions>
 
   <projectListeners>

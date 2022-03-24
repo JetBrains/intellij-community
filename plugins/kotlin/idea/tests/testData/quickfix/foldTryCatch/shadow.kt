@@ -2,7 +2,7 @@
 // ACTION: Change to 'var'
 // ERROR: Val cannot be reassigned
 // ERROR: Val cannot be reassigned
-// WITH_RUNTIME
+// WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun foo() {

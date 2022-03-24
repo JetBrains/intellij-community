@@ -4,7 +4,6 @@ package com.intellij.ide.actionsOnSave;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +21,11 @@ import java.util.function.Supplier;
  * {@link #getValueFromSavedStateOrFromUiState(Supplier, Function)}.
  * <br/><br/>
  * Setter implementations ({@link #setActionOnSaveEnabled(boolean)}), as well as handlers of {@link #getActivatedOnDropDownLink()},
- * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()} must call {@link #updateUiOnOwnPage(Consumer)}.
+ * {@link #getDropDownLinks()}, and {@link #getActivatedOnDropDownLink()} must call {@link #updateUiOnOwnPage(Consumer)}.
  *
  * @see #getValueFromSavedStateOrFromUiState(Supplier, Function)
  * @see #updateUiOnOwnPage(Consumer)
  */
-@ApiStatus.Experimental
 public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedConfigurable> extends ActionOnSaveInfo {
   private static final Logger LOG = Logger.getInstance(ActionOnSaveBackedByOwnConfigurable.class);
 
@@ -81,7 +79,7 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
    * <br/><br/>
    * The default method implementation restores the initial state of the 'action on save enabled' checkbox. Override this method if
    * your implementation can also change the state of this 'action on save' via handlers of {@link #getActivatedOnDropDownLink()},
-   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()}.
+   * {@link #getDropDownLinks()}, and {@link #getActivatedOnDropDownLink()}.
    */
   protected void resetUiOnOwnPageThatIsMirroredOnActionsOnSavePage(@NotNull Conf configurable) {
     setActionOnSaveEnabled(configurable, isActionOnSaveEnabledAccordingToStoredState());
@@ -107,7 +105,7 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
    * <br/><br/>
    * The default method implementation only checks the state of the 'action on save enabled' checkbox. Override this method if
    * your implementation can also change the state of this 'action on save' via handlers of {@link #getActivatedOnDropDownLink()},
-   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()}.
+   * {@link #getDropDownLinks()}, and {@link #getActivatedOnDropDownLink()}.
    */
   protected boolean areOptionsMirroredOnActionsOnSavePageModified(@NotNull Conf configurable) {
     return isActionOnSaveEnabledAccordingToStoredState() != isActionOnSaveEnabledAccordingToUiState(configurable);

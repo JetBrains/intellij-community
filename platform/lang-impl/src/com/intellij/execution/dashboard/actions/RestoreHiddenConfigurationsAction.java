@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -73,7 +72,7 @@ public class RestoreHiddenConfigurationsAction extends DumbAwareAction {
       // Restore all hidden configurations if action is invoked from Services toolbar, or on Run Dashboard contributor root node,
       // or when grouping by configuration type is disabled.
       RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
-      runDashboardManager.restoreConfigurations(new THashSet<>(runDashboardManager.getHiddenConfigurations()));
+      runDashboardManager.restoreConfigurations(new HashSet<>(runDashboardManager.getHiddenConfigurations()));
       return;
     }
 

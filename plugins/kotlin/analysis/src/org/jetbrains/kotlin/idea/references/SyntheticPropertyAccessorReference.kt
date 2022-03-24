@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -11,13 +12,18 @@ import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.core.copied
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.search.canHaveSyntheticGetter
+import org.jetbrains.kotlin.idea.search.canHaveSyntheticSetter
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
+import org.jetbrains.kotlin.load.java.propertyNameBySetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getReferenceTargets
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -26,8 +32,13 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
     expression: KtNameReferenceExpression,
     getter: Boolean
 ) : SyntheticPropertyAccessorReference(expression, getter), KtDescriptorsBasedReference {
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        super<SyntheticPropertyAccessorReference>.isReferenceTo(element)
+
+    override fun isReferenceTo(element: PsiElement): Boolean {
+        if (element !is PsiMethod || !isAccessorName(element.name)) return false
+        if (getter && !element.canHaveSyntheticGetter || !getter && !element.canHaveSyntheticSetter) return false
+        if (!getter && expression.readWriteAccess(true) == ReferenceAccess.READ) return false
+        return additionalIsReferenceToChecker(element)
+    }
 
     override fun additionalIsReferenceToChecker(element: PsiElement): Boolean = matchesTarget(element)
 
@@ -85,15 +96,13 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
 
         val newNameAsName = Name.identifier(newElementName)
         val newName = if (getter) {
-            SyntheticJavaPropertyDescriptor.propertyNameByGetMethodName(newNameAsName)
+            propertyNameByGetMethodName(newNameAsName)
         } else {
             //TODO: it's not correct
             //TODO: setIsY -> setIsIsY bug
-            SyntheticJavaPropertyDescriptor.propertyNameBySetMethodName(
+            propertyNameBySetMethodName(
                 newNameAsName,
-                withIsPrefix = expression.getReferencedNameAsName().asString().startsWith(
-                    "is"
-                )
+                withIsPrefix = expression.getReferencedNameAsName().asString().startsWith("is")
             )
         }
         // get/set becomes ordinary method

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.cef.network.CefCookie;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,10 +104,20 @@ public final class JBCefCookie {
     JBCefCookie cookie = (JBCefCookie)o;
     return getName().equals(cookie.getName()) &&
            getValue().equals(cookie.getValue()) &&
-           getDomain().equals(cookie.getDomain()) &&
+           compareDomains(getDomain(), cookie.getDomain()) &&
            getPath().equals(cookie.getPath()) &&
            isSecure() == cookie.isSecure() &&
            isHttpOnly() == cookie.isHttpOnly();
+  }
+
+  private static boolean compareDomains(@Nullable String d1, @Nullable String d2) {
+    if (d1 == null && d2 == null) return true;
+    if (d1 == null || d2 == null) return false;
+    d1 = StringUtil.trimStart(d1, ".");
+    d1 = StringUtil.trimStart(d1, "www.");
+    d2 = StringUtil.trimStart(d2, ".");
+    d2 = StringUtil.trimStart(d2, "www.");
+    return d1.equals(d2);
   }
 
   @Override

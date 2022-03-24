@@ -8,9 +8,9 @@ public class al implements Comparable<al> {
    private final ak a;
    private final List<n<Date, Double>> b = new ArrayList();
    private final List<n<Date, Double>> c = new ArrayList();
-   private double d = 0.0D;
-   private double e = 0.0D;
-   private double f = 0.0D;
+   private double d = 0.0;
+   private double e = 0.0;
+   private double f = 0.0;
    private static final String[] g;
 
    public al(ak var1) {
@@ -52,7 +52,7 @@ public class al implements Comparable<al> {
    public double e() {
       try {
          if (this.b.isEmpty()) {
-            return 0.0D;
+            return 0.0;
          }
       } catch (a_ var1) {
          throw var1;
@@ -64,7 +64,7 @@ public class al implements Comparable<al> {
    public double f() {
       try {
          if (this.c.isEmpty()) {
-            return 0.0D;
+            return 0.0;
          }
       } catch (a_ var1) {
          throw var1;
@@ -136,21 +136,21 @@ public class al implements Comparable<al> {
          var4 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 61;
-            break;
-         case 1:
-            var10008 = 121;
-            break;
-         case 2:
-            var10008 = 103;
-            break;
-         case 3:
-            var10008 = 113;
-            break;
-         default:
-            var10008 = 123;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 61;
+               break;
+            case 1:
+               var10008 = 121;
+               break;
+            case 2:
+               var10008 = 103;
+               break;
+            case 3:
+               var10008 = 113;
+               break;
+            default:
+               var10008 = 123;
          }
       } else {
          var10004 = var10003;
@@ -179,21 +179,21 @@ public class al implements Comparable<al> {
 
                while(true) {
                   var10007 = var4[var10006];
-                  switch(var1 % 5) {
-                  case 0:
-                     var10008 = 61;
-                     break;
-                  case 1:
-                     var10008 = 121;
-                     break;
-                  case 2:
-                     var10008 = 103;
-                     break;
-                  case 3:
-                     var10008 = 113;
-                     break;
-                  default:
-                     var10008 = 123;
+                  switch (var1 % 5) {
+                     case 0:
+                        var10008 = 61;
+                        break;
+                     case 1:
+                        var10008 = 121;
+                        break;
+                     case 2:
+                        var10008 = 103;
+                        break;
+                     case 3:
+                        var10008 = 113;
+                        break;
+                     default:
+                        var10008 = 123;
                   }
 
                   var4[var10006] = (char)(var10007 ^ var10008);
@@ -236,21 +236,21 @@ public class al implements Comparable<al> {
 
             while(true) {
                var10007 = var4[var10006];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 61;
-                  break;
-               case 1:
-                  var10008 = 121;
-                  break;
-               case 2:
-                  var10008 = 103;
-                  break;
-               case 3:
-                  var10008 = 113;
-                  break;
-               default:
-                  var10008 = 123;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 61;
+                     break;
+                  case 1:
+                     var10008 = 121;
+                     break;
+                  case 2:
+                     var10008 = 103;
+                     break;
+                  case 3:
+                     var10008 = 113;
+                     break;
+                  default:
+                     var10008 = 123;
                }
 
                var4[var10006] = (char)(var10007 ^ var10008);
@@ -274,21 +274,21 @@ public class al implements Comparable<al> {
          var4 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 61;
-            break;
-         case 1:
-            var10008 = 121;
-            break;
-         case 2:
-            var10008 = 103;
-            break;
-         case 3:
-            var10008 = 113;
-            break;
-         default:
-            var10008 = 123;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 61;
+               break;
+            case 1:
+               var10008 = 121;
+               break;
+            case 2:
+               var10008 = 103;
+               break;
+            case 3:
+               var10008 = 113;
+               break;
+            default:
+               var10008 = 123;
          }
       }
 
@@ -300,21 +300,21 @@ public class al implements Comparable<al> {
                var10006 = var2;
                var4 = var10004;
                var10007 = var10004[var2];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 61;
-                  break;
-               case 1:
-                  var10008 = 121;
-                  break;
-               case 2:
-                  var10008 = 103;
-                  break;
-               case 3:
-                  var10008 = 113;
-                  break;
-               default:
-                  var10008 = 123;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 61;
+                     break;
+                  case 1:
+                     var10008 = 121;
+                     break;
+                  case 2:
+                     var10008 = 103;
+                     break;
+                  case 3:
+                     var10008 = 113;
+                     break;
+                  default:
+                     var10008 = 123;
                }
             } else {
                if (var2 <= var1) {
@@ -341,21 +341,21 @@ public class al implements Comparable<al> {
 
                      while(true) {
                         var10007 = var4[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 61;
-                           break;
-                        case 1:
-                           var10008 = 121;
-                           break;
-                        case 2:
-                           var10008 = 103;
-                           break;
-                        case 3:
-                           var10008 = 113;
-                           break;
-                        default:
-                           var10008 = 123;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 61;
+                              break;
+                           case 1:
+                              var10008 = 121;
+                              break;
+                           case 2:
+                              var10008 = 103;
+                              break;
+                           case 3:
+                              var10008 = 113;
+                              break;
+                           default:
+                              var10008 = 123;
                         }
 
                         var4[var10006] = (char)(var10007 ^ var10008);
@@ -398,21 +398,21 @@ public class al implements Comparable<al> {
 
                   while(true) {
                      var10007 = var4[var10006];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 61;
-                        break;
-                     case 1:
-                        var10008 = 121;
-                        break;
-                     case 2:
-                        var10008 = 103;
-                        break;
-                     case 3:
-                        var10008 = 113;
-                        break;
-                     default:
-                        var10008 = 123;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 61;
+                           break;
+                        case 1:
+                           var10008 = 121;
+                           break;
+                        case 2:
+                           var10008 = 103;
+                           break;
+                        case 3:
+                           var10008 = 113;
+                           break;
+                        default:
+                           var10008 = 123;
                      }
 
                      var4[var10006] = (char)(var10007 ^ var10008);
@@ -436,21 +436,21 @@ public class al implements Comparable<al> {
                var4 = var10004;
                var10006 = var1;
                var10007 = var10004[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 61;
-                  break;
-               case 1:
-                  var10008 = 121;
-                  break;
-               case 2:
-                  var10008 = 103;
-                  break;
-               case 3:
-                  var10008 = 113;
-                  break;
-               default:
-                  var10008 = 123;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 61;
+                     break;
+                  case 1:
+                     var10008 = 121;
+                     break;
+                  case 2:
+                     var10008 = 103;
+                     break;
+                  case 3:
+                     var10008 = 113;
+                     break;
+                  default:
+                     var10008 = 123;
                }
             }
          }

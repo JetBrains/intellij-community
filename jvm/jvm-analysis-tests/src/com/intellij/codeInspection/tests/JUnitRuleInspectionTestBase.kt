@@ -50,7 +50,7 @@ abstract class JUnitRuleInspectionTestBase : UastInspectionTestBase() {
       import org.junit.rules.TestRule;
       import org.junit.ClassRule;
     
-      class SomeTestRule implements TestRule { }
+      public class SomeTestRule implements TestRule { }
   """.trimIndent())
   }
 }

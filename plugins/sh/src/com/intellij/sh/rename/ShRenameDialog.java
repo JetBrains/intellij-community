@@ -91,11 +91,6 @@ class ShRenameDialog extends RefactoringDialog {
     return false;
   }
 
-  @Override
-  protected void createDefaultActions() {
-    super.createDefaultActions();
-  }
-
   @NotNull
   private String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
@@ -111,6 +112,11 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
           //setOKButtonIcon(executor.getIcon());
         }
       }
+
+      @Override
+      public Dimension getInitialSize() {
+        return new Dimension(650, 500);
+      }
     };
 
     dialog.setTitle(title);
@@ -129,7 +135,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
            JComponent cp = component.getComponent();
             if (cp instanceof ComboBox) {
               ApplicationManager.getApplication().invokeLater(() -> {
-                ComboPopup popup = ((ComboBox)cp).getPopup();
+                ComboPopup popup = ((ComboBox<?>)cp).getPopup();
                 if (popup != null && cp.isShowing()) {
                   popup.show();
                 }

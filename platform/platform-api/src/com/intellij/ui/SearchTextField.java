@@ -14,7 +14,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,6 @@ public class SearchTextField extends JPanel {
   private JBPopup myPopup;
   private String myHistoryPropertyName;
   private final boolean historyPopupEnabled;
-  private boolean init = true;
 
   public SearchTextField() {
     this(true);
@@ -145,7 +143,7 @@ public class SearchTextField extends JPanel {
     }
 
     myTextField.putClientProperty("JTextField.variant", "search");
-    myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(4));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
       onFieldCleared();
@@ -153,7 +151,6 @@ public class SearchTextField extends JPanel {
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
-    init = false;
   }
 
   @Override
@@ -229,7 +226,6 @@ public class SearchTextField extends JPanel {
   public void addCurrentTextToHistory() {
     if (myModel.addElement(getText()) && myHistoryPropertyName != null) {
       PropertiesComponent.getInstance().setValue(myHistoryPropertyName, StringUtil.join(getHistory(), "\n"));
-      reInitPopup();
     }
   }
 
@@ -344,7 +340,7 @@ public class SearchTextField extends JPanel {
 
     public void fireContentsChanged() {
       fireContentsChanged(this, -1, -1);
-      reInitPopup();
+      updatePopup();
     }
 
     public void setItems(List<String> aList) {
@@ -365,31 +361,35 @@ public class SearchTextField extends JPanel {
       final String value = (String)list.getSelectedValue();
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
-      reInitPopup();
     };
   }
 
   protected void showPopup() {
     addCurrentTextToHistory();
-    if ((myPopup == null || !myPopup.isVisible()) && historyPopupEnabled) {
-      reInitPopup();
-      if (isShowing()) {
-        myPopup.showUnderneathOf(getPopupLocationComponent());
-      }
+    if (myPopup != null && myPopup.isVisible()) return;
+    if (historyPopupEnabled) {
+      doShowPopup();
     }
   }
 
-  private void reInitPopup() {
-    if(!init) {
+  private void updatePopup() {
+    if (myPopup != null && myPopup.isVisible()) {
       hidePopup();
+      doShowPopup();
+    }
+  }
+
+  private void doShowPopup() {
+    if (ApplicationManager.getApplication() != null &&
+        JBPopupFactory.getInstance() != null &&
+        isShowing()) {
       final JList<String> list = new JBList<>(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
-      if (ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
-        myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setMovable(false)
-          .setRequestFocus(true)
-          .setItemChoosenCallback(chooseRunnable).createPopup();
-      }
+      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setMovable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(chooseRunnable).createPopup();
+      myPopup.showUnderneathOf(getPopupLocationComponent());
     }
   }
 
@@ -427,9 +427,7 @@ public class SearchTextField extends JPanel {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   public void setSearchIcon(final Icon icon) {
   }
 

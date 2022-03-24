@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +74,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   int getWidthInPixels();
 
   /**
-   * Returns current inlay's width. Width is defined at inlay's creation using information returned by inlay's renderer.
+   * Returns current inlay's height. Height is defined at inlay's creation using information returned by inlay's renderer.
    * To change height (supported for 'block' elements only), {@link #update()} method should be called.
    */
   int getHeightInPixels();
@@ -93,8 +92,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   /**
    * @deprecated Use {@link #update()} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void updateSize() {
     update();
   }

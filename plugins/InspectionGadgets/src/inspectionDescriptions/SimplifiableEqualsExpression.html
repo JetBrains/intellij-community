@@ -3,13 +3,13 @@
 Reports comparisons to <code>null</code> that are followed by a call to <code>equals()</code> with a constant argument.
 
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   if (s != null && s.equals("literal")) {}
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   if ("literal".equals(s)) {}
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
     Use the inspection settings to report <code>equals()</code> calls with a non-constant argument

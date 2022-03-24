@@ -74,6 +74,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
   }
 
   override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+    LOG.info(String.format("Attaching directory: \"%s\"", projectDir))
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
     if (!dotIdeaDir.exists()) {
       val options = OpenProjectTask(useDefaultProjectAsTemplate = true, isNewProject = true)

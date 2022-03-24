@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
 import com.google.common.collect.Sets;
@@ -13,11 +13,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.util.FileContentUtilCore;
-import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -32,10 +32,10 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
 
   boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
     if (!(file instanceof VirtualFileWithId)) {
-      throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: "+file);
+      throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: "+file +" ("+file.getClass()+")");
     }
     if (file.isDirectory()) {
-      throw new IllegalArgumentException("file must not be directory but got: "+file);
+      throw new IllegalArgumentException("file must not be directory but got: "+file+"; File.isDirectory():"+new File(file.getPath()).isDirectory());
     }
     String value = type.getName();
     String prevValue = myMap.put(file, value);
@@ -89,7 +89,7 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
 
   @Override
   public void loadState(@NotNull Element state) {
-    Set<VirtualFile> oldFiles = new THashSet<>(getFiles());
+    Set<VirtualFile> oldFiles = new HashSet<>(getFiles());
     myMap.clear();
     for (Element fileElement : state.getChildren(FILE_ELEMENT)) {
       Attribute urlAttr = fileElement.getAttribute(URL_ATTR);

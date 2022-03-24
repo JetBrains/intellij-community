@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.junit2.info.NestedClassLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -68,18 +69,18 @@ public class TestsPattern extends TestPackage {
       final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
       if (psiClass != null) {
         if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
-          if (className.contains(",")) {
-            String methodName = StringUtil.getShortName(className, ',');
-            PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
-            if (methods.length > 0) {
-              classes.add(MethodLocation.elementInClass(methods[0], psiClass));
-            }
-            else {
-              classes.add(PsiLocation.fromPsiElement(psiClass));
-            }
-          }
-          else {
-            classes.add(PsiLocation.fromPsiElement(psiClass));
+          classes.add(findLocation(className, psiClass, PsiLocation.fromPsiElement(psiClass)));
+        }
+      }
+      else if (junit5 && className.contains("$")) { //OuterClass$InnerInSuper
+        String topLevelClassName = StringUtil.getPackageName(className, '$');
+        String nestedClassName = StringUtil.getShortName(className, '$');
+        PsiClass cl = ReadAction.compute(() -> getTestClass(project, topLevelClassName));
+        if (cl != null && ReadAction.compute(() -> JUnitUtil.isJUnit5TestClass(cl, false))) {
+          PsiClass innerClassByName =
+            cl.findInnerClassByName(nestedClassName.contains(",") ? StringUtil.getPackageName(nestedClassName, ',') : nestedClassName, true);
+          if (innerClassByName != null) {
+            classes.add(findLocation(nestedClassName, innerClassByName, NestedClassLocation.elementInClass(innerClassByName, cl)));
           }
         }
       }
@@ -93,6 +94,17 @@ public class TestsPattern extends TestPackage {
         return;
       }
     }
+  }
+
+  private static Location<?> findLocation(String className, PsiClass psiClass, Location<? extends PsiClass> classLocation) {
+    if (className.contains(",")) {
+      String shortName = StringUtil.getShortName(className, ',');
+      PsiMethod[] methods = psiClass.findMethodsByName(shortName, true);
+      if (methods.length > 0) {
+        return new MethodLocation(psiClass.getProject(), methods[0], classLocation);
+      }
+    }
+    return classLocation;
   }
 
   @Override
@@ -118,12 +130,12 @@ public class TestsPattern extends TestPackage {
 
   @Nullable
   @Override
-  public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(PsiElement element) {
     final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
-    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     for (final String pattern : patterns) {
-      final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
+      final PsiClass testClass = getTestClass(getConfiguration().getProject(), pattern.trim());
       if (testClass != null && testClass.equals(element)) {
         final RefactoringElementListener listeners =
           RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<>() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
@@ -20,7 +19,7 @@ interface VcsCloneComponent : Disposable {
    */
   fun getView(): JComponent
 
-  fun doClone(project: Project, listener: CheckoutProvider.Listener)
+  fun doClone(listener: CheckoutProvider.Listener)
 
   fun isOkEnabled(): Boolean
 

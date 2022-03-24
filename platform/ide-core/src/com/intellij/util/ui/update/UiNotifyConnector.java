@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,6 +19,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
   @NotNull
   private final WeakReference<Component> myComponent;
   private Activatable myTarget;
+  private boolean myDeferred = true;
 
   public UiNotifyConnector(@NotNull Component component, @NotNull Activatable target) {
     myComponent = new WeakReference<>(component);
@@ -32,6 +34,11 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
       return;
     }
     component.addHierarchyListener(this);
+  }
+
+  public UiNotifyConnector(@NotNull Component component, @NotNull Activatable target, boolean deferred) {
+    this(component, target);
+    myDeferred = deferred;
   }
 
   @Override
@@ -54,13 +61,17 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
       }
     };
 
-    Application app = ApplicationManager.getApplication();
-    if (app != null && app.isDispatchThread()) {
-      app.invokeLater(runnable, ModalityState.current());
+    if (myDeferred) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && app.isDispatchThread()) {
+        app.invokeLater(runnable, ModalityState.current());
+      }
+      else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
     else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(runnable);
+      runnable.run();
     }
   }
 
@@ -129,25 +140,32 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
   }
 
   public static void doWhenFirstShown(@NotNull JComponent c, @NotNull Runnable runnable) {
-    doWhenFirstShown((Component)c, runnable);
+    doWhenFirstShown(c, runnable, null);
   }
 
   public static void doWhenFirstShown(@NotNull Component c, @NotNull Runnable runnable) {
+    doWhenFirstShown(c, runnable, null);
+  }
+
+  public static void doWhenFirstShown(@NotNull Component c, @NotNull Runnable runnable, @Nullable Disposable parent) {
     doWhenFirstShown(c, new Activatable() {
       @Override
       public void showNotify() {
         runnable.run();
       }
-    });
+    }, parent);
   }
 
-  public static void doWhenFirstShown(@NotNull Component c, @NotNull Activatable activatable) {
-    new UiNotifyConnector(c, activatable) {
+  private static void doWhenFirstShown(@NotNull Component c, @NotNull Activatable activatable, @Nullable Disposable parent) {
+    UiNotifyConnector connector = new UiNotifyConnector(c, activatable) {
       @Override
       protected void showNotify() {
         super.showNotify();
         Disposer.dispose(this);
       }
     };
+    if (parent != null) {
+      Disposer.register(parent, connector);
+    }
   }
 }

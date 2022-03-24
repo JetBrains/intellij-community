@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.compiler;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,12 +14,14 @@ import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
 import org.jetbrains.jps.gradle.model.impl.*;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -26,6 +29,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDescriptor, GradleResourcesTarget> {
+  private static final Logger LOG = Logger.getInstance(GradleResourcesBuilder.class);
 
   public GradleResourcesBuilder() {
     super(Arrays.asList(GradleResourcesTargetType.PRODUCTION, GradleResourcesTargetType.TEST));
@@ -82,7 +86,23 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
       return res;
     });
 
-    GradleResourceFileProcessor fileProcessor = new GradleResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    ResourceFileProcessor fileProcessor;
+    try {
+      fileProcessor = new GradleResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    }
+    catch (Throwable t) {
+      LOG.warn("Can not create resource file processor", t);
+      fileProcessor = new ResourceFileProcessor() {
+        @Override
+        public void copyFile(File file,
+                             Ref<File> targetFileRef,
+                             ResourceRootConfiguration rootConfiguration,
+                             CompileContext context,
+                             FileFilter filteringFilter) throws IOException {
+          FSOperations.copy(file, targetFileRef.get());
+        }
+      };
+    }
 
     for (GradleResourceRootDescriptor rd : roots) {
       for (File file : files.get(rd)) {

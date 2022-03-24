@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
@@ -31,9 +31,12 @@ import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
@@ -46,7 +49,7 @@ import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-private val settings get() = UISettings.instance
+private val settings get() = UISettings.getInstance()
 private val defaultProject get() = ProjectManager.getInstance().defaultProject
 
 private val laf get() = LafManager.getInstance()
@@ -57,7 +60,7 @@ class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable) = CustomizeTab(parentDisposable)
 }
 
-private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size
+private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize2D else JBFont.label().size2D
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
@@ -86,10 +89,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       WelcomeScreenEventCollector.logLafChanged(laf.currentLookAndFeel, laf.autodetect)
     }
     ideFontProperty.afterChange({
-                                  if (settings.fontSize == it) return@afterChange
+                                  if (settings.fontSize2D == it) return@afterChange
                                   settings.overrideLafFonts = true
-                                  WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize, it)
-                                  settings.fontSize = it
+                                  WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize2D, it)
+                                  settings.fontSize2D = it
                                   updateFontSettingsLater()
                                 }, parentDisposable)
     keymapProperty.afterChange({
@@ -159,50 +162,49 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
 
   override fun buildComponent(): JComponent {
     return panel {
-      blockRow {
-        header(IdeBundle.message("welcome.screen.color.theme.header"))
-        fullRow {
-          val themeBuilder = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
-            .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
-          colorThemeComboBox = themeBuilder.component
-          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
-                                      syncThemeProperty).withLargeLeftGap().apply {
-            component.isOpaque = false
-            component.isVisible = laf.autodetectSupported
+      header(IdeBundle.message("welcome.screen.color.theme.header"), true)
+      row {
+        val themeBuilder = comboBox(laf.lafComboBoxModel, laf.lookAndFeelCellRenderer)
+          .bindItem(lafProperty)
+          .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
+        colorThemeComboBox = themeBuilder.component
+        val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
+          .bindSelected(syncThemeProperty)
+          .applyToComponent {
+            isOpaque = false
+            isVisible = laf.autodetectSupported
           }
 
-          themeBuilder.enableIf(syncCheckBox.selected.not())
-          component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
-        }
-      }.largeGapAfter()
-      blockRow {
-        header(IdeBundle.message("title.accessibility"))
+        themeBuilder.enabledIf(syncCheckBox.selected.not())
+        cell(laf.settingsToolbar).visibleIf(syncCheckBox.selected)
+      }
 
-        row(IdeBundle.message("welcome.screen.ide.font.size.label"))
-        {
-          fontComboBox(ideFontProperty)
-        }.largeGapAfter()
+      header(IdeBundle.message("title.accessibility"))
 
-        createColorBlindnessSettingBlock()
-      }.largeGapAfter()
-      blockRow {
-        header(KeyMapBundle.message("keymap.display.name"))
-        fullRow {
-          keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
-            .accessibleName(KeyMapBundle.message("keymap.display.name"))
-            .component
-          component(ActionLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
-          }).withLargeLeftGap()
+      row(IdeBundle.message("welcome.screen.ide.font.size.label")) {
+        fontComboBox(ideFontProperty)
+      }.bottomGap(BottomGap.SMALL)
+
+      createColorBlindnessSettingBlock()
+
+      header(KeyMapBundle.message("keymap.display.name"))
+      row {
+        keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()))
+          .bindItem(keymapProperty)
+          .accessibleName(KeyMapBundle.message("keymap.display.name"))
+          .component
+        link(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
         }
       }
-      blockRow {
-        component(AnActionLink("WelcomeScreen.Configure.Import", ActionPlaces.WELCOME_SCREEN))
-        row {
-          component(ActionLink(IdeBundle.message("welcome.screen.all.settings.link")) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,
-                                                              *ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, true))
-          })
+
+      row {
+        cell(AnActionLink("WelcomeScreen.Configure.Import", ActionPlaces.WELCOME_SCREEN))
+      }.topGap(TopGap.MEDIUM)
+      row {
+        link(IdeBundle.message("welcome.screen.all.settings.link")) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,
+                                                            *ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, true))
         }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
@@ -224,31 +226,39 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
   }
 
-  private fun Row.createColorBlindnessSettingBlock() {
+  private fun Panel.createColorBlindnessSettingBlock() {
     if (supportedColorBlindness.isNotEmpty()) {
-      fullRow {
+      row {
         if (supportedColorBlindness.size == 1) {
-          checkBox(UIBundle.message("color.blindness.checkbox.text"), adjustColorsProperty,
-                   UIBundle.message("color.blindness.checkbox.comment")).applyToComponent { isOpaque = false }
+          checkBox(UIBundle.message("color.blindness.checkbox.text"))
+            .bindSelected(adjustColorsProperty)
+            .comment(UIBundle.message("color.blindness.checkbox.comment"))
+            .applyToComponent { isOpaque = false }
         }
         else {
-          val checkBox = checkBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"),
-                                  adjustColorsProperty).applyToComponent { isOpaque = false }.component
-          comboBox(DefaultComboBoxModel(supportedColorBlindness.toTypedArray()), colorBlindnessProperty, SimpleListCellRenderer.create("") {
+          val checkBox = checkBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))
+            .bindSelected(adjustColorsProperty)
+            .applyToComponent { isOpaque = false }.component
+          comboBox(DefaultComboBoxModel(supportedColorBlindness.toTypedArray()), SimpleListCellRenderer.create("") {
             PlatformEditorBundle.message(it?.key ?: "")
-          }).comment(UIBundle.message("color.blindness.combobox.comment")).enableIf(checkBox.selected)
+          })
+            .bindItem(colorBlindnessProperty)
+            .comment(UIBundle.message("color.blindness.combobox.comment"))
+            .enabledIf(checkBox.selected)
         }
-        component(ActionLink(UIBundle.message("color.blindness.link.to.help"))
-                  { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
-          .withLargeLeftGap()
+        link(UIBundle.message("color.blindness.link.to.help"))
+        { HelpManager.getInstance().invokeHelp("Colorblind_Settings") }
       }
     }
   }
 
-  private fun Row.header(@Nls title: String) {
-    fullRow {
-      component(HeaderLabel(title))
-    }.largeGapAfter()
+  private fun Panel.header(@Nls title: String, firstHeader: Boolean = false) {
+    val row = row {
+      cell(HeaderLabel(title))
+    }.bottomGap(BottomGap.SMALL)
+    if (!firstHeader) {
+      row.topGap(TopGap.MEDIUM)
+    }
   }
 
   private class HeaderLabel(@Nls title: String) : JBLabel(title) {
@@ -260,13 +270,15 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
   }
 
-  private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {
-    val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
+  private fun Row.fontComboBox(fontProperty: GraphProperty<Float>): Cell<ComboBox<Float>> {
+    val fontSizes = UIUtil.getStandardFontSizes().map { it.toFloat() }.toSortedSet()
     fontSizes.add(fontProperty.get())
     val model = DefaultComboBoxModel(fontSizes.toTypedArray())
-    return comboBox(model, fontProperty).applyToComponent {
-      isEditable = true
-    }
+    return comboBox(model)
+      .bindItem(fontProperty)
+      .applyToComponent {
+        isEditable = true
+      }
   }
 
   private fun getColorBlindness(): List<ColorBlindness> {

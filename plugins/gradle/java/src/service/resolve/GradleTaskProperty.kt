@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator.generateType
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.ide.presentation.Presentation
 import com.intellij.openapi.util.Key
 import com.intellij.psi.OriginInfoAwareElement
@@ -27,7 +27,7 @@ class GradleTaskProperty(
   private val doc by lazyPub {
     val result = StringBuilder()
     result.append("<PRE>")
-    generateType(result, propertyType, myContext, true)
+    JavaDocInfoGeneratorFactory.create(context.project, null).generateType(result, propertyType, myContext, true)
     result.append(" " + task.name)
     result.append("</PRE>")
     task.description?.let(result::append)

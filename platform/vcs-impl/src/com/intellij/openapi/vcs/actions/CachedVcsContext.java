@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,6 @@ public class CachedVcsContext implements VcsContext {
   private final Editor myEditor;
   private final File[] mySelectedIOFiles;
   private final int myModifiers;
-  private final Refreshable myRefreshablePanel;
   private final String myPlace;
   private final File mySelectedIOFile;
   private final FilePath[] mySelectedFilePaths;
@@ -57,7 +55,6 @@ public class CachedVcsContext implements VcsContext {
     myEditor = baseContext.getEditor();
     mySelectedIOFiles = baseContext.getSelectedIOFiles();
     myModifiers = baseContext.getModifiers();
-    myRefreshablePanel = baseContext.getRefreshableDialog();
     myPlace = baseContext.getPlace();
     mySelectedIOFile = baseContext.getSelectedIOFile();
     mySelectedFilePaths = baseContext.getSelectedFilePaths();
@@ -111,11 +108,6 @@ public class CachedVcsContext implements VcsContext {
   @Override
   public int getModifiers() {
     return myModifiers;
-  }
-
-  @Override
-  public Refreshable getRefreshableDialog() {
-    return myRefreshablePanel;
   }
 
   @Override

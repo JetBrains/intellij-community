@@ -6,21 +6,14 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.execution.configurations.ConfigurationFactory
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.psi.PsiFile
+import com.jetbrains.python.psi.PyFile
 
 /**
  * Parent of all test configuration producers
  */
 abstract class AbstractPythonTestConfigurationProducer<T : AbstractPythonTestRunConfiguration<*>> : RunConfigurationProducer<T> {
   constructor() : super(true)
-
-  /**
-   * @deprecated Override [getConfigurationFactory].
-   */
-  @Deprecated("Override getConfigurationFactory")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  constructor(configurationFactory: ConfigurationFactory) : super(configurationFactory)
 
   /**
    * Configuration type this producer accepts/creates
@@ -33,6 +26,11 @@ abstract class AbstractPythonTestConfigurationProducer<T : AbstractPythonTestRun
     super.getConfigurationSettingsList(runManager).filter { configurationClass.isAssignableFrom(it.configuration.javaClass) }
 
   override fun createConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
+    val file = context.psiLocation?.containingFile
+    if (file is PsiFile && file !is PyFile && file.name != "tox.ini") {
+      // Shortcut: if user clicked on file and this file is not py nor tox.ini -- nothing to do here
+      return null
+    }
     if (!configurationClass.isAssignableFrom(cloneTemplateConfiguration(context).configuration.javaClass)) {
       return null
     }

@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradle.configuration.mpp
 
-import org.jetbrains.kotlin.gradle.KotlinDependency
+import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 
-internal object DistinctIdKotlinDependenciesPreprocessor : KotlinDependenciesPreprocessor {
+@IntellijInternalApi
+object DistinctIdKotlinDependenciesPreprocessor : KotlinDependenciesPreprocessor {
     override fun invoke(dependencies: Iterable<KotlinDependency>): List<KotlinDependency> {
         return dependencies
             .groupBy { dependency -> dependency.id }

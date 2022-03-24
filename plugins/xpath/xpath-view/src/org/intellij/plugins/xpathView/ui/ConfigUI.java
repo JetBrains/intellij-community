@@ -17,6 +17,7 @@ package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.XPathBundle;
@@ -95,7 +96,7 @@ public class ConfigUI extends JPanel {
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 
-        Insets emptyInsets = JBUI.emptyInsets();
+      Insets emptyInsets = JBInsets.emptyInsets();
         Insets cpInsets = JBUI.insetsLeft(8);
 
         GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, emptyInsets, 0, 0);

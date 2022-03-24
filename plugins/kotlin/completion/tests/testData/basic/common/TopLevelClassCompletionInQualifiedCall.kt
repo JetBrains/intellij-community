@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Test {
     fun foo(a: Collection<String>) {
 

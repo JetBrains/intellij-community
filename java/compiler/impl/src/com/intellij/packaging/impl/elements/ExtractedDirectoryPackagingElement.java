@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -50,7 +51,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
 
   @Override
   public String toString() {
-    return "extracted:" + myFilePath + "!" + myPathInJar;
+    return "extracted:" + getMyFilePath() + "!" + getMyPathInJar();
   }
 
   @Override
@@ -59,14 +60,14 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     if (jarFile == null) return null;
 
     final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
-    if ("/".equals(myPathInJar)) return jarRoot;
-    return jarRoot != null ? jarRoot.findFileByRelativePath(myPathInJar) : null;
+    if ("/".equals(getMyPathInJar())) return jarRoot;
+    return jarRoot != null ? jarRoot.findFileByRelativePath(getMyPathInJar()) : null;
   }
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof ExtractedDirectoryPackagingElement && super.isEqualTo(element)
-           && Objects.equals(myPathInJar, ((ExtractedDirectoryPackagingElement)element).getPathInJar());
+           && Objects.equals(getMyPathInJar(), ((ExtractedDirectoryPackagingElement)element).getPathInJar());
   }
 
   @Override
@@ -82,11 +83,11 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
 
   @Attribute("path-in-jar")
   public String getPathInJar() {
-    return myPathInJar;
+    return getMyPathInJar();
   }
 
   public void setPathInJar(String pathInJar) {
-    String myPathInJarBefore = myPathInJar;
+    String myPathInJarBefore = getMyPathInJar();
     this.update(
       () -> myPathInJar = pathInJar,
       (builder, entity) -> {
@@ -113,5 +114,19 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
       BridgeModelModifiableEntitiesKt.addExtractedDirectoryPackagingElementEntity(diff, fileUrl, this.myPathInJar, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;
+  }
+
+  @Nullable
+  private String getMyPathInJar() {
+    if (myStorage == null) {
+      return myPathInJar;
+    } else {
+      ExtractedDirectoryPackagingElementEntity entity = (ExtractedDirectoryPackagingElementEntity)getThisEntity();
+      String path = entity.getPathInArchive();
+      if (!Objects.equals(myPathInJar, path)) {
+        myPathInJar = path;
+      }
+      return path;
+    }
   }
 }

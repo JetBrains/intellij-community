@@ -40,7 +40,6 @@ public class FinishElementInstruction extends Instruction {
     for (DfaVariableValue var : myVarsToFlush) {
       instruction.myVarsToFlush.add(var.bindToFactory(factory));
     }
-    instruction.setIndex(getIndex());
     return instruction;
   }
 

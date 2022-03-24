@@ -133,7 +133,7 @@ public class StreamInlining {
 
   String blockLambda(List<String> list) {
     return list == null ? "" : list.stream().map(s -> {
-      return s.equals("abc") ? null : s;
+      return s.equals("abc") ? <warning descr="Function may return null, but it's not allowed here">null</warning> : s;
     }).findFirst().orElse("");
   }
 

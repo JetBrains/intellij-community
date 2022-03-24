@@ -107,6 +107,10 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
     doTest(1, ApplyPatchStatus.SUCCESS, null);
   }
 
+  public void testRenameFileGitStyleWithWhitespaces() throws Exception {
+    doTest(1, ApplyPatchStatus.SUCCESS, null);
+  }
+
   public void testRenameDir() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS, file -> !"empty".equals(file.getNameWithoutExtension()));
   }
@@ -185,6 +189,10 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
 
   public void testFileWithGitStylePathsWithSpaces() throws Exception {
     doTest(0, ApplyPatchStatus.SUCCESS, null);
+  }
+
+  public void testAddEmptyFileWithWhitespaces() throws Exception {
+    doTest(1, ApplyPatchStatus.SUCCESS, null);
   }
 
   private void doTest(final int skipTopDirs, final ApplyPatchStatus expectedStatus, final VirtualFileFilter fileFilter) throws Exception {

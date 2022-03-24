@@ -96,13 +96,13 @@ public final class ShowRunningListAction extends AnAction {
               component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
               Object value = ((JComponent)component).getClientProperty(KEY);
               if (value instanceof Trinity) {
-                Project aProject = (Project)((Trinity)value).first;
+                Project aProject = (Project)((Trinity<?, ?, ?>)value).first;
                 JFrame aFrame = WindowManager.getInstance().getFrame(aProject);
                 if (aFrame != null && !aFrame.isActive()) {
                   IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true));
                 }
                 RunContentManager.getInstance(aProject).
-                  toFrontRunContent((Executor)((Trinity)value).second, (RunContentDescriptor)((Trinity)value).third);
+                  toFrontRunContent((Executor)((Trinity<?, ?, ?>)value).second, (RunContentDescriptor)((Trinity<?, ?, ?>)value).third);
               }
             }
           }

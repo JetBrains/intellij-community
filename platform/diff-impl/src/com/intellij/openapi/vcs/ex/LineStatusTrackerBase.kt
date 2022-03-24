@@ -85,7 +85,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   @RequiresEdt
-  protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
+  protected open fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
 
@@ -142,7 +142,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   @RequiresEdt
-  protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
+  protected fun updateDocument(side: Side, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = if (side.isLeft) vcsDocument else document
     return updateDocument(project, affectedDocument, commandName, task)
   }
@@ -274,10 +274,9 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   private fun fireLinesUnchanged(startLine: Int, endLine: Int) {
-    if (!isClearLineModificationFlagOnRollback()) return
-    if (document.textLength == 0) return  // empty document has no lines
-    if (startLine == endLine) return
-    (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
+    if (isClearLineModificationFlagOnRollback()) {
+      DiffUtil.clearLineModificationFlags(document, startLine, endLine)
+    }
   }
 
 

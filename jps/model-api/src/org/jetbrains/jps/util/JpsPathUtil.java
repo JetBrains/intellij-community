@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -55,8 +55,7 @@ public final class JpsPathUtil {
       return url.substring(FILE_URL_PREFIX.length());
     }
     else if (url.startsWith(JAR_URL_PREFIX)) {
-      url = url.substring(JAR_URL_PREFIX
-    .length());
+      url = url.substring(JAR_URL_PREFIX.length());
       url = Strings.trimEnd(url, JAR_SEPARATOR);
     }
     return url;

@@ -16,6 +16,14 @@ open class NotATest2: NotATest() {
 
 }
 
+class NotATest3: NotATest(){
+    fun testMe() {}
+}
+
+class NotATest4 {
+    fun testMe() {}
+}
+
 class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest1</lineMarker>: TestCase() {
 
 }

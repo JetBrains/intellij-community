@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -56,6 +56,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   };
 
   public static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
+  public static final DataKey<List<XValueNodeImpl>> SELECTED_NODES = DataKey.create("xdebugger.selected.nodes");
+
   private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
@@ -338,6 +340,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public Object getData(@NotNull @NonNls final String dataId) {
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
       return this;
+    }
+    if (SELECTED_NODES.is(dataId)) {
+      return List.of(getSelectedNodes(XValueNodeImpl.class, null));
     }
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);

@@ -1,4 +1,7 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Variable 'int1' is never used
+// AFTER-WARNING: Variable 'int2' is never used
 
 fun main(args: Array<String>) {
     for ((int1, int2) in 1.createListOfDataClasses()) {

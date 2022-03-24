@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import kotlin.math.max
@@ -48,11 +48,33 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         stepSize: Int
     ): DebugProcessImpl.ResumeCommand? {
         if (suspendContext == null || suspendContext.isResumed) return null
-        val sourcePosition = suspendContext.debugProcess.debuggerContext.sourcePosition ?: return null
+        val sourcePosition = suspendContext.getSourcePosition() ?: return null
         if (sourcePosition.file !is KtFile) return null
         return getStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
+    override fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl?,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?,
+        stepSize: Int
+    ): DebugProcessImpl.ResumeCommand? {
+        if (suspendContext == null || suspendContext.isResumed) return null
+        val sourcePosition = suspendContext.getSourcePosition() ?: return null
+        if (sourcePosition.file !is KtFile) return null
+        return getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
+    @TestOnly
+    fun getStepIntoCommand(
+        suspendContext: SuspendContextImpl,
+        ignoreFilters: Boolean,
+        smartStepFilter: MethodFilter?
+    ): DebugProcessImpl.ResumeCommand? {
+        return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
+    }
+
+    @TestOnly
     fun getStepOverCommand(
         suspendContext: SuspendContextImpl,
         ignoreBreakpoints: Boolean,
@@ -78,6 +100,9 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         return DebuggerSteppingHelper.createStepOutCommand(suspendContext, true)
     }
 }
+
+private fun SuspendContextImpl.getSourcePosition(): SourcePosition? =
+    debugProcess.debuggerContext.sourcePosition
 
 private operator fun PsiElement?.contains(element: PsiElement): Boolean {
     return this?.textRange?.contains(element.textRange) ?: false
@@ -170,6 +195,22 @@ fun getStepOverAction(
     }
 
     return KotlinStepAction.KotlinStepOver(tokensToSkip, StepOverCallerInfo.from(location))
+}
+
+internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): KotlinInlineFilter? {
+    val location = suspendContext.location ?: return null
+    val method = location.safeMethod() ?: return null
+    return KotlinInlineFilter(location, method)
+}
+
+internal class KotlinInlineFilter(location: Location, method: Method) {
+    private val borders = method.getInlineFunctionNamesAndBorders().values.filter { location !in it }
+
+    fun isNestedInline(context: SuspendContextImpl?): Boolean {
+        if (context === null) return false
+        val candidate = context.location ?: return false
+        return borders.any { range -> candidate in range }
+    }
 }
 
 fun Method.isSyntheticMethodForDefaultParameters(): Boolean {

@@ -5,7 +5,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-internal sealed class PackageScope(open val scopeName: String) : Comparable<PackageScope> {
+sealed class PackageScope(open val scopeName: String) : Comparable<PackageScope> {
 
     @get:Nls
     abstract val displayName: String

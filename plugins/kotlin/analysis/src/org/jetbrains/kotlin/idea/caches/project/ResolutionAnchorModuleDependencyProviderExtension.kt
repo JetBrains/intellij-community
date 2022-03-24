@@ -6,12 +6,18 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.CommonProcessors
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleDependencyProviderExtension
 import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 
 class ResolutionAnchorModuleDependencyProviderExtension(private val project: Project) : ModuleDependencyProviderExtension {
+    override fun getAdditionalDependencyModules(module: Module): Collection<Module> {
+        val modules = HashSet<Module>()
+        processAdditionalDependencyModules(module, CommonProcessors.CollectProcessor(modules))
+        return modules
+    }
     /**
      * Consider modules M1, M2, M3, library L1 resolving via Resolution anchor M2, other libraries L2, L3 with the following dependencies:
      * M2 depends on M1
@@ -24,8 +30,8 @@ class ResolutionAnchorModuleDependencyProviderExtension(private val project: Pro
      * Updates for libraries aren't managed here, corresponding ModificationTracker is responsible for that.
      * This extension provides missing dependencies from source-dependent library dependencies only to source modules.
      */
-    override fun getAdditionalDependencyModules(module: Module): Collection<Module> {
-        if (!project.libraryToSourceAnalysisEnabled) return emptySet()
+    override fun processAdditionalDependencyModules(module: Module, processor: Processor<Module>) {
+        if (!project.libraryToSourceAnalysisEnabled) return
 
         val resolutionAnchorDependencies = HashSet<ModuleSourceInfo>()
         ModuleRootManager.getInstance(module).orderEntries().recursively().forEachLibrary { library ->
@@ -36,11 +42,9 @@ class ResolutionAnchorModuleDependencyProviderExtension(private val project: Pro
             true
         }
 
-        val additionalModules = HashSet<Module>()
         for (anchorModule in resolutionAnchorDependencies) {
             ModuleRootManager.getInstance(anchorModule.module).orderEntries().recursively()
-                .forEachModule(CommonProcessors.CollectProcessor(additionalModules))
+                .forEachModule(processor)
         }
-        return additionalModules
     }
 }

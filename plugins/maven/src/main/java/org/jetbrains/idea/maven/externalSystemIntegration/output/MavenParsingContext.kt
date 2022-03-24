@@ -9,12 +9,14 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 
 class MavenParsingContext(val runConfiguration : MavenRunConfiguration,
-                          private val myTaskId: ExternalSystemTaskId,
+                          val myTaskId: ExternalSystemTaskId,
                           val targetFileMapper: Function<String, String>) {
 
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()
   val ideaProject = runConfiguration.project
+  @Volatile var sessionEnded = false
+  @Volatile var projectFailure = false
 
   private val context = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0

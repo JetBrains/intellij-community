@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -10,9 +11,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.actions.WindowAction;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ide.DocumentationUtil;
+import com.intellij.lang.documentation.impl.DocumentationRequest;
+import com.intellij.lang.documentation.impl.ImplKt;
+import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
+import com.intellij.model.Pointer;
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -20,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -48,10 +55,10 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -60,16 +67,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TextUI;
-import javax.swing.text.View;
-import javax.swing.text.html.HTML;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
+
+/**
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationUI
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
+ * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
+ */
+@Deprecated
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =
@@ -81,18 +93,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public static final Color SECTION_COLOR = Gray.get(0x90);
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
-  private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
-  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
+  static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
+  static final JBDimension MAX_DEFAULT = new JBDimension(950, 500);
 
   private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
   private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
-
-  private static final String QUICK_DOC_FONT_SIZE_V1_PROPERTY = "quick.doc.font.size"; // 2019.3 or earlier versions
-  private static final String QUICK_DOC_FONT_SIZE_V2_PROPERTY = "quick.doc.font.size.v2"; // 2020.1 EAP
-  private static final String QUICK_DOC_FONT_SIZE_V3_PROPERTY = "quick.doc.font.size.v3"; // 2020.1 or later versions
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -109,7 +117,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final JScrollPane myScrollPane;
   private final DocumentationHintEditorPane myEditorPane;
-  private @Nls String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private final DocumentationLinkHandler myLinkHandler;
@@ -118,10 +125,25 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private AbstractPopup myHint;
 
-  @NotNull
-  public static DocumentationComponent createAndFetch(@NotNull Project project,
-                                                      @NotNull PsiElement element,
-                                                      @NotNull Disposable disposable) {
+  /**
+   * @deprecated This method is executed on the EDT, but at the same time it works with PSI.
+   * To migrate: compute pointer and presentation on a BG thread, then transfer to the EDT
+   * and call {@link DocumentationUtil#documentationComponent(Project, Pointer, TargetPresentation, Disposable)} with the prepared data.
+   */
+  @SuppressWarnings("TestOnlyProblems") // KTIJ-19938
+  @Deprecated
+  public static @NotNull JComponent createAndFetch(
+    @NotNull Project project,
+    @NotNull PsiElement element,
+    @NotNull Disposable disposable
+  ) {
+    if (isDocumentationV2Enabled() && Registry.is("documentation.v2.component")) {
+      DocumentationRequest request;
+      try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
+        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));
+      }
+      return DocumentationUtil.documentationComponent(project, request, disposable);
+    }
     DocumentationManager manager = DocumentationManager.getInstance(project);
     DocumentationComponent component = new DocumentationComponent(manager);
     Disposer.register(disposable, component);
@@ -142,9 +164,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane = new DocumentationHintEditorPane(
       manager.getProject(),
       DocumentationScrollPane.keyboardActions(myScrollPane),
-      this::getElement
+      this::getElementImage
     );
-    myText = "";
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
 
@@ -214,29 +235,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
     toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ShowPopupAutomaticallyAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
-    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true) {
-      Point initialClick;
-
-      @Override
-      protected void processMouseEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
-          initialClick = e.getPoint();
-        }
-        super.processMouseEvent(e);
-      }
-
-      @Override
-      protected void processMouseMotionEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
-          Point location = myHint.getLocationOnScreen();
-          myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
-          e.consume();
-          return;
-        }
-        super.processMouseMotionEvent(e);
-      }
-    };
+    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true);
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
     myToolBar.setTargetComponent(this);
 
@@ -276,6 +277,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new ToggleShowDocsOnHoverAction());
     gearActions.add(new MyShowSettingsAction());
     gearActions.add(new ShowToolbarAction());
+    gearActions.add(new ShowPopupAutomaticallyAction());
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(navigationAndAdditionalActions);
@@ -379,48 +381,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @NotNull
   public static FontSize getQuickDocFontSize() {
-    FontSize v1 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V1_PROPERTY, true);
-    FontSize v2 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V2_PROPERTY, true);
-    FontSize v3 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V3_PROPERTY, false);
-    if (v3 != null) {
-      return v3;
-    }
-    if (v2 != null) {
-      v3 = migrateV2ToV3(v2);
-      setQuickDocFontSize(v3);
-      return v3;
-    }
-    if (v1 != null) {
-      v3 = migrateV2ToV3(migrateV1ToV2(v1));
-      setQuickDocFontSize(v3);
-      return v3;
-    }
-    return FontSize.SMALL;
-  }
-
-  private static @NotNull FontSize migrateV1ToV2(@NotNull FontSize size) {
-    return size == FontSize.X_LARGE ? FontSize.XX_LARGE : size == FontSize.LARGE ? FontSize.X_LARGE : size;
-  }
-
-  private static @NotNull FontSize migrateV2ToV3(@NotNull FontSize size) {
-    return size == FontSize.X_SMALL ? FontSize.XX_SMALL : size == FontSize.SMALL ? FontSize.X_SMALL : size;
-  }
-
-  @Nullable
-  private static FontSize readFontSizeFromSettings(@NotNull String propertyName, boolean unsetAfterReading) {
-    String strValue = PropertiesComponent.getInstance().getValue(propertyName);
-    if (strValue != null) {
-      if (unsetAfterReading) PropertiesComponent.getInstance().unsetValue(propertyName);
-      try {
-        return FontSize.valueOf(strValue);
-      }
-      catch (IllegalArgumentException ignored) {}
-    }
-    return null;
+    return DocumentationFontSize.getDocumentationFontSize();
   }
 
   public static void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_V3_PROPERTY, fontSize.toString());
+    DocumentationFontSize.setDocumentationFontSize(fontSize);
   }
 
   public boolean isEmpty() {
@@ -439,6 +404,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public void setHint(JBPopup hint) {
     myHint = (AbstractPopup)hint;
+    PopupDragListener.dragPopupByComponent(hint, myControlPanel);
     myEditorPane.setHint(hint);
   }
 
@@ -513,7 +479,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = false;
     if (myManager == null) return;
 
-    myText = text;
+    myEditorPane.setText(text);
     setElement(element);
     if (element != null && element.getElement() != null) {
       myManager.updateToolWindowTabName(element.getElement());
@@ -542,7 +508,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myLinkHandler.highlightLink(-1);
 
-    myEditorPane.setText(myText);
     myEditorPane.applyFontProps(getQuickDocFontSize());
 
     showHint();
@@ -587,30 +552,30 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setHintSize() {
-    Dimension hintSize;
-    if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      hintSize = getOptimalSize();
-    }
-    else {
-      if (myManuallyResized) {
-        hintSize = myHint.getSize();
-        JBInsets.removeFrom(hintSize, myHint.getContent().getInsets());
-      }
-      else {
-        hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-      }
-      if (hintSize == null) {
-        hintSize = new Dimension(MIN_DEFAULT);
-      }
-      else {
-        hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
-        hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
-      }
-    }
+    Dimension hintSize = myManuallyResized ? ensureMinimum(myHint.getContentSize())
+                                           : getDefaultHintSize();
     myHint.setSize(hintSize);
   }
 
-  public Dimension getOptimalSize() {
+  private @NotNull Dimension getDefaultHintSize() {
+    if (myHint.getDimensionServiceKey() == null) {
+      return getOptimalSize();
+    }
+    Dimension storedSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+    if (storedSize != null) {
+      return ensureMinimum(storedSize);
+    }
+    return new Dimension(MIN_DEFAULT);
+  }
+
+  private static @NotNull Dimension ensureMinimum(@NotNull Dimension hintSize) {
+    return new Dimension(
+      Math.max(hintSize.width, MIN_DEFAULT.width),
+      Math.max(hintSize.height, MIN_DEFAULT.height)
+    );
+  }
+
+  private @NotNull Dimension getOptimalSize() {
     int width = getPreferredWidth();
     int height = getPreferredHeight(width);
     return new Dimension(width, height);
@@ -621,13 +586,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int minWidth = JBUIScale.scale(300);
     int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : JBUIScale.scale(MAX_DEFAULT.width);
 
-    int width = definitionPreferredWidth();
-    if (width < 0) { // no definition found
-      width = myEditorPane.getPreferredSize().width;
-    }
-    else {
-      width = Math.max(width, myEditorPane.getMinimumSize().width);
-    }
+    int width = myEditorPane.getPreferredWidth();
     Insets insets = getInsets();
     return MathUtil.clamp(width, minWidth, maxWidth) + insets.left + insets.right;
   }
@@ -635,7 +594,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public int getPreferredHeight(int width) {
     myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-    myEditorPane.setText(myText);
     Dimension preferredSize = myEditorPane.getPreferredSize();
 
     int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
@@ -680,45 +638,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private int definitionPreferredWidth() {
-    TextUI ui = myEditorPane.getUI();
-    View view = ui.getRootView(myEditorPane);
-    View definition = findDefinition(view);
-
-    if (definition == null) {
-      return -1;
-    }
-    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
-
-    // Heuristics to calculate popup width based on the amount of the content.
-    // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
-    // 200 chars and less is 300px, 1000 chars and more is 500px.
-    // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-    int textLength = definition.getDocument().getLength();
-    final int contentLengthPreferredSize;
-    if (textLength < 200) {
-      contentLengthPreferredSize = JBUIScale.scale(300);
-    }
-    else if (textLength > 200 && textLength < 1000) {
-      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1) * (textLength - 200) * (500 - 300) / (1000 - 200);
-    }
-    else {
-      contentLengthPreferredSize = JBUIScale.scale(500);
-    }
-    return Math.max(contentLengthPreferredSize, defaultPreferredSize);
-  }
-
-  private static View findDefinition(View view) {
-    if ("definition".equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
-      return view;
-    }
-    for (int i = 0; i < view.getViewCount(); i++) {
-      View definition = findDefinition(view.getView(i));
-      if (definition != null) return definition;
-    }
-    return null;
-  }
-
   private void goBack() {
     if (myBackStack.isEmpty()) return;
     Context context = myBackStack.pop();
@@ -735,7 +654,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
+    return new Context(myElement, myEditorPane.getText(), myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
   }
 
   private void restoreContext(@NotNull Context context) {
@@ -770,6 +689,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myManager.myToolWindow == null && Registry.is("documentation.show.toolbar");
   }
 
+  private @Nullable Image getElementImage(@NotNull String imageSpec) {
+    PsiElement element = getElement();
+    return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
+  }
+
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
@@ -777,7 +701,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
@@ -797,7 +721,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
@@ -817,7 +741,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
+  protected final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
     private EditDocumentationSourceAction() {
       super(true);
@@ -886,11 +810,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public @Nls String getText() {
-    return myText;
+    return myEditorPane.getText();
   }
 
   public @Nls String getDecoratedText() {
-    return myText;
+    return myEditorPane.getText();
   }
 
   @Override
@@ -947,7 +871,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
@@ -965,7 +889,30 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+    ShowPopupAutomaticallyAction() {
+      super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      var project = e.getProject();
+      e.getPresentation().setEnabledAndVisible(project != null && LookupManager.getInstance(project).getActiveLookup() != null);
+      super.update(e);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO = state;
+    }
+  }
+
+  protected class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
       super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
@@ -988,7 +935,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
       super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }

@@ -6,8 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -110,15 +109,15 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
                                            (if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""))
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
-    val groupId = NotificationGroup.createIdWithTitle("Settings Error", IdeBundle.message("notification.group.settings.error"))
+    val group = NotificationGroupManager.getInstance().getNotificationGroup("Settings Error")
     val notification = if (pluginId == null || (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)) {
-      Notification(groupId, IdeBundle.message("notification.title.unable.to.save.settings"),
+      group.createNotification(IdeBundle.message("notification.title.unable.to.save.settings"),
                    IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                    NotificationType.ERROR)
     }
     else {
       PluginManagerCore.disablePlugin(pluginId)
-      Notification(groupId, IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
+      group.createNotification(IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
                    IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled", pluginId.idString, messagePostfix),
                    NotificationType.ERROR)
     }

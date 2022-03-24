@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 import org.jetbrains.idea.reposearch.SearchParameters;
@@ -76,7 +77,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
   }
 
   protected SearchParameters createSearchParameters(CompletionParameters parameters) {
-    return new SearchParameters(parameters.getInvocationCount() < 2, ApplicationManager.getApplication().isUnitTestMode());
+    return new SearchParameters(parameters.getInvocationCount() < 2, MavenUtil.isMavenUnitTestModeEnabled());
   }
 
   protected abstract Promise<Integer> find(@NotNull DependencySearchService service,

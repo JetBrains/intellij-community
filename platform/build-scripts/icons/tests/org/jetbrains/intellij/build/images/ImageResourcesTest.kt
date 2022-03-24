@@ -71,6 +71,17 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
   }
 }
 
+@Ignore
+class AllIconClassesTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return collectNonRegeneratedIconClasses(TestRoot.ALL)
+    }
+  }
+}
+
 
 @RunWith(Parameterized::class)
 abstract class ImageResourcesTestBase {
@@ -192,7 +203,9 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
       image.files.parallelStream().forEach { file ->
         val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
-          failures.add(FailedTest(module, "image size can be optimized (run \"Generate icon classes\" configuration): ${optimized.compressionStats}", image, file.toFile()))
+          failures.add(FailedTest(module, "image size can be optimized using " +
+                                          "\"Icons processing | Generate icon classes\" run configuration: " +
+                                          optimized.compressionStats, image, file.toFile()))
         }
       }
     }
@@ -204,12 +217,17 @@ private class MyIconClassFileChecker(private val projectHome: Path, private val 
 
   private val config = IntellijIconClassGeneratorConfig()
 
+  /**
+   * See [org.jetbrains.intellij.build.images.RobotFileHandler] for supported icon-robots.txt rules.
+   */
   fun checkIconClasses(module: JpsModule) {
     val generator = IconsClassGenerator(projectHome, modules, false)
     generator.processModule(module, config.getConfigForModule(module.name))
 
     generator.getModifiedClasses().forEach { (module, file, details) ->
-      failures.add(FailedTest(module, "icon class file should be regenerated (run \"Generate icon classes\" configuration)", file, details))
+      failures.add(FailedTest(module, "icon class file should be regenerated using " +
+                                      "\"Icons processing | Generate icon classes\" run configuration, " +
+                                      "or new icons be ignored via 'icon-robots.txt'", file, details))
     }
   }
 }

@@ -8,8 +8,9 @@ import org.jetbrains.annotations.ApiStatus;
  * Check whether the current process should be terminated to avoid long IO-operation
  * and throws cancellation exception if it does.
  */
-@FunctionalInterface
 @ApiStatus.Experimental
 public interface IOCancellationCallback {
   void checkCancelled() throws ProcessCanceledException;
+
+  void interactWithUI();
 }

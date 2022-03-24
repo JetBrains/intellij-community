@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
@@ -10,11 +15,13 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamData;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamsUtil;
@@ -30,22 +37,39 @@ import java.util.Set;
 public final class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
 
-  public static void appendParameterPresentation(GrParameter parameter,
-                                                 PsiSubstitutor substitutor,
-                                                 TypePresentation typePresentation,
-                                                 StringBuilder builder) {
-    if (presentNamedParameters(builder, parameter)) return;
+  public static void appendParameterPresentation(
+    GrParameter parameter,
+    PsiSubstitutor substitutor,
+    TypePresentation typePresentation,
+    StringBuilder builder,
+    boolean doHighlighting
+  ) {
+    if (presentNamedParameters(builder, parameter, doHighlighting)) return;
 
     for (PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
-      builder.append(annotation.getText()).append(' ');
+      appendStyledSpan(doHighlighting, builder, GroovySyntaxHighlighter.ANNOTATION, annotation.getText());
+      builder.append(' ');
     }
 
     PsiType type = parameter.getTypeGroovy();
     type = substitutor.substitute(type);
 
     if (typePresentation == TypePresentation.LINK) {
-      PsiImplUtil.appendTypeString(builder, type, parameter);
-      builder.append(' ').append(parameter.getName());
+      if (type != null) {
+        StringBuilder typeBuilder = new StringBuilder();
+        JavaDocInfoGeneratorFactory.create(parameter.getProject(), null).generateType(typeBuilder, type, parameter);
+        if (doHighlighting) {
+          builder.append(typeBuilder);
+        }
+        else {
+          builder.append(StringUtil.removeHtmlTags(typeBuilder.toString(), true));
+        }
+      }
+      else {
+        appendStyledSpan(doHighlighting, builder, GroovySyntaxHighlighter.KEYWORD, GrModifier.DEF);
+      }
+      builder.append(' ');
+      appendStyledSpan(doHighlighting, builder, GroovySyntaxHighlighter.PARAMETER, parameter.getName());
       return;
     }
 
@@ -70,7 +94,7 @@ public final class GroovyPresentationUtil {
           }
 
           StringBuilder builder1 = new StringBuilder();
-          builder1.append(((GrReferenceElement)parent).getReferenceName());
+          builder1.append(((GrReferenceElement<?>)parent).getReferenceName());
           PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
           if (argTypes != null) {
             builder1.append("(");
@@ -97,12 +121,6 @@ public final class GroovyPresentationUtil {
     }
   }
 
-  private static boolean presentNamedParameters(@NotNull StringBuilder buffer, @NotNull GrParameter parameter) {
-    List<NamedParamData> pairs = NamedParamsUtil.collectNamedParams(parameter);
-    StringUtil.join(pairs, namedParam -> namedParam.getName() + ": " + namedParam.getType().getPresentableText(), ", ", buffer);
-    return !pairs.isEmpty();
-  }
-
   public static String getSignaturePresentation(MethodSignature signature) {
     StringBuilder builder = new StringBuilder();
     builder.append(signature.getName()).append('(');
@@ -113,5 +131,34 @@ public final class GroovyPresentationUtil {
     if (types.length > 0) builder.delete(builder.length() - 2, builder.length());
     builder.append(")");
     return builder.toString();
+  }
+
+  private static @NotNull StringBuilder appendStyledSpan(
+    boolean doHighlighting,
+    @NotNull StringBuilder buffer,
+    @NotNull TextAttributesKey attributesKey,
+    @Nullable String value
+  ) {
+    if (doHighlighting) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation(false));
+    }
+    else {
+      buffer.append(value);
+    }
+    return buffer;
+  }
+
+  private static boolean presentNamedParameters(@NotNull StringBuilder buffer, @NotNull GrParameter parameter, boolean doHighlighting) {
+    List<NamedParamData> pairs = NamedParamsUtil.collectNamedParams(parameter);
+    for (int i = 0; i < pairs.size(); i++) {
+      NamedParamData namedParam = pairs.get(i);
+      appendStyledSpan(doHighlighting, buffer, GroovySyntaxHighlighter.PARAMETER, namedParam.getName());
+      appendStyledSpan(doHighlighting, buffer, JavaHighlightingColors.OPERATION_SIGN, ": ");
+      appendStyledSpan(doHighlighting, buffer, GroovySyntaxHighlighter.CLASS_REFERENCE, namedParam.getType().getPresentableText());
+      if (i != pairs.size() - 1) {
+        appendStyledSpan(doHighlighting, buffer, JavaHighlightingColors.COMMA, ", ");
+      }
+    }
+    return !pairs.isEmpty();
   }
 }

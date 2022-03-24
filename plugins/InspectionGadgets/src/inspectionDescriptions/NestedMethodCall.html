@@ -3,16 +3,16 @@
 Reports method calls used as parameters to another method call.
 <p>The quick-fix introduces a variable to make the code simpler and easier to debug.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   public int y() { return 1; }
   public int f(int x) { return 2 * x; }
 
   public void foo() {
       int x = f(y());
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   public int y() { return 1; }
   public int f(int x) { return 2 * x; }
 
@@ -20,7 +20,7 @@ Reports method calls used as parameters to another method call.
       int y = y();
       int x = f(y);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the inspection options to toggle the reporting of:

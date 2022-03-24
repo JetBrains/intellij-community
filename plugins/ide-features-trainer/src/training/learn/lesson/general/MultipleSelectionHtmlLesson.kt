@@ -5,6 +5,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
 import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
 import training.dsl.parseLessonSample
@@ -15,6 +16,7 @@ class MultipleSelectionHtmlLesson
   : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
 
   override val languageId: String = "HTML"
+  override val sampleFilePath: String = "Learning.html"
 
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">
@@ -71,6 +73,13 @@ class MultipleSelectionHtmlLesson
         stateCheck { checkMultiChange() }
         test { type("td") }
       }
+      task("EditorEscape") {
+        stateCheck {
+          editor.caretModel.caretCount < 2
+        }
+        text(LessonsBundle.message("multiple.selections.escape", action(it)))
+        test { actions(it) }
+      }
     }
 
   private fun TaskRuntimeContext.checkMultiChange(): Boolean {
@@ -86,4 +95,9 @@ class MultipleSelectionHtmlLesson
     }
     return count == 6
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("multiple.selections.help.multiple.carets"),
+         LessonUtil.getHelpLink("multicursor.html")),
+  )
 }

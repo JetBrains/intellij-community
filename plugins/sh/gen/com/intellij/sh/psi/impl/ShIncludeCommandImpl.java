@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShIncludeCommandImpl extends ShCommandImpl implements ShIncludeCommand {
+public class ShIncludeCommandImpl extends ShIncludeCommandMixin implements ShIncludeCommand {
 
   public ShIncludeCommandImpl(ASTNode node) {
     super(node);

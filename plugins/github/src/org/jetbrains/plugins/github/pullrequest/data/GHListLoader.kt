@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 interface GHListLoader<T> : Disposable {
@@ -15,7 +16,8 @@ interface GHListLoader<T> : Disposable {
   @get:RequiresEdt
   val loadedData: List<T>
 
-  @Deprecated("Use loadedData", replaceWith = ReplaceWith("loadedData.isNotEmpty()"))
+  @get:Deprecated("Use loadedData", replaceWith = ReplaceWith("loadedData.isNotEmpty()"))
+  @get:ApiStatus.ScheduledForRemoval
   @get:RequiresEdt
   val hasLoadedItems: Boolean
 

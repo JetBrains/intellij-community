@@ -17,6 +17,9 @@ interface ValuesTestBase {
   fun getTestDataPath(): String
   fun getEvaluatorExtension(): UEvaluatorExtension? = null
 
+  // TODO: when JavaUFile (and/or its constructor) becomes `internal`, this should move into JavaUFile.
+  private fun JavaUFile.copy() : JavaUFile = JavaUFile(sourcePsi, languagePlugin)
+
   private fun UFile.analyzeAll() = analyzeAll(extensions = getEvaluatorExtension()?.let { listOf(it) } ?: emptyList())
 
   private fun UFile.asLogValues(evaluationContext: UEvaluationContext, cachedOnly: Boolean) =
@@ -31,7 +34,7 @@ interface ValuesTestBase {
     assertEqualsToFile("Log values", valuesFile, file.asLogValues(evaluationContext, cachedOnly = false))
 
     if (file is JavaUFile) {
-      val copyFile = JavaUFile(file.sourcePsi, file.languagePlugin)
+      val copyFile = file.copy()
       assertEqualsToFile("Log cached values", valuesFile, copyFile.asLogValues(evaluationContext, cachedOnly = true))
     }
   }

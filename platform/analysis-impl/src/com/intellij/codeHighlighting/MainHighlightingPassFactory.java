@@ -28,6 +28,6 @@ import org.jetbrains.annotations.Nullable;
 public interface MainHighlightingPassFactory extends TextEditorHighlightingPassFactory {
   @Nullable
   TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
-                                                        @NotNull final Document document,
+                                                        @NotNull Document document,
                                                         @NotNull HighlightInfoProcessor highlightInfoProcessor);
 }

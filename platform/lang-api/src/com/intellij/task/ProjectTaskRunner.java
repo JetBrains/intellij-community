@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task;
 
 import com.intellij.execution.Executor;
@@ -73,6 +73,16 @@ public abstract class ProjectTaskRunner {
     return null;
   }
 
+  @ApiStatus.Experimental
+  @Nullable
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+    if (tasks.length == 0) return null;
+    if (tasks.length == 1 && tasks[0] instanceof ExecuteRunConfigurationTask) {
+      return createExecutionEnvironment(project, (ExecuteRunConfigurationTask)tasks[0], null);
+    }
+    return null;
+  }
+
   /**
    * The flag indicates if the {@link ProjectTaskRunner} supports reporting an information about generated files during execution or not.
    * The fine-grained events per generated files allow greatly improve IDE performance for some activities like fast hotswap reload after incremental compilation.
@@ -92,8 +102,7 @@ public abstract class ProjectTaskRunner {
   /**
    * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
@@ -102,7 +111,6 @@ public abstract class ProjectTaskRunner {
     notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
   }
 
-  @SuppressWarnings("deprecation")
   private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
     private final @NotNull AsyncPromise<? super Result> myPromise;
 
@@ -111,7 +119,7 @@ public abstract class ProjectTaskRunner {
     }
 
     @Override
-    public void finished(@NotNull ProjectTaskResult taskResult) {
+    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
       myPromise.setResult(new Result() {
         @Override
         public boolean isAborted() {
@@ -126,17 +134,16 @@ public abstract class ProjectTaskRunner {
     }
   }
 
-  @SuppressWarnings("deprecation")
-  private static void notifyIfNeeded(@NotNull Promise<? extends Result> promise, @Nullable ProjectTaskNotification callback) {
+  private static void notifyIfNeeded(@NotNull Promise<? extends Result> promise, @SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
     if (callback != null) {
+      //noinspection deprecation
       promise
         .onSuccess(result -> callback.finished(new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
         .onError(throwable -> callback.finished(new ProjectTaskResult(true, 0, 0)));
     }
   }
 
-  @SuppressWarnings("deprecation")
-  private void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
+  private void assertUnsupportedOperation(@SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
     if (callback instanceof ProjectTaskNotificationAdapter) {
       throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method in " + getClass());
     }

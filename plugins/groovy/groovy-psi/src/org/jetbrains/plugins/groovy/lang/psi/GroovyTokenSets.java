@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.tree.TokenSet;
@@ -22,7 +22,7 @@ public interface GroovyTokenSets {
     KW_NEW, KW_NULL, KW_PACKAGE, KW_RETURN,
     KW_SUPER, KW_SWITCH, KW_THIS, KW_THROW,
     KW_THROWS, KW_TRAIT, KW_TRUE, KW_TRY,
-    KW_WHILE
+    KW_WHILE, KW_YIELD
   );
 
   TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);
@@ -35,7 +35,7 @@ public interface GroovyTokenSets {
   TokenSet MULTIPLICATIVE_OPERATORS = create(T_STAR, T_DIV, T_REM);
   TokenSet SHIFT_OPERATORS = create(LEFT_SHIFT_SIGN, RIGHT_SHIFT_SIGN, RIGHT_SHIFT_UNSIGNED_SIGN);
   TokenSet REGEX_OPERATORS = create(T_REGEX_FIND, T_REGEX_MATCH);
-  TokenSet RANGES = create(T_RANGE, T_RANGE_EX);
+  TokenSet RANGES = create(T_RANGE, T_RANGE_BOTH_OPEN, T_RANGE_LEFT_OPEN, T_RANGE_RIGHT_OPEN);
   TokenSet OTHER_OPERATORS = create(KW_AS, KW_IN, T_NOT_IN, T_POW, KW_INSTANCEOF, T_NOT_INSTANCEOF);
   TokenSet BINARY_OPERATORS = orSet(
     LOGICAL_OPERATORS,

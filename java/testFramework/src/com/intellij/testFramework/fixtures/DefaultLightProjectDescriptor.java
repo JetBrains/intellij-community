@@ -25,20 +25,42 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author peter
  */
 public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
-  @NotNull
+
+  private @Nullable Supplier<? extends Sdk> customSdk;
+  private final List<RequiredLibrary> mavenLibraries = new ArrayList<>();
+
+  public DefaultLightProjectDescriptor() {
+  }
+
+  public DefaultLightProjectDescriptor(@NotNull Supplier<? extends Sdk> customSdk) {
+    this.customSdk = customSdk;
+  }
+
+  public DefaultLightProjectDescriptor(@NotNull Supplier<? extends Sdk> customSdk, @NotNull List<String> mavenLibraries) {
+    this.customSdk = customSdk;
+    for (String library : mavenLibraries) {
+      withRepositoryLibrary(library);
+    }
+  }
+
   @Override
-  public String getModuleTypeId() {
+  public @NotNull String getModuleTypeId() {
     return ModuleTypeId.JAVA_MODULE;
   }
 
   @Override
   public Sdk getSdk() {
-    return IdeaTestUtil.getMockJdk17();
+    return customSdk == null ? IdeaTestUtil.getMockJdk17() : customSdk.get();
   }
 
   @Override
@@ -46,6 +68,29 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
     LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
     if (extension != null) {
       extension.setLanguageLevel(LanguageLevel.HIGHEST);
+
+      for (RequiredLibrary library : mavenLibraries) {
+        MavenDependencyUtil.addFromMaven(model, library.mavenCoordinates, library.includeTransitive);
+      }
+    }
+  }
+
+  public DefaultLightProjectDescriptor withRepositoryLibrary(@NotNull String library) {
+    return withRepositoryLibrary(library, true);
+  }
+
+  public DefaultLightProjectDescriptor withRepositoryLibrary(@NotNull String library, boolean includeTransitive) {
+    mavenLibraries.add(new RequiredLibrary(library, includeTransitive));
+    return this;
+  }
+
+  private static class RequiredLibrary {
+    public final String mavenCoordinates;
+    public final boolean includeTransitive;
+
+    private RequiredLibrary(String coordinates, boolean transitive) {
+      mavenCoordinates = coordinates;
+      includeTransitive = transitive;
     }
   }
 }

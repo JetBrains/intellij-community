@@ -3,6 +3,7 @@
     "usages": [
         "Explicit.kt",
         "Explicit2.kt",
-        "Implicit.kt"
+        "Implicit.kt",
+        "JavaClass.java"
     ]
 }

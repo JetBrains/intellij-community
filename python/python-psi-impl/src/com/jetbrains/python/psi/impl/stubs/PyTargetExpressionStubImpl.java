@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
@@ -131,6 +132,28 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
 
   @Override
   public String toString() {
-    return "PyTargetExpressionStub(name=" + myName + ")";
+    String result = "PyTargetExpressionStub(name=" + myName +
+                    ", hasAssignedValue=" + myHasAssignedValue;
+    if (myCustomStub == null) {
+      if (myInitializer != null) {
+        result += ", initializer=" + myInitializer;
+      }
+      result += ", initializerType=" + myInitializerType +
+                ", qualified=" + myQualified;
+    }
+    else {
+      result += ", customStub=" + myCustomStub;
+    }
+    if (myTypeComment != null) {
+      result += ", typeComment='" + myTypeComment + '\'';
+    }
+    if (myAnnotation != null) {
+      result += ", annotation='" + myAnnotation + '\'';
+    }
+    if (myDocString != null) {
+      result += ", docString='" + StringUtil.escapeStringCharacters(myDocString) + '\'';
+    }
+    result += ")";
+    return result;
   }
 }

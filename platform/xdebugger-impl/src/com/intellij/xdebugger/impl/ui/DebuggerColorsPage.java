@@ -45,6 +45,7 @@ public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySor
       new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.inlined.values.execution.line"), DebuggerColors.INLINED_VALUES_EXECUTION_LINE),
       new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.smart.step.into.target"), DebuggerColors.SMART_STEP_INTO_TARGET),
       new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.smart.step.into.selection"), DebuggerColors.SMART_STEP_INTO_SELECTION),
+      new AttributesDescriptor(XDebuggerBundle.message("options.kotlin.attribute.descriptor.inline.stack.frames"), DebuggerColors.INLINE_STACK_FRAMES)
     };
   }
 

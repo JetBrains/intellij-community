@@ -34,7 +34,7 @@ public final class TextMateLexerDataStorage extends ShortBasedStorage {
   }
 
   @Override
-  public int packData(IElementType tokenType, int state, boolean isRestartableState) {
+  public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
     if (tokenType instanceof TextMateElementType) {
       synchronized (tokenTypeMap) {
         if (tokenTypeMap.containsKey(tokenType)) {
@@ -50,17 +50,17 @@ public final class TextMateLexerDataStorage extends ShortBasedStorage {
   }
 
   @Override
-  public IElementType unpackTokenFromData(int data) {
+  public @NotNull IElementType unpackTokenFromData(int data) {
     return data != 0 ? tokenTypes.get(Math.abs(data) - 1) : new TextMateElementType(TextMateScope.EMPTY);
   }
 
   @Override
-  public DataStorage copy() {
+  public @NotNull DataStorage copy() {
     return new TextMateLexerDataStorage(myData, tokenTypeMap, tokenTypes);
   }
 
   @Override
-  public DataStorage createStorage() {
+  public @NotNull DataStorage createStorage() {
     return new TextMateLexerDataStorage(tokenTypeMap, tokenTypes);
   }
 }

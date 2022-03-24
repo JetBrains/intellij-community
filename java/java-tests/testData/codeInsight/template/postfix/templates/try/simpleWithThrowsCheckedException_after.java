@@ -5,7 +5,7 @@ public class Foo {
         try {
             doAct()<caret>
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

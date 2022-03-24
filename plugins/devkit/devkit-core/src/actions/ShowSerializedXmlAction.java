@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
@@ -28,6 +28,7 @@ import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.lang.PathClassLoader;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -82,10 +83,10 @@ public final class ShowSerializedXmlAction extends DumbAwareAction {
     }
 
     final Project project = module.getProject();
-    UrlClassLoader loader = UrlClassLoader.build().files(files).parent(XmlSerializer.class.getClassLoader()).get();
+    PathClassLoader loader = new PathClassLoader(UrlClassLoader.build().files(files).parent(XmlSerializer.class.getClassLoader()));
     final Class<?> aClass;
     try {
-      aClass = Class.forName(className, true, loader);
+      aClass = loader.loadClass(className);
     }
     catch (ClassNotFoundException e) {
       Messages.showErrorDialog(project, DevKitBundle.message("action.ShowSerializedXml.message.cannot.find.class", className),
@@ -194,8 +195,7 @@ public final class ShowSerializedXmlAction extends DumbAwareAction {
       return o;
     }
 
-    @Nullable
-    private Object createArray(Class<?> valueClass, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
+    private @NotNull Object createArray(Class<?> valueClass, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
       final Object[] array = (Object[])Array.newInstance(valueClass.getComponentType(), Math.max(elementTypes.size(), 2));
       for (int i = 0; i < array.length; i++) {
         Type type = elementTypes.isEmpty() ? valueClass.getComponentType() : elementTypes.get(i % elementTypes.size());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -74,7 +74,7 @@ public class HgExecutor {
     int exitValue = result.getExitValue();
     if (!ignoreNonZeroExitCode && exitValue != 0) {
       debug("exit code: " + exitValue + " " + result.getRawOutput());
-      throw new RuntimeException(result.getRawError());
+      throw new HgCommandFailedException(exitValue, result.getRawOutput(), result.getRawError());
     }
     return result.getRawOutput();
   }
@@ -98,5 +98,30 @@ public class HgExecutor {
     //abort: process cannot access the file because it is being used by another process
     if (result == null) return false;
     return HgErrorUtil.isAbort(result) && result.getRawError().contains("used by another process");
+  }
+
+  public static class HgCommandFailedException extends RuntimeException {
+    private final int myExitCode;
+    private final @NotNull String myRawOutput;
+    private final @NotNull String myRawError;
+
+    private HgCommandFailedException(int exitCode, @NotNull String rawOutput, @NotNull String rawError) {
+      super(String.format("output: \"%s\"; error: \"%s\"", rawOutput, rawError));
+      myExitCode = exitCode;
+      myRawOutput = rawOutput;
+      myRawError = rawError;
+    }
+
+    public int getExitCode() {
+      return myExitCode;
+    }
+
+    public @NotNull String getRawOutput() {
+      return myRawOutput;
+    }
+
+    public @NotNull String getRawError() {
+      return myRawError;
+    }
   }
 }

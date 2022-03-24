@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
@@ -39,7 +40,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
       DataManager.getInstance()
         .dataContextFromFocusAsync
         .onSuccess {
-          val popup = PySdkPopupFactory(project, module).createPopup(it) ?: return@onSuccess
+          val popup = PySdkPopupFactory(project, module).createPopup(it)
 
           val component = SwingHelper.getComponentFromRecentMouseEvent()
           if (component != null) {
@@ -73,8 +74,16 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     }
 
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
+    if (Registry.get("python.use.targets.api").asBoolean()) {
+      val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
+      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(it, currentSdk) })
+      group.add(addNewInterpreterPopupGroup)
+      group.addSeparator()
+    }
     group.add(InterpreterSettingsAction())
-    group.add(AddInterpreterAction(currentSdk))
+    if (!Registry.get("python.use.targets.api").asBoolean()) {
+      group.add(AddInterpreterAction(currentSdk))
+    }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
       PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"),

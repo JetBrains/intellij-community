@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.compiled.*
 import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigationPolicy {
     override fun getNavigationElement(clsClass: ClsClassImpl): PsiClass? {
@@ -34,11 +35,11 @@ class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigation
     override fun getNavigationElement(file: ClsFileImpl): PsiElement? {
         val virtualFile = file.virtualFile
         val project = file.project
+        val sourceFileName = file.classes.firstOrNull()?.safeAs<ClsClassImpl>()?.sourceFileName ?: return null
 
         val kotlinScriptConfigurationManager = ScriptConfigurationManager.getInstance(project)
         if (virtualFile !in kotlinScriptConfigurationManager.getAllScriptsDependenciesClassFilesScope()) return null
 
-        val sourceFileName = (file.classes.first() as ClsClassImpl).sourceFileName
         val packageName = file.packageName
         val relativePath = if (packageName.isEmpty()) sourceFileName else packageName.replace('.', '/') + '/' + sourceFileName
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.ide.IdeEventQueue
@@ -12,16 +12,20 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ui.TimerUtil
 import training.dsl.TaskContext
 import training.dsl.impl.LessonExecutor
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 import training.util.DataLoader
@@ -30,6 +34,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.CompletableFuture
+import javax.swing.Timer
 
 private val LOG = logger<ActionsRecorder>()
 
@@ -46,6 +51,7 @@ internal class ActionsRecorder(private val project: Project,
   var disposed = false
     private set
 
+  private var timer: Timer? = null
   private val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
 
   /** Currently registered command listener */
@@ -115,8 +121,8 @@ internal class ActionsRecorder(private val project: Project,
 
       override fun fileOpenedSync(source: FileEditorManager,
                                   file: VirtualFile,
-                                  editors: Pair<Array<FileEditor>, Array<FileEditorProvider>>) {
-        editorListener?.fileOpenedSync(source, file, editors)
+                                  editorsWithProviders: List<FileEditorWithProvider>) {
+        editorListener?.fileOpenedSync(source, file, editorsWithProviders)
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {
@@ -128,7 +134,6 @@ internal class ActionsRecorder(private val project: Project,
   override fun dispose() {
     removeListeners()
     disposed = true
-    Disposer.dispose(this)
   }
 
   fun futureActionOnStart(actionId: String, check: () -> Boolean): CompletableFuture<Boolean> {
@@ -198,6 +203,20 @@ internal class ActionsRecorder(private val project: Project,
           if (mutableListOfActions.isNotEmpty() && mutableListOfActions.first() == event.newFile?.name) mutableListOfActions.removeAt(0)
           if (mutableListOfActions.isEmpty()) future.complete(true)
         }
+      }
+    }
+    return future
+  }
+
+  fun timerCheck(delayMillis: Int = 200, checkFunction: () -> Boolean): CompletableFuture<Boolean> {
+    val future: CompletableFuture<Boolean> = CompletableFuture()
+    val t = timer ?: TimerUtil.createNamedTimer("State Timer Check", delayMillis).also {
+      timer = it
+      it.start()
+    }
+    t.addActionListener {
+      if (checkFunction()) {
+        future.complete(true)
       }
     }
     return future
@@ -288,6 +307,8 @@ internal class ActionsRecorder(private val project: Project,
     commandListener = null
     editorListener = null
     focusChangeListener?.let { KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", it) }
+    timer?.stop()
+    timer = null
   }
 
   private fun getActionId(action: AnAction): String {
@@ -311,7 +332,7 @@ internal class ActionsRecorder(private val project: Project,
       val lesson = LessonManager.instance.currentLesson
       if (activeToolWindow != null && lesson != null) {
         val notification = TaskContext.RestoreNotification(LearnBundle.message("learn.restore.notification.editor.closed")) {
-          CourseManager.instance.openLesson(activeToolWindow.project, lesson)
+          CourseManager.instance.openLesson(activeToolWindow.project, lesson, LessonStartingWay.RESTORE_LINK)
         }
         LessonManager.instance.setRestoreNotification(notification)
       }

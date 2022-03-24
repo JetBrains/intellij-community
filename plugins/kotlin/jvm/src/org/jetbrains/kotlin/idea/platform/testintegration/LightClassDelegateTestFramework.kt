@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class LightClassDelegateTestFramework: LightTestFramework {
     override val name: String = "LightClass"
 
+    override val slowProvider: Boolean = true
+
     override fun qualifiedName(namedDeclaration: KtNamedDeclaration): String? = when (namedDeclaration) {
         is KtClassOrObject -> namedDeclaration.toLightClass()?.qualifiedName
         is KtNamedFunction -> {

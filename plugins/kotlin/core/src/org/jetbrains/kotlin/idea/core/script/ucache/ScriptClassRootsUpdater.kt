@@ -1,26 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -29,8 +28,11 @@ import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -73,6 +75,15 @@ abstract class ScriptClassRootsUpdater(
     private val cache: AtomicReference<ScriptClassRootsCache> = AtomicReference(ScriptClassRootsCache.EMPTY)
 
     init {
+        ProjectManager.getInstance().addProjectManagerListener(project, object : ProjectManagerListener {
+            override fun projectClosing(project: Project) {
+                scheduledUpdate?.apply {
+                    cancel()
+                    awaitCompletion()
+                }
+            }
+        })
+
         ensureUpdateScheduled()
     }
 
@@ -107,8 +118,12 @@ abstract class ScriptClassRootsUpdater(
         update { invalidate() }
     }
 
+    fun isInTransaction(): Boolean {
+        return concurrentUpdates.get() > 0
+    }
+
     fun checkInTransaction() {
-        check(concurrentUpdates.get() > 0)
+        check(isInTransaction())
     }
 
     inline fun <T> update(body: () -> T): T {
@@ -132,12 +147,20 @@ abstract class ScriptClassRootsUpdater(
         scheduleUpdateIfInvalid()
     }
 
+    fun addConfiguration(vFile: VirtualFile, configuration: ScriptCompilationConfigurationWrapper) {
+        update {
+            val builder = classpathRoots.builder(project)
+            builder.add(vFile, configuration)
+            cache.set(builder.build())
+        }
+    }
+
     private fun scheduleUpdateIfInvalid() {
         lock.withLock {
             if (!invalidated) return
             invalidated = false
 
-            if (syncUpdateRequired || ApplicationManager.getApplication().isUnitTestMode) {
+            if (syncUpdateRequired || isUnitTestMode()) {
                 syncUpdateRequired = false
                 updateSynchronously()
             } else {
@@ -146,14 +169,15 @@ abstract class ScriptClassRootsUpdater(
         }
     }
 
-    private var scheduledUpdate: ProgressIndicator? = null
+    private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask<*>? = null
 
     private fun ensureUpdateScheduled() {
+        val disposable = KotlinPluginDisposable.getInstance(project)
         lock.withLock {
             scheduledUpdate?.cancel()
-            val disposable = KotlinPluginDisposable.getInstance(project)
-            if (!Disposer.isDisposed(disposable)) {
-                scheduledUpdate = BackgroundTaskUtil.executeOnPooledThread(disposable) {
+
+            if (!disposable.disposed) {
+                scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
                     doUpdate()
                 }
             }
@@ -168,6 +192,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun doUpdate(underProgressManager: Boolean = true) {
+        val disposable = KotlinPluginDisposable.getInstance(project)
         try {
             val updates = recreateRootsCacheAndDiff()
 
@@ -176,27 +201,42 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
-
-            if (project.isDisposed) return
+            if (disposable.disposed) return
 
             if (updates.hasNewRoots) {
-                notifyRootsChanged()
-            }
+                runInEdt (ModalityState.NON_MODAL) {
+                    runWriteAction {
+                        if (project.isDisposed) return@runWriteAction
 
-            PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project)
-                .clearCache()
+                        scriptingDebugLog { "kotlin.script.dependencies from ${updates.oldRoots} to ${updates.newRoots}" }
 
-            ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+                            project,
+                            KotlinBundle.message("script.name.kotlin.script.dependencies"),
+                            updates.oldRoots,
+                            updates.newRoots,
+                            KotlinBundle.message("script.name.kotlin.script.dependencies")
+                        )
 
-            if (updates.hasUpdatedScripts) {
-                updateHighlighting(project) {
-                    updates.isScriptChanged(it.path)
+                        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                    }
                 }
             }
 
-            val scriptClassRootsCache = updates.cache
-            ScriptCacheDependencies(scriptClassRootsCache).save(project)
-            lastSeen = scriptClassRootsCache
+            runReadAction {
+                if (project.isDisposed) return@runReadAction
+                PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
+
+                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+
+                if (updates.hasUpdatedScripts) {
+                    updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }
+                }
+
+                val scriptClassRootsCache = updates.cache
+                ScriptCacheDependencies(scriptClassRootsCache).save(project)
+                lastSeen = scriptClassRootsCache
+            }
         } finally {
             scheduledUpdate = null
         }
@@ -223,19 +263,6 @@ abstract class ScriptClassRootsUpdater(
         } while (!cache.compareAndSet(old, new))
 
         ensureUpdateScheduled()
-    }
-
-    private fun notifyRootsChanged() {
-        runInEdt (ModalityState.NON_MODAL) {
-            runWriteAction {
-                if (project.isDisposed) return@runWriteAction
-
-                scriptingDebugLog { "roots change event" }
-
-                ProjectRootManagerEx.getInstanceEx(project)?.makeRootsChange(EmptyRunnable.getInstance(), false, true)
-                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
-            }
-        }
     }
 
     private fun updateHighlighting(project: Project, filter: (VirtualFile) -> Boolean) {

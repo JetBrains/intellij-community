@@ -77,7 +77,7 @@ fun createMultifileClassStub(
 ): KotlinFileStubImpl {
     val packageFqName = header.packageName?.let { FqName(it) } ?: facadeFqName.parent()
     val partNames = header.data?.asList()?.map { it.substringAfterLast('/') }
-    val fileStub = KotlinFileStubForIde.forMultifileClassStub(facadeFqName, partNames)
+    val fileStub = KotlinFileStubForIde.forMultifileClassStub(packageFqName, facadeFqName, partNames)
     setupFileStub(fileStub, packageFqName)
     for (partFile in partFiles) {
         val partHeader = partFile.classHeader

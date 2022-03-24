@@ -84,7 +84,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   /**
    * @deprecated Use {@link #multiResolveName(String)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   PsiElement getElementNamed(String name);
 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
 class NotNullAwareUseOfWildcardAsTypeArgument {
-  @DefaultNonNull
+  @NullMarked
   interface Lib<T extends @Nullable Object> {}
 
   interface Super {
     Lib<?> get();
   }
 
-  @DefaultNonNull
+  @NullMarked
   class Caller {
     @Nullable
     Lib<? extends Object> x0(Super s) {

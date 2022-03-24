@@ -1,4 +1,4 @@
-// "Replace iteration with bulk 'TestClass.test' call" "true"
+// "Replace iteration with bulk 'TestClass.test()' call" "true"
 package testpackage;
 
 interface TestClass<T> {

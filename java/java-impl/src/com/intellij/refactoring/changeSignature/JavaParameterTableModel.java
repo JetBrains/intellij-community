@@ -53,7 +53,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
          new AnyVarColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>() {
         @Override
         public boolean isCellEditable(ParameterTableModelItemBase<ParameterInfoImpl> item) {
-          boolean isGenerateDelegate = ((ChangeSignatureDialogBase)dialog).isGenerateDelegate();
+          boolean isGenerateDelegate = ((ChangeSignatureDialogBase<?, ?, ?, ?, ?, ?>)dialog).isGenerateDelegate();
           return !isGenerateDelegate && super.isCellEditable(item);
         }
       });

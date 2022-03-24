@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -9,6 +9,7 @@ import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
+import com.intellij.tests.IgnoreException;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +35,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 
@@ -97,6 +99,7 @@ public class TestAll implements Test {
 
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
+  private int myIgnoredTests;
   private TestRecorder myTestRecorder;
 
   private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
@@ -192,13 +195,15 @@ public class TestAll implements Test {
   }
 
   @Override
-  public void run(final TestResult testResult) {
+  public void run(TestResult testResult) {
     loadTestRecorder();
 
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
     }
+
+    testResult = RetriesImpl.maybeEnable(testResult);
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
@@ -276,7 +281,8 @@ public class TestAll implements Test {
   private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
     myRunTests++;
 
-    int count = testResult.errorCount() + testResult.failureCount();
+    int errorCount = testResult.errorCount();
+    int count = errorCount + testResult.failureCount() - myIgnoredTests;
     if (count > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT >= 0) {
       addErrorMessage(testResult, "Too many errors (" + count + ", MAX_FAILURE_TEST_COUNT = " + MAX_FAILURE_TEST_COUNT + "). Executed: " + myRunTests + " of " + totalTests);
       testResult.stop();
@@ -292,6 +298,17 @@ public class TestAll implements Test {
     }
     catch (Throwable t) {
       testResult.addError(test, t);
+    }
+
+    if (testResult.errorCount() > errorCount) {
+      Enumeration<TestFailure> errors = testResult.errors();
+      while (errors.hasMoreElements()) {
+        TestFailure failure = errors.nextElement();
+        if (errorCount-- > 0) continue;
+        if (IgnoreException.isIgnoringThrowable(failure.thrownException())) {
+          myIgnoredTests++;
+        }
+      }
     }
   }
 
@@ -312,7 +329,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -346,7 +363,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName()))) {
               return;
             }
 
@@ -388,18 +405,32 @@ public class TestAll implements Test {
 
   private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
     if (ourUnit4TestAdapterCache == null) {
-      try {
-        //noinspection SpellCheckingInspection
-        ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)
-          Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
-            .getMethod("getInstance")
-            .invoke(null);
+      JUnit4TestAdapterCache cache;
+      if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
+        try {
+          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5Runner")
+                .getMethod("createJUnit4TestAdapterCache")
+                .invoke(null);
+        }
+        catch (Throwable e) {
+          cache = JUnit4TestAdapterCache.getDefault();
+        }
       }
-      catch (Exception e) {
-        System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
-                           " and ignored tests won't be properly reported: " + e);
-        ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+      else {
+        try {
+          //noinspection SpellCheckingInspection
+          cache = (JUnit4TestAdapterCache)
+            Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
+              .getMethod("getInstance")
+              .invoke(null);
+        }
+        catch (Exception e) {
+          System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
+                             " and ignored tests won't be properly reported: " + e);
+          cache = JUnit4TestAdapterCache.getDefault();
+        }
       }
+      ourUnit4TestAdapterCache = RetriesImpl.maybeEnable(cache);
     }
     return ourUnit4TestAdapterCache;
   }

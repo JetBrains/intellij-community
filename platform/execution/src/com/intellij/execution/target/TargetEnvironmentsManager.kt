@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Companion.toOneTargetState
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -70,22 +71,14 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     }
   }
 
-  internal class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(
-    TargetEnvironmentType.EXTENSION_NAME) {
-    override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState =
-      OneTargetState().also {
-        it.loadFromConfiguration(config)
-        it.uuid = config.uuid
-        it.runtimes = config.runtimes.state.configs
-      }
+  class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(
+    TargetEnvironmentType.EXTENSION_NAME
+  ) {
+    override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState = config.toOneTargetState()
 
-    override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? {
-      val result = super.fromOneState(state)
-      if (result != null && state is OneTargetState) {
-        result.uuid = state.uuid ?: UUID.randomUUID().toString()
-        result.runtimes.loadState(state.runtimes)
-      }
-      return result
+    override fun fromOneState(state: ContributedStateBase) = when (state) {
+      is OneTargetState -> state.toTargetConfiguration()
+      else -> super.fromOneState(state) // unexpected, but I do not want to fail just in case
     }
   }
 
@@ -104,5 +97,20 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     @get: XCollection(style = XCollection.Style.v2)
     @get: Property(surroundWithTag = false)
     var runtimes by list<ContributedConfigurationsList.ContributedStateBase>()
+
+    fun toTargetConfiguration(): TargetEnvironmentConfiguration? {
+      return TargetEnvironmentType.EXTENSION_NAME.deserializeState(this)?.also { result ->
+        result.uuid = uuid ?: UUID.randomUUID().toString()
+        result.runtimes.loadState(runtimes)
+      }
+    }
+
+    companion object {
+      fun TargetEnvironmentConfiguration.toOneTargetState() = OneTargetState().also { state ->
+        state.loadFromConfiguration(this)
+        state.uuid = uuid
+        state.runtimes = runtimes.state.configs
+      }
+    }
   }
 }

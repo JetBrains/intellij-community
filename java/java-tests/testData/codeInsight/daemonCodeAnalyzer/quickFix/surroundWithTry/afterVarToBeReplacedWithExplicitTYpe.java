@@ -5,7 +5,7 @@ public class Test {
         try {
             foo = bar();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         foo.toString();
     }

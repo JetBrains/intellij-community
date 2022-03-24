@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -16,10 +17,14 @@ import java.awt.geom.Path2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource {
-  private static final JBInsets DEFAULT_INSETS = JBUI.insets(1);
+  private static final JBInsets DEFAULT_INSETS = new JBInsets(1);
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (IdeaPopupMenuUI.isUnderPopup(c)) {
+      return;
+    }
+
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));
@@ -50,9 +55,10 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
     if (isComboPopup(c)) {
       return JBInsets.create(1, 2).asUIResource();
     }
-    else {
+    if (IdeaPopupMenuUI.isUnderPopup(c)) {
       return JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS).asUIResource();
     }
+    return DEFAULT_INSETS.asUIResource();
   }
 
   protected static boolean isComboPopup(Component c) {

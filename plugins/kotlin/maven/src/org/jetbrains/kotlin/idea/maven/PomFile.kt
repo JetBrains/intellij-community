@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
@@ -29,8 +28,10 @@ import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildA
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
@@ -226,7 +227,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
         val project: MavenProject =
             MavenProjectsManager.getInstance(module.project).findProject(module) ?: run {
-                if (ApplicationManager.getApplication().isUnitTestMode) {
+                if (isUnitTestMode()) {
                     LOG.warn("WARNING: Bad project configuration in tests. Javac execution configuration was skipped.")
                     return
                 }
@@ -697,7 +698,8 @@ fun PomFile.changeFeatureConfiguration(
         }
 
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }
-    val featureArgumentString = feature.buildArgumentString(state, kotlinPlugin.version.stringValue)
+    val kotlinVersion = kotlinPlugin.version.stringValue?.let(IdeKotlinVersion::opt)
+    val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
     val childTag = argsSubTag.createChildTag("arg", featureArgumentString)
     return argsSubTag.add(childTag)
 }

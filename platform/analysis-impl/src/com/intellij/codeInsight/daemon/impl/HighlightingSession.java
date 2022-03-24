@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,4 +37,7 @@ public interface HighlightingSession {
   ProgressIndicator getProgressIndicator();
 
   EditorColorsScheme getColorsScheme();
+
+  @NotNull
+  ProperTextRange getVisibleRange();
 }

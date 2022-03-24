@@ -64,7 +64,7 @@ fun buildDecompiledTextForClassFile(
     }
 
     fun buildText(declarations: List<DeclarationDescriptor>) = buildDecompiledText(
-        classHeader.packageName?.let(::FqName) ?: classId.packageFqName,
+        classHeader.packageNameWithFallback,
         declarations, decompilerRendererForClassFiles, listOf(ByDescriptorIndexer, BySignatureIndexer)
     )
 

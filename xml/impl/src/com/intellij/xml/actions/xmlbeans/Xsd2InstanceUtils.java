@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -97,7 +97,7 @@ public class Xsd2InstanceUtils {
             StringBuilder out = new StringBuilder("Schema compilation errors: ");
             Collection errors = e.getErrors();
             for (Object error : errors) out.append("\n").append(error);
-              throw new IllegalArgumentException(out.toString());
+            throw new IllegalArgumentException(out.toString());
           }
         }
 

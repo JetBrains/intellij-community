@@ -19,7 +19,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -328,10 +327,8 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
         final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker = info.quickFixActionRanges.get(0);
         final PsiElement someElement = myFixture.getFile().findElementAt(0);
         assertNotNull(someElement);
-        final List<IntentionAction> options = marker.getFirst().getOptions(someElement, myFixture.getEditor());
-        assertNotNull(options);
         boolean doBreak = false;
-        for (IntentionAction option : options) {
+        for (IntentionAction option : marker.getFirst().getOptions(someElement, myFixture.getEditor())) {
           if (option instanceof CleanupInspectionIntention) {
             myFixture.launchAction(option);
             doBreak = true;

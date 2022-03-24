@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -60,6 +60,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new AccessStaticViaInstance());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -342,20 +343,18 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    final StringBuilder sb = new StringBuilder("\"-\"");
-    for (int i = 0; i < 10000; i++) sb.append("+\"b\"");
-    final String hugeExpr = sb.toString();
-    final int pos = getEditor().getDocument().getText().indexOf("\"\"");
+    String hugeExpr = "\"-\"" + "+\"b\"".repeat(10000);
+    int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
 
-    final PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
-    final PsiExpression expression = field.getInitializer();
+    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    PsiExpression expression = field.getInitializer();
     assert expression != null;
-    final PsiType type = expression.getType();
+    PsiType type = expression.getType();
     assert type != null;
     assertEquals("PsiType:String", type.toString());
   }

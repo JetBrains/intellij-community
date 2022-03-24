@@ -1,23 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogConfigParserException;
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
 import com.intellij.internal.statistic.config.EventLogExternalSettings;
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
-import com.intellij.internal.statistic.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsResponseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class SettingsConnectionService {
@@ -86,8 +91,16 @@ public abstract class SettingsConnectionService {
   }
 
   private void logError(Exception e) {
-    final String message = e.getMessage();
-    myApplicationInfo.getLogger().warn(message != null ? message : "", e);
+    final String message = String.format(Locale.ENGLISH, "%s: %s", e.getClass().getName(),
+                                         Objects.requireNonNullElse(e.getMessage(), "No message provided"));
+
+    if (e instanceof ConnectException || e instanceof HttpTimeoutException ||
+        e instanceof SSLHandshakeException || e instanceof StatsResponseException) {
+      // Expected non-critical problems: no connection, bad connection, errors on loading data
+      myApplicationInfo.getLogger().info(message);
+    } else {
+      myApplicationInfo.getLogger().warn(message, e);
+    }
     myApplicationInfo.getEventLogger().logErrorEvent("loading.config.failed", e);
   }
 }

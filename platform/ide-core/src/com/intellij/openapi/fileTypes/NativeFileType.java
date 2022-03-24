@@ -14,33 +14,28 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public final class NativeFileType implements INativeFileType {
   public static final NativeFileType INSTANCE = new NativeFileType();
 
   private NativeFileType() { }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "Native";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return IdeCoreBundle.message("filetype.native.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return IdeCoreBundle.message("filetype.native.display.name");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "";
   }
 
@@ -55,7 +50,7 @@ public final class NativeFileType implements INativeFileType {
   }
 
   @Override
-  public boolean openFileInAssociatedApplication(final Project project, @NotNull final VirtualFile file) {
+  public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
     return openAssociatedApplication(file);
   }
 
@@ -64,9 +59,14 @@ public final class NativeFileType implements INativeFileType {
     return true;
   }
 
-  public static boolean openAssociatedApplication(@NotNull final VirtualFile file) {
-    final List<String> commands = new ArrayList<>();
+  public static boolean openAssociatedApplication(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) {
+      throw new IllegalArgumentException("Non-local file: " + file + "; FS=" + file.getFileSystem());
+    }
+
+    List<String> commands = new ArrayList<>();
     if (SystemInfo.isWindows) {
+      //noinspection SpellCheckingInspection
       commands.add("rundll32.exe");
       commands.add("url.dll,FileProtocolHandler");
     }
@@ -79,7 +79,7 @@ public final class NativeFileType implements INativeFileType {
     else {
       return false;
     }
-    commands.add(file.getPath());
+    commands.add(file.getPresentableUrl());
 
     try {
       new GeneralCommandLine(commands).createProcess();

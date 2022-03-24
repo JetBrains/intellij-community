@@ -27,6 +27,8 @@ import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
+import java.util.List;
+
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
@@ -1479,4 +1481,23 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoSemicolonAfterNonLastVariableInitializer() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testSuggestExceptionTypes() {
+    myFixture.configureByText("Test.java", "import java.io.*;\n" +
+                                          "\n" +
+                                          "class X {\n" +
+                                          "  void test() {\n" +
+                                          "    try {\n" +
+                                          "      new FileInputStream(\"/etc/passwd\");\n" +
+                                          "    }\n" +
+                                          "    catch(<caret>)\n" +
+                                          "  }\n" +
+                                          "}\n" +
+                                          "class MyException extends FileNotFoundException {}\n" +
+                                          "class My2Exception extends MyException {}");
+    myFixture.complete(CompletionType.SMART);
+    myFixture.assertPreferredCompletionItems(0, "FileNotFoundException", "IOException", "Exception", "Throwable",
+                                             "MyException", "My2Exception",
+                                             "RuntimeException", "ArithmeticException", "ArrayIndexOutOfBoundsException");
+  }
 }

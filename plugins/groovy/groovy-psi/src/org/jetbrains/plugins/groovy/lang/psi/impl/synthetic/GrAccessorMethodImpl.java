@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -29,6 +30,10 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   private final boolean myIsSetter;
 
   public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name) {
+    this(property, isSetter, name, null);
+  }
+
+  public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name, @Nullable Integer modifierMask) {
     super(property.getManager(), GroovyLanguage.INSTANCE, name,
           new LightParameterListBuilder(property.getManager(), GroovyLanguage.INSTANCE),
           new LightModifierList(property.getManager()) {
@@ -54,7 +59,18 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
 
     setMethodReturnType(myIsSetter ? PsiType.VOID : myProperty.getType());
 
-    addModifier(PsiModifier.PUBLIC);
+    if (modifierMask == null) {
+      addModifier(PsiModifier.PUBLIC);
+    }
+    else if ((modifierMask & GrModifierFlags.PUBLIC_MASK) != 0) {
+      addModifier(PsiModifier.PUBLIC);
+    }
+    else if ((modifierMask & GrModifierFlags.PROTECTED_MASK) != 0) {
+      addModifier(PsiModifier.PROTECTED);
+    }
+    else if ((modifierMask & GrModifierFlags.PRIVATE_MASK) != 0) {
+      addModifier(PsiModifier.PRIVATE);
+    }
     GrModifierList modifierList = myProperty.getModifierList();
     if (modifierList != null && GrModifierListUtil.hasModifierProperty(modifierList, PsiModifier.STATIC, false)) {
       addModifier(PsiModifier.STATIC);
@@ -72,7 +88,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
 
     setContainingClass(myProperty.getContainingClass());
     setMethodKind("AccessorMethod");
-    setOriginInfo("synthetic accessor for '"+myProperty.getName()+"'");
+    setOriginInfo("synthetic accessor for '" + myProperty.getName() + "'");
   }
 
   @Override
@@ -86,7 +102,6 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   public boolean isSetter() {
     return myIsSetter;
   }
-
 
   @Override
   public PsiElement copy() {
@@ -131,5 +146,10 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       if (PsiModifier.FINAL.equals(name)) return false;
     }
     return super.hasModifierProperty(name);
+  }
+
+  @Override
+  public @NotNull LightModifierList getModifierList() {
+    return (LightModifierList)super.getModifierList();
   }
 }

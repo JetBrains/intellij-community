@@ -11,19 +11,16 @@ public interface JsonPathPathExpression extends JsonPathExpression {
   JsonPathEvalSegment getEvalSegment();
 
   @NotNull
+  List<JsonPathExpressionSegment> getExpressionSegmentList();
+
+  @NotNull
   List<JsonPathFunctionCall> getFunctionCallList();
 
   @NotNull
   List<JsonPathIdSegment> getIdSegmentList();
 
-  @NotNull
-  List<JsonPathQuotedSegment> getQuotedSegmentList();
-
   @Nullable
   JsonPathRootSegment getRootSegment();
-
-  @NotNull
-  List<JsonPathSegmentExpression> getSegmentExpressionList();
 
   @NotNull
   List<JsonPathWildcardSegment> getWildcardSegmentList();

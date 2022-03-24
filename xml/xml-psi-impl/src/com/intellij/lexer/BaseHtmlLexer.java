@@ -4,20 +4,19 @@ package com.intellij.lexer;
 import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
 import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
 import com.intellij.html.embedding.HtmlEmbedment;
-import com.intellij.lang.HtmlScriptContentProvider;
-import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.xml.XmlTokenType.*;
@@ -223,120 +222,5 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
   protected boolean isHtmlTagState(int state) {
     return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME;
-  }
-
-  /* Deprecated APIs kept for binary compatibility */
-  /**
-   * This API does no longer work. The value of the field is always {@code false}.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected boolean seenAttribute;
-
-  /**
-   * This API does no longer work. The value of the field is always {@code false}.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected boolean seenScript;
-
-  /**
-   * This API does no longer work. The value of the field is always {@code false}.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected boolean seenStyle;
-
-  /**
-   * This API does no longer work. The value of the field is always {@code false}.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected boolean seenTag;
-
-  /**
-   * This API does no longer work. The value of the field is always {@code false}.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected boolean seenStylesheetType;
-
-  /**
-   * This API does no longer work. The value of the field is always {@code null}.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected String styleType;
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected void registerHandler(IElementType elementType, TokenHandler value) {
-    logLegacyLexer();
-  }
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
-    logLegacyLexer();
-    return null;
-  }
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Nullable
-  protected Language getStyleLanguage() {
-    logLegacyLexer();
-    return null;
-  }
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public interface TokenHandler {
-    void handleElement(Lexer lexer);
-  }
-
-  private static final Set<Class<? extends BaseHtmlLexer>> ourLegacyLexers = ContainerUtil.newConcurrentSet();
-  private static final Logger LOG = Logger.getInstance(BaseHtmlLexer.class);
-
-  void logLegacyLexer() {
-    if (ourLegacyLexers.add(this.getClass())) {
-      LOG.error("Lexer of class " +
-                this.getClass().getName() +
-                " is using deprecated and no longer working APIs. The lexer might fail to correctly lex source code.");
-    }
   }
 }

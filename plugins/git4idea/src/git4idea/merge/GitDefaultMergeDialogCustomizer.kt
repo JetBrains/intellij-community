@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.ActionLink
@@ -32,7 +33,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil.*
-import git4idea.GitVcs
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryUtils
@@ -181,8 +181,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
     val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
 
-    val shortDetails = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), repository.root,
-                                                  listOf(cherryPickHead.asString()))
+    val shortDetails = GitLogUtil.collectMetadata(project, repository.root, listOf(cherryPickHead.asString()))
 
     val result = shortDetails.singleOrNull() ?: return null
     return CherryPickDetails(cherryPickHead.toShortString(), result.author.name, result.subject)
@@ -288,8 +287,8 @@ internal fun getTitleWithCommitDetailsCustomizer(
   @NlsSafe commit: String
 ) = DiffEditorTitleCustomizer {
   getTitleWithShowDetailsAction(title) {
-    val dlg = ChangeListViewerDialog(repository.project)
-    dlg.loadChangesInBackground {
+    val panel = LoadingCommittedChangeListPanel(repository.project)
+    panel.loadChangesInBackground {
       val changeList = GitChangeUtils.getRevisionChanges(
         repository.project,
         repository.root,
@@ -298,8 +297,10 @@ internal fun getTitleWithCommitDetailsCustomizer(
         false,
         false
       )
-      ChangeListViewerDialog.ChangelistData(changeList, file)
+      LoadingCommittedChangeListPanel.ChangelistData(changeList, file)
     }
+
+    val dlg = ChangeListViewerDialog(repository.project, panel)
     dlg.title = StringUtil.stripHtml(title, false)
     dlg.isModal = true
     dlg.show()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -112,7 +112,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         StoreUtil.saveDocumentsAndProjectSettings(project);
       }
 
-      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
+      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
+          AbstractCommonUpdateAction.this.onSuccess();
+        }
+      };
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         task.run(new EmptyProgressIndicator());
@@ -124,6 +130,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     catch (ProcessCanceledException ignored) {
     }
   }
+
+  protected void onSuccess() {}
 
   private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
@@ -447,7 +455,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId("vcs.project.partially.updated");
+      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
@@ -555,7 +563,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           type = NotificationType.INFORMATION;
         }
         VcsNotifier.getInstance(myProject).notify(
-          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId("vcs.project.update.finished"));
+          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 

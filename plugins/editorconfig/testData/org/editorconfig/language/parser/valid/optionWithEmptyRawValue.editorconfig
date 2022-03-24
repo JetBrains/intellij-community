@@ -1,0 +1,3 @@
+[*.cs]
+file_header_template =
+charset=utf-8

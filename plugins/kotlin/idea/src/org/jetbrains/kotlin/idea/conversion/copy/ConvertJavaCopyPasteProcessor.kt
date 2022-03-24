@@ -113,7 +113,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         ): TextRange? {
             if (referenceData.isEmpty() && explicitImports.isEmpty()) return bounds
 
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
+            PsiDocumentManager.getInstance(project).commitDocument(document)
 
             val rangeMarker = document.createRangeMarker(bounds)
             rangeMarker.isGreedyToLeft = true
@@ -167,7 +167,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
 
             val newBounds = insertImports(boundsAfterReplace, referenceData, explicitImports)
 
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
+            PsiDocumentManager.getInstance(project).commitDocument(document)
             runPostProcessing(project, targetFile, newBounds, conversionResult?.converterContext, useNewJ2k)
 
             conversionPerformed = true
@@ -193,8 +193,8 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         importsAndPackage: String,
         targetFile: KtFile
     ): Collection<KotlinReferenceData> {
-        var blockStart: Int? = null
-        var blockEnd: Int? = null
+        var blockStart: Int
+        var blockEnd: Int
         val fileText = buildString {
             append(importsAndPackage)
 
@@ -213,8 +213,8 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         }
 
         val dummyFile = KtPsiFactory(targetFile.project).createAnalyzableFile("dummy.kt", fileText, targetFile)
-        val startOffset = blockStart!!
-        val endOffset = blockEnd!!
+        val startOffset = blockStart
+        val endOffset = blockEnd
         return KotlinCopyPasteReferenceProcessor().collectReferenceData(dummyFile, intArrayOf(startOffset), intArrayOf(endOffset)).map {
             it.copy(startOffset = it.startOffset - startOffset, endOffset = it.endOffset - startOffset)
         }
@@ -365,7 +365,7 @@ fun runPostProcessing(
                         processor.updateState(0, phase, description)
                     }
             },
-            KotlinBundle.message("copy.text.convert.java.to.kotlin"),
+            @Suppress("DialogTitleCapitalization") KotlinBundle.message("copy.text.convert.java.to.kotlin.title"),
             true,
             project
         )

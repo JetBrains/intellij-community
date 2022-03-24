@@ -1,11 +1,11 @@
-from typing import Any, Pattern
+from typing import Pattern
 
 from markdown.blockprocessors import BlockProcessor, ListIndentProcessor
 from markdown.extensions import Extension
 
 class DefListProcessor(BlockProcessor):
-    RE: Pattern
-    NO_INDENT_RE: Pattern
+    RE: Pattern[str]
+    NO_INDENT_RE: Pattern[str]
 
 class DefListIndentProcessor(ListIndentProcessor): ...
 class DefListExtension(Extension): ...

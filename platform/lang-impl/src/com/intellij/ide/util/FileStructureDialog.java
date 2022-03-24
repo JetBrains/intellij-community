@@ -178,7 +178,7 @@ public class FileStructureDialog extends DialogWrapper {
     ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, myTreeStructure, null, showRoot) {
       @Override
       protected boolean shouldEnterSingleTopLevelElement(Object rootChild) {
-        Object element = ((StructureViewTreeElement)((AbstractTreeNode)rootChild).getValue()).getValue();
+        Object element = ((StructureViewTreeElement)((AbstractTreeNode<?>)rootChild).getValue()).getValue();
         return myBaseTreeModel.shouldEnterElement(element);
       }
 
@@ -269,7 +269,7 @@ public class FileStructureDialog extends DialogWrapper {
 
   private void addCheckbox(final JPanel panel, final TreeAction action) {
     String text = action instanceof FileStructureFilter ? ((FileStructureFilter)action).getCheckBoxText() :
-                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider)action).getCheckBoxText() : null;
+                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider<?>)action).getCheckBoxText() : null;
 
     if (text == null) return;
 
@@ -446,7 +446,7 @@ public class FileStructureDialog extends DialogWrapper {
 
       for (Object child : childElements) {
         if (child instanceof AbstractTreeNode) {
-          Object value = ((AbstractTreeNode)child).getValue();
+          Object value = ((AbstractTreeNode<?>)child).getValue();
           if (value instanceof TreeElement) {
             String name = ((TreeElement)value).getPresentation().getPresentableText();
             if (name == null) {

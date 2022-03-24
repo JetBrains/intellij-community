@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -52,7 +52,7 @@ public final class PatternCompiler {
    */
   public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
-    return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
+    return ReadAction.nonBlocking(() -> doCompilePattern(project, options, checkForErrors, optimizeScope)).executeSynchronously();
   }
 
   @Nullable
@@ -442,7 +442,7 @@ public final class PatternCompiler {
         try {
           MatchVariableConstraint constraint = options.getVariableConstraint(name);
           if (constraint == null) {
-            // we do not edited the constraints
+            // we do not edit the constraints
             constraint = options.addNewVariableConstraint(name);
           }
 

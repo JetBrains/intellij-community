@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,14 +27,22 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting{
+public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting, AutoCompletionContributor{
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
+
+  @Override
+  public List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition) {
+    return myDelegate instanceof AutoCompletionContributor
+           ? ((AutoCompletionContributor)myDelegate).getAutocompleteItems(pattern, caretPosition)
+           : Collections.emptyList();
+  }
 
   public static SearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
     if (Registry.is("psi.element.list.cell.renderer.background")) {
@@ -320,7 +329,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   public static PsiElement toPsi(Object o) {
     if (o instanceof PsiElement) return (PsiElement)o;
     if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
-
+    if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem) o).getTargetElement();
     return null;
   }
 }

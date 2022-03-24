@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
@@ -20,7 +20,7 @@ import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-class FileBasedIndexTumbler {
+class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val dumbModeSemaphore = Semaphore()
 
@@ -34,24 +34,15 @@ class FileBasedIndexTumbler {
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
-        val unitTestMode = app.isUnitTestMode
-        if (!unitTestMode) {
+        val headless = app.isHeadlessEnvironment
+        if (!headless) {
           val wasUp = dumbModeSemaphore.isUp
           dumbModeSemaphore.down()
           if (wasUp) {
             for (project in ProjectUtil.getOpenProjects()) {
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
-              dumbService.queueTask(object : DumbModeTask(dumbModeSemaphore) {
-                override fun performInDumbMode(indicator: ProgressIndicator) {
-                  indicator.text = IndexingBundle.message("indexes.reloading")
-                  dumbModeSemaphore.waitFor()
-                }
-
-                override fun toString(): String {
-                  return "Plugin loading/unloading"
-                }
-              })
+              MyDumbModeTask(dumbModeSemaphore).queue(project)
             }
           }
         }
@@ -59,7 +50,7 @@ class FileBasedIndexTumbler {
         LOG.assertTrue(fileTypeTracker == null)
         fileTypeTracker = FileTypeTracker()
         fileBasedIndex.waitUntilIndicesAreInitialized()
-        fileBasedIndex.performShutdown(true)
+        fileBasedIndex.performShutdown(true, reason)
         fileBasedIndex.dropRegisteredIndexes()
         val indexesAreOk = RebuildStatus.isOk()
         RebuildStatus.reset()
@@ -79,34 +70,33 @@ class FileBasedIndexTumbler {
   }
 
   @JvmOverloads
-  fun turnOn(beforeIndexTasksStarted: Runnable? = null, reason: @NonNls String? = null) {
+  fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread)
     nestedLevelCount--
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
-        val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
-        if (unitTestMode) {
+        val headless = ApplicationManager.getApplication().isHeadlessEnvironment
+        if (headless) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
-        if (!unitTestMode) {
+        if (!headless) {
           dumbModeSemaphore.up()
         }
 
-        val runRescanning = Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
-                            !RebuildStatus.isOk() ||
+        val runRescanning = CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
-                            FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture())
+                            FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag()
           for (project in ProjectUtil.getOpenProjects()) {
-            DumbService.getInstance(project).queueTask(UnindexedFilesUpdater(project, reason))
+            UnindexedFilesUpdater(project, reason).queue(project)
           }
-          LOG.info("Index rescanning has been started after plugin load/unload")
+          LOG.info("Index rescanning has been started after `$reason`")
         }
         else {
-          LOG.info("Index rescanning has been skipped after plugin load/unload")
+          LOG.info("Index rescanning has been skipped after `$reason`")
         }
       }
       finally {
@@ -119,6 +109,20 @@ class FileBasedIndexTumbler {
 
   companion object {
     private val LOG = logger<FileBasedIndexTumbler>()
+
+    private class MyDumbModeTask(val semaphore: Semaphore) : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {
+        indicator.text = IndexingBundle.message("indexes.reloading")
+        semaphore.waitFor()
+      }
+
+      override fun toString(): String {
+        return "Plugin loading/unloading"
+      }
+
+      override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
+        if (taskFromQueue is MyDumbModeTask && taskFromQueue.semaphore === semaphore) this else null
+    }
   }
 }
 

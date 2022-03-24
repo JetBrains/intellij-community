@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -35,6 +34,8 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
+import org.jetbrains.kotlin.idea.search.useScope
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
@@ -79,7 +80,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             return elementsToSearch.asSequence().flatMap {
                 val searchParameters = KotlinReferencesSearchParameters(
                     it,
-                    if (it.hasActualModifier()) it.project.projectScope() else it.useScope,
+                    if (it.hasActualModifier()) it.project.projectScope() else it.useScope(),
                     kotlinOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = true)
                 )
                 ReferencesSearch.search(searchParameters).asSequence()
@@ -236,7 +237,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 else -> return
             }
             for (constructor in constructors) {
-                constructor.processDelegationCallConstructorUsages((constructor as PsiElement).useScope) {
+                constructor.processDelegationCallConstructorUsages((constructor as PsiElement).useScope()) {
                     if (!getIgnoranceCondition().value(it)) {
                         usages.add(SafeDeleteReferenceSimpleDeleteUsageInfo(it, element, false))
                     }
@@ -355,7 +356,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         }
 
         if (overridingMethodUsages.isNotEmpty()) {
-            if (ApplicationManager.getApplication()!!.isUnitTestMode) {
+            if (isUnitTestMode()) {
                 result.addAll(overridingMethodUsages)
             } else {
                 val dialog = KotlinOverridingDialog(project, overridingMethodUsages)
@@ -420,7 +421,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
     }
 
     private fun shouldAllowPropagationToExpected(parameter: KtParameter): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) return parameter.project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
+        if (isUnitTestMode()) return parameter.project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
 
         return Messages.showYesNoDialog(
             KotlinBundle.message("do.you.want.to.delete.this.parameter.in.expected.declaration.and.all.related.actual.ones"),
@@ -430,7 +431,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
     }
 
     private fun shouldAllowPropagationToExpected(): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) return true
+        if (isUnitTestMode()) return true
 
         return Messages.showYesNoDialog(
             KotlinBundle.message("do.you.want.to.delete.expected.declaration.together.with.all.related.actual.ones"),
@@ -473,7 +474,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
         return when (element) {
             is KtNamedFunction, is KtProperty -> {
-                if (ApplicationManager.getApplication()!!.isUnitTestMode) return Collections.singletonList(element)
+                if (isUnitTestMode()) return Collections.singletonList(element)
                 checkSuperMethods(element as KtDeclaration, allElementsToDelete, KotlinBundle.message("delete.with.usage.search"))
             }
             else ->

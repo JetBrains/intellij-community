@@ -45,6 +45,16 @@ public class MockModule extends MockComponentManager implements Module {
     return new MockGlobalSearchScope();
   }
 
+  @Override
+  public @NotNull GlobalSearchScope getModuleProductionSourceScope() {
+    throw new UnsupportedOperationException("Method getModuleProductionSourceScope is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleTestSourceScope() {
+    throw new UnsupportedOperationException("Method getModuleTestSourceScope is not yet implemented in " + getClass().getName());
+  }
+
   @NotNull
   @Override
   public GlobalSearchScope getModuleScope() {

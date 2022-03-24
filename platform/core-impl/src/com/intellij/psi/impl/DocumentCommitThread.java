@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,14 +87,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     assert !isDisposed;
 
     if (!project.isInitialized() && !project.isDefault()) {
-      @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
-      try {
-        Disposer.dispose(project);
-      }
-      catch (Throwable ignored) {
-        // do not fill log with endless exceptions
-      }
-      throw new RuntimeException(s);
+      throw new IllegalArgumentException("Must not call sync commit with unopened project: "+ project + "; Disposed: " + project.isDisposed() + "; Open: " + project.isOpen());
     }
 
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
@@ -118,7 +110,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       finishProcessors.add(handleCommitWithoutPsi(task, documentManager));
     }
     else {
-      // while we were messing around transferring things to background thread, the viewprovider can become obsolete
+      // while we were messing around transferring things to background thread, the ViewProvider can become obsolete
       // when e.g. virtual file was renamed. store new provider to retain it from GC
       task.cachedViewProvider = viewProvider;
 
@@ -176,7 +168,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   @TestOnly
-  // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
+  // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -244,7 +236,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     }
   }
 
-  // returns runnable to execute under write action in AWT to finish the commit
+  // returns runnable to execute under the write action in AWT to finish the commit
   @NotNull
   private static BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,

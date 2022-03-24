@@ -48,7 +48,7 @@ object Urls {
       }
       // https://stackoverflow.com/questions/5330104/encoding-url-query-parameters-in-java
       result.append(URLUtil.encodeURIComponent(name))
-      if (value != null && value.isNotEmpty()) {
+      if (!value.isNullOrEmpty()) {
         result.append('=').append(URLUtil.encodeURIComponent(value))
       }
     }

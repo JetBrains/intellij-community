@@ -1,5 +1,5 @@
 // INTENTION_TEXT: "Add import for 'kotlin.LazyThreadSafetyMode.NONE'"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     val v1: Int by lazy(LazyThreadSafetyMode.NONE<caret>) { 1 }

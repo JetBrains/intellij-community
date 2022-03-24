@@ -24,6 +24,15 @@ interface TargetPresentation {
     fun builder(@Nls presentableText: String): TargetPresentationBuilder {
       return SymbolNavigationService.getInstance().presentationBuilder(presentableText)
     }
+
+    /**
+     * @return a builder instance initialized from existing [presentation]
+     */
+    @JvmStatic
+    fun builder(presentation: TargetPresentation): TargetPresentationBuilder {
+      // the only implementation is also a builder
+      return presentation as TargetPresentationBuilder
+    }
   }
 
   val backgroundColor: Color?

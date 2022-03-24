@@ -2,7 +2,7 @@
 // "/(Static import|Import static) method 'foo.Bar.setVariable'/" "true"
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
-// WITH_RUNTIME
+// WITH_STDLIB
 package bar;
 
 public class Foo {
@@ -26,7 +26,7 @@ class Bar {
 // "/(Static import|Import static) method 'foo.Bar.setVariable'/" "true"
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
-// WITH_RUNTIME
+// WITH_STDLIB
 package bar;
 
 import static foo.Bar.setVariable;

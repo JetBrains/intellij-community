@@ -36,6 +36,11 @@ import java.awt.*;
 */
 public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
+  public boolean isApplicable(@NotNull Project project) {
+    return !ActionCenter.isEnabled();
+  }
+
+  @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     EventLog.getProjectService(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
@@ -77,7 +82,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NotNull @NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
+        return PlatformCoreDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
     panel.setContent(editorPanel);

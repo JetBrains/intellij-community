@@ -1,4 +1,5 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: The expression is unused
 
 infix fun Int.upTo(other: Int) = this.rangeTo(other)
 

@@ -5,15 +5,13 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.util.io.FileUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.VersionView
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.junit.Assert
@@ -49,14 +47,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         assertEmpty(getCanBeConfiguredModules(myProject, jvmConfigurator))
     }
 
-    fun testLibraryNonDefault_libExistInDefault() {
-        val module = module
-
-        // Move fake runtime jar to default library path to pretend library is already configured
-        FileUtil.copy(
-            File(project.basePath + "/lib/" + KotlinArtifactNames.KOTLIN_STDLIB),
-            File(jvmConfigurator.getDefaultPathToJarFile(project) + "/" + KotlinArtifactNames.KOTLIN_STDLIB)
-        )
+    fun testSimple() {
         assertNotConfigured(module, jvmConfigurator)
         jvmConfigurator.configure(myProject, emptyList())
         assertProperlyConfigured(module, jvmConfigurator)
@@ -65,8 +56,9 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
     fun testNoKotlincExistsNoSettingsLatestRuntime() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
-        Assert.assertEquals(VersionView.RELEASED_VERSION, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(VersionView.RELEASED_VERSION, myProject.getLanguageVersionSettings(null).languageVersion)
+        val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
+        Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
         checkKotlincPresence(false)
     }
@@ -74,8 +66,9 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
-        Assert.assertEquals(VersionView.RELEASED_VERSION, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(VersionView.RELEASED_VERSION, myProject.getLanguageVersionSettings(null).languageVersion)
+        val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
+        Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
             autoAdvanceLanguageVersion = false
             autoAdvanceApiVersion = false
@@ -94,15 +87,6 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         }
         application.saveAll()
         checkKotlincPresence(false)
-    }
-
-    fun testProject106InconsistentVersionInConfig() {
-        val settings = KotlinFacetSettingsProvider.getInstance(myProject)?.getInitializedSettings(module)
-            ?: error("Facet settings are not found")
-
-        Assert.assertEquals(false, settings.useProjectSettings)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, settings.languageLevel!!)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, settings.apiLevel!!)
     }
 
     fun testProject107InconsistentVersionInConfig() {

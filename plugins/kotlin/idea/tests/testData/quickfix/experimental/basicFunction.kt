@@ -1,6 +1,6 @@
-// "Add '@MyExperimentalAPI' annotation to 'bar'" "true"
+// "Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @RequiresOptIn
 annotation class MyExperimentalAPI

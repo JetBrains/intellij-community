@@ -156,7 +156,11 @@ public final class ExternalSystemJdkUtil {
         && projectSdk.getSdkType() instanceof DependentSdkType
         && projectSdk.getSdkType() instanceof JavaSdkType) {
       final JavaSdkType sdkType = (JavaSdkType)projectSdk.getSdkType();
-      final String jdkPath = FileUtil.toSystemIndependentName(new File(sdkType.getBinPath(projectSdk)).getParent());
+      String sdkBinPath = sdkType.getBinPath(projectSdk);
+      if (sdkBinPath == null) {
+        return null;
+      }
+      final String jdkPath = FileUtil.toSystemIndependentName(new File(sdkBinPath).getParent());
       return ContainerUtil.find(ProjectJdkTable.getInstance().getAllJdks(), sdk -> {
         final String homePath = sdk.getHomePath();
         return homePath != null && FileUtil.toSystemIndependentName(homePath).equals(jdkPath);

@@ -71,7 +71,7 @@ class LastModifiedFiles(
 
         fun read(buildRoot: VirtualFile): LastModifiedFiles? {
             try {
-                return fileAttribute.readAttribute(buildRoot)?.use {
+                return fileAttribute.readFileAttribute(buildRoot)?.use {
                     readLastModifiedFiles(it)
                 }
             } catch (e: Exception) {
@@ -87,13 +87,13 @@ class LastModifiedFiles(
 
         fun write(buildRoot: VirtualFile, data: LastModifiedFiles?) {
             try {
-                fileAttribute.writeAttribute(buildRoot).use {
+                fileAttribute.writeFileAttribute(buildRoot).use {
                     writeLastModifiedFiles(it, data)
                 }
             } catch (e: Exception) {
                 scriptingErrorLog("Cannot store data=$data for buildRoot=$buildRoot to file attributes", e)
 
-                fileAttribute.writeAttribute(buildRoot).use {
+                fileAttribute.writeFileAttribute(buildRoot).use {
                     writeLastModifiedFiles(it, null)
                 }
             }

@@ -68,7 +68,7 @@ class SingleInstructionInterpreter(private val eval: Eval) : Interpreter<Value>(
             BIPUSH, SIPUSH -> int((insn as IntInsnNode).operand)
 
             LDC -> {
-                when (val cst = ((insn as LdcInsnNode)).cst) {
+                when (val cst = (insn as LdcInsnNode).cst) {
                     is Int -> int(cst)
                     is Float -> float(cst)
                     is Long -> long(cst)

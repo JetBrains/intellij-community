@@ -91,7 +91,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
 
   @NotNull
   @Override
-  public String getSuccessMessage() {
+  protected String getSuccessMessage() {
     return GitBundle.message("git.rename.branch.was.renamed.to",
                              HtmlChunk.text(myCurrentName).code().bold(), HtmlChunk.text(myNewName).code().bold());
   }

@@ -86,7 +86,18 @@ public class FontFamilyService {
                                       @Nullable String boldSubFamily,
                                       @JdkConstants.FontStyle int style,
                                       int size) {
-    return getFont(family, regularSubFamily, boldSubFamily, style).deriveFont((float)size);
+    return getFont(family, regularSubFamily, boldSubFamily, style, (float)size);
+  }
+
+  /**
+   * Floating-point version of {@link #getFont(String, String, String, int, int)}
+   */
+  public static @NotNull Font getFont(@NotNull String family,
+                                      @Nullable String regularSubFamily,
+                                      @Nullable String boldSubFamily,
+                                      @JdkConstants.FontStyle int style,
+                                      float size) {
+    return getFont(family, regularSubFamily, boldSubFamily, style).deriveFont(size);
   }
 
   /**
@@ -94,6 +105,13 @@ public class FontFamilyService {
    * allowing to use typographic family/subfamily instead of 'standard' family and Java font style.
    */
   public static @NotNull Font getFont(@NotNull String family, @NotNull String subFamily, int size) {
+    return getFont(family, subFamily, subFamily, Font.PLAIN, size);
+  }
+
+  /**
+   * Floating-point version of {@link #getFont(String, String, int)}
+   */
+  public static @NotNull Font getFont(@NotNull String family, @NotNull String subFamily, float size) {
     return getFont(family, subFamily, subFamily, Font.PLAIN, size);
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.PreferredPlace;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -21,7 +22,7 @@ public class ToggleAutoTestAction extends ToggleAction {
     super(IdeBundle.messagePointer("action.ToggleAction.text.toggle.auto.test"),
           IdeBundle.messagePointer("action.ToggleAction.description.toggle.auto.test"),
           AllIcons.Actions.SwapPanels);
-    getTemplatePresentation().putClientProperty(RunTab.HIDE_FROM_TOOLBAR, true);
+    getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.MORE_GROUP);
   }
 
   @Override

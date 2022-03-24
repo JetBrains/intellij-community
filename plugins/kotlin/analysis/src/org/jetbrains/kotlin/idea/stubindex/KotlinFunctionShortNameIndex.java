@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 import java.util.Collection;
 
-public class KotlinFunctionShortNameIndex extends StringStubIndexExtension<KtNamedFunction> {
+public class KotlinFunctionShortNameIndex extends AbstractStringStubIndexExtension<KtNamedFunction> {
     private static final StubIndexKey<String, KtNamedFunction> KEY = KotlinIndexUtil.createIndexKey(KotlinFunctionShortNameIndex.class);
 
     private static final KotlinFunctionShortNameIndex ourInstance = new KotlinFunctionShortNameIndex();
@@ -21,7 +20,9 @@ public class KotlinFunctionShortNameIndex extends StringStubIndexExtension<KtNam
         return ourInstance;
     }
 
-    private KotlinFunctionShortNameIndex() {}
+    private KotlinFunctionShortNameIndex() {
+        super(KtNamedFunction.class);
+    }
 
     @NotNull
     @Override
@@ -34,4 +35,5 @@ public class KotlinFunctionShortNameIndex extends StringStubIndexExtension<KtNam
     public Collection<KtNamedFunction> get(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope) {
         return StubIndex.getElements(KEY, s, project, scope, KtNamedFunction.class);
     }
+
 }

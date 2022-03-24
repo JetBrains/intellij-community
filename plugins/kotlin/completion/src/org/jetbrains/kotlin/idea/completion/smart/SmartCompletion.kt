@@ -2,7 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion.smart
 
-import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.OffsetKey
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.*
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 interface InheritanceItemsSearcher {
     fun search(nameFilter: (String) -> Boolean, consumer: (LookupElement) -> Unit)
@@ -259,12 +259,14 @@ class SmartCompletion(
                         val whenExpression = entry.parent as KtWhenExpression
                         val entries = whenExpression.entries
                         if (whenExpression.elseExpression == null && entry == entries.last() && entries.size != 1) {
-                            val lookupElement = LookupElementBuilder.create("else").bold().withTailText(" ->")
-                            items.add(object : LookupElementDecorator<LookupElement>(lookupElement) {
-                                override fun handleInsert(context: InsertionContext) {
-                                    WithTailInsertHandler("->", spaceBefore = true, spaceAfter = true).handleInsert(context, delegate)
-                                }
-                            })
+                            val lookupElement = LookupElementBuilder.create("else")
+                                .bold()
+                                .withTailText(" ->")
+                                .withInsertHandler(
+                                    WithTailInsertHandler("->", spaceBefore = true, spaceAfter = true).asPostInsertHandler
+                                )
+
+                            items.add(lookupElement)
                         }
                     }
                 }
@@ -291,10 +293,10 @@ class SmartCompletion(
 
     private fun postProcess(item: LookupElement): LookupElement {
         if (forBasicCompletion) return item
-
         return if (item.getUserData(KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY) == null) {
-            object : LookupElementDecorator<LookupElement>(item) {
-                override fun handleInsert(context: InsertionContext) {
+            LookupElementDecorator.withDelegateInsertHandler(
+                item,
+                InsertHandler { context, element ->
                     if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) {
                         val offset = context.offsetMap.tryGetOffset(OLD_ARGUMENTS_REPLACEMENT_OFFSET)
                         if (offset != null) {
@@ -302,9 +304,9 @@ class SmartCompletion(
                         }
                     }
 
-                    super.handleInsert(context)
+                    element.handleInsert(context)
                 }
-            }
+            )
         } else {
             item
         }
@@ -433,8 +435,7 @@ class SmartCompletion(
                     presentation.itemText = "::" + presentation.itemText
                 }
 
-                override fun handleInsert(context: InsertionContext) {
-                }
+                override fun getDelegateInsertHandler() = EmptyDeclarativeInsertHandler
             }
 
             return lookupElement.assignSmartCompletionPriority(SmartCompletionItemPriority.CALLABLE_REFERENCE)

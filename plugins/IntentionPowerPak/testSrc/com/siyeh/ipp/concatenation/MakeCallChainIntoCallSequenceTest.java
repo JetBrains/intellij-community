@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
 
 public class MakeCallChainIntoCallSequenceTest extends IPPTestCase {
   public void testBuilder() { doTest(); }
@@ -36,9 +34,4 @@ public class MakeCallChainIntoCallSequenceTest extends IPPTestCase {
     return "concatenation/call_chain";
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
-  }
 }

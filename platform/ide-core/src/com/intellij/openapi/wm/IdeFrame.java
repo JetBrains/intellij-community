@@ -30,6 +30,13 @@ public interface IdeFrame {
     return false;
   }
 
+  /**
+   * This method is invoked when the frame becomes active. If this frame belongs to a project, the implementation should call
+   * RecentProjectsManagerBase.setActivationTimestamp at nearest suitable time (e.g. at startup this can be delayed till a project is
+   * assigned to the frame).
+   */
+  default void notifyProjectActivation() {}
+
   interface Child extends IdeFrame {
   }
 }

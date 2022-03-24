@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("TestOnlyProblems")
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.SystemProperties
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
@@ -72,9 +71,9 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
 private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
 
   init {
-    if (!ApplicationManager.getApplication().isInternal
-        || !SystemProperties.`is`("ide.plugins.create.all.services.and.extensions")) {
-      throw ExtensionNotApplicableException.INSTANCE
+    if (!ApplicationManager.getApplication().isInternal ||
+        !java.lang.Boolean.getBoolean("ide.plugins.create.all.services.and.extensions")) {
+      throw ExtensionNotApplicableException.create()
     }
   }
 
@@ -94,6 +93,7 @@ fun performAction() {
   )
 }
 
+// external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
 const val ACTION_ID = "CreateAllServicesAndExtensions"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
@@ -125,7 +125,7 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
   taskExecutor {
     extensionClass = extensionPoint.extensionClass
   }
-  
+
   extensionPoint.checkImplementations { extension ->
     taskExecutor {
       val extensionInstance: Any
@@ -147,21 +147,23 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
 private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors: MutableList<Throwable>) {
   for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
     // we don't check classloader for sub descriptors because url set is the same
-    if (plugin.classLoader !is PluginClassLoader) {
+    val pluginClassLoader = plugin.pluginClassLoader
+    if (pluginClassLoader !is PluginClassLoader) {
       continue
     }
 
     ClassGraph()
       .enableAnnotationInfo()
       .ignoreParentClassLoaders()
-      .overrideClassLoaders(plugin.classLoader)
+      .overrideClassLoaders(pluginClassLoader)
       .scan()
       .use { scanResult ->
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
           if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
-              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService") {
-            // wants EDT in constructor
+              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService" ||
+              lightService.name == "com.intellij.javascript.web.webTypes.nodejs.WebTypesNpmLoader") {
+            // wants EDT/read action in constructor
              continue
           }
 
@@ -209,12 +211,12 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
 
 private fun loadLightServiceClass(lightService: ClassInfo, mainDescriptor: IdeaPluginDescriptorImpl): Class<*> {
   for (item in mainDescriptor.content.modules) {
-    val classLoader = item.requireDescriptor().classLoader as? PluginClassLoader ?: continue
+    val classLoader = item.requireDescriptor().pluginClassLoader as? PluginClassLoader ?: continue
     if (lightService.name.startsWith(classLoader.packagePrefix!!)) {
       return classLoader.loadClass(lightService.name, true)
     }
   }
 
   // ok, or no plugin dependencies at all, or all are disabled, resolve from main
-  return (mainDescriptor.classLoader as PluginClassLoader).loadClass(lightService.name, true)
+  return (mainDescriptor.pluginClassLoader as PluginClassLoader).loadClass(lightService.name, true)
 }

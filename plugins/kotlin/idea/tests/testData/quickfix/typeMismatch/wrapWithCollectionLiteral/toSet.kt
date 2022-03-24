@@ -1,5 +1,5 @@
 // "Wrap element with 'setOf()' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(a: String) {
     bar(a<caret>)

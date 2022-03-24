@@ -1,4 +1,4 @@
-// "Inline 'map' body into the next 'map' call" "true"
+// "Inline 'map()' body into the next 'map()' call" "true"
 import java.util.List;
 
 public class Main {

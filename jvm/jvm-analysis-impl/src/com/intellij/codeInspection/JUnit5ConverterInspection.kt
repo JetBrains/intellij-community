@@ -155,16 +155,22 @@ class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::cl
         usages: Array<out UsageInfo>,
         refsToShorten: ArrayList<in SmartPsiElementPointer<PsiElement>>
       ) {
+        val shortName = StringUtil.getShortName(newQName)
+        val project = elementToBind.project
         for (usage in usages) {
           if (usage is MigrationUsageInfo) {
             if (newQName == usage.mapEntry.newName) {
               val element = usage.getElement()
               if (element == null || !element.isValid) continue
               val uElement = element.getUastParentOfType<UQualifiedReferenceExpression>()
-              val project = elementToBind.project
-              val uFactory = uElement?.getUastElementFactory(project) ?: return
-              val qualifiedExpression = uFactory.createQualifiedReference(newQName, null) ?: return
-              uElement.replace(qualifiedExpression)?.sourcePsi ?: return
+              if (uElement == null) {
+                val simpleExpr = element.getUastParentOfType<USimpleNameReferenceExpression>()
+                val uFactory = simpleExpr?.getUastElementFactory(project) ?: continue
+                simpleExpr.replace(uFactory.createSimpleReference(shortName, element)!!)
+                continue
+              }
+              val qualifiedExpression = uElement.getUastElementFactory(project)?.createQualifiedReference(newQName, element) ?: continue
+              uElement.replace(qualifiedExpression)
             }
           }
         }

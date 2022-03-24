@@ -30,7 +30,6 @@
 + -org-jetbrains-debugger-streams-
 + -com-intellij-swagger-
 + -com-intellij-reactivestreams-
-+ -com-intellij-microservices-config-
 + -com-intellij-micronaut-
 + -com-intellij-java-ide-
 + -com-intellij-java-i18n-

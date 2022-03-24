@@ -42,7 +42,7 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
     }
 
     override fun getDialogTitle() = KotlinBundle.message("text.rename.overloads.title")
-    override fun getDialogDescription() = KotlinBundle.message("text.rename.overloads.to")
+    override fun getDialogDescription() = KotlinBundle.message("title.rename.overloads.to")
     override fun entityName() = KotlinBundle.message("text.overload")
     override fun isSelectedByDefault(): Boolean = true
 }

@@ -68,7 +68,7 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
    * @deprecated use {@param name} instead because of JEP 254
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
     return name;
@@ -78,7 +78,7 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
    * @deprecated use {@param string} instead because of JEP 254
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
     if (JAVA_9) return string; // see JEP 254: Compact Strings
     if (string.length() == 0) return "";

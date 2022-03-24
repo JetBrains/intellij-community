@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // IS_APPLICABLE: false
 // ERROR: 'infix' modifier is inapplicable on this function: must be a member or an extension function
 

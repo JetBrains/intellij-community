@@ -10,17 +10,17 @@ are not empty.
   add
   the missing modifiers.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     public boolean equals(Object o) { return true; }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     public final boolean equals(Object o) { return true; }
   }
-</pre>
+</code></pre>
 This inspection is intended for code that is going to be used in secure environments, and is probably not appropriate for less restrictive environments.
 <!-- tooltip end -->
 </body>

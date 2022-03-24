@@ -43,9 +43,9 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
       "package org.apache.logging.log4j;" +
       "import org.apache.logging.log4j.util.Supplier;" +
       "public interface LogBuilder {" +
-      "  public void log(String format, Object p0);" +
-      "  public void log(String format, Object... params);" +
-      "  public void log(String format, Supplier<?>... params);" +
+      "  void log(String format, Object p0);" +
+      "  void log(String format, Object... params);" +
+      "  void log(String format, Supplier<?>... params);" +
       "}"
     };
   }

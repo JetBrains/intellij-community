@@ -16,11 +16,11 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShBundle;
+import com.intellij.sh.ShFileType;
+import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.sh.ShBundle.message;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
 public class ShExternalFormatter extends AsyncDocumentFormattingService {
@@ -73,20 +74,24 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     String shFmtExecutable = ShSettings.getShfmtPath();
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.install.question"),
+        Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.install.question"),
                                                      NotificationType.INFORMATION);
+        notification.setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER);
+        notification.setSuggestionType(true);
         notification.addAction(
           NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
             notification.expire();
             ShShfmtFormatterUtil.download(formattingContext.getProject(),
                                           () -> Notifications.Bus
-                                            .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
+                                            .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
                                                                      message("sh.fmt.success.install"),
-                                                                     NotificationType.INFORMATION)),
+                                                                     NotificationType.INFORMATION)
+                                                      .setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER_SUCCESS)),
                                           () -> Notifications.Bus
-                                            .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
+                                            .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
                                                                      message("sh.fmt.cannot.download"),
-                                                                     NotificationType.ERROR)));
+                                                                     NotificationType.ERROR)
+                                                      .setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER_ERROR)));
           }));
         notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
           notification.expire();
@@ -99,22 +104,19 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     ShShfmtFormatterUtil.checkShfmtForUpdate(project);
     String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
 
-    VirtualFile file = formattingContext.getVirtualFile();
-    if (file == null || !file.exists()) return null;
 
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return null;
 
-    String filePath = file.getPath();
-    String realPath = FileUtil.toSystemDependentName(filePath);
-    if (!new File(realPath).exists()) return null;
+    File ioFile = request.getIOFile();
+    if (ioFile == null) return null;
 
     @NonNls
     List<String> params = new SmartList<>();
     params.add("-ln=" + interpreter);
-    if (!settings.useTabCharacter(file.getFileType())) {
-      int tabSize = settings.getIndentSize(file.getFileType());
+    if (!settings.getIndentOptions(ShFileType.INSTANCE).USE_TAB_CHARACTER) {
+      int tabSize = settings.getIndentOptions(ShFileType.INSTANCE).INDENT_SIZE;
       params.add("-i=" + tabSize);
     }
     if (shSettings.BINARY_OPS_START_LINE) {
@@ -132,7 +134,7 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     if (shSettings.MINIFY_PROGRAM) {
       params.add("-mn");
     }
-    params.add(realPath);
+    params.add(ioFile.getPath());
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()

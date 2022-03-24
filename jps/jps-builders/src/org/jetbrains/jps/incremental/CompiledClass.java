@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -86,17 +85,6 @@ public class CompiledClass extends UserDataHolderBase{
   @NotNull
   public List<String> getSourceFilesPaths() {
     return ContainerUtil.map(mySourceFiles, file -> file.getPath());
-  }
-
-  /**
-   * @deprecated use {@link CompiledClass#getSourceFiles()} or {{@link CompiledClass#getSourceFilesPaths()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public File getSourceFile() {
-    //noinspection ConstantConditions
-    return ContainerUtil.getFirstItem(getSourceFiles());
   }
 
   @Nullable

@@ -8,12 +8,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
@@ -44,7 +46,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
       public void projectClosing(@NotNull Project project) {
         List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration
         for (ClientId clientId : clientIds) {
-          ClientId.withClientId(clientId, () -> {
+          try (AccessToken ignored = ClientId.withClientId(clientId)) {
             CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator(clientId);
             if (indicator != null && indicator.getProject() == project) {
               indicator.closeAndFinish(true);
@@ -53,7 +55,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
             else if (indicator == null) {
               setCompletionPhase(clientId, CompletionPhase.NoCompletion);
             }
-          });
+          }
         }
       }
     });
@@ -62,9 +64,9 @@ public final class CompletionServiceImpl extends BaseCompletionService {
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration
         for (ClientId clientId : clientIds) {
-          ClientId.withClientId(clientId, () -> {
+          try (AccessToken ignored = ClientId.withClientId(clientId)) {
             setCompletionPhase(clientId, CompletionPhase.NoCompletion);
-          });
+          }
         }
       }
     });
@@ -76,11 +78,11 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   @Override
-  public void setAdvertisementText(@Nullable final String text) {
+  public void setAdvertisementText(@NlsContexts.PopupAdvertisement @Nullable final String text) {
     setAdvertisementText(ClientId.getCurrent(), text);
   }
 
-  private static void setAdvertisementText(@NotNull ClientId clientId, @Nullable final String text) {
+  private static void setAdvertisementText(@NotNull ClientId clientId, @NlsContexts.PopupAdvertisement @Nullable final String text) {
     if (text == null) return;
     final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator(clientId);
     if (completion != null) {

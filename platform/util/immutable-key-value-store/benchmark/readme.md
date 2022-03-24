@@ -1,0 +1,1 @@
+Cannot be located in test sources due to IntelliJ IDEA bug - cannot find annotation processor.

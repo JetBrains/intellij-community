@@ -114,7 +114,6 @@ public final class CompletionUtil {
     return findInText(offsetInFile, startOffset, idPart, idStart, position.getNode().getChars());
   }
 
-  @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
     final CharSequence text = document.getImmutableCharSequence();

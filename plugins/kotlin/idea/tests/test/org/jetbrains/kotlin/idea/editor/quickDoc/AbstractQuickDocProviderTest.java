@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.completion.test.IdeaTestUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 
 import java.io.File;
 import java.util.List;

@@ -1,5 +1,5 @@
 // "Create extension function 'Int.foo'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun <T, U> T.map(f: T.() -> U) = f()
 
 fun consume(s: String) {}

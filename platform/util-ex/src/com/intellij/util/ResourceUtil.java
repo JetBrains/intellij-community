@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,26 +20,37 @@ public final class ResourceUtil {
   private ResourceUtil() {
   }
 
+  public static byte @Nullable [] getResourceAsBytes(@NotNull String path, @NotNull ClassLoader classLoader) throws IOException {
+    return getResourceAsBytes(path, classLoader, false);
+  }
+
+  public static byte @Nullable [] getResourceAsBytes(@NotNull String path,
+                                                     @NotNull ClassLoader classLoader,
+                                                     boolean checkParents) throws IOException {
+    if (classLoader instanceof UrlClassLoader) {
+      return ((UrlClassLoader)classLoader).getResourceAsBytes(path, checkParents);
+    }
+
+    InputStream stream = classLoader.getResourceAsStream(path);
+    if (stream == null) {
+      return null;
+    }
+
+    try (stream) {
+      return stream.readAllBytes();
+    }
+  }
+
   /**
    * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static URL getResource(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
-  /**
-   * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static InputStream getResourceAsStream(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
-  }
-
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
+    String fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/");
     if (fixedPath.isEmpty()) {
       return loader.getResourceAsStream(fileName);
     }
@@ -57,7 +68,7 @@ public final class ResourceUtil {
   }
 
   public static URL getResource(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
+    String fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/");
 
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
@@ -128,18 +139,14 @@ public final class ResourceUtil {
   /**
    * @deprecated Use {@link #loadText(InputStream)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull String loadText(@NotNull URL url) throws IOException {
     return loadText(URLUtil.openStream(url));
   }
 
   public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
-    try {
+    try (in) {
       return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-    }
-    finally {
-      in.close();
     }
   }
 }

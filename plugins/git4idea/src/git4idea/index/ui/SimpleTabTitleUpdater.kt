@@ -2,6 +2,7 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull
 import java.beans.PropertyChangeEvent
 
 abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val tabName: String) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private var branches = emptySet<BranchData>()
     set(value) {
       if (field == value) return
@@ -32,7 +34,8 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
     UiNotifyConnector.doWhenFirstShown(tree, Runnable { refresh() })
     tree.addGroupingChangeListener(groupingListener)
     tree.project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE,
-                                                    GitRepositoryChangeListener { runInEdt(this) { refresh() } })
+                                                    GitRepositoryChangeListener { runInEdt(disposableFlag) { refresh() } })
+    Disposer.register(this, disposableFlag)
   }
 
   abstract fun getRoots(): Collection<VirtualFile>

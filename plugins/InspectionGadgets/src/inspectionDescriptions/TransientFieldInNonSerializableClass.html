@@ -4,10 +4,9 @@ Reports <code>transient</code> fields in classes that do not implement <code>jav
 <p><b>Example:</b></p>
 <pre><code>
   public class NonSerializableClass {
-    private transient String password; // warning: Field 'password' is marked 'transient', in non-Serializable class
+    private transient String password;
   }
-  </code>
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
   public class NonSerializableClass {

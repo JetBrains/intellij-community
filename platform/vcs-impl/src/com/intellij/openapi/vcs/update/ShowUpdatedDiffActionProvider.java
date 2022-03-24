@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider {
   @Override
@@ -176,6 +177,22 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
       catch (IOException e) {
         throw new DiffRequestProducerException(VcsBundle.message("update.can.t.load.content"), e);
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyDiffRequestProducer producer = (MyDiffRequestProducer)o;
+      return myBefore.equals(producer.myBefore) &&
+             myAfter.equals(producer.myAfter) &&
+             myFileStatus.equals(producer.myFileStatus) &&
+             myFilePath.equals(producer.myFilePath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myBefore, myAfter, myFileStatus, myFilePath);
     }
   }
 

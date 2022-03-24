@@ -9,7 +9,6 @@ import com.intellij.vcs.log.history.FileHistoryPaths.filePaths
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcsUtil.VcsFileUtil
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import java.awt.Color
 
 internal class FileHistoryColorManager(private val root: VirtualFile, private val path: FilePath) : VcsLogColorManager {

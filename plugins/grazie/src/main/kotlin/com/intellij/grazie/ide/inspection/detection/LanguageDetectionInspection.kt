@@ -2,6 +2,7 @@ package com.intellij.grazie.ide.inspection.detection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
@@ -12,9 +13,12 @@ import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionPro
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiWhiteSpace
 
 internal class LanguageDetectionInspection : LocalInspectionTool() {
   companion object {
@@ -32,7 +36,8 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
     if (languages.isEmpty()) return
 
-    holder.registerProblem(LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages))
+    val descriptor = ReadAction.compute<ProblemDescriptor,RuntimeException>{ LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages) }
+    holder.registerProblem(descriptor)
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -41,13 +46,16 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
       return PsiElementVisitor.EMPTY_VISITOR
 
     val domains = GrazieInspection.checkedDomains()
-    val fileLanguage = file.language
-    val areChecksDisabled = GrazieInspection.getDisabledChecker(fileLanguage)
+    val areChecksDisabled = GrazieInspection.getDisabledChecker(file)
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (areChecksDisabled(element)) return
-        val text = TextExtractor.findUniqueTextAt(element, domains) ?: return
-        LangDetector.updateContext(text, session.getUserData(key)!!)
+        if (element is PsiWhiteSpace || areChecksDisabled(element)) return
+        val context = session.getUserData(key)!!
+        val texts = TextExtractor.findUniqueTextsAt(element, domains)
+        texts.forEach {
+          ProgressManager.checkCanceled()
+          LangDetector.updateContext(it, context)
+        }
       }
     }
   }

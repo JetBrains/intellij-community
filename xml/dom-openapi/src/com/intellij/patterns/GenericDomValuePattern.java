@@ -40,7 +40,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
     super(new InitialPatternCondition(aClass) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue)o).getDomElementType()));
+        return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue<?>)o).getDomElementType()));
       }
 
     });

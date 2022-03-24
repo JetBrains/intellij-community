@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -19,10 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListSeparator;
-import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -36,7 +33,8 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +44,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.*;
 
-public class BuildArtifactAction extends DumbAwareAction {
-  private static class Holder {
+public final class BuildArtifactAction extends DumbAwareAction {
+  private static final class Holder {
     private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Clean artifact");
   }
 
@@ -79,7 +77,7 @@ public class BuildArtifactAction extends DumbAwareAction {
       items.add(0, new ArtifactPopupItem(null, JavaCompilerBundle.message("artifacts.menu.item.all"), EmptyIcon.ICON_16));
     }
     Set<Artifact> selectedArtifacts = new HashSet<>(ArtifactsWorkspaceSettings.getInstance(project).getArtifactsToBuild());
-    TIntArrayList selectedIndices = new TIntArrayList();
+    IntList selectedIndices = new IntArrayList();
     if (Comparing.haveEqualElements(artifacts, selectedArtifacts) && selectedArtifacts.size() > 1) {
       selectedIndices.add(0);
       selectedArtifacts.clear();
@@ -97,16 +95,17 @@ public class BuildArtifactAction extends DumbAwareAction {
     final ArtifactAwareProjectSettingsService settingsService = projectSettingsService instanceof ArtifactAwareProjectSettingsService ? (ArtifactAwareProjectSettingsService)projectSettingsService : null;
 
     final ChooseArtifactStep step = new ChooseArtifactStep(items, artifacts.get(0), project, settingsService);
-    step.setDefaultOptionIndices(selectedIndices.toNativeArray());
+    step.setDefaultOptionIndices(selectedIndices.toIntArray());
 
-    final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);
-    final KeyStroke editKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getEditSource());
-    if (settingsService != null && editKeyStroke != null) {
-      popup.registerAction("editArtifact", editKeyStroke, new AbstractAction() {
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+    KeyStroke editKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getEditSource());
+    if (popup instanceof ListPopupImpl && settingsService != null && editKeyStroke != null) {
+      ListPopupImpl popupImpl = (ListPopupImpl)popup;
+      popupImpl.registerAction("editArtifact", editKeyStroke, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          Object[] values = popup.getSelectedValues();
-          popup.cancel();
+          Object[] values = popupImpl.getSelectedValues();
+          popupImpl.cancel();
           settingsService.openArtifactSettings(values.length > 0 ? ((ArtifactPopupItem)values[0]).getArtifact() : null);
         }
       });
@@ -114,7 +113,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static void doBuild(@NotNull Project project, final @NotNull List<? extends ArtifactPopupItem> items, boolean rebuild) {
+  private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
     final Artifact[] artifacts = getArtifacts(items, project);
     if (rebuild) {
       ProjectTaskManager.getInstance(project).rebuild(artifacts);
@@ -124,7 +123,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static Artifact[] getArtifacts(final List<? extends ArtifactPopupItem> items, final Project project) {
+  private static Artifact[] getArtifacts(final List<ArtifactPopupItem> items, final Project project) {
     Set<Artifact> artifacts = new LinkedHashSet<>();
     for (ArtifactPopupItem item : items) {
       artifacts.addAll(item.getArtifacts(project));
@@ -176,7 +175,7 @@ public class BuildArtifactAction extends DumbAwareAction {
 
       if (!outputPathContainingSourceRoots.isEmpty()) {
         final String message;
-        if (outputPathContainingSourceRoots.size() == 1 && outputPathContainingSourceRoots.values().size() == 1) {
+        if (outputPathContainingSourceRoots.size() == 1) {
           final String name = ContainerUtil.getFirstItem(outputPathContainingSourceRoots.keySet());
           final String output = outputPathContainingSourceRoots.get(name);
           message = JavaCompilerBundle.message("dialog.message.output.dir.contains.source.roots", output, name);

@@ -1,11 +1,13 @@
 {
+    "mainFile": "JJK.java",
     "usages": [
-        "JJK.java",
         "JJJK.java",
+        "JJK.java",
+        "jjjk_.java",
+        "jjjk_.kt",
         "jjk_.java",
-        "jjjk_.java"
-    ],
-    "shouldBeUsage": [
-        "kjjk_.java"
+        "jjk_.kt",
+        "kjjk_.java",
+        "kjjk_.kt"
     ]
 }

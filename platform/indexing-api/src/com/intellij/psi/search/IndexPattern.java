@@ -16,6 +16,9 @@ import java.util.regex.PatternSyntaxException;
  * @see IndexPatternProvider#getIndexPatterns()
  */
 public class IndexPattern {
+
+  public static final IndexPattern[] EMPTY_ARRAY = new IndexPattern[0];
+
   @NotNull private String myPatternString;
   private Pattern myOptimizedIndexingPattern;
   private boolean myCaseSensitive;

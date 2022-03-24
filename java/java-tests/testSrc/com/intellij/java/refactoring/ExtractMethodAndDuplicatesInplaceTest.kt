@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
@@ -113,6 +115,120 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   fun testSpecificCatch(){
     doTest()
+  }
+
+  fun testExpressionDuplicates(){
+    doTest()
+  }
+
+  fun testArrayFoldingWithDuplicate(){
+    doTest()
+  }
+
+  fun testFoldReturnExpression(){
+    doTest()
+  }
+
+  fun testOverlappingRanges(){
+    doTest()
+  }
+
+  fun testConditionalYield(){
+    doTest()
+  }
+
+  fun testYieldWithDuplicate(){
+    doTest()
+  }
+
+  fun testDisabledOnSwitchRules(){
+    assertThrows(RefactoringErrorHintException::class.java, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression")) {
+      doTest()
+    }
+  }
+
+  fun testNormalizedOnSwitchRule(){
+    doTest()
+  }
+
+  fun testExpressionStatementInSwitchExpression(){
+    doTest()
+  }
+
+  fun testExpressionStatementInSwitchStatement(){
+    doTest()
+  }
+
+  fun testIDEA278872(){
+    doTest()
+  }
+
+  fun testLocalAssignmentDuplicates(){
+    doTest()
+  }
+
+  fun testWrongLocalAssignmentDuplicates(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousMethodReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithAnonymousFieldReference(){
+    doTest()
+  }
+
+  fun testDuplicateWithLocalReferenceInLambda(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInPattern(){
+    doTest()
+  }
+
+  fun testAvoidChangeSignatureForLocalRefsInCandidate(){
+    doTest()
+  }
+
+  fun testDiamondTypesConsideredAsEqual(){
+    doTest()
+  }
+
+  fun testDuplicatedExpressionAndChangeSignature(){
+    doTest()
+  }
+
+  fun testChangedVariableDeclaredOnce(){
+    doTest()
+  }
+
+  fun testDuplicatedWithDeclinedChangeSignature(){
+    val default = DuplicatesMethodExtractor.changeSignatureDefault
+    try {
+      DuplicatesMethodExtractor.changeSignatureDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.changeSignatureDefault = default
+    }
+  }
+
+  fun testDuplicatedButDeclined(){
+    val default = DuplicatesMethodExtractor.replaceDuplicatesDefault
+    try {
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.replaceDuplicatesDefault = default
+    }
+  }
+
+  fun testTemplateRenamesInsertedCallOnly(){
+    doTest(changedName = "renamed")
   }
 
   fun testRefactoringListener(){

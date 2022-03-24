@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.Ref;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import junit.framework.TestCase;
 
 public class TrigramBuilderTest extends TestCase {
   public void testBuilder() {
     final Ref<Integer> trigramCountRef = new Ref<>();
-    final TIntArrayList list = new TIntArrayList();
+    final IntList list = new IntArrayList();
 
     TrigramBuilder.processTrigrams("String$CharData", new TrigramBuilder.TrigramProcessor() {
       @Override
@@ -24,7 +25,7 @@ public class TrigramBuilderTest extends TestCase {
       }
     });
 
-    list.sort();
+    list.sort(null);
     Integer trigramCount = trigramCountRef.get();
     assertNotNull(trigramCount);
 
@@ -33,7 +34,9 @@ public class TrigramBuilderTest extends TestCase {
     assertEquals(expectedTrigramCount, list.size());
 
     int[] expected = {buildTrigram("$Ch"), buildTrigram("arD"), buildTrigram("ata"), 6514785, 6578548, 6759523, 6840690, 6909543, 7235364, 7496801, 7498094, 7566450, 7631465, };
-    for(int i = 0; i < expectedTrigramCount; ++i) assertEquals(expected[i], list.getQuick(i));
+    for (int i = 0; i < expectedTrigramCount; ++i) {
+      assertEquals(expected[i], list.getInt(i));
+    }
   }
 
   private static int buildTrigram(String s) {

@@ -17,11 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 public class GrCharConverter extends GrTypeConverter {
 
-  @Override
-  public boolean isApplicableTo(@NotNull Position position) {
-    return position == Position.ASSIGNMENT || position == Position.RETURN_VALUE;
-  }
-
   @Nullable
   @Override
   public ConversionResult isConvertible(@NotNull PsiType lType,

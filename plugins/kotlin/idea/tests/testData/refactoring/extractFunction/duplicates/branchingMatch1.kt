@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // SUGGESTED_NAMES: i, getT
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int

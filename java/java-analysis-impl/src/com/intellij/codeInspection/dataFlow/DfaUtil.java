@@ -143,6 +143,14 @@ public final class DfaUtil {
     return Collections.emptyList();
   }
 
+  /**
+   * Compute method nullability using dataflow analysis. Results are not cached and
+   * this method may work slowly, so avoid calling it often. Could be useful for
+   * refactorings like "extract method".
+   *
+   * @param method method to infer nullability for
+   * @return inferred nullability
+   */
   public static @NotNull Nullability inferMethodNullability(PsiMethod method) {
     if (PsiUtil.resolveClassInType(method.getReturnType()) == null) {
       return Nullability.UNKNOWN;
@@ -162,6 +170,13 @@ public final class DfaUtil {
     return false;
   }
 
+  /**
+   * Compute lambda return value nullability using dataflow analysis. Results are not cached and
+   * this method may work slowly, so avoid calling it often.
+   *
+   * @param lambda lambda to infer nullability for
+   * @return inferred nullability
+   */
   public static @NotNull Nullability inferLambdaNullability(PsiLambdaExpression lambda) {
     if (LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
       return Nullability.UNKNOWN;

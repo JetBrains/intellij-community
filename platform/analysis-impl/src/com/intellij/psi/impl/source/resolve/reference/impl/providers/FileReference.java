@@ -440,7 +440,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       PsiFileSystemItem root = null;
       PsiFileSystemItem dstItem = null;
       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-        if (!helper.isMine(project, dstVFile)) continue;
+        if (!helper.isMine(project, curVFile, dstVFile)) continue;
         PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
         if (_dstItem != null) {
           PsiFileSystemItem _root = helper.findRoot(project, dstVFile);

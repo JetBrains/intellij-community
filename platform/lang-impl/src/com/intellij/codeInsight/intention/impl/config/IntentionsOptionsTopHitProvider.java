@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.ui.OptionsTopHitProvider;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
   @Override
@@ -29,11 +29,12 @@ final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.App
   @Override
   public @NotNull Collection<OptionDescription> getOptions() {
     IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
-    Collection<BooleanOptionDescription> options = new ArrayList<>();
-    for (IntentionActionMetaData data : settings.getMetaData()) {
-      options.add(new Option(settings, data));
+    List<IntentionActionMetaData> metaData = settings.getMetaData();
+    List<OptionDescription> result = new ArrayList<>(metaData.size());
+    for (IntentionActionMetaData data : metaData) {
+      result.add(new Option(settings, data));
     }
-    return Collections.unmodifiableCollection(options);
+    return result;
   }
 
   private static final class Option extends BooleanOptionDescription {

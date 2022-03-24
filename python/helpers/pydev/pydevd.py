@@ -414,6 +414,8 @@ class PyDB(object):
 
         self.breakpoints = {}
 
+        self.__user_type_renderers = {}
+
         # mtime to be raised when breakpoints change
         self.mtime = 0
 
@@ -628,7 +630,7 @@ class PyDB(object):
                     'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
             if is_thread_alive(t):
-                if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
+                if not t.daemon or hasattr(t, "__pydevd_main_thread"):
                     return True
 
         return False
@@ -924,6 +926,12 @@ class PyDB(object):
             self.break_on_caught_exceptions = cp
 
         return eb
+
+    def set_user_type_renderers(self, renderers):
+        self.__user_type_renderers = renderers
+
+    def get_user_type_renderers(self):
+        return self.__user_type_renderers
 
     def _mark_suspend(self, thread, stop_reason):
         info = set_additional_thread_info(thread)
@@ -1841,7 +1849,7 @@ class DispatchReader(ReaderThread):
 
     @overrides(ReaderThread._on_run)
     def _on_run(self):
-        dummy_thread = threading.currentThread()
+        dummy_thread = threading.current_thread()
         dummy_thread.is_pydev_daemon_thread = False
         return ReaderThread._on_run(self)
 

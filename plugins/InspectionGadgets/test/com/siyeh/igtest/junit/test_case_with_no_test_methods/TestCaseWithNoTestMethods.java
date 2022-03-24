@@ -49,9 +49,9 @@ class Test5WithInner {
 
 class <warning descr="Test class 'Test5WithInner1' has no tests">Test5WithInner1</warning> {
   @org.junit.jupiter.api.Nested
-  static class Inner {
-    @org.junit.jupiter.api.Test
+  class <warning descr="Test class 'Inner' has no tests">Inner</warning> {
     void test1() {}
   }
 }
-
+@org.junit.Ignore
+class IgnoredTest extends junit.framework.TestCase {}

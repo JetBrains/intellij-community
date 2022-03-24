@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.application.WriteAction;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -299,7 +299,7 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
                            "<version>1"); //  invalid tag
 
     importProjectWithErrors();
-    resolvePlugins();
+    //resolvePlugins();
     assertModules("project", "foo");
 
     MavenProject root = getRootProjects().get(0);
@@ -542,7 +542,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testCircularDependencies() {
-    if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

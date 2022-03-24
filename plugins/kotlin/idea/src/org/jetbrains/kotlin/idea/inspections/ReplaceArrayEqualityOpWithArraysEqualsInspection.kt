@@ -5,13 +5,13 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.resolvedToArrayType
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 class ReplaceArrayEqualityOpWithArraysEqualsInspection : AbstractApplicabilityBasedInspection<KtBinaryExpression>(
     KtBinaryExpression::class.java
@@ -36,7 +36,7 @@ class ReplaceArrayEqualityOpWithArraysEqualsInspection : AbstractApplicabilityBa
         val right = element.right
         val left = element.left
         if (right == null || left == null) return false
-        val context = element.analyze()
+        val context = element.safeAnalyzeNonSourceRootCode()
         val rightResolvedCall = right.getResolvedCall(context)
         val leftResolvedCall = left.getResolvedCall(context)
         return rightResolvedCall?.resolvedToArrayType() == true && leftResolvedCall?.resolvedToArrayType() == true

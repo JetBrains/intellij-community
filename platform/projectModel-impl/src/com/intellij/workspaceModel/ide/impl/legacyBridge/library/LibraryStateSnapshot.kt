@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
-import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -32,15 +32,7 @@ class LibraryStateSnapshot(
   val storage: WorkspaceEntityStorage,
   val libraryTable: LibraryTable,
   val parentDisposable: Disposable) {
-  private val roots = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
-    val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
-    val jarDirs = roots
-      .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
-      .map {
-        JarDirectoryDescription(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
-      }
-    FileContainerDescription(urls, jarDirs)
-  }
+  private val roots = collectFiles(libraryEntity)
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
     FileContainerDescription(libraryEntity.excludedRoots,
                              emptyList())
@@ -50,7 +42,7 @@ class LibraryStateSnapshot(
   private val kindProperties by lazy {
     val customProperties = libraryEntity.getCustomProperties()
     val k = customProperties?.libraryType?.let {
-      LibraryKind.findById(it) ?: UnknownLibraryKind.getOrCreate(it)
+      LibraryKindRegistry.getInstance().findKindById(it) ?: UnknownLibraryKind.getOrCreate(it)
     } as? PersistentLibraryKind<*>
     val p = loadProperties(k, customProperties)
     k to p
@@ -106,4 +98,16 @@ class LibraryStateSnapshot(
 
   val externalSource: ProjectModelExternalSource?
     get() = (libraryEntity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
+
+  companion object {
+    fun collectFiles(libraryEntity: LibraryEntity): Map<Any, FileContainerDescription> = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
+      val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
+      val jarDirs = roots
+        .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
+        .map {
+          JarDirectoryDescription(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
+        }
+      FileContainerDescription(urls, jarDirs)
+    }
+  }
 }

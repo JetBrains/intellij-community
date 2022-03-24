@@ -53,7 +53,8 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   @NotNull
   @Override
   public String getText() {
-    if (myArgList.getExpressionCount() == 1) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list != null && list.getExpressionCount() == 1) {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
     else {
@@ -68,7 +69,9 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+    PsiExpressionList list = myArgList.getElement();
+    if (list == null) return null;
+    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
                                                    myArgumentFixerActionFactory);
   }
 

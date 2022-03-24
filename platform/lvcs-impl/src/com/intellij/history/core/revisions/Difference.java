@@ -15,8 +15,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class Difference {
   private final boolean myIsFile;
   private final Entry myLeft;
@@ -79,7 +77,7 @@ public class Difference {
       @Override
       @NotNull
       public FilePath getFile() {
-        return VcsUtil.getFilePath(new File(e.getPath()), e.isDirectory());
+        return VcsUtil.getFilePath(e.getPath(), e.isDirectory());
       }
 
       @Override

@@ -24,6 +24,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
   private long myLastModificationCount;
+  private boolean myIsUsedForVisualFormatting;
 
   private final Object lock = new Object();
 
@@ -53,6 +54,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
         parentSettings = parentSettings.getParentSettings();
       }
       settings.setParentSettings(parentSettings);
+      myIsUsedForVisualFormatting = parentScheme.isUsedForVisualFormatting();
     }
 
     if (root != null) {
@@ -145,5 +147,14 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
       return ApplicationBundle.message("code.style.scheme.default");
     }
     return super.getDisplayName();
+  }
+
+  @Override
+  public boolean isUsedForVisualFormatting() {
+    return myIsUsedForVisualFormatting;
+  }
+
+  public void setUsedForVisualFormatting(boolean usedForVisualFormatting) {
+    myIsUsedForVisualFormatting = usedForVisualFormatting;
   }
 }

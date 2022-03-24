@@ -17,9 +17,11 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightTestCase;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
@@ -29,8 +31,6 @@ import java.util.Objects;
 @SuppressWarnings("deprecation")
 public abstract class AbstractConfigureProjectByChangingFileTest<C extends KotlinProjectConfigurator>
         extends KotlinLightCodeInsightTestCase {
-    private static final String DEFAULT_VERSION = "default_version";
-
     private PsiFile moduleInfoFile;
 
     @Override
@@ -53,7 +53,10 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
         prepareModuleInfoFile(beforeFile);
 
         String versionFromFile = InTextDirectivesUtils.findStringWithPrefixes(getFile().getText(), "// VERSION:");
-        String version = versionFromFile != null ? versionFromFile : DEFAULT_VERSION;
+
+        IdeKotlinVersion version = versionFromFile != null
+                         ? IdeKotlinVersion.get(versionFromFile)
+                         : KotlinPluginLayout.getInstance().getStandaloneCompilerVersion();
 
         NotificationMessageCollector collector = NotificationMessageCollectorKt.createConfigureKotlinNotificationCollector(getProject());
 
@@ -61,7 +64,10 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         collector.showNotification();
 
-        KotlinTestUtils.assertEqualsToFile(new File(getTestDataDirectory(), afterFile), getFile().getText().replace(version, "$VERSION$"));
+        KotlinTestUtils.assertEqualsToFile(
+                new File(getTestDataDirectory(), afterFile),
+                getFile().getText().replace(version.getRawVersion(), "$VERSION$")
+        );
 
         checkModuleInfoFile(beforeFile);
     }
@@ -96,7 +102,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
     protected abstract void runConfigurator(
             Module module, @NotNull PsiFile file,
             @NotNull C configurator,
-            @NotNull String version,
+            @NotNull IdeKotlinVersion version,
             @NotNull NotificationMessageCollector collector
     );
 

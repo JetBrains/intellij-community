@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
@@ -49,7 +49,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> extensionPointElements) {
+  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<? extends Element> extensionPointElements) {
     for (Element element : extensionPointElements) {
       String pointName = element.getAttributeValue("qualifiedName");
       if (pointName == null) {
@@ -58,8 +58,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           throw componentManager.createError("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin",
                                              pluginDescriptor.getPluginId());
         }
-
-        assert pluginDescriptor.getPluginId() != null;
         pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
       }
 
@@ -83,21 +81,20 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public boolean unregisterExtensions(@NotNull String extensionPointName,
                                       @NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull List<ExtensionDescriptor> elements,
-                                      @NotNull List<Runnable> priorityListenerCallbacks,
-                                      @NotNull List<Runnable> listenerCallbacks) {
-    ExtensionPointImpl<?> point = extensionPoints.get(extensionPointName);
+                                      @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                      @NotNull List<? super Runnable> listenerCallbacks) {
+    ExtensionPointImpl<?> point = getExtensionPointIfRegistered(extensionPointName);
     if (point == null) {
       return false;
     }
 
-    point.unregisterExtensions(componentManager, pluginDescriptor, elements, priorityListenerCallbacks, listenerCallbacks);
+    point.unregisterExtensions(componentManager, pluginDescriptor, priorityListenerCallbacks, listenerCallbacks);
     return true;
   }
 
   public void resetExtensionPoints(@NotNull List<ExtensionPointDescriptor> descriptors, @NotNull PluginDescriptor pluginDescriptor) {
     for (ExtensionPointDescriptor descriptor : descriptors) {
-      ExtensionPointImpl<?> extensionPoint = extensionPoints.get(descriptor.getQualifiedName(pluginDescriptor));
+      ExtensionPointImpl<?> extensionPoint = getExtensionPointIfRegistered(descriptor.getQualifiedName(pluginDescriptor));
       if (extensionPoint != null) {
         extensionPoint.reset();
       }
@@ -109,7 +106,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   /**
-   * You must call {@link #resetExtensionPoints} before otherwise event ExtensionEvent.REMOVED will be not fired.
+   * You must call {@link #resetExtensionPoints} before otherwise event `ExtensionEvent.REMOVED` will be not fired.
    */
   public void unregisterExtensionPoints(@NotNull List<ExtensionPointDescriptor> descriptors,
                                         @NotNull PluginDescriptor pluginDescriptor) {
@@ -146,10 +143,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public <T> ExtensionPointImpl<T> registerPoint(@NotNull String name,
-                                                 @NotNull Class<T> extensionClass,
-                                                 @NotNull PluginDescriptor pluginDescriptor,
-                                                 boolean isDynamic) {
+  public <T> @NotNull ExtensionPointImpl<T> registerPoint(@NotNull String name,
+                                                          @NotNull Class<T> extensionClass,
+                                                          @NotNull PluginDescriptor pluginDescriptor,
+                                                          boolean isDynamic) {
     return doRegisterExtensionPoint(name,
                                     extensionClass.getName(),
                                     pluginDescriptor,
@@ -188,7 +185,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
    * because often it is not possible to use one (for example, {@link com.intellij.lang.LanguageExtensionPoint}).
    */
   @TestOnly
-  public <T> ExtensionPointImpl<T> registerFakeBeanPoint(@NotNull String name, @NotNull PluginDescriptor pluginDescriptor) {
+  public <T> @NotNull ExtensionPointImpl<T> registerFakeBeanPoint(@NotNull String name, @NotNull PluginDescriptor pluginDescriptor) {
     // any object name can be used, because EP must not create any instance
     return doRegisterExtensionPoint(name, Object.class.getName(), pluginDescriptor, false, false);
   }
@@ -221,7 +218,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @ApiStatus.Internal
   public static void createExtensionPoints(@NotNull List<ExtensionPointDescriptor> points,
                                            @NotNull ComponentManager componentManager,
-                                           @NotNull Map<String, ExtensionPointImpl<?>> result,
+                                           @NotNull Map<? super String, ExtensionPointImpl<?>> result,
                                            @NotNull PluginDescriptor pluginDescriptor) {
     for (ExtensionPointDescriptor descriptor : points) {
       String name = descriptor.getQualifiedName(pluginDescriptor);
@@ -233,9 +230,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         point = new InterfaceExtensionPoint<>(name, descriptor.className, pluginDescriptor, componentManager, null, descriptor.isDynamic);
       }
 
-      ExtensionPointImpl<?> old = result.put(name, point);
+      ExtensionPointImpl<?> old = result.putIfAbsent(name, point);
       if (old != null) {
-        result.put(name, old);
         PluginDescriptor oldPluginDescriptor = old.getPluginDescriptor();
         throw componentManager.createError("Duplicate registration for EP " + name + ": " +
                                            "first in " + oldPluginDescriptor + ", second in " + pluginDescriptor,
@@ -246,8 +242,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public @NotNull <T> ExtensionPointImpl<T> getExtensionPoint(@NotNull String extensionPointName) {
-    @SuppressWarnings("unchecked")
-    ExtensionPointImpl<T> extensionPoint = (ExtensionPointImpl<T>)extensionPoints.get(extensionPointName);
+    ExtensionPointImpl<T> extensionPoint = getExtensionPointIfRegistered(extensionPointName);
     if (extensionPoint == null) {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in container " + componentManager);
     }
@@ -255,7 +250,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public @Nullable <T> ExtensionPointImpl<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
+  public <T> ExtensionPointImpl<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
     //noinspection unchecked
     return (ExtensionPointImpl<T>)extensionPoints.get(extensionPointName);
   }
@@ -266,7 +261,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void processExtensionPoints(@NotNull Consumer<ExtensionPointImpl<?>> consumer) {
+  public void processExtensionPoints(@NotNull Consumer<? super ExtensionPointImpl<?>> consumer) {
     extensionPoints.values().forEach(consumer);
   }
 
@@ -274,8 +269,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   public @Nullable <T> T findExtensionByClass(@NotNull Class<T> aClass) {
     // TeamCity plugin wants DefaultDebugExecutor in constructor
     if (aClass.getName().equals("com.intellij.execution.executors.DefaultDebugExecutor")) {
-      //noinspection unchecked
-      return ((ExtensionPointImpl<T>)extensionPoints.get("com.intellij.executor")).findExtension(aClass, false, ThreeState.YES);
+      return getExtensionPointIfRegistered("com.intellij.executor").findExtension(aClass, false, ThreeState.YES);
     }
 
     for (ExtensionPointImpl<?> point : extensionPoints.values()) {
@@ -305,7 +299,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   @TestOnly
   public void unregisterExtensionPoint(@NotNull String extensionPointName) {
-    ExtensionPointImpl<?> extensionPoint = extensionPoints.get(extensionPointName);
+    ExtensionPointImpl<?> extensionPoint = getExtensionPointIfRegistered(extensionPointName);
     if (extensionPoint != null) {
       extensionPoint.reset();
 

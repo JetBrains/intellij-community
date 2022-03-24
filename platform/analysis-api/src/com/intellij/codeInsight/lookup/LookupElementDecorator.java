@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -54,9 +54,33 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.getObject();
   }
 
+  /**
+   * Use {@link LookupElementDecorator#getDecoratorInsertHandler()} or {@link LookupElementDecorator#getDelegateInsertHandler()} to
+   * override handler for delegated element.
+   */
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
+    InsertHandler<? super LookupElementDecorator<@NotNull T>> decoratorInsertHandler = getDecoratorInsertHandler();
+    if (decoratorInsertHandler != null) {
+      decoratorInsertHandler.handleInsert(context, this);
+      return;
+    }
+
+    InsertHandler<T> delegateInsertHandler = getDelegateInsertHandler();
+    if (delegateInsertHandler != null) {
+      delegateInsertHandler.handleInsert(context, myDelegate);
+      return;
+    }
+
     myDelegate.handleInsert(context);
+  }
+
+  public @Nullable InsertHandler<@NotNull T> getDelegateInsertHandler() {
+    return null;
+  }
+
+  public @Nullable InsertHandler<? super LookupElementDecorator<@NotNull T>> getDecoratorInsertHandler() {
+    return null;
   }
 
   @Override
@@ -105,11 +129,19 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   /**
-   * Wraps the given lookup element into a decorator that overrides its insertion behavior.
+   * Wraps the given lookup element into a decorator that overrides its insertion behavior (passes the decorator to the handler).
    */
   @NotNull
   public static <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, @NotNull final InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
     return new InsertingDecorator<>(element, insertHandler);
+  }
+
+  /**
+   * Wraps the given lookup element into a decorator that overrides its insertion behavior (passes the delegate to the handler).
+   */
+  @NotNull
+  public static <T extends LookupElement> LookupElementDecorator<T> withDelegateInsertHandler(@NotNull T element, final @NotNull InsertHandler<T> insertHandler) {
+    return new InsertingDelegateDecorator<>(element, insertHandler);
   }
 
   @NotNull
@@ -154,8 +186,8 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     }
 
     @Override
-    public void handleInsert(@NotNull InsertionContext context) {
-      myInsertHandler.handleInsert(context, this);
+    public @Nullable InsertHandler<? super LookupElementDecorator<@NotNull T>> getDecoratorInsertHandler() {
+      return myInsertHandler;
     }
 
     @Override
@@ -164,7 +196,41 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
       if (o == null || getClass() != o.getClass()) return false;
       if (!super.equals(o)) return false;
 
-      InsertingDecorator that = (InsertingDecorator)o;
+      InsertingDecorator<?> that = (InsertingDecorator<?>)o;
+
+      if (!myInsertHandler.equals(that.myInsertHandler)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myInsertHandler.hashCode();
+      return result;
+    }
+  }
+
+  private static class InsertingDelegateDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+    private final InsertHandler<T> myInsertHandler;
+
+    InsertingDelegateDecorator(T element, InsertHandler<T> insertHandler) {
+      super(element);
+      myInsertHandler = insertHandler;
+    }
+
+    @Override
+    public @Nullable InsertHandler<@NotNull T> getDelegateInsertHandler() {
+      return myInsertHandler;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+
+      InsertingDelegateDecorator<?> that = (InsertingDelegateDecorator<?>)o;
 
       if (!myInsertHandler.equals(that.myInsertHandler)) return false;
 

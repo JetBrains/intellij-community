@@ -62,7 +62,7 @@ public final class ManifestFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Manifest;
   }
 }

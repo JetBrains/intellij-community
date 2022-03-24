@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffContentVirtualFile
@@ -63,7 +63,6 @@ class VcsEditorTabFilesManager :
   fun openFile(project: Project, file: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     if (editorManager.isFileOpen(file)) {
-      editorManager.updateFilePresentation(file)
       editorManager.selectAndFocusEditor(file, focusEditor)
       return emptyArray()
     }
@@ -78,9 +77,9 @@ class VcsEditorTabFilesManager :
 
   private fun FileEditorManagerImpl.selectAndFocusEditor(file: VirtualFile, focusEditor: Boolean) {
     val window = windows.find { it.isFileOpen(file) } ?: return
-    val composite = window.findFileComposite(file) ?: return
+    val composite = window.getComposite(file) ?: return
 
-    window.setSelectedEditor(composite, focusEditor)
+    window.setSelectedComposite(composite, focusEditor)
     if (focusEditor) {
       window.requestFocus(true)
       window.toFront()

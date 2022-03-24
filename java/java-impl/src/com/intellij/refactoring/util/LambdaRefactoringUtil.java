@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,7 +20,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -176,8 +179,7 @@ public final class LambdaRefactoringUtil {
         if (!(referenceNameElement instanceof PsiKeyword)) {
           if (qualifier instanceof PsiTypeElement) {
             final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
-            LOG.assertTrue(referenceElement != null);
-            if (!PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
+            if (referenceElement != null && !PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
               buf.append(referenceElement.getReferenceName()).append(".");
             }
           }
@@ -221,7 +223,7 @@ public final class LambdaRefactoringUtil {
         }
       }
 
-      if (!onArrayRef || isReceiver) {
+      if (!onArrayRef || !(referenceNameElement instanceof PsiKeyword) || isReceiver) {
         //param list
         buf.append("(");
         boolean first = true;
@@ -341,7 +343,10 @@ public final class LambdaRefactoringUtil {
                                        JavaRefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
             //ensure introduced before lambda
             qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
-            new IntroduceVariableHandler().invoke(qualifierExpression.getProject(), editor, qualifierExpression);
+            RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+            JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
+            assert handler != null;
+            handler.invoke(qualifierExpression.getProject(), editor, qualifierExpression);
           }
         }
       }

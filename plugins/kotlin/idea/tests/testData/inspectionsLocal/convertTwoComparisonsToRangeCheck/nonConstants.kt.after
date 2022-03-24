@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo(bar: Int, min: Int, max: Int) {
     bar in (min + 1) until max
 }

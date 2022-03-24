@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.util
 
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.NlsSafe
@@ -21,26 +21,25 @@ object KeymapUtil {
   fun getShortcutByActionId(actionId: String?): KeyStroke? {
     actionId ?: return null
 
-    fun KeyboardShortcut.isConflicting(): Boolean {
-      return KeymapManager.getInstance().activeKeymap.getConflicts(actionId, this).isNotEmpty()
+    val activeKeymap = KeymapManager.getInstance().activeKeymap
+    findCustomShortcut(activeKeymap, actionId)?.let {
+      return it.firstKeyStroke
     }
-
-    val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
-    var bestShortcut: KeyboardShortcut? = null
-    for (curShortcut in shortcuts) {
-      if (curShortcut is KeyboardShortcut) {
-        val isConflicting = curShortcut.isConflicting()
-        val isNumpadKey = curShortcut.isNumpadKey
-        if (bestShortcut == null || !isConflicting && !isNumpadKey
-            || !isNumpadKey && bestShortcut.isNumpadKey // Prefer not numpad shortcut then not conflicting shortcut
-            || !isConflicting && bestShortcut.isConflicting() && bestShortcut.isNumpadKey
-        ) {
-          bestShortcut = curShortcut
-        }
-        if (!isConflicting && !isNumpadKey) break
-      }
+    val shortcuts = activeKeymap.getShortcuts(actionId)
+    val bestShortcut: KeyboardShortcut? = shortcuts.filterIsInstance<KeyboardShortcut>().let { kbShortcuts ->
+      kbShortcuts.find { !it.isNumpadKey } ?: kbShortcuts.firstOrNull()
     }
     return bestShortcut?.firstKeyStroke
+  }
+
+  private fun findCustomShortcut(activeKeymap: Keymap, actionId: String): KeyboardShortcut? {
+    val currentShortcuts = activeKeymap.getShortcuts(actionId).toList()
+    if (!activeKeymap.canModify()) return null
+    val parentShortcuts = activeKeymap.parent?.getShortcuts(actionId)?.toList() ?: return null
+    val shortcuts = currentShortcuts - parentShortcuts
+    if (shortcuts.isEmpty()) return null
+
+    return shortcuts.reversed().filterIsInstance<KeyboardShortcut>().firstOrNull()
   }
 
   private val KeyboardShortcut.isNumpadKey: Boolean
@@ -61,6 +60,10 @@ object KeymapUtil {
     val keyCode = keyStroke.keyCode
     var key = specificKeyString(keyCode)
               ?: if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyCode) else KeyEvent.getKeyText(keyCode)
+
+    if (key.contains(' ')) {
+      key = key.replace(' ', '\u00A0')
+    }
 
     if (key.length == 1) getStringForMacSymbol(key[0])?.let {
       key = key + "\u00A0" + it
@@ -94,7 +97,7 @@ object KeymapUtil {
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
     val keyStroke = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyStrokeData(keyStroke)
-    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
+    val actionName = getActionById(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpace()
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))

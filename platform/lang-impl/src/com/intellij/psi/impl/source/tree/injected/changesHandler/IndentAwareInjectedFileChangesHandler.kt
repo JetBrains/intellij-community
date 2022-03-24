@@ -82,6 +82,10 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
               LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
             }
           }
+        }.let { preprocessed ->
+          val firstLineWhiteSpaces = markerText.takeWhile { it.isWhitespace() }
+          if (preprocessed.startsWith(firstLineWhiteSpaces)) preprocessed
+          else firstLineWhiteSpaces + preprocessed
         }
 
       val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)

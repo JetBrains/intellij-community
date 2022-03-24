@@ -37,7 +37,7 @@ import org.jetbrains.annotations.TestOnly;
  */
 public class EditorHighlighterUpdater {
   @NotNull protected final Project myProject;
-  @NotNull private final EditorEx myEditor;
+  @NotNull protected final EditorEx myEditor;
   @Nullable private final VirtualFile myFile;
 
   public EditorHighlighterUpdater(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull EditorEx editor, @Nullable VirtualFile file) {
@@ -77,10 +77,8 @@ public class EditorHighlighterUpdater {
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if (pluginDescriptor.getPluginId() == null) return;
         IdeaPluginDescriptor loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
-        if (loadedPluginDescriptor == null) return;
-        ClassLoader pluginClassLoader = loadedPluginDescriptor.getPluginClassLoader();
+        ClassLoader pluginClassLoader = loadedPluginDescriptor != null ? loadedPluginDescriptor.getPluginClassLoader() : null;
         if (myFile != null && pluginClassLoader instanceof PluginAwareClassLoader) {
           FileType fileType = myFile.getFileType();
           if (fileType.getClass().getClassLoader() == pluginClassLoader ||
@@ -172,7 +170,7 @@ public class EditorHighlighterUpdater {
     @Override
     public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-    // File can be invalid after file type changing. The editor should be removed
+      // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       FileType type = event.getRemovedFileType();
       if (type != null && !(type instanceof AbstractFileType)) {
@@ -184,5 +182,4 @@ public class EditorHighlighterUpdater {
       }
     }
   }
-
 }

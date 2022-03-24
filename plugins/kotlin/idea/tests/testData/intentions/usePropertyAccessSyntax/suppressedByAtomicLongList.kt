@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // WITH_JDK
 // IS_APPLICABLE: false
 import java.util.concurrent.atomic.AtomicLong

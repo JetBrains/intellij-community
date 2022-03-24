@@ -21,6 +21,6 @@ class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigrationInspection :
     }
 
     override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtAnnotationEntry, *>
-        get() = Errors.ANNOTATION_ON_SUPERCLASS
+        get() = Errors.ANNOTATION_ON_SUPERCLASS.errorFactory
 }
 

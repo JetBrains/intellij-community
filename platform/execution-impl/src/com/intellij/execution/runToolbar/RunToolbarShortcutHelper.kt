@@ -7,9 +7,9 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
 
 class RunToolbarShortcutHelper(val project: Project) : ActiveListener {
-  private val actionManager = ActionManager.getInstance()
 
   override fun enabled() {
+    val actionManager = ActionManager.getInstance()
     RunToolbarProcess.getProcesses().forEach { process ->
       ExecutorRegistry.getInstance().getExecutorById(process.executorId)?.let { executor ->
         actionManager.getAction(executor.id)?.let {
@@ -22,6 +22,7 @@ class RunToolbarShortcutHelper(val project: Project) : ActiveListener {
   }
 
   override fun disabled() {
+    val actionManager = ActionManager.getInstance()
     RunToolbarProcess.getProcesses().forEach { process ->
       ExecutorRegistry.getInstance().getExecutorById(process.executorId)?.let { executor ->
         actionManager.getAction(process.getMainActionId())?.let {

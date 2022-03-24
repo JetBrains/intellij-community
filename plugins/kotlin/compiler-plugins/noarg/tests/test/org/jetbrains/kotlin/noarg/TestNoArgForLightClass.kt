@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.noarg
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinProjectDescriptorWithFacet
@@ -20,7 +21,7 @@ private const val noArgAnnotationName = "HelloNoArg"
 class TestNoArgForLightClass : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinProjectDescriptorWithFacet(LanguageVersion.LATEST_STABLE, multiPlatform = false)
+        KotlinProjectDescriptorWithFacet(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion, multiPlatform = false)
 
     override fun setUp() {
         super.setUp()

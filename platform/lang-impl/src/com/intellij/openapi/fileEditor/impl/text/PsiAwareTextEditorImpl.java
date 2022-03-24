@@ -1,17 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeInsight.codeVision.CodeVisionHost;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
-import com.intellij.codeInsight.daemon.impl.focusMode.FocusModePassFactory;
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.hints.HintsBuffer;
+import com.intellij.codeInsight.hints.InlayHintsPassFactory;
+import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +39,13 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     super(project, file, provider);
   }
 
+  public PsiAwareTextEditorImpl(@NotNull Project project,
+                                @NotNull VirtualFile file,
+                                @NotNull TextEditorProvider provider,
+                                @NotNull EditorImpl editor) {
+    super(project, file, provider, editor);
+  }
+
   @NotNull
   @Override
   protected Runnable loadEditorInBackground() {
@@ -55,6 +65,9 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                        ? DocRenderPassFactory.calculateItemsToRender(editor, psiFile)
                                        : null;
 
+    HintsBuffer buffer = psiFile != null ? InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor) : null;
+    var placeholders = CodeVisionHost.getInstance(myProject).collectPlaceholders(editor, psiFile);
+
     return () -> {
       baseResult.run();
 
@@ -73,6 +86,14 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
         DocRenderPassFactory.applyItemsToRender(editor, myProject, items, true);
       }
 
+      if (buffer != null) {
+        InlayHintsPassFactory.Companion.applyPlaceholders(psiFile, editor, buffer);
+      }
+
+      if (!placeholders.isEmpty()) {
+        CodeVisionPassFactory.applyPlaceholders(editor, placeholders);
+      }
+
       if (psiFile != null && psiFile.isValid()) {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
@@ -81,8 +102,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   @NotNull
   @Override
-  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file) {
-    return new PsiAwareTextEditorComponent(project, file, this);
+  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
+    return new PsiAwareTextEditorComponent(project, file, this, editor);
   }
 
   @Override
@@ -103,8 +124,9 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     private PsiAwareTextEditorComponent(@NotNull Project project,
                                         @NotNull VirtualFile file,
-                                        @NotNull TextEditorImpl textEditor) {
-      super(project, file, textEditor);
+                                        @NotNull TextEditorImpl textEditor,
+                                        @NotNull EditorImpl editor) {
+      super(project, file, textEditor, editor);
       myProject = project;
       myFile = file;
     }
@@ -132,7 +154,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
             return lookup.getBounds();
           }
         }
-        if (LangDataKeys.MODULE.is(dataId)) {
+        if (PlatformCoreDataKeys.MODULE.is(dataId)) {
           return ModuleUtilCore.findModuleForFile(myFile, myProject);
         }
         return superProvider.getData(dataId);

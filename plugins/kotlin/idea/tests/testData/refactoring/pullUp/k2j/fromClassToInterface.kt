@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 abstract class <caret>B: I {
     // INFO: {"checked": "true"}
     val x = 1

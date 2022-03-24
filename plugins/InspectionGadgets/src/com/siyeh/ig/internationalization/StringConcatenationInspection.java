@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -72,8 +73,7 @@ public class StringConcatenationInspection extends BaseInspection {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
     if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
-      final InspectionGadgetsFix fix = createAddAnnotationFix(variable);
-      result.add(fix);
+      ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(variable));
     }
     else if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
@@ -83,8 +83,7 @@ public class StringConcatenationInspection extends BaseInspection {
         final PsiElement target = referenceExpression.resolve();
         if (target instanceof PsiModifierListOwner) {
           final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-          final InspectionGadgetsFix fix = createAddAnnotationFix(modifierListOwner);
-          result.add(fix);
+          ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(modifierListOwner));
         }
       }
     }
@@ -99,7 +98,7 @@ public class StringConcatenationInspection extends BaseInspection {
           final PsiElement target = referenceExpression.resolve();
           if (target instanceof PsiModifierListOwner) {
             final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-            result.add(createAddAnnotationFix(modifierListOwner));
+            ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(modifierListOwner));
           }
         }
       }
@@ -107,19 +106,15 @@ public class StringConcatenationInspection extends BaseInspection {
     final PsiExpression[] operands = polyadicExpression.getOperands();
     for (PsiExpression operand : operands) {
       final PsiModifierListOwner element1 = getAnnotatableElement(operand);
-      if (element1 != null && 
-          (!element1.getManager().isInProject(element1) || 
-           JavaPsiFacade.getInstance(element1.getProject()).findClass(AnnotationUtil.NON_NLS, element1.getResolveScope()) != null)) {
-        final InspectionGadgetsFix fix = createAddAnnotationFix(element1);
-        result.add(fix);
+      if (element1 != null) {
+        ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(element1));
       }
     }
     final PsiElement expressionParent = PsiTreeUtil.getParentOfType(polyadicExpression, PsiReturnStatement.class, PsiExpressionList.class);
     if (!(expressionParent instanceof PsiExpressionList) && expressionParent != null) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(expressionParent, PsiMethod.class);
       if (method != null) {
-        final InspectionGadgetsFix fix = createAddAnnotationFix(method);
-        result.add(fix);
+        ContainerUtil.addIfNotNull(result, (InspectionGadgetsFix)createAddAnnotationFix(method));
       }
     }
 
@@ -132,8 +127,13 @@ public class StringConcatenationInspection extends BaseInspection {
     return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
-  private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner variable) {
-    return new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, variable));
+  private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner listOwner) {
+    if (listOwner.getManager().isInProject(listOwner) && 
+        JavaPsiFacade.getInstance(listOwner.getProject()).findClass(AnnotationUtil.NON_NLS, 
+                                                                    listOwner.getResolveScope()) == null) {
+      return null;
+    }
+    return new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, listOwner));
   }
 
   @Nullable

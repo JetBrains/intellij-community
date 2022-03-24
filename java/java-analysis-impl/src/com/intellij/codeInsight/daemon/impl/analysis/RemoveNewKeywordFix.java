@@ -33,18 +33,18 @@ final class RemoveNewKeywordFix extends LocalQuickFixAndIntentionActionOnPsiElem
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiNewExpression newDeclaration = tryCast(startElement, PsiNewExpression.class);
+    PsiNewExpression newDeclaration = tryCast(startElement, PsiNewExpression.class);
     if (newDeclaration == null) return;
 
-    final PsiJavaCodeReferenceElement reference = newDeclaration.getClassOrAnonymousClassReference();
+    PsiJavaCodeReferenceElement reference = newDeclaration.getClassOrAnonymousClassReference();
     if (reference == null) return;
 
-    final PsiExpressionList arguments = newDeclaration.getArgumentList();
+    PsiExpressionList arguments = newDeclaration.getArgumentList();
 
-    final CommentTracker ct = new CommentTracker();
+    CommentTracker ct = new CommentTracker();
     ct.markRangeUnchanged(reference, Objects.requireNonNullElse(arguments, reference));
 
-    final String methodCallExpression = newDeclaration.getText().substring(reference.getStartOffsetInParent());
+    String methodCallExpression = newDeclaration.getText().substring(reference.getStartOffsetInParent());
     ct.replaceAndRestoreComments(newDeclaration, methodCallExpression);
   }
 }

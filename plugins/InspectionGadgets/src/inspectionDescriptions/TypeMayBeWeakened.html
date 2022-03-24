@@ -3,7 +3,7 @@
 Reports variable and method return types that can be changed to a more abstract (weaker) type.
 This allows making the code more abstract, hence more reusable.
 <p>Example:</p>
-<pre>
+<pre><code>
   // Type of parameter can be weakened to java.util.List
   void processList(ArrayList&lt;String&gt; list) {
     if (list.isEmpty()) return;
@@ -12,7 +12,7 @@ This allows making the code more abstract, hence more reusable.
       System.out.println("String: " + s);
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Enable the <b>Use righthand type</b> checkbox below

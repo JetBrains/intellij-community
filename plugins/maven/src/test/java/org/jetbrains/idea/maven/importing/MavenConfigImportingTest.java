@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.idea.maven.dom.MavenDomTestCase;
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;

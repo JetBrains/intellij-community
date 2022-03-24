@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="grpc-protobuf" type="repository">
-    <properties maven-id="io.grpc:grpc-protobuf:1.34.1">
+    <properties maven-id="io.grpc:grpc-protobuf:1.39.0">
       <exclude>
         <dependency maven-id="io.grpc:grpc-api" />
         <dependency maven-id="com.google.code.findbugs:jsr305" />
@@ -11,15 +11,15 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.34.1/grpc-protobuf-1.34.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/1.17.0/proto-google-common-protos-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.34.1/grpc-protobuf-lite-1.34.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.39.0/grpc-protobuf-1.39.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.0.1/proto-google-common-protos-2.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.39.0/grpc-protobuf-lite-1.39.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.34.1/grpc-protobuf-1.34.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/1.17.0/proto-google-common-protos-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.34.1/grpc-protobuf-lite-1.34.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.39.0/grpc-protobuf-1.39.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.0.1/proto-google-common-protos-2.0.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.39.0/grpc-protobuf-lite-1.39.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

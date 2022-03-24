@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -151,6 +151,9 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
   }
   
   public void testableClassTest() {
+     myFixture.addClass("package org.junit.jupiter.api;" +
+                       "@org.junit.platform.commons.annotation.Testable public @interface Test {}");
+       
     PsiFile file = myFixture.configureByText("TestableClassTest.java",
                                              "@org.junit.platform.commons.annotation.Testable " +
                                              "class TestableClassTest {\n" +

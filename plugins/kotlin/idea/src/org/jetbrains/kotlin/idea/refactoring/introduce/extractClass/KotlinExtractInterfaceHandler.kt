@@ -3,13 +3,16 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui.KotlinExtractInterfaceDialog
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 object KotlinExtractInterfaceHandler : KotlinExtractSuperHandlerBase(true) {
-    val REFACTORING_NAME = KotlinBundle.message("name.extract.interface")
+    val REFACTORING_NAME
+        @Nls
+        get() = KotlinBundle.message("name.extract.interface")
 
     override fun getErrorMessage(klass: KtClassOrObject): String? {
         val superMessage = super.getErrorMessage(klass)

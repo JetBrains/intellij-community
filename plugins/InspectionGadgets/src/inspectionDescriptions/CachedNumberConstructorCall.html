@@ -1,11 +1,11 @@
 <html>
 <body>
-<p>Reports any attempt to instantiate a new <code>Long</code>,
-  <code>Integer</code>, <code>Short</code>, or
-  <code>Byte</code> object from a primitive <code>long</code>,
-  <code>integer</code>, <code>short</code>, or
-  <code>byte</code>
-  argument.</p>
+Reports instantiations of new <code>Long</code>,
+<code>Integer</code>, <code>Short</code>, or
+<code>Byte</code> objects that have a primitive <code>long</code>,
+<code>integer</code>, <code>short</code>, or
+<code>byte</code>
+argument.
 <p>It is recommended that you use the static method <code>valueOf()</code>
   introduced in Java 5. By default, this method caches objects for values between -128 and
   127 inclusive.
@@ -20,7 +20,7 @@
   Long l = Long.valueOf(1L);
 </code></pre>
 <!-- tooltip end -->
-<p>This inspection reports if the language level of the project or module is 5 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 5 or higher</p>
 <p>
   Use the <b>Ignore new number expressions with a String argument</b> option to ignore calls to number constructors with a <code>String</code> argument.</p>
 <p>

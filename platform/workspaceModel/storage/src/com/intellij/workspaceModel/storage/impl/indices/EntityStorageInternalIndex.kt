@@ -5,14 +5,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongSetMap
 import org.jetbrains.annotations.TestOnly
 
+//typealias EntityStorageIndex = BidirectionalSetMap<EntityId, T>
+internal typealias EntityStorageIndex<T> = BidirectionalLongSetMap<T>
+
 open class EntityStorageInternalIndex<T> private constructor(
-  internal open val index: BidirectionalSetMap<EntityId, T>,
+  internal open val index: EntityStorageIndex<T>,
   protected val oneToOneAssociation: Boolean
 ) {
-  constructor(oneToOneAssociation: Boolean) : this(BidirectionalSetMap<EntityId, T>(), oneToOneAssociation)
+  constructor(oneToOneAssociation: Boolean) : this(EntityStorageIndex<T>(), oneToOneAssociation)
 
   internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)?.toList()
 
@@ -24,7 +27,7 @@ open class EntityStorageInternalIndex<T> private constructor(
 
   class MutableEntityStorageInternalIndex<T> private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalSetMap<EntityId, T>,
+    override var index: EntityStorageIndex<T>,
     oneToOneAssociation: Boolean
   ) : EntityStorageInternalIndex<T>(index, oneToOneAssociation) {
 
@@ -38,7 +41,7 @@ open class EntityStorageInternalIndex<T> private constructor(
         return
       }
       LOG.trace { "Index $id to $entry" }
-      index[id] = entry
+      index.put(id, entry)
       if (oneToOneAssociation) {
         if ((index.getKeysByValue(entry)?.size ?: 0) > 1) {
           thisLogger().error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")

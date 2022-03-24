@@ -1,4 +1,4 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
  import com.intellij.diagnostic.PerformanceWatcher;
@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
+ import com.intellij.testFramework.LoggedErrorProcessor;
+ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+ import java.util.ArrayList;
+ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -30,11 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
   public void testAlarmRequestsShouldExecuteSequentiallyEvenInPooledThread() throws Exception {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    assertRequestsExecuteSequentially(alarm);
-  }
-
-  public void testAlarmRequestsShouldExecuteSequentiallyAbsolutelyEveryWhere() throws Exception {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
   }
 
@@ -171,5 +168,36 @@ import static org.assertj.core.api.Assertions.assertThat;
     alarm.waitForAllExecuted(3000, TimeUnit.MILLISECONDS);
 
     assertEquals(2, sb.length());
+  }
+
+  public void testExceptionDuringAlarmExecutionMustManifestItselfInTests() throws Exception {
+    Alarm alarm = new Alarm(getTestRootDisposable());
+    List<Throwable> errors = new ArrayList<>();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor(){
+      @Override
+      public boolean processError(@NotNull String category,
+                                  String message,
+                                  Throwable t,
+                                  String @NotNull [] details) {
+        errors.add(t);
+        return false;
+      }
+    }, () -> {
+      alarm.addRequest(() -> {
+        throw new RuntimeException("wtf");
+      }, 1);
+      boolean caught = false;
+      while (!alarm.isEmpty()) {
+        try {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        catch (RuntimeException e) {
+          caught |= "wtf".equals(e.getMessage());
+        }
+      }
+      assertTrue(caught);
+      Throwable t = assertOneElement(errors);
+      assertEquals("wtf", t.getMessage());
+    });
   }
 }

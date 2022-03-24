@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.editor.Editor;
@@ -23,5 +23,11 @@ public interface CtrlMouseAction {
    *
    * @return info instance, which will be used to draw highlighting and show tooltip near the mouse pointer
    */
+  @Nullable CtrlMouseData getCtrlMouseData(@NotNull Editor editor, @NotNull PsiFile file, int offset);
+
+  /**
+   * @deprecated implement {@link #getCtrlMouseData}
+   */
+  @Deprecated
   @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset);
 }

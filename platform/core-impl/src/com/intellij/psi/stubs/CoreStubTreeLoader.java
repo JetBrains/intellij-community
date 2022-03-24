@@ -64,7 +64,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
       if (parserDefinition == null) return false;
       final IFileElementType elementType = parserDefinition.getFileNodeType();
-      return elementType instanceof IStubFileElementType && ((IStubFileElementType)elementType).shouldBuildStubFor(file);
+      return elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file);
     }
     else if (fileType.isBinary()) {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);

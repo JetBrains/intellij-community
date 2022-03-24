@@ -1,0 +1,11 @@
+markdown.extensions.abbr.ABBR_REF_RE
+markdown.extensions.attr_list.AttrListTreeprocessor.run
+markdown.extensions.codehilite.CodeHilite.__init__
+markdown.extensions.fenced_code.FencedBlockPreprocessor.__init__
+markdown.extensions.footnotes.DEF_RE
+markdown.extensions.footnotes.FootnotePreprocessor
+markdown.extensions.footnotes.TABBED_RE
+markdown.extensions.legacy_attrs.LegacyAttrs.run
+markdown.extensions.toc.TocTreeprocessor.run
+markdown.extensions.toc.slugify
+markdown.preprocessors.ReferencePreprocessor

@@ -32,7 +32,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
 
   @NotNull private static final Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
 
-  @NotNull private final Alarm myCollapseStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final Alarm myCollapseStateAlarm = new Alarm();
 
   /** Holds list of paths which 'expand/collapse' state should be restored. */
   @NotNull private final Set<TreePath> myPathsToProcessCollapseState = new HashSet<>();

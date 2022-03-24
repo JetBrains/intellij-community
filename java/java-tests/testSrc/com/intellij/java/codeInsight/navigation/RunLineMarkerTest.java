@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.application.options.editor.GutterIconsConfigurable;
@@ -36,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
@@ -76,6 +63,18 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
                                                "      someCode();\n" +
                                                "    }\n" +
                                                "}");
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    assertEquals(0, myFixture.findGuttersAtCaret().size());
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertEquals(2, gutters.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+  }
+  
+  public void testRunLineMarkerOnInterface() {
+    myFixture.configureByText("Main.java", "public class Ma<caret>in implements I {}\n" +
+                                           "interface I {" +
+                                           "    public static void main(String[] args) {}\n" +
+                                           "}\n");
     assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEquals(0, myFixture.findGuttersAtCaret().size());
     List<GutterMark> gutters = myFixture.findAllGutters();
@@ -145,6 +144,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     list.get(1).update(event);
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
     myFixture.testAction(list.get(1));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
     myTempSettings.add(selectedConfiguration);
     assertEquals("MainTest", selectedConfiguration.getName());
@@ -210,6 +210,22 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
     Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
     assertEquals(descriptors.size(), strings.size());
+  }
+
+  public void testGeneratedNames() {
+    RunManager manager = RunManager.getInstance(getProject());
+    ApplicationConfiguration first = new ApplicationConfiguration("Unknown", getProject());
+    first.setMainClass(myFixture.addClass("package a; public class Main {public static void main(String[] args) {}}"));
+    first.setGeneratedName();
+    assertEquals("Main", first.getName());
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, first);
+    manager.addConfiguration(settings);
+    myTempSettings.add(settings);
+    
+    ApplicationConfiguration second = new ApplicationConfiguration("Unknown", getProject());
+    second.setMainClass(myFixture.addClass("package b; public class Main {public static void main(String[] args) {}}"));
+    second.setGeneratedName();
+    assertEquals("b.Main", second.getName());
   }
 
   public void testTooltip() {

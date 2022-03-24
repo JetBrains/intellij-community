@@ -1,11 +1,10 @@
 fun a() {
     when {
-        true && true -> {
-        }
+        true && true -> {}
         false        -> {
         }
-        else         -> {
-        }
+
+        else         -> {}
     }
 }
 

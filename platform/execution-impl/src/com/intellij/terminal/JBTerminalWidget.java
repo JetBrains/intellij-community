@@ -22,9 +22,11 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TtyConnector;
@@ -61,6 +63,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
   private final Project myProject;
+  private final @NotNull TerminalTitle myTerminalTitle = new TerminalTitle();
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -177,6 +180,17 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
+  public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
+    myTerminalTitle.change(terminalTitleState -> {
+      //noinspection HardCodedStringLiteral
+      terminalTitleState.setDefaultTitle(getSessionName());
+      return null;
+    });
+
+    super.setTtyConnector(ttyConnector);
+  }
+
+  @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
@@ -214,12 +228,24 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return getSettingsProvider().getUiSettingsManager().getFontSize();
   }
 
+  public float getFontSize2D() {
+    return getSettingsProvider().getUiSettingsManager().getFontSize2D();
+  }
+
   public void setFontSize(int fontSize) {
+    setFontSize((float)fontSize);
+  }
+
+  public void setFontSize(float fontSize) {
     getSettingsProvider().getUiSettingsManager().setFontSize(fontSize);
   }
 
   public void resetFontSize() {
     getSettingsProvider().getUiSettingsManager().resetFontSize();
+  }
+
+  public @Nullable ProcessTtyConnector getProcessTtyConnector() {
+    return ObjectUtils.tryCast(getTtyConnector(), ProcessTtyConnector.class);
   }
 
   static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
@@ -304,12 +330,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
-  public void notifyRenamed() {
-    if (myListener != null) {
-      myListener.onTerminalRenamed();
-    }
-  }
-
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
@@ -363,5 +383,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       myTerminal.writeCharacters(line);
       first = false;
     }
+  }
+
+  public @NotNull TerminalTitle getTerminalTitle() {
+    return myTerminalTitle;
   }
 }

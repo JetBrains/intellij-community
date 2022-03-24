@@ -2,15 +2,18 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
-final class CornerAwareScrollPaneLayout extends JBScrollPane.Layout {
+@Internal
+public final class CornerAwareScrollPaneLayout extends JBScrollPane.Layout {
 
   private final @NotNull Component myCorner;
 
-  CornerAwareScrollPaneLayout(@NotNull Component corner) {
+  public CornerAwareScrollPaneLayout(@NotNull Component corner) {
     myCorner = corner;
   }
 
@@ -20,14 +23,17 @@ final class CornerAwareScrollPaneLayout extends JBScrollPane.Layout {
     if (!myCorner.isVisible()) {
       return;
     }
+    JScrollBar vsb = this.vsb;
+    JScrollBar hsb = this.hsb;
+    if (vsb == null && hsb == null) {
+      return;
+    }
+    Rectangle cornerBounds = myCorner.getBounds();
     if (vsb != null) {
-      Rectangle bounds = vsb.getBounds();
-      vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - myCorner.getPreferredSize().height - 3);
+      vsb.setSize(vsb.getBounds().width, cornerBounds.y - 3);
     }
     if (hsb != null) {
-      Rectangle bounds = hsb.getBounds();
-      int vsbOffset = vsb != null ? vsb.getBounds().width : 0;
-      hsb.setBounds(bounds.x, bounds.y, bounds.width - myCorner.getPreferredSize().width - 3 + vsbOffset, bounds.height);
+      hsb.setSize(cornerBounds.x - 3, hsb.getBounds().height);
     }
   }
 }

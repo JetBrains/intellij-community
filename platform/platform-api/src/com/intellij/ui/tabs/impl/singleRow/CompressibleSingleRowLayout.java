@@ -34,7 +34,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     }
 
     final int extraWidth = data.toFitLength - lengthEstimation;
-
+    float fractionalPart = 0;
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
       final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
@@ -45,7 +45,13 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
         length = Math.min(data.toFitLength - spentLength, lengthIncrement);
       }
       else if (extraWidth <= 0 ) {//need compress
-        length = (int)(lengthIncrement * (float)data.toFitLength / lengthEstimation);
+        float fLength = lengthIncrement * (float)data.toFitLength / lengthEstimation;
+        fractionalPart += fLength - (int)fLength;
+        length = (int)fLength;
+        if (fractionalPart >= 1) {
+          length++;
+          fractionalPart -= 1;
+        }
       }
       else {
         length = lengthIncrement;

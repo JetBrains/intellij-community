@@ -3,6 +3,7 @@ package com.intellij.vcs.changes
 import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.scope.RangeBasedLocalSearchScope
 import com.intellij.util.text.CharArrayUtil
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -20,6 +22,10 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
                                  displayName: @Nls String,
                                  private val myGivenVirtualFiles: Array<VirtualFile>?,
                                  ignoreInjectedPsi: Boolean) : RangeBasedLocalSearchScope(displayName, ignoreInjectedPsi), WeighedItem {
+
+  companion object {
+    private val logger = Logger.getInstance(VcsChangesLocalSearchScope::class.java)
+  }
 
   private val rangeMap: HashMap<VirtualFile, List<TextRange>> by lazy {
     ReadAction.compute<HashMap<VirtualFile, List<TextRange>>, RuntimeException> {
@@ -30,12 +36,17 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
         (myGivenVirtualFiles ?: changeListManager.affectedFiles.toTypedArray())
           .mapNotNull { psiManager.findFile(it) }.toMutableList()
 
+      if (logger.isTraceEnabled)
+        logger.trace("PSI files for VcsChangesLocalSearchScope: ${psiFiles.joinToString()}")
+
       val result = HashMap<VirtualFile, List<TextRange>>()
       for (file in psiFiles) {
         val info = vcsFacade.getChangedRangesInfo(file)
+        val document = file.viewProvider.document
         if (info != null) {
-          val document = file.viewProvider.document
           val ranges = ArrayList<TextRange>()
+          if (logger.isTraceEnabled)
+            logger.trace("Changed ranges for a file $file: ${info.allChangedRanges.joinToString()}")
 
           for (range in info.allChangedRanges) {
             val startLine = document.getLineNumber(range.startOffset)
@@ -50,6 +61,16 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
           }
 
           result[file.virtualFile] = ranges
+        }
+        else {
+          if (logger.isTraceEnabled)
+            logger.trace("No changes for file $file")
+
+          val virtualFile = file.virtualFile
+          if (changeListManager.isUnversioned(virtualFile) && !changeListManager.isIgnoredFile(virtualFile)) {
+            // Must be a new file, not yet added to VCS
+            result[file.virtualFile] = listOf(TextRange(0, document.textLength))
+          }
         }
       }
       result

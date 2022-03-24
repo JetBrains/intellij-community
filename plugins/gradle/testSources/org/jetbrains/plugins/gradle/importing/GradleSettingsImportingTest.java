@@ -34,8 +34,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.PathUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -43,12 +45,13 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.extPluginVersionIsAtLeast;
+import static org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.extPluginVersionIsAtLeast;
 
 /**
  * Created by Nikita.Skvortsov
@@ -141,9 +144,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     Map<String, Object> gradleSettings = configs.get("gr1");
 
     assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
-    assertTrue(((List)gradleSettings.get("taskNames")).contains(":cleanTest"));
+    assertTrue(((List<?>)gradleSettings.get("taskNames")).contains(":cleanTest"));
     assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
-    assertTrue(((Map)gradleSettings.get("envs")).containsKey("env_key"));
+    assertTrue(((Map<?, ?>)gradleSettings.get("envs")).containsKey("env_key"));
   }
 
   private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {
@@ -408,6 +411,46 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     else {
       assertContain(beforeSyncTasks, ":projects", ":tasks");
     }
+  }
+
+  @Test
+  public void testIdeaPostProcessingHook() throws Exception {
+    File layoutFile = new File(getProjectPath(), "test_output.txt");
+    assertThat(layoutFile).doesNotExist();
+
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
+        .addPostfix("import org.jetbrains.gradle.ext.*\n" +
+                    "idea {\n" +
+                    "  project.settings {\n" +
+                    "    withIDEADir { File dir ->\n" +
+                    "        def f = file(\"test_output.txt\")\n" +
+                    "        f.createNewFile()\n" +
+                    "        f.text = \"Expected file content\"\n" +
+                    "    }  \n" +
+                    "  }\n" +
+                    "}")
+        .generate()
+    );
+    final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
+      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+
+    assertThat(activations)
+      .extracting("projectPath")
+      .containsExactly(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath());
+
+    final List<String> afterSyncTasks = activations.get(0).state.getTasks(ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+
+    assertThat(afterSyncTasks).containsExactly("processIdeaSettings");
+
+    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)myProject).getComponentStore()
+      .getProjectFilePath().getParent().toAbsolutePath().toString());
+
+    String moduleFile = getModule("project").getModuleFilePath();
+    assertThat(layoutFile)
+      .exists()
+      .hasContent("Expected file content");
   }
 
   @Test

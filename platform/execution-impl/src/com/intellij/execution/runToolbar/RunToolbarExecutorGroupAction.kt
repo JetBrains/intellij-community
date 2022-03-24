@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.Executor
@@ -14,15 +14,20 @@ internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecut
   override val process: RunToolbarProcess
     get() = group.process
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible && if(e.isItRunToolbarMainSlot()) e.project?.let {
-        !RunToolbarSlotManager.getInstance(it).getState().isActive()
-      } ?: false else true
+    e.presentation.isVisible = !e.isActiveProcess() && e.presentation.isVisible
 
-    } ?: false
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
@@ -40,15 +45,19 @@ internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+   return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible && if(e.isItRunToolbarMainSlot()) e.project?.let {
-        !RunToolbarSlotManager.getInstance(it).getState().isActive()
-      } ?: false else true
+    e.presentation.isVisible = !e.isActiveProcess()
 
-    } ?: false
-
+    if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 }

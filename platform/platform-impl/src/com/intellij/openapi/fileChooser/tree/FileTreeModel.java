@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,6 +25,8 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,11 +38,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
 
@@ -295,6 +293,9 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private List<Root> getRoots() {
+      if (!model.invoker.isValidThread()) {
+        LOG.error(new IllegalStateException(Thread.currentThread().getName()));
+      }
       List<VirtualFile> files = roots;
       if (files == null) files = getSystemRoots();
       if (files.isEmpty()) return Collections.emptyList();
@@ -306,28 +307,83 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return list.isEmpty() && descriptor.isShowFileSystemRoots() ? null : list;
     }
 
-    private static @NotNull List<VirtualFile> getSystemRoots() {
-      List<Path> roots = ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories());
+    private @NotNull List<VirtualFile> getSystemRoots() {
+      List<WSLDistribution> distributions = List.of();
       if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
-        LOG.debug("Fetching WSL distributions...");
-        Future<List<WSLDistribution>> future = WslDistributionManager.getInstance().getInstalledDistributionsFuture();
-        try {
-          List<WSLDistribution> distributions = future.get(100, TimeUnit.MILLISECONDS);
-          List<Path> wslRoots = ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Added WSL roots: " + wslRoots);
+        WslDistributionManager distributionManager = WslDistributionManager.getInstance();
+        List<WSLDistribution> lastDistributions = ContainerUtil.notNullize(distributionManager.getLastInstalledDistributions());
+        distributions = lastDistributions;
+        LOG.debug("WSL distributions: ", distributions);
+        distributionManager.getInstalledDistributionsFuture().thenAccept(newDistributions -> {
+          // called on a background thread without read action
+          if (newDistributions.equals(lastDistributions)) {
+            LOG.debug("WSL distributions are up-to-date");
+            return;
           }
-          roots.addAll(wslRoots);
+          LOG.debug("New WSL distributions: ", newDistributions);
+          model.invoker.invokeLater(() -> {
+            // invokeLater to ensure model.roots are calculated
+            setRoots(getLocalAndWslRoots(newDistributions));
+          });
+        });
+      }
+      return getLocalAndWslRoots(distributions);
+    }
+
+    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<WSLDistribution> distributions) {
+      return toVirtualFiles(ContainerUtil.concat(ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories()),
+                                                 ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath)));
+    }
+
+    private void setRoots(@NotNull List<VirtualFile> newRootFiles) {
+      List<Root> oldRoots = model.roots;
+      if (oldRoots == null) {
+        LOG.error("Roots have not been calculated yet, new roots won't be set due to a possible race condition");
+        return;
+      }
+      List<VirtualFile> oldRootFiles = toRootFiles(oldRoots);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("New roots: " + newRootFiles + ", old roots: " + oldRootFiles);
+      }
+      removeRoots(oldRoots, findNewElementIndices(oldRootFiles, newRootFiles));
+      List<Root> rootsToAdd = newRootFiles.stream().filter(root -> !oldRootFiles.contains(root))
+        .map(root -> new Root(this, root)).collect(Collectors.toList());
+      addRoots(model.roots, rootsToAdd);
+    }
+
+    private static @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
+      return ContainerUtil.map(roots, FileNode::getFile);
+    }
+
+    private void removeRoots(@NotNull List<Root> roots, int[] indicesToRemove) {
+      if (indicesToRemove.length > 0) {
+        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).collect(Collectors.toList());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Removing " + toRootFiles(rootsToRemove));
         }
-        catch (InterruptedException | ExecutionException e) {
-          LOG.error("Unexpected exception when fetching WSL distributions", e);
+        model.roots = ContainerUtil.filter(roots, root -> !rootsToRemove.contains(root));
+        model.treeNodesRemoved(path, indicesToRemove, rootsToRemove.toArray());
+      }
+    }
+
+    private void addRoots(@NotNull List<Root> roots, @NotNull List<Root> rootsToAdd) {
+      if (rootsToAdd.size() > 0) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Adding " + toRootFiles(rootsToAdd));
         }
-        catch (TimeoutException e) {
-          LOG.info("Timed out when fetching WSL distributions, re-fetch scheduled");
-          throw new ProcessCanceledException(e);
+        model.roots = List.copyOf(ContainerUtil.concat(roots, rootsToAdd));
+        model.treeNodesInserted(path, IntStream.range(roots.size(), roots.size() + rootsToAdd.size()).toArray(), rootsToAdd.toArray());
+      }
+    }
+
+    private static <E> int[] findNewElementIndices(@NotNull List<E> a, @NotNull List<E> b) {
+      IntList newIndices = new IntArrayList();
+      for (int i = 0; i < a.size(); i++) {
+        if (!b.contains(a.get(i))) {
+          newIndices.add(i);
         }
       }
-      return toVirtualFiles(roots);
+      return newIndices.toIntArray();
     }
 
     private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<Path> paths) {

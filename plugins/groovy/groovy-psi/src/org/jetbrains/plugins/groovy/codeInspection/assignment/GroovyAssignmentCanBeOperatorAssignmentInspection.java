@@ -65,7 +65,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
 
   @Override
   @Nullable
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel =
         new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyBundle.message("checkbox.ignore.conditional.operators"), "ignoreLazyOperators");

@@ -166,7 +166,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+  public void registerConflictResolvers(List<? super ResolveSnapshotProvider.ResolveSnapshot> snapshots,
                                         @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
                                         UsageInfo[] usages, ChangeInfo changeInfo) {
   }
@@ -500,7 +500,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (map == null) return;
     if (changeInfo.isNameChanged()) {
       if (element instanceof GrReferenceElement) {
-        element = ((GrReferenceElement)element).handleElementRename(changeInfo.getNewName());
+        element = ((GrReferenceElement<?>)element).handleElementRename(changeInfo.getNewName());
       }
     }
     if (toChangeArguments) {

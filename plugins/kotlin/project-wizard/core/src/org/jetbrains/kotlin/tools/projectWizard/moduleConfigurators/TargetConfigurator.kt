@@ -69,7 +69,7 @@ internal fun Module.createTargetAccessIr(
 ) =
     TargetAccessIR(
         moduleSubType,
-        name.takeIf { it != moduleSubType.name },
+        name.takeIf { it != moduleSubType.toString() },
         additionalParams.filterNotNull()
     )
 
@@ -81,10 +81,10 @@ enum class JsTargetKind(override val text: String) : DisplayableSettingItem {
     APPLICATION(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.application"))
 }
 
-enum class JsCompiler(override val text: String) : DisplayableSettingItem {
-    IR("IR"),
-    LEGACY("LEGACY"),
-    BOTH("BOTH")
+enum class JsCompiler(override val text: String, val scriptValue: String) : DisplayableSettingItem {
+    IR(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.ir"), "IR"),
+    LEGACY(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.legacy"), "LEGACY"),
+    BOTH(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.both"), "BOTH")
 }
 
 abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleConfiguratorWithTests {

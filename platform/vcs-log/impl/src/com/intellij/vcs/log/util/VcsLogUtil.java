@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -15,6 +17,7 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
@@ -22,12 +25,13 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +46,8 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
+import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_DOES_NOT_MATCH;
+import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_NOT_FOUND;
 import static java.util.Collections.singletonList;
 
 public final class VcsLogUtil {
@@ -53,16 +59,9 @@ public final class VcsLogUtil {
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
-    return groupByRoot(refs, VcsRef::getRoot);
-  }
-
-  @NotNull
-  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<? extends T> items,
-                                                          @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
-    for (T item : items) {
-      VirtualFile root = rootGetter.fun(item);
-      map.computeIfAbsent(root, k -> new HashSet<>()).add(item);
+    Map<VirtualFile, Set<VcsRef>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
+    for (VcsRef item : refs) {
+      map.computeIfAbsent(item.getRoot(), k -> new HashSet<>()).add(item);
     }
     return map;
   }
@@ -390,5 +389,48 @@ public final class VcsLogUtil {
       if (visiblePack.getVisibleGraph().getVisibleCommitCount() <= r) return -1;
       return r;
     }, SettableFuture.create(), silently, true);
+  }
+
+  public static int getCommitRow(@NotNull VcsLogStorage storage, @NotNull VisiblePack visiblePack,
+                                 @NotNull Hash hash, @NotNull VirtualFile root) {
+    int commitIndex = storage.getCommitIndex(hash, root);
+    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
+    if (visibleGraph instanceof VisibleGraphImpl) {
+      int nodeId = ((VisibleGraphImpl<Integer>)visibleGraph).getPermanentGraph().getPermanentCommitsInfo().getNodeId(commitIndex);
+      if (nodeId == COMMIT_NOT_FOUND) return COMMIT_NOT_FOUND;
+      if (nodeId < 0) return COMMIT_DOES_NOT_MATCH;
+      Integer rowIndex = ((VisibleGraphImpl<Integer>)visibleGraph).getLinearGraph().getNodeIndex(nodeId);
+      return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
+    }
+    Integer rowIndex = visibleGraph.getVisibleRowIndex(commitIndex);
+    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
+  }
+
+  @NotNull
+  public static ListenableFuture<VcsLogUiEx.JumpResult> jumpToCommit(@NotNull VcsLogUiEx vcsLogUi,
+                                                                     @NotNull Hash commitHash,
+                                                                     @NotNull VirtualFile root,
+                                                                     boolean silently,
+                                                                     boolean focus) {
+    SettableFuture<VcsLogUiEx.JumpResult> future = SettableFuture.create();
+    vcsLogUi.jumpTo(commitHash, (visiblePack, hash) -> {
+      VcsLogStorage storage = vcsLogUi.getLogData().getStorage();
+      if (!storage.containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
+      return getCommitRow(storage, visiblePack, hash, root);
+    }, future, silently, focus);
+    return future;
+  }
+
+  public static void runWhenVcsAndLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
+    VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+    if (logManager != null) {
+      action.consume(logManager);
+      return;
+    }
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        VcsProjectLog.runWhenLogIsReady(project, action);
+      });
+    });
   }
 }

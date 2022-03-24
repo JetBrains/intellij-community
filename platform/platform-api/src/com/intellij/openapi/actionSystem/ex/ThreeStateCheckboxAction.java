@@ -5,6 +5,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.Nls;
@@ -15,7 +16,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public abstract class ThreeStateCheckboxAction extends AnAction implements CustomComponentAction {
-  @NonNls public static final String STATE_PROPERTY = "three_state_selected";
+  @NonNls public static final Key<ThreeStateCheckBox.State> STATE_PROPERTY = Key.create("three_state_selected");
 
   protected ThreeStateCheckboxAction() {}
 
@@ -58,13 +59,6 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
 
     Presentation presentation = e.getPresentation();
     presentation.putClientProperty(STATE_PROPERTY, state);
-
-    JComponent property = presentation.getClientProperty(COMPONENT_KEY);
-    if (property instanceof ThreeStateCheckBox) {
-      ThreeStateCheckBox checkBox = (ThreeStateCheckBox)property;
-
-      updateCustomComponent(checkBox, presentation);
-    }
   }
 
   @NotNull
@@ -73,14 +67,18 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
     // this component cannot be stored right here because of the action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     ThreeStateCheckBox checkBox = new ThreeStateCheckBox();
-    updateCustomComponent(checkBox, presentation);
     return CheckboxAction.createCheckboxComponent(checkBox, this, place);
   }
 
-  protected void updateCustomComponent(ThreeStateCheckBox checkBox, Presentation presentation) {
-    CheckboxAction.updateCheckboxPresentation(checkBox, presentation);
+  @Override
+  public void updateCustomComponent(@NotNull JComponent component,
+                                    @NotNull Presentation presentation) {
+    if (component instanceof ThreeStateCheckBox) {
+      ThreeStateCheckBox checkBox = (ThreeStateCheckBox)component;
+      CheckboxAction.updateCheckboxPresentation(checkBox, presentation);
 
-    ThreeStateCheckBox.State property = ObjectUtils.tryCast(presentation.getClientProperty(STATE_PROPERTY), ThreeStateCheckBox.State.class);
-    checkBox.setState(ObjectUtils.chooseNotNull(property, ThreeStateCheckBox.State.NOT_SELECTED));
+      ThreeStateCheckBox.State property = presentation.getClientProperty(STATE_PROPERTY);
+      checkBox.setState(ObjectUtils.chooseNotNull(property, ThreeStateCheckBox.State.NOT_SELECTED));
+    }
   }
 }

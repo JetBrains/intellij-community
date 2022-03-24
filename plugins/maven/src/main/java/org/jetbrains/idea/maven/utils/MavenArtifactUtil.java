@@ -11,20 +11,23 @@ import org.jetbrains.idea.maven.model.MavenId;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public final class MavenArtifactUtil {
   public static final String[] DEFAULT_GROUPS = new String[]{"org.apache.maven.plugins", "org.codehaus.mojo"};
   public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
-  private static final Map<File, MavenPluginInfo> ourPluginInfoCache = Collections.synchronizedMap(new HashMap<>());
+  private static final Map<Path, MavenPluginInfo> ourPluginInfoCache = Collections.synchronizedMap(new HashMap<>());
 
   @Nullable
   public static MavenPluginInfo readPluginInfo(File localRepository, MavenId mavenId) {
-    File file = getArtifactFile(localRepository, mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion(), "jar");
+    Path file = getArtifactNioPath(localRepository, mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion(), "jar");
 
     MavenPluginInfo result = ourPluginInfoCache.get(file);
     if (result == null) {
@@ -39,17 +42,17 @@ public final class MavenArtifactUtil {
   }
 
   public static boolean hasArtifactFile(File localRepository, MavenId id, String type) {
-    return getArtifactFile(localRepository, id, type).exists();
+    return Files.exists(getArtifactFile(localRepository, id, type));
   }
 
   @NotNull
-  public static File getArtifactFile(File localRepository, MavenId id, String type) {
-    return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), type);
+  public static Path getArtifactFile(File localRepository, MavenId id, String type) {
+    return getArtifactNioPath(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), type);
   }
 
   @NotNull
-  public static File getArtifactFile(File localRepository, MavenId id) {
-    return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+  public static Path getArtifactFile(File localRepository, MavenId id) {
+    return getArtifactNioPath(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
   }
 
   public static boolean isPluginIdEquals(@Nullable String groupId1, @Nullable String artifactId1,
@@ -79,13 +82,22 @@ public final class MavenArtifactUtil {
     return Objects.equals(groupId1, groupId2);
   }
 
+  /**
+   * @deprecated use {@link #getArtifactNioPath(File, String, String, String, String)} instead
+   */
+  @Deprecated
   @NotNull
   public static File getArtifactFile(File localRepository, String groupId, String artifactId, String version, String type) {
-    File dir = null;
+    return getArtifactNioPath(localRepository, groupId, artifactId, version, type).toFile();
+  }
+
+  @NotNull
+  public static Path getArtifactNioPath(File localRepository, String groupId, String artifactId, String version, String type) {
+    Path dir = null;
     if (StringUtil.isEmpty(groupId)) {
       for (String each : DEFAULT_GROUPS) {
         dir = getArtifactDirectory(localRepository, each, artifactId);
-        if (dir.exists()) break;
+        if (Files.exists(dir)) break;
       }
     }
     else {
@@ -93,33 +105,31 @@ public final class MavenArtifactUtil {
     }
 
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);
-    return new File(dir, version + File.separator + artifactId + "-" + version + "." + type);
+    return dir.resolve(version).resolve(artifactId + "-" + version + "." + type);
   }
 
-  private static File getArtifactDirectory(File localRepository,
+  private static Path getArtifactDirectory(File localRepository,
                                            String groupId,
                                            String artifactId) {
     String relativePath = StringUtil.replace(groupId, ".", File.separator) + File.separator + artifactId;
-    return new File(localRepository, relativePath);
+    return localRepository.toPath().resolve(relativePath);
   }
 
-  private static String resolveVersion(File pluginDir) {
+  private static String resolveVersion(Path pluginDir) {
     List<String> versions = new ArrayList<>();
-
-    File[] children;
-    try {
-      children = pluginDir.listFiles();
-      if (children == null) return "";
+    try (Stream<Path> children = Files.list(pluginDir)) {
+      children.forEach(path -> {
+        if (Files.isDirectory(path)) {
+          versions.add(path.getFileName().toString());
+        }
+      });
     }
-    catch (Exception e) {
-      MavenLog.LOG.warn(e);
+    catch (NoSuchFileException e) {
       return "";
     }
-
-    for (File version : children) {
-      if (version.isDirectory()) {
-        versions.add(version.getName());
-      }
+    catch (Exception e) {
+      MavenLog.LOG.warn(e.getMessage());
+      return "";
     }
 
     if (versions.isEmpty()) return "";
@@ -129,12 +139,11 @@ public final class MavenArtifactUtil {
   }
 
   @Nullable
-  private static MavenPluginInfo createPluginDocument(File file) {
+  private static MavenPluginInfo createPluginDocument(Path file) {
     try {
-      if (!file.exists()) return null;
+      if (!Files.exists(file)) return null;
 
-      ZipFile jar = new ZipFile(file);
-      try {
+      try (ZipFile jar = new ZipFile(file.toFile())) {
         ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
         if (entry == null) {
@@ -142,17 +151,10 @@ public final class MavenArtifactUtil {
           return null;
         }
 
-        InputStream is = jar.getInputStream(entry);
-        try {
+        try (InputStream is = jar.getInputStream(entry)) {
           byte[] bytes = FileUtil.loadBytes(is);
           return new MavenPluginInfo(bytes);
         }
-        finally {
-          is.close();
-        }
-      }
-      finally {
-        jar.close();
       }
     }
     catch (IOException e) {

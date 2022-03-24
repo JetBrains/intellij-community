@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
@@ -73,9 +74,14 @@ public final class ConstructionUtils {
       PsiNewExpression newExpression = (PsiNewExpression)expression;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList != null && argumentList.isEmpty() && newExpression.getAnonymousClass() == null) {
-        PsiType type = expression.getType();
-        return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
-               com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
+        PsiClassType type = ObjectUtils.tryCast(expression.getType(), PsiClassType.class);
+        if (type == null) return false;
+        PsiClass aClass = type.resolve();
+        if (aClass == null) return false;
+        String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName == null || !qualifiedName.startsWith("java.util.")) return false;
+        return com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+               com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_MAP);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {

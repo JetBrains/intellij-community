@@ -230,7 +230,18 @@ public class JavaKeywordCompletion {
 
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(myPrevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(myPrevLeaf)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ELSE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      LookupElement elseKeyword = new OverridableSpace(createKeyword(PsiKeyword.ELSE), TailType.HUMBLE_SPACE_BEFORE_WORD);
+      CharSequence text = myParameters.getEditor().getDocument().getCharsSequence();
+      int offset = myParameters.getOffset();
+      while (text.length() > offset && Character.isWhitespace(text.charAt(offset))) {
+        offset++;
+      }
+      if (text.length() > offset + PsiKeyword.ELSE.length() &&
+          text.subSequence(offset, offset + PsiKeyword.ELSE.length()).toString().equals(PsiKeyword.ELSE) &&
+          Character.isWhitespace(text.charAt(offset + PsiKeyword.ELSE.length()))) {
+        elseKeyword = PrioritizedLookupElement.withPriority(elseKeyword, -1);
+      }
+      addKeyword(elseKeyword);
     }
   }
 
@@ -304,6 +315,7 @@ public class JavaKeywordCompletion {
     if (selectorType instanceof PsiPrimitiveType) return;
 
     addKeyword(createKeyword(PsiKeyword.NULL));
+    addKeyword(createKeyword(PsiKeyword.DEFAULT));
   }
 
   private boolean isInsideCaseLabel() {
@@ -756,13 +768,29 @@ public class JavaKeywordCompletion {
     if (psiClass != null) {
       if (!psiClass.isEnum() && !psiClass.isRecord()) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        if (HighlightingFeature.SEALED_CLASSES.isAvailable(psiClass)) {
+          PsiModifierList modifiers = psiClass.getModifierList();
+          if (myParameters.getInvocationCount() > 1 ||
+              (modifiers != null &&
+               !modifiers.hasExplicitModifier(PsiModifier.FINAL) &&
+               !modifiers.hasExplicitModifier(PsiModifier.NON_SEALED))) {
+            InsertHandler<LookupElement> handler = (context, item) -> {
+              PsiClass aClass = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiClass.class, false);
+              if (aClass != null) {
+                PsiModifierList modifierList = aClass.getModifierList();
+                if (modifierList != null) {
+                  modifierList.setModifierProperty(PsiModifier.SEALED, true);
+                }
+              }
+            };
+            LookupElement element = new OverridableSpace(LookupElementDecorator.withInsertHandler(createKeyword(PsiKeyword.PERMITS), handler),
+                                                         TailType.HUMBLE_SPACE_BEFORE_WORD);
+            addKeyword(element);
+          }
+        }
       }
       if (!psiClass.isInterface()) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPLEMENTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      }
-      PsiModifierList modifiers = psiClass.getModifierList();
-      if (modifiers != null && modifiers.hasExplicitModifier(PsiModifier.SEALED)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PERMITS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
     }
   }

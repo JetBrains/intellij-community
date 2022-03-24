@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.ElementKind.TYPE_CONSTRUCTOR
@@ -24,13 +24,16 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.ui.Kot
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     companion object {
         @JvmStatic
-        val REFACTORING_NAME get() = KotlinBundle.message("name.introduce.type.alias")
+        val REFACTORING_NAME
+            @Nls
+            get() = KotlinBundle.message("name.introduce.type.alias")
 
         val INSTANCE = KotlinIntroduceTypeAliasHandler()
     }
@@ -96,7 +99,7 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
 
             is IntroduceTypeAliasAnalysisResult.Success -> {
                 val originalDescriptor = analysisResult.descriptor
-                if (ApplicationManager.getApplication().isUnitTestMode) {
+                if (isUnitTestMode()) {
                     val (descriptor, conflicts) = descriptorSubstitutor!!(originalDescriptor).validate()
                     project.checkConflictsInteractively(conflicts) { runRefactoring(descriptor, project, editor) }
                 } else {

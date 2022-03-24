@@ -17,11 +17,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.KotlinLibraryData
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 import kotlin.test.assertNotNull
 
@@ -129,6 +129,19 @@ object ConfigLibraryUtil {
         }
     }
 
+    fun addLibraries(rootModel: ModifiableRootModel, vararg librariesData: KotlinLibraryData) {
+        rootModel.moduleLibraryTable.modifiableModel.apply {
+            for (libraryData in librariesData) {
+                val library = createLibrary(libraryData.libraryName, libraryData.kind)
+                library.modifiableModel.apply {
+                    addRoot(VfsUtil.getUrlForLibraryRoot(libraryData.classesRoot), OrderRootType.CLASSES)
+                    addRoot(VfsUtil.getUrlForLibraryRoot(libraryData.sourcesRoot), OrderRootType.SOURCES)
+                    commit()
+                }
+            }
+        }
+    }
+
     fun addLibrary(editor: NewLibraryEditor, model: ModifiableRootModel, kind: PersistentLibraryKind<*>? = null): Library {
         val libraryTableModifiableModel = model.moduleLibraryTable.modifiableModel
         val library = libraryTableModifiableModel.createLibrary(editor.name, kind)
@@ -170,7 +183,7 @@ object ConfigLibraryUtil {
                             }
                             modifiableModel.commit()
 
-                            model.moduleLibraryTable.removeLibrary(library)
+                            model.removeOrderEntry(orderEntry)
 
                             removed = true
                             break

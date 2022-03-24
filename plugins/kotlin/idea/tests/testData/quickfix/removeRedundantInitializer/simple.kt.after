@@ -1,5 +1,5 @@
 // "Remove redundant initializer" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 fun foo() {
     var bar: Int
     bar = 42

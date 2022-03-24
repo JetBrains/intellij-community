@@ -61,6 +61,10 @@ final class ValueContainerMap<Key, Value> {
     }
   }
 
+  void remove(Key key) throws IOException {
+    myPersistentMap.remove(key);
+  }
+
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
     return myKeyDescriptor instanceof InlineKeyDescriptor
            // process keys and check that they're already present in map because we don't have separated key storage we must check keys

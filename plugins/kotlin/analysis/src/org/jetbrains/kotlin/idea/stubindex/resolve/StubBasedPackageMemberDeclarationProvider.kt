@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
 import org.jetbrains.kotlin.resolve.lazy.data.KtScriptInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import java.util.*
 
 class StubBasedPackageMemberDeclarationProvider(
     private val fqName: FqName,
@@ -27,10 +25,16 @@ class StubBasedPackageMemberDeclarationProvider(
 ) : PackageMemberDeclarationProvider {
 
     override fun getDeclarations(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<KtDeclaration> {
+        val fqNameAsString = fqName.asString()
         val result = ArrayList<KtDeclaration>()
 
-        fun addFromIndex(index: StringStubIndexExtension<out KtNamedDeclaration>) {
-            index.get(fqName.asString(), project, searchScope).filterTo(result) { nameFilter(it.nameAsSafeName) }
+        fun addFromIndex(index: AbstractStringStubIndexExtension<out KtNamedDeclaration>) {
+            index.processElements(fqNameAsString, project, searchScope) {
+                if (nameFilter(it.nameAsSafeName)) {
+                    result.add(it)
+                }
+                true
+            }
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK)) {
@@ -87,7 +91,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getAllDeclaredSubPackages(nameFilter: (Name) -> Boolean): Collection<FqName> {
-        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, project, nameFilter)
+        return PackageIndexUtil.getSubPackageFqNames(fqName, searchScope, nameFilter)
     }
 
     override fun getPackageFiles(): Collection<KtFile> {

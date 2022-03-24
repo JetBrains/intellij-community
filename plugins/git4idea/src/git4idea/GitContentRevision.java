@@ -63,6 +63,10 @@ public class GitContentRevision implements ByteBackedContentRevision {
       return null;
     }
     try {
+      if (!GitUtil.isHashString(myRevision.getRev())) {
+        // do not cache contents for 'HEAD' or branch/tag references
+        return ContentRevisionCache.loadAsBytes(myFile, this::loadContent);
+      }
       return ContentRevisionCache.getOrLoadAsBytes(myProject, myFile, myRevision, GitVcs.getKey(), REPOSITORY_CONTENT, this::loadContent);
     }
     catch (IOException e) {
@@ -137,7 +141,8 @@ public class GitContentRevision implements ByteBackedContentRevision {
   }
 
   @NotNull
-  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean isDirectory) throws VcsException {
+  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean isDirectory)
+    throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, GitUtil.unescapePath(path));
     return VcsUtil.getFilePath(absolutePath, isDirectory);
   }

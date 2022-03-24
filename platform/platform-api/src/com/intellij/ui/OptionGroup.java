@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -69,9 +70,9 @@ public class OptionGroup implements PanelWithAnchor {
         panel.add(component, new GridBagConstraints(0, i, REMAINDER, 1, 1, 0, WEST, getFill(component), JBUI.insets(top, left, 0, 0), 0, 0));
       }
       else {
-        JComponent first = (JComponent)((Pair)option).first;
+        JComponent first = (JComponent)((Pair<?, ?>)option).first;
         panel.add(first, new GridBagConstraints(0, i, 1, 1, 1, 0, WEST, getFill(first), JBUI.insets(top, left, 0, 0), 0, 0));
-        JComponent second = (JComponent)((Pair)option).second;
+        JComponent second = (JComponent)((Pair<?, ?>)option).second;
         panel.add(second, new GridBagConstraints(1, i, 1, 1, 1, 0, EAST, HORIZONTAL, JBUI.insets(top, UIUtil.DEFAULT_HGAP, 0, 0), 0, 0));
         if (first instanceof JLabel) {
           ((JLabel)first).setLabelFor(second);
@@ -81,7 +82,7 @@ public class OptionGroup implements PanelWithAnchor {
 
     JPanel p = new JPanel();
     p.setPreferredSize(new Dimension(0, 0));
-    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBInsets.emptyInsets(), 0, 0));
 
     if (myTitle != null) {
       IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true);
@@ -105,8 +106,8 @@ public class OptionGroup implements PanelWithAnchor {
   public void setAnchor(@Nullable JComponent anchor) {
     myAnchor = anchor;
     for (Object o : myOptions) {
-      if (o instanceof Pair && ((Pair)o).first instanceof AnchorableComponent) {
-        ((AnchorableComponent)((Pair)o).first).setAnchor(anchor);
+      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent) {
+        ((AnchorableComponent)((Pair<?, ?>)o).first).setAnchor(anchor);
       }
     }
   }
@@ -115,8 +116,8 @@ public class OptionGroup implements PanelWithAnchor {
     List<JComponent> components = new ArrayList<>();
     for (Object o : myOptions) {
       if (o instanceof Pair) {
-        components.add((JComponent)((Pair)o).first);
-        components.add((JComponent)((Pair)o).second);
+        components.add((JComponent)((Pair<?, ?>)o).first);
+        components.add((JComponent)((Pair<?, ?>)o).second);
       }
       else {
         components.add((JComponent)o);
@@ -130,8 +131,8 @@ public class OptionGroup implements PanelWithAnchor {
     double maxWidth = -1;
     JComponent anchor = null;
     for (Object o : myOptions) {
-      if (o instanceof Pair && ((Pair)o).first instanceof AnchorableComponent && ((Pair)o).first instanceof JComponent) {
-        JComponent component = (JComponent)((Pair)o).first;
+      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent && ((Pair<?, ?>)o).first instanceof JComponent) {
+        JComponent component = (JComponent)((Pair<?, ?>)o).first;
         if (component.getPreferredSize().getWidth() > maxWidth) {
           maxWidth = component.getPreferredSize().getWidth();
           anchor = component;

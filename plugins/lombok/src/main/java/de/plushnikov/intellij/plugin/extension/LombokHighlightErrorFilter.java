@@ -218,48 +218,6 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
         return !LazyGetterHandler.isLazyGetterHandled(highlightedElement)
           || !LazyGetterHandler.isInitializedInConstructors(highlightedElement);
       }
-    },
-
-    /**
-     * Handles warnings that are related to Builder.Default cause.
-     * The final fields that are marked with Builder.Default contains only possible value because user can set another value during the creation of the object.
-     */
-    //see de.plushnikov.intellij.plugin.inspection.DataFlowInspectionTest.testDefaultBuilderFinalValueInspectionIsAlwaysThat
-    //see de.plushnikov.intellij.plugin.inspection.PointlessBooleanExpressionInspectionTest.testPointlessBooleanExpressionBuilderDefault
-    CONSTANT_CONDITIONS_DEFAULT_BUILDER_CAN_BE_SIMPLIFIED(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES) {
-      @SuppressWarnings("UnresolvedPropertyKey")
-      private final Pattern patternCanBeSimplified =
-        preparePattern(InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor"), "''{0}''");
-
-      @SuppressWarnings("UnresolvedPropertyKey")
-      private final Pattern patternIsAlways =
-        preparePattern(JavaAnalysisBundle.message("dataflow.message.constant.condition"), "<code>{0, choice, 0#false|1#true}</code>");
-
-      @NotNull
-      private Pattern preparePattern(String message, String s) {
-        return Pattern.compile(ProblemDescriptorUtil.removeLocReference(message).replace("<code>#ref</code>", "'(.+)'").replace(s, "'(.+)'"));
-      }
-
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return description != null
-          && (patternCanBeSimplified.matcher(description).matches() || patternIsAlways.matcher(description).matches());
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        PsiReferenceExpression parent = PsiTreeUtil.getParentOfType(highlightedElement, PsiReferenceExpression.class);
-        if (parent == null) {
-          return true;
-        }
-
-        PsiElement resolve = parent.resolve();
-        if (!(resolve instanceof PsiField)) {
-          return true;
-        }
-
-        return !PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) resolve, LombokClassNames.BUILDER_DEFAULT);
-      }
     };
 
     private final HighlightSeverity severity;

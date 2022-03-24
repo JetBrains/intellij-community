@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
+ * Listener for {@link VirtualFile} to {@link Document} association events:
+ * Virtual file loading, Document creation, Document saving back and reloading.
  * @see AppTopics#FILE_DOCUMENT_SYNC
  */
 public interface FileDocumentManagerListener extends EventListener {
@@ -57,5 +59,8 @@ public interface FileDocumentManagerListener extends EventListener {
   }
 
   default void unsavedDocumentsDropped() {
+  }
+
+  default void afterDocumentUnbound(@NotNull VirtualFile file, @NotNull Document document) {
   }
 }

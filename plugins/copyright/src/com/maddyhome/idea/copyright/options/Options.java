@@ -126,10 +126,13 @@ public class Options implements Cloneable {
           String name = option.getAttributeValue("name");
           String val = option.getAttributeValue("value");
           if ("body".equals(name)) {
-            //todo opts.setNotice(val);
+            opts.setNotice(val);
           }
           else if ("location".equals(name)) {
-            opts.setFileLocation(Integer.parseInt(val));
+            if(val != null){
+              opts.setFileLocation(Integer.parseInt(val));
+            }
+
           }
         }
 

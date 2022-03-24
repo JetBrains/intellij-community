@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.exists
-import org.jetbrains.kotlin.checkers.API_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.checkers.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
 import org.jetbrains.kotlin.checkers.diagnostics.factories.SyntaxErrorDiagnosticFactory
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.Directives
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -85,7 +85,7 @@ abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
 
     protected open fun checkFile(file: KtFile, expectedFile: File) {
         val resolutionFacade = file.getResolutionFacade()
-        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(listOf(file))
+        val (bindingContext, moduleDescriptor) = resolutionFacade.analyzeWithAllCompilerChecks(file)
 
         val directives = KotlinTestUtils.parseDirectives(file.text)
         val diagnosticsFilter = parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)

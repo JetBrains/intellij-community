@@ -2,17 +2,17 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 @CompileStatic
 class ProductModulesLayout {
-  public static List<String> DEFAULT_BUNDLED_PLUGINS = ["intellij.platform.images"]
+  public static final List<String> DEFAULT_BUNDLED_PLUGINS = List.of("intellij.platform.images")
 
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
@@ -70,7 +70,7 @@ class ProductModulesLayout {
   /**
    * Maps names of JARs to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
-  MultiValuesMap<String, String> additionalPlatformJars = new MultiValuesMap<>(true)
+  MultiMap<String, String> additionalPlatformJars = MultiMap.createLinkedSet()
 
   /**
    * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
@@ -82,7 +82,22 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  Consumer<PlatformLayout> platformLayoutCustomizer = {} as Consumer<PlatformLayout>
+  BiConsumer<PlatformLayout, BuildContext> platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+    @Override
+    void accept(PlatformLayout layout, BuildContext context) {
+    }
+  }
+
+  void appendPlatformCustomizer(BiConsumer<PlatformLayout, BuildContext> customizer) {
+    BiConsumer<PlatformLayout, BuildContext> prev = platformLayoutCustomizer
+    platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+      @Override
+      void accept(PlatformLayout layout, BuildContext context) {
+        prev.accept(layout, context)
+        customizer.accept(layout, context)
+      }
+    }
+  }
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
@@ -111,14 +126,14 @@ class ProductModulesLayout {
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
-  List<String> compatiblePluginsToIgnore = []
+  List<String> compatiblePluginsToIgnore = new ArrayList<>()
 
   /**
    * Module names which should be excluded from this product.
    * Allows to filter out default platform modules (both api and implementation) as well as product modules.
    * This API is experimental, use with care
    */
-  List<String> excludedModuleNames = []
+  final Set<String> excludedModuleNames = new HashSet<>()
 
   /**
    * @return list of all modules which output is included into the plugin's JARs
@@ -129,14 +144,18 @@ class ProductModulesLayout {
     result.addAll(enabledPluginModules)
     result.addAll(allNonTrivialPlugins
                     .findAll { enabledPluginModules.contains(it.mainModule) }
-                    .collectMany { it.moduleJars.values() })
+                    .collectMany { it.includedModuleNames })
     return result
   }
 
   /**
-   * @deprecated this method isn't supposed to be used in product build scripts
+   * Map name of JAR to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
-  List<String> getIncludedPlatformModules() {
-    DistributionJARsBuilder.getIncludedPlatformModules(this)
+  void withAdditionalPlatformJar(String jarName, String... moduleNames) {
+    additionalPlatformJars.putValues(jarName, List.of(moduleNames))
+  }
+
+  void withoutAdditionalPlatformJar(String jarName, String moduleName) {
+    additionalPlatformJars.remove(jarName, moduleName)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -43,10 +43,11 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,8 +140,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator));
-            UIUtil.invokeLaterIfNeeded(() -> {
+            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
+            EdtInvocationManager.invokeLaterIfNeeded(() -> {
               configurable.setDeveloperList(updatedDevelopers);
               if (isShowing()) {
                 setDevelopers(updatedDevelopers);
@@ -149,7 +150,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
           catch (SocketTimeoutException e) {
             LOG.debug(e);
-            UIUtil.invokeLaterIfNeeded(() -> {
+            EdtInvocationManager.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
                 setDevelopers(developers);
               }
@@ -217,7 +218,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 10), 0, 0));
     panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
     panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, EAST, NONE, JBUI.insets(3, 0), 0, 0));
-    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(2, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(2, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -315,8 +316,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JPanel accountRow = new JPanel(new GridBagLayout());
     accountRow.setBorder(JBUI.Borders.empty(6, 0));
-    accountRow.add(myCredentialsLabel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    if (myAssigneeVisible) accountRow.add(myAssigneePanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
+    accountRow.add(myCredentialsLabel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    if (myAssigneeVisible)
+      accountRow.add(myAssigneePanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBInsets.emptyInsets(), 0, 0));
     JPanel bottomRow = new JPanel(new BorderLayout());
     bottomRow.add(accountRow, BorderLayout.NORTH);
     bottomRow.add(myPrivacyNotice, BorderLayout.CENTER);
@@ -542,9 +544,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myAttachmentsList.clear();
       myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
-      boolean internal = ApplicationManager.getApplication().isInternal();
       for (Attachment attachment : message.getAllAttachments()) {
-        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded() || internal);
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
       }
       myAttachmentsList.setSelectedIndex(0);
 
@@ -712,14 +713,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         continue;
       }
 
-      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
-                                                               pluginIdMap,
-                                                               (pluginId, descriptor) ->
-                                                                 Objects.requireNonNull(descriptor).isEnabled() ?
-                                                                 pluginIdsToDisable.contains(pluginId) ?
-                                                                 FileVisitResult.TERMINATE :
-                                                                 FileVisitResult.CONTINUE :
-                                                                 FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
+      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, descriptor ->
+        descriptor.isEnabled() ?
+        pluginIdsToDisable.contains(descriptor.getPluginId()) ?
+        FileVisitResult.TERMINATE :
+        FileVisitResult.CONTINUE :
+        FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
       )) {
         return true;
       }
@@ -901,14 +900,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         return pair("*** exception class was changed or removed", detailsText);
       }
     }
-  }
-
-  /** @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead, and take the plugin name and version from the returned instance */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
-    IdeaPluginDescriptor plugin = getPlugin(event);
-    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
   public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {

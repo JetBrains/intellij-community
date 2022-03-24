@@ -22,12 +22,7 @@ final class WriteThread {
    * @param runnable the action to run
    * @return a future representing the result of the scheduled computation
    */
-  @NotNull
-  public static Future<Void> submit(@NotNull Runnable runnable) {
-    return submit(runnable, ModalityState.defaultModalityState());
-  }
-
-  public static Future<Void> submit(@NotNull Runnable runnable, ModalityState modalityState) {
+  private static @NotNull Future<Void> submit(@NotNull Runnable runnable, ModalityState modalityState) {
     return submit(() -> {
       runnable.run();
       return null;
@@ -41,12 +36,7 @@ final class WriteThread {
    * @param <T> return type of scheduled computation
    * @return a future representing the result of the scheduled computation
    */
-  @NotNull
-  public static <T> Future<T> submit(@NotNull ThrowableComputable<? extends T, ?> computable) {
-    return submit(computable, ModalityState.defaultModalityState());
-  }
-
-  public static <T> Future<T> submit(@NotNull ThrowableComputable<? extends T, ?> computable, ModalityState modalityState) {
+  private static <T> @NotNull Future<T> submit(@NotNull ThrowableComputable<? extends T, ?> computable, ModalityState modalityState) {
     CompletableFuture<T> future = new CompletableFuture<>();
     ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
       try {
@@ -65,11 +55,11 @@ final class WriteThread {
    *
    * @param runnable the action to run
    */
-  public static void invokeAndWait(@NotNull Runnable runnable) {
+  static void invokeAndWait(@NotNull Runnable runnable) {
     invokeAndWait(runnable, ModalityState.defaultModalityState());
   }
 
-  public static void invokeAndWait(@NotNull Runnable runnable, ModalityState modalityState) {
+  static void invokeAndWait(@NotNull Runnable runnable, ModalityState modalityState) {
     try {
       submit(runnable, modalityState).get();
     }

@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -14,12 +16,13 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ComponentTreeEventDispatcher;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
@@ -54,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -64,7 +67,7 @@ import java.util.function.Function;
   name = "EditorColorsManagerImpl",
   storages = @Storage("colors.scheme.xml"),
   additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC,
-  category = ComponentCategory.UI
+  category = SettingsCategory.UI
 )
 @ApiStatus.Internal
 public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
@@ -76,7 +79,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final SchemeManager<EditorColorsScheme> mySchemeManager;
-  static final String FILE_SPEC = "colors";
+  public static final String FILE_SPEC = "colors";
 
   private State myState = new State();
   private boolean themeIsCustomized;
@@ -99,7 +102,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         reloadKeepingActiveScheme();
@@ -229,7 +232,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
-  public void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
+  private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
     String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
     if (wizardEditorScheme != null) {
@@ -267,13 +270,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
-    for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
-      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
-        UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
-        String path = theme.getEditorScheme();
-        if (path != null) {
-          mySchemeManager.loadBundledScheme(path, theme, null);
-        }
+    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
+      UITheme theme = laf.getTheme();
+      String path = theme.getEditorScheme();
+      if (path != null) {
+        mySchemeManager.loadBundledScheme(path, theme, null);
       }
     }
   }
@@ -380,7 +381,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     final boolean dark = StartupUiUtil.isUnderDarcula() && getScheme("Darcula") != null;
-    // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
+    // It is reasonable to fetch attributes from Default color scheme. Otherwise, if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
     return getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME).getAttributes(key);
@@ -414,15 +415,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
                                                             @NotNull Collection<AdditionalTextAttributesEP> attributeEps) {
     for (AdditionalTextAttributesEP attributesEP : attributeEps) {
-      InputStream resourceStream = attributesEP.pluginDescriptor.getPluginClassLoader()
-        .getResourceAsStream(StringUtil.trimStart(attributesEP.file, "/"));
-      if (resourceStream == null) {
-        LOG.warn("resource not found: " + attributesEP.file);
-        continue;
-      }
-
       try {
-        Element root = JDOMUtil.load(resourceStream);
+        byte[] data =
+          ResourceUtil.getResourceAsBytes(Strings.trimStart(attributesEP.file, "/"), attributesEP.pluginDescriptor.getClassLoader());
+        if (data == null) {
+          LOG.warn("resource not found: " + attributesEP.file);
+          continue;
+        }
+
+        Element root = JDOMUtil.load(data);
         scheme.readAttributes(Objects.requireNonNullElse(root.getChild("attributes"), root));
         Element colors = root.getChild("colors");
         if (colors != null) {
@@ -440,10 +441,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     if (!isDefaultScheme(scheme) && !Strings.isEmpty(scheme.getName())) {
       mySchemeManager.addScheme(scheme);
     }
-  }
-
-  @Override
-  public void removeAllSchemes() {
   }
 
   @Override
@@ -477,8 +474,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
   }
 
-  @NotNull
-  private EditorColorsScheme getDefaultScheme() {
+  private @NotNull EditorColorsScheme getDefaultScheme() {
     DefaultColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getFirstScheme();
     String editableCopyName = defaultScheme.getEditableCopyName();
     EditorColorsScheme editableCopy = getScheme(editableCopyName);
@@ -486,17 +482,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return editableCopy;
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme getGlobalScheme() {
+  public @NotNull EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
     EditorColorsScheme editableCopy = getEditableCopy(scheme);
     if (editableCopy != null) return editableCopy;
     return scheme == null ? getDefaultScheme() : scheme;
   }
 
-  @Nullable
-  private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+  private @Nullable EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
     if (isTempScheme(scheme)) return scheme;
     String editableCopyName = getEditableCopyName(scheme);
     if (editableCopyName != null) {
@@ -506,8 +500,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return null;
   }
 
-  @Nullable
-  private static String getEditableCopyName(EditorColorsScheme scheme) {
+  private static @Nullable String getEditableCopyName(EditorColorsScheme scheme) {
     String editableCopyName = null;
     if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
       editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
@@ -533,9 +526,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return myState.USE_ONLY_MONOSPACED_FONTS;
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     String currentSchemeName = mySchemeManager.getCurrentSchemeName();
     if (currentSchemeName != null && !isTempScheme(mySchemeManager.getActiveScheme())) {
       myState.colorScheme = currentSchemeName;
@@ -557,13 +549,24 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   @Override
+  public void initializeComponent() {
+    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
+    // LafManager is initialized in EDT, so, that's ok to call it here
+    LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    // null in a headless mode
+    if (laf != null) {
+      initScheme(laf);
+    }
+    activity.end();
+  }
+
+  @Override
   public boolean isDefaultScheme(EditorColorsScheme scheme) {
     return scheme instanceof DefaultColorsScheme;
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme getSchemeForCurrentUITheme() {
+  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
     EditorColorsScheme scheme = null;
     if (lookAndFeelInfo instanceof TempUIThemeBasedLookAndFeelInfo) {
@@ -592,21 +595,19 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return editableCopy != null ? editableCopy : scheme;
   }
 
-  @NotNull
-  public SchemeManager<EditorColorsScheme> getSchemeManager() {
+  public @NotNull SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
   }
 
-  @NonNls private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
-  @NonNls private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
+  private static final @NonNls String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  private static final @NonNls String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
   public static boolean isTempScheme(EditorColorsScheme scheme) {
     if (scheme == null) return false;
 
     return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
   }
 
-  @Nullable
-  public static Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
+  public static @Nullable Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
     if (isTempScheme(scheme)) {
       String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
       if (path != null) {

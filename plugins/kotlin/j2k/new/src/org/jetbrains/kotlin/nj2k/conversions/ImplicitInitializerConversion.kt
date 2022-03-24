@@ -1,14 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.findUsages
-import org.jetbrains.kotlin.nj2k.modality
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
-
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
@@ -104,8 +102,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
             constructors[constructor] = true
         }
 
-        val initializedInConstructorsCount = constructors.values.count { it }
-        return when (initializedInConstructorsCount) {
+        return when (constructors.values.count { it }) {
             0 -> InitializationState.NON_INITIALIZED
             constructors.size -> InitializationState.INITIALIZED_IN_ALL_CONSTRUCTORS
             else -> InitializationState.INITIALIZED_IN_SOME_CONSTRUCTORS

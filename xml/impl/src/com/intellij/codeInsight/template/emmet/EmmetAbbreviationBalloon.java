@@ -84,7 +84,7 @@ public class EmmetAbbreviationBalloon {
     panel.add(field, BorderLayout.CENTER);
     panel.add(label, BorderLayout.EAST);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final BalloonImpl balloon = (BalloonImpl)popupFactory.createBalloonBuilder(panel)
+    final Balloon balloon = popupFactory.createBalloonBuilder(panel)
       .setCloseButtonEnabled(false)
       .setBlockClicksThroughBalloon(true)
       .setAnimationCycle(0)

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.UpdateInBackground
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
@@ -41,6 +42,6 @@ class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.
   private fun getOriginalFile(psiElement: PsiElement?): VirtualFile? {
     val psiClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass::class.java, false)
     val file = psiClass?.originalElement?.containingFile?.virtualFile
-    return if (file != null && file.fileType == JavaClassFileType.INSTANCE) file else null
+    return if (file != null && FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) file else null
   }
 }

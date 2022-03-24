@@ -230,6 +230,10 @@ public class SpacingBuilder {
     return new RuleBuilder(new RuleCondition(TokenSet.create(parentType), tokenSet, null));
   }
 
+  public RuleBuilder afterInside(TokenSet tokenSet, TokenSet parentType) {
+    return new RuleBuilder(new RuleCondition(parentType, tokenSet, null));
+  }
+
   public RuleBuilder before(IElementType elementType) {
     return before(TokenSet.create(elementType));
   }

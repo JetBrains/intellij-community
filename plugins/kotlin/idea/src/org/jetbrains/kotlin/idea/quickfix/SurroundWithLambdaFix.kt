@@ -51,6 +51,11 @@ class SurroundWithLambdaFix(
                     expectedType = diagnosticWithParameters.a
                     expressionType = diagnosticWithParameters.b
                 }
+                Errors.TYPE_MISMATCH_WARNING -> {
+                    val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
+                    expectedType = diagnosticWithParameters.a
+                    expressionType = diagnosticWithParameters.b
+                }
                 Errors.CONSTANT_EXPECTED_TYPE_MISMATCH -> {
                     val context = (diagnostic.psiFile as KtFile).analyzeWithContent()
                     val diagnosticWithParameters = Errors.CONSTANT_EXPECTED_TYPE_MISMATCH.cast(diagnostic)

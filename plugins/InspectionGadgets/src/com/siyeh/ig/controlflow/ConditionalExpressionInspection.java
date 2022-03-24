@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -91,9 +91,6 @@ public class ConditionalExpressionInspection extends BaseInspection {
         return;
       }
       PsiConditionalExpression expression = (PsiConditionalExpression)element;
-      if (!PsiTreeUtil.processElements(expression, e -> !(e instanceof PsiErrorElement))) {
-        return;
-      }
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
       if (surrounder == null) return;
       CodeBlockSurrounder.SurroundResult result = surrounder.surround();
@@ -124,7 +121,8 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (initializer instanceof PsiArrayInitializerExpression) {
           final int conditionIdx = ArrayUtilRt.find(((PsiArrayInitializerExpression)initializer).getInitializers(), expression);
           if (conditionIdx >= 0) {
-            initializer = (PsiExpression)initializer.replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
+            initializer = (PsiExpression)initializer.replace(
+              CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
             final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
             LOG.assertTrue(arrayInitializer != null, initializer.getText());
             expression = (PsiConditionalExpression)arrayInitializer.getInitializers()[conditionIdx];
@@ -154,6 +152,32 @@ public class ConditionalExpressionInspection extends BaseInspection {
         ifStatement.setThenBranch(thenBranch);
         ifStatement.setElseBranch(elseBranch);
         ifStatement = (PsiIfStatement)tracker.replaceAndRestoreComments(statement, ifStatement);
+      }
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch instanceof PsiReturnStatement) {
+        final PsiReturnStatement returnStatement = (PsiReturnStatement)elseBranch;
+        final PsiExpression value = returnStatement.getReturnValue();
+        if (value instanceof PsiParenthesizedExpression) {
+          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)value;
+          if (parenthesizedExpression.getExpression() == null) {
+            elseBranch.delete();
+          }
+        }
+      }
+      else if (elseBranch instanceof PsiExpressionStatement) {
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)elseBranch;
+        final PsiExpression statementExpression = expressionStatement.getExpression();
+        if (statementExpression instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)statementExpression;
+          final PsiExpression rhs = assignmentExpression.getRExpression();
+
+          if (rhs instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rhs;
+            if (parenthesizedExpression.getExpression() == null) {
+              rhs.delete();
+            }
+          }
+        }
       }
       ifStatement = (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(ifStatement));
@@ -223,7 +247,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       if (last instanceof PsiWhiteSpace) {
         last = last.getPrevSibling();
       }
-      if (last instanceof PsiErrorElement) {
+      if (last instanceof PsiErrorElement || expression.getThenExpression() == null) {
         // can't be fixed
         return;
       }

@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ExecutionUiService
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ExtendableSettingsEditor
 import com.intellij.openapi.options.ExtensionSettingsEditor
@@ -19,16 +20,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.util.SmartList
 import org.jdom.Element
+import org.jdom.output.XMLOutputter
 import java.util.*
 
-private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
-private const val EXT_ID_ATTR = "ID"
+private const val EXTENSION_ID_ATTR = "ID"
 private const val EXTENSION_ROOT_ATTR = "EXTENSION"
 
 open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : RunConfigurationExtensionBase<U>>(@PublishedApi internal val extensionPoint: ExtensionPointName<T>) {
-  protected open val idAttrName = EXT_ID_ATTR
+  protected open val idAttrName = EXTENSION_ID_ATTR
 
   protected open val extensionRootAttr = EXTENSION_ROOT_ATTR
+
+  private val unloadedExtensionsKey = Key.create<List<Element>>(this::class.java.canonicalName + ".run.extension.elements")
 
   fun readExternal(configuration: U, parentNode: Element) {
     val children = parentNode.getChildren(extensionRootAttr)
@@ -38,14 +41,15 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
 
     val extensions = HashMap<String, T>()
     processApplicableExtensions(configuration) {
-      extensions.put(it.serializationId, it)
+      extensions[it.serializationId] = it
     }
 
     // if some of extensions settings weren't found we should just keep it because some plugin with extension
     // may be turned off
     var hasUnknownExtension = false
     for (element in children) {
-      val extension = extensions.remove(element.getAttributeValue(idAttrName))
+      val id = element.getExtensionId()
+      val extension = extensions.remove(id)
       if (extension == null) {
         hasUnknownExtension = true
       }
@@ -58,22 +62,26 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
       for (child in children) {
         copy.add(JDOMUtil.internElement(child))
       }
-      configuration.putCopyableUserData(RUN_EXTENSIONS, copy)
+      configuration.putCopyableUserData(unloadedExtensionsKey, copy)
     }
   }
 
   fun writeExternal(configuration: U, parentNode: Element) {
     val map = TreeMap<String, Element>()
-    val elements = configuration.getCopyableUserData(RUN_EXTENSIONS)
+    val elements = configuration.getCopyableUserData(unloadedExtensionsKey)
     if (elements != null) {
       for (element in elements) {
-        map.put(element.getAttributeValue(idAttrName), element.clone())
+        val id = element.getExtensionId()
+        if (id != null) {
+          map[id] = element.clone()
+        }
       }
     }
 
     processApplicableExtensions(configuration) { extension ->
+      val id = extension.serializationId
       val element = Element(extensionRootAttr)
-      element.setAttribute(idAttrName, extension.serializationId)
+      element.setExtensionId(id)
       try {
         extension.writeExternal(configuration, element)
       }
@@ -82,13 +90,26 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
       }
 
       if (element.content.isNotEmpty() || element.attributes.size > 1) {
-        map.put(extension.serializationId, element)
+        map[id] = element
       }
     }
 
     for (values in map.values) {
       parentNode.addContent(values)
     }
+  }
+
+  private fun Element.getExtensionId(): String? {
+    val id = getAttributeValue(idAttrName)
+    if (id == null) {
+      val xml = XMLOutputter().outputString(this)
+      logger<RunConfigurationExtensionsManager<*, *>>().error("Cannot find extension id in extension element: $xml")
+    }
+    return id
+  }
+
+  private fun Element.setExtensionId(id: String) {
+    setAttribute(idAttrName, id)
   }
 
   fun <V : U> appendEditors(configuration: U, group: SettingsEditorGroup<V>) {
@@ -195,6 +216,10 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
         handler(extension)
       }
     }
+  }
+
+  fun forEachApplicableExtension(configuration: U, handler: (T) -> Unit) {
+    processApplicableExtensions(configuration, handler)
   }
 
   protected inline fun processEnabledExtensions(configuration: U, runnerSettings: RunnerSettings?, handler: (T) -> Unit) {

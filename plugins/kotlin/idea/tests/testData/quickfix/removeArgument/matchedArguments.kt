@@ -4,6 +4,7 @@
 // ACTION: Convert to apply
 // ACTION: Convert to run
 // ACTION: Convert to with
+// ACTION: Do not show hints for current method
 // ACTION: Put arguments on separate lines
 class Bar() {
     fun foo(s: String, i: Int) {

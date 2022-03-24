@@ -238,7 +238,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       PermanentGraph<Integer> permanentGraph = myCurrentDataPack.isFull() ? myCurrentDataPack.getPermanentGraph() : null;
       Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
       try {
-        if (permanentGraph != null) {
+        Collection<VcsLogProvider> providers = ContainerUtil.filter(myProviders, roots::contains).values();
+        boolean supportsIncrementalRefresh = ContainerUtil.all(providers, provider -> {
+          return VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH.getOrDefault(provider);
+        });
+        if (permanentGraph != null && supportsIncrementalRefresh) {
           int commitCount = myRecentCommitCount;
           for (int attempt = 0; attempt <= 1; attempt++) {
             loadLogAndRefs(roots, currentRefs, commitCount);

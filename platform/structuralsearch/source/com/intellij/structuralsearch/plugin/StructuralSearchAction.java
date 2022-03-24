@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,23 +36,10 @@ public class StructuralSearchAction extends DumbAwareAction {
 
     final StructuralSearchDialog searchDialog = new StructuralSearchDialog(searchContext, replace);
     if (config != null) {
-      searchDialog.loadConfiguration(config);
       searchDialog.setUseLastConfiguration(true);
+      searchDialog.loadConfiguration(config);
     }
+    StructuralSearchPlugin.getInstance(project).setDialog(searchDialog);
     searchDialog.show();
   }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final Project project = event.getProject();
-    final StructuralSearchPlugin plugin = (project == null) ? null : StructuralSearchPlugin.getInstance(project);
-
-    if (plugin == null || plugin.isSearchInProgress()) {
-      presentation.setEnabled(false);
-    } else {
-      presentation.setEnabled(true);
-    }
-  }
-
 }

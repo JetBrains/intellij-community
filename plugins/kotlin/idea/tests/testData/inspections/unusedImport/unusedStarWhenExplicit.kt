@@ -9,5 +9,5 @@ import java.util.* // used because HashMap is used
 fun foo(file: File, input: InputStream, arrayList: ArrayList<Int>, hashMap: HashMap<Int, Char>) {
 }
 
-// WITH_RUNTIME
+// WITH_STDLIB
 // FULL_JDK

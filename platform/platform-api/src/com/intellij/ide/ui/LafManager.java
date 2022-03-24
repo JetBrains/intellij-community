@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -53,29 +52,20 @@ public abstract class LafManager {
 
   public abstract boolean getAutodetectSupported();
 
-  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo myPreferredDarkLaf);
+  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo value);
 
-  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo myPreferredLightLaf);
+  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo value);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable);
-
-  /**
-   * @deprecated Use {@link LafManagerListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
   public static final class LafReference {

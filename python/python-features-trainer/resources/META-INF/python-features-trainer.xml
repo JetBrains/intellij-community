@@ -3,5 +3,6 @@
   <extensions defaultExtensionNs="training">
     <ift.language.extension language="Python" implementationClass="com.jetbrains.python.ift.PythonLangSupport"/>
     <ift.learning.course language="Python" implementationClass="com.jetbrains.python.ift.PythonLearningCourse"/>
+    <ifs.suggesterSupport language="Python" implementationClass="com.jetbrains.python.ifs.PythonSuggesterSupport"/>
   </extensions>
 </idea-plugin>

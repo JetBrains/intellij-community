@@ -3,7 +3,7 @@ package com.jetbrains.python.spellchecker;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       return;
     }

@@ -2,6 +2,7 @@
     "mainFile": "Main.kt",
     "usages": [
         "Bar.kt",
-        "Foo.kt"
+        "Foo.kt",
+        "JavaClass.java"
     ]
 }

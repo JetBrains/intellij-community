@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +8,6 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
@@ -175,12 +173,26 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     DirectoriesWithCompletionPopupPanel contentPanel = new DirectoriesWithCompletionPopupPanel(variants);
 
     JTextField nameField = contentPanel.getTextField();
+    nameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void textChanged(@NotNull DocumentEvent event) {
+        final String text = nameField.getText();
+        validator.checkInput(text);
+        String errorText = validator.getErrorText(text);
+        if (errorText != null) {
+          contentPanel.setError(errorText);
+        }
+        else if (contentPanel.hasError()) {
+          contentPanel.setError(null);
+        }
+      }
+    });
     nameField.setText(initialText);
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(title, contentPanel, nameField);
 
     contentPanel.setApplyAction(event -> {
       for (CompletionItem it : contentPanel.getSelectedItems()) {
-        it.reportToStatistics(project);
+        CreateDirectoryUsageCollector.logCompletionVariantChosen(project, it.contributor.getClass());
       }
 
       // if there are selected suggestions, we need to create the selected folders (not the path in the text field)
@@ -197,9 +209,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       }
       else {
         for (Pair<String, JpsModuleSourceRootType<?>> dir : toCreate) {
-          String errorText = validator.getErrorText(dir.first);
-          if (errorText != null) {
-            String errorMessage = validator.getErrorText(errorText);
+          String errorMessage = validator.getErrorText(dir.first);
+          if (errorMessage != null) {
             contentPanel.setError(errorMessage);
             break;
           }
@@ -332,16 +343,6 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       this.displayText = FileUtil.toSystemDependentName(relativePath);
       this.icon = icon;
     }
-
-    public void reportToStatistics(@Nullable Project project) {
-      Class contributorClass = contributor.getClass();
-      String nameToReport = getPluginInfo(contributorClass).isSafeToReport()
-                            ? contributorClass.getSimpleName() : "third.party";
-
-      FUCounterUsageLogger.getInstance().logEvent(project, "create.directory.dialog",
-                                                  "completion.variant.chosen",
-                                                  new FeatureUsageData().addData("contributor", nameToReport));
-    }
   }
 
   private static class DirectoriesWithCompletionPopupPanel extends NewItemWithTemplatesPopupPanel<CompletionItem> {
@@ -353,7 +354,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     private boolean locked = false;
 
     protected DirectoriesWithCompletionPopupPanel(@NotNull List<CompletionItem> items) {
-      super(items, SimpleListCellRenderer.create("", item -> item.displayText));
+      super(items, SimpleListCellRenderer.create("", item -> item.displayText), true);
       setupRenderers();
 
       // allow multi selection with Shift+Up/Down

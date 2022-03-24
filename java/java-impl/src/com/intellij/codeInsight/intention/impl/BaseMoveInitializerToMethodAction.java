@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +129,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     final PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + " = y;", codeBlock);
 
     PsiExpression initializer = field.getInitializer();
-    initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType());
+    initializer = CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType());
 
     final PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
     Objects.requireNonNull(expression.getRExpression()).replace(Objects.requireNonNull(initializer));

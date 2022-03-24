@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.hierarchy.calls.CalleeReferenceProcessor
 import org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallHierarchyNodeDescriptor
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
@@ -72,7 +74,9 @@ class KotlinMethodNode(
 
         val renderedFunction = KotlinCallHierarchyNodeDescriptor.renderNamedFunction(descriptor)
         val renderedFunctionWithContainer = containerName?.let {
-            "${if (it.isSpecial) KotlinBundle.message("text.anonymous") else it.asString()}.$renderedFunction"
+            @NlsSafe
+            val name = "${if (it.isSpecial) KotlinBundle.message("text.anonymous") else it.asString()}.$renderedFunction"
+            name
         } ?: renderedFunction
 
         val attributes = if (isEnabled)
@@ -97,8 +101,11 @@ class KotlinMethodNode(
                 }
             }
         }
-        val query = myMethod.getRepresentativeLightMethod()?.let { MethodReferencesSearch.search(it, it.useScope, true) }
-            ?: ReferencesSearch.search(myMethod, myMethod.useScope)
+
+        val query = myMethod.getRepresentativeLightMethod()
+            ?.let { MethodReferencesSearch.search(it, it.useScope(), true) }
+            ?: ReferencesSearch.search(myMethod, myMethod.useScope())
+
         query.forEach { processor.process(it) }
         return callers.toList()
     }

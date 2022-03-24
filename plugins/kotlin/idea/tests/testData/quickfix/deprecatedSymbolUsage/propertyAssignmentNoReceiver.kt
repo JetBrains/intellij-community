@@ -1,5 +1,5 @@
 // "Replace with 'new'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     @Deprecated("msg", ReplaceWith("new"))

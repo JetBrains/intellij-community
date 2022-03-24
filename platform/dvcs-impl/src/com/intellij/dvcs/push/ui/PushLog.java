@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
@@ -26,15 +26,17 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
-import kotlin.Unit;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -71,9 +72,11 @@ public final class PushLog extends JPanel implements DataProvider {
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private @Nls String mySyncRenderedText;
+  private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
-  public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+  public PushLog(@NotNull Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+    myProject = project;
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
@@ -226,22 +229,17 @@ public final class PushLog extends JPanel implements DataProvider {
     collapseAll.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_COLLAPSE_ALL).getShortcutSet(), myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupMenu(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
+    PopupHandler.installPopupMenu(myTree, VcsLogActionIds.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
-      @NotNull
-      @Override
-      protected Border createViewerBorder() {
-        return IdeBorderFactory.createBorder(SideBorder.TOP);
-      }
-    };
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
+    myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
     setDefaultEmptyText();
 
-    myDetailsPanel = new CommitDetailsPanel(project, e -> Unit.INSTANCE);
+    myDetailsPanel = new CommitDetailsPanel();
     JScrollPane detailsScrollPane =
       new JBScrollPane(myDetailsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     detailsScrollPane.setBorder(JBUI.Borders.empty());
@@ -412,7 +410,10 @@ public final class PushLog extends JPanel implements DataProvider {
     }
     myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
     if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
-      myDetailsPanel.setCommit(commitNodes.get(0).getUserObject());
+      VcsFullCommitDetails commitDetails = commitNodes.get(0).getUserObject();
+      CommitPresentationUtil.CommitPresentation presentation =
+        CommitPresentationUtil.buildPresentation(myProject, commitDetails, new HashSet<>());
+      myDetailsPanel.setCommit(presentation);
       myShowDetailsAction.setEnabled(true);
     }
     else {
@@ -438,6 +439,10 @@ public final class PushLog extends JPanel implements DataProvider {
         Hash hash = commitNode.getUserObject().getId();
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
       });
+    }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return ContainerUtil.map2Array(commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject());
     }
     return null;
   }
@@ -611,7 +616,7 @@ public final class PushLog extends JPanel implements DataProvider {
       // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
       // null border works as expected always.
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      renderer.setIpad(JBUI.emptyInsets());
+      renderer.setIpad(JBInsets.emptyInsets());
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
         RepositoryNode valueNode = (RepositoryNode)value;

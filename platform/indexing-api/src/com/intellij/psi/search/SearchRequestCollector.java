@@ -129,7 +129,7 @@ public class SearchRequestCollector {
     if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
       return false;
     }
-    return searchScope != GlobalSearchScope.EMPTY_SCOPE && !StringUtil.isEmpty(word);
+    return !SearchScope.isEmptyScope(searchScope) && !StringUtil.isEmpty(word);
   }
 
   public void searchQuery(@NotNull QuerySearchRequest request) {

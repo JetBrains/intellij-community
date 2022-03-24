@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.Executor;
@@ -98,8 +98,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory) throws ExecutionException {
     throw new AssertionError("Call createProcess(TerminalProcessOptions, JBTerminalWidget)");
   }
@@ -107,8 +106,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     return createProcess(directory);
   }
@@ -118,18 +116,16 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
     return createTerminalWidget(parent, currentWorkingDirectory, true);
   }
 
   /**
-   * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(com.intellij.openapi.Disposable, java.lang.String, boolean)} instead
+   * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(Disposable, String, boolean)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                   @Nullable VirtualFile currentWorkingDirectory,
@@ -138,7 +134,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void initToolWindow(@NotNull ToolWindowEx toolWindow, Supplier<Content> newTabRunnable) {
-
     toolWindow.setTabActions(
       new DumbAwareAction(IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
                           IdeBundle.messagePointer("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
@@ -150,20 +145,25 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       new TerminalNewPredefinedSessionAction()
     );
     toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
-    toolWindow.setToHideOnEmptyContent(true);
   }
 
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                         @Nullable String currentWorkingDirectory,
                                                         boolean deferSessionStartUntilUiShown) {
     JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
+    scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
+    return terminalWidget;
+  }
+
+  protected void scheduleOpenSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
+                                                @Nullable String currentWorkingDirectory,
+                                                boolean deferSessionStartUntilUiShown) {
     if (deferSessionStartUntilUiShown) {
       UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
     }
     else {
       openSessionInDirectory(terminalWidget, currentWorkingDirectory);
     }
-    return terminalWidget;
   }
 
   private void initConsoleUI(final T process) {
@@ -236,6 +236,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public abstract String runningTargetName();
 
+  /**
+   * @return true if all live terminal sessions created with this runner
+   *              should be recreated when the project is opened for the next time
+   */
+  public boolean isTerminalSessionPersistent() {
+    return true;
+  }
+
   @Nullable
   private static String getParentDirectoryPath(@Nullable VirtualFile file) {
     VirtualFile dir = file != null && !file.isDirectory() ? file.getParent() : file;
@@ -246,8 +254,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
    * It will be private in future releases.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                      @Nullable String directory) {
@@ -255,6 +262,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     Dimension size = terminalWidget.getTerminalPanel().getTerminalSizeFromComponent();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (myProject.isDisposed()) return;
       try {
         T process = createProcess(new TerminalProcessOptions(directory,
                                                              size != null ? size.width : null,
@@ -276,7 +284,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
           catch (RuntimeException e) {
             printError(terminalWidget, "Cannot open " + runningTargetName(), e);
           }
-        }, modalityState);
+        }, modalityState, myProject.getDisposed());
       }
       catch (Exception e) {
         printError(terminalWidget, "Cannot open " + runningTargetName(), e);

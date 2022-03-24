@@ -68,7 +68,7 @@ public class GrKindWeigher extends CompletionWeigher {
     }
 
     final PsiElement parent = position.getParent();
-    final PsiElement qualifier = parent instanceof GrReferenceElement ? ((GrReferenceElement)parent).getQualifier() : null;
+    final PsiElement qualifier = parent instanceof GrReferenceElement ? ((GrReferenceElement<?>)parent).getQualifier() : null;
     if (qualifier == null) {
       if (o instanceof NamedArgumentDescriptor) {
         switch (((NamedArgumentDescriptor)o).getPriority()) {

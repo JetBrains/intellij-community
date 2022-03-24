@@ -30,10 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -370,24 +367,29 @@ public class PsiUtilCore {
   }
 
   public static int compareElementsByPosition(@Nullable PsiElement element1, @Nullable PsiElement element2) {
-    if (element1 != null && element2 != null) {
-      if (element1.equals(element2)) return 0;
-      final PsiFile psiFile1 = element1.getContainingFile();
-      final PsiFile psiFile2 = element2.getContainingFile();
-      if (Comparing.equal(psiFile1, psiFile2)){
-        final TextRange textRange1 = element1.getTextRange();
-        final TextRange textRange2 = element2.getTextRange();
-        if (textRange1 != null && textRange2 != null) {
-          return textRange1.getStartOffset() - textRange2.getStartOffset();
-        }
-      }
-      else if (psiFile1 != null && psiFile2 != null){
-        final String name1 = psiFile1.getName();
-        final String name2 = psiFile2.getName();
-        return name1.compareToIgnoreCase(name2);
-      }
+    if (element1 == null && element2 == null) return 0;
+    if (element1 == null) return -1;
+    if (element2 == null) return 1;
+    if (element1.equals(element2)) return 0;
+
+    final PsiFile psiFile1 = element1.getContainingFile();
+    final PsiFile psiFile2 = element2.getContainingFile();
+    if (psiFile1 == null && psiFile2 == null) return 0;
+    if (psiFile1 == null) return -1;
+    if (psiFile2 == null) return 1;
+
+    if (Comparing.equal(psiFile1, psiFile2)) {
+      final TextRange textRange1 = element1.getTextRange();
+      final TextRange textRange2 = element2.getTextRange();
+      if (textRange1 == null && textRange2 == null) return 0;
+      if (textRange1 == null) return -1;
+      if (textRange2 == null) return 1;
+      return textRange1.getStartOffset() - textRange2.getStartOffset();
     }
-    return 0;
+
+    final String name1 = psiFile1.getName();
+    final String name2 = psiFile2.getName();
+    return name1.compareToIgnoreCase(name2);
   }
 
   public static boolean hasErrorElementChild(@NotNull PsiElement element) {
@@ -533,6 +535,7 @@ public class PsiUtilCore {
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();

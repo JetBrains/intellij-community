@@ -1,12 +1,10 @@
 <html>
 <body>
-Reports the newline (<code>\n</code>) and return (<code>\r</code>) characters in a string or
-character literal. These characters are commonly used as line separators, and portability may suffer if they are hardcoded.
+Reports linefeed (<code>\n</code>) and carriage return (<code>\r</code>) character escape sequences used in string literals,
+character literals or text blocks. These characters are commonly used as line separators, and portability may suffer if they are hardcoded.
 <p><b>Example:</b></p>
 <pre><code>
-  void test() {
-    String str = "first\nsecond\rthird";
-  }
+  String count = "first\nsecond\rthird";
 </code></pre>
 <!-- tooltip end -->
 </body>

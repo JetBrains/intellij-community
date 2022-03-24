@@ -151,9 +151,8 @@ public class FogBugzRepository extends BaseRepositoryImpl {
                 return element.getChildTextTrim("sPerson");
               }
 
-              @Nullable
               @Override
-              public Date getDate() {
+              public @NotNull Date getDate() {
                 return parseDate(element.getChildTextTrim("dt"));
               }
             };
@@ -174,21 +173,19 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return type;
       }
 
-      @Nullable
       @Override
-      public Date getUpdated() {
+      public @NotNull Date getUpdated() {
         return parseDate(element.getChildText("dtLastUpdated"));
       }
 
-      @Nullable
       @Override
-      public Date getCreated() {
+      public @NotNull Date getCreated() {
         return parseDate(element.getChildTextTrim("dtOpened"));
       }
 
       @Override
       public boolean isClosed() {
-        return !Boolean.valueOf(element.getChildTextTrim("fOpen"));
+        return !Boolean.parseBoolean(element.getChildTextTrim("fOpen"));
       }
 
       @Override
@@ -196,15 +193,13 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return true;
       }
 
-      @Nullable
       @Override
-      public String getIssueUrl() {
+      public @NotNull String getIssueUrl() {
         return getUrl() + "/default.asp?" + getId();
       }
 
-      @Nullable
       @Override
-      public TaskRepository getRepository() {
+      public @NotNull TaskRepository getRepository() {
         return FogBugzRepository.this;
       }
     };
@@ -263,7 +258,7 @@ public class FogBugzRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private PostMethod getLogoutMethod() throws Exception {
+  private PostMethod getLogoutMethod() {
     PostMethod method = new PostMethod(getUrl() + "/api.asp");
     method.addParameter("cmd", "logoff");
     assert myToken != null;

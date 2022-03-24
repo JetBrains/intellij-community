@@ -52,7 +52,7 @@ public abstract class JsonSchemaBaseReference<T extends PsiElement> extends PsiR
     @Override
     @Nullable
     public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
-      return ((JsonSchemaBaseReference)ref).resolveInner();
+      return ((JsonSchemaBaseReference<?>)ref).resolveInner();
     }
   }
 }

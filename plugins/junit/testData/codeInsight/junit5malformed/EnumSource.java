@@ -31,7 +31,7 @@ class EnumSourceTest {
   }
 
   @ParameterizedTest
-  @EnumSource(value = Foo.class, names = {"BBB", "AAX"})
+  @EnumSource(value = Foo.class, names = {"BBB", "AAX"/*, "commented"*/})
   void array() {
   }
 

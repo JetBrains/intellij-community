@@ -7,11 +7,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Pair;
 import git4idea.commands.GitHandler;
+import git4idea.commands.GitScriptGenerator;
 import git4idea.config.GitExecutable;
 import git4idea.editor.GitRebaseEditorApp;
 import git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import git4idea.util.ScriptGenerator;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
 
@@ -37,10 +36,6 @@ public final class GitRebaseEditorService implements Disposable {
    * The lock for the handlers
    */
   private final Object myHandlersLock = new Object();
-  /**
-   * The prefix for rebase editors
-   */
-  @NonNls private static final String GIT_REBASE_EDITOR_PREFIX = "git-rebase-editor-";
 
   /**
    * @return an instance of the server
@@ -77,9 +72,10 @@ public final class GitRebaseEditorService implements Disposable {
   @NotNull
   public synchronized String getEditorCommand(@NotNull GitExecutable executable) {
     synchronized (myScriptLock) {
-      ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorApp.class);
-      generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().waitForStart().getPort()));
-      return generator.commandLine(executable);
+      int port = BuiltInServerManager.getInstance().waitForStart().getPort();
+      return new GitScriptGenerator(executable)
+        .addParameters(Integer.toString(port))
+        .commandLine(GitRebaseEditorApp.class, false);
     }
   }
 

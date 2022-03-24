@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -16,13 +16,17 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -34,10 +38,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
@@ -65,6 +68,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
+import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.stream.Collectors
@@ -77,6 +81,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
                              private val activate: () -> Unit) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
+  private val disposableFlag = Disposer.newCheckedDisposable()
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
@@ -89,7 +94,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val changesStatusPanel: Wrapper
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
-  private var editorTabPreview: EditorTabPreview? = null
+  private var editorTabPreview: GitStageEditorDiffPreview? = null
 
   private val state: GitStageTracker.State
     get() = tracker.state
@@ -124,7 +129,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
     toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
-    toolbar.setTargetComponent(tree)
+    toolbar.targetComponent = tree
 
     PopupHandler.installPopupMenu(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
@@ -168,8 +173,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     updateChangesStatusPanel()
 
     Disposer.register(disposableParent, this)
+    Disposer.register(this, disposableFlag)
 
-    runInEdtAsync(this) { update() }
+    runInEdtAsync(disposableFlag) { update() }
   }
 
   private fun isRefreshInProgress(): Boolean {
@@ -214,7 +220,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   }
 
   private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
-    if (Disposer.isDisposed(this)) return
+    if (disposableFlag.isDisposed) return
     if (!force && (isInEditor == (editorTabPreview != null))) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
@@ -222,7 +228,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     diffPreviewProcessor!!.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
 
     if (isInEditor) {
-      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree, this, activate)
+      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree).apply { setup() }
       commitDiffSplitter.secondComponent = null
     }
     else {
@@ -231,10 +237,22 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
   }
 
+  private fun GitStageEditorDiffPreview.setup() {
+    escapeHandler = Runnable {
+      closePreview()
+      activate()
+    }
+
+    installSelectionHandler(tree, false)
+    installNextDiffActionOn(this@GitStagePanel)
+    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+  }
+
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(), this@GitStagePanel) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(),
+                                                                     this@GitStagePanel) {
     override val state
       get() = this@GitStagePanel.state
     override val ignoredFilePaths
@@ -263,19 +281,27 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-
-        val dataContext = DataManager.getInstance().getDataContext(this)
-
-        val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
-        val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
-        if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
-          performActionDumbAwareWithCallbacks(mergeAction, event)
-        }
-        else {
-          OpenSourceUtil.openSourcesFrom(dataContext, true)
-        }
+        processDoubleClickOrEnter(e, true)
         true
       }
+      enterKeyHandler = Processor { e ->
+        processDoubleClickOrEnter(e, false)
+        true
+      }
+    }
+
+    private fun processDoubleClickOrEnter(e: InputEvent?, isDoubleClick: Boolean) {
+      val dataContext = DataManager.getInstance().getDataContext(tree)
+
+      val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
+      val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
+      if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
+        performActionDumbAwareWithCallbacks(mergeAction, event)
+        return
+      }
+      if (editorTabPreview?.processDoubleClickOrEnter(isDoubleClick) == true) return
+
+      OpenSourceUtil.openSourcesFrom(dataContext, true)
     }
 
     fun editedCommitChanged() {
@@ -362,13 +388,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun installGroupingSupport(): ChangesGroupingSupport {
       val result = ChangesGroupingSupport(project, this, false)
 
-      if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
-        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
+      if (PropertiesComponent.getInstance(project).getList(GROUPING_PROPERTY_NAME) == null) {
+        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getList(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
         oldGroupingKeys.add(REPOSITORY_GROUPING)
-        PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
+        PropertiesComponent.getInstance(project).setList(GROUPING_PROPERTY_NAME, oldGroupingKeys.toList())
       }
 
-      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
+      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
       return result
     }
 
@@ -408,13 +434,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private inner class MyGitChangeProviderListener : GitRefreshListener {
     override fun progressStarted() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateProgressState()
       }
     }
 
     override fun progressStopped() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateProgressState()
       }
     }
@@ -433,13 +459,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private inner class MyChangeListListener : ChangeListListener {
     override fun changeListUpdateDone() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateChangesStatusPanel()
       }
     }
   }
 
-  private inner class MyCommitWorkflowListener: CommitWorkflowListener {
+  private inner class MyCommitWorkflowListener : CommitWorkflowListener {
     override fun executionEnded() {
       if (hasPendingUpdates) {
         hasPendingUpdates = false

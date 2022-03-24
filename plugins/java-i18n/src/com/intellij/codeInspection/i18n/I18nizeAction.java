@@ -87,6 +87,15 @@ public class I18nizeAction extends AnAction implements UpdateInBackground {
   @Nullable
   public static UInjectionHost getEnclosingStringLiteral(final PsiFile psiFile, final Editor editor) {
     PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    return getEnclosingStringLiteral(psiElement);
+  }
+
+  /**
+   * @param psiElement element to search from
+   * @return UAST element representing an enclosing string literal
+   */
+  @Nullable
+  public static UInjectionHost getEnclosingStringLiteral(PsiElement psiElement) {
     while (psiElement != null) {
       UInjectionHost uastStringLiteral = UastContextKt.toUElement(psiElement, UInjectionHost.class);
       if (uastStringLiteral != null && uastStringLiteral.isString()) {

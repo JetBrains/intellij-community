@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 import kotlin.collections.mapIndexed as foo
 
 fun test(list: List<String>) {

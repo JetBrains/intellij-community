@@ -3,8 +3,8 @@ package git4idea.push
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -16,16 +16,17 @@ import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
-import git4idea.i18n.GitBundle
 import git4idea.push.GitPushRepoResult.Type.*
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitUpdateResult
+import org.junit.After
 import org.junit.Assume.assumeTrue
+import org.junit.Before
 import java.io.File
 import java.nio.file.Path
 import java.util.Collections.singletonMap
-import javax.swing.Action
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   private lateinit var repository: GitRepository
@@ -44,6 +45,16 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(projectPath)
     refresh()
     updateRepositories()
+  }
+
+  @Before
+  fun beforeEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
+  }
+
+  @After
+  fun afterEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
   }
 
   fun `test successful push`() {
@@ -89,11 +100,10 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     pushCommitFromBro()
 
     var dialogShown = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+    TestDialogManager.setTestDialog {
       dialogShown = true
-      DialogWrapper.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
-
     val result = push("master", "origin/master")
 
     assertTrue("Rejected push dialog wasn't shown", dialogShown)
@@ -106,9 +116,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     git("checkout -b feature")
 
     var dialogShown = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+    TestDialogManager.setTestDialog {
       dialogShown = true
-      DialogWrapper.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
 
     val result = push("feature", "origin/master")
@@ -122,7 +132,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     val hash = makeCommit("afile.txt")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode }
 
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
@@ -148,7 +158,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     makeCommit("afile.txt")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.REBASE.exitCode }
 
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
@@ -271,9 +281,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   fun `test dont propose to update if force push is rejected`() {
     var dialogShown = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+    TestDialogManager.setTestDialog {
       dialogShown = true
-      DialogWrapper.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
 
     val remoteTipAndPushResult = forcePushWithReject(true)
@@ -326,7 +336,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     val hash = makeCommit("file.txt")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode }
 
     val result = push("master", "origin/master")
 
@@ -356,9 +366,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
       """.trimIndent()
     installHook(parentRepo, "pre-receive", rejectHook)
 
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      throw AssertionError("Update shouldn't be proposed")
-    }
+    TestDialogManager.setTestDialog { throw AssertionError("Update shouldn't be proposed") }
 
     val result = push("master", "origin/master")
 
@@ -380,7 +388,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     append("bro.txt", "main content")
     makeCommit("msg")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.REBASE.exitCode }
     vcsHelper.onMerge {}
 
     val result = push("master", "origin/master")
@@ -418,70 +426,6 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertPushed(hash, "master")
   }
 
-  fun `test warn if rebasing over merge`() {
-    generateUnpushedMergedCommitProblem()
-
-    var rebaseOverMergeProblemDetected = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      rebaseOverMergeProblemDetected = it.warnsAboutRebaseOverMerge()
-      DialogWrapper.CANCEL_EXIT_CODE
-    }
-    push("master", "origin/master")
-    assertTrue(rebaseOverMergeProblemDetected)
-  }
-
-  fun `test warn if silently rebasing over merge`() {
-    generateUnpushedMergedCommitProblem()
-
-    settings.setAutoUpdateIfPushRejected(true)
-    settings.updateMethod = UpdateMethod.REBASE
-
-    var rebaseOverMergeProblemDetected = false
-    dialogManager.onMessage {
-      rebaseOverMergeProblemDetected = it.contains(GitBundle.message("dialog.message.rebasing.merge.commits"))
-      Messages.CANCEL
-    }
-    push("master", "origin/master")
-    assertTrue(rebaseOverMergeProblemDetected)
-  }
-
-  fun `test dont overwrite rebase setting when chose to merge due to unpushed merge commits`() {
-    generateUnpushedMergedCommitProblem()
-
-    settings.updateMethod = UpdateMethod.REBASE
-
-    var rebaseOverMergeProblemDetected = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      rebaseOverMergeProblemDetected = it.warnsAboutRebaseOverMerge()
-      GitRejectedPushUpdateDialog.MERGE_EXIT_CODE
-    }
-    push("master", "origin/master")
-    assertTrue(rebaseOverMergeProblemDetected)
-    assertEquals("Update method was overwritten by temporary update-via-merge decision",
-                 UpdateMethod.REBASE, settings.updateMethod)
-  }
-
-  fun `test respect branch default setting for rejected push dialog`() {
-    generateUpdateNeeded()
-    settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
-    git("config branch.master.rebase true")
-
-    var defaultActionName = ""
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      defaultActionName = it.defaultAction.getValue(Action.NAME) as String
-      DialogWrapper.CANCEL_EXIT_CODE
-    }
-
-    push("master", "origin/master")
-    assertTrue("Default action in rejected-push dialog is incorrect: $defaultActionName",
-               defaultActionName.toLowerCase().contains("rebase"))
-
-    git("config branch.master.rebase false")
-    push("master", "origin/master")
-    assertTrue("Default action in rejected-push dialog is incorrect: $defaultActionName",
-               defaultActionName.toLowerCase().contains("merge"))
-  }
-
   fun `test respect branch default setting for silent update when rejected push`() {
     generateUpdateNeeded()
     settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
@@ -499,9 +443,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
 
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      GitRejectedPushUpdateDialog.REBASE_EXIT_CODE
-    }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
 
     push("master", "origin/master")
     assertEquals(UpdateMethod.BRANCH_DEFAULT, settings.updateMethod)
@@ -511,16 +453,6 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     pushCommitFromBro()
     cd(repository)
     makeCommit("file.txt")
-  }
-
-  private fun generateUnpushedMergedCommitProblem() {
-    pushCommitFromBro()
-    cd(repository)
-    repository.prepareConflict("master", "feature", "branch1.txt")
-    git("checkout master")
-    git("merge feature", true)
-    git("add -u .")
-    git("commit -m 'merged with conflicts'")
   }
 
   private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {

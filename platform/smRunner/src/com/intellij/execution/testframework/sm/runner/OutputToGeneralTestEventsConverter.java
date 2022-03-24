@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,8 +99,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
    *
    * @deprecated use {@link #processConsistentText(String, Key)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void processConsistentText(@NotNull final String text,
                                        final Key<?> outputType,
                                        @SuppressWarnings("unused") final boolean tcLikeFakeOutput) {

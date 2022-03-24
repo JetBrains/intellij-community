@@ -44,7 +44,7 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
   @Override
   public void queue(@NotNull Update update) {
     boolean passThrough = false;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
       passThrough = isPassThrough();
     }
     else if (MavenUtil.isNoBackgroundMode()) {
@@ -57,7 +57,7 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
     }
     super.queue(update);
   }
-
+  
   public void makeUserAware(final Project project) {
     ApplicationManager.getApplication().runReadAction(() -> {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
@@ -98,30 +98,6 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
           }
         }
       });
-    });
-  }
-
-  public void makeDumbAware(final Project project) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      if (DumbService.isDumb(project)) {
-        mySuspendCounter.incrementAndGet();
-      }
-      MessageBusConnection connection = project.getMessageBus().connect(this);
-      connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void enteredDumbMode() {
-          suspend();
-        }
-
-        @Override
-        public void exitDumbMode() {
-          resume();
-        }
-      });
-
-      if (DumbService.getInstance(project).isDumb()) {
-        suspend();
-      }
     });
   }
 

@@ -18,10 +18,12 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -39,7 +41,13 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   @NotNull
   @Override
   public NameValuePairElement getNode() {
-    return (NameValuePairElement)super.getNode();
+    ASTNode node = super.getNode();
+    if (!(node instanceof NameValuePairElement)) {
+      String parents = String.join("; ", SyntaxTraverser.psiApi().parents(this).takeWhile(Objects::nonNull)
+        .map(psi -> psi.getClass().getName()).toList());
+      throw new IllegalStateException("Node is not NameValuePairElement; node class = " + node.getClass() + "; parents = " + parents);
+    }
+    return (NameValuePairElement)node;
   }
 
   @Override

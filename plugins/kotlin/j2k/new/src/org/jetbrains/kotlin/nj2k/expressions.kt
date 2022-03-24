@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -56,8 +56,8 @@ fun downToExpression(
         conversionContext
     )
 
-fun JKExpression.parenthesizeIfBinaryExpression() = when (this) {
-    is JKBinaryExpression -> JKParenthesizedExpression(this)
+fun JKExpression.parenthesizeIfCompoundExpression() = when (this) {
+    is JKIfElseExpression, is JKBinaryExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
@@ -241,10 +241,6 @@ fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProv
         expression = expression,
         token = JKOperatorToken.EQ,
     )
-
-fun JKTreeElement.asQualifierWithThisAsSelector(): JKQualifiedExpression? =
-    parent?.safeAs<JKQualifiedExpression>()
-        ?.takeIf { it.selector == this }
 
 fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKExpression {
     fun handleAnnotationParameter(element: JKTreeElement): JKTreeElement =

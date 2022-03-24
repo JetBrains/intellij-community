@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -18,6 +18,9 @@ final class IdeaCommunityBuilder {
     this.buildContext = buildContext
   }
 
+  /**
+   * Compiles production modules and test modules required for {@link org.jetbrains.intellij.build.CommunityStandaloneJpsBuilder#processJpsLayout}
+   */
   void compileModules() {
     BuildTasks.create(buildContext).compileProjectAndTests(["intellij.platform.jps.build"])
   }
@@ -28,16 +31,12 @@ final class IdeaCommunityBuilder {
     tasks.buildFullUpdaterJar()
   }
 
-  void buildIntelliJCore(boolean compileModules = true) {
-    def builder = new IntelliJCoreArtifactsBuilder(buildContext)
-    if (compileModules) {
-      builder.compileModules()
-    }
-    builder.layoutIntelliJCore()
-  }
-
   void buildDistributions() {
     compileModules()
+    /**
+     * required because {@link org.jetbrains.intellij.build.BuildTasks#buildDistributions} will trigger compilation of production modules
+     * wiping out test modules compiled in {@link org.jetbrains.intellij.build.IdeaCommunityBuilder#compileModules}
+     */
     buildContext.options.incrementalCompilation = true
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()

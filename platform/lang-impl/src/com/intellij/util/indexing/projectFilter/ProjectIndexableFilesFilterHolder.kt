@@ -3,7 +3,10 @@ package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -19,12 +22,16 @@ import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentMap
 
+internal enum class FileAddStatus {
+  ADDED, PRESENT, SKIPPED
+}
+
 internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun getProjectIndexableFiles(project: Project): IdFilter?
 
-  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>)
+  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus
 
-  abstract fun addFileId(fileId: Int, project: Project): Boolean
+  abstract fun addFileId(fileId: Int, project: Project): FileAddStatus
 
   abstract fun entireProjectUpdateStarted(project: Project)
 
@@ -67,16 +74,20 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     myProjectFilters[project]?.resetPreviousFileIds()
   }
 
-  override fun addFileId(fileId: Int, projects: () -> Set<Project>) {
+  override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
-    for ((p, filter) in myProjectFilters) {
+    val statuses = myProjectFilters.map { (p, filter) ->
       filter.ensureFileIdPresent(fileId) {
         matchedProjects.contains(p)
       }
     }
+
+    if (statuses.all { it == FileAddStatus.SKIPPED }) return FileAddStatus.SKIPPED
+    if (statuses.any { it == FileAddStatus.ADDED }) return FileAddStatus.ADDED
+    return FileAddStatus.PRESENT
   }
 
-  override fun addFileId(fileId: Int, project: Project): Boolean {
+  override fun addFileId(fileId: Int, project: Project): FileAddStatus {
     return myProjectFilters.get(project)!!.ensureFileIdPresent(fileId) { true }
   }
 
@@ -96,25 +107,32 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun runHealthCheck() {
-    for ((project, filter) in myProjectFilters) {
-      val errors = ReadAction
-        .nonBlocking(Callable { runHealthCheck(project, filter) })
-        .inSmartMode(project)
-        .executeSynchronously()
+    try {
+      for ((project, filter) in myProjectFilters) {
+        var errors: List<HealthCheckError>? = null
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
+          if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
+          errors = runHealthCheck(project, filter)
+        }
 
-      if (errors.isNotEmpty()) {
-        for (error in errors) {
+        if (errors.isNullOrEmpty()) continue
+
+        for (error in errors!!) {
           error.fix(filter)
         }
 
-        val message = StringUtil.first(errors.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
+        val message = StringUtil.first(errors!!.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
                                        300,
                                        true)
         FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+
       }
-      else {
-        FileBasedIndexImpl.LOG.info("Health check heartbeat")
-      }
+    }
+    catch (_: ProcessCanceledException) {
+
+    }
+    catch (e: Exception) {
+      FileBasedIndexImpl.LOG.error(e)
     }
   }
 
@@ -140,5 +158,6 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     fun fix(filter: IncrementalProjectIndexableFilesFilter) {
       filter.ensureFileIdPresent((virtualFile as VirtualFileWithId).id) { true }
     }
+
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
@@ -22,7 +22,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
       it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()
     }
 
-    val switcher = FileBasedIndexTumbler()
+    val switcher = FileBasedIndexTumbler("test")
     switcher.turnOff()
     switcher.turnOn()
 
@@ -50,7 +50,7 @@ class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
     null
 
   override fun <K : Any?, V : Any?> combineIndex(indexExtension: FileBasedIndexExtension<K, V>,
-                                                 baseIndex: UpdatableIndex<K, V, FileContent>): UpdatableIndex<K, V, FileContent>? {
+                                                 baseIndex: UpdatableIndex<K, V, FileContent, *>): UpdatableIndex<K, V, FileContent, *>? {
     Files.createFile(PathManager.getIndexRoot().resolve(indexExtension.name.name + testInfraExtensionFile))
     return null
   }

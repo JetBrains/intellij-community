@@ -67,9 +67,13 @@
       <string>1.8*,1.8+</string>
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>
+      <key>Options</key>
+      <array>
+        @@vm_options@@
+      </array>
       <key>Properties</key>
       <dict>
-        @@idea_properties@@
+        @@vm_properties@@
         <key>idea.home.path</key>
         <string>$APP_PACKAGE/Contents</string>
       </dict>

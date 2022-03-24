@@ -66,8 +66,8 @@ object NGram {
     return modelRunner?.let { runner -> Scorer(NGRAM_RECENT_FILES_SCORER_NAME, { runner.score(it) }, prefix) }
   }
 
-  internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES
-                                                          || CompletionFeaturesPolicy.useNgramModel(language)
+  internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES ||
+                                                          CompletionFeaturesPolicy.useNgramModel(language)
 
   fun getNGramPrefix(parameters: CompletionParameters, order: Int): Array<String> {
     val precedingTokens = SyntaxTraverser.revPsiTraverser()

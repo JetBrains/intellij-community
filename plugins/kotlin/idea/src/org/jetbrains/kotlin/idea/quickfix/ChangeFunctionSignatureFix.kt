@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
@@ -147,7 +147,7 @@ abstract class ChangeFunctionSignatureFix(
                     override fun forcePerformForSelectedFunctionOnly() = false
                 },
                 context,
-                KotlinBundle.message("fix.change.signature.remove.parameter", parameterDescriptor.name.asString())
+                KotlinBundle.message("fix.change.signature.remove.parameter.command", parameterDescriptor.name.asString())
             )
         }
 

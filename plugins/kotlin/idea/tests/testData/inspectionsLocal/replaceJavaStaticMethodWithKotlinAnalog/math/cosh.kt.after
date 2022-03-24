@@ -1,6 +1,6 @@
 import kotlin.math.cosh
 
-// WITH_RUNTIME
+// WITH_STDLIB
 fun test(x: Double) {
     cosh(x)
 }

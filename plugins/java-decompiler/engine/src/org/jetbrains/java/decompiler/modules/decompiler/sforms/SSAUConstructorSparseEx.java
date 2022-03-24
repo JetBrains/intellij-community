@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -13,14 +14,10 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class SSAUConstructorSparseEx {
@@ -122,7 +119,7 @@ public class SSAUConstructorSparseEx {
 
       // quick solution: 'dummy' field variables should not cross basic block borders (otherwise problems e.g. with finally loops - usage without assignment in a loop)
       // For the full solution consider adding a dummy assignment at the entry point of the method
-      boolean allow_field_propagation = node.succs.isEmpty() || (node.succs.size() == 1 && node.succs.get(0).preds.size() == 1);
+      boolean allow_field_propagation = node.successors.isEmpty() || (node.successors.size() == 1 && node.successors.get(0).predecessors.size() == 1);
 
       if (!allow_field_propagation && varmaparr[0] != null) {
         varmaparr[0].removeAllFields();
@@ -139,7 +136,7 @@ public class SSAUConstructorSparseEx {
           outNegVarVersions.put(node.id, varmaparr[1]);
         }
 
-        for (DirectNode nd : node.succs) {
+        for (DirectNode nd : node.successors) {
           updated.add(nd.id);
         }
       }
@@ -254,7 +251,7 @@ public class SSAUConstructorSparseEx {
     }
     else if (expr.type == Exprent.EXPRENT_INVOCATION ||
              (expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)expr).getLeft().type == Exprent.EXPRENT_FIELD) ||
-             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewType().type == CodeConstants.TYPE_OBJECT) ||
+             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewType().getType() == CodeConstants.TYPE_OBJECT) ||
              expr.type == Exprent.EXPRENT_FUNCTION) {
 
       boolean ismmpp = true;
@@ -326,12 +323,12 @@ public class SSAUConstructorSparseEx {
               VarVersionNode vernode = ssuversions.nodes.getWithKey(varpaar);
 
               FastSparseSet<Integer> vers = factory.spawnEmptySet();
-              if (vernode.preds.size() == 1) {
-                vers.add(vernode.preds.iterator().next().source.version);
+              if (vernode.predecessors.size() == 1) {
+                vers.add(vernode.predecessors.iterator().next().source.version);
               }
               else {
-                for (VarVersionEdge edge : vernode.preds) {
-                  vers.add(edge.source.preds.iterator().next().source.version);
+                for (VarVersionEdge edge : vernode.predecessors) {
+                  vers.add(edge.source.predecessors.iterator().next().source.version);
                 }
               }
               vers.add(nextver);
@@ -416,7 +413,7 @@ public class SSAUConstructorSparseEx {
 
     // ssu graph
     VarVersionNode phinode = ssuversions.nodes.getWithKey(phivar);
-    List<VarVersionEdge> lstPreds = new ArrayList<>(phinode.preds);
+    List<VarVersionEdge> lstPreds = new ArrayList<>(phinode.predecessors);
     if (lstPreds.size() == 1) {
       // not yet a phi node
       VarVersionEdge edge = lstPreds.get(0);
@@ -425,7 +422,7 @@ public class SSAUConstructorSparseEx {
     }
     else {
       for (VarVersionEdge edge : lstPreds) {
-        int verssrc = edge.source.preds.iterator().next().source.version;
+        int verssrc = edge.source.predecessors.iterator().next().source.version;
         if (!vers.contains(verssrc) && verssrc != ppvers) {
           edge.source.removeSuccessor(edge);
           phinode.removePredecessor(edge);
@@ -504,7 +501,7 @@ public class SSAUConstructorSparseEx {
 
     SFormsFastMapDirect mapNew = new SFormsFastMapDirect();
 
-    for (DirectNode pred : node.preds) {
+    for (DirectNode pred : node.predecessors) {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapOut.getCopy();
@@ -639,7 +636,7 @@ public class SSAUConstructorSparseEx {
 
                 VarVersionNode exitnode = ssuversions.nodes.getWithKey(exitvar);
                 VarVersionNode phantomnode = ssuversions.createNode(phantomvar);
-                phantomnode.flags |= VarVersionNode.FLAG_PHANTOM_FINEXIT;
+                phantomnode.flags |= VarVersionNode.FLAG_PHANTOM_FIN_EXIT;
 
                 VarVersionEdge edge = new VarVersionEdge(VarVersionEdge.EDGE_PHANTOM, exitnode, phantomnode);
                 exitnode.addSuccessor(edge);
@@ -686,7 +683,7 @@ public class SSAUConstructorSparseEx {
     }
 
     for (Entry<Integer, FastSparseSet<Integer>> ent2 : map2.entryList()) {
-      if (!InterpreterUtil.equalObjects(map1.get(ent2.getKey()), ent2.getValue())) {
+      if (!Objects.equals(map1.get(ent2.getKey()), ent2.getValue())) {
         return false;
       }
     }
@@ -706,11 +703,11 @@ public class SSAUConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCHALL:
-      case Statement.TYPE_TRYCATCH:
+      case CATCH_ALL:
+      case TRY_CATCH:
 
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCHALL) {
+        if (stat.type == StatementType.CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {
@@ -757,11 +754,11 @@ public class SSAUConstructorSparseEx {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stackSize;
+          varindex += md.params[i - 1].getStackSize();
         }
       }
       else {
-        varindex += md.params[i].stackSize;
+        varindex += md.params[i].getStackSize();
       }
     }
 
@@ -777,13 +774,13 @@ public class SSAUConstructorSparseEx {
         break;
       }
 
-      if (parent.type == Statement.TYPE_CATCHALL ||
-          parent.type == Statement.TYPE_TRYCATCH) {
+      if (parent.type == StatementType.CATCH_ALL ||
+          parent.type == StatementType.TRY_CATCH) {
         if (parent.getFirst() == stat) {
           return parent.id;
         }
       }
-      else if (parent.type == Statement.TYPE_SYNCRONIZED) {
+      else if (parent.type == StatementType.SYNCHRONIZED) {
         if (((SynchronizedStatement)parent).getBody() == stat) {
           return parent.id;
         }

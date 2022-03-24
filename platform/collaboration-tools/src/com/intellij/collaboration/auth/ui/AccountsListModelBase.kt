@@ -13,7 +13,7 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
       accountsListModel.removeAll()
       accountsListModel.add(value.toList())
     }
-  override var defaultAccount: A? = null
+  override var selectedAccount: A? = null
   override val newCredentials = mutableMapOf<A, Cred>()
 
   override val accountsListModel = CollectionListModel<A>()

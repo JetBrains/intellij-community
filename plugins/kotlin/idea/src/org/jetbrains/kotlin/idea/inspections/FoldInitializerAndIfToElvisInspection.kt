@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.expressionCo
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.fromIfKeywordToRightParenthesisTextRangeInThis
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.hasComments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isNullable
@@ -109,7 +109,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
 
             val elvis = createElvisExpression(element, data, factory)
 
-            return runWriteAction {
+            return runWriteActionIfPhysical(initializer) {
                 val newElvis = initializer.replaced(elvis)
                 element.delete()
 
@@ -139,7 +139,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
             } else {
                 initializer
             }
-            val elvis = factory.createExpressionByPattern(pattern, newInitializer, ifNullExpr) as KtBinaryExpression
+            val elvis = factory.createExpressionByPattern(pattern, newInitializer, ifNullExpr, reformat = false) as KtBinaryExpression
             if (typeReference != null) {
                 elvis.left!!.replace(factory.createExpressionByPattern("$0 as? $1", newInitializer, typeReference))
             }

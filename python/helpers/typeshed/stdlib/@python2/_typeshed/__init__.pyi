@@ -14,7 +14,7 @@
 
 import array
 import mmap
-from typing import Any, Container, Iterable, Protocol, Text, Tuple, TypeVar, Union
+from typing import Any, Container, Iterable, Protocol, Text, TypeVar, Union
 from typing_extensions import Literal, final
 
 _KT = TypeVar("_KT")
@@ -25,6 +25,10 @@ _VT_co = TypeVar("_VT_co", covariant=True)
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
+
+# Use for "self" annotations:
+#   def __enter__(self: Self) -> Self: ...
+Self = TypeVar("Self")  # noqa Y001
 
 class IdentityFunction(Protocol):
     def __call__(self, __x: _T) -> _T: ...
@@ -44,7 +48,7 @@ class SupportsRDivMod(Protocol[_T_contra, _T_co]):
 
 class SupportsItems(Protocol[_KT_co, _VT_co]):
     # We want dictionaries to support this on Python 2.
-    def items(self) -> Iterable[Tuple[_KT_co, _VT_co]]: ...
+    def items(self) -> Iterable[tuple[_KT_co, _VT_co]]: ...
 
 class SupportsKeysAndGetItem(Protocol[_KT, _VT_co]):
     def keys(self) -> Iterable[_KT]: ...

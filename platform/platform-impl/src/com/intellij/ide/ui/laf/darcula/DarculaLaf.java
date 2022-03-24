@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,88 +6,70 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.TableActions;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ResourceUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AppContext;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
-import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
-  private static final Object SYSTEM = new Object();
   public static final @NlsSafe String NAME = "Darcula";
   private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
+
+  private static final AtomicReference<LookAndFeel> preInitializedBaseLaf = new AtomicReference<>();
+
+  public static boolean setPreInitializedBaseLaf(@NotNull LookAndFeel value) {
+    return preInitializedBaseLaf.compareAndSet(null, value);
+  }
+
   private LookAndFeel base;
-  private boolean isBaseInitialized;
 
-  protected Disposable myDisposable;
-  private final UserDataHolderBase myUserData = new UserDataHolderBase();
-  private static boolean myAltPressed;
+  private Disposable disposable;
+  private final UserDataHolderBase userData = new UserDataHolderBase();
+  private static boolean isAltPressed;
+  protected final UIDefaults baseDefaults = new UIDefaults();
 
-  public DarculaLaf(@NotNull LookAndFeel base) {
-    this.base = base;
-    isBaseInitialized = true;
-  }
-
-  public DarculaLaf() {
-  }
-
-  private void callInit(String method, UIDefaults defaults) {
-    try {
-      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod(method, UIDefaults.class);
-      superMethod.setAccessible(true);
-      superMethod.invoke(base, defaults);
-    }
-    catch (Exception e) {
-      log(e);
-    }
-  }
-
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return myUserData.getUserData(key);
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
+    return userData.getUserData(key);
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    myUserData.putUserData(key, value);
+    userData.putUserData(key, value);
   }
 
-  protected static void log(Exception e) {
+  protected static void log(Throwable e) {
     Logger.getInstance(DarculaLaf.class).error(e);
   }
 
@@ -110,23 +92,22 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     try {
       UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       UIDefaults defaults = base.getDefaults();
+      baseDefaults.putAll(defaults);
 
-      if (SystemInfoRt.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
-        defaults.keySet().stream().
-          filter(key -> key.toString().endsWith(".font")).
-          forEach(key -> {
+      if (SystemInfoRt.isLinux && List.of("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+        for (Object key : defaults.keySet()) {
+          if (key.toString().endsWith(".font")) {
             Font font = toFont(defaults, key);
-            Font uiFont = new FontUIResource("Dialog", font.getStyle(), font.getSize());
-            defaults.put(key, uiFont);
-          });
+            defaults.put(key, new FontUIResource("Dialog", font.getStyle(), font.getSize()));
+          }
+        }
       }
 
       StartupUiUtil.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
-      patchStyledEditorKit(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
-      defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
+      defaults.put("Spinner.arrowButtonSize", new JBDimension(16, 5).asUIResource());
       if (SystemInfoRt.isMac) {
         defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
           "ENTER", "press",
@@ -146,13 +127,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     return super.getDefaults();
   }
 
-  /** @deprecated metal themes are obsolete, since everything's in JSON now */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  protected DefaultMetalTheme createMetalTheme() {
-    return new DefaultMetalTheme();
-  }
-
   private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {
     defaults.remove("ComboBox.ancestorInputMap");
     defaults.remove("ComboBox.actionMap");
@@ -160,33 +134,12 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"));
   }
 
-  private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css"));
-    StyleSheet styleSheet = StartupUiUtil.loadStyleSheet(url);
-    defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
-    try {
-      Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
-      keyField.setAccessible(true);
-      AppContext.getAppContext().put(keyField.get(null), StartupUiUtil.loadStyleSheet(url));
-    }
-    catch (Exception e) {
-      log(e);
-    }
+  protected @NotNull String getPrefix() {
+    return "com/intellij/ide/ui/laf/darcula/darcula";
   }
 
-  @NotNull
-  protected String getPrefix() {
-    return "darcula";
-  }
-
-  @Nullable
-  protected String getSystemPrefix() {
+  protected @Nullable String getSystemPrefix() {
     return null;
-  }
-
-  @Override
-  public void initComponentDefaults(UIDefaults defaults) {
-    callInit("initComponentDefaults", defaults);
   }
 
   protected void initIdeaDefaults(UIDefaults defaults) {
@@ -253,16 +206,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   protected void loadDefaultsFromJson(UIDefaults defaults) {
     loadDefaultsFromJson(defaults, getPrefix());
-    if (getSystemPrefix() != null) {
-      loadDefaultsFromJson(defaults, getSystemPrefix());
+    String systemPrefix = getSystemPrefix();
+    if (systemPrefix != null) {
+      loadDefaultsFromJson(defaults, systemPrefix);
     }
   }
 
   private void loadDefaultsFromJson(UIDefaults defaults, String prefix) {
     String filename = prefix + ".theme.json";
-    try (InputStream stream = getClass().getResourceAsStream(filename)) {
-      assert stream != null : "Can't load " + filename;
-      UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
+    try {
+      // it is important to use class loader of a current instance class (LaF in plugin)
+      ClassLoader classLoader = getClass().getClassLoader();
+      // macOS light theme uses theme file from core plugin
+      byte[] data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */ true);
+      if (data == null) {
+        throw new RuntimeException("Can't load " + filename);
+      }
+      UITheme theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity());
       theme.applyProperties(defaults);
     }
     catch (IOException e) {
@@ -270,17 +230,20 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
-  protected Object parseValue(String key, @NotNull String value) {
-    if ("system".equals(value)) {
-      return SYSTEM;
-    }
+  public Color getBaseColor(String key) {
+    return baseDefaults.getColor(key);
+  }
 
+  /**
+   * @deprecated Use {@link UITheme#parseValue(String, String, ClassLoader)}
+   */
+  @Deprecated(forRemoval = true)
+  protected Object parseValue(String key, @NotNull String value) {
     return UITheme.parseValue(key, value, getClass().getClassLoader());
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
     return NAME;
   }
 
@@ -305,32 +268,22 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
-  protected void initSystemColorDefaults(UIDefaults defaults) {
-    callInit("initSystemColorDefaults", defaults);
-  }
-
-  @Override
-  protected void initClassDefaults(UIDefaults defaults) {
-    callInit("initClassDefaults", defaults);
-  }
-
-  @Override
   public void initialize() {
-    if (!isBaseInitialized) {
-      try {
+    try {
+      if (base == null) {
+        base = preInitializedBaseLaf.getAndSet(null);
         if (base == null) {
           base = createBaseLaF();
         }
-        base.initialize();
       }
-      catch (Throwable e) {
-        Logger.getInstance(DarculaLaf.class).error(e);
-      }
+      base.initialize();
+    }
+    catch (Throwable e) {
+      log(e);
     }
 
-    if (LoadingState.LAF_INITIALIZED.isOccurred()) {
-      ideEventQueueInitialized(IdeEventQueue.getInstance());
-    }
+    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
+    ideEventQueueInitialized(IdeEventQueue.getInstance());
   }
 
   @ApiStatus.Internal
@@ -339,51 +292,39 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
       return (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
     }
+    else if (!SystemInfoRt.isLinux) {
+      return new IdeaLaf(null);
+    }
 
     Map<Object, Object> fontDefaults = new HashMap<>();
-
-    if (SystemInfoRt.isLinux) {
-      // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
-      // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
-      // and scale them based on Xft.dpi value.
-      try {
-        @SuppressWarnings("SpellCheckingInspection") String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-        Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(name);
-        LookAndFeel gtk = (LookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
-        if (gtk.isSupportedLookAndFeel()) {  // GTK is available
-          gtk.initialize();  // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
-          UIDefaults gtkDefaults = gtk.getDefaults();
-          for (Object key : gtkDefaults.keySet()) {
-            if (key.toString().endsWith(".font")) {
-              fontDefaults.put(key, gtkDefaults.get(key));  // `UIDefaults#get` unwraps lazy values
-            }
+    // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+    // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+    // and scale them based on Xft.dpi value.
+    try {
+      @SuppressWarnings("SpellCheckingInspection") String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+      Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(name);
+      LookAndFeel gtk = (LookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
+      if (gtk.isSupportedLookAndFeel()) {  // GTK is available
+        gtk.initialize();  // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+        UIDefaults gtkDefaults = gtk.getDefaults();
+        for (Object key : gtkDefaults.keySet()) {
+          if (key.toString().endsWith(".font")) {
+            fontDefaults.put(key, gtkDefaults.get(key));  // `UIDefaults#get` unwraps lazy values
           }
         }
       }
-      catch (Exception e) {
-        Logger.getInstance(DarculaLaf.class).debug(e);
-      }
     }
-
+    catch (Exception e) {
+      Logger.getInstance(DarculaLaf.class).debug(e);
+    }
     return new IdeaLaf(fontDefaults.isEmpty() ? null : fontDefaults);
   }
 
-  @ApiStatus.Internal
-  public void appCreated(@NotNull Disposable parent) {
-    if (myDisposable != null) {
-      Disposer.register(parent, myDisposable);
-    }
-  }
-
-  @ApiStatus.Internal
-  public final void ideEventQueueInitialized(@NotNull IdeEventQueue eventQueue) {
-    if (myDisposable == null) {
-      myDisposable = Disposer.newDisposable();
+  private void ideEventQueueInitialized(@NotNull IdeEventQueue eventQueue) {
+    if (disposable == null) {
+      disposable = Disposer.newDisposable();
       if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-        Application application = ApplicationManager.getApplication();
-        if (application != null) {
-          Disposer.register(application, myDisposable);
-        }
+        Disposer.register(ApplicationManager.getApplication(), disposable);
       }
     }
 
@@ -397,29 +338,29 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         }
 
         //noinspection AssignmentToStaticFieldFromInstanceMethod
-        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        isAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
         Alarm mnemonicAlarm = this.mnemonicAlarm;
         if (mnemonicAlarm == null) {
-          mnemonicAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+          mnemonicAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
           this.mnemonicAlarm = mnemonicAlarm;
         }
 
         mnemonicAlarm.cancelAllRequests();
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (focusOwner != null) {
-          mnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
+          mnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, isAltPressed), 10);
         }
         return false;
       }
-    }, myDisposable);
+    }, disposable);
   }
 
   public static boolean isAltPressed() {
-    return myAltPressed;
+    return isAltPressed;
   }
 
   private static void repaintMnemonics(@NotNull Component focusOwner, boolean pressed) {
-    if (pressed != myAltPressed) {
+    if (pressed != isAltPressed) {
       return;
     }
 
@@ -443,15 +384,14 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @Override
   public void uninitialize() {
     try {
-      isBaseInitialized = false;
       base.uninitialize();
     }
     catch (Exception ignore) {
     }
 
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
+    if (disposable != null) {
+      Disposer.dispose(disposable);
+      disposable = null;
     }
   }
 
@@ -463,6 +403,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
                                                                     String[].class,
                                                                     boolean.class);
       superMethod.setAccessible(true);
+      // invoke method on a base LaF, not on our instance
       superMethod.invoke(base, defaults, systemColors, useNative);
     }
     catch (Exception e) {
@@ -470,6 +411,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
+  /*
+   * The method is expected to return an Icon in Swing format (with MultiResolutionImage)
+   */
   @Override
   public final Icon getDisabledIcon(JComponent component, Icon icon) {
     if (icon == null) {
@@ -477,14 +421,13 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
 
     ScaleContext ctx = ScaleContext.create(component);
-    icon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
-    Icon disabledIcon = super.getDisabledIcon(component, icon);
-    disabledIcon = MultiResolutionImageProvider.convertFromMRIcon(disabledIcon, ctx);
-
-    if (disabledIcon != null) {
-      return disabledIcon;
+    Icon multiResIcon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
+    Icon multiResDisabledIcon = super.getDisabledIcon(component, multiResIcon);
+    if (multiResDisabledIcon != null) {
+      return multiResDisabledIcon;
     }
-    return IconLoader.getDisabledIcon(icon, component);
+    Icon jbDisabledIcon = IconLoader.getDisabledIcon(icon, component);
+    return MultiResolutionImageProvider.convertFromJBIcon(jbDisabledIcon, ctx);
   }
 
   @Override

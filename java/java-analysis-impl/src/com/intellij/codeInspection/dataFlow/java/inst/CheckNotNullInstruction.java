@@ -34,9 +34,7 @@ public class CheckNotNullInstruction extends Instruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myTransferValue == null) return this;
-    var instruction = new CheckNotNullInstruction(myProblem, myTransferValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new CheckNotNullInstruction(myProblem, myTransferValue.bindToFactory(factory));
   }
 
   @NotNull
@@ -84,11 +82,11 @@ public class CheckNotNullInstruction extends Instruction {
     return "CHECK_NOT_NULL " + myProblem;
   }
 
-  static <T extends PsiElement> DfaValue dereference(@NotNull DataFlowInterpreter runner, 
+  static <T extends PsiElement> DfaValue dereference(@NotNull DataFlowInterpreter interpreter,
                                                      @NotNull DfaMemoryState memState,
                                                      @NotNull DfaValue value,
                                                      @Nullable NullabilityProblemKind.NullabilityProblem<T> problem) {
-    checkNotNullable(runner, memState, value, problem);
+    checkNotNullable(interpreter, memState, value, problem);
     if (value instanceof DfaTypeValue) {
       DfType dfType = value.getDfType().meet(NOT_NULL_OBJECT);
       return value.getFactory().fromDfType(dfType == DfType.BOTTOM ? NOT_NULL_OBJECT : dfType);
@@ -106,7 +104,7 @@ public class CheckNotNullInstruction extends Instruction {
     return value;
   }
 
-  static void checkNotNullable(@NotNull DataFlowInterpreter runner, 
+  static void checkNotNullable(@NotNull DataFlowInterpreter interpreter,
                                @NotNull DfaMemoryState state,
                                @NotNull DfaValue value,
                                @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
@@ -114,7 +112,7 @@ public class CheckNotNullInstruction extends Instruction {
       DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
       ThreeState failed = nullability == DfaNullability.NOT_NULL ? ThreeState.NO :
                           nullability == DfaNullability.NULL ? ThreeState.YES : ThreeState.UNSURE;
-      runner.getListener().onCondition(problem, value, failed, state);
+      interpreter.getListener().onCondition(problem, value, failed, state);
     }
   }
 }

@@ -1,14 +1,13 @@
 <html>
 <body>
-Reports a <code>catch</code> block with parameters that are more generic than the
+Reports <code>catch</code> blocks with parameters that are more generic than the
 exception thrown by the corresponding <code>try</code> block.
 <p><b>Example:</b></p>
 <pre><code>
   try  {
     File file = new File(pathToFile);
     return file.getAbsolutePath();
-  }
-  catch (Exception ex) { // warning: 'catch' of 'Exception' is too broad, masking exceptions 'RuntimeException'
+  } catch (Exception ex) { // warning: 'catch' of 'Exception' is too broad, masking exceptions 'RuntimeException'
     return defaultFilePath;
   }
 </code></pre>
@@ -17,8 +16,7 @@ exception thrown by the corresponding <code>try</code> block.
   try  {
     File file = new File(pathToFile);
     return file.getAbsolutePath();
-  }
-  catch (RuntimeException ex) {
+  } catch (RuntimeException ex) {
     return defaultFilePath;
   }
 </code></pre>

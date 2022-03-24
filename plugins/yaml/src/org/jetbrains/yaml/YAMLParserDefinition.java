@@ -51,7 +51,7 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
   @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
-    return TokenSet.create(YAMLTokenTypes.SCALAR_STRING, YAMLTokenTypes.SCALAR_DSTRING, YAMLTokenTypes.TEXT);
+    return YAMLElementTypes.TEXT_SCALAR_ITEMS;
   }
 
   @Override

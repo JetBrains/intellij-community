@@ -86,7 +86,7 @@ public class MacWinTabsHandler {
   }
 
   public void frameInit() {
-    if (!myFrameAllowed || !isTransparentTitleBar()) {
+    if (!myFrameAllowed) {
       return;
     }
 
@@ -291,17 +291,28 @@ public class MacWinTabsHandler {
       if (cPlatformWindow != null) {
         Class<?> windowClass = cPlatformWindow.getClass();
 
-        Method deliverMoveResize = ReflectionUtil
-          .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
-        if (deliverMoveResize == null) {
+        Method deliverMoveResize = ReflectionUtil.getDeclaredMethod(windowClass, "doDeliverMoveResizeEvent");
+        if (deliverMoveResize != null) {
+          try {
+            deliverMoveResize.invoke(cPlatformWindow);
+          }
+          catch (Throwable e) {
+            Logger.getInstance(MacWinTabsHandler.class).error(e);
+          }
           return;
         }
 
-        DisplayMode displayMode = window.getGraphicsConfiguration().getDevice().getDisplayMode();
+        Method javaDeliverMoveResize = ReflectionUtil
+          .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
+        if (javaDeliverMoveResize == null) {
+          return;
+        }
+
+        Rectangle rect = window.getGraphicsConfiguration().getBounds();
 
         Foundation.executeOnMainThread(true, false, () -> {
           try {
-            deliverMoveResize.invoke(cPlatformWindow, 0, 0, displayMode.getWidth(), displayMode.getHeight(), true);
+            javaDeliverMoveResize.invoke(cPlatformWindow, rect.x, rect.y, rect.width, rect.height, true);
           }
           catch (Throwable e) {
             Logger.getInstance(MacWinTabsHandler.class).error(e);

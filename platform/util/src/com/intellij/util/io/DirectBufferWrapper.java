@@ -28,6 +28,7 @@ public final class DirectBufferWrapper {
     myLength = length;
     myReadOnly = readOnly;
     myBuffer = DirectByteBufferAllocator.allocate(() -> create());
+    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
   private void markDirty() throws IOException {
@@ -59,66 +60,92 @@ public final class DirectBufferWrapper {
   }
 
   public byte get(int index) {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkReadAccess();
+
     return myBuffer.get(index);
   }
 
   public long getLong(int index) {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkReadAccess();
+
     return myBuffer.getLong(index);
   }
 
   public ByteBuffer putLong(int index, long value) throws IOException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
     markDirty();
     return myBuffer.putLong(index, value);
   }
 
   public int getInt(int index) {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkReadAccess();
+
     return myBuffer.getInt(index);
   }
 
   public ByteBuffer putInt(int index, int value) throws IOException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
     markDirty();
     return myBuffer.putInt(index, value);
   }
 
   public void position(int newPosition) {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
     myBuffer.position(newPosition);
   }
 
   public int position() {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkReadAccess();
+
     return myBuffer.position();
   }
 
   public void put(ByteBuffer src) throws IOException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
     markDirty();
     myBuffer.put(src);
   }
 
   public void put(int index, byte b) throws IOException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
     markDirty();
     myBuffer.put(index, b);
   }
 
   public void readToArray(byte[] dst, int o, int page_offset, int page_len) throws IllegalArgumentException {
-    // TODO do a proper synchronization
-    //noinspection SynchronizeOnNonFinalField
-    synchronized (myBuffer) {
-      myBuffer.position(page_offset);
-      myBuffer.get(dst, o, page_len);
-    }
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkReadAccess();
+
+    myBuffer.position(page_offset);
+    myBuffer.get(dst, o, page_len);
   }
 
   public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IOException, IllegalArgumentException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
     markDirty();
-    // TODO do a proper synchronization
-    //noinspection SynchronizeOnNonFinalField
-    synchronized (myBuffer) {
-      myBuffer.position(page_offset);
-      myBuffer.put(src, o, page_len);
-    }
+    myBuffer.position(page_offset);
+    myBuffer.put(src, o, page_len);
   }
 
 
   private ByteBuffer create() throws IOException {
+
     ByteBuffer buffer = ByteBuffer.allocateDirect(myLength);
     return myFile.useChannel(ch -> {
       ch.read(buffer, myPosition);
@@ -127,6 +154,8 @@ public final class DirectBufferWrapper {
   }
 
   void release() throws IOException {
+    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
+
     if (isDirty()) force();
     if (myBuffer != null) {
       ByteBufferUtil.cleanBuffer(myBuffer);
@@ -140,6 +169,8 @@ public final class DirectBufferWrapper {
   }
 
   void force() throws IOException {
+    myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
+
     assert !myReadOnly;
     if (!isReleased() && isDirty()) {
       ByteBuffer buffer = myBuffer;
@@ -167,6 +198,10 @@ public final class DirectBufferWrapper {
     if (myBuffer.order() != ourNativeByteOrder) {
       myBuffer.order(ourNativeByteOrder);
     }
+  }
+
+  boolean belongs(@NotNull StorageLockContext context) {
+    return myFile.getStorageLockContext() == context;
   }
 
   public static DirectBufferWrapper readWriteDirect(PagedFileStorage file, long offset, int length) throws IOException {

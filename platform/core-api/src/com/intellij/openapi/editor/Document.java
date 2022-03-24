@@ -75,7 +75,7 @@ public interface Document extends UserDataHolder {
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   default char @NotNull [] getChars() {
     return CharArrayUtil.fromSequence(getImmutableCharSequence());
   }
@@ -377,13 +377,13 @@ public interface Document extends UserDataHolder {
    * In bulk mode editor(s) associated with the document will stop updating internal caches on each document change. As a result, certain
    * operations with editor can return invalid results or lead to exception, if they are preformed in bulk mode. They include: querying
    * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position,
-   * etc), querying or updating caret position or selection state.
+   * etc.), querying or updating caret position or selection state.
    * <p>
-   * Bulk mode shouldn't span more than one thread or EDT event. Typically it should turned on/off in a try/finally statement.
+   * Bulk mode shouldn't span more than one thread or EDT event. Typically, it should be turned on/off in a try/finally statement.
    *
    * @see com.intellij.util.DocumentUtil#executeInBulk(Document, boolean, Runnable)
    * @see BulkAwareDocumentListener
-   * @deprecated use {@link com.intellij.util.DocumentUtil#executeInBulk(com.intellij.openapi.editor.Document, boolean, java.lang.Runnable)} instead
+   * @deprecated use {@link com.intellij.util.DocumentUtil#executeInBulk(Document, boolean, Runnable)} instead
    */
   @Deprecated
   default void setInBulkUpdate(boolean value) {}

@@ -165,7 +165,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
     initText("  a\n    b c");
-    configureSoftWraps(5);
+    configureSoftWraps(5, false);
     runIndentsPass();
     addBlockInlay(0);
     checkResult();
@@ -286,6 +286,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     initText("a\nb<caret>\nc");
     addCustomLinesFolding(1, 1);
     checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionInsideSelection() throws Exception {
+    initText("<selection>\ntext\n<caret></selection>");
+    addCustomLinesFolding(1, 1);
+    checkResult();
   }
 
   private void addCustomLinesFolding(int startLine, int endLine) {

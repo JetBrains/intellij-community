@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -142,7 +143,7 @@ public class UserDefinedJsonSchemaConfiguration {
           result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
           break;
         case Pattern:
-          String pathText = patternText.getPath().replace(File.separatorChar, '/').replace('\\', '/');
+          String pathText = FileUtil.toSystemIndependentName(patternText.getPath());
           final Pattern pattern = pathText.isEmpty()
                                   ? PatternUtil.NOTHING
                                   : pathText.indexOf('/') >= 0

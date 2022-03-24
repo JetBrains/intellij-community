@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.apache.http.Consts
@@ -31,7 +30,6 @@ class CompilationPartsUploader implements Closeable {
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
-    CompilationPartsUtil.initLog4J(messages)
     def timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
     def config = RequestConfig.custom()
       .setConnectTimeout(timeout)
@@ -48,8 +46,7 @@ class CompilationPartsUploader implements Closeable {
 
   @Override
   void close() throws IOException {
-    StreamUtil.closeStream(myHttpClient)
-    CompilationPartsUtil.deinitLog4J()
+    CloseStreamUtil.closeStream(myHttpClient)
   }
 
   @SuppressWarnings("unused")
@@ -127,7 +124,7 @@ class CompilationPartsUploader implements Closeable {
       return null
     }
     finally {
-      StreamUtil.closeStream(response)
+      CloseStreamUtil.closeStream(response)
     }
   }
 
@@ -146,7 +143,7 @@ class CompilationPartsUploader implements Closeable {
       throw new UploadException("Failed to HEAD $path: " + e.getMessage(), e)
     }
     finally {
-      StreamUtil.closeStream(response)
+      CloseStreamUtil.closeStream(response)
     }
   }
 
@@ -162,7 +159,7 @@ class CompilationPartsUploader implements Closeable {
       throw new UploadException("Failed to DELETE $path: " + e.getMessage(), e)
     }
     finally {
-      StreamUtil.closeStream(response)
+      CloseStreamUtil.closeStream(response)
     }
   }
 
@@ -191,7 +188,7 @@ class CompilationPartsUploader implements Closeable {
       throw new UploadException("Failed to PUT file to $path: " + e.getMessage(), e)
     }
     finally {
-      StreamUtil.closeStream(response)
+      CloseStreamUtil.closeStream(response)
     }
   }
 

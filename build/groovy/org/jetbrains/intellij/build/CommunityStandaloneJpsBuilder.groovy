@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -6,6 +6,8 @@ import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.library.JpsLibrary
+
+import java.nio.file.Path
 
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
@@ -22,7 +24,7 @@ final class CommunityStandaloneJpsBuilder {
   void processJpsLayout(String targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
                         boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
     BuildContext context = buildContext
-    new LayoutBuilder(buildContext, false).process(targetDir, projectStructureMapping, copyFiles) {
+    new LayoutBuilder(buildContext).process(targetDir, projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
           module("intellij.platform.util.rt")
@@ -31,6 +33,9 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
+          module("intellij.platform.tracing.rt")
+          module("intellij.platform.util.diff")
+          module("intellij.platform.util.rt.java8")
         }
 
         jar("jps-launcher.jar") {
@@ -65,6 +70,7 @@ final class CommunityStandaloneJpsBuilder {
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps.jar") { module("intellij.groovy.jps") }
         jar("groovy-rt.jar") { module("intellij.groovy.rt") }
+        jar("groovy-rt-class-loader.jar") { module("intellij.groovy.rt.classLoader") }
         jar("groovy-constants-rt.jar") { module("intellij.groovy.constants.rt") }
         jar("java-guiForms-jps.jar") { module("intellij.java.guiForms.jps") }
 
@@ -102,7 +108,7 @@ final class CommunityStandaloneJpsBuilder {
         moduleTests("intellij.platform.jps.model.serialization.tests")
       }
     }
-    buildContext.notifyArtifactBuilt(targetDir)
+    buildContext.notifyArtifactWasBuilt(Path.of(targetDir).normalize().toAbsolutePath())
   }
 
   static String getZipName(String buildNumber) {

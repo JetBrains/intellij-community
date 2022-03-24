@@ -10,7 +10,7 @@ import javax.swing.*;
 /**
  * @deprecated moved to com.intellij.psi.impl.file.SourceRootIconProvider.DirectoryProvider
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DirectoryIconProvider extends SourceRootIconProvider.DirectoryProvider {
   public static Icon getDirectoryIcon(VirtualFile vFile, Project project) {
     return SourceRootIconProvider.getDirectoryIcon(vFile, project);

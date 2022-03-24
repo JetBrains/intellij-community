@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
+import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -116,3 +117,10 @@ fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List
     val receiverType = descriptor.extensionReceiverParameter?.type ?: return emptyList()
     return KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
 }
+
+internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
+    get() = when (this) {
+        is KotlinChangeInfo -> this
+        is KotlinChangeInfoWrapper -> delegate
+        else -> null
+    }

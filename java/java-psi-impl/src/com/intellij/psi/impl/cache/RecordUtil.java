@@ -91,6 +91,6 @@ public final class RecordUtil {
 
     return stub instanceof PsiFieldStub &&
            stub.getStubType() == JavaElementType.ENUM_CONSTANT ||
-           stub.getParentStub() instanceof PsiClassStub && ((PsiClassStub)stub.getParentStub()).isInterface();
+           stub.getParentStub() instanceof PsiClassStub && ((PsiClassStub<?>)stub.getParentStub()).isInterface();
   }
 }

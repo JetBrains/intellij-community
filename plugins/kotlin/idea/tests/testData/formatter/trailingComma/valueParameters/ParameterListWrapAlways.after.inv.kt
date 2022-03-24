@@ -477,8 +477,9 @@ class G(
 )
 
 class H(
-        val x: String, /*
-    */
+        val x: String,
+        /*
+           */
         val y: String,
         val z: String,
 )
@@ -486,7 +487,8 @@ class H(
 class J(
         val x: String,
         val y: String,
-        val z: String, /*
+        val z: String,
+        /*
      */
 )
 

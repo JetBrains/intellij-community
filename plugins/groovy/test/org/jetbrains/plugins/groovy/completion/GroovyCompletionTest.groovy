@@ -174,7 +174,7 @@ class Foo<A, B> {
   }
 
   void testInnerClassExtendsImplementsCompletion() {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements")
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements", "permits")
   }
 
   void testInnerClassCompletion() {
@@ -1148,6 +1148,10 @@ public class KeyVO {
 
   void testSpaceTail3() {
     checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
+  }
+
+  void testSpaceTail4() {
+    checkSingleItemCompletion 'class Foo perm<caret> {}', 'class Foo permits <caret> {}'
   }
 
   void testAmbiguousClassQualifier() {

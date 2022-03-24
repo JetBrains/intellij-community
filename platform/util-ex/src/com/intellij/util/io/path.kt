@@ -12,6 +12,7 @@ import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import java.util.*
 import java.util.function.Predicate
 import kotlin.math.min
 
@@ -262,3 +263,17 @@ fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
 }
 
 fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
+
+@Throws(IOException::class)
+fun generateRandomPath(parentDirectory: Path): Path {
+  var path = parentDirectory.resolve(UUID.randomUUID().toString())
+  var i = 0
+  while (path.exists() && i < 5) {
+    path = parentDirectory.resolve(UUID.randomUUID().toString())
+    ++i
+  }
+  if (path.exists()) {
+    throw IOException("Couldn't generate unique random path.")
+  }
+  return path
+}

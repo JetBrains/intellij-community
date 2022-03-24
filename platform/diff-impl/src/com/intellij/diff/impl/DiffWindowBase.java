@@ -2,14 +2,20 @@
 package com.intellij.diff.impl;
 
 import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.FrameStateListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +58,18 @@ public abstract class DiffWindowBase {
 
     Consumer<WindowWrapper> wrapperHandler = myHints.getWindowConsumer();
     if (wrapperHandler != null) wrapperHandler.consume(myWrapper);
+
+    MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect(myProcessor);
+    appConnection.subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
+      @Override
+      public void onFrameActivated() {
+        DiffRequest request = myProcessor.getActiveRequest();
+        if (request != null) {
+          VirtualFile[] files = VfsUtilCore.toVirtualFileArray(request.getFilesToRefresh());
+          DiffUtil.refreshOnFrameActivation(files);
+        }
+      }
+    });
   }
 
   public void show() {

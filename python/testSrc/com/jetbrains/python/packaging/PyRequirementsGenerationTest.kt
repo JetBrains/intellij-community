@@ -3,7 +3,7 @@ package com.jetbrains.python.packaging
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorEx
@@ -69,7 +69,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
       myFixture.configureFromTempProjectFile(settings.requirementsPath)
 
       val action = ActionManager.getInstance().getAction("PySyncPythonRequirements")
-      val context = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE, myFixture.module, (myFixture.editor as EditorEx).dataContext)
+      val context = SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.MODULE, myFixture.module, (myFixture.editor as EditorEx).dataContext)
       val event = AnActionEvent.createFromAnAction(action, null, "", context)
       action.actionPerformed(event)
       myFixture.checkResultByFile("$testName/new_${settings.requirementsPath}", true)

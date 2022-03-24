@@ -18,6 +18,7 @@ public class JBCefBrowserBuilder {
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
   boolean myIsOffScreenRendering;
   boolean myCreateImmediately;
+  boolean myEnableOpenDevToolsMenuItem;
 
   /**
    * Sets whether the browser is rendered off-screen.
@@ -100,9 +101,27 @@ public class JBCefBrowserBuilder {
   }
 
   /**
-   * Creates the browser with the set parameters.
+   * Sets whether the "Open DevTools" item should be present in the context menu.
+   * <p></p>
+   * When not set the item is not present.
    */
+  public @NotNull JBCefBrowserBuilder setEnableOpenDevToolsMenuItem(boolean enableOpenDevToolsMenuItem) {
+    myEnableOpenDevToolsMenuItem = enableOpenDevToolsMenuItem;
+    return this;
+  }
+
+  /**
+   * @deprecated use {@link JBCefBrowserBuilder#build()} instead
+   */
+  @Deprecated
   public @NotNull JBCefBrowser createBrowser() {
+    return build();
+  }
+
+  /**
+   * Creates and returns the browser with the set parameters.
+   */
+  public @NotNull JBCefBrowser build() {
     return JBCefBrowser.create(this);
   }
 }

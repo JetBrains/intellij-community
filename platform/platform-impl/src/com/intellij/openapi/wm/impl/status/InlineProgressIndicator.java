@@ -169,8 +169,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myProgress.setValue((int)(getFraction() * 99 + 1));
     }
 
-    setTextValue(getText() != null ? getText() : "");
-    setText2Value(getText2() != null ? getText2() : "");
+    String text = getText();
+    String text2 = getText2();
+    setTextValue(text != null ? text : "");
+    setText2Value(text2 != null ? text2 : "");
 
     if (myCompact && StringUtil.isEmpty(getTextValue())) {
       setTextValue(myInfo.getTitle());

@@ -32,7 +32,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
             if (property.hasModifier(KtTokens.CONST_KEYWORD)) return false
             if (property.hasJvmFieldAnnotation()) return false
 
-            val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(listOf(property)).bindingContext
+            val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(property).bindingContext
             val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property) as? PropertyDescriptor ?: return false
             if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) == false) return false
 
@@ -71,13 +71,13 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
         }
 
         private fun createGetter(element: KtProperty) {
-            val body = "get() = _${element.name}"
+            val body = "get() = ${backingName(element)}"
             val newGetter = KtPsiFactory(element).createProperty("val x $body").getter!!
             element.addAccessor(newGetter)
         }
 
         private fun createSetter(element: KtProperty) {
-            val body = "set(value) { _${element.name} = value }"
+            val body = "set(value) { ${backingName(element)} = value }"
             val newSetter = KtPsiFactory(element).createProperty("val x $body").setter!!
             element.addAccessor(newSetter)
         }
@@ -91,7 +91,8 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
             val backingProperty = KtPsiFactory(property).buildDeclaration {
                 appendFixedText("private ")
                 appendFixedText(property.valOrVarKeyword.text)
-                appendFixedText(" _${property.name}")
+                appendFixedText(" ")
+                appendNonFormattedText(backingName(property))
                 if (property.typeReference != null) {
                     appendFixedText(": ")
                     appendTypeReference(property.typeReference)
@@ -107,6 +108,10 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
             }
 
             property.parent.addBefore(backingProperty, property)
+        }
+
+        private fun backingName(property: KtProperty): String {
+            return if (property.nameIdentifier?.text?.startsWith('`') == true) "`_${property.name}`" else "_${property.name}"
         }
 
         private fun replaceFieldReferences(element: KtElement, propertyName: String) {

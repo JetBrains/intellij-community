@@ -16,9 +16,15 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.openapi.editor.impl.AbstractRtlTest;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.ui.UIUtil;
+
+import java.nio.charset.StandardCharsets;
 
 public class PropertiesRtlTest extends AbstractRtlTest {
   public void testComment() {
-    checkBidiRunBoundaries("# |R", ".properties");
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
+    UIUtil.dispatchAllInvocationEvents();
+    checkBidiRunBoundaries("# |R", "properties");
   }
 }

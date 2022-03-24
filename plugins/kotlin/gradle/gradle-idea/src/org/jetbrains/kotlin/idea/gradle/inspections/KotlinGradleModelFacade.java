@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +18,7 @@ public interface KotlinGradleModelFacade {
 
     @Deprecated
     @Nullable
-    default String getResolvedKotlinStdlibVersionByModuleData(@NotNull DataNode<?> moduleData, @NotNull List<String> libraryIds) {
+    default IdeKotlinVersion getResolvedKotlinStdlibVersionByModuleData(@NotNull DataNode<?> moduleData, @NotNull List<String> libraryIds) {
         return null;
     }
 
@@ -27,8 +28,8 @@ public interface KotlinGradleModelFacade {
             @NotNull String groupId,
             @NotNull List<String> libraryIds
     ) {
-        //noinspection deprecation
-        return getResolvedKotlinStdlibVersionByModuleData(moduleData, libraryIds);
+        IdeKotlinVersion stdlibVersion = getResolvedKotlinStdlibVersionByModuleData(moduleData, libraryIds);
+        return (stdlibVersion != null) ? stdlibVersion.getRawVersion() : null;
     }
 
     @NotNull

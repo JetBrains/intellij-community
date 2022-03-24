@@ -219,7 +219,8 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       ExternalEntityMapping<Object> mapping = myStorage.getBase().getExternalMapping("intellij.artifacts.packaging.elements");
       List<WorkspaceEntity> mappedEntities = mapping.getEntities(this);
       if (mappedEntities.isEmpty()) {
-        throw new RuntimeException(this.getClass().getName() + " - " + myStorage.getBase().getClass().getName());
+        throw new RuntimeException(
+          this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
       }
       PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mappedEntities.get(0);
       if (packagingElementEntity instanceof CompositePackagingElementEntity) {
@@ -275,7 +276,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
   @Nullable
   public CompositePackagingElement<?> findCompositeChild(@NotNull String name) {
     for (PackagingElement<?> child : getChildren()) {
-      if (child instanceof CompositePackagingElement && name.equals(((CompositePackagingElement)child).getName())) {
+      if (child instanceof CompositePackagingElement && name.equals(((CompositePackagingElement<?>)child).getName())) {
         return (CompositePackagingElement)child;
       }
     }

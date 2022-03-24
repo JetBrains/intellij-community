@@ -18,6 +18,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 /**
  * @author peter
@@ -25,7 +28,13 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultCompletionStatistician extends CompletionStatistician{
 
   @Override
+  public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull CompletionLocation location) {
+    String context = "completion#" + location.getCompletionParameters().getOriginalFile().getLanguage();
+    return element -> new StatisticsInfo(context, element.getLookupString());
+  }
+
+  @Override
   public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
-    return new StatisticsInfo("completion#" + location.getCompletionParameters().getOriginalFile().getLanguage(), element.getLookupString());
+    return forLocation(location).apply(element);
   }
 }

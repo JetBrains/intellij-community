@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
@@ -69,7 +68,6 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return myFile;
   }
 
-  @Nullable
   public RangeMarker getRangeMarker() {
     return myRangeMarker;
   }
@@ -101,7 +99,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   protected static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
-    final int offset = descriptor.getOffset();
+    int offset = descriptor.getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
     if (descriptor.getLine() >= 0) {
@@ -127,9 +125,9 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     }
   }
 
-  protected static void unfoldCurrentLine(@NotNull final Editor editor) {
-    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    final TextRange range = getRangeToUnfoldOnNavigation(editor);
+  protected static void unfoldCurrentLine(@NotNull Editor editor) {
+    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+    TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       for (FoldRegion region : allRegions) {
         if (!region.isExpanded() && range.intersects(TextRange.create(region))) {
@@ -141,7 +139,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   @NotNull
   public static TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
-    final int offset = editor.getCaretModel().getOffset();
+    int offset = editor.getCaretModel().getOffset();
     int line = editor.getDocument().getLineNumber(offset);
     int start = editor.getDocument().getLineStartOffset(line);
     int end = editor.getDocument().getLineEndOffset(line);
@@ -154,12 +152,12 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   @Override
   public boolean canNavigate() {
-    return FileNavigator.getInstance().canNavigate(myFile);
+    return FileNavigator.getInstance().canNavigate(this);
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return canNavigate();
+    return FileNavigator.getInstance().canNavigateToSource(this);
   }
 
   @NotNull
@@ -167,6 +165,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return myProject;
   }
 
+  @NotNull
   public OpenFileDescriptor setUseCurrentWindow(boolean search) {
     myUseCurrentWindow = search;
     return this;
@@ -177,6 +176,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return myUseCurrentWindow;
   }
 
+  @NotNull
   public OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
     myUsePreviewTab = usePreviewTab;
     return this;

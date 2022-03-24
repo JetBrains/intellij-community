@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 
 import java.awt.*;
 
@@ -50,4 +51,18 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * That slow part shall be returned when this data key is requested.
    */
   public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
+  /**
+   * Returns single selection item.
+   *
+   * @see #SELECTED_ITEMS
+   */
+  public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
+  /**
+   * Returns multi selection items.
+   *
+   * @see #SELECTED_ITEM
+   */
+  public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
+
+  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 }

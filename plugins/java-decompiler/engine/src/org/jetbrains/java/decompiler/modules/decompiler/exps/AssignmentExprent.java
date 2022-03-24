@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -14,9 +12,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AssignmentExprent extends Exprent {
 
@@ -60,10 +56,10 @@ public class AssignmentExprent extends Exprent {
     VarType typeLeft = left.getExprType();
     VarType typeRight = right.getExprType();
 
-    if (typeLeft.typeFamily > typeRight.typeFamily) {
-      result.addMinTypeExprent(right, VarType.getMinTypeInFamily(typeLeft.typeFamily));
+    if (typeLeft.getTypeFamily() > typeRight.getTypeFamily()) {
+      result.addMinTypeExprent(right, VarType.getMinTypeInFamily(typeLeft.getTypeFamily()));
     }
-    else if (typeLeft.typeFamily < typeRight.typeFamily) {
+    else if (typeLeft.getTypeFamily() < typeRight.getTypeFamily()) {
       result.addMinTypeExprent(left, typeRight);
     }
     else {
@@ -134,12 +130,12 @@ public class AssignmentExprent extends Exprent {
 
     if (condType == CONDITION_NONE &&
         !leftType.isSuperset(rightType) &&
-        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
+        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) {
       if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
         res.enclose("(", ")");
       }
 
-      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
+      res.prepend("(" + ExprProcessor.getCastTypeName(leftType, Collections.emptyList()) + ")");
     }
 
     buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
@@ -165,8 +161,8 @@ public class AssignmentExprent extends Exprent {
     if (!(o instanceof AssignmentExprent)) return false;
 
     AssignmentExprent as = (AssignmentExprent)o;
-    return InterpreterUtil.equalObjects(left, as.getLeft()) &&
-           InterpreterUtil.equalObjects(right, as.getRight()) &&
+    return Objects.equals(left, as.getLeft()) &&
+           Objects.equals(right, as.getRight()) &&
            condType == as.getCondType();
   }
 

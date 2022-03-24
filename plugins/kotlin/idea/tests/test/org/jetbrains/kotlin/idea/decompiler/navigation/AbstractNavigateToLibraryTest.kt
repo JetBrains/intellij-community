@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -23,7 +23,7 @@ abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTest
     }
 
     override fun tearDown() = runAll(
-        ThrowableRunnable { SourceNavigationHelper.setForceResolve(false) },
+        ThrowableRunnable { SourceNavigationHelper.resetForceResolve() },
         ThrowableRunnable { super.tearDown() }
     )
 }
@@ -142,9 +142,13 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
     companion object {
         fun checkAnnotatedCode(file: PsiFile, expectedFile: File, referenceTargetChecker: (PsiElement) -> Unit = {}) {
             val navigationChecker = NavigationChecker(file, referenceTargetChecker)
-            for (forceResolve in listOf(false, true)) {
-                SourceNavigationHelper.setForceResolve(forceResolve)
-                KotlinTestUtils.assertEqualsToFile(expectedFile, navigationChecker.annotatedLibraryCode())
+            try {
+                for (forceResolve in listOf(false, true)) {
+                    SourceNavigationHelper.setForceResolve(forceResolve)
+                    KotlinTestUtils.assertEqualsToFile(expectedFile, navigationChecker.annotatedLibraryCode())
+                }
+            } finally {
+                SourceNavigationHelper.resetForceResolve()
             }
         }
     }

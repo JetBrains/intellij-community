@@ -1,3 +1,4 @@
+// AFTER-WARNING: Unchecked cast: Array<String?> to Array<String>
 fun test(n: Int): Array<String> {
     var x: Array<String> = arrayOfNulls<String>(1) as Array<String>
 

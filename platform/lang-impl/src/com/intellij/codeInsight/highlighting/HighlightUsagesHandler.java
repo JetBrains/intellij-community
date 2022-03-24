@@ -275,8 +275,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   /**
    * @deprecated Use the overload with TextAttributesKey
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void highlightRanges(@NotNull HighlightManager highlightManager,
                                      @NotNull Editor editor,
                                      @NotNull TextAttributes attributes,
@@ -383,7 +382,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributesKey, clearHighlights, textRanges);
   }
 
-  @SuppressWarnings("unused") // NB don't deprecate this method while PsiSymbolReference is @Experimental
+  // NB don't deprecate this method while PsiSymbolReference is @Experimental
   @NotNull
   public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @NotNull List<TextRange> result) {
     collectHighlightRanges(ref, result);

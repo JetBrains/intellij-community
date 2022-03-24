@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.utils.LibraryUtils
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
@@ -28,11 +29,10 @@ object JsLibraryStdDetectionUtil {
         return getJsStdLibJar(classes) != null
     }
 
-    fun getJsLibraryStdVersion(library: Library, project: Project): String? {
+    fun getJsLibraryStdVersion(library: Library, project: Project): IdeKotlinVersion? {
         if ((library as LibraryEx).effectiveKind(project) !is JSLibraryKind) return null
         val jar = getJsStdLibJar(library.getFiles(OrderRootType.CLASSES).toList()) ?: return null
-
-        return JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(jar), Attributes.Name.IMPLEMENTATION_VERSION)
+        return IdeKotlinVersion.fromManifest(jar)
     }
 
     fun getJsStdLibJar(classesRoots: List<VirtualFile>): VirtualFile? {

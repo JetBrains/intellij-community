@@ -3,10 +3,12 @@ package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -19,10 +21,10 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -55,41 +57,40 @@ public final class XDebuggerInlayUtil {
           if (currentSession != null) {
             XVariablesView.InlineVariablesInfo info = XVariablesView.InlineVariablesInfo.get(currentSession);
             if (info != null) {
-              for (Inlay inlay : info.getInlays()) {
-                InlineDebugRenderer renderer = (InlineDebugRenderer)inlay.getRenderer();
-                createInlayInt(renderer.getValueNode(), currentSession, renderer.getPosition(), inlay.getOffset());
-              }
+              info.getInlays().forEach(renderer -> createInlayInt(currentSession, renderer));
             }
           }
           DebuggerUIUtil.repaintCurrentEditor(project); // to update inline debugger data
         }, project.getDisposed());
       }
     });
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        clearInlaysInEditor(event.getEditor());
+      }
+    }, project);
   }
 
   public boolean createLineEndInlay(@NotNull XValueNodeImpl valueNode,
                                     @NotNull XDebugSession session,
-                                    @NotNull XSourcePosition position,
-                                    @NotNull Document document) {
+                                    @NotNull XSourcePosition position) {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        int offset = document.getLineEndOffset(position.getLine());
-        createInlayInt(valueNode, session, position, offset);
+        createInlayInt(session, new InlineDebugRenderer(valueNode, position, session));
       }, session.getProject().getDisposed());
       return true;
     }
     return false;
   }
 
-  private static void createInlayInt(@NotNull XValueNodeImpl valueNode,
-                                     @NotNull XDebugSession session,
-                                     @NotNull XSourcePosition position,
-                                     int offset) {
+  private static void createInlayInt(@NotNull XDebugSession session, InlineDebugRenderer renderer) {
     EDT.assertIsEdt();
+    XSourcePosition position = renderer.getPosition();
     FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
     if (editor instanceof TextEditor) {
       Editor e = ((TextEditor)editor).getEditor();
-      InlineDebugRenderer renderer = new InlineDebugRenderer(valueNode, position, session);
+      int offset = e.getDocument().getLineEndOffset(position.getLine());
       Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(offset,
                                                                                   new InlayProperties()
                                                                                     .disableSoftWrapping(true)
@@ -98,6 +99,7 @@ public final class XDebuggerInlayUtil {
       if (inlay == null) {
         return;
       }
+      XValueNodeImpl valueNode = renderer.getValueNode();
       valueNode.getTree().addTreeListener(new XDebuggerTreeListener() {
         @Override
         public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
@@ -118,18 +120,21 @@ public final class XDebuggerInlayUtil {
     ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), myProject.getDisposed());
   }
 
-  private static List<Inlay> clearInlaysInt(@NotNull Project project) {
+  private static List<Inlay> clearInlaysInEditor(@NotNull Editor editor) {
     EDT.assertIsEdt();
-    ArrayList<Inlay> res = new ArrayList<>();
-    for (FileEditor editor : FileEditorManager.getInstance(project).getAllEditors()) {
-      if (editor instanceof TextEditor) {
-        Editor e = ((TextEditor)editor).getEditor();
-        List<Inlay<? extends InlineDebugRenderer>> inlays =
-          e.getInlayModel().getAfterLineEndElementsInRange(0, e.getDocument().getTextLength(), InlineDebugRenderer.class);
-        inlays.forEach(Disposer::dispose);
-        res.addAll(inlays);
-      }
-    }
-    return res;
+    List<? extends Inlay> inlays =
+      editor.getInlayModel().getAfterLineEndElementsInRange(0, editor.getDocument().getTextLength(), InlineDebugRenderer.class);
+    inlays.forEach(Disposer::dispose);
+    //noinspection unchecked
+    return (List<Inlay>)inlays;
+  }
+
+  private static List<InlineDebugRenderer> clearInlaysInt(@NotNull Project project) {
+    return StreamEx.of(FileEditorManager.getInstance(project).getAllEditors())
+      .select(TextEditor.class)
+      .flatCollection(textEditor -> clearInlaysInEditor(textEditor.getEditor()))
+      .map(Inlay::getRenderer)
+      .select(InlineDebugRenderer.class)
+      .toList();
   }
 }

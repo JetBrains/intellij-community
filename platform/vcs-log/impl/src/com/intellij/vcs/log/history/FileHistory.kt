@@ -18,26 +18,27 @@ import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
 import com.intellij.vcsUtil.VcsFileUtil
-import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.function.BiConsumer
 
 class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
                                        internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
-                                       internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty())
-
-internal val EMPTY_HISTORY = FileHistory(emptyMap())
+                                       internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty()) {
+  companion object {
+    internal val EMPTY = FileHistory(emptyMap())
+  }
+}
 
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
                                   private val fileHistoryData: FileHistoryData,
                                   private val oldFileHistory: FileHistory,
-                                  private val commitsToHide: Set<Int> = emptySet()) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
+                                  private val commitsToHide: Set<Int> = emptySet(),
+                                  private val removeTrivialMerges: Boolean = true,
+                                  private val refine: Boolean = true) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
   private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
   private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
@@ -47,7 +48,8 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
     get() = FileHistory(pathsMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
-    val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
+    val needToRepeat = removeTrivialMerges &&
+                       removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
 
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
@@ -89,7 +91,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
     val visibleLinearGraph = controller.compiledGraph
-    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && Registry.`is`("vcs.history.refine")) {
+    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && refine) {
 
       val (row, path) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
@@ -130,6 +132,14 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   companion object {
     private val LOG = Logger.getInstance(FileHistoryBuilder::class.java)
+
+    @JvmField
+    internal val removeTrivialMergesValue = Registry.get("vcs.history.remove.trivial.merges")
+    @JvmField
+    internal val refineValue = Registry.get("vcs.history.refine")
+
+    internal val isRemoveTrivialMerges get() = removeTrivialMergesValue.asBoolean()
+    internal val isRefine get() = refineValue.asBoolean()
   }
 }
 

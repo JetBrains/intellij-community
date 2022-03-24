@@ -73,4 +73,48 @@ public final class MathUtil {
     }
     return Math.min(max, Math.max(value, min));
   }
+
+  /**
+   * @return {@code true} if {@code a == b} accurate to {@code epsilon}
+   */
+  public static boolean equals(float a, float b, float epsilon) {
+    return Math.abs(a - b) < epsilon;
+  }
+
+  /**
+   * @return {@code true} if {@code a == b} accurate to {@code epsilon}
+   */
+  public static boolean equals(double a, double b, double epsilon) {
+    return Math.abs(a - b) < epsilon;
+  }
+
+  /**
+   * Imprecise version of {@link Float#compare(float, float)} with the given accuracy.
+   * @param epsilon Accuracy
+   */
+  public static int compare(float a, float b, float epsilon) {
+    return Math.abs(a - b) < epsilon ? 0 : Float.compare(a, b);
+  }
+
+  /**
+   * Imprecise version of {@link Double#compare(double, double)} with the given accuracy.
+   * @param epsilon Accuracy
+   */
+  public static int compare(double a, double b, double epsilon) {
+    return Math.abs(a - b) < epsilon ? 0 : Double.compare(a, b);
+  }
+
+  /**
+   * @return {@code true} if {@code min <= med <= max} accurate to {@code epsilon}
+   */
+  public static boolean between(float min, float med, float max, float epsilon) {
+    return compare(min, med, epsilon) < 0 && compare(med, max, epsilon) < 0;
+  }
+
+  /**
+   * @return {@code true} if {@code min <= med <= max} accurate to {@code epsilon}
+   */
+  public static boolean between(double min, double med, double max, double epsilon) {
+    return compare(min, med, epsilon) < 0 && compare(med, max, epsilon) < 0;
+  }
 }

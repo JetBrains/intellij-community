@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -24,11 +24,7 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -59,6 +55,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
@@ -95,7 +92,6 @@ import kotlin.collections.component2
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
-private const val GROUP_ID = "Dynamic plugin installation"
 
 object DynamicPlugins {
   @JvmStatic
@@ -162,7 +158,15 @@ object DynamicPlugins {
       }
     }
 
-    var comparator = PluginSet.getTopologicalComparator(allPlugins)
+    // todo make internal:
+    //  1) ModuleGraphBase;
+    //  2) SortedModuleGraph;
+    //  3) SortedModuleGraph.topologicalComparator;
+    //  4) PluginSetBuilder.sortedModuleGraph.
+    var comparator = PluginSetBuilder(allPlugins)
+      .moduleGraph
+      .topologicalComparator
+
     if (!load) {
       comparator = comparator.reversed()
     }
@@ -231,7 +235,7 @@ object DynamicPlugins {
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
       if (pluginSet.findEnabledPlugin(module.pluginId) != null && module === parentModule && !module.isUseIdeaClassLoader) {
-        val pluginClassLoader = module.classLoader
+        val pluginClassLoader = module.pluginClassLoader
         if (pluginClassLoader != null && pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
           return "Plugin ${module.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
                  "For example, the IDE is started from the sources with the plugin."
@@ -432,10 +436,6 @@ object DynamicPlugins {
     }
   }
 
-  fun unloadAndUninstallPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
-    return unloadPlugin(pluginDescriptor, UnloadPluginOptions(disable = false))
-  }
-
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
@@ -453,8 +453,6 @@ object DynamicPlugins {
       }
     }
 
-    var classLoaderUnloaded: Boolean
-    val classLoaders = WeakList<PluginClassLoader>()
     try {
       if (options.save) {
         saveDocumentsAndProjectsAndApp(true)
@@ -463,6 +461,16 @@ object DynamicPlugins {
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
+    }
+    catch (e: Exception) {
+      logger<DynamicPlugins>().error(e)
+      logDescriptorUnload(pluginDescriptor, success = false)
+      return false
+    }
+
+    var classLoaderUnloaded: Boolean
+    val classLoaders = WeakList<PluginClassLoader>()
+    try {
       app.runWriteAction {
         // must be after flushQueue (e.g. https://youtrack.jetbrains.com/issue/IDEA-252010)
         val forbidGettingServicesToken = app.forbidGettingServices("Plugin $pluginId being unloaded.")
@@ -484,13 +492,14 @@ object DynamicPlugins {
           app.extensionArea.clearUserCache()
           for (project in ProjectUtil.getOpenProjects()) {
             (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
-            (project.serviceIfCreated<CachedValuesManager>() as CachedValuesManagerImpl?)?.clearCachedValues()
           }
+          clearCachedValues()
+
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
-          PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.resetAllToolbars()
+          PresentationFactory.clearPresentationCaches()
           TouchbarSupport.reloadAllActions()
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
@@ -578,16 +587,15 @@ object DynamicPlugins {
           InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
-        val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
-        val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
-        @Suppress("DEPRECATION")
-        FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", eventId, fuData)
+        logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
       }
     }
 
     if (!classLoaderUnloaded) {
       setClassLoaderState(pluginDescriptor, PluginAwareClassLoader.ACTIVE)
     }
+
+    ActionToolbarImpl.updateAllToolbarsImmediately(true)
 
     return classLoaderUnloaded
   }
@@ -626,7 +634,7 @@ object DynamicPlugins {
 
       // this additional code is required because in unit tests PluginClassLoader is not used
       if (mainDescriptor !== subDescriptor) {
-        subDescriptor.classLoader = null
+        subDescriptor.pluginClassLoader = null
       }
 
       if (dependencyClassloader is PluginClassLoader && classLoader is PluginClassLoader) {
@@ -645,7 +653,7 @@ object DynamicPlugins {
                                           classLoaders: WeakList<PluginClassLoader>) {
     for (dependency in plugin.pluginDependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
-      val classLoader = subDescriptor.classLoader
+      val classLoader = subDescriptor.pluginClassLoader
       if (!pluginSet.isPluginEnabled(dependency.pluginId)) {
         LOG.assertTrue(classLoader == null,
                        "Expected not to have any sub descriptor classloader when dependency ${dependency.pluginId} is not loaded")
@@ -658,24 +666,24 @@ object DynamicPlugins {
 
       unloadDependencyDescriptors(subDescriptor, pluginSet, classLoaders)
       unloadModuleDescriptorNotRecursively(subDescriptor)
-      subDescriptor.classLoader = null
+      subDescriptor.pluginClassLoader = null
     }
 
     for (module in plugin.content.modules) {
       val subDescriptor = module.requireDescriptor()
 
-      val classLoader = subDescriptor.classLoader ?: continue
+      val classLoader = subDescriptor.pluginClassLoader ?: continue
       if (classLoader is PluginClassLoader && classLoader.pluginDescriptor === subDescriptor) {
         classLoaders.add(classLoader)
       }
 
       unloadModuleDescriptorNotRecursively(subDescriptor)
-      subDescriptor.classLoader = null
+      subDescriptor.pluginClassLoader = null
     }
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = NotificationGroupManager.getInstance().getNotificationGroup(GROUP_ID).createNotification(text, notificationType)
+    val notification = UpdateChecker.getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }
@@ -694,12 +702,12 @@ object DynamicPlugins {
     val unloadListeners = mutableListOf<Runnable>()
     unregisterUnknownLevelExtensions(module.unsortedEpNameToExtensionElements, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
-    for ((epName, epExtensions) in (module.appContainerDescriptor.extensions ?: emptyMap())) {
-      appExtensionArea.unregisterExtensions(epName, module, epExtensions, priorityUnloadListeners, unloadListeners)
+    for (epName in (module.appContainerDescriptor.extensions?.keys ?: emptySet())) {
+      appExtensionArea.unregisterExtensions(epName, module, priorityUnloadListeners, unloadListeners)
     }
-    for ((epName, epExtensions) in (module.projectContainerDescriptor.extensions ?: emptyMap())) {
+    for (epName in (module.projectContainerDescriptor.extensions?.keys ?: emptySet())) {
       for (project in openedProjects) {
-        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, epExtensions, priorityUnloadListeners,
+        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, priorityUnloadListeners,
                                                                            unloadListeners)
       }
     }
@@ -757,8 +765,8 @@ object DynamicPlugins {
                                                openedProjects: List<Project>,
                                                priorityUnloadListeners: MutableList<Runnable>,
                                                unloadListeners: MutableList<Runnable>) {
-    for ((epName, epExtensions) in (extensionMap ?: return)) {
-      val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, epExtensions, priorityUnloadListeners,
+    for (epName in (extensionMap?.keys ?: return)) {
+      val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
                                                                unloadListeners)
       if (isAppLevelEp) {
         continue
@@ -766,11 +774,11 @@ object DynamicPlugins {
 
       for (project in openedProjects) {
         val isProjectLevelEp = (project.extensionArea as ExtensionsAreaImpl)
-          .unregisterExtensions(epName, pluginDescriptor, epExtensions, priorityUnloadListeners, unloadListeners)
+          .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
         if (!isProjectLevelEp) {
           for (module in ModuleManager.getInstance(project).modules) {
             (module.extensionArea as ExtensionsAreaImpl)
-              .unregisterExtensions(epName, pluginDescriptor, epExtensions, priorityUnloadListeners, unloadListeners)
+              .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
           }
         }
       }
@@ -821,20 +829,20 @@ object DynamicPlugins {
     app.runWriteAction {
       try {
         PluginManagerCore.setPluginSet(pluginSet)
+
         val listenerCallbacks = mutableListOf<Runnable>()
         loadModule(pluginWithContentModules, app, listenerCallbacks)
-        loadOptionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet, listenerCallbacks)
-        clearPluginClassLoaderParentListCache(pluginSet)
-
-        for (openProject in ProjectUtil.getOpenProjects()) {
-          (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
+        for (module in optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet)) {
+          // 4. load into service container
+          loadModule(sequenceOf(module), app, listenerCallbacks)
         }
+
+        clearPluginClassLoaderParentListCache(pluginSet)
+        clearCachedValues()
 
         listenerCallbacks.forEach(Runnable::run)
 
-        val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
-        @Suppress("DEPRECATION")
-        FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", "load", fuData)
+        logDescriptorLoad(pluginDescriptor)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {
@@ -989,42 +997,41 @@ private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: Id
 /**
  * Load all sub plugins that depend on specified [dependencyPlugin].
  */
-private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescriptorImpl,
-                                             classLoaderConfigurator: ClassLoaderConfigurator,
-                                             pluginSet: PluginSet,
-                                             listenerCallbacks: MutableList<Runnable>) {
+private fun optionalDependenciesOnPlugin(
+  dependencyPlugin: IdeaPluginDescriptorImpl,
+  classLoaderConfigurator: ClassLoaderConfigurator,
+  pluginSet: PluginSet,
+): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val mainToModule = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val mainToModules = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
+  val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
 
-  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { mainDescriptor, subDescriptor ->
-    val subDescriptors = mainToModule.computeIfAbsent(mainDescriptor) { mutableListOf() }
-    if (subDescriptors.any { it === subDescriptor }) {
-      throw PluginException("Descriptor has already been added: $subDescriptor", subDescriptor.pluginId)
+  processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
+    val modules = mainToModules.computeIfAbsent(main) {
+      mutableListOf()
     }
-    subDescriptors.add(subDescriptor)
-  }
-
-  if (mainToModule.isEmpty()) {
-    return
-  }
-
-  // 2. setup classloaders
-  classLoaderConfigurator.configureDependenciesIfNeeded(mainToModule)
-
-  val app = ApplicationManager.getApplication() as ApplicationImpl
-  // 3. load into service container
-  for (entry in mainToModule.entries) {
-    for (subDescriptor in entry.value) {
-      loadModule(sequenceOf(subDescriptor), app, listenerCallbacks)
+    if (modules.any { it === module }) {
+      throw PluginException("Descriptor has already been added: $module", module.pluginId)
     }
-  }
-}
 
-private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
-  // yes, clear not only enabled plugins, but all, just to be sure, it is cheap operation
-  for (descriptor in pluginSet.allPlugins) {
-    (descriptor.classLoader as? PluginClassLoader ?: continue).clearParentListCache()
+    modulesToMain[module] = main
+    modules.add(module)
   }
+
+  if (mainToModules.isEmpty()) {
+    return emptySet()
+  }
+
+  // 2. sort topologically
+  val sortedModulesToMain = modulesToMain.toSortedMap(PluginSetBuilder(mainToModules.keys.toList())
+                                                        .moduleGraph
+                                                        .topologicalComparator)
+  // 3. setup classloaders
+  for ((moduleDescriptor, mainDescriptor) in sortedModulesToMain) {
+    classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
+  }
+
+  return sortedModulesToMain.keys
 }
 
 private fun loadModule(modules: Sequence<IdeaPluginDescriptorImpl>,
@@ -1068,7 +1075,8 @@ private fun getPluginWithContentModules(pluginDescriptor: IdeaPluginDescriptorIm
 }
 
 private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
-  val classLoader = pluginDescriptor.classLoader as? PluginClassLoader ?: return null
+  val classLoader = pluginDescriptor.pluginClassLoader as? PluginClassLoader
+                    ?: return null
   return Predicate {
     if (it is PluginManager.PluginAwareDisposable) {
       it.classLoaderId == classLoader.instanceId
@@ -1124,7 +1132,7 @@ private fun processDependenciesOnPlugin(
       val module = moduleItem.requireDescriptor()
 
       if (loadStateFilter != LoadStateFilter.ANY) {
-        val isModuleLoaded = module.classLoader != null
+        val isModuleLoaded = module.pluginClassLoader != null
         if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
           continue
         }
@@ -1165,7 +1173,7 @@ private fun processOptionalDependenciesInOldFormatOnPlugin(
 
     val subDescriptor = dependency.subDescriptor ?: continue
     if (loadStateFilter != LoadStateFilter.ANY) {
-      val isModuleLoaded = subDescriptor.classLoader != null
+      val isModuleLoaded = subDescriptor.pluginClassLoader != null
       if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
         continue
       }
@@ -1326,18 +1334,31 @@ private inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
 
 private fun unloadClassLoader(pluginDescriptor: IdeaPluginDescriptorImpl, timeoutMs: Int): Boolean {
   if (timeoutMs == 0) {
-    pluginDescriptor.classLoader = null
+    pluginDescriptor.pluginClassLoader = null
     return true
   }
 
-  val watcher = GCWatcher.tracking(pluginDescriptor.classLoader)
-  pluginDescriptor.classLoader = null
+  val watcher = GCWatcher.tracking(pluginDescriptor.pluginClassLoader)
+  pluginDescriptor.pluginClassLoader = null
   return watcher.tryCollect(timeoutMs)
 }
 
 private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, state: Int) {
-  (pluginDescriptor.classLoader as? PluginClassLoader)?.state = state
+  (pluginDescriptor.pluginClassLoader as? PluginClassLoader)?.state = state
   for (dependency in pluginDescriptor.pluginDependencies) {
     dependency.subDescriptor?.let { setClassLoaderState(it, state) }
+  }
+}
+
+private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
+  // yes, clear not only enabled plugins, but all, just to be sure; it's a cheap operation
+  for (descriptor in pluginSet.allPlugins) {
+    (descriptor.pluginClassLoader as? PluginClassLoader)?.clearParentListCache()
+  }
+}
+
+private fun clearCachedValues() {
+  for (project in ProjectUtil.getOpenProjects()) {
+    (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
   }
 }

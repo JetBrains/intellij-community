@@ -2,10 +2,13 @@ fun some(x: Any) {
     when (x) {
         is Int ->
             0
+
         3 ->
             2
+
         in 0..3 ->
             2
+
         else ->
             1
     }
@@ -13,12 +16,15 @@ fun some(x: Any) {
         is Int -> {
             0
         }
+
         3 -> {
             2
         }
+
         in 0..3 -> {
             2
         }
+
         else -> {
             1
         }
@@ -27,12 +33,15 @@ fun some(x: Any) {
         is Int -> {
             0
         }
+
         3 -> {
             2
         }
+
         in 0..3 -> {
             2
         }
+
         else -> {
             1
         }
@@ -43,15 +52,18 @@ fun some(x: Any) {
         -> {
             0
         }
+
         3,
         -> {
             2
         }
+
         in
         0..3,
         -> {
             2
         }
+
         else
         -> {
             1

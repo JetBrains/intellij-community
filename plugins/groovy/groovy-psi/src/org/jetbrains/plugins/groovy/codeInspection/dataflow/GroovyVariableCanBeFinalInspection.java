@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
@@ -35,6 +36,7 @@ public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspect
     };
 
   private static void process(@NotNull GrControlFlowOwner owner, @NotNull GrVariable variable, @NotNull ProblemsHolder problemsHolder) {
+    if (variable instanceof LightElement) return;
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return;
     if (!checkVariableDeclaredInsideScope(owner, variable)) return;
     if (checkVariableAssignedInsideClosureOrAnonymous(owner, variable)) return;
@@ -82,10 +84,10 @@ public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspect
     final DFAEngine<Object2IntMap<GrVariable>> engine = new DFAEngine<>(
       flow,
       new WritesCounterDFAInstance(),
-      new WritesCounterSemilattice<>()
+      new WritesCounterSemilattice()
     );
     List<Object2IntMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null || dfaResult.isEmpty()) {
+    if (dfaResult == null || dfaResult.isEmpty() || dfaResult.get(dfaResult.size() - 1) == null) {
       return;
     }
 

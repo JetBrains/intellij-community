@@ -1,6 +1,8 @@
 import org.gradle.internal.os.OperatingSystem
+
 import java.util.concurrent.TimeUnit
 
+apply from: 'retries.gradle'
 final def IJ_DIR = project.file("../../..").canonicalFile
 final def REPOSITORY = "https://repo.labs.intellij.net/clion"
 final def SETUP_ALL_PLATFORMS = Boolean.getBoolean("intellij.cidr.setup.all.platforms")
@@ -32,19 +34,24 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldb: [
-    version: "e0cccbacab5cf5ee621edddca1ea452353192e6b",
     platforms: [
       win: [
-        version: "347b30bd03fec57924cd06456059e1d61150f023",
+        version: "896dd621c66b229cfdc6bbfc491eaa0fbee9ed99",
         archs: ["x64", "x86"]
       ],
-      linux: [archs: ["x64"]],
-      mac: [archs: ["x64"]]
+      linux: [
+        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
+        archs: ["x64"]
+      ],
+      mac: [
+        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
+        archs: ["x64"]
+      ]
     ],
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "1e5c6ed011d85d7547e00afb083a96a5a46719aa",
+    version: "9a2042e226b54cca37f2c41f06d629e52c67a74e",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],
@@ -53,7 +60,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   bridge: [
-    version: "51b0c22",
+    version: "ed6c9b1",
     platforms: [
       mac: [archs: ["x64"]]
     ],
@@ -61,7 +68,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "810660",
+    version: "b19d276",
     platforms: [
       "mac": [archs: ["x64"]]
     ],
@@ -69,7 +76,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   objchelper: [
-    version: "e9b1fe3",
+    version: "f0d856",
     platforms: [
       "mac": [archs: ["x64"]],
       "linux": [archs: ["x64"]]
@@ -101,13 +108,14 @@ task setupCidr
         outputs.file(packageArchive)
 
         doLast {
-          download {
-            src downloadUrl
-            dest packageArchive
-            tempAndMove true
-            connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
-            readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
-            retries 10
+          project.ext.retry {
+            download {
+              src downloadUrl
+              dest packageArchive
+              tempAndMove true
+              connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+              readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+            }
           }
         }
       }

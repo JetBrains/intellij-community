@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class KotlinMoveRefactoringFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
@@ -44,13 +44,13 @@ class KotlinMoveRefactoringFUSCollector : CounterUsagesCollector() {
             isDefault: Boolean,
             isSucceeded: Boolean
         ) = event.log(
-            this.lagging.with(timeFinished - timeStarted),
-            this.entity.with(entity),
-            this.destination.with(destination),
-            this.numberOfEntities.with(numberOfEntities),
-            this.areSettingsChanged.with(isDefault),
-            this.succeeded.with(isSucceeded),
-            this.pluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)),
+          this.lagging.with(timeFinished - timeStarted),
+          this.entity.with(entity),
+          this.destination.with(destination),
+          this.numberOfEntities.with(numberOfEntities),
+          this.areSettingsChanged.with(isDefault),
+          this.succeeded.with(isSucceeded),
+          this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id)),
         )
     }
 

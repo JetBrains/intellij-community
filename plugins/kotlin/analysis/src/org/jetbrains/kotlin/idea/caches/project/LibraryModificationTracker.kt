@@ -7,10 +7,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,13 +36,13 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
             override fun after(events: List<VFileEvent>) {
                 events.filter(::isRelevantEvent).let { createEvents ->
                     if (createEvents.isNotEmpty()) {
-                        ApplicationManager.getApplication().invokeLater {
-                            if (!Disposer.isDisposed(disposable)) {
-                                processBulk(createEvents) {
-                                    projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(it)
-                                }
-                            }
-                        }
+                        ApplicationManager.getApplication().invokeLater({
+                           processBulk(createEvents) {
+                               projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(
+                                   it
+                               )
+                           }
+                       }, project.disposed)
                     }
                 }
             }
@@ -91,7 +91,7 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
 
     // if library points to a jar, the jar does not pass isInLibraryClasses check, so we have to perform additional check for this case
     private fun isLibraryArchiveRoot(virtualFile: VirtualFile): Boolean {
-        if (virtualFile.fileType != ArchiveFileType.INSTANCE) return false
+        if (!FileTypeRegistry.getInstance().isFileOfType(virtualFile, ArchiveFileType.INSTANCE)) return false
 
         val archiveRoot = JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: return false
         return projectFileIndex.isInLibraryClasses(archiveRoot)

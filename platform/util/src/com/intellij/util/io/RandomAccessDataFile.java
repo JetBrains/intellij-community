@@ -184,13 +184,6 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
     catch (IOException ignored) { }
   }
 
-  public void flushSomePages(int maxPagesToFlush) {
-    assertNotDisposed();
-    if (isDirty()) {
-      myIsDirty = !myPool.flushPages(this, maxPagesToFlush);
-    }
-  }
-
   @Override
   public boolean isDirty() {
     assertNotDisposed();

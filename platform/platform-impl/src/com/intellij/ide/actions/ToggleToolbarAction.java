@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -148,6 +149,11 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     e.getPresentation().setVisible(hasToolbars);
   }
 
+  public static boolean hasVisibleToolwindowToolbars(@NotNull ToolWindow toolWindow) {
+    Iterator<ActionToolbar> iterator = iterateToolbars(Collections.singletonList(toolWindow.getContentManager().getComponent())).iterator();
+    return iterator.hasNext() && iterator.next().getComponent().isVisible();
+  }
+
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected();
@@ -195,8 +201,16 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
     OptionsGroup(ToolWindow toolWindow) {
       getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
-      setPopup(true);
       myToolWindow = toolWindow;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isVisible()) {
+        int trimmedSize = ActionGroupUtil.getVisibleActions(this, e).take(4).size();
+        e.getPresentation().setPopupGroup(trimmedSize > 3);
+      }
     }
 
     @Override
@@ -227,7 +241,6 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
         }
       }
       boolean popup = ContainerUtil.count(result, it -> !(it instanceof Separator)) > 3;
-      setPopup(popup);
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
       return result.toArray(AnAction.EMPTY_ARRAY);
     }

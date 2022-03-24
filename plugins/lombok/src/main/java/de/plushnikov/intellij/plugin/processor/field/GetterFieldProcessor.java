@@ -11,10 +11,11 @@ import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
-import de.plushnikov.intellij.plugin.util.*;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -67,7 +68,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     validateOnXAnnotations(psiAnnotation, psiField, builder, "onMethod");
 
     if (result) {
-      result = validateExistingMethods(psiField, builder);
+      result = validateExistingMethods(psiField, builder, true);
     }
 
     if (result) {
@@ -81,30 +82,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "lazy", false);
   }
 
-  private boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-    final PsiClass psiClass = psiField.getContainingClass();
-    if (null != psiClass) {
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-      final Collection<String> methodNames = LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), isBoolean);
-      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-      filterToleratedElements(classMethods);
-
-      for (String methodName : methodNames) {
-        if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {
-          final String setterMethodName = LombokUtils.getGetterName(psiField);
-
-          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"),
-                             setterMethodName, methodName);
-          result = false;
-        }
-      }
-    }
-    return result;
-  }
-
-  private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
       builder.addWarning(LombokBundle.message("inspection.message.not.generating.getter.for.this.field"));

@@ -2,31 +2,34 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 
 @SkipSlowTestLocally
 class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase() {
     fun `test sub and super types`() {
-        val m1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m1", myFixture.tempDirFixture.findOrCreateDir("m1"))
+        val m1 = createModule("m1")
         myFixture.addFileToProject("m1/k.kt", "package one\nopen class K")
         myFixture.addFileToProject("m1/kk.kt", "package one\nopen class KK : K()")
         myFixture.addFileToProject("m1/kkk.kt", "package one\nopen class KKK : KK()")
 
-        val m2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m2", myFixture.tempDirFixture.findOrCreateDir("m2"))
+        val m2 = createModule("m2")
         myFixture.addFileToProject("m2/i.kt", "package two\ninterface I")
         myFixture.addFileToProject("m2/ii.kt", "package two\ninterface II : I")
         myFixture.addFileToProject("m2/iii.kt", "package two\ninterface III : II")
         ModuleRootModificationUtil.addDependency(m2, m1)
 
-        val m3 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m3", myFixture.tempDirFixture.findOrCreateDir("m3"))
+        val m3 = createModule("m3")
         myFixture.addFileToProject("m3/i2.kt", "package three\ninterface I2")
         myFixture.addFileToProject("m3/ii2.kt", "package three\ninterface II2 : I2")
 
-        val m4 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m4", myFixture.tempDirFixture.findOrCreateDir("m4"))
+        val m4 = createModule("m4")
         ModuleRootModificationUtil.addDependency(m4, m1)
         ModuleRootModificationUtil.addDependency(m4, m2)
         ModuleRootModificationUtil.addDependency(m4, m3)
@@ -96,21 +99,21 @@ class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase()
      * [org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService.buildScopeWithReferences]
      */
     fun `test dirty scope`() {
-        val m1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m1", myFixture.tempDirFixture.findOrCreateDir("m1"))
+        val m1 = createModule("m1")
         val f1 = myFixture.addFileToProject("m1/f1.java", "package one;\nclass JavaClass {}")
         val f2 = myFixture.addFileToProject("m1/f2.kt", "package one\nclass KotlinClass")
         val f3 = myFixture.addFileToProject("m1/f3.txt", "")
         val f8 = myFixture.addFileToProject("m1/f8.kt", "package one\nclass AnotherKotlinClass")
 
-        PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m2", myFixture.tempDirFixture.findOrCreateDir("m2"))
+        createModule("m2")
         val f4 = myFixture.addFileToProject("m2/f4.txt", "")
 
-        PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m3", myFixture.tempDirFixture.findOrCreateDir("m3"))
+        createModule("m3")
         val f5 = myFixture.addFileToProject("m3/f5.java", "package three;\nclass JavaClass {}")
         val f6 = myFixture.addFileToProject("m3/f6.kt", "package three\nclass KotlinClass")
         val f7 = myFixture.addFileToProject("m3/f7.txt", "")
 
-        val m4 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m4", myFixture.tempDirFixture.findOrCreateDir("m4"))
+        val m4 = createModule("m4")
         val f9 = myFixture.addFileToProject("m4/f9.kt", "package four\nclass KotlinClass")
         ModuleRootModificationUtil.addDependency(m4, m1)
 
@@ -125,6 +128,13 @@ class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase()
 
         myFixture.renameElement(f2, "ff2.kt")
         files.assertFilesInScope { it == f6 }
+    }
+
+    private fun createModule(moduleName: String): Module {
+        val moduleDir = myFixture.tempDirFixture.findOrCreateDir(moduleName)
+        val module = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), moduleName, moduleDir)
+        IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_11)
+        return module
     }
 
     private fun List<PsiFile>.assertFilesInScope(isFileNotInScope: (PsiFile) -> Boolean) =

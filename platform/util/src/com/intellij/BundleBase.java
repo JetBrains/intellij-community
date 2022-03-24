@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,6 @@ import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 
 @ApiStatus.NonExtendable
-@ApiStatus.Internal
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
@@ -202,6 +201,7 @@ public abstract class BundleBase {
 
     StringBuilder builder = new StringBuilder();
     boolean macMnemonic = value.contains("&&");
+    boolean mnemonicAdded = false;
     int i = 0;
     while (i < value.length()) {
       char c = value.charAt(i);
@@ -217,12 +217,24 @@ public abstract class BundleBase {
       else if (c == '&') {
         if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
           if (SystemInfoRt.isMac) {
-            builder.append(MNEMONIC);
+            if (!mnemonicAdded) {
+              mnemonicAdded = true;
+              builder.append(MNEMONIC);
+            }
+            else {
+              LOG.warn("ignore extra mnemonic in " + value);
+            }
           }
           i++;
         }
         else if (!SystemInfoRt.isMac || !macMnemonic) {
-          builder.append(MNEMONIC);
+          if (!mnemonicAdded) {
+            mnemonicAdded = true;
+            builder.append(MNEMONIC);
+          }
+          else {
+            LOG.warn("ignore extra mnemonic in " + value);
+          }
         }
       }
       else {

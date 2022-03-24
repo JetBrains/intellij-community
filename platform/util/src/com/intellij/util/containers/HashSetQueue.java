@@ -11,11 +11,16 @@ import java.util.Queue;
 
 /**
  * Unbounded non-thread-safe {@link Queue} with fast add/remove/contains.<br>
- * Differs from the conventional Queue by:<ul>
+ * Differs from the conventional {@link Queue} by:<ul>
  * <li>The new method {@link #find(T)} which finds the queue element equivalent to its argument in hashmap-like O(1) avg. time</li>
  * <li>The {@link #contains(Object)} method is O(1)</li>
  * <li>The {@link #remove(Object)} method is O(1)</li>
  * <li>Null elements are NOT permitted</li>
+ * </ul>
+ * Differs from the conventional {@link java.util.LinkedHashSet} by additional queue flavor:<ul>
+ * <li>The distinguished "first added" and "last added" elements (stored in {@link #TOMB} field in its {@link QueueEntry#prev} and {@link QueueEntry#next} fields correspondingly)</li>
+ * <li>Ability to iterate these elements in the modification order by {@link PositionalIterator}</li>
+ * <li>Ability to modify these elements in the queue fashion by {@link #offer(Object)}, {@link #poll()}
  * </ul>
  * Implementation is backed by {@link ObjectOpenHashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
@@ -182,7 +187,7 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
     private final long count;
     private final QueueEntry<T> TOMB;
 
-    private MyIteratorPosition(@NotNull QueueEntry<T> cursor, long count, QueueEntry<T> TOMB) {
+    private MyIteratorPosition(@NotNull QueueEntry<T> cursor, long count, @NotNull QueueEntry<T> TOMB) {
       this.cursor = cursor;
       this.count = count;
       this.TOMB = TOMB;

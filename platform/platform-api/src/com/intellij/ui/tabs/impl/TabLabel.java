@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -18,10 +19,8 @@ import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
-import com.intellij.util.ui.Centerizer;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +85,11 @@ public class TabLabel extends JPanel implements Accessible {
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
+          ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(TabLabel.this), popup -> {
+            if (ClientProperty.isTrue(popup.getContent(), MorePopupAware.class)) {
+              popup.cancel();
+            }
+          });
         }
         else {
           handlePopup(e);
@@ -206,7 +210,7 @@ public class TabLabel extends JPanel implements Accessible {
     label.setIconTextGap(
       tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeeded() ? 4 : 2) + 1 : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
-    label.setIpad(JBUI.emptyInsets());
+    label.setIpad(JBInsets.emptyInsets());
 
     return label;
   }
@@ -307,7 +311,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void handlePopup(final MouseEvent e) {
-    if (e.getClickCount() != 1 || !e.isPopupTrigger()) return;
+    if (e.getClickCount() != 1 || !e.isPopupTrigger() || PopupUtil.getPopupContainerFor(this) != null) return;
 
     if (e.getX() < 0 || e.getX() >= e.getComponent().getWidth() || e.getY() < 0 || e.getY() >= e.getComponent().getHeight()) return;
 
@@ -606,7 +610,10 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public String getToolTipText(MouseEvent event) {
     Point pointInLabel = new RelativePoint(event).getPoint(myLabel);
-    if (myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
+    Icon icon = myLabel.getIcon();
+    int iconWidth = (icon != null ? icon.getIconWidth() : JBUI.scale(16));
+    if ((myLabel.getVisibleRect().width >= iconWidth * 2 || !UISettings.getInstance().getShowTabsTooltips())
+        && myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
       String toolTip = myIcon.getToolTip(false);
       if (toolTip != null) {
         return StringUtil.capitalize(toolTip);

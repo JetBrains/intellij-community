@@ -1,0 +1,5 @@
+val v: Int
+    private get<caret>
+
+// ELEMENT: "get"
+// TAIL_TEXT: ""

@@ -6,7 +6,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -64,7 +64,7 @@ public class TestDataProvider implements DataProvider, DataContext {
     if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       return manager instanceof FileEditorManagerImpl ? ((FileEditorManagerImpl)manager).getSelectedTextEditor(true) : manager.getSelectedTextEditor();
     }
-    else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       Editor editor = manager.getSelectedTextEditor();
       return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }

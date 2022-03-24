@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.idea.maven.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCase
 
 class JpsLanguageLevelQuickFixTest : MavenTestCase() {
   private val jpsLanguageLevelQuickFix = JpsLanguageLevelQuickFix()

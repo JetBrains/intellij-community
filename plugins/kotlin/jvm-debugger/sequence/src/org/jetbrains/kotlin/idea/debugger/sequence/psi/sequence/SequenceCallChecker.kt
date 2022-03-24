@@ -13,12 +13,14 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 class SequenceCallChecker : StreamCallChecker {
     override fun isIntermediateCall(expression: KtCallExpression): Boolean {
         val receiverType = expression.receiverType() ?: return false
-        return isSequenceInheritor(receiverType) && isSequenceInheritor(expression.resolveType())
+        val expressionType = expression.resolveType() ?: return false
+        return isSequenceInheritor(receiverType) && isSequenceInheritor(expressionType)
     }
 
     override fun isTerminationCall(expression: KtCallExpression): Boolean {
         val receiverType = expression.receiverType() ?: return false
-        return isSequenceInheritor(receiverType) && !isSequenceInheritor(expression.resolveType())
+        val expressionType = expression.resolveType() ?: return false
+        return isSequenceInheritor(receiverType) && !isSequenceInheritor(expressionType)
     }
 
     private fun isSequenceInheritor(type: KotlinType): Boolean =

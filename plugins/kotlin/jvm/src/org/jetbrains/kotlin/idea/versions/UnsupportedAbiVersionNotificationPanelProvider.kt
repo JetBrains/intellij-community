@@ -18,37 +18,42 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
-import com.intellij.ui.HyperlinkAdapter
-import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.*
+import com.intellij.ui.EditorNotificationProvider.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.function.Function
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.HyperlinkEvent
 
-class UnsupportedAbiVersionNotificationPanelProvider(private val project: Project) :
-    EditorNotifications.Provider<EditorNotificationPanel>() {
+class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvider {
 
-    private fun doCreate(module: Module, badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>): EditorNotificationPanel {
-        val answer = ErrorNotificationPanel()
+    private fun doCreate(fileEditor: FileEditor, project: Project, badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>): EditorNotificationPanel {
+        val answer = ErrorNotificationPanel(fileEditor)
         val badRootFiles = badVersionedRoots.map { it.file }
 
         val kotlinLibraries = findAllUsedLibraries(project).keySet()
         val badRuntimeLibraries = kotlinLibraries.filter { library ->
-            val runtimeJar = LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+            val runtimeJar = LibraryJarDescriptor.STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
             val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
             badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)
         }
@@ -89,7 +94,8 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        updateLibraries(project, badRuntimeLibraries)
+                        val newArtifactVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion
+                        updateLibraries(project, newArtifactVersion, badRuntimeLibraries)
                     }
                 }
             }
@@ -142,21 +148,25 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
         }
 
-        createShowPathsActionLabel(module, answer, KotlinJvmBundle.message("button.text.details"))
+        createShowPathsActionLabel(project, badVersionedRoots, answer, KotlinJvmBundle.message("button.text.details"))
 
         return answer
     }
 
-    private fun createShowPathsActionLabel(module: Module, answer: EditorNotificationPanel, labelText: String) {
+    private fun createShowPathsActionLabel(
+        project: Project,
+        badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>,
+        answer: EditorNotificationPanel,
+        @NlsContexts.LinkLabel labelText: String
+    ) {
         answer.createComponentActionLabel(labelText) { label ->
             val task = {
-                val badRoots = collectBadRoots(module)
-                assert(!badRoots.isEmpty()) { "This action should only be called when bad roots are present" }
+                assert(!badVersionedRoots.isEmpty()) { "This action should only be called when bad roots are present" }
 
                 val listPopupModel = LibraryRootsPopupModel(
-                    KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinPluginUtil.getPluginVersion()),
+                    KotlinJvmBundle.message("unsupported.format.plugin.version.0", KotlinIdePlugin.version),
                     project,
-                    badRoots
+                    badVersionedRoots
                 )
                 val popup = JBPopupFactory.getInstance().createListPopup(listPopupModel)
                 popup.showUnderneathOf(label)
@@ -197,40 +207,30 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
         }
     }
 
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+        if (!file.isKotlinFileType()) {
+            return CONST_NULL
+        }
         try {
-            if (DumbService.isDumb(project)) return null
-            if (ApplicationManager.getApplication().isUnitTestMode) return null
-            if (file.fileType !== KotlinFileType.INSTANCE) return null
+            if (DumbService.isDumb(project) || isUnitTestMode()) return CONST_NULL
 
-            if (CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return null
+            if (CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return CONST_NULL
 
-            val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
+            val module = ModuleUtilCore.findModuleForFile(file, project) ?: return CONST_NULL
 
-            return checkAndCreate(module)
+            project.service<SuppressNotificationState>().state.takeUnless(SuppressNotificationState::isSuppressed) ?: return CONST_NULL
+
+            val badRoots: Collection<BinaryVersionedFile<BinaryVersion>> =
+                collectBadRoots(module).takeUnless(Collection<BinaryVersionedFile<BinaryVersion>>::isEmpty) ?: return CONST_NULL
+
+            return Function { doCreate(it, project, badRoots) }
         } catch (e: ProcessCanceledException) {
             // Ignore
         } catch (e: IndexNotReadyException) {
-            DumbService.getInstance(project).runWhenSmart(updateNotifications)
+            DumbService.getInstance(project).runWhenSmart { updateNotifications(project) }
         }
 
-        return null
-    }
-
-    fun checkAndCreate(module: Module): EditorNotificationPanel? {
-        val state = project.service<SuppressNotificationState>().state
-        if (state.isSuppressed) {
-            return null
-        }
-
-        val badRoots = collectBadRoots(module)
-        if (!badRoots.isEmpty()) {
-            return doCreate(module, badRoots)
-        }
-
-        return null
+        return CONST_NULL
     }
 
     private fun findBadRootsInRuntimeLibraries(
@@ -258,7 +258,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     }
 
     private class LibraryRootsPopupModel(
-        title: String,
+        @NlsContexts.PopupTitle title: String,
         private val project: Project,
         roots: Collection<BinaryVersionedFile<BinaryVersion>>
     ) : BaseListPopupStep<BinaryVersionedFile<BinaryVersion>>(title, *roots.toTypedArray()) {
@@ -268,11 +268,10 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
             return KotlinJvmBundle.message("0.1.expected.2", relativePath ?: root.file.path, root.version, root.supportedVersion)
         }
 
-        override fun getIconFor(aValue: BinaryVersionedFile<BinaryVersion>): Icon? {
-            if (aValue.file.isDirectory) {
-                return AllIcons.Nodes.Folder
-            }
-            return AllIcons.FileTypes.Archive
+        override fun getIconFor(aValue: BinaryVersionedFile<BinaryVersion>): Icon = if (aValue.file.isDirectory) {
+            AllIcons.Nodes.Folder
+        } else {
+            AllIcons.FileTypes.Archive
         }
 
         override fun onChosen(selectedValue: BinaryVersionedFile<BinaryVersion>, finalChoice: Boolean): PopupStep<*>? {
@@ -283,12 +282,12 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
         override fun isSpeedSearchEnabled(): Boolean = true
     }
 
-    private class ErrorNotificationPanel : EditorNotificationPanel() {
+    private class ErrorNotificationPanel(fileEditor: FileEditor) : EditorNotificationPanel(fileEditor) {
         init {
             myLabel.icon = AllIcons.General.Error
         }
 
-        fun createProgressAction(text: String, successLinkText: String, updater: (JLabel, HyperlinkLabel) -> Unit) {
+        fun createProgressAction(@Nls text: String, @Nls successLinkText: String, updater: (JLabel, HyperlinkLabel) -> Unit) {
             val label = JLabel(text)
             myLinksPanel.add(label)
 
@@ -309,10 +308,8 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
         }
     }
 
-    private val updateNotifications = Runnable { updateNotifications() }
-
-    private fun updateNotifications() {
-        ApplicationManager.getApplication().invokeLater {
+    private fun updateNotifications(project: Project) {
+        invokeLater {
             if (!project.isDisposed) {
                 EditorNotifications.getInstance(project).updateAllNotifications()
             }
@@ -320,8 +317,6 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     }
 
     companion object {
-        private val KEY = Key.create<EditorNotificationPanel>("unsupported.abi.version")
-
         private fun navigateToLibraryRoot(project: Project, root: VirtualFile) {
             OpenFileDescriptor(project, root).navigate(true)
         }
@@ -340,7 +335,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     }
 }
 
-fun EditorNotificationPanel.createComponentActionLabel(labelText: String, callback: (HyperlinkLabel) -> Unit) {
+fun EditorNotificationPanel.createComponentActionLabel(@NlsContexts.LinkLabel labelText: String, callback: (HyperlinkLabel) -> Unit) {
     val label: Ref<HyperlinkLabel> = Ref.create()
     val action = Runnable {
         callback(label.get())

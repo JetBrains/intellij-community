@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
 import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.ULocalVariable;
 import org.jetbrains.uast.UastContextKt;
+
+import java.util.Arrays;
 
 class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
@@ -40,6 +43,8 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     PsiModifierListOwner owner = context.getOwner();
     if (owner == null) return TaintValue.UNKNOWN;
     info = fromAnnotationOwner(owner.getModifierList());
+    if (info != TaintValue.UNKNOWN) return info;
+    info = fromExternalAnnotations(owner);
     if (info != TaintValue.UNKNOWN) return info;
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
@@ -72,16 +77,23 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     return info;
   }
 
-  @NotNull
-  static TaintValue of(PsiModifierListOwner annotationOwner) {
-    PsiAnnotation annotation =
-      AnnotationUtil.findAnnotationInHierarchy(annotationOwner, TaintValue.NAMES, false);
+  private static @NotNull TaintValue fromExternalAnnotations(@NotNull PsiModifierListOwner owner) {
+    ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(owner.getProject());
+    PsiAnnotation[] annotations = annotationsManager.findExternalAnnotations(owner);
+    if (annotations == null) return TaintValue.UNKNOWN;
+    return Arrays.stream(annotations)
+      .map(a -> fromAnnotation(a)).filter(a -> a != null)
+      .findFirst().orElse(TaintValue.UNKNOWN);
+  }
+
+  static @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(annotationOwner, TaintValue.NAMES, false);
     if (annotation == null) return TaintValue.UNKNOWN;
     TaintValue value = fromAnnotation(annotation);
     return value == null ? TaintValue.UNKNOWN : value;
   }
 
-  private static TaintValue of(PsiMember member) {
+  private static @NotNull TaintValue of(@NotNull PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
       TaintValue classInfo = INSTANCE.fromAnnotationOwner(containingClass.getModifierList());

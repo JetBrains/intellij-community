@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -63,11 +63,11 @@ class KotlinReferencesSearchTest : AbstractSearcherTest() {
 
         // check that local reference search gives the same result
         try {
-            ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.PLAIN_WHEN_NEEDED
+            ExpressionsOfTypeProcessor.prodMode()
             val localRefs = ReferencesSearch.search(func, LocalSearchScope(psiFile)).findAll()
             Assert.assertEquals(refs.size, localRefs.size)
         } finally {
-            ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.ALWAYS_SMART
+            ExpressionsOfTypeProcessor.resetMode()
         }
 
         return refs

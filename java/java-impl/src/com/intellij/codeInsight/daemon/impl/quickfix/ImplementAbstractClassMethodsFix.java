@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -76,7 +76,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
     if (classReference == null) return;
     final PsiClass psiClass = (PsiClass)classReference.resolve();
     if (psiClass == null) return;
-    final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, psiClass, false);
+    final JavaOverrideImplementMemberChooser chooser = chooseMethodsToImplement(editor, startElement, psiClass, false);
     if (chooser == null) return;
 
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
@@ -101,7 +101,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
         }
       }
       OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiAnonClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                   chooser.isInsertOverrideAnnotation());
+                                                                   chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc());
     });
   }
 }

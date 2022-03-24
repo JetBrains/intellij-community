@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
@@ -93,7 +93,7 @@ class AddNameToArgumentFix(argument: KtValueArgument) : KotlinQuickFixAction<KtV
     }
 
     private fun getNamePopup(project: Project, names: List<Name>): ListPopupStep<Name> {
-        return object : BaseListPopupStep<Name>(KotlinBundle.message("fix.add.argument.name.step.choose.parameter.name"), names) {
+        return object : BaseListPopupStep<Name>(KotlinBundle.message("fix.add.argument.name.step.choose.parameter.title"), names) {
             override fun onChosen(selectedValue: Name, finalChoice: Boolean): PopupStep<*>? {
                 addName(project, element!!, selectedValue)
                 return PopupStep.FINAL_CHOICE

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -20,8 +20,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
-public
-interface AnnotationBuilder {
+public interface AnnotationBuilder {
   /**
    * Specify annotation range. When not called, the current element range is used,
    * i.e. of the element your {@link Annotator#annotate(PsiElement, AnnotationHolder)} method is called with.
@@ -30,8 +29,7 @@ interface AnnotationBuilder {
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder range(@NotNull TextRange range);
+  @NotNull AnnotationBuilder range(@NotNull TextRange range);
 
   /**
    * Specify annotation range is equal to the {@code element.getTextRange()}.
@@ -40,8 +38,7 @@ interface AnnotationBuilder {
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder range(@NotNull ASTNode element);
+  @NotNull AnnotationBuilder range(@NotNull ASTNode element);
 
   /**
    * Specify annotation range is equal to the {@code element.getTextRange()}.
@@ -50,16 +47,14 @@ interface AnnotationBuilder {
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder range(@NotNull PsiElement element);
+  @NotNull AnnotationBuilder range(@NotNull PsiElement element);
 
   /**
    * Specify annotation should be shown after the end of line. Useful for creating warnings of the type "unterminated string literal".
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder afterEndOfLine();
+  @NotNull AnnotationBuilder afterEndOfLine();
 
   /**
    * Specify annotation should be shown differently - as a sticky popup at the top of the file.
@@ -67,8 +62,7 @@ interface AnnotationBuilder {
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder fileLevel();
+  @NotNull AnnotationBuilder fileLevel();
 
   /**
    * Specify annotation should have an icon at the gutter.
@@ -76,64 +70,56 @@ interface AnnotationBuilder {
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer);
+  @NotNull AnnotationBuilder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer);
 
   /**
    * Specify problem group for the annotation to group corresponding inspections.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder problemGroup(@NotNull ProblemGroup problemGroup);
+  @NotNull AnnotationBuilder problemGroup(@NotNull ProblemGroup problemGroup);
 
   /**
    * Override text attributes for the annotation to change the defaults specified for the given severity.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder enforcedTextAttributes(@NotNull TextAttributes enforcedAttributes);
+  @NotNull AnnotationBuilder enforcedTextAttributes(@NotNull TextAttributes enforcedAttributes);
 
   /**
    * Specify text attributes for the annotation to change the defaults specified for the given severity.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder textAttributes(@NotNull TextAttributesKey enforcedAttributes);
+  @NotNull AnnotationBuilder textAttributes(@NotNull TextAttributesKey enforcedAttributes);
 
   /**
-   * Specify the problem highlight type for the annotation. If not specified, the default type for the severity is used..
+   * Specify the problem highlight type for the annotation. If not specified, the default type for the severity is used.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder highlightType(@NotNull ProblemHighlightType highlightType);
+  @NotNull AnnotationBuilder highlightType(@NotNull ProblemHighlightType highlightType);
 
   /**
    * Specify tooltip for the annotation to popup on mouse hover.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder tooltip(@NotNull @NlsContexts.Tooltip String tooltip);
+  @NotNull AnnotationBuilder tooltip(@NotNull @NlsContexts.Tooltip String tooltip);
 
   /**
    * Optimization method specifying whether the annotation should be re-calculated when the user types in it.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder needsUpdateOnTyping();
+  @NotNull AnnotationBuilder needsUpdateOnTyping();
 
   /**
    * Optimization method which explicitly specifies whether the annotation should be re-calculated when the user types in it.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder needsUpdateOnTyping(boolean value);
+  @NotNull AnnotationBuilder needsUpdateOnTyping(boolean value);
 
   /**
    * Registers quick fix for this annotation.
@@ -141,8 +127,7 @@ interface AnnotationBuilder {
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure = true)
-  @NotNull
-  AnnotationBuilder withFix(@NotNull IntentionAction fix);
+  @NotNull AnnotationBuilder withFix(@NotNull IntentionAction fix);
 
   /**
    * Begin registration of the new quickfix associated with the annotation.
@@ -151,8 +136,7 @@ interface AnnotationBuilder {
    * @param fix an intention action to be shown for the annotation as a quick fix
    */
   @Contract(pure = true)
-  @NotNull
-  FixBuilder newFix(@NotNull IntentionAction fix);
+  @NotNull FixBuilder newFix(@NotNull IntentionAction fix);
 
   /**
    * Begin registration of the new quickfix associated with the annotation.
@@ -162,8 +146,7 @@ interface AnnotationBuilder {
    * @param problemDescriptor to be passed to {@link LocalQuickFix#applyFix(Project, CommonProblemDescriptor)}
    */
   @Contract(pure = true)
-  @NotNull
-  FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor);
+  @NotNull FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor);
 
   interface FixBuilder {
     /**
@@ -171,28 +154,24 @@ interface AnnotationBuilder {
      * This is an intermediate method in the registering new quick fix pipeline.
      */
     @Contract(pure = true)
-    @NotNull
-    FixBuilder range(@NotNull TextRange range);
+    @NotNull FixBuilder range(@NotNull TextRange range);
 
     @Contract(pure = true)
-    @NotNull
-    FixBuilder key(@NotNull HighlightDisplayKey key);
+    @NotNull FixBuilder key(@NotNull HighlightDisplayKey key);
 
     /**
      * Specify that the quickfix will be available during batch mode only.
      * This is an intermediate method in the registering new quick fix pipeline.
      */
     @Contract(pure = true)
-    @NotNull
-    FixBuilder batch();
+    @NotNull FixBuilder batch();
 
     /**
      * Specify that the quickfix will be available both during batch mode and on-the-fly.
      * This is an intermediate method in the registering new quick fix pipeline.
      */
     @Contract(pure = true)
-    @NotNull
-    FixBuilder universal();
+    @NotNull FixBuilder universal();
 
     /**
      * Finish registration of the new quickfix associated with the annotation.
@@ -205,19 +184,16 @@ interface AnnotationBuilder {
      * }</pre>
      */
     @Contract(pure = true)
-    @NotNull
-    AnnotationBuilder registerFix();
+    @NotNull AnnotationBuilder registerFix();
   }
 
   /**
    * Finish creating new annotation.
-   * Calling this method means you've completed your annotation and it's ready to be shown on screen.
+   * Calling this method means you've completed your annotation, and it is ready to be shown on screen.
    */
   void create();
 
-  /**
-   * @deprecated Use {@link #create()} instead
-   */
-  @Deprecated
+  /** @deprecated Use {@link #create()} instead */
+  @Deprecated(forRemoval = true)
   Annotation createAnnotation();
 }

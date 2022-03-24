@@ -4,7 +4,7 @@ class Foo {
         try {
             System.out.println(Integer.parseInt(s));
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

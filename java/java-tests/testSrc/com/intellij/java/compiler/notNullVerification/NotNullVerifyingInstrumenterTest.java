@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.compiler.notNullVerification;
 
 import com.intellij.JavaTestUtil;
@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -38,7 +39,6 @@ import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static org.junit.Assert.*;
-
 
 public abstract class NotNullVerifyingInstrumenterTest {
   @Retention(RetentionPolicy.RUNTIME)
@@ -84,7 +84,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testSimpleReturn() throws Exception {
     Class<?> testClass = prepareTest();
-    Object instance = testClass.newInstance();
+    Object instance = testClass.getDeclaredConstructor().newInstance();
     Method method = testClass.getMethod("test");
     verifyCallThrowsException("@NotNull method SimpleReturn.test must not return null", instance, method);
   }
@@ -92,7 +92,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testSimpleReturnWithMessage() throws Exception {
     Class<?> testClass = prepareTest();
-    Object instance = testClass.newInstance();
+    Object instance = testClass.getDeclaredConstructor().newInstance();
     Method method = testClass.getMethod("test");
     verifyCallThrowsException("This method cannot return null", instance, method);
   }
@@ -100,7 +100,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testMultipleReturns() throws Exception {
     Class<?> testClass = prepareTest();
-    Object instance = testClass.newInstance();
+    Object instance = testClass.getDeclaredConstructor().newInstance();
     Method method = testClass.getMethod("test", int.class);
     verifyCallThrowsException("@NotNull method MultipleReturns.test must not return null", instance, method, 1);
   }
@@ -108,7 +108,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testSimpleParam() throws Exception {
     Class<?> testClass = prepareTest();
-    Object instance = testClass.newInstance();
+    Object instance = testClass.getDeclaredConstructor().newInstance();
     Method method = testClass.getMethod("test", Object.class);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of SimpleParam.test must not be null", instance, method, (Object)null);
   }
@@ -116,7 +116,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testSimpleParamWithMessage() throws Exception {
     Class<?> testClass = prepareTest();
-    Object instance = testClass.newInstance();
+    Object instance = testClass.getDeclaredConstructor().newInstance();
     Method method = testClass.getMethod("test", Object.class);
     verifyCallThrowsException("SimpleParamWithMessage.test(o) cant be null", instance, method, (Object)null);
   }
@@ -157,7 +157,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
     Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Method staticMethod = testClass.getMethod("foo", long.class, String.class, String.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'c' of LongParameter.foo must not be null",
-                              null, staticMethod, new Long(2), "z", null);
+                              null, staticMethod, Long.valueOf(2), "z", null);
   }
 
   @Test
@@ -165,7 +165,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
     Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Method staticMethod = testClass.getMethod("foo", double.class, String.class, String.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'c' of DoubleParameter.foo must not be null",
-                              null, staticMethod, new Long(2), "z", null);
+                              null, staticMethod, Long.valueOf(2), "z", null);
   }
 
   @Test
@@ -178,7 +178,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   public void testCustomExceptionType() throws Exception {
     Class<?> testClass = prepareTest();
     try {
-      testClass.getMethod("foo", Object.class, Object.class).invoke(testClass.newInstance(), null, null);
+      testClass.getMethod("foo", Object.class, Object.class).invoke(testClass.getDeclaredConstructor().newInstance(), null, null);
       fail();
     }
     catch (InvocationTargetException e) {
@@ -202,13 +202,13 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testStaticInnerClass() throws Exception {
     Class<?> aClass = prepareTest();
-    assertNotNull(aClass.newInstance());
+    assertNotNull(aClass.getDeclaredConstructor().newInstance());
   }
 
   @Test
   public void testNonStaticInnerClass() throws Exception {
     Class<?> testClass = prepareTest();
-    assertNotNull(testClass.newInstance());
+    assertNotNull(testClass.getDeclaredConstructor().newInstance());
     verifyCallThrowsException(
       "Argument 1 for @NotNull parameter of NonStaticInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
@@ -216,7 +216,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testGroovyInnerClass() throws Exception {
     Class<?> testClass = prepareTest();
-    assertNotNull(testClass.newInstance());
+    assertNotNull(testClass.getDeclaredConstructor().newInstance());
     verifyCallThrowsException(
       "Argument for @NotNull parameter 's2' of GroovyInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
@@ -239,7 +239,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testMultipleMessages() throws Exception {
     Class<?> test = prepareTest();
-    Object instance = test.newInstance();
+    Object instance = test.getDeclaredConstructor().newInstance();
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MultipleMessages.bar1 must not be null",
                               instance, test.getMethod("bar1", Object.class), (Object)null);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MultipleMessages.bar2 must not be null",
@@ -251,7 +251,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testMultipleAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno", "BarAnno");
-    Object instance = test.newInstance();
+    Object instance = test.getDeclaredConstructor().newInstance();
     verifyCallThrowsException("@FooAnno method MultipleAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("@BarAnno method MultipleAnnotations.foo2 must not return null", instance, test.getMethod("foo2"));
   }
@@ -259,7 +259,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testTypeUseOnlyAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno");
-    Object instance = test.newInstance();
+    Object instance = test.getDeclaredConstructor().newInstance();
     verifyCallThrowsException("@FooAnno method TypeUseOnlyAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseOnlyAnnotations.foo2 must not be null",
                               instance, test.getMethod("foo2", String.class), (String)null);
@@ -275,7 +275,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
   @Test
   public void testTypeUseAndMemberAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno");
-    Object instance = test.newInstance();
+    Object instance = test.getDeclaredConstructor().newInstance();
     verifyCallThrowsException("@FooAnno method TypeUseAndMemberAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseAndMemberAnnotations.foo2 must not be null",
                               instance, test.getMethod("foo2", String.class), (String)null);
@@ -291,7 +291,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
     @Test
     public void testTypeUseAndMemberAnnotationsOnArrays() throws Exception {
       Class<?> test = prepareTest();
-      Object instance = test.newInstance();
+      Object instance = test.getDeclaredConstructor().newInstance();
 
       Object[] singleNullArg = {null};
       verifyCallThrowsException("Argument 0 for @NotNull parameter of TypeUseAndMemberAnnotationsOnArrays.notNullArray must not be null",
@@ -316,14 +316,14 @@ public abstract class NotNullVerifyingInstrumenterTest {
     Class<?> testClass = prepareTest();
     Object obj1 = testClass.getMethod("fromStatic").invoke(null);
     assertEquals(testClass, obj1.getClass().getEnclosingClass());
-    Object obj2 = testClass.getMethod("fromInstance").invoke(testClass.newInstance());
+    Object obj2 = testClass.getMethod("fromInstance").invoke(testClass.getDeclaredConstructor().newInstance());
     assertEquals(testClass, obj2.getClass().getEnclosingClass());
   }
 
   @Test
   public void testLocalClassImplicitParameters() throws Exception {
     Class<?> test = prepareTest(true, "NotNull");
-    Object instance = test.newInstance();
+    Object instance = test.getDeclaredConstructor().newInstance();
     assertEquals(42, test.getMethod("ok").invoke(instance));
     verifyCallThrowsException("Argument for @NotNull parameter 'test' of LocalClassImplicitParameters$1Test.<init> must not be null",
                               instance, test.getMethod("failLocal"));
@@ -439,8 +439,8 @@ public abstract class NotNullVerifyingInstrumenterTest {
     boolean modified = false;
     MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
     Class<?> mainClass = null;
-    for (File file: files) {
-      FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
+    for (File file : files) {
+      ClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
       int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
       ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);

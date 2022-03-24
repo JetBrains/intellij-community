@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.filter
 
@@ -8,20 +8,40 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.ui.classFilter.ClassFilter
 
 private const val KOTLIN_STDLIB_FILTER = "kotlin.*"
+private const val COMPOSE_RUNTIME_FILTER = "androidx.compose.runtime.*"
 
-class JvmDebuggerAddFilterStartupActivity : StartupActivity {
+class JvmDebuggerAddFilterStartupActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
-        addKotlinStdlibDebugFilterIfNeeded()
+        val settings = DebuggerSettings.getInstance() ?: return
+        settings.addSteppingFilterIfNeeded(KOTLIN_STDLIB_FILTER)
+        settings.addSteppingFilterIfNeeded(COMPOSE_RUNTIME_FILTER)
     }
 }
 
-fun addKotlinStdlibDebugFilterIfNeeded() {
-    val settings = DebuggerSettings.getInstance() ?: return
-    val existingFilters = settings.steppingFilters
+private fun DebuggerSettings.addSteppingFilterIfNeeded(pattern: String) {
+    val steppingFilters = this.steppingFilters
+    when (val occurrencesNum = steppingFilters.count { it.pattern == pattern }) {
+        0 -> setSteppingFilters(steppingFilters + ClassFilter(pattern))
+        1 -> return
+        else -> leaveOnlyFirstOccurenceOfSteppingFilter(pattern, occurrencesNum)
+    }
+}
 
-    if (existingFilters.any { it.pattern == KOTLIN_STDLIB_FILTER }) {
-        return
+private fun DebuggerSettings.leaveOnlyFirstOccurenceOfSteppingFilter(pattern: String, occurrencesNum: Int) {
+    val steppingFilters = this.steppingFilters
+    val newFilters = ArrayList<ClassFilter>(steppingFilters.size - occurrencesNum + 1)
+
+    var firstOccurrenceFound = false
+    for (filter in steppingFilters) {
+        if (filter.pattern == pattern) {
+            if (!firstOccurrenceFound) {
+                newFilters.add(filter)
+                firstOccurrenceFound = true
+            }
+        } else {
+            newFilters.add(filter)
+        }
     }
 
-    settings.steppingFilters = settings.steppingFilters + ClassFilter(KOTLIN_STDLIB_FILTER)
+    setSteppingFilters(newFilters.toTypedArray())
 }

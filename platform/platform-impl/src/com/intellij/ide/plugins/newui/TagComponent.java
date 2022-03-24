@@ -45,7 +45,7 @@ public class TagComponent extends LinkComponent {
     else if (Tags.Trial.name().equals(name) || Tags.Purchased.name().equals(name)) {
       myColor = TRIAL_BACKGROUND;
     }
-    else if (Tags.Paid.name().equals(name)) {
+    else if (Tags.Paid.name().equals(name) || Tags.Freemium.name().equals(name)) {
       myColor = PAID_BACKGROUND;
       tooltip = IdeBundle.message("tooltip.paid.plugin");
     }

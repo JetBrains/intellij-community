@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.util.List;
@@ -24,8 +23,7 @@ public final class ElementLocationUtil {
   /**
    * @deprecated use {@link #renderElementLocation(PsiElement, Ref)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void customizeElementLabel(final PsiElement element, final JLabel label) {
     Ref<Icon> ref = new Ref<>();
     label.setText(renderElementLocation(element, ref));

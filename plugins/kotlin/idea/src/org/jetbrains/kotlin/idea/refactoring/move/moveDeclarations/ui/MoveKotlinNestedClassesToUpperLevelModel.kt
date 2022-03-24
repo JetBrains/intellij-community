@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.util.RefactoringMessageUtil
-import com.intellij.refactoring.util.RefactoringUtil
+import com.intellij.util.CommonJavaRefactoringUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -87,11 +87,11 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
                     targetSourceRoot = contentSourceRoots[0]
                 }
 
-                RefactoringUtil.findPackageDirectoryInSourceRoot(newPackage, targetSourceRoot)?.let { return it }
+                CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(newPackage, targetSourceRoot)?.let { return it }
 
                 return runWriteAction {
                     try {
-                        RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot)
+                        CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(newPackage, targetSourceRoot)
                     } catch (e: IncorrectOperationException) {
                         null
                     }

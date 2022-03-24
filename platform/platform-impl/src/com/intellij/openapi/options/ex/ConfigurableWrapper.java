@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -229,10 +229,12 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return myEp;
   }
 
+  @Override
   public String getParentId() {
     return myEp.parentId;
   }
 
+  @Override
   public ConfigurableWrapper addChild(Configurable configurable) {
     return new CompositeWrapper(myEp, configurable);
   }

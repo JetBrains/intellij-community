@@ -1,5 +1,5 @@
 // "Replace with 'str.isEmpty()'" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 import Bar.bar
 

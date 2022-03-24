@@ -32,9 +32,9 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public abstract class ChangeEditorFontSizeAction extends AnAction implements DumbAware {
-  private final int myStep;
+  private final float myStep;
 
-  protected ChangeEditorFontSizeAction(@NotNull Supplier<String> text, int increaseStep) {
+  protected ChangeEditorFontSizeAction(@NotNull Supplier<String> text, float increaseStep) {
     super(text);
     myStep = increaseStep;
   }
@@ -43,7 +43,7 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   public void actionPerformed(@NotNull AnActionEvent e) {
     final EditorImpl editor = getEditor(e);
     if (editor != null) {
-      final int size = editor.getFontSize() + myStep;
+      final float size = editor.getFontSize2D() + myStep;
       if (size >= 8 && size <= EditorFontsConstants.getMaxEditorFontSize()) {
         editor.setFontSize(size);
       }

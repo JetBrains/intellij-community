@@ -65,5 +65,9 @@
     <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
     </extensionPoint>
+
+    <extensionPoint name="listSplitJoinContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.lists.ListSplitJoinContext"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

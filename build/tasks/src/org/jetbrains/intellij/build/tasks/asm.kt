@@ -13,7 +13,7 @@ import java.nio.file.Path
 //}
 
 // see https://stackoverflow.com/a/49454118
-fun injectAppInfo(inFile: Path, outFile: Path, newFieldValue: String) {
+fun injectAppInfo(inFile: Path, newFieldValue: String): ByteArray {
   val classReader = ClassReader(Files.readAllBytes(inFile))
   val classWriter = ClassWriter(classReader, 0)
   classReader.accept(object : ClassVisitor(Opcodes.API_VERSION, classWriter) {
@@ -35,6 +35,5 @@ fun injectAppInfo(inFile: Path, outFile: Path, newFieldValue: String) {
       }
     }
   }, 0)
-  Files.createDirectories(outFile.parent)
-  Files.write(outFile, classWriter.toByteArray())
+  return classWriter.toByteArray()
 }

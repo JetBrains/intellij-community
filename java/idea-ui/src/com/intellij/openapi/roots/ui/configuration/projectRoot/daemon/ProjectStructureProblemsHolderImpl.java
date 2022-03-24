@@ -1,9 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -23,7 +23,13 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
                               @NotNull PlaceInProjectStructure place,
                               @Nullable ConfigurationErrorQuickFix fix) {
     final List<ConfigurationErrorQuickFix> fixes = fix != null ? Collections.singletonList(fix) : Collections.emptyList();
-    registerProblem(new ProjectStructureProblemDescription(message, description, place, problemType, fixes));
+    registerProblem(new ProjectStructureProblemDescription(message,
+                                                           description != null ? HtmlChunk.raw(description) : HtmlChunk.empty(),
+                                                           place,
+                                                           problemType,
+                                                           ProjectStructureProblemDescription.ProblemLevel.PROJECT,
+                                                           fixes,
+                                                           true));
   }
 
   @Override

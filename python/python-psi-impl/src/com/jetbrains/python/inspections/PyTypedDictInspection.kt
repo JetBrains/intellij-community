@@ -16,10 +16,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.types.PyLiteralType
-import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.PyTypedDictType
+import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
@@ -29,14 +26,14 @@ class PyTypedDictInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
-    return Visitor(holder, session)
+    return Visitor(holder, PyInspectionVisitor.getContext(session))
   }
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       val operandType = myTypeEvalContext.getType(node.operand)
-      if (operandType !is PyTypedDictType) return
+      if (operandType !is PyTypedDictType || operandType.isInferred()) return
 
       val indexExpression = node.indexExpression
       val indexExpressionValueOptions = getIndexExpressionValueOptions(indexExpression)
@@ -166,7 +163,7 @@ class PyTypedDictInspection : PyInspection() {
         for (expr in PyUtil.flattenedParensAndTuples(target)) {
           if (expr !is PySubscriptionExpression) continue
           val type = myTypeEvalContext.getType(expr.operand)
-          if (type is PyTypedDictType) {
+          if (type is PyTypedDictType && !type.isInferred()) {
             val index = PyEvaluator.evaluate(expr.indexExpression, String::class.java)
             if (index == null || index !in type.fields) continue
             if (type.fields[index]!!.isRequired) {
@@ -182,7 +179,7 @@ class PyTypedDictInspection : PyInspection() {
       if (callee !is PyReferenceExpression || callee.qualifier == null) return
 
       val nodeType = myTypeEvalContext.getType(callee.qualifier!!)
-      if (nodeType !is PyTypedDictType) return
+      if (nodeType !is PyTypedDictType || nodeType.isInferred()) return
       val arguments = node.arguments
 
       if (PyNames.UPDATE == callee.name) {
@@ -221,7 +218,7 @@ class PyTypedDictInspection : PyInspection() {
         }
       }
 
-      if (PyTypingTypeProvider.resolveToQualifiedNames(callee, myTypeEvalContext).contains(PyTypingTypeProvider.MAPPING_GET)) {
+      if (PyTypedDictTypeProvider.isGetMethodToOverride(node, myTypeEvalContext)) {
         val keyArgument = node.getArgument(0, "key", PyExpression::class.java) ?: return
         val key = PyEvaluator.evaluate(keyArgument, String::class.java)
         if (key == null) {
@@ -278,7 +275,9 @@ class PyTypedDictInspection : PyInspection() {
      * Checks that [expression] with [strType] name is a type
      */
     private fun checkValueIsAType(expression: PyExpression?, strType: String?) {
-      if (expression !is PyReferenceExpression && expression !is PySubscriptionExpression && expression !is PyNoneLiteralExpression || strType == null) {
+      if (expression !is PyReferenceExpression &&
+          expression !is PySubscriptionExpression &&
+          expression !is PyNoneLiteralExpression || strType == null) {
         registerProblem(expression, PyPsiBundle.message("INSP.typeddict.value.must.be.type"), ProblemHighlightType.WEAK_WARNING)
         return
       }

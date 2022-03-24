@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
-Premain-Class: com.intellij.rt.debugger.agent.CaptureAgent
+Premain-Class: com.intellij.rt.debugger.agent.DebuggerAgent
 Can-Retransform-Classes: true
+Boot-Class-Path: debugger-agent.jar

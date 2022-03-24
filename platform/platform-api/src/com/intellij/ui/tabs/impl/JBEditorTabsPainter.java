@@ -12,7 +12,7 @@ import java.awt.*;
  * @deprecated left for API compatibility
  * @author Konstantin Bulenkov
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class JBEditorTabsPainter {
   protected Color myDefaultTabColor;
   protected final JBEditorTabs myTabs;

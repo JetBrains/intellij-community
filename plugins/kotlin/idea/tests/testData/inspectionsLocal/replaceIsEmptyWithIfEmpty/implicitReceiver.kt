@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun String.test(): String {
     return if (isBlank<caret>()) {
         "foo"

@@ -2,7 +2,6 @@
 package com.intellij.java.propertyBased
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.Problem
@@ -121,7 +120,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val prevScope = psiMember.useScope
       env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, psiMember)}")
       val usages = findUsages(psiMember)
-      if (usages == null || usages.isEmpty()) {
+      if (usages.isNullOrEmpty()) {
         env.logMessage("Member has no usages (or too many). Skipping.")
         continue
       }
@@ -163,7 +162,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
   private fun rehighlight(psiFile: PsiFile, editor: Editor): List<HighlightInfo> {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-    return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
+    return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, true)
   }
 
   private fun openEditor(virtualFile: VirtualFile) =

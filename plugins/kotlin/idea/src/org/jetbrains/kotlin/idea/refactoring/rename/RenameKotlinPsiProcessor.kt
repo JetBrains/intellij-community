@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -40,10 +40,10 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
     ) : MoveRenameUsageInfo(
         referenceElement,
         ref,
-        ref.getRangeInElement().getStartOffset(),
-        ref.getRangeInElement().getEndOffset(),
+        ref.rangeInElement.startOffset,
+        ref.rangeInElement.endOffset,
         element,
-        false
+        false,
     )
 
     override fun canProcessElement(element: PsiElement): Boolean = element is KtNamedDeclaration
@@ -125,13 +125,21 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
 
     protected var PsiElement.ambiguousImportUsages: List<UsageInfo>? by UserDataProperty(Key.create("AMBIGUOUS_IMPORT_USAGES"))
 
-    protected fun UsageInfo.isAmbiguousImportUsage(): Boolean {
-        val ref = reference as? PsiPolyVariantReference ?: return false
+    protected fun UsageInfo.importState(): ImportState {
+        val ref = reference as? PsiPolyVariantReference ?: return ImportState.NOT_IMPORT
         val refElement = ref.element
-        return refElement.parents
-            .any { (it is KtImportDirective && !it.isAllUnder) || (it is PsiImportStaticStatement && !it.isOnDemand) } && ref.multiResolve(
-            false
-        ).mapNotNullTo(HashSet()) { it.element?.unwrapped }.size > 1
+        if (refElement.parents.none { it is KtImportDirective && !it.isAllUnder || it is PsiImportStatementBase && !it.isOnDemand }) {
+            return ImportState.NOT_IMPORT
+        }
+
+        return if (ref.multiResolve(false).mapNotNullTo(HashSet()) { it.element?.unwrapped }.size > 1)
+            ImportState.AMBIGUOUS
+        else
+            ImportState.SIMPLE
+    }
+
+    protected enum class ImportState {
+        NOT_IMPORT, AMBIGUOUS, SIMPLE
     }
 
     protected fun renameMangledUsageIfPossible(usage: UsageInfo, element: PsiElement, newName: String): Boolean {

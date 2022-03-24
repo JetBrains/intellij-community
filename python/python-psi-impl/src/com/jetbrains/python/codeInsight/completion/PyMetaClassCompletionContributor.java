@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author vlan
  */
-public class PyMetaClassCompletionContributor extends CompletionContributor {
+public class PyMetaClassCompletionContributor extends CompletionContributor implements DumbAware {
   public PyMetaClassCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns

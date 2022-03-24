@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,20 +32,10 @@ import java.util.Comparator;
 /**
  * @deprecated please use {@link BackgroundUpdaterTask}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
 
   protected AbstractPopup myPopup;
-
-  /**
-   * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull @ProgressTitle final String title) {
-    this(project, title, null);
-  }
 
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @ProgressTitle String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title, comparator);
@@ -55,8 +44,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
   /**
    * @deprecated please use {@link BackgroundUpdaterTask}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void init(@NotNull AbstractPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
     if (component instanceof JBList) {

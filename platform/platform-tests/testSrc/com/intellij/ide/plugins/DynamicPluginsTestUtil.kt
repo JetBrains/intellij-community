@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
@@ -15,29 +15,43 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
 
-internal fun loadDescriptorInTest(dir: Path,
-                                  disabledPlugins: Set<PluginId> = emptySet(),
-                                  isBundled: Boolean = false): IdeaPluginDescriptorImpl {
+@JvmOverloads
+internal fun loadDescriptorInTest(
+  dir: Path,
+  isBundled: Boolean = false,
+  disabledPlugins: Set<PluginId> = emptySet(),
+): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
-  val buildNumber = BuildNumber.fromString("2042.42")!!
-  val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
-                                                   result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = loadDescriptorFromFileOrDir(file = dir,
-                                           context = parentContext,
-                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                           isBundled = isBundled,
-                                           isEssential = true,
-                                           isDirectory = Files.isDirectory(dir),
-                                           useCoreClassLoader = false)
+
+  val result = loadDescriptorFromFileOrDir(
+    file = dir,
+    context = DescriptorListLoadingContext(disabledPlugins, createPluginLoadingResult()),
+    pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+    isBundled = isBundled,
+    isEssential = true,
+    isDirectory = Files.isDirectory(dir),
+    useCoreClassLoader = false,
+    isUnitTestMode = true,
+  )
+
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
     throw AssertionError("Cannot load plugin from $dir")
   }
 
-  result.jarFiles = emptyList()
   return result
+}
+
+@JvmOverloads
+internal fun createPluginLoadingResult(checkModuleDependencies: Boolean = false): PluginLoadingResult {
+  val buildNumber = BuildNumber.fromString("2042.42")!!
+  return PluginLoadingResult(
+    brokenPluginVersions = emptyMap(),
+    productBuildNumber = Supplier { buildNumber },
+    checkModuleDependencies = checkModuleDependencies,
+  )
 }
 
 @JvmOverloads
@@ -63,13 +77,13 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, fs: FileSystem): D
     DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
   }
   catch (e: Exception) {
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    unloadAndUninstallPlugin(descriptor)
     throw e
   }
 
   return Disposable {
     val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    unloadAndUninstallPlugin(descriptor)
     assertThat(reason).isNull()
   }
 }
@@ -84,10 +98,17 @@ internal fun loadDescriptorInTest(
 }
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
-  rootDescriptor.classLoader = classLoader
+  rootDescriptor.pluginClassLoader = classLoader
   for (dependency in rootDescriptor.pluginDependencies) {
-    if (dependency.subDescriptor != null) {
-      dependency.subDescriptor!!.classLoader = classLoader
+    dependency.subDescriptor?.let {
+      it.pluginClassLoader = classLoader
     }
   }
+}
+
+internal fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boolean {
+  return DynamicPlugins.unloadPlugin(
+    descriptor,
+    DynamicPlugins.UnloadPluginOptions(disable = false),
+  )
 }

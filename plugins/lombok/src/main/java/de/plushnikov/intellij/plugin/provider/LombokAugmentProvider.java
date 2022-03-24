@@ -6,12 +6,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,17 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
     return LombokLibraryUtil.hasLombokLibrary(typeElement.getProject()) && valProcessor.canInferType(typeElement);
+  }
+
+  /*
+   * The final fields that are marked with Builder.Default contains only possible value
+   * because user can set another value during the creation of the object.
+   */
+  //see de.plushnikov.intellij.plugin.inspection.DataFlowInspectionTest.testDefaultBuilderFinalValueInspectionIsAlwaysThat
+  //see de.plushnikov.intellij.plugin.inspection.PointlessBooleanExpressionInspectionTest.testPointlessBooleanExpressionBuilderDefault
+  @Override
+  protected boolean fieldInitializerMightBeChanged(@NotNull PsiField field) {
+    return PsiAnnotationSearchUtil.isAnnotatedWith(field, LombokClassNames.BUILDER_DEFAULT);
   }
 
   @Nullable

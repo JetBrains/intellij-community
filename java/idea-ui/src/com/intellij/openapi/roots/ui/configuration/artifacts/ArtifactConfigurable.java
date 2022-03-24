@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.ui.SimpleListCellRenderer;
 
 import javax.swing.*;
@@ -37,8 +38,12 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
     if (name != null && !name.equals(oldName) && !isUpdatingNameFieldFromDisplayName()) {
-      myArtifactsStructureContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
-      getEditor().updateOutputPath(oldName, name);
+      ModifiableArtifactModel modifiableArtifactModel = myArtifactsStructureContext.getOrCreateModifiableArtifactModel();
+      // Modify artifact name only in case no other artifacts have the same name because names should be unique between the artifacts
+      if (modifiableArtifactModel.findArtifact(name) == null) {
+        modifiableArtifactModel.getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
+        getEditor().updateOutputPath(oldName, name);
+      }
     }
   }
 

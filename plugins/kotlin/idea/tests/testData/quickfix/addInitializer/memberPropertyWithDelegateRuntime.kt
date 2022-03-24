@@ -1,8 +1,9 @@
-// "class org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$AddInitializerFix" "false"
+// "Add initializer" "false"
+// ACTION: Convert to ordinary property
 // ACTION: Make internal
 // ACTION: Make private
 // ACTION: Make protected
-// WITH_RUNTIME
+// WITH_STDLIB
 class A {
     <caret>val n: Int by lazy { 0 }
 }

@@ -64,7 +64,8 @@ public class JBCefBrowserDemo extends AnAction implements DumbAware {
     final JBCefBrowser myJBCefBrowser = JBCefBrowser.createBuilder()
       .setOffScreenRendering(isOffScreenRendering)
       .setUrl(URL)
-      .createBrowser();
+      .setEnableOpenDevToolsMenuItem(true)
+      .build();
 
     myJBCefBrowser.setErrorPage(new JBCefBrowserBase.ErrorPage() {
       @Override

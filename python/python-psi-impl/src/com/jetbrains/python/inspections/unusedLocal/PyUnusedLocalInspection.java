@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.PyInspection;
+import com.jetbrains.python.inspections.PyInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,11 +26,10 @@ public class PyUnusedLocalInspection extends PyInspection {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder,
-                                                                                      session,
                                                                                       ignoreTupleUnpacking,
                                                                                       ignoreLambdaParameters,
                                                                                       ignoreLoopIterationVariables,
-                                                                                      ignoreVariablesStartingWithUnderscore);
+                                                                                      ignoreVariablesStartingWithUnderscore, PyInspectionVisitor.getContext(session));
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final PyUnusedLocalInspectionVisitor existingVisitor = session.getUserData(KEY);
     if (existingVisitor == null) {

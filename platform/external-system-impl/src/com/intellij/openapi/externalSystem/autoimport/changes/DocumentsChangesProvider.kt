@@ -6,11 +6,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
-import com.intellij.openapi.observable.operations.afterOperation
-import com.intellij.openapi.observable.operations.beforeOperation
 import com.intellij.psi.ExternalChangeAction
 import com.intellij.util.EventDispatcher
 
@@ -34,11 +33,11 @@ class DocumentsChangesProvider(private val isIgnoreExternalChanges: Boolean) : F
     when (bulkUpdateOperation.isOperationCompleted()) {
       true -> {
         eventDispatcher.multicaster.init()
-        eventDispatcher.multicaster.onFileChange(file.path, document.modificationStamp, ProjectStatus.ModificationType.INTERNAL)
+        eventDispatcher.multicaster.onFileChange(file.path, document.modificationStamp, INTERNAL)
         eventDispatcher.multicaster.apply()
       }
       else -> {
-        eventDispatcher.multicaster.onFileChange(file.path, document.modificationStamp, ProjectStatus.ModificationType.INTERNAL)
+        eventDispatcher.multicaster.onFileChange(file.path, document.modificationStamp, INTERNAL)
       }
     }
   }

@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun main() {
     <caret>for (i in 1..100) {
         if (i % 2 == 0) continue

@@ -1,6 +1,6 @@
-from typing import Any, Text, Union
+from typing import Any, Text
 
-from . import cookies, models, status_codes, utils
+from . import cookies, models, utils
 
 extract_cookies_to_jar = cookies.extract_cookies_to_jar
 parse_dict_header = utils.parse_dict_header
@@ -9,7 +9,7 @@ to_native_string = utils.to_native_string
 CONTENT_TYPE_FORM_URLENCODED: Any
 CONTENT_TYPE_MULTI_PART: Any
 
-def _basic_auth_str(username: Union[bytes, Text], password: Union[bytes, Text]) -> str: ...
+def _basic_auth_str(username: bytes | Text, password: bytes | Text) -> str: ...
 
 class AuthBase:
     def __call__(self, r: models.PreparedRequest) -> models.PreparedRequest: ...

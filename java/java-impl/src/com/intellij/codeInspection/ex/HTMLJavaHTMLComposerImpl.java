@@ -9,11 +9,12 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.xml.util.XmlStringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.*;
+
+import java.util.List;
 
 public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   private final HTMLComposerImpl myComposer;
@@ -23,7 +24,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendClassOrInterface(@NotNull StringBuilder buf, RefClass refClass, boolean capitalizeFirstLetter) {
+  public void appendClassOrInterface(@NotNull StringBuilder buf, @NotNull RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
       buf.append(capitalizeFirstLetter
                  ? AnalysisBundle.message("inspection.export.results.capitalized.interface")
@@ -42,7 +43,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendClassExtendsImplements(@NotNull StringBuilder buf, RefClass refClass) {
+  public void appendClassExtendsImplements(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
       HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extends.implements"));
       myComposer.startList(buf);
@@ -54,7 +55,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendDerivedClasses(@NotNull StringBuilder buf, RefClass refClass) {
+  public void appendDerivedClasses(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
     if (refClass.getSubClasses().size() > 0) {
       if (refClass.isInterface()) {
         HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extended.implemented"));
@@ -72,7 +73,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendLibraryMethods(@NotNull StringBuilder buf, RefClass refClass) {
+  public void appendLibraryMethods(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
     if (refClass.getLibraryMethods().size() > 0) {
       HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.overrides.library.methods"));
 
@@ -85,7 +86,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendSuperMethods(@NotNull StringBuilder buf, RefMethod refMethod) {
+  public void appendSuperMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
     if (refMethod.getSuperMethods().size() > 0) {
       HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.overrides.implements"));
 
@@ -98,7 +99,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendDerivedMethods(@NotNull StringBuilder buf, RefMethod refMethod) {
+  public void appendDerivedMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
     if (refMethod.getDerivedMethods().size() > 0) {
       HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.derived.methods"));
 
@@ -111,7 +112,22 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  public void appendTypeReferences(@NotNull StringBuilder buf, RefClass refClass) {
+  public void appendDerivedFunctionalExpressions(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
+    List<RefFunctionalExpression> functionalExpressions =
+      StreamEx.of(refMethod.getDerivedReferences()).select(RefFunctionalExpression.class).toList();
+    if (!functionalExpressions.isEmpty()) {
+      HTMLComposer.appendHeading(buf, "Derived lambdas and method references");
+
+      myComposer.startList(buf);
+      for (RefFunctionalExpression functionalExpression : functionalExpressions) {
+        myComposer.appendListItem(buf, functionalExpression);
+      }
+      myComposer.doneList(buf);
+    }
+  }
+
+  @Override
+  public void appendTypeReferences(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
     if (refClass.getInTypeReferences().size() > 0) {
       HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.type.references"));
 
@@ -304,6 +320,15 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     else if (refElement instanceof RefMethod) {
       UMethod psiMethod = (UMethod)((RefMethod)refElement).getUastElement();
       buf.append(psiMethod.getName());
+    }
+    else if (refElement instanceof RefFunctionalExpression) {
+      UExpression functionalExpr = ((RefFunctionalExpression)refElement).getUastElement();
+      if (functionalExpr instanceof ULambdaExpression) {
+        buf.append(refElement.getName());
+      }
+      else if (functionalExpr instanceof UCallableReferenceExpression) {
+        buf.append(functionalExpr.asSourceString());
+      }
     }
     else {
       buf.append(refElement.getName());

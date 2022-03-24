@@ -1,13 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +24,6 @@ import java.util.*;
  * @author Pavel.Dolgov
  */
 public final class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchInspectionTool {
-  private static final Logger LOG = Logger.getInstance(Java9RedundantRequiresStatementInspection.class);
 
   private static final Key<Set<String>> IMPORTED_JAVA_PACKAGES = Key.create("imported_java_packages");
 
@@ -120,9 +117,8 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      if (!(element instanceof PsiRequiresStatement)) return;
 
-      LOG.assertTrue(element instanceof PsiRequiresStatement, "Should be 'requires' statement");
       PsiRequiresStatement statementToDelete = (PsiRequiresStatement)element;
       addTransitiveDependencies(statementToDelete);
       statementToDelete.delete();
@@ -194,12 +190,6 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           onJavaFileReferencesBuilt(refFile, (PsiJavaFile)file);
         }
       }
-      else if (refElement instanceof RefJavaModule) {
-        RefModule refModule = refElement.getModule();
-        if (refModule != null) {
-          setImportedPackages(refModule, refElement.getPsiElement() != null);
-        }
-      }
     }
 
     private static void onJavaFileReferencesBuilt(@NotNull RefFile refFile, @NotNull PsiJavaFile file) {
@@ -210,8 +200,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (refModule != null) {
             Set<String> packageNames = getImportedPackages(refModule, refFile);
             if (packageNames != DONT_COLLECT_PACKAGES) {
-              PsiImportStatementBase[] statements = importList.getAllImportStatements();
-              for (PsiImportStatementBase statement : statements) {
+              for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
                 String packageName = getPackageName(statement);
                 if (!StringUtil.isEmpty(packageName)) {
                   packageNames.add(packageName);
@@ -223,8 +212,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       }
     }
 
-    @Nullable
-    private static String getPackageName(@NotNull PsiImportStatementBase statement) {
+    private static @Nullable String getPackageName(@NotNull PsiImportStatementBase statement) {
       PsiElement resolved = statement.resolve();
       if (resolved instanceof PsiPackage) {
         return ((PsiPackage)resolved).getQualifiedName();
@@ -238,21 +226,16 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       return null;
     }
 
-    @NotNull
-    private static Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
-      Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
-      if (importedPackages == null) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
-        importedPackages = javaModule != null ? new HashSet<>() : DONT_COLLECT_PACKAGES;
-        refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
-      }
-      return importedPackages;
-    }
-
-    private static void setImportedPackages(RefModule refModule, boolean collectPackages) {
-      Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
-      if (importedPackages == null) {
-        refModule.putUserData(IMPORTED_JAVA_PACKAGES, collectPackages ? new HashSet<>() : DONT_COLLECT_PACKAGES);
+    private static @NotNull Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (refModule) {
+        Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
+        if (importedPackages == null) {
+          PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
+          importedPackages = javaModule != null ? ContainerUtil.newConcurrentSet() : DONT_COLLECT_PACKAGES;
+          refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
+        }
+        return importedPackages;
       }
     }
   }

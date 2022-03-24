@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.navigation.actions;
 
@@ -19,6 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.multipleTargetsCtrlMouseData;
+import static com.intellij.codeInsight.navigation.CtrlMouseDataKt.psiCtrlMouseData;
 
 public class GotoImplementationAction extends BaseCodeInsightAction implements CtrlMouseAction {
 
@@ -43,14 +47,9 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
     }
   }
 
-  @Override
-  public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    final PsiElement elementAtPointer = file.findElementAt(offset);
-    if (elementAtPointer == null) {
-      return null;
-    }
+  private static @NotNull PsiElement @Nullable [] targetElements(@NotNull Editor editor, int offset) {
     final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
-    PsiElement[] targetElements = new ImplementationSearcher() {
+    return new ImplementationSearcher() {
       @Override
       protected PsiElement @NotNull [] searchDefinitions(final PsiElement element, Editor editor) {
         final List<PsiElement> found = new ArrayList<>(2);
@@ -61,6 +60,22 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
         return PsiUtilCore.toPsiElementArray(found);
       }
     }.searchImplementations(editor, element, offset);
+  }
+
+  private static @Nullable PsiElement targetElement(@NotNull PsiElement targetElement) {
+    Navigatable descriptor = EditSourceUtil.getDescriptor(targetElement);
+    return descriptor != null && descriptor.canNavigate() && targetElement.isPhysical()
+           ? targetElement
+           : null;
+  }
+
+  @Override
+  public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    PsiElement elementAtPointer = file.findElementAt(offset);
+    if (elementAtPointer == null) {
+      return null;
+    }
+    PsiElement[] targetElements = targetElements(editor, offset);
     if (targetElements == null || targetElements.length == 0) {
       return null;
     }
@@ -68,15 +83,33 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
       return new MultipleTargetElementsInfo(elementAtPointer);
     }
     else {
-      Navigatable descriptor = EditSourceUtil.getDescriptor(targetElements[0]);
-      if (descriptor == null || !descriptor.canNavigate()) {
-        return null;
-      }
-      PsiElement targetElement = targetElements[0];
-      if (targetElement == null || !targetElement.isPhysical()) {
+      PsiElement targetElement = targetElement(targetElements[0]);
+      if (targetElement == null) {
         return null;
       }
       return new SingleTargetElementInfo(elementAtPointer, targetElement);
+    }
+  }
+
+  @Override
+  public @Nullable CtrlMouseData getCtrlMouseData(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    final PsiElement elementAtPointer = file.findElementAt(offset);
+    if (elementAtPointer == null) {
+      return null;
+    }
+    PsiElement[] targetElements = targetElements(editor, offset);
+    if (targetElements == null || targetElements.length == 0) {
+      return null;
+    }
+    else if (targetElements.length > 1) {
+      return multipleTargetsCtrlMouseData(getReferenceRanges(elementAtPointer));
+    }
+    else {
+      PsiElement targetElement = targetElement(targetElements[0]);
+      if (targetElement == null) {
+        return null;
+      }
+      return psiCtrlMouseData(elementAtPointer, targetElement);
     }
   }
 }

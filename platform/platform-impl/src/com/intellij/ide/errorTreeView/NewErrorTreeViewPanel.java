@@ -60,7 +60,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private volatile float myFraction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private volatile boolean myIsDisposed;
   private final ErrorTreeViewConfiguration myConfiguration;
 
@@ -199,7 +199,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       final NavigatableErrorTreeElement selectedMessageElement = getSelectedNavigatableElement();
       return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {

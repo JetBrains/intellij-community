@@ -1,29 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.anchor;
 
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiCaseLabelElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * An anchor of the boolean expression that says whether the switch label is taken
  */
 public class JavaSwitchLabelTakenAnchor extends JavaDfaAnchor {
-  private final @NotNull PsiExpression myExpression;
+  private final @NotNull PsiCaseLabelElement myLabelElement;
 
-  public JavaSwitchLabelTakenAnchor(@NotNull PsiExpression expression) {
-    myExpression = expression;
+  public JavaSwitchLabelTakenAnchor(@NotNull PsiCaseLabelElement labelElement) {
+    myLabelElement = labelElement;
   }
 
   /**
-   * @return switch label expression
+   * @return switch label element
    */
-  public @NotNull PsiExpression getLabelExpression() {
-    return myExpression;
+  public @NotNull PsiCaseLabelElement getLabelElement() {
+    return myLabelElement;
   }
 
   @Override
   public String toString() {
-    return "Label: " + myExpression.getText();
+    return "Label: " + myLabelElement.getText();
   }
 
   @Override
@@ -31,12 +31,11 @@ public class JavaSwitchLabelTakenAnchor extends JavaDfaAnchor {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     JavaSwitchLabelTakenAnchor anchor = (JavaSwitchLabelTakenAnchor)o;
-    return myExpression.equals(anchor.myExpression);
+    return myLabelElement.equals(anchor.myLabelElement);
   }
 
   @Override
   public int hashCode() {
-    return myExpression.hashCode() + 2;
+    return myLabelElement.hashCode() + 2;
   }
-
 }

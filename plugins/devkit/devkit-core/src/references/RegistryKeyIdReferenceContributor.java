@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.application.options.RegistryManager;
@@ -77,14 +77,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return DevKitBundle.message("code.convert.registry.key.cannot.resolve", getValue());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return getAttribute(extension, "key");
-    }
-
-    @Override
-    protected boolean hasCustomNameElement() {
-      return true;
+    protected @Nullable GenericAttributeValue<String> getNameElement(Extension extension) {
+      return (GenericAttributeValue<String>)getAttribute(extension, "key");
     }
 
     @Nullable
@@ -110,7 +106,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
 
       final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
       processCandidates(extension -> {
-        final String key = getNameElement(extension).getStringValue();
+        final GenericAttributeValue<String> nameElement = getNameElement(extension);
+        if (nameElement == null) return true;
+
+        final String key = nameElement.getStringValue();
         if (key == null || extension.getXmlElement() == null) return true;
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "restartRequired"));

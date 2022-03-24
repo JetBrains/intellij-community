@@ -6,3 +6,4 @@ fun anyFoo(vararg a: Any) {}
 fun test() {
     anyFoo(a = intArr<caret>ayOf(1))
 }
+/* IGNORE_FIR */

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.dvcs.MultiRootMessage;
@@ -12,10 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -26,7 +23,6 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +34,7 @@ import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
-import static git4idea.GitNotificationIdsHolder.FETCH_ERROR;
-import static git4idea.GitNotificationIdsHolder.FETCH_SUCCESS;
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 
 /**
@@ -75,8 +70,7 @@ public class GitFetcher {
    * @return true if fetch was successful, false in the case of error.
    * @deprecated Use {@link GitFetchSupport}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
@@ -88,8 +82,7 @@ public class GitFetcher {
   /**
    * @deprecated Use {@link GitFetchSupport}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
@@ -234,7 +227,7 @@ public class GitFetcher {
                              GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
     }
     else if (result.isCancelled()) {
-      notifier.notifyMinorWarning("", GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
+      notifier.notifyMinorWarning(GitNotificationIdsHolder.FETCH_CANCELLED, GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
     }
     else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
@@ -265,8 +258,7 @@ public class GitFetcher {
    * @return true if all fetches were successful, false if at least one fetch failed.
    * @deprecated Use {@link GitFetchSupport}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean fetchRootsAndNotify(@NotNull Collection<? extends GitRepository> roots,
                                      @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
                                      boolean notifySuccess) {
@@ -290,7 +282,7 @@ public class GitFetcher {
     }
 
     if (!additionalInfo.asString().isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyMinorInfo(null, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
+      VcsNotifier.getInstance(myProject).notifyMinorInfo(FETCH_DETAILS, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
     }
 
     return true;

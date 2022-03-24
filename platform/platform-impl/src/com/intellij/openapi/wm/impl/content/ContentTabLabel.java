@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.EngravedTextGraphics;
@@ -18,6 +19,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +31,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-class ContentTabLabel extends ContentLabel {
+public class ContentTabLabel extends ContentLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
 
   private final LayeredIcon myActiveCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true));
@@ -48,9 +52,9 @@ class ContentTabLabel extends ContentLabel {
   }
 
   private void handleDoubleClick(@NotNull MouseEvent e) {
-    if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && !myLayout.myDoubleClickActions.isEmpty()) {
+    if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && !myLayout.doubleClickActions.isEmpty()) {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
-      for (AnAction action : myLayout.myDoubleClickActions) {
+      for (AnAction action : myLayout.doubleClickActions) {
         AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           ActionUtil.performActionDumbAwareWithCallbacks(action, event);
@@ -66,28 +70,40 @@ class ContentTabLabel extends ContentLabel {
   }
 
   private void updateText() {
-    if (myText != null && myText.startsWith("<html>")) {
-      super.setText(myText); // SwingUtilities2.clipString does not support HTML
-      return;
+    try {
+      if (myText != null && myText.startsWith("<html>")) {
+        super.setText(myText); // SwingUtilities2.clipString does not support HTML
+        return;
+      }
+      FontMetrics fm = getFontMetrics(getFont());
+      int textWidth = UIUtilities.stringWidth(this, fm, myText);
+      int prefWidth = myIconWithInsetsWidth + textWidth;
+
+      int maxWidth = getMaximumSize().width;
+
+      if (prefWidth > maxWidth) {
+        int offset = maxWidth - myIconWithInsetsWidth;
+        String s = UIUtilities.clipString(this, fm, myText, offset);
+        super.setText(s);
+        return;
+      }
+
+      super.setText(myText);
+    } finally {
+      //noinspection ConstantConditions
+      if (myContent != null && !Disposer.isDisposed(myContent)) {
+        new SingleAlarm(() -> {
+          ObjectUtils.consumeIfNotNull(getParent(), c -> {
+            c.revalidate();
+            c.repaint();
+          });
+        }, 50, myContent, Alarm.ThreadToUse.SWING_THREAD).request();
+      }
     }
-    FontMetrics fm = getFontMetrics(getFont());
-    int textWidth = UIUtilities.stringWidth(this, fm, myText);
-    int prefWidth = myIconWithInsetsWidth + textWidth;
-
-    int maxWidth = getMaximumSize().width;
-
-    if (prefWidth > maxWidth) {
-      int offset = maxWidth - myIconWithInsetsWidth;
-      String s = UIUtilities.clipString(this, fm, myText, offset);
-      super.setText(s);
-      return;
-    }
-
-    super.setText(myText);
   }
 
   ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
-    super(layout.myUi, false);
+    super(layout.ui, false);
     myLayout = layout;
     myContent = content;
 
@@ -138,10 +154,7 @@ class ContentTabLabel extends ContentLabel {
   }
 
   protected void closeContent() {
-    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-    if (contentManager != null) {
-      contentManager.removeContent(myContent, true);
-    }
+    getContentManager().removeContent(myContent, true);
   }
 
   public void update() {
@@ -150,7 +163,7 @@ class ContentTabLabel extends ContentLabel {
       setBorder(null);
     }
 
-    updateTextAndIcon(myContent, isSelected());
+    updateTextAndIcon(myContent, isSelected(), false);
   }
 
   @Override
@@ -160,8 +173,8 @@ class ContentTabLabel extends ContentLabel {
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-    if (contentManager != null && contentManager.getContentCount() > 1) {
+    ContentManager contentManager = getContentManager();
+    if (contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
 
@@ -179,8 +192,7 @@ class ContentTabLabel extends ContentLabel {
   }
 
   public boolean isSelected() {
-    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-    return contentManager != null && contentManager.isSelected(myContent);
+    return getContentManager().isSelected(myContent);
   }
 
   @Override

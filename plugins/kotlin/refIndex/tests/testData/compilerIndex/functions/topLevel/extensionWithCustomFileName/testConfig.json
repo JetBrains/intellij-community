@@ -1,8 +1,9 @@
 {
+    "mainFile": "Main.kt",
     "usages": [
-        "Main.kt",
         "Bar.kt",
         "Foo.kt",
-        "JavaClass.java"
+        "JavaClass.java",
+        "Main.kt"
     ]
 }

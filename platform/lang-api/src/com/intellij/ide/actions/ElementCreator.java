@@ -48,16 +48,17 @@ public abstract class ElementCreator implements WriteActionAware {
   private final Project myProject;
   private final @NlsContexts.DialogTitle String myErrorTitle;
 
-  protected ElementCreator(Project project, @NlsContexts.DialogTitle String errorTitle) {
+  protected ElementCreator(Project project, @NotNull @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
     myErrorTitle = errorTitle;
   }
 
-  protected abstract PsiElement[] create(@NotNull String newName) throws Exception;
+  protected abstract PsiElement @NotNull [] create(@NotNull String newName) throws Exception;
   @NlsContexts.Command
-  protected abstract String getActionName(String newName);
+  @NotNull
+  protected abstract String getActionName(@NotNull String newName);
 
-  public PsiElement[] tryCreate(@NotNull final String inputString) {
+  public @NotNull PsiElement @NotNull [] tryCreate(@NotNull final String inputString) {
     if (inputString.isEmpty()) {
       Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
@@ -79,14 +80,15 @@ public abstract class ElementCreator implements WriteActionAware {
   }
 
   @Nullable
-  private Exception executeCommand(@NlsContexts.Command String commandName, ThrowableRunnable<? extends Exception> invokeCreate) {
+  private Exception executeCommand(@NotNull @NlsContexts.Command String commandName, @NotNull ThrowableRunnable<? extends Exception> invokeCreate) {
     final Exception[] exception = new Exception[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
       try {
         if (startInWriteAction()) {
           WriteAction.run(invokeCreate);
-        } else {
+        }
+        else {
           invokeCreate.run();
         }
       }

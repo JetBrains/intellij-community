@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,17 +20,7 @@ public interface CommitResultHandler extends EventListener {
   default void onCancel() {
   }
 
-  /**
-   * @deprecated Use {@link #onFailure(List<VcsException>)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void onFailure() {
-  }
-
   @SuppressWarnings("unused")
   default void onFailure(@NotNull List<VcsException> errors) {
-    onFailure();
   }
 }

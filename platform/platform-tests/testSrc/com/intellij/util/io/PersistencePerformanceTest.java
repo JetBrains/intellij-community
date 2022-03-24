@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -58,7 +59,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
-    StorageLockContext storageLockContext = new StorageLockContext(false);
+    StorageLockContext storageLockContext = new StorageLockContext();
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 
@@ -106,7 +107,8 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
       new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
-        .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)), new EmptyProgressIndicator());
+        .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
+                    new EmptyProgressIndicator(), new ProjectIndexingHistoryImpl(getProject(), "Testing", false));
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());

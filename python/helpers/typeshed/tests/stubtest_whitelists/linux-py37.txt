@@ -1,2 +1,0 @@
-ctypes.wintypes
-pwd.getpwnam

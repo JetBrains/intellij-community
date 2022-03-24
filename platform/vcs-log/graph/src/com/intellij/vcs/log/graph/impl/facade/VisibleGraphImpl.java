@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +32,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraph;
   @NotNull private final GraphColorManager<CommitId> myColorManager;
 
-  private PrintElementManagerImpl myPrintElementManager;
+  private PrintElementManagerImpl<CommitId> myPrintElementManager;
   private PrintElementGeneratorImpl myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
@@ -76,7 +76,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   }
 
   void updatePrintElementGenerator() {
-    myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
+    myPrintElementManager = new PrintElementManagerImpl<>(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
   }
 

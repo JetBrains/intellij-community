@@ -1,0 +1,9 @@
+typealias AliasedInt = Int
+
+class GenericClass<T> {
+    fun dec(): Int
+}
+
+fun test() {
+    val result: Int? = (null as GenericClass<AliasedInt>?)?.dec()
+}

@@ -10,7 +10,7 @@ suspend fun withIoDispatcher() {
     }
 
     withContext(Dispatchers.Default) {
-        Thread.<warning descr="Inappropriate blocking method call">sleep</warning>(1)
+        Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
     }
 }
 

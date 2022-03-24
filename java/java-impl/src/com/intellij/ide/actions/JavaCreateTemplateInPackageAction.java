@@ -83,6 +83,11 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
   @Override
   protected @Nullable T createFile(String name, String templateName, PsiDirectory dir) {
     T file = super.createFile(name, templateName, dir);
+    setupJdk(dir, file);
+    return file;
+  }
+
+  public static void setupJdk(PsiDirectory dir, PsiElement file) {
     Module module = ModuleUtilCore.findModuleForPsiElement(dir);
     if (file != null && module != null && ModuleRootManager.getInstance(module).getSdk() == null) {
       Project project = dir.getProject();
@@ -112,6 +117,5 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
         }
       });
     }
-    return file;
   }
 }

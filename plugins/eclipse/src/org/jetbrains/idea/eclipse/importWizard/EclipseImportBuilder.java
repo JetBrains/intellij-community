@@ -345,7 +345,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
         
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
             return super.isFileSelectable(file) && Comparing.strEqual(file.getExtension(), "userlibraries");
           }
         };

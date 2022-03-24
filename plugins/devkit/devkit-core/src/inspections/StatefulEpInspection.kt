@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -18,6 +18,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import java.util.*
 
 class StatefulEpInspection : DevKitJvmInspection() {
 
@@ -27,11 +28,12 @@ class StatefulEpInspection : DevKitJvmInspection() {
 
     override fun visitField(field: JvmField): Boolean? {
       val clazz = field.containingClass ?: return null
+      val className = clazz.name ?: return null
       val fieldTypeClass = JvmUtil.resolveClass(field.type as? JvmReferenceType) ?: return null
 
       val isQuickFix by lazy(LazyThreadSafetyMode.NONE) { isInheritor(clazz, localQuickFixFqn) }
 
-      val targets = findEpCandidates(project, clazz)
+      val targets = findEpCandidates(project, className)
       if (targets.isEmpty() && !isQuickFix) {
         return null
       }
@@ -63,12 +65,10 @@ class StatefulEpInspection : DevKitJvmInspection() {
 private val localQuickFixFqn = LocalQuickFix::class.java.canonicalName
 private val projectComponentFqn = ProjectComponent::class.java.canonicalName
 
-private fun findEpCandidates(project: Project, clazz: JvmClass): Collection<XmlTag> {
-  val name = clazz.name ?: return emptyList()
-  val result = SmartList<XmlTag>()
-  processExtensionsByClassName(project, name) { tag, _ ->
-    val forClass = tag.getAttributeValue("forClass")
-    if (forClass == null || !forClass.contains(name)) {
+private fun findEpCandidates(project: Project, className: String): Collection<XmlTag> {
+  val result = Collections.synchronizedList(SmartList<XmlTag>())
+  processExtensionsByClassName(project, className) { tag, _ ->
+    if (tag.getAttributeValue("forClass")?.contains(className) != true) {
       result.add(tag)
     }
     true

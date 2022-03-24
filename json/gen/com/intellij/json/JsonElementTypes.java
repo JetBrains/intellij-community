@@ -14,6 +14,7 @@ public interface JsonElementTypes {
   IElementType NULL_LITERAL = new JsonElementType("NULL_LITERAL");
   IElementType NUMBER_LITERAL = new JsonElementType("NUMBER_LITERAL");
   IElementType OBJECT = new JsonElementType("OBJECT");
+  IElementType PARAMETER_LITERAL = new JsonElementType("PARAMETER_LITERAL");
   IElementType PROPERTY = new JsonElementType("PROPERTY");
   IElementType REFERENCE_EXPRESSION = new JsonElementType("REFERENCE_EXPRESSION");
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
@@ -30,6 +31,7 @@ public interface JsonElementTypes {
   IElementType L_CURLY = new JsonTokenType("{");
   IElementType NULL = new JsonTokenType("null");
   IElementType NUMBER = new JsonTokenType("NUMBER");
+  IElementType PARAMETER = new JsonTokenType("PARAMETER");
   IElementType R_BRACKET = new JsonTokenType("]");
   IElementType R_CURLY = new JsonTokenType("}");
   IElementType SINGLE_QUOTED_STRING = new JsonTokenType("SINGLE_QUOTED_STRING");
@@ -52,6 +54,9 @@ public interface JsonElementTypes {
       }
       else if (type == OBJECT) {
         return new JsonObjectImpl(node);
+      }
+      else if (type == PARAMETER_LITERAL) {
+        return new JsonParameterLiteralImpl(node);
       }
       else if (type == PROPERTY) {
         return new JsonPropertyImpl(node);

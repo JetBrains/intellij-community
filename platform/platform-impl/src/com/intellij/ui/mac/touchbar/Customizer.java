@@ -3,9 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CompactActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.ui.mac.TouchbarDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,15 +16,15 @@ class Customizer {
   private final Map<AnAction, ActionGroupInfo> myAct2Parent = new HashMap<>();
   private final Map<AnAction, Object> myAct2Descriptor = new HashMap<>();
 
-  private final @Nullable TouchBar.CrossEscInfo myCrossEscInfo;
+  private final @Nullable TBPanel.CrossEscInfo myCrossEscInfo;
   private final String @Nullable[] myAutoCloseActionIds;
 
-  Customizer(@Nullable TouchBar.CrossEscInfo crossEscInfo, String[] autoCloseActionIds, @NotNull ItemCustomizer itemCustomizer) {
+  Customizer(@Nullable TBPanel.CrossEscInfo crossEscInfo, String[] autoCloseActionIds, @NotNull ItemCustomizer itemCustomizer) {
     this(crossEscInfo, autoCloseActionIds);
     addBaseCustomizations(itemCustomizer);
   }
 
-  Customizer(@Nullable TouchBar.CrossEscInfo crossEscInfo, String @Nullable[] autoCloseActionIds) {
+  Customizer(@Nullable TBPanel.CrossEscInfo crossEscInfo, String @Nullable[] autoCloseActionIds) {
     myCrossEscInfo = crossEscInfo;
     myAutoCloseActionIds = autoCloseActionIds;
   }
@@ -35,6 +33,8 @@ class Customizer {
     myAct2Parent.clear();
     fillAct2Parent(new ActionGroupInfo(actionGroup, null));
   }
+
+  void onBeforeActionsExpand(@NotNull ActionGroup actionGroup) {}
 
   private void fillAct2Parent(@NotNull ActionGroupInfo actionGroupInfo) {
     @NotNull ActionGroup actionGroup = actionGroupInfo.group;
@@ -51,7 +51,7 @@ class Customizer {
     }
   }
 
-  @Nullable TouchBar.CrossEscInfo getCrossEscInfo() { return myCrossEscInfo; }
+  @Nullable TBPanel.CrossEscInfo getCrossEscInfo() { return myCrossEscInfo; }
 
   String @Nullable[] getAutoCloseActionIds() { return myAutoCloseActionIds; }
 
@@ -95,13 +95,13 @@ class Customizer {
   boolean isPrincipalGroupAction(@NotNull AnAction action) {
     // 1. check parent group
     ActionGroupInfo groupInfo = myAct2Parent.get(action);
-    if (groupInfo != null && groupInfo.hasMainGroupParent()) {
+    if (groupInfo != null && groupInfo.hasPrincipalParent()) {
       return true;
     }
 
-    // 2. check action descriptor
+    // 2. check action customizations descriptor
     Object descriptor = myAct2Descriptor.get(action);
-    return descriptor instanceof TouchbarDataKeys.DlgButtonDesc && ((TouchbarDataKeys.DlgButtonDesc)descriptor).isMainGroup();
+    return descriptor instanceof TouchbarActionCustomizations && ((TouchbarActionCustomizations)descriptor).isPrincipal();
   }
 
   //
@@ -143,24 +143,20 @@ class Customizer {
     final @NotNull ActionGroup group;
     final @NotNull String groupID;
     final @Nullable ActionGroupInfo parent;
-    final @Nullable TouchbarDataKeys.ActionDesc groupDesc;
+    final @Nullable TouchbarActionCustomizations groupC;
 
     ActionGroupInfo(@NotNull ActionGroup group, @Nullable ActionGroupInfo parent) {
       this.group = group;
       this.parent = parent;
       this.groupID = Helpers.getActionId(group);
-      this.groupDesc = group.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      this.groupC = TouchbarActionCustomizations.getCustomizations(group);
     }
 
-    boolean isCompact() { return group instanceof CompactActionGroup; }
+    @Nullable TouchbarActionCustomizations getCustomizations() { return groupC; }
 
-    @NotNull String getGroupID() { return groupID; }
-
-    @Nullable TouchbarDataKeys.ActionDesc getDesc() { return groupDesc; }
-
-    boolean hasMainGroupParent() {
+    boolean hasPrincipalParent() {
       for (ActionGroupInfo p = this; p != null; p = p.parent) {
-        if (p.groupDesc != null && p.groupDesc.isMainGroup()) {
+        if (p.groupC != null && p.groupC.isPrincipal()) {
           return true;
         }
       }

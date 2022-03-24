@@ -32,14 +32,14 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
 
   @Override
   public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-    if (!isSortByType() && descriptor1 instanceof ProjectViewNode && ((ProjectViewNode)descriptor1).isSortByFirstChild()) {
+    if (!isSortByType() && descriptor1 instanceof ProjectViewNode && ((ProjectViewNode<?>)descriptor1).isSortByFirstChild()) {
       Collection<? extends AbstractTreeNode<?>> children = ((ProjectViewNode<?>)descriptor1).getChildren();
       if (!children.isEmpty()) {
         descriptor1 = children.iterator().next();
         descriptor1.update();
       }
     }
-    if (!isSortByType() && descriptor2 instanceof ProjectViewNode && ((ProjectViewNode)descriptor2).isSortByFirstChild()) {
+    if (!isSortByType() && descriptor2 instanceof ProjectViewNode && ((ProjectViewNode<?>)descriptor2).isSortByFirstChild()) {
       Collection<? extends AbstractTreeNode<?>> children = ((ProjectViewNode<?>)descriptor2).getChildren();
       if (!children.isEmpty()) {
         descriptor2 = children.iterator().next();

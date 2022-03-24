@@ -1,56 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWslPresence;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 
-public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+public final class WSLCommandEscapingTest {
+  private static final TestFixtureRule appRule = new TestFixtureRule();
+  private static final WslRule wslRule = new WslRule();
+  @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
 
-  private static NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
-    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
-    if (distributions.isEmpty()) return null;
-    WSLDistribution distribution = distributions.get(0);
-    if (distribution instanceof WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.getId())) return null;
-    return distribution;
-  });
-
-  private WSLDistribution wsl;
-
-  @BeforeClass
-  public static void checkEnvironment() {
-    assumeWindows();
-    assumeWslPresence();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    WSL = null;
-  }
-
-  @Before
-  public void setUp() {
-    assumeTrue("No WSL distributions available", (wsl = WSL.getValue()) != null);
-  }
+  @Rule public final TempDirectory myTempDirectory = new TempDirectory();
 
   @Test
   public void testEmptyParams() throws Exception {
@@ -141,15 +117,15 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
     assertEchoOutput(params);
   }
 
-  private void assertEchoOutput(String... echoParams) throws ExecutionException {
+  private static void assertEchoOutput(String... echoParams) throws ExecutionException {
     assertEchoOutput(Arrays.asList(echoParams));
   }
 
-  private void assertEchoOutput(List<String> echoParams) throws ExecutionException {
+  private static void assertEchoOutput(List<String> echoParams) throws ExecutionException {
     assertEchoOutput("/bin/echo", echoParams);
   }
 
-  private void assertEchoOutput(String echoExecutableLinuxPath, List<String> echoParams) throws ExecutionException {
+  private static void assertEchoOutput(String echoExecutableLinuxPath, List<String> echoParams) throws ExecutionException {
     String expectedOut = String.join(" ", echoParams) + "\n";
     List<String> command = new ArrayList<>(echoParams.size() + 1);
     command.add(echoExecutableLinuxPath);
@@ -192,7 +168,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   @Test
   public void testThreeCharsCombinations() throws Exception {
     List<Character> characters = getRepresentativeCharacters();
-    int batch = 700;  // Need to limit amount of parameters. Otherwise, it fails with "CreateProcess error=206, The filename or extension is too long".
+    int batch = 700;  // limiting the number of parameters to prevent "CreateProcess error=206, The filename or extension is too long"
     List<String> params = new ArrayList<>(batch);
     for (Character a : characters) {
       for (Character b : characters) {
@@ -222,7 +198,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testPassingRemoteWorkingDir() throws IOException, ExecutionException {
+  public void testPassingRemoteWorkingDir() throws ExecutionException {
     assertPwdOutputInDirectory("test");
     assertPwdOutputInDirectory("a b");
     assertPwdOutputInDirectory(" a");
@@ -233,7 +209,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertPwdOutputInDirectory(String directoryName) throws ExecutionException {
-    String path = wsl.getWslPath(tempDir.newDirectory(directoryName).getPath());
+    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).getPath());
     assertWslCommandOutput(path + "\n", path, Collections.emptyMap(), List.of("pwd"));
   }
 
@@ -250,12 +226,12 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
                            "_KEY_", " ]&<>:\"'|?(*)["));
   }
 
-  private void assertEnvOutput(Map<String, String> envs) throws ExecutionException {
-    List<String> command = ContainerUtil.concat(List.of("printenv"), List.copyOf(envs.keySet()));
-    String expectedOut = String.join("\n", envs.values()) + "\n";
-    assertWslCommandOutput(expectedOut, null, envs, command);
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(false).setPassEnvVarsUsingInterop(true));
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(true).setPassEnvVarsUsingInterop(true));
+  private static void assertEnvOutput(Map<String, String> env) throws ExecutionException {
+    List<String> command = ContainerUtil.concat(List.of("printenv"), List.copyOf(env.keySet()));
+    String expectedOut = String.join("\n", env.values()) + "\n";
+    assertWslCommandOutput(expectedOut, null, env, command);
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setLaunchWithWslExe(false).setPassEnvVarsUsingInterop(true));
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setLaunchWithWslExe(true).setPassEnvVarsUsingInterop(true));
   }
 
   @Test
@@ -268,43 +244,51 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testReadShellPath() {
-    Assert.assertNotEquals("/bin/sh", wsl.getShellPath());
+    Assert.assertNotEquals("/bin/sh", wslRule.getWsl().getShellPath());
   }
 
   private String createEchoScriptAndGetLinuxPath(String executableName) {
-    File file = tempDir.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
-    String wslPath = wsl.getWslPath(file.getPath());
+    File file = myTempDirectory.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
+    String wslPath = wslRule.getWsl().getWslPath(file.getPath());
     assertNotNull("local path: " + file, wslPath);
     return wslPath;
   }
 
-  private void assertWslCommandOutput(String expectedOut, String remoteWorkingDirectory, Map<String, String> envs, List<String> command) throws ExecutionException {
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(false)
+  private static void assertWslCommandOutput(String expectedOut,
+                                             String remoteWorkingDirectory,
+                                             Map<String, String> env,
+                                             List<String> command) throws ExecutionException {
+    var wsl = wslRule.getWsl();
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setLaunchWithWslExe(false)
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
       .setExecuteCommandInLoginShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
       .setExecuteCommandInInteractiveShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
 
     if (remoteWorkingDirectory == null && ContainerUtil.all(command, (param) -> {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
       return !param.isEmpty() && !param.contains("\\");
     })) {
-      assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setExecuteCommandInShell(false));
+      assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setExecuteCommandInShell(false));
     }
   }
 
-  private void assertWslCommandOutput(String expectedOut, Map<String, String> envs, List<String> command, WSLCommandLineOptions options) throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(envs);
+  private static void assertWslCommandOutput(String expectedOut,
+                                             Map<String, String> env,
+                                             List<String> command,
+                                             WSLCommandLineOptions options) throws ExecutionException {
+    var wsl = wslRule.getWsl();
+    GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
     ProcessOutput output;
     if (options.isExecuteCommandInShell()) {
-      output = wsl.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000);
+      output = WslExecution.executeInShellAndGetCommandOnlyStdout(wsl, commandLine, options, 10_000);
     }
     else {
       wsl.patchCommandLine(commandLine, null, options);

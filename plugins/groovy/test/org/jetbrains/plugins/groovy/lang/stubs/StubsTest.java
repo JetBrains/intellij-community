@@ -54,7 +54,7 @@ public class StubsTest extends LightJavaCodeInsightFixtureTestCase {
   private static void getStubsTreeImpl(StubElement element, StringBuffer buffer, String offset) {
     PsiElement psi = element.getPsi();
     buffer.append(offset).append("[").append(psi.toString()).
-            append(element instanceof NamedStub ? " : " + ((NamedStub) element).getName() : "").
+            append(element instanceof NamedStub ? " : " + ((NamedStub<?>) element).getName() : "").
             append("]\n");
     for (StubElement stubElement : ((List<StubElement>) element.getChildrenStubs())) {
       getStubsTreeImpl(stubElement, buffer, offset + "  ");

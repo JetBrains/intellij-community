@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -8,10 +8,13 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -178,15 +181,19 @@ public class GitImpl extends GitImplBase {
 
   @Override
   @NotNull
-  public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
+  public GitCommandResult clone(@Nullable final Project project, @NotNull final File parentDirectory, @NotNull final String url,
                                 @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
-      GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
+      // do not use per-project executable for 'clone' command
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      GitExecutable executable = GitExecutableManager.getInstance().getExecutable(defaultProject, parentDirectory);
+      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, executable, GitCommand.CLONE, emptyList());
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
-      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
+      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project, handler.getExecutable()) &&
+          AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
       }
       handler.addParameters(url);
@@ -553,13 +560,6 @@ public class GitImpl extends GitImplBase {
     return runCommand(handler);
   }
 
-  @Override
-  @NotNull
-  public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
-                                     GitLineHandlerListener @NotNull ... listeners) {
-    return cherryPick(repository, hash, autoCommit, true, listeners);
-  }
-
   @NotNull
   @Override
   public GitCommandResult cherryPick(@NotNull GitRepository repository,
@@ -607,7 +607,7 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult fetch(@NotNull final GitRepository repository,
                                 @NotNull final GitRemote remote,
                                 @NotNull final List<? extends GitLineHandlerListener> listeners,
-                                @Nullable GitAuthenticationGate authenticationGate,
+                                @Nullable AuthenticationGate authenticationGate,
                                 final String... params) {
     return runCommand(() -> {
       GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
@@ -871,6 +871,10 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   public static String runBundledCommand(@Nullable Project project, String... args) throws VcsException {
+    if (project != null && !TrustedProjects.isTrusted(project)) {
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
+    }
+
     try {
       GitExecutable gitExecutable = GitExecutableManager.getInstance().getExecutable(project);
       GeneralCommandLine command = gitExecutable.createBundledCommandLine(project, args);

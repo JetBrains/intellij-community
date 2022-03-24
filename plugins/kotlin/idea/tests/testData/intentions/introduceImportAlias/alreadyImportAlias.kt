@@ -1,3 +1,4 @@
+// AFTER-WARNING: Variable 'i' is never used
 import Outer.Middle as P
 
 class Outer {

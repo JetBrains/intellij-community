@@ -19,7 +19,7 @@ package com.intellij.analysis;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiJavaFile;
@@ -42,7 +42,7 @@ public class AnalysisScopeRule implements GetDataRule {
       if (!manager.isInProject(pack)) return null;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(manager.getProject()));
       if (dirs.length == 0) return null;
-      return new JavaAnalysisScope(pack, (Module)dataProvider.getData(LangDataKeys.MODULE.getName()));
+      return new JavaAnalysisScope(pack, (Module)dataProvider.getData(PlatformCoreDataKeys.MODULE.getName()));
     }
     return null;
   }

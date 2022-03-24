@@ -2,8 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.rest
 
 import com.google.gson.GsonBuilder
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.notification.impl.NotificationGroupManagerImpl
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -14,10 +14,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
-import com.jetbrains.packagesearch.intellij.plugin.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
@@ -32,7 +31,6 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class PackageSearchRestService : RestService() {
-
     override fun getServiceName() = "packageSearch"
 
     override fun isMethodSupported(method: HttpMethod) = method === HttpMethod.GET || method === HttpMethod.POST
@@ -87,9 +85,8 @@ internal class PackageSearchRestService : RestService() {
             ProjectUtil.focusProjectWindow(project, true)
 
             PackageSearchToolWindowFactory.activateToolWindow(project) {
-                val rootModel = project.packageSearchDataService
+//                project.packageSearchDataService.programmaticSearchQueryStateFlow.tryEmit(query ?: pkg.replace(':', ' '))
 //                rootModel.setSelectedPackage(pkg) // TODO preselect proper package
-                rootModel.setSearchQuery(query ?: pkg.replace(':', ' '))
 
                 notify(project, pkg)
             }
@@ -118,9 +115,9 @@ internal class PackageSearchRestService : RestService() {
     }
 
     @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name...
-    private fun notify(project: Project, @Nls pkg: String) =
-        NotificationGroupManagerImpl()
-            .getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
+    private fun notify(project: Project, @Nls pkg: String) {
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup(PluginEnvironment.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
                 PackageSearchBundle.message("packagesearch.restService.readyForInstallation"),
@@ -128,10 +125,10 @@ internal class PackageSearchRestService : RestService() {
             )
             .setSubtitle(pkg)
             .notify(project)
+    }
 }
 
 internal class InstallPackageRequest {
-
     var project: String? = null
     @NlsSafe var `package`: String? = null
     @NonNls var query: String? = null

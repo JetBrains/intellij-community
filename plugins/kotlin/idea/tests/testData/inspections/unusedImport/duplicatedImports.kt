@@ -10,5 +10,5 @@ import java.sql.* // unused
 fun foo(file: File, list: ArrayList<Int>) {
 }
 
-// WITH_RUNTIME
+// WITH_STDLIB
 // FULL_JDK

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints;
 
@@ -19,8 +19,8 @@ import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpointBase;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ActionsKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
@@ -47,6 +47,7 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
@@ -68,9 +69,11 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+
+import static org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt.isDispatchThread;
+import static org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt.isUnitTestMode;
 
 // This class is copied from com.intellij.debugger.ui.breakpoints.MethodBreakpoint.
 // Changed parts are marked with '// MODIFICATION: ' comments.
@@ -96,7 +99,7 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
 
     @Override
     public boolean isValid() {
-        return super.isValid() && getMethodName() != null;
+         return super.isValid() && getMethodName() != null;
     }
 
     // MODIFICATION: Start Kotlin implementation
@@ -104,47 +107,51 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
     public void reload() {
         super.reload();
 
+        // We can't wait for a smart mode under a read access. It would result to exceptions
+        // or a possible deadlock. So return here.
+        if (ApplicationManager.getApplication().isReadAccessAllowed() && DumbService.isDumb(myProject)) return;
+
         setMethodName(null);
         mySignature = null;
 
-        Project project = myProject;
+        SourcePosition sourcePosition = getSourcePosition();
+        MethodDescriptor descriptor =
+                sourcePosition == null
+                ? null
+                : DumbService.getInstance(myProject).runReadActionInSmartMode(() -> getMethodDescriptor(myProject, sourcePosition));
 
+        ProgressIndicatorProvider.checkCanceled();
+
+        String methodName = descriptor == null ? null : descriptor.methodName;
+        JVMName methodSignature = descriptor == null ? null : descriptor.methodSignature;
+        boolean methodIsStatic = descriptor != null && descriptor.isStatic;
+
+        ProgressIndicatorProvider.checkCanceled();
+
+        setMethodName(methodName);
+        mySignature = methodSignature;
+        myIsStatic = methodIsStatic;
+
+        if (methodIsStatic) {
+            setInstanceFiltersEnabled(false);
+        }
+
+        updateClassPattern();
+    }
+
+    private void updateClassPattern() {
         Task.Backgroundable task = new Task.Backgroundable(myProject, KotlinDebuggerCoreBundle.message("function.breakpoint.initialize")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-                SourcePosition sourcePosition = KotlinFunctionBreakpoint.this.getSourcePosition();
-                MethodDescriptor descriptor =
-                        sourcePosition == null
-                        ? null
-                        : DumbService.getInstance(project).runReadActionInSmartMode(() -> getMethodDescriptor(project, sourcePosition));
-
-                ProgressIndicatorProvider.checkCanceled();
-
-                String methodName = descriptor == null ? null : descriptor.methodName;
-                JVMName methodSignature = descriptor == null ? null : descriptor.methodSignature;
-                boolean methodIsStatic = descriptor != null && descriptor.isStatic;
-
-                PsiClass psiClass = KotlinFunctionBreakpoint.this.getPsiClass();
-
-                ProgressIndicatorProvider.checkCanceled();
-
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    KotlinFunctionBreakpoint.this.setMethodName(methodName);
-                    KotlinFunctionBreakpoint.this.mySignature = methodSignature;
-                    KotlinFunctionBreakpoint.this.myIsStatic = methodIsStatic;
-
-                    if (psiClass != null) {
-                        KotlinFunctionBreakpoint.this.getProperties().myClassPattern = psiClass.getQualifiedName();
-                    }
-                    if (methodIsStatic) {
-                        KotlinFunctionBreakpoint.this.setInstanceFiltersEnabled(false);
-                    }
-                }, ModalityState.defaultModalityState());
+                PsiClass psiClass = getPsiClass();
+                if (psiClass != null) {
+                    getProperties().myClassPattern = ActionsKt.runReadAction(() -> psiClass.getQualifiedName());
+                }
             }
         };
 
         ProgressManager progressManager = ProgressManager.getInstance();
-        if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        if (isDispatchThread() && !isUnitTestMode()) {
             progressManager.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
         } else {
             EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
@@ -183,18 +190,8 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
             request.enable();
         }
 
-        AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();
-        ApplicationManager.getApplication().invokeAndWait(
-                () -> {
-                    ProgressWindow progress =
-                            new ProgressWindow(
-                                    true, false, debugProcess.getProject(),
-                                    KotlinDebuggerCoreBundle.message("function.breakpoint.cancel.emulation")
-                            );
-                    progress.setDelayInMillis(2000);
-                    indicatorRef.set(progress);
-                });
-        ProgressWindow indicator = indicatorRef.get();
+        ProgressWindow indicator = new ProgressWindow(true, false, debugProcess.getProject(), KotlinDebuggerCoreBundle.message("function.breakpoint.cancel.emulation"));
+        indicator.setDelayInMillis(2000);
 
         AtomicBoolean changed = new AtomicBoolean();
         XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
@@ -429,6 +426,7 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         return getEventMessage(event, getFileName());
     }
 
+    @Nls
     private static String getEventMessage(@NotNull LocatableEvent event, @NotNull String defaultFileName) {
         Location location = event.location();
         if (event instanceof MethodEntryEvent) {
@@ -444,6 +442,7 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         return "";
     }
 
+    @Nls
     private static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
         String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
         String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
@@ -499,7 +498,9 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         } else {
             buffer.append(JavaDebuggerBundle.message("status.breakpoint.invalid"));
         }
-        return buffer.toString();
+        @SuppressWarnings("HardCodedStringLiteral")
+        String s = buffer.toString();
+        return s;
     }
 
     @Override
@@ -653,11 +654,11 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
     public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
         super.readExternal(breakpointNode);
         try {
-            getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
+            getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
         } catch (Exception ignored) {
         }
         try {
-            getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
+            getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
         } catch (Exception ignored) {
         }
     }

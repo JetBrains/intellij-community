@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -36,11 +35,10 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       genPageHeader(buf, refEntity);
     }
 
-    if (refEntity instanceof RefElement) {
+    if (refEntity instanceof RefElementImpl) {
       RefElementImpl refElement = (RefElementImpl)refEntity;
       if (refElement.isSuspicious() && !refElement.isEntry()) {
         appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
-        //noinspection HardCodedStringLiteral
         buf.append("<br>");
         buf.append("<div class=\"problem-description\">");
         appendProblemSynopsis(refElement, buf);
@@ -63,6 +61,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             appendElementInReferences(buf, method);
             appendElementOutReferences(buf, method);
             myComposer.appendDerivedMethods(buf, method);
+            myComposer.appendDerivedFunctionalExpressions(buf, method);
             myComposer.appendSuperMethods(buf, method);
           }
 
@@ -74,7 +73,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       } else {
         appendNoProblems(buf);
       }
-      appendCallesList(refElement, buf, new HashSet<>(), true);
+      appendCallersList(refElement, buf, new HashSet<>(), true);
     }
   }
 
@@ -111,7 +110,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis10"));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
           String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, true);
-          //noinspection HardCodedStringLiteral
           buf.append("&nbsp;");
 
           int nDerived = getImplementationsCount(refClass);
@@ -172,7 +170,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             }
           }
         } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
-          if (method.isAbstract()) {
+          if (method.isAbstract() && !refClass.isInterface()) {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis15"));
@@ -203,9 +201,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
 
-    //noinspection HardCodedStringLiteral
     buf.append("<br>");
-    if (refElement instanceof RefClass) {
+    if (refElement instanceof RefClassImpl) {
       RefClassImpl refClass = (RefClassImpl)refElement;
       if (refClass.isSuspicious()) {
         if (refClass.isUtilityClass()) {
@@ -280,13 +277,18 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     return 1;
   }
 
-  private static int getImplementationsCount(RefClass refClass) {
+  private static int getImplementationsCount(RefOverridable refClass) {
     int count = 0;
-    for (RefClass subClass : refClass.getSubClasses()) {
-      if (!subClass.isInterface() && !subClass.isAbstract()) {
+    for (RefOverridable reference : refClass.getDerivedReferences()) {
+      if (reference instanceof RefClass) {
+        if (!((RefClass)reference).isInterface() && !((RefClass)reference).isAbstract()) {
+          count++;
+        }
+        count += getImplementationsCount(reference);
+      }
+      else if (reference instanceof RefFunctionalExpression) {
         count++;
       }
-      count += getImplementationsCount(subClass);
     }
 
     return count;
@@ -316,7 +318,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  private void appendCallesList(RefElement element, @NotNull StringBuilder buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
+  private void appendCallersList(RefElement element, @NotNull StringBuilder buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
     final Set<RefElement> possibleChildren = getPossibleChildren(element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
@@ -333,7 +335,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           appendElementReference(buf, refElement, true);
           @NonNls final String closeLi = "</li>";
           buf.append(closeLi);
-          appendCallesList(refElement, buf, mentionedElements, false);
+          appendCallersList(refElement, buf, mentionedElements, false);
         }
       }
       @NonNls final String closeUl = "</ul>";
@@ -359,8 +361,9 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
       RefClass aClass = refMethod.getOwnerClass();
       if (!refMethod.isStatic() && !refMethod.isConstructor() && (aClass != null && !aClass.isAnonymous())) {
-        for (RefMethod refDerived : refMethod.getDerivedMethods()) {
-          if (((RefMethodImpl)refDerived).isSuspicious()) {
+        for (RefOverridable refDerived : refMethod.getDerivedReferences()) {
+          if (refDerived instanceof RefMethodImpl && ((RefMethodImpl)refDerived).isSuspicious() ||
+              refDerived instanceof RefFunctionalExpressionImpl && ((RefFunctionalExpressionImpl)refDerived).isSuspicious()) {
             newChildren.add(refDerived);
           }
         }

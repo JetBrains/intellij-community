@@ -60,10 +60,10 @@ public class PyCallHierarchyTest extends PyTestCase {
   private void checkHierarchyTreeStructure(PyFunction function) {
     final PyCallerFunctionTreeStructure callerStructure = new PyCallerFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    assertSameLinesWithFile(getVerificationCallerFilePath(), HierarchyViewTestFixture.dump(callerStructure, null, 0));
+    assertSameLinesWithFile(getVerificationCallerFilePath(), HierarchyViewTestFixture.dump(callerStructure, null, null,0));
     final PyCalleeFunctionTreeStructure calleeStructure = new PyCalleeFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    assertSameLinesWithFile(getVerificationCalleeFilePath(), HierarchyViewTestFixture.dump(calleeStructure, null, 0));
+    assertSameLinesWithFile(getVerificationCalleeFilePath(), HierarchyViewTestFixture.dump(calleeStructure, null, null,0));
   }
 
   private void doTestCallHierarchy(String ... fileNames) {
@@ -121,6 +121,11 @@ public class PyCallHierarchyTest extends PyTestCase {
 
   // PY-29841
   public void testSuper() {
+    doTestCallHierarchy("main.py");
+  }
+
+  // PY-52034
+  public void testQualifierDefinedInside() {
     doTestCallHierarchy("main.py");
   }
 }

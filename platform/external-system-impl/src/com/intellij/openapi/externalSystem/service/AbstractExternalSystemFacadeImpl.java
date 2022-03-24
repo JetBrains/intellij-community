@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,10 +36,14 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   public AbstractExternalSystemFacadeImpl(@NotNull Class<ExternalSystemProjectResolver<S>> projectResolverClass,
                                           @NotNull Class<ExternalSystemTaskManager<S>> buildManagerClass)
-    throws IllegalAccessException, InstantiationException
-  {
-    myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.newInstance());
-    myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.newInstance());
+    throws IllegalAccessException, InstantiationException {
+    try {
+      myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.getConstructor().newInstance());
+      myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.getConstructor().newInstance());
+    }
+    catch (InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void init() throws RemoteException {
@@ -87,7 +92,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
   }
 
-  @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings("unchecked")
   private <I extends RemoteExternalSystemService<S>, C extends I> I getService(@NotNull Class<I> interfaceClass,
                                                                                final @NotNull C impl)
     throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
@@ -137,14 +142,13 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
    * @throws RemoteException
    */
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
   protected abstract  <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass,
                                                                                               final @NotNull C impl)
   throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException;
 
   @Override
   public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
-    for (RemoteExternalSystemService service : myRemotes.values()) {
+    for (RemoteExternalSystemService<?> service : myRemotes.values()) {
       if (service.isTaskInProgress(id)) {
         return true;
       }
@@ -155,7 +159,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
   @Override
   public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
     Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> result = null;
-    for (RemoteExternalSystemService service : myRemotes.values()) {
+    for (RemoteExternalSystemService<?> service : myRemotes.values()) {
       final Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> tasks = service.getTasksInProgress();
       if (tasks.isEmpty()) {
         continue;

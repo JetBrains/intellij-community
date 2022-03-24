@@ -1,20 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.welcomeScreen
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.StartPagePromoter
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.ui.UISettings
+import training.ui.showOnboardingFeedbackNotification
 import training.util.resetPrimaryLanguage
 import training.util.rigid
 import java.awt.Component
@@ -25,10 +33,12 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.border.MatteBorder
 
-open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
+@ApiStatus.Internal
+open class OnboardingLessonPromoter(@NonNls private val lessonId: String, @NonNls private val languageName: String) : StartPagePromoter {
   open fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
 
   override fun getPromotionForInitialState(): JPanel? {
+    scheduleOnboardingFeedback()
     val rPanel: JPanel = NonOpaquePanel()
     rPanel.layout = BoxLayout(rPanel, BoxLayout.PAGE_AXIS)
     rPanel.border = JBUI.Borders.empty(JBUI.scale(10), JBUI.scale(32))
@@ -38,10 +48,10 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     vPanel.alignmentY = Component.TOP_ALIGNMENT
 
     val header = JLabel(LearnBundle.message("welcome.promo.header"))
-    header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + JBUI.scale(4))
+    header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
-    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName)}</html>").also {
+    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)}</html>").also {
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
         SystemInfo.isMac -> JBUIScale.scale(-1)
@@ -54,14 +64,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     jButton.isOpaque = false
     jButton.action = object : AbstractAction(LearnBundle.message("welcome.promo.start.tour")) {
       override fun actionPerformed(e: ActionEvent?) {
-        val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
-        if (lesson == null) {
-          logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
-          return
-        }
-        val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
-        resetPrimaryLanguage(primaryLanguage)
-        OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson)
+        startOnboardingLessonWithSdk()
       }
     }
     vPanel.add(rigid(0, 18))
@@ -77,11 +80,24 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     hPanel.add(picture)
 
     rPanel.add(NonOpaquePanel().apply {
-      border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
+      border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.getInstance().separatorColor)
     })
     rPanel.add(rigid(0, 20))
     rPanel.add(hPanel)
     return rPanel
+  }
+
+  protected fun startOnboardingLessonWithSdk() {
+    val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
+    if (lesson == null) {
+      logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
+      return
+    }
+    val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
+    resetPrimaryLanguage(primaryLanguage)
+    LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
+      OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)
+    }
   }
 
   private fun buttonPixelHunting(button: JButton): JPanel {
@@ -102,5 +118,18 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
 
     return buttonPlace
+  }
+
+  // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
+  private fun scheduleOnboardingFeedback() {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return
+
+    val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
+
+    invokeLater {
+      langSupport.onboardingFeedbackData = null
+      showOnboardingFeedbackNotification(null, onboardingFeedbackData)
+      (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
+    }
   }
 }

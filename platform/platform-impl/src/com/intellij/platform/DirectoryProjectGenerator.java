@@ -7,14 +7,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-
+/**
+ * Provides simple directory-oriented generators, which usually used in small IDEs, where there is only one module
+ * {@link com.intellij.ide.util.projectWizard.AbstractNewProjectStep}
+ * {@link com.intellij.ide.util.projectWizard.ProjectSettingsStepBase}
+ * {@link com.intellij.ide.util.projectWizard.CustomStepProjectGenerator}
+ * {@link HideableProjectGenerator}
+ * 
+ */
 public interface DirectoryProjectGenerator<T> {
   @Nullable
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -28,8 +34,7 @@ public interface DirectoryProjectGenerator<T> {
   }
 
   // to be removed in 2017.3
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
+  @Deprecated(forRemoval = true)
   default boolean isPrimaryGenerator() {
     return true;
   }

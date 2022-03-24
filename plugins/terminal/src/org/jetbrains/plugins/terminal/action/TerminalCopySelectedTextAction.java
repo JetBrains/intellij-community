@@ -7,10 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class TerminalCopySelectedTextAction extends DumbAwareAction {
 
-  public TerminalCopySelectedTextAction() {
-    getTemplatePresentation().setEnabled(false);
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);

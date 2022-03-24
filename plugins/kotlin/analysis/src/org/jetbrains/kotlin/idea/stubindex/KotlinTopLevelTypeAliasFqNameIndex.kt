@@ -4,19 +4,15 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class KotlinTopLevelTypeAliasFqNameIndex : StringStubIndexExtension<KtTypeAlias>() {
+class KotlinTopLevelTypeAliasFqNameIndex : AbstractStringStubIndexExtension<KtTypeAlias>(KtTypeAlias::class.java) {
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
 
     override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        StubIndex.getElements<String, KtTypeAlias>(
-            KEY, s, project,
-            scope, KtTypeAlias::class.java
-        )
+        StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
 
     companion object {
         val KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelTypeAliasFqNameIndex::class.java)

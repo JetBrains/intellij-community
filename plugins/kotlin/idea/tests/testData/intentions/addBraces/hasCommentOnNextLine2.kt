@@ -7,6 +7,7 @@ fun foo(list: List<String>) {
     for (l in list)<caret> println(l)
 
     // printing...
+// AFTER-WARNING: Parameter 'a' is never used
     println("hi")
 }
 

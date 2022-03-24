@@ -384,13 +384,13 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
         if (o instanceof Pair) {
-          getTextRenderer().append((String)((Pair)o).second);
+          getTextRenderer().append((String)((Pair<?, ?>)o).second);
         }
       }
     }, root) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
+        final TemplateContextType type = (TemplateContextType)((Pair<?, ?>)node.getUserObject()).first;
         if (type != null) {
           boolean enabled = node.isChecked();
           context.setEnabled(type, enabled);

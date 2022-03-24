@@ -1,4 +1,6 @@
-// WITH_RUNTIME
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Parameter 'x' is never used
 
 class Foo {
     companion object {

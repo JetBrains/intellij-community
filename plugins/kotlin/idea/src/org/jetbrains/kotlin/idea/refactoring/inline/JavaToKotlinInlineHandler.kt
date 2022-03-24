@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -99,8 +99,6 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     var fakeFile: KtFile? = null
     object : Task.Modal(project, KotlinBundle.message("action.j2k.name"), false) {
         override fun run(indicator: ProgressIndicator) {
-            indicator.isIndeterminate = false
-
             val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
             val postProcessor = converterExtension.createPostProcessor(formatCode = true)
             val processor = converterExtension.createWithProgressProcessor(

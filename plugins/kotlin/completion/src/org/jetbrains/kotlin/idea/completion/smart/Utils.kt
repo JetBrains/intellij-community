@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
-import java.util.*
 
 class ArtificialElementInsertHandler(
     private val textBeforeCaret: String,
@@ -49,60 +48,30 @@ class ArtificialElementInsertHandler(
     }
 }
 
-fun mergeTails(tails: Collection<Tail?>): Tail? {
-    return tails.singleOrNull() ?: tails.toSet().singleOrNull()
-}
+fun mergeTails(tails: Collection<Tail?>): Tail? = tails.singleOrNull() ?: tails.toSet().singleOrNull()
 
 fun LookupElement.addTail(tail: Tail?): LookupElement = when (tail) {
     null -> this
-
-    Tail.COMMA -> object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            WithTailInsertHandler.COMMA.handleInsert(context, delegate)
-        }
-    }
-
-    Tail.RPARENTH -> object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            WithTailInsertHandler.RPARENTH.handleInsert(context, delegate)
-        }
-    }
-
-    Tail.RBRACKET -> object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            WithTailInsertHandler.RBRACKET.handleInsert(context, delegate)
-        }
-    }
-
-    Tail.ELSE -> object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            WithTailInsertHandler.ELSE.handleInsert(context, delegate)
-        }
-    }
-
-    Tail.RBRACE -> object : LookupElementDecorator<LookupElement>(this) {
-        override fun handleInsert(context: InsertionContext) {
-            WithTailInsertHandler.RBRACE.handleInsert(context, delegate)
-        }
-    }
+    Tail.COMMA -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.COMMA)
+    Tail.RPARENTH -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.RPARENTH)
+    Tail.RBRACKET -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.RBRACKET)
+    Tail.ELSE -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.ELSE)
+    Tail.RBRACE -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.RBRACE)
 }
 
-fun LookupElement.withOptions(options: ItemOptions): LookupElement {
-    var lookupElement = this
+fun LookupElement.withOptions(options: ItemOptions): LookupElement =
     if (options.starPrefix) {
-        lookupElement = object : LookupElementDecorator<LookupElement>(this) {
+        object : LookupElementDecorator<LookupElement>(this) {
             override fun renderElement(presentation: LookupElementPresentation) {
                 super.renderElement(presentation)
                 presentation.itemText = "*" + presentation.itemText
             }
 
-            override fun handleInsert(context: InsertionContext) {
-                WithExpressionPrefixInsertHandler("*").handleInsert(context, delegate)
-            }
+            override fun getDelegateInsertHandler() = WithExpressionPrefixInsertHandler("*")
         }
+    } else {
+        this
     }
-    return lookupElement
-}
 
 fun LookupElement.addTailAndNameSimilarity(
     matchedExpectedInfos: Collection<ExpectedInfo>,
@@ -223,9 +192,7 @@ private fun MutableCollection<LookupElement>.addLookupElementsForNullable(
                 presentation.itemText = "!! " + presentation.itemText
             }
 
-            override fun handleInsert(context: InsertionContext) {
-                WithTailInsertHandler("!!", spaceBefore = false, spaceAfter = false).handleInsert(context, delegate)
-            }
+            override fun getDelegateInsertHandler() = WithTailInsertHandler("!!", spaceBefore = false, spaceAfter = false)
         }.postProcess()
     }
 
@@ -236,9 +203,7 @@ private fun MutableCollection<LookupElement>.addLookupElementsForNullable(
                 presentation.itemText = "?: " + presentation.itemText
             }
 
-            override fun handleInsert(context: InsertionContext) {
-                WithTailInsertHandler("?:", spaceBefore = true, spaceAfter = true).handleInsert(context, delegate) //TODO: code style
-            }
+            override fun getDelegateInsertHandler() = WithTailInsertHandler("?:", spaceBefore = true, spaceAfter = true)
         }.postProcess()
     }
 }
@@ -289,7 +254,19 @@ fun LookupElement.assignSmartCompletionPriority(priority: SmartCompletionItemPri
     return this
 }
 
-var LookupElement.isProbableKeyword: Boolean by NotNullableUserDataProperty(Key.create("PROBABLE_KEYWORD_KEY"), false)
+/**
+ * In some completion contexts, certain keywords are more probable than others. This enum together with
+ * [keywordProbability] property are used to capture that. They should be considered when weighting completion
+ * items.
+ */
+internal enum class KeywordProbability {
+    HIGH,
+    DEFAULT,
+    LOW,
+}
+
+internal var LookupElement.keywordProbability: KeywordProbability
+    by NotNullableUserDataProperty(Key.create("KEYWORD_PROBABILITY_KEY"), KeywordProbability.DEFAULT)
 
 fun DeclarationDescriptor.fuzzyTypesForSmartCompletion(
     smartCastCalculator: SmartCastCalculator,

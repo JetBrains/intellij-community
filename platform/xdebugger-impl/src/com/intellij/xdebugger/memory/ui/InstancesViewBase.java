@@ -1,29 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
-import com.intellij.application.Topics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 public abstract class InstancesViewBase extends JBPanel implements Disposable {
@@ -33,12 +21,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     super(layout);
 
     myInstancesProvider = instancesProvider;
-    XDebugSessionListener debugSessionListener = new MySessionListener();
-    session.addSessionListener(debugSessionListener, this);
-    final XValueMarkers<?, ?> markers = getValueMarkers(session);
-    if (markers != null) {
-      Topics.subscribe(AnActionListener.TOPIC, this, new MyActionListener(markers));
-    }
+    session.addSessionListener(new MySessionListener(), this);
   }
 
   protected XValueMarkers<?, ?> getValueMarkers(@NotNull XDebugSession session) {
@@ -82,50 +65,6 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
           tree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, state);
         }
       });
-    }
-  }
-
-  private final class MyActionListener implements AnActionListener {
-    private final XValueMarkers<?, ?> myValueMarkers;
-
-    private MyActionListener(@NotNull XValueMarkers<?, ?> markers) {
-      myValueMarkers = markers;
-    }
-
-    @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-      if (event.getData(PlatformDataKeys.CONTEXT_COMPONENT) == getInstancesTree() &&
-        (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
-        XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(event.getDataContext());
-
-        if (selectedNode != null) {
-          TreeNode currentNode = selectedNode;
-          while (!getInstancesTree().getRoot().equals(currentNode.getParent())) {
-            currentNode = currentNode.getParent();
-          }
-
-          final XValue valueContainer = ((XValueNodeImpl)currentNode).getValueContainer();
-
-          final String expression = valueContainer.getEvaluationExpression();
-          if (expression != null) {
-            myValueMarkers.markValue(valueContainer,
-              new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
-          }
-
-          ApplicationManager.getApplication().invokeLater(() -> getInstancesTree()
-            .rebuildTree(InstancesTree.RebuildPolicy.ONLY_UPDATE_LABELS));
-        }
-      }
-    }
-
-    private boolean isAddToWatchesAction(AnAction action) {
-      final String className = action.getClass().getSimpleName();
-      return action instanceof XDebuggerTreeActionBase && className.equals("XAddToWatchesAction");
-    }
-
-    private boolean isEvaluateExpressionAction(AnAction action) {
-      final String className = action.getClass().getSimpleName();
-      return action instanceof XDebuggerActionBase && className.equals("EvaluateAction");
     }
   }
 }

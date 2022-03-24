@@ -55,7 +55,19 @@ class DependencyExclusionEditor {
         getTextRenderer().append(versionFragment, !rejected ? SimpleTextAttributes.GRAYED_ATTRIBUTES : STRIKEOUT_GRAYED_ATTRIBUTES, true);
         setToolTipText(rejected ? JavaUiBundle.message("tooltip.text.dependency.was.rejected") : null);
       }
-    }, myRootNode, policy);
+    }, myRootNode, policy) {
+      @Override
+      protected void installSpeedSearch() {
+        new TreeSpeedSearch(this, treePath -> {
+          Object node = treePath.getLastPathComponent();
+          if (!(node instanceof CheckedTreeNode)) return "";
+          Object data = ((CheckedTreeNode)node).getUserObject();
+          if (!(data instanceof ArtifactDependencyNode)) return "";
+          Artifact artifact = ((ArtifactDependencyNode)data).getArtifact();
+          return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
+        });
+      }
+    };
     myDependenciesTree.setRootVisible(false);
     myDependenciesTree.addCheckboxTreeListener(new CheckboxTreeListener() {
       private boolean myProcessingNodes;

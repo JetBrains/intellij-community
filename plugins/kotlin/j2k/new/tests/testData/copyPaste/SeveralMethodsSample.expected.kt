@@ -20,10 +20,7 @@ class A {
                 }
             }
         }
-        assert(element is PsiMethod) {
-            "Method accepts only kotlin functions/properties and java methods, but '" + element.getText()
-                .toString() + "' was found"
-        }
+        assert(element is PsiMethod) { "Method accepts only kotlin functions/properties and java methods, but '" + element.getText() + "' was found" }
         return JetRefactoringUtil.formatPsiMethod(element as PsiMethod, true, false)
     }
 

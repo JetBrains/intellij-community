@@ -200,24 +200,26 @@ fun foo() {
 
     testtest(
             foofoo, foofoo, foofoo, foofoo,
-            bar, /*
-    */ /* */
-            foo,
+            bar,
+            /*
+               */
+            /* */ foo,
     )
 
     testtest(
-/*
-    */
-            foofoo, foofoo, foofoo, /*
+            /*
+                */
+            foofoo, foofoo, foofoo,
+            /*
 
-    */
+               */
             foofoo, bar,
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo,
-            bar,/*
-    */
+            foofoo, foofoo, foofoo, foofoo, bar,
+            /*
+                */
     )
 
     testtest(
@@ -225,9 +227,10 @@ fun foo() {
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo, /*
+            foofoo, foofoo, foofoo, foofoo,
+            /*
 
-    */
+               */
             bar,
     )
 
@@ -243,10 +246,10 @@ fun foo() {
     testtest(foofoo/**/)
 
     testtest(
-            foofoo, foofoo, foofoo,
-            foofoo,/*
-     */ /* */
-            bar,
+            foofoo, foofoo, foofoo, foofoo,
+            /*
+                 */
+            /* */ bar,
     )
 
     testtest(
@@ -261,8 +264,9 @@ fun foo() {
     testtest(foofoo/**/)
 
     testtest(
-            foofoo, fososos,/*
-    */
+            foofoo, fososos,
+            /*
+                */
             testtest(testtest(foofoo)),
     )
 
@@ -271,17 +275,18 @@ fun foo() {
     testtest(foofoo, testtest(testtest(foofoo))/* */, /**/testsa)
 
     testtest(
-            foofoo,
-            testtest(testtest(foofoo)),/*
-    */
+            foofoo, testtest(testtest(foofoo)),
+            /*
+                */
             testsa,
     )
 
     testtest(foofoo, seee, testtest(testtest(foofoo)), /**/testsa)
 
     testtest(
-            foofoo, seee, testtest(testtest(foofoo)), /*
-    */
+            foofoo, seee, testtest(testtest(foofoo)),
+            /*
+               */
             testsa,
     )
 
@@ -289,7 +294,8 @@ fun foo() {
             "B", "C",
             Callable {
                 println("Hello world")
-            }, /* */
+            },
+            /* */
             Callable {
                 println("Hello world")
             },
@@ -341,9 +347,11 @@ fun foo() {
 
 fun test() {
     baz(
-            f = fun(it: Int): String = "$it", /*dwdwd
+            f = fun(it: Int): String = "$it",
+            /*dwdwd
         */
-            name = "", /*
-        */
+            name = "",
+            /*
+                   */
     )
 }

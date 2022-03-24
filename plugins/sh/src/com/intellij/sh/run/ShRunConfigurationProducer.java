@@ -6,6 +6,8 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.psi.ShFile;
@@ -24,6 +26,8 @@ final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRu
                                                   @NotNull Ref<PsiElement> sourceElement) {
     PsiFile psiFile = sourceElement.get().getContainingFile();
     if (!(psiFile instanceof ShFile)) return false;
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) return false;
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
 
@@ -43,6 +47,8 @@ final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRu
     if (psiLocation == null) return false;
     PsiFile psiFile = psiLocation.getContainingFile();
     if (!(psiFile instanceof ShFile)) return false;
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) return false;
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
 

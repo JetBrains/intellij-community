@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -30,6 +31,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -73,6 +75,8 @@ public class MavenModuleBuilderHelper {
   }
 
   public void configure(final Project project, final VirtualFile root, final boolean isInteractive) {
+    MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT);
+
     PsiFile[] psiFiles = myAggregatorProject != null
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
@@ -186,6 +190,8 @@ public class MavenModuleBuilderHelper {
   }
 
   private void generateFromArchetype(final Project project, final VirtualFile pom) {
+    MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE);
+
     final File workingDir;
     try {
       workingDir = FileUtil.createTempDirectory("archetype", "tmp");
@@ -203,26 +209,18 @@ public class MavenModuleBuilderHelper {
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
+
     Map<String, String> props = settings.getMavenProperties();
-
     props.put("interactiveMode", "false");
-    //props.put("archetypeGroupId", myArchetype.groupId);
-    //props.put("archetypeArtifactId", myArchetype.artifactId);
-    //props.put("archetypeVersion", myArchetype.version);
-    //if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
-
-    //props.put("groupId", myProjectId.getGroupId());
-    //props.put("artifactId", myProjectId.getArtifactId());
-    //props.put("version", myProjectId.getVersion());
-
     props.putAll(myPropertiesToCreateByArtifact);
 
-    runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project));
+    runner.run(params, settings, () -> copyGeneratedFiles(workingDir, pom, project, props.get("artifactId")));
   }
 
-  private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {
+  @VisibleForTesting
+  void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project, String artifactId) {
     try {
-      String artifactId = myProjectId.getArtifactId();
+      artifactId = artifactId != null ? artifactId : myProjectId.getArtifactId();
       if (artifactId != null) {
         FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
       }
@@ -234,6 +232,7 @@ public class MavenModuleBuilderHelper {
     }
 
     pom.getParent().refresh(false, false);
+    pom.refresh(false, false);
     updateProjectPom(project, pom);
 
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);

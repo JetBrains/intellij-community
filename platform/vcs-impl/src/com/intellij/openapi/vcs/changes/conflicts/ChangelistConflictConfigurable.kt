@@ -16,6 +16,12 @@ import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import javax.swing.DefaultListModel
 import javax.swing.event.ListDataEvent
@@ -33,37 +39,34 @@ class ChangelistConflictConfigurable(val project: Project)
     val changeListsEnabledPredicate = ChangeListsEnabledPredicate(project, disposable!!)
 
     return panel {
-      blockRow {
-        row {
-          enableIf(changeListsEnabledPredicate)
-          checkBox(message("settings.changelists.create.automatically.checkbox"), appSettings::CREATE_CHANGELISTS_AUTOMATICALLY)
-        }
+      row {
+        checkBox(message("settings.changelists.create.automatically.checkbox"))
+          .bindSelected(appSettings::CREATE_CHANGELISTS_AUTOMATICALLY)
+      }.enabledIf(changeListsEnabledPredicate)
 
-        row {
-          enableIf(changeListsEnabledPredicate)
-          checkBox(message("settings.partial.changelists.enable.checkbox"), appSettings::ENABLE_PARTIAL_CHANGELISTS)
-            .onApply {
-              ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-            }
-        }
-      }
+      row {
+        checkBox(message("settings.partial.changelists.enable.checkbox"))
+          .bindSelected(appSettings::ENABLE_PARTIAL_CHANGELISTS)
+          .onApply {
+            ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+          }
+      }.enabledIf(changeListsEnabledPredicate)
 
-      titledRow(message("settings.inactive.changelist.group.title")) {
-        enableSubRowsIf(changeListsEnabledPredicate)
+      group(message("settings.inactive.changelist.group.title")) {
         row {
-          checkBox(message("settings.highlight.files.from.non.active.changelist.checkbox"),
-                   conflictOptions::HIGHLIGHT_NON_ACTIVE_CHANGELIST)
+          checkBox(message("settings.highlight.files.from.non.active.changelist.checkbox"))
+            .bindSelected(conflictOptions::HIGHLIGHT_NON_ACTIVE_CHANGELIST)
             .onApply { conflictTracker.optionsChanged() }
         }
 
         row {
-          checkBox(message("settings.show.conflict.resolve.dialog.checkbox"), conflictOptions::SHOW_DIALOG)
+          checkBox(message("settings.show.conflict.resolve.dialog.checkbox"))
+            .bindSelected(conflictOptions::SHOW_DIALOG)
             .onApply { conflictTracker.optionsChanged() }
         }
 
-        fullRow {
-          label(message("settings.label.when.empty.changelist.becomes.inactive"))
-          comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java), vcsConfiguration::REMOVE_EMPTY_INACTIVE_CHANGELISTS,
+        row(message("settings.label.when.empty.changelist.becomes.inactive")) {
+          comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
                    renderer = listCellRenderer { value, _, _ ->
                      setText(when (value) {
                                VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("remove.changelist.combobox.show.options")
@@ -72,54 +75,53 @@ class ChangelistConflictConfigurable(val project: Project)
                                else -> ""
                              })
                    }
-          )
+          ).bindItem(vcsConfiguration::REMOVE_EMPTY_INACTIVE_CHANGELISTS)
         }
-      }
+      }.enabledIf(changeListsEnabledPredicate)
 
-      titledRow(message("settings.changelist.conflicts.group.title")) {
-        enableSubRowsIf(changeListsEnabledPredicate)
+      group(message("settings.changelist.conflicts.group.title")) {
         row {
-          checkBox(message("settings.highlight.files.with.conflicts.checkbox"), conflictOptions::HIGHLIGHT_CONFLICTS)
+          checkBox(message("settings.highlight.files.with.conflicts.checkbox"))
+            .bindSelected(conflictOptions::HIGHLIGHT_CONFLICTS)
             .onApply { conflictTracker.optionsChanged() }
-        }.largeGapAfter()
+        }.bottomGap(BottomGap.SMALL)
 
         val ignoredFilesModel = DefaultListModel<String>()
-        row {
-          label(message("settings.files.with.ignored.conflicts.list.title"))
-        }
         row {
           val list = JBList(ignoredFilesModel).apply {
             emptyText.text = message("no.ignored.files")
           }
-          scrollPane(list)
+          scrollCell(list)
             .onReset {
               ignoredFilesModel.clear()
               for (path in conflictTracker.ignoredConflicts) {
                 ignoredFilesModel.addElement(path)
               }
             }
-        }
+            .horizontalAlign(HorizontalAlign.FILL)
+            .verticalAlign(VerticalAlign.FILL)
+            .label(message("settings.files.with.ignored.conflicts.list.title"), LabelPosition.TOP)
+        }.resizableRow()
         row {
-          right {
-            var shouldClear = false
-            button(message("button.clear")) {
-              shouldClear = true
-              ignoredFilesModel.clear()
-            }
-              .onIsModified { shouldClear }
-              .onReset { shouldClear = false }
-              .onApply {
-                if (shouldClear) {
-                  for (conflict in conflictTracker.conflicts.values) {
-                    conflict.ignored = false
-                  }
-                  shouldClear = false
-                }
-              }
-              .enableIf(ListNotEmptyPredicate(ignoredFilesModel))
+          var shouldClear = false
+          button(message("button.clear")) {
+            shouldClear = true
+            ignoredFilesModel.clear()
           }
+            .onIsModified { shouldClear }
+            .onReset { shouldClear = false }
+            .onApply {
+              if (shouldClear) {
+                for (conflict in conflictTracker.conflicts.values) {
+                  conflict.ignored = false
+                }
+                shouldClear = false
+              }
+            }.horizontalAlign(HorizontalAlign.RIGHT)
+            .enabledIf(ListNotEmptyPredicate(ignoredFilesModel))
         }
-      }
+      }.enabledIf(changeListsEnabledPredicate)
+        .resizableRow()
     }
   }
 

@@ -59,8 +59,11 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
   }
 
   public static class BackwardReferenceReader extends CompilerReferenceReader<JavaCompilerBackwardReferenceIndex> {
+    private final Project myProject;
+
     protected BackwardReferenceReader(Project project, File buildDir) {
       super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath()), true));
+      myProject = project;
     }
 
     @Override
@@ -233,6 +236,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
                                                                                                                                                            boolean includeAnonymous,
                                                                                                                                                            int interruptNumber) {
       try {
+        List<DirectInheritorProvider> directInheritorProviders = DirectInheritorProvider.EP_NAME.getExtensionList(myProject);
         Set<CompilerRef.CompilerClassHierarchyElementDef> result = new HashSet<>();
         Deque<CompilerRef.CompilerClassHierarchyElementDef> q = new ArrayDeque<>(10);
         q.addLast(hierarchyElement);
@@ -260,6 +264,17 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
               }
               return true;
             });
+            try {
+              SearchId searchId = curClass instanceof SearchIdHolder
+                                  ? ((SearchIdHolder)curClass).getSearchId()
+                                  : CompilerHierarchySearchType.DIRECT_INHERITOR.convertToId(curClass, myIndex.getByteSeqEum());
+
+              for (DirectInheritorProvider provider : directInheritorProviders) {
+                q.addAll(provider.findDirectInheritors(searchId, myIndex.getByteSeqEum()));
+              }
+            }
+            catch (IOException ignored) {
+            }
           }
         }
         return result.toArray(CompilerRef.CompilerClassHierarchyElementDef.EMPTY_ARRAY);

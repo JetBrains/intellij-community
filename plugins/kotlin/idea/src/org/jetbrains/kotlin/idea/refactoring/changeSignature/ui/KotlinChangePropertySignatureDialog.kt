@@ -97,7 +97,7 @@ class KotlinChangePropertySignatureDialog(
     private var receiverTypeLabel: JLabel by Delegates.notNull()
     private var receiverDefaultValueLabel: JLabel by Delegates.notNull()
 
-    private val updateSignatureAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
+    private val updateSignatureAlarm = Alarm()
     private val signatureComponent: MethodSignatureComponent = KotlinSignatureComponent("", project).apply {
         preferredSize = Dimension(-1, 130)
         minimumSize = Dimension(-1, 130)

@@ -103,8 +103,8 @@ internal class GitRebaseDialog(private val project: Project,
     updateBranches()
     loadSettings()
 
-    updateUi()
     init()
+    updateUi()
 
     updateOkActionEnabled()
   }
@@ -354,7 +354,7 @@ internal class GitRebaseDialog(private val project: Project,
     add(ontoField,
         CC()
           .gapAfter("0")
-          .minWidth("${JBUI.scale(if (showRootField()) 220 else 310)}px")
+          .minWidth("${JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH)}px")
           .growX()
           .pushX())
 
@@ -424,7 +424,7 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createOntoField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     isVisible = false
-    setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
+    setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH))
     setPlaceholder(GitBundle.message("rebase.dialog.new.base"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
@@ -437,7 +437,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun createUpstreamField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
-    setMinimumAndPreferredWidth(JBUI.scale(185))
+    setMinimumAndPreferredWidth(JBUI.scale(SHORT_FIELD_LENGTH))
     setPlaceholder(GitBundle.message("rebase.dialog.target"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
@@ -479,12 +479,12 @@ internal class GitRebaseDialog(private val project: Project,
     mnemonic = KeyEvent.VK_M
   }
 
-  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
-                                                            GitBundle.message("rebase.options.modify.dialog.title"),
-                                                            { GitRebaseOption.values().toMutableList() },
-                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
-                                                            ::optionChosen,
-                                                            ::isOptionEnabled)
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(
+    project,
+    GitBundle.message("rebase.options.modify.dialog.title"),
+    { GitRebaseOption.values().toList() },
+    ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen, ::hasSeparatorAbove
+  )
 
   private fun isOptionSelected(option: GitRebaseOption) = option in selectedOptions
 
@@ -495,6 +495,8 @@ internal class GitRebaseDialog(private val project: Project,
     return !(option == GitRebaseOption.REBASE_MERGES && selectedOptions.contains(GitRebaseOption.INTERACTIVE)
              || option == GitRebaseOption.INTERACTIVE && selectedOptions.contains(GitRebaseOption.REBASE_MERGES))
   }
+
+  private fun hasSeparatorAbove(option: GitRebaseOption): Boolean = option == GitRebaseOption.INTERACTIVE
 
   private fun getOptionInfo(option: GitRebaseOption) = optionInfos.computeIfAbsent(option) {
     OptionInfo(option, option.getOption(gitVersion), option.description)
@@ -538,11 +540,11 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateUi() {
+    updatePlaceholders()
     updateUpstreamField()
     updateTopPanel()
     updateBottomPanel()
     optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
-    updatePlaceholders()
     rerender()
   }
 
@@ -581,7 +583,7 @@ internal class GitRebaseDialog(private val project: Project,
 
         val layout = topPanel.layout as MigLayout
 
-        val constraints = CC().minWidth("${JBUI.scale(185)}px").growX().pushX().alignY("top")
+        val constraints = CC().minWidth("${JBUI.scale(SHORT_FIELD_LENGTH)}px").growX().pushX().alignY("top")
         layout.setComponentConstraints(upstreamField, constraints)
         layout.setComponentConstraints(branchField, constraints)
 
@@ -677,5 +679,8 @@ internal class GitRebaseDialog(private val project: Project,
       IconUtil.brighter(AllIcons.General.ContextHelp, 3)
     else
       IconUtil.darker(AllIcons.General.ContextHelp, 3)
+
+    private const val SHORT_FIELD_LENGTH = 220
+    private const val LONG_FIELD_LENGTH = 310
   }
 }

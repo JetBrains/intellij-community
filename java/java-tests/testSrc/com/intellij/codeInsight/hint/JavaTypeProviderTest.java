@@ -77,6 +77,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Runnable</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Constraints:</td><td>exactly ? extends Runnable</td></tr>" +
            "</table>");
   }
 

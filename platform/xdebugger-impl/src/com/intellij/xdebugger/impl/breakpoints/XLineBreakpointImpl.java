@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
@@ -44,6 +45,8 @@ import java.util.Objects;
 
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
+  private static final Logger LOG = Logger.getInstance(XLineBreakpointImpl.class);
+
   @Nullable private RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
@@ -227,7 +230,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void removeHighlighter() {
     if (myHighlighter != null) {
-      myHighlighter.dispose();
+      try {
+        myHighlighter.dispose();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
       myHighlighter = null;
     }
   }

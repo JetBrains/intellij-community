@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -11,10 +12,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.RawPluginDescriptor;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -27,7 +25,6 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -55,12 +52,12 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.XmlElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import kotlin.Unit;
@@ -181,6 +178,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
+  private static @NotNull ActionManagerListener managerPublisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(ActionManagerListener.TOPIC);
+  }
+
   static @Nullable AnAction convertStub(@NotNull ActionStub stub) {
     AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
     if (anAction == null) {
@@ -253,7 +254,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getPluginClassLoader(), null, true);
+    Icon icon = IconLoader.findIcon(iconPath, module.getClassLoader());
     if (icon == null) {
       reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
       icon = AllIcons.Nodes.Unknown;
@@ -269,7 +270,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                          String descriptionValue,
                                                                          @NotNull ClassLoader classLoader) {
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + DESCRIPTION, Strings.notNullize(descriptionValue));
   }
@@ -282,7 +283,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                  @NotNull ClassLoader classLoader) {
     String defaultValue = Strings.notNullize(textValue);
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return bundle == null ? defaultValue : AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, defaultValue);
   }
@@ -356,7 +357,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
   }
 
-  private static String getPluginInfo(@Nullable PluginId id) {
+  private static @NotNull String getPluginInfo(@Nullable PluginId id) {
     IdeaPluginDescriptor plugin = id == null ? null : PluginManagerCore.getPlugin(id);
     if (plugin == null) {
       return "";
@@ -394,6 +395,20 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     myTimer.listeners.add(listener);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void reinitializeTimer() {
+    if (myTimer != null) {
+      var oldListeners = myTimer.listeners;
+
+      myTimer.stop();
+      myTimer = null;
+
+      for (var listener: oldListeners)
+        addTimerListener(listener);
+    }
+  }
+
   @Override
   public void removeTimerListener(@NotNull TimerListener listener) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -418,7 +433,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    ActionToolbar toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return toolbar;
   }
 
   private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl module, @NotNull KeymapManagerEx keymapManager) {
@@ -448,7 +465,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getPluginClassLoader());
+          bundle = DynamicBundle.getResourceBundle(module.getClassLoader(), bundleName);
           lastBundle = bundle;
           lastBundleName = bundleName;
         }
@@ -460,10 +477,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
       switch (descriptor.name) {
         case ACTION_ELEMENT_NAME:
-          processActionElement(element, module, bundle, keymapManager, module.getPluginClassLoader());
+          processActionElement(element, module, bundle, keymapManager, module.getClassLoader());
           break;
         case GROUP_ELEMENT_NAME:
-          processGroupElement(element, module, bundle, keymapManager, module.getPluginClassLoader());
+          processGroupElement(element, module, bundle, keymapManager, module.getClassLoader());
           break;
         case SEPARATOR_ELEMENT_NAME:
           processSeparatorNode(null, element, module, bundle);
@@ -620,7 +637,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                       module.getPluginId()));
       }
 
-      Presentation presentation = new Presentation();
+      Presentation presentation = Presentation.newTemplatePresentation();
       presentation.setText(text);
       if (bundle == null) {
         presentation.setDescription(descriptionValue);
@@ -823,7 +840,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           case ACTION_ELEMENT_NAME: {
             AnAction action = processActionElement(child, module, bundle, keymapManager, classLoader);
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
             break;
           }
@@ -833,20 +850,19 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           case GROUP_ELEMENT_NAME: {
             AnAction action = processGroupElement(child, module, bundle, keymapManager, classLoader);
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, false);
+              addToGroupInner(group, action, Constraints.LAST, module, false);
             }
             break;
           }
           case ADD_TO_GROUP_ELEMENT_NAME:
             processAddToGroupNode(group, child, module, isSecondary(child));
             break;
-          case REFERENCE_ELEMENT_NAME: {
+          case REFERENCE_ELEMENT_NAME:
             AnAction action = processReferenceElement(child, module);
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
             break;
-          }
           case OVERRIDE_TEXT_ELEMENT_NAME:
             processOverrideTextNode(group, id, child, module, bundle);
             break;
@@ -905,13 +921,30 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       reportActionError(module, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
     }
-    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), secondary);
+    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), module, secondary);
   }
 
-  private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
-    String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
-    ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
-    idToGroupId.putValue(actionId, actionToId.get(group));
+  private void addToGroupInner(@NotNull AnAction group, @NotNull AnAction action, @NotNull Constraints constraints,
+                               @Nullable IdeaPluginDescriptor module, boolean secondary) {
+    try {
+      String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
+      DefaultActionGroup actionGroup = (DefaultActionGroup)group;
+      if (module != null && actionGroup.containsAction(action)) {
+        reportActionError(module, "Cannot add an action twice: " + actionId + " (" +
+                                  (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
+        return;
+      }
+      actionGroup.addAction(action, constraints, this).setAsSecondary(secondary);
+      idToGroupId.putValue(actionId, actionToId.get(group));
+    }
+    catch (IllegalArgumentException e) {
+      if (module != null) reportActionError(module, e.getMessage(), e);
+      else throw e;
+    }
+  }
+
+  public void addToGroup(@NotNull DefaultActionGroup group, @NotNull AnAction action, @NotNull Constraints constraints) {
+    addToGroupInner(group, action, constraints, null, false);
   }
 
   public @Nullable DefaultActionGroup getParentGroup(String groupId,
@@ -1229,8 +1262,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
       if (actionToId.containsKey(action)) {
         IdeaPluginDescriptorImpl module = pluginId == null ? null : PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId);
-        String message = "ID \"" + actionToId.get(action) + "\" is already taken by action \"" + action + "\". " +
-                         "ID \"" + actionId + "\" cannot be registered for the same action";
+        String message = "ID '" + actionToId.get(action) + "' is already taken by action '" + action + "' (" + action.getClass()+"). " +
+                         "ID '" + actionId + "' cannot be registered for the same action";
         if (module == null) {
           LOG.error(new PluginException(message + " " + pluginId, null, pluginId));
         }
@@ -1263,9 +1296,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   private @Nullable AnAction addToMap(@NotNull String actionId, @NotNull AnAction action, @Nullable ProjectType projectType) {
-    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> {
-      return old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType);
-    });
+    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType));
     if (chameleonAction == null) {
       AnAction result = projectType == null ? action : new ChameleonAction(action, projectType);
       idToAction.put(actionId, result);
@@ -1284,8 +1315,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       .map(ActionManagerImpl::getPluginInfo)
       .collect(Collectors.joining(","));
 
-    String message = ("ID \"" + actionId + "\" is already taken by action \"" + idToAction.get(actionId) + "\"" + oldPluginInfo +
-                      ". Action \"" + action + "\"" + " cannot use the same ID") + " " + pluginId;
+    AnAction oldAction = idToAction.get(actionId);
+    String message = "ID '" + actionId + "' is already taken by action '" + oldAction + "' ("+oldAction.getClass()+") " + oldPluginInfo + ". " +
+                     "Action '" + action + "' (" + action.getClass() + ") cannot use the same ID " + pluginId;
     if (pluginId == null) {
       LOG.error(message);
     }
@@ -1341,7 +1373,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                 continue;
               }
               for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
-                if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
+                if (stub instanceof ActionGroupStub && groupId.equals(((ActionGroupStub)stub).getId())) {
                   ((ActionGroupStub)stub).remove(actionToRemove, actionId);
                 }
               }
@@ -1409,16 +1441,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
   }
 
-  public boolean isToolWindowContextMenuVisible() {
-    for (Object popup : myPopups) {
-      if (popup instanceof ActionPopupMenuImpl &&
-          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public boolean isActionPopupStackEmpty() {
     return myPopups.isEmpty();
@@ -1433,8 +1455,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @Override
   public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
-    replaceAction(actionId, newAction, pluginId);
+    PluginDescriptor plugin = callerClass == null ? null : PluginManager.getPluginByClass(callerClass);
+    replaceAction(actionId, newAction, plugin == null ? null : plugin.getPluginId());
   }
 
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
@@ -1445,6 +1467,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
 
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
+    int oldIndex = idToIndex.getOrDefault(actionId, -1);  // Valid indices >= 0
     if (oldAction != null) {
       if (newAction instanceof OverridingAction) {
         myBaseActions.put((OverridingAction)newAction, oldAction);
@@ -1463,6 +1486,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       unregisterAction(actionId, false);
     }
     registerAction(actionId, newAction, pluginId);
+    if (oldIndex >= 0) {
+      idToIndex.put(actionId, oldIndex);
+    }
     return oldAction;
   }
 
@@ -1620,7 +1646,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
-        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
+        ActionUtil.performDumbAwareUpdate(action, event, false);
         if (!event.getPresentation().isEnabled()) {
           result.setRejected();
           return;
@@ -1659,6 +1685,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private final class MyTimer extends Timer implements ActionListener {
     final List<TimerListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
+    private final ClientId myClientId = ClientId.getCurrent();
 
     private MyTimer() {
       super(TIMER_DELAY, null);
@@ -1696,8 +1723,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       if (myLastTimePerformed == lastEventCount) {
         return;
       }
-      for (TimerListener listener : listeners) {
-        runListenerAction(listener);
+      try (AccessToken ignored = ClientId.withClientId(myClientId)) {
+        for (TimerListener listener : listeners) {
+          runListenerAction(listener);
+        }
       }
     }
 
