@@ -317,7 +317,7 @@ final class FindInProjectTask {
       deque.addAll(GlobalSearchScopeUtil.getLocalScopeFiles((LocalSearchScope)customScope));
     }
     else if (customScope instanceof VirtualFileEnumeration) {
-      // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
+      // GlobalSearchScope can include files out of project roots e.g., FileScope / FilesScope
       ContainerUtil.addAll(deque, FileBasedIndexEx.toFileIterable(((VirtualFileEnumeration)customScope).asArray()));
     }
     else if (myDirectory != null) {

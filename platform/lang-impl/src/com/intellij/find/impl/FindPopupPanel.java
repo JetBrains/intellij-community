@@ -1287,7 +1287,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           if (!isCancelled()) {
             boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
-              showEmptyText(null);
+              showEmptyText(FindBundle.message("message.nothingFound"));
             }
           }
           onStop(hash);
@@ -1304,15 +1304,16 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     header.infoLabel.setText(null);
   }
 
-  private void showEmptyText(@Nullable @NlsContexts.StatusText String message) {
+  private void showEmptyText(@Nullable @NlsContexts.StatusText @NotNull String message) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
     FindModel model = myHelper.getModel();
     boolean dotAdded = false;
     if (StringUtil.isEmpty(model.getStringToFind())) {
       emptyText.setText(FindBundle.message("message.type.search.query"));
-    } else {
-      emptyText.setText(message != null ? message : FindBundle.message("message.nothingFound"));
+    }
+    else {
+      emptyText.setText(message);
     }
     if (mySelectedScope == FindPopupScopeUIImpl.DIRECTORY && !model.isWithSubdirectories()) {
       emptyText.appendText(".");
@@ -1453,10 +1454,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
 
   private void onStop(int hash) {
-    onStop(hash, null);
+    onStop(hash, FindBundle.message("message.nothingFound"));
   }
 
-  private void onStop(int hash, String message) {
+  private void onStop(int hash, @NotNull String message) {
     if (hash != myLoadingHash) {
       return;
     }
