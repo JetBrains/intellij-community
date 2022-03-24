@@ -8,3 +8,13 @@ fun numbers(): String {
         toString() // used as the return value
     }
 }
+
+class StringBuilder {
+    fun append(ch: Char) {
+        TODO()
+    }
+}
+
+fun <T, R> with(x: T, op: T.() -> R) : R {
+    TODO()
+}
