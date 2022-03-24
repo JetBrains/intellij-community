@@ -23,6 +23,11 @@ interface DaemonBoundCodeVisionProvider {
     val extensionPoint = ExtensionPointName.create<DaemonBoundCodeVisionProvider>(EP_NAME)
   }
 
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile) {
+
+  }
+
   /**
    * Computes code lens data in read action in background for a given editor.
    */
