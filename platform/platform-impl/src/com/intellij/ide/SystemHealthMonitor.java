@@ -59,6 +59,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     checkReservedCodeCacheSize();
     checkEnvironment();
     checkSignalBlocking();
+    checkTempDirEnvVars();
     startDiskSpaceMonitoring();
   }
 
@@ -209,6 +210,24 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
       catch (Throwable t) {
         LOG.warn(t);
+      }
+    }
+  }
+
+  private static void checkTempDirEnvVars() {
+    List<String> envVars = SystemInfo.isWindows ? List.of("TMP", "TEMP") : List.of("TMPDIR");
+    for (String name : envVars) {
+      String value = System.getenv(name);
+      if (value != null) {
+        try {
+          if (!Files.isDirectory(Path.of(value))) {
+            showNotification("temp.dir.env.invalid", false, null, name, value);
+          }
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          showNotification("temp.dir.env.invalid", false, null, name, value);
+        }
       }
     }
   }
