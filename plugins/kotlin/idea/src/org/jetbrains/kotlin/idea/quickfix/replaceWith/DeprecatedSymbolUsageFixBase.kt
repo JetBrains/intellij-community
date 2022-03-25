@@ -49,16 +49,16 @@ import org.jetbrains.kotlin.util.*
 
 abstract class DeprecatedSymbolUsageFixBase(
     element: KtReferenceExpression,
-    val replaceWith: ReplaceWith
+    val replaceWith: ReplaceWithData
 ) : KotlinQuickFixAction<KtReferenceExpression>(element) {
 
-    internal val available: Boolean
+    internal val isAvailable: Boolean
 
     init {
         assert(!isDispatchThread()) {
             "${javaClass.name} should not be created on EDT"
         }
-        available = buildUsageReplacementStrategy(
+        isAvailable = buildUsageReplacementStrategy(
             element,
             replaceWith,
             recheckAnnotation = true,
@@ -66,7 +66,7 @@ abstract class DeprecatedSymbolUsageFixBase(
         )?.let { it.createReplacer(element) != null } == true
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && available
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && isAvailable
 
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
@@ -84,11 +84,11 @@ abstract class DeprecatedSymbolUsageFixBase(
             project: Project,
             contextElement: KtReferenceExpression?,
             replaceInWholeProject: Boolean
-        ): ReplaceWith? {
+        ): ReplaceWithData? {
             val annotation = descriptor.annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
             val replaceWithValue = annotation.getAnnotationValue(Deprecated::replaceWith) ?: return null
-            val pattern = replaceWithValue.getStringValue(kotlin.ReplaceWith::expression)?.takeIf { it.isNotEmpty() } ?: return null
-            val imports = replaceWithValue.getArrayValue(kotlin.ReplaceWith::imports)?.mapAll { (it as? StringValue)?.value } ?: return null
+            val pattern = replaceWithValue.getStringValue(ReplaceWith::expression)?.takeIf { it.isNotEmpty() } ?: return null
+            val imports = replaceWithValue.getArrayValue(ReplaceWith::imports)?.mapAll { (it as? StringValue)?.value } ?: return null
 
             // should not be available for descriptors with optional parameters if we cannot fetch default values for them (currently for library with no sources)
             if (descriptor is CallableDescriptor && descriptor.valueParameters.any {
@@ -97,9 +97,9 @@ abstract class DeprecatedSymbolUsageFixBase(
             ) return null
 
             return if (replaceInWholeProject) {
-                ReplaceWith(pattern, imports, true)
+                ReplaceWithData(pattern, imports, true)
             } else {
-                ReplaceWith(pattern.applyContextElement(contextElement, descriptor), imports, false)
+                ReplaceWithData(pattern.applyContextElement(contextElement, descriptor), imports, false)
             }
         }
 
@@ -158,7 +158,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
         data class Data(
             val referenceExpression: KtReferenceExpression,
-            val replaceWith: ReplaceWith,
+            val replaceWith: ReplaceWithData,
             val descriptor: DeclarationDescriptor
         )
 
@@ -187,7 +187,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
         private fun buildUsageReplacementStrategy(
             element: KtReferenceExpression,
-            replaceWith: ReplaceWith,
+            replaceWith: ReplaceWithData,
             recheckAnnotation: Boolean,
             reformat: Boolean,
             editor: Editor? = null

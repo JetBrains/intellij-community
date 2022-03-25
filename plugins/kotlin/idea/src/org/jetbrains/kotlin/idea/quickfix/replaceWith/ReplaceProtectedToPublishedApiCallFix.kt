@@ -27,13 +27,13 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 
 class ReplaceProtectedToPublishedApiCallFix(
     element: KtExpression,
-    val classOwnerPointer: SmartPsiElementPointer<KtClass>,
-    val originalName: String,
-    val paramNames: Map<String, String>,
-    val newSignature: String,
-    val isProperty: Boolean,
-    val isVar: Boolean,
-    val isPublishedMemberAlreadyExists: Boolean
+    private val classOwnerPointer: SmartPsiElementPointer<KtClass>,
+    private val originalName: String,
+    private val paramNames: Map<String, String>,
+    private val newSignature: String,
+    private val isProperty: Boolean,
+    private val isVar: Boolean,
+    private val isPublishedMemberAlreadyExists: Boolean
 ) : KotlinQuickFixAction<KtExpression>(element) {
 
     override fun getFamilyName() = KotlinBundle.message("replace.with.publishedapi.bridge.call")
