@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots.libraries;
 
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -55,57 +41,57 @@ public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase 
   }
 
   public void testSingleJar() {
-    Library library = assertOneElement(createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES)));
+    Library library = assertOneElement(createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES)));
     assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar());
     assertEmpty(library.getFiles(OrderRootType.SOURCES));
   }
 
   public void testTwoJars() {
-    List<Library> libraries = createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+    List<Library> libraries = createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
                                               new OrderRoot(getAsmJar(), OrderRootType.CLASSES));
     assertEquals(2, libraries.size());
     assertNull(libraries.get(0).getName());
-    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getJDomJar());
+    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getFastUtilJar());
     assertNull(libraries.get(1).getName());
     assertSameElements(libraries.get(1).getFiles(OrderRootType.CLASSES), getAsmJar());
   }
 
   public void testJarAndSources() {
-    Library library = assertOneElement(createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+    Library library = assertOneElement(createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
                                                        new OrderRoot(getJDomSources(), OrderRootType.SOURCES)));
     assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar());
     assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomSources());
   }
 
   public void testJarWithSourcesInside() {
-    Library library = assertOneElement(createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
-                                                       new OrderRoot(getJDomJar(), OrderRootType.SOURCES)));
+    Library library = assertOneElement(createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
+                                                       new OrderRoot(getFastUtilJar(), OrderRootType.SOURCES)));
     assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar());
-    assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomJar());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar());
+    assertSameElements(library.getFiles(OrderRootType.SOURCES), getFastUtilJar());
   }
 
   public void testTwoJarAndSources() {
-    List<Library> libraries = createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+    List<Library> libraries = createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
                                               new OrderRoot(getAsmJar(), OrderRootType.CLASSES),
                                               new OrderRoot(getJDomSources(), OrderRootType.SOURCES));
     Library library = assertOneElement(libraries);
     assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar(), getAsmJar());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar(), getAsmJar());
     assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomSources());
   }
 
   public void testTwoJarWithSourcesInside() {
-    List<Library> libraries = createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+    List<Library> libraries = createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
                                               new OrderRoot(getAsmJar(), OrderRootType.CLASSES),
-                                              new OrderRoot(getJDomJar(), OrderRootType.SOURCES),
+                                              new OrderRoot(getFastUtilJar(), OrderRootType.SOURCES),
                                               new OrderRoot(getAsmJar(), OrderRootType.SOURCES));
     assertEquals(2, libraries.size());
     assertNull(libraries.get(0).getName());
-    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getJDomJar());
-    assertSameElements(libraries.get(0).getFiles(OrderRootType.SOURCES), getJDomJar());
+    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getFastUtilJar());
+    assertSameElements(libraries.get(0).getFiles(OrderRootType.SOURCES), getFastUtilJar());
     assertNull(libraries.get(1).getName());
     assertSameElements(libraries.get(1).getFiles(OrderRootType.CLASSES), getAsmJar());
     assertSameElements(libraries.get(1).getFiles(OrderRootType.SOURCES), getAsmJar());

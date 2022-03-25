@@ -22,13 +22,13 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
     assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                    getRtJarJdk17(), getJDomJar());
+                    getRtJarJdk17(), getFastUtilJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
-                    getJDomJar());
+                    getFastUtilJar());
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
-                    getJDomJar());
+                    getFastUtilJar());
     assertClasspath(myProject, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                    getRtJarJdk17(), getJDomJar());
+                    getRtJarJdk17(), getFastUtilJar());
   }
 
   public void testModuleSourcesAndOutput() throws Exception {
@@ -50,18 +50,18 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
-                    getJDomJar(), getAsmJar());
+                    getFastUtilJar(), getAsmJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
-                    getJDomJar());
+                    getFastUtilJar());
   }
 
   public void testProvidedScope() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.PROVIDED, false);
     ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getJDomJar(), getAsmJar());
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getAsmJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), getJDomJar());
+    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), getFastUtilJar());
   }
 
   public void testModuleDependency() throws Exception {
@@ -72,9 +72,9 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
-                    depOutput, getJDomJar());
+                    depOutput, getFastUtilJar());
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
-                    depTestOutput, depOutput, getJDomJar());
+                    depTestOutput, depOutput, getFastUtilJar());
   }
 
   public void testModuleDependencyScope() throws Exception {
@@ -84,10 +84,10 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
-                    getJDomJar());
+                    getFastUtilJar());
 
     assertClasspath(myProject, JavaParameters.CLASSES_ONLY,
-                    getJDomJar());
+                    getFastUtilJar());
   }
 
   public void testUseNewestJreVersion() throws CantRunException {
