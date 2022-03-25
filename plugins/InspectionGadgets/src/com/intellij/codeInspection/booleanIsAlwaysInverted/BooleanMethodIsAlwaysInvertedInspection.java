@@ -37,8 +37,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
         }
         else {
           PsiElement elementToRefactor = getElementToRefactor(element);
-          new InvertBooleanProcessor(elementToRefactor, ((PsiNamedElement)elementToRefactor).getName())
-            .run();
+          new InvertBooleanProcessor(elementToRefactor, ((PsiNamedElement)elementToRefactor).getName()).run();
         }
       }
     };
@@ -140,11 +139,9 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
 
   private static boolean hasNonInvertedCalls(final RefMethod refMethod) {
     final Boolean alwaysInverted = refMethod.getUserData(ALWAYS_INVERTED);
-    if (alwaysInverted == null) return true;
+    if (alwaysInverted != Boolean.TRUE) return true;
     if (refMethod.isExternalOverride()) return true;
-    if (refMethod.isReferenced() && !alwaysInverted.booleanValue()) return true;
-    final Collection<RefMethod> superMethods = refMethod.getSuperMethods();
-    for (RefMethod superMethod : superMethods) {
+    for (RefMethod superMethod : refMethod.getSuperMethods()) {
       if (hasNonInvertedCalls(superMethod)) return true;
     }
     return false;
