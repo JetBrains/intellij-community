@@ -10,8 +10,6 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -21,8 +19,6 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import java.io.File
-
-typealias MigrationTestState = KotlinMigrationProjectService.MigrationTestState
 
 class KotlinMigrationProjectService(val project: Project) {
     @Volatile
@@ -102,9 +98,7 @@ class KotlinMigrationProjectService(val project: Project) {
         fun getInstance(project: Project): KotlinMigrationProjectService = project.getServiceSafe()
 
         private fun prepareMigrationInfo(old: MigrationState?, new: MigrationState?): MigrationInfo? {
-            if (old == null || new == null) {
-                return null
-            }
+            if (old == null || new == null) return null
 
             if (old.apiVersion < new.apiVersion || old.languageVersion < new.languageVersion) {
                 return MigrationInfo(
@@ -170,9 +164,33 @@ private class MigrationState(
     val languageVersion: LanguageVersion,
 ) {
     companion object {
-        fun build(project: Project): MigrationState {
-            val languageVersionSettings = collectMaxCompilerSettings(project)
-            return MigrationState(languageVersionSettings.apiVersion, languageVersionSettings.languageVersion)
+        fun build(project: Project): MigrationState = runReadAction {
+            var maxApiVersion: ApiVersion? = null
+            var maxLanguageVersion: LanguageVersion? = null
+
+            for (module in ModuleManager.getInstance(project).modules) {
+                if (!module.isKotlinModule()) {
+                    // Otherwise, project compiler settings will give unreliable maximum for compiler settings
+                    continue
+                }
+
+                val languageVersionSettings = module.languageVersionSettings
+
+                if (maxApiVersion == null || languageVersionSettings.apiVersion > maxApiVersion) {
+                    maxApiVersion = languageVersionSettings.apiVersion
+                }
+
+                if (maxLanguageVersion == null || languageVersionSettings.languageVersion > maxLanguageVersion) {
+                    maxLanguageVersion = languageVersionSettings.languageVersion
+                }
+            }
+
+            val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+
+            MigrationState(
+                apiVersion = maxApiVersion ?: bundledKotlinVersion.apiVersion,
+                languageVersion = maxLanguageVersion ?: bundledKotlinVersion.languageVersion,
+            )
         }
     }
 }
@@ -210,37 +228,6 @@ fun MigrationInfo.isLanguageVersionUpdate(old: LanguageVersion, new: LanguageVer
 
 
 private const val BUILD_SRC_FOLDER_NAME = "buildSrc"
-
-private fun collectMaxCompilerSettings(project: Project): LanguageVersionSettings {
-    return runReadAction {
-        var maxApiVersion: ApiVersion? = null
-        var maxLanguageVersion: LanguageVersion? = null
-
-        for (module in ModuleManager.getInstance(project).modules) {
-            if (!module.isKotlinModule()) {
-                // Otherwise project compiler settings will give unreliable maximum for compiler settings
-                continue
-            }
-
-            val languageVersionSettings = module.languageVersionSettings
-
-            if (maxApiVersion == null || languageVersionSettings.apiVersion > maxApiVersion) {
-                maxApiVersion = languageVersionSettings.apiVersion
-            }
-
-            if (maxLanguageVersion == null || languageVersionSettings.languageVersion > maxLanguageVersion) {
-                maxLanguageVersion = languageVersionSettings.languageVersion
-            }
-        }
-
-        val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
-
-        LanguageVersionSettingsImpl(
-            maxLanguageVersion ?: bundledKotlinVersion.languageVersion,
-            maxApiVersion ?: bundledKotlinVersion.apiVersion
-        )
-    }
-}
 
 private fun Module.isKotlinModule(): Boolean {
     if (isDisposed) return false

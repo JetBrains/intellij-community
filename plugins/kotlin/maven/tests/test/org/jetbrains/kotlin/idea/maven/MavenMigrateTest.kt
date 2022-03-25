@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
 import org.jetbrains.kotlin.idea.configuration.MigrationInfo
-import org.jetbrains.kotlin.idea.configuration.MigrationTestState
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -102,7 +101,7 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
             })
         }
 
-        val importResult = FutureResult<MigrationTestState?>()
+        val importResult = FutureResult<KotlinMigrationProjectService.MigrationTestState?>()
         val migrationProjectComponent = KotlinMigrationProjectService.getInstance(myProject)
 
         migrationProjectComponent.setImportFinishListener { migrationState ->
