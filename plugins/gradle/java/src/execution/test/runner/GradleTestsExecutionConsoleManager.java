@@ -270,13 +270,22 @@ public class GradleTestsExecutionConsoleManager
     if (task instanceof ExternalSystemExecuteTaskTask) {
       var taskTask = (ExternalSystemExecuteTaskTask)task;
       if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
-        if (hasTestOption(taskTask) || hasTestTasks(taskTask)) {
+        if (hasTestOption(taskTask) || hasTestTasks(taskTask) || hasTestData(taskTask)) {
           taskTask.putUserData(RUN_TASK_AS_TEST, true);
           return true;
         }
       }
     }
     return false;
+  }
+
+  // Android Studio: workaround for IDEA-289683
+  private static boolean hasTestData(@NotNull ExternalSystemExecuteTaskTask task) {
+    return ContainerUtil.exists(task.getTasksToExecute(), taskToExecute -> {
+      var tasksIndices = GradleTasksIndices.getInstance(task.getIdeProject());
+      var testDataTasks = tasksIndices.findGradleTestDataTasks();
+      return testDataTasks.contains(taskToExecute);
+    });
   }
 
   private static boolean hasTestOption(@NotNull ExternalSystemExecuteTaskTask task) {

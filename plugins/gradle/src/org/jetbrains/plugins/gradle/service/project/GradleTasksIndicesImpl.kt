@@ -52,6 +52,11 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     return matchers.flatMap { matcher -> moduleContext.findTasks(matcher) }
   }
 
+  // Android Studio: workaround for IDEA-289683
+  override fun findGradleTestDataTasks(): Set<String> {
+    return org.jetbrains.plugins.gradle.util.getAllGradleTestDataTasks(project)
+  }
+
   override fun isMatchedTask(modulePath: String, task: GradleTaskData, matcher: String): ThreeState {
     return getTaskContext(modulePath, task).isMatchedTask(matcher)
   }
