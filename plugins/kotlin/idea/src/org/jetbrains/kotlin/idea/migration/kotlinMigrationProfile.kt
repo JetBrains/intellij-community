@@ -48,7 +48,7 @@ fun createMigrationProfile(
     return model
 }
 
-fun applicableMigrationTools(migrationInfo: MigrationInfo) = applicableMigrationToolsImpl(migrationInfo)
+fun applicableMigrationToolExists(migrationInfo: MigrationInfo): Boolean = applicableMigrationToolsImpl(migrationInfo).isNotEmpty()
 
 private fun applicableMigrationToolsImpl(migrationInfo: MigrationInfo?): List<InspectionToolWrapper<*, *>> {
     val rootProfile = InspectionProfileManager.getInstance().currentProfile

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -14,7 +13,6 @@ import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.idea.syncPublisherWithDisposeCheck
 import kotlin.reflect.KClass
 
 abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(private val project: Project) :
@@ -66,12 +64,10 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 
             KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
-            ApplicationManager.getApplication().invokeLater {
-                project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
-                    oldSettings = oldSettings,
-                    newSettings = _settings,
-                )
-            }
+            project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                oldSettings = oldSettings,
+                newSettings = _settings,
+            )
         }
 
     fun update(changer: T.() -> Unit) {
@@ -107,12 +103,10 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 
         KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
-        ApplicationManager.getApplication().invokeLater {
-            project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
-                oldSettings = null,
-                newSettings = settings,
-            )
-        }
+        project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+            oldSettings = null,
+            newSettings = settings,
+        )
     }
 
     public override fun clone(): Any = super.clone()

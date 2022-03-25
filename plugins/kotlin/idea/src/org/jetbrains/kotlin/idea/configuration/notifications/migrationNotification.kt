@@ -51,10 +51,11 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
             NotificationType.WARNING
         )
         .setSuggestionType(true)
-        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { _, notification ->
-            val projectContext = SimpleDataContext.getProjectContext(project)
-            val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
-            Notification.fire(notification, action, projectContext)
+        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { notificationAction, notification ->
+            val notificationProject = notificationAction.project ?: return@createExpiring
+            val projectContext = SimpleDataContext.getProjectContext(notificationProject)
+            val migrationAction = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
+            Notification.fire(notification, migrationAction, projectContext)
             KotlinMigrationProjectFUSCollector.logRun()
         })
         .setImportant(true)

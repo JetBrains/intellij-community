@@ -8,7 +8,6 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 
 class KotlinMavenImportListener(private val project: Project) : MavenImportListener {
@@ -16,7 +15,6 @@ class KotlinMavenImportListener(private val project: Project) : MavenImportListe
         KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project)
 
         ProgressIndicatorUtils.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
-            KotlinMigrationProjectService.getInstance(project).onImportFinished()
             checkExternalKotlinCompilerVersion(project)
         }
     }

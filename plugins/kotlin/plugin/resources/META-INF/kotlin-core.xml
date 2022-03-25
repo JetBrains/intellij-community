@@ -242,8 +242,6 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService$PackageCacheModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectDataImportListener"
-              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.KotlinClearPackageCachesListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
@@ -251,6 +249,9 @@
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="org.jetbrains.kotlin.idea.configuration.notifications.ExternalKotlinCompilerProjectDataImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+
+    <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService$CommonCompilerSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
