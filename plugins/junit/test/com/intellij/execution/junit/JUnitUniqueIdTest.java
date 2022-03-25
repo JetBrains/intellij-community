@@ -53,4 +53,32 @@ public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
       producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN));
     assertEquals("MyTest.m.nodeId", fromContext.getConfiguration().getName());
   }
+
+  public void testCustomEngineId() {
+    PsiClass psiClass = myFixture.addClass("/** @noinspection ALL*/ @org.junit.platform.commons.annotation.Testable\n" +
+                                           "class MyTest {\n" +
+                                           "  public Object testScenario = null;\n" +
+                                           "}");
+
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
+    SMTestProxy parent = new SMTestProxy("MyTest", true, "java:suite://MyTest");
+    SMTestProxy proxy = new SMTestProxy("nodeId", false, "file://" + psiClass.getContainingFile().getVirtualFile().getPath() + ":3");
+    proxy.setLocator(FileUrlProvider.INSTANCE);
+    parent.addChild(proxy);
+    proxy.putUserData(SMTestProxy.NODE_ID, "nodeId");
+    assertEquals("nodeId", TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(UniqueIdConfigurationProducer.class);
+    MapDataContext context = new MapDataContext();
+    context.put(CommonDataKeys.PROJECT, getProject());
+    context.put(AbstractTestProxy.DATA_KEYS, new AbstractTestProxy[]{proxy});
+    context.put(AbstractTestProxy.DATA_KEY, proxy);
+    context.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass.getFields()[0]));
+    JUnitConfiguration oldConfiguration = new JUnitConfiguration("", getProject());
+    oldConfiguration.setModule(getModule());
+    context.put(RunConfiguration.DATA_KEY, oldConfiguration);
+    
+    ConfigurationFromContext fromContext =
+      producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN));
+    assertEquals("nodeId", fromContext.getConfiguration().getName());
+  }
 }
