@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +41,27 @@ public class ResetFontSizeAction extends EditorAction {
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
 
   private static float getResetFontSize(@NotNull Editor editor) {
-    if (ConsoleViewUtil.isConsoleViewEditor(editor)) {
-      return PropertiesComponent.getInstance().getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
+    PropertiesComponent c = PropertiesComponent.getInstance();
+    boolean isConsoleViewEditor = ConsoleViewUtil.isConsoleViewEditor(editor);
+    float value;
+    if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) { // all editors case
+      if (isConsoleViewEditor) {
+        value = c.getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
+      }
+      else {
+        value = c.getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
+      }
     }
-    return PropertiesComponent.getInstance().getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
+    else { // single editor
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      if (isConsoleViewEditor) {
+        value = globalScheme.getConsoleFontSize2D();
+      }
+      else {
+        value = globalScheme.getEditorFontSize2D();
+      }
+    }
+    return value;
   }
 
   public ResetFontSizeAction() {
