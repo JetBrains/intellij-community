@@ -57,6 +57,11 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
             return false
         }
 
+        val nodeIds = UniqueIdConfigurationProducer.getNodeIds(context)
+        if (!nodeIds.isNullOrEmpty()) {
+            return false
+        }
+        
         return settingsMatchTemplate(configuration, context)
     }
 
