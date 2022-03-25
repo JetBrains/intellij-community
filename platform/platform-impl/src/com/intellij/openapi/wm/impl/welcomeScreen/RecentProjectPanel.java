@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -577,7 +577,7 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  private static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
+  public static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
     private ScheduledExecutorService myService = null;
     private final Set<String> myInvalidPaths = Collections.synchronizedSet(new HashSet<>());

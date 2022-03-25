@@ -9,10 +9,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.setEmptyState
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel.FilePathChecker
 import com.intellij.ui.*
+import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
@@ -30,10 +35,12 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
 
+// TODO: fix (using sealed interface)
 internal class RecentProjectPanelComponentFactory(
   private val parentDisposable: Disposable
 ) {
   private val recentProjectActions: List<AnAction> = RecentProjectListActionProvider.getInstance().getProjectActions()
+  private var filePathChecker: FilePathChecker? = null
 
   fun createComponent(): ProjectActionFilteringTree {
     val root = initializeTree(recentProjectActions)
@@ -49,6 +56,18 @@ internal class RecentProjectPanelComponentFactory(
       )
 
       SmartExpander.installOn(this)
+      TreeHoverListener.DEFAULT.addTo(this)
+    }
+
+    if (Registry.`is`("autocheck.availability.welcome.screen.projects")) {
+      filePathChecker = FilePathChecker(
+        Runnable {
+          if (tree.isShowing) {
+            tree.revalidate()
+            tree.repaint()
+          }
+        }, recentProjectActions.filterIsInstance(ReopenProjectAction::class.java).map { action -> action.projectPath })
+      Disposer.register(parentDisposable, filePathChecker!!)
     }
 
     val filteringTree = ProjectActionFilteringTree(tree, root).apply {
@@ -78,7 +97,7 @@ internal class RecentProjectPanelComponentFactory(
     return root
   }
 
-  private fun isProjectPathValid(path: String): Boolean = true // TODO: implement
+  private fun isProjectPathValid(path: String): Boolean = filePathChecker == null || filePathChecker!!.isValid(path)
 
   class ProjectActionFilteringTree(tree: Tree, root: DefaultMutableTreeNode) : FilteringTree<DefaultMutableTreeNode, AnAction>(
     ProjectManager.getInstance().defaultProject, tree, root
@@ -88,7 +107,7 @@ internal class RecentProjectPanelComponentFactory(
     override fun getText(action: AnAction?): String? = when (action) {
       is ReopenProjectAction -> action.projectName
       is ProjectGroupActionGroup -> action.group.name
-      else -> "" // TODO: fix (using sealed interface)
+      else -> ""
     }
 
     override fun getChildren(action: AnAction): Iterable<AnAction> = when (action) {
@@ -123,13 +142,21 @@ internal class RecentProjectPanelComponentFactory(
   private class ProjectActionMouseListener(private val tree: Tree) : MouseAdapter() {
     override fun mousePressed(mouseEvent: MouseEvent) {
       val treePath = tree.selectionPath ?: return
-      if (mouseEvent.clickCount == 2 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
+      if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
         mouseEvent.consume()
         val treeNode = treePath.lastPathComponent as DefaultMutableTreeNode
-        val action = treeNode.userObject as AnAction
-        val dataContext = DataManager.getInstance().getDataContext(tree)
-        val anActionEvent = AnActionEvent.createFromInputEvent(mouseEvent, ActionPlaces.WELCOME_SCREEN, null, dataContext)
-        action.actionPerformed(anActionEvent)
+        when (val action = treeNode.userObject) {
+          is ProjectGroupActionGroup -> {
+            if (tree.isExpanded(treePath)) tree.collapsePath(treePath) else tree.expandPath(treePath)
+            tree.removeSelectionRow(tree.getRowForPath(treePath))
+          }
+          is ReopenProjectAction -> {
+            val dataContext = DataManager.getInstance().getDataContext(tree)
+            val anActionEvent = AnActionEvent.createFromInputEvent(mouseEvent, ActionPlaces.WELCOME_SCREEN, null, dataContext)
+            action.actionPerformed(anActionEvent)
+          }
+          else -> {}
+        }
       }
     }
   }
