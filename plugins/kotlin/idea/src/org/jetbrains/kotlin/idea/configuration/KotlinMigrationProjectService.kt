@@ -1,17 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import com.intellij.util.CommonProcessors
-import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -20,13 +15,11 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.framework.MAVEN_SYSTEM_ID
 import org.jetbrains.kotlin.idea.migration.CodeMigrationToggleAction
 import org.jetbrains.kotlin.idea.migration.applicableMigrationTools
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.versions.LibInfo
 import java.io.File
 
 typealias MigrationTestState = KotlinMigrationProjectService.MigrationTestState
@@ -113,20 +106,12 @@ class KotlinMigrationProjectService(val project: Project) {
                 return null
             }
 
-            val oldLibraryVersion = old.stdlibInfo?.version
-            val newLibraryVersion = new.stdlibInfo?.version
-
-            if (oldLibraryVersion == null || newLibraryVersion == null) {
-                return null
-            }
-
-            if (VersionComparatorUtil.COMPARATOR.compare(newLibraryVersion, oldLibraryVersion) > 0 ||
-                old.apiVersion < new.apiVersion || old.languageVersion < new.languageVersion
-            ) {
+            if (old.apiVersion < new.apiVersion || old.languageVersion < new.languageVersion) {
                 return MigrationInfo(
-                    oldLibraryVersion, newLibraryVersion,
-                    old.apiVersion, new.apiVersion,
-                    old.languageVersion, new.languageVersion
+                    oldApiVersion = old.apiVersion,
+                    newApiVersion = new.apiVersion,
+                    oldLanguageVersion = old.languageVersion,
+                    newLanguageVersion = new.languageVersion,
                 )
             }
 
@@ -158,6 +143,7 @@ class KotlinMigrationProjectService(val project: Project) {
                             return true
                         }
                     }
+
                     "kt", "java", "groovy" -> {
                         val dirs: Sequence<File> = generateSequence(changedFile) { it.parentFile }
                             .drop(1) // Drop original file
@@ -180,43 +166,41 @@ class KotlinMigrationProjectService(val project: Project) {
 }
 
 private class MigrationState(
-    var stdlibInfo: LibInfo?,
-    var apiVersion: ApiVersion,
-    var languageVersion: LanguageVersion
+    val apiVersion: ApiVersion,
+    val languageVersion: LanguageVersion,
 ) {
     companion object {
         fun build(project: Project): MigrationState {
-            val libraries = maxKotlinLibVersion(project)
             val languageVersionSettings = collectMaxCompilerSettings(project)
-            return MigrationState(libraries, languageVersionSettings.apiVersion, languageVersionSettings.languageVersion)
+            return MigrationState(languageVersionSettings.apiVersion, languageVersionSettings.languageVersion)
         }
     }
 }
 
-data class MigrationInfo(
-    val oldStdlibVersion: String,
-    val newStdlibVersion: String,
+class MigrationInfo(
     val oldApiVersion: ApiVersion,
     val newApiVersion: ApiVersion,
     val oldLanguageVersion: LanguageVersion,
-    val newLanguageVersion: LanguageVersion
+    val newLanguageVersion: LanguageVersion,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MigrationInfo) return false
 
-    companion object {
-        fun create(
-            oldStdlibVersion: String,
-            oldApiVersion: ApiVersion,
-            oldLanguageVersion: LanguageVersion,
-            newStdlibVersion: String = oldStdlibVersion,
-            newApiVersion: ApiVersion = oldApiVersion,
-            newLanguageVersion: LanguageVersion = oldLanguageVersion
-        ): MigrationInfo {
-            return MigrationInfo(
-                oldStdlibVersion, newStdlibVersion,
-                oldApiVersion, newApiVersion,
-                oldLanguageVersion, newLanguageVersion
-            )
-        }
+        if (oldApiVersion != other.oldApiVersion) return false
+        if (newApiVersion != other.newApiVersion) return false
+        if (oldLanguageVersion != other.oldLanguageVersion) return false
+        if (newLanguageVersion != other.newLanguageVersion) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = oldApiVersion.hashCode()
+        result = 31 * result + newApiVersion.hashCode()
+        result = 31 * result + oldLanguageVersion.hashCode()
+        result = 31 * result + newLanguageVersion.hashCode()
+        return result
     }
 }
 
@@ -226,36 +210,6 @@ fun MigrationInfo.isLanguageVersionUpdate(old: LanguageVersion, new: LanguageVer
 
 
 private const val BUILD_SRC_FOLDER_NAME = "buildSrc"
-private const val KOTLIN_GROUP_ID = "org.jetbrains.kotlin"
-
-private fun maxKotlinLibVersion(project: Project): LibInfo? {
-    return runReadAction {
-        var maxStdlibInfo: LibInfo? = null
-
-        val allLibProcessor = CommonProcessors.CollectUniquesProcessor<Library>()
-        ProjectRootManager.getInstance(project).orderEntries().forEachLibrary(allLibProcessor)
-
-        for (library in allLibProcessor.results) {
-            if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, GRADLE_SYSTEM_ID) &&
-                !ExternalSystemApiUtil.isExternalSystemLibrary(library, MAVEN_SYSTEM_ID)
-            ) {
-                continue
-            }
-
-            if (library.name?.contains(" $KOTLIN_GROUP_ID:kotlin-stdlib") != true) {
-                continue
-            }
-
-            val libraryInfo = parseExternalLibraryName(library) ?: continue
-
-            if (maxStdlibInfo == null || VersionComparatorUtil.COMPARATOR.compare(libraryInfo.version, maxStdlibInfo.version) > 0) {
-                maxStdlibInfo = LibInfo(KOTLIN_GROUP_ID, libraryInfo.artifactId, libraryInfo.version)
-            }
-        }
-
-        maxStdlibInfo
-    }
-}
 
 private fun collectMaxCompilerSettings(project: Project): LanguageVersionSettings {
     return runReadAction {

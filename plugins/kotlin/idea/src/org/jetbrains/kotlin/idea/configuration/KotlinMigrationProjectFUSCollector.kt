@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -11,18 +11,16 @@ class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.migrationTool", 2)
+        private val GROUP = EventLogGroup("kotlin.ide.migrationTool", 3)
 
         private val oldLanguageVersion = EventFields.StringValidatedByRegexp("old_language_version", "version_lang_api")
         private val oldApiVersion = EventFields.StringValidatedByRegexp("old_api_version", "version_lang_api")
-        private val oldStdlibVersion = EventFields.StringValidatedByRegexp("old_stdlib_version", "version_stdlib")
         private val pluginInfo = EventFields.PluginInfo
 
         private val notificationEvent = GROUP.registerVarargEvent(
             "Notification",
             oldLanguageVersion,
             oldApiVersion,
-            oldStdlibVersion,
             pluginInfo,
         )
 
@@ -34,7 +32,6 @@ class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
             notificationEvent.log(
                 this.oldLanguageVersion.with(migrationInfo.oldLanguageVersion.versionString),
                 this.oldApiVersion.with(migrationInfo.oldApiVersion.versionString),
-                this.oldStdlibVersion.with(migrationInfo.oldStdlibVersion),
                 this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
             )
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.configuration.MigrationTestState
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -121,11 +120,13 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
         }
 
         Assert.assertEquals(
-            MigrationInfo.create(
-                "1.2.50", ApiVersion.KOTLIN_1_2, LanguageVersion.KOTLIN_1_2,
-                newApiVersion = ApiVersion.KOTLIN_1_3, newLanguageVersion = LanguageVersion.KOTLIN_1_3
+            MigrationInfo(
+                oldApiVersion = ApiVersion.KOTLIN_1_2,
+                newApiVersion = ApiVersion.KOTLIN_1_3,
+                oldLanguageVersion = LanguageVersion.KOTLIN_1_2,
+                newLanguageVersion = LanguageVersion.KOTLIN_1_3,
             ),
-            migrationTestState?.migrationInfo
+            migrationTestState?.migrationInfo,
         )
     }
 }

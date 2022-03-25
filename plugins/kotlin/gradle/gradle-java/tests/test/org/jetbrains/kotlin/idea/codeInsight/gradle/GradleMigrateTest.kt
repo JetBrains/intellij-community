@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -67,13 +67,11 @@ class GradleMigrateTest : GradleImportingTestCase() {
         assertEquals(false, migrateComponentState?.hasApplicableTools)
 
         assertEquals(
-            MigrationInfo.create(
-                oldStdlibVersion = "1.3.40",
+            MigrationInfo(
                 oldApiVersion = ApiVersion.KOTLIN_1_3,
-                oldLanguageVersion = LanguageVersion.KOTLIN_1_3,
-                newStdlibVersion = "1.4.0-rc",
                 newApiVersion = ApiVersion.KOTLIN_1_4,
-                newLanguageVersion = LanguageVersion.KOTLIN_1_4
+                oldLanguageVersion = LanguageVersion.KOTLIN_1_3,
+                newLanguageVersion = LanguageVersion.KOTLIN_1_4,
             ),
             migrateComponentState?.migrationInfo
         )

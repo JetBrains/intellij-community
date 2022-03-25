@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.notifications
 
@@ -20,15 +20,6 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
     @NlsSafe
     val detectedChangeMessage = buildString {
         appendBr(KotlinBundle.message("configuration.migration.text.detected.migration"))
-        if (migrationInfo.oldStdlibVersion != migrationInfo.newStdlibVersion) {
-            appendIndentBr(
-                KotlinBundle.message(
-                    "configuration.migration.text.standard.library",
-                    migrationInfo.oldStdlibVersion,
-                    migrationInfo.newStdlibVersion
-                )
-            )
-        }
 
         if (migrationInfo.oldLanguageVersion != migrationInfo.newLanguageVersion) {
             appendIndentBr(
