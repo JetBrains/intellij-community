@@ -183,8 +183,7 @@ Includes the following features:</p>
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
-    <applicationConfigurable parentId="Settings.Markdown"
-                             provider="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurableProvider"/>
+    <applicationConfigurable parentId="Settings.Markdown" instance="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurable"/>
 
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
@@ -295,10 +294,6 @@ Includes the following features:</p>
     <registryKey key="markdown.google.docs.import.action.enable"
                  defaultValue="false"
                  description="Temporarily disable the action of the import docs from google"/>
-
-    <registryKey key="markdown.google.accounts.enable"
-                 defaultValue="false"
-                 description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
 
     <registryKey key="markdown.tables.editing.support.enable"
                  defaultValue="true"
