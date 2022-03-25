@@ -479,7 +479,7 @@ private fun renderAnnotation(
     return "${request.qualifiedName}${
         request.attributes.takeIf { it.isNotEmpty() }?.mapIndexed { i, p ->
             if (!isKotlinAnnotation(request) && i == 0 && p.name == "value")
-                renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)
+                renderAttributeValue(p.value, psiFactory, isKotlinAnnotation, isVararg = true)
             else
                 "${p.name} = ${renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)}"
         }?.joinToString(", ", "(", ")") ?: ""
@@ -490,6 +490,7 @@ private fun renderAttributeValue(
     annotationAttributeRequest: AnnotationAttributeValueRequest,
     psiFactory: KtPsiFactory,
     isKotlinAnnotation: (AnnotationRequest) -> Boolean,
+    isVararg: Boolean = false,
 ): String =
     when (annotationAttributeRequest) {
         is AnnotationAttributeValueRequest.PrimitiveValue -> annotationAttributeRequest.value.toString()
@@ -498,8 +499,10 @@ private fun renderAttributeValue(
         is AnnotationAttributeValueRequest.ConstantValue -> annotationAttributeRequest.text
         is AnnotationAttributeValueRequest.NestedAnnotation ->
             renderAnnotation(annotationAttributeRequest.annotationRequest, psiFactory, isKotlinAnnotation)
-        is AnnotationAttributeValueRequest.ArrayValue ->
-            annotationAttributeRequest.members.joinToString(", ", "[", "]") { memberRequest ->
+        is AnnotationAttributeValueRequest.ArrayValue -> {
+            val (prefix, suffix) = if (isVararg) "" to "" else "[" to "]"
+            annotationAttributeRequest.members.joinToString(", ", prefix, suffix) { memberRequest ->
                 renderAttributeValue(memberRequest, psiFactory, isKotlinAnnotation)
             }
+        }
     }
