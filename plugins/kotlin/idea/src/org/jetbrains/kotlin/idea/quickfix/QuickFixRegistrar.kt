@@ -741,5 +741,6 @@ class QuickFixRegistrar : QuickFixContributor {
         NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
 
         WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(ChangeMemberFunctionSignatureFix)
+        CONFUSING_BRANCH_CONDITION.registerFactory(ConfusingExpressionInWhenBranchFix)
     }
 }
