@@ -298,6 +298,8 @@ class QuickFixRegistrar : QuickFixContributor {
         INVALID_IF_AS_EXPRESSION.registerFactory(AddIfElseBranchFix)
         INVALID_IF_AS_EXPRESSION_WARNING.registerFactory(AddIfElseBranchFix)
 
+        INTEGER_OPERATOR_RESOLVE_WILL_CHANGE.registerFactory(AddConversionCallFix)
+
         NO_TYPE_ARGUMENTS_ON_RHS.registerFactory(AddStarProjectionsFixFactory)
 
         TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER.registerFactory(RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory)
