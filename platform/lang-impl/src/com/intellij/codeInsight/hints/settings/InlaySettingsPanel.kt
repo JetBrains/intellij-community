@@ -45,6 +45,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private val groups: MutableMap<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
 
+  companion object {
+    @kotlin.jvm.JvmField
+    val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+  }
+
   init {
     val models = InlaySettingsProvider.EP.getExtensions().flatMap { provider ->
       provider.getSupportedLanguages(project).flatMap { provider.createModels(project, it) }
@@ -214,6 +219,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     if (previewText != null) {
       val editorTextField = createEditor(model.getCasePreviewLanguage(null) ?: model.language, project) { editor ->
         currentEditor = editor
+        PREVIEW_KEY.set(editor, "")
         CASE_KEY.set(editor, case)
         updateHints(editor, model)
       }
