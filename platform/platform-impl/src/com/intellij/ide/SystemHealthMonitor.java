@@ -117,7 +117,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
     String jreHome = SystemProperties.getJavaHome();
     if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
-      // the JRE is non-bundled and is either non-JB or older than bundled
+      // boot JRE is non-bundled and is either non-JB or older than bundled
       NotificationAction switchAction = null;
 
       String directory = PathManager.getCustomOptionsDirectory();
