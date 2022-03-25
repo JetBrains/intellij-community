@@ -60,13 +60,17 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
     var settings: T
         get() = _settings
         set(value) {
+            val oldSettings = _settings
             validateNewSettings(value)
             _settings = value
 
             KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
             ApplicationManager.getApplication().invokeLater {
-                project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(value)
+                project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                    oldSettings = oldSettings,
+                    newSettings = _settings,
+                )
             }
         }
 
@@ -104,7 +108,10 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
         ApplicationManager.getApplication().invokeLater {
-            project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(settings)
+            project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                oldSettings = null,
+                newSettings = settings,
+            )
         }
     }
 
@@ -112,7 +119,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 }
 
 interface KotlinCompilerSettingsListener {
-    fun <T> settingsChanged(newSettings: T)
+    fun <T> settingsChanged(oldSettings: T?, newSettings: T?)
 
     companion object {
         @Topic.ProjectLevel
