@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -44,6 +45,7 @@ import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.isMetaPressed
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import kotlinx.coroutines.launch
 import org.jetbrains.jewel.theme.intellij.appendIf
 import org.jetbrains.jewel.theme.intellij.styles.LocalTreeViewStyle
 import org.jetbrains.jewel.theme.intellij.styles.TreeViewState
@@ -171,7 +173,7 @@ fun <T> BaseTreeLayout(
     style: TreeViewStyle = LocalTreeViewStyle.current,
     state: LazyListState = rememberLazyListState(),
     focusedTreeElement: Tree.Element<T>? = null,
-    onFocusChanged: (Tree.Element<T>?) -> Unit,
+    onFocusedElementChange: (Tree.Element<T>?) -> Unit,
     onTreeNodeToggle: (Tree.Element.Node<T>) -> Unit,
     onTreeElementClick: MouseClickScope.(Int, Tree.Element<T>) -> Unit,
     onTreeElementDoubleClick: (Tree.Element<T>) -> Unit,
@@ -180,12 +182,12 @@ fun <T> BaseTreeLayout(
     var isFocused by remember { mutableStateOf(TreeViewState.fromBoolean(false)) }
     val appearance = style.appearance(isFocused)
     val appearanceTransitionState = updateTreeViewAppearanceTransition(appearance)
+    val scope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = modifier.background(appearanceTransitionState.background)
             .onFocusChanged {
                 isFocused = TreeViewState.fromBoolean(it.hasFocus)
-                if (!it.hasFocus) onFocusChanged(null)
             }
             .focusProperties { canFocus = false }
             .focusTarget(),
@@ -202,7 +204,7 @@ fun <T> BaseTreeLayout(
                     .appendIf(treeElement.isSelected) { background(appearanceTransitionState.selectedBackground) }
                     .onFocusChanged {
                         isElementSelected = it.isFocused || it.hasFocus
-                        if (isElementSelected) onFocusChanged(treeElement)
+                        if (isElementSelected) onFocusedElementChange(treeElement)
                     }
                     .onKeyEvent { onKeyPressed(it, index, treeElementWithDepth) }
                     .mouseClickable { onTreeElementClick(index, treeElement) }
@@ -234,7 +236,7 @@ fun <T> BaseTreeLayout(
             }
 
             if (focusedTreeElement == treeElement) {
-                LaunchedEffect(focusedTreeElement) {
+                scope.launch {
                     focusRequester.requestFocus()
                 }
             }
@@ -294,7 +296,7 @@ fun <T> TreeLayout(
 
     BaseTreeLayout(
         modifier = modifier,
-        onFocusChanged = { focusedTreeElement = it },
+        onFocusedElementChange = { focusedTreeElement = it },
         onKeyPressed = { keyEvent, index, elementWithDepth ->
             val (element, depth) = elementWithDepth
 
