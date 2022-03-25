@@ -32,7 +32,6 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
@@ -45,22 +44,10 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="intellij.java.structureView" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module-library">
-      <library name="nekohtml" type="repository">
-        <properties include-transitive-deps="false" maven-id="net.sourceforge.nekohtml:nekohtml:1.9.22" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/sourceforge/nekohtml/nekohtml/1.9.22/nekohtml-1.9.22.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="library" name="jaxb-api" level="project" />
-    <orderEntry type="library" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
@@ -85,7 +72,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="library" name="ASM" level="project" />
   </component>
   <component name="copyright">
     <Base>

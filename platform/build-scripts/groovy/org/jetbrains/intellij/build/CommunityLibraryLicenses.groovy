@@ -571,8 +571,6 @@ final class CommunityLibraryLicenses {
     new LibraryLicense(libraryName: "NanoXML", license: "zlib/libpng",
                        url: "https://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
                        licenseUrl: "https://www.opensource.org/licenses/zlib-license.html"),
-    new LibraryLicense(name: "nekohtml", libraryName: "nekohtml",
-                       url: "https://nekohtml.sourceforge.net/").apache(),
     new LibraryLicense(name: "net.loomchild.segment", libraryName: "net.loomchild:segment:2.0.1",
                        url: "https://github.com/loomchild/segment",
                        licenseUrl: "https://github.com/loomchild/segment/blob/master/LICENSE.txt").mit(),
