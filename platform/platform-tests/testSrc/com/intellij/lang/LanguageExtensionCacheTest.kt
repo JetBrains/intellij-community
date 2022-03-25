@@ -92,7 +92,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
     val plainTextDialectFileType = object: MockLanguageFileType(language, "x_x_x_x") {
       override fun getDescription(): String = "blah-blah" + System.identityHashCode(this)
     }
-    (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(plainTextDialectFileType, listOf(), parentDisposable)
+    (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(plainTextDialectFileType, listOf(), parentDisposable, descriptor)
     return plainTextDialectFileType.language
   }
 
