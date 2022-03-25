@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.maven
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.runUnderDisposeAwareIndicator
 
 

@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.migration
 
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
 
 /**
  * Marker interface for inspections that can be used during kotlin migrations

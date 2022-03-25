@@ -12,9 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectFUSCollector
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.CodeMigrationAction
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
 
 internal fun showMigrationNotification(project: Project, migrationInfo: MigrationInfo) {
     @NlsSafe

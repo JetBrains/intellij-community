@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.configuration
+package org.jetbrains.kotlin.idea.migration
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -30,9 +30,9 @@ class KotlinMigrationProjectFUSCollector : CounterUsagesCollector() {
 
         fun logNotification(migrationInfo: MigrationInfo) {
             notificationEvent.log(
-                this.oldLanguageVersion.with(migrationInfo.oldLanguageVersion.versionString),
-                this.oldApiVersion.with(migrationInfo.oldApiVersion.versionString),
-                this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
+                oldLanguageVersion.with(migrationInfo.oldLanguageVersion.versionString),
+                oldApiVersion.with(migrationInfo.oldApiVersion.versionString),
+                pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
             )
         }
 

@@ -10,8 +10,8 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.FutureResult
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.configuration
+package org.jetbrains.kotlin.idea.migration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.migration.CodeMigrationToggleAction
-import org.jetbrains.kotlin.idea.migration.applicableMigrationTools
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.*
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode

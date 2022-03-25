@@ -10,9 +10,9 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.FutureResult
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService.MigrationTestState
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService
+import org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService.MigrationTestState
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
