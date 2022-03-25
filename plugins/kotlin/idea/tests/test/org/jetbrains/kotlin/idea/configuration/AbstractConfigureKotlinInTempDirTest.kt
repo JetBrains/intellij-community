@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -8,7 +8,6 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 import java.nio.file.Files
@@ -37,9 +36,19 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
         val projectFile = projectRoot.resolve("projectFile.ipr")
         val projectRoot = (if (projectFile.exists()) projectFile else projectRoot).toPath()
 
-        val kotlinRuntime = projectRoot.resolve("lib/kotlin-stdlib.jar")
-        if (getTestName(true).toLowerCase().contains("latestruntime") && Files.exists(kotlinRuntime)) {
-            KotlinArtifacts.instance.kotlinStdlib.copyTo(kotlinRuntime.toFile(), overwrite = true)
+        val testName = getTestName(true).toLowerCase()
+        val originalStdlibFile = when {
+            testName.contains("latestruntime") -> KotlinArtifacts.instance.kotlinStdlib
+            testName.endsWith("withstdlib") -> KotlinArtifacts.instance.kotlinStdlib
+            else -> null
+        }
+
+        if (originalStdlibFile != null) {
+            val stdlibPath = "lib/kotlin-stdlib.jar"
+            val originalPath = originalDir.resolve(stdlibPath)
+            if (Files.exists(originalPath.toPath())) error(originalPath)
+            val kotlinStdlib = projectRoot.resolve(stdlibPath)
+            originalStdlibFile.copyTo(kotlinStdlib.toFile(), overwrite = true)
         }
 
         return projectRoot
