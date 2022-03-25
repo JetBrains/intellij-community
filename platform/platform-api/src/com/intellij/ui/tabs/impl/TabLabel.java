@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -286,7 +287,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   public boolean isLastPinned() {
-    if (myInfo.isPinned()) {
+    if (myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       @NotNull List<TabInfo> tabs = myTabs.getTabs();
       for (int i = 0; i < tabs.size(); i++) {
         TabInfo info = tabs.get(i);
@@ -299,7 +300,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   public boolean isNextToLastPinned() {
-    if (!myInfo.isPinned()) {
+    if (!myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       @NotNull List<TabInfo> tabs = myTabs.getVisibleInfos();
       boolean wasPinned = false;
       for (TabInfo info : tabs) {
