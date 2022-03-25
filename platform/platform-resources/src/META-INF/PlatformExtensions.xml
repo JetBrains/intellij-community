@@ -1200,6 +1200,8 @@
     <applicationInitializedListener implementation="com.intellij.ide.customize.WelcomeWizardHelper"/>
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
 
+    <applicationInitializedListener implementation="com.intellij.openapi.editor.actions.ResetFontSizeAction$Listener"/>
+
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl" preload="true"/>
