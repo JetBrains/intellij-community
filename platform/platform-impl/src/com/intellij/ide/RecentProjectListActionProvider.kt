@@ -15,6 +15,27 @@ open class RecentProjectListActionProvider {
     fun getInstance() = service<RecentProjectListActionProvider>()
   }
 
+  fun getProjectActions(): List<AnAction> {
+    val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+    val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
+    val openedPaths = ProjectUtil.getOpenProjects().mapNotNull { openProject ->
+      recentProjectManager.getProjectPath(openProject)
+    }.toSet()
+
+    val actions = mutableListOf<AnAction>()
+    val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
+    val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
+    groups.forEach { projectGroup ->
+      val children = projectGroup.projects.map { recentProject -> createOpenAction(recentProject, duplicates) }
+      allRecentProjectPaths.removeAll(projectGroup.projects.toSet())
+      actions.add(ProjectGroupActionGroup(projectGroup, children))
+    }
+
+    allRecentProjectPaths.forEach { recentProject -> actions.add(createOpenAction(recentProject, duplicates)) }
+
+    return actions
+  }
+
   @JvmOverloads
   open fun getActions(addClearListItem: Boolean = false, useGroups: Boolean = false): List<AnAction> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
@@ -30,25 +51,7 @@ open class RecentProjectListActionProvider {
     val duplicates = getDuplicateProjectNames(openedPaths, paths)
     val groups = recentProjectManager.groups.toMutableList()
     if (useGroups) {
-      val projectPaths = paths.toMutableList()
-      groups.sortWith(object : Comparator<ProjectGroup> {
-        override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
-          val ind1 = getGroupIndex(o1)
-          val ind2 = getGroupIndex(o2)
-          return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
-        }
-
-        private fun getGroupIndex(group: ProjectGroup): Int {
-          var index = Integer.MAX_VALUE
-          for (path in group.projects) {
-            val i = projectPaths.indexOf(path)
-            if (i in 0 until index) {
-              index = i
-            }
-          }
-          return index
-        }
-      })
+      groups.sortWith(ProjectGroupComparator(paths))
 
       for (group in groups) {
         paths.removeAll(group.projects)
@@ -127,5 +130,24 @@ open class RecentProjectListActionProvider {
       }
     }
     return duplicates
+  }
+
+  private class ProjectGroupComparator(private val projectPaths: Set<String>) : Comparator<ProjectGroup> {
+    override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
+      val ind1 = getGroupIndex(o1)
+      val ind2 = getGroupIndex(o2)
+      return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
+    }
+
+    private fun getGroupIndex(group: ProjectGroup): Int {
+      var index = Integer.MAX_VALUE
+      for (path in group.projects) {
+        val i = projectPaths.indexOf(path)
+        if (i in 0 until index) {
+          index = i
+        }
+      }
+      return index
+    }
   }
 }
