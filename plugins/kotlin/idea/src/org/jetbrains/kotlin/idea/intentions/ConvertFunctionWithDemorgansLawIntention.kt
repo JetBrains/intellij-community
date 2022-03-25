@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -40,12 +40,11 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         val callee = element.calleeExpression ?: return null
         val (fromFunctionName, toFunctionName, _, _) = conversions[callee.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
+        val lambdaBody = element.singleLambdaArgumentExpression()?.bodyExpression ?: return null
+        if (lambdaBody.anyDescendantOfType<KtReturnExpression>()) return null
+
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull() !in fqNames) return null
-
-        val lambda = element.singleLambdaArgumentExpression() ?: return null
-        val lambdaBody = lambda.bodyExpression ?: return null
-        if (lambdaBody.anyDescendantOfType<KtReturnExpression>()) return null
         if (lambdaBody.statements.lastOrNull()?.getType(context)?.isBoolean() != true) return null
 
         setTextGetter(KotlinBundle.lazyMessage("replace.0.with.1", fromFunctionName, toFunctionName))
@@ -55,36 +54,11 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         val (_, toFunctionName, negateCall, negatePredicate) = conversions[element.calleeExpression?.text] ?: return
         val lambda = element.singleLambdaArgumentExpression() ?: return
-        val lastExpression = lambda.bodyExpression?.statements?.lastOrNull() ?: return
-        val psiFactory = KtPsiFactory(element)
-
-        if (negatePredicate) {
-            val exclPrefixExpression = lastExpression.asExclPrefixExpression()
-            if (exclPrefixExpression == null) {
-                val replaced = lastExpression.replaced(psiFactory.createExpressionByPattern("!($0)", lastExpression)) as KtPrefixExpression
-                replaced.baseExpression.removeUnnecessaryParentheses()
-                when (val baseExpression = replaced.baseExpression?.deparenthesize()) {
-                    is KtBinaryExpression -> {
-                        val operationToken = baseExpression.operationToken
-                        if (operationToken == KtTokens.ANDAND || operationToken == KtTokens.OROR) {
-                            ConvertBinaryExpressionWithDemorgansLawIntention.convertIfPossible(baseExpression)
-                        } else {
-                            SimplifyNegatedBinaryExpressionInspection.simplifyNegatedBinaryExpressionIfNeeded(replaced)
-                        }
-                    }
-                    is KtQualifiedExpression -> {
-                        baseExpression.invertSelectorFunction()?.let { replaced.replace(it) }
-                    }
-                }
-            } else {
-                val replaced = exclPrefixExpression.baseExpression?.let { lastExpression.replaced(it) }
-                replaced.removeUnnecessaryParentheses()
-            }
-        }
-
-        val callOrQualified = element.getQualifiedExpressionForSelector() ?: element
+        val predicate = lambda.bodyExpression?.statements?.lastOrNull() ?: return
+        if (negatePredicate) negate(predicate)
+        val callOrQualified = element.getQualifiedExpressionForSelectorOrThis()
         val parentNegatedExpression = callOrQualified.parentNegatedExpression()
-        psiFactory.buildExpression {
+        KtPsiFactory(element).buildExpression {
             val addNegation = negateCall && parentNegatedExpression == null
             if (addNegation && callOrQualified !is KtSafeQualifiedExpression) {
                 appendFixedText("!")
@@ -94,6 +68,32 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
                 appendFixedText("?.not()")
             }
         }.let { (parentNegatedExpression ?: callOrQualified).replaced(it) }
+    }
+
+    private fun negate(predicate: KtExpression) {
+        val exclPrefixExpression = predicate.asExclPrefixExpression()
+        if (exclPrefixExpression != null) {
+            val replaced = exclPrefixExpression.baseExpression?.let { predicate.replaced(it) }
+            replaced.removeUnnecessaryParentheses()
+            return
+        }
+
+        val replaced = predicate.replaced(KtPsiFactory(predicate).createExpressionByPattern("!($0)", predicate)) as KtPrefixExpression
+        replaced.baseExpression.removeUnnecessaryParentheses()
+        when (val baseExpression = replaced.baseExpression?.deparenthesize()) {
+            is KtBinaryExpression -> {
+                val operationToken = baseExpression.operationToken
+                if (operationToken == KtTokens.ANDAND || operationToken == KtTokens.OROR) {
+                    ConvertBinaryExpressionWithDemorgansLawIntention.convertIfPossible(baseExpression)
+                } else {
+                    SimplifyNegatedBinaryExpressionInspection.simplifyNegatedBinaryExpressionIfNeeded(replaced)
+                }
+            }
+
+            is KtQualifiedExpression -> {
+                baseExpression.invertSelectorFunction()?.let { replaced.replace(it) }
+            }
+        }
     }
 
     private fun KtExpression.parentNegatedExpression(): KtExpression? {
