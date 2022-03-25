@@ -400,10 +400,10 @@
     },
 
     "Tree": {
-      "collapsedIcon": "/general/chevron-right.svg",
-      "collapsedSelectedIcon": "/general/chevron-right.svg",
-      "expandedIcon": "/general/chevron-down.svg",
-      "expandedSelectedIcon": "/general/chevron-down.svg",
+      "collapsedIcon": "/expui/general/chevronRight.svg",
+      "collapsedSelectedIcon": "/expui/general/chevronRight.svg",
+      "expandedIcon": "/expui/general/chevronDown.svg",
+      "expandedSelectedIcon": "/expui/general/chevronDown.svg",
       "rowHeight": 24,
       "hash": "Grey5"
     },
