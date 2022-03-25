@@ -729,5 +729,6 @@ class QuickFixRegistrar : QuickFixContributor {
         OVERRIDE_DEPRECATION.registerFactory(AddAnnotationWithArgumentsFix.CopyDeprecatedAnnotation)
 
         WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(ChangeMemberFunctionSignatureFix)
+        CONFUSING_BRANCH_CONDITION.registerFactory(ConfusingExpressionInWhenBranchFix)
     }
 }
