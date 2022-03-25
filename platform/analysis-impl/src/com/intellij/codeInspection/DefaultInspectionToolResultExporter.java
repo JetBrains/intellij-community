@@ -173,7 +173,6 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       .collect(Collectors.toList());
 
     for (ProblemDescriptorKey key : keys) {
-      LOG.info("" + key.position);
       final var descriptor = key.descriptor;
       Element element = null;
       try {
