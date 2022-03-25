@@ -356,7 +356,7 @@ public final class EnvironmentUtil {
           .start();
         final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String envData = Files.exists(envDataFile) ? new String(Files.readAllBytes(envDataFile), Charset.defaultCharset()) : "";
+        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
         final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
         if (exitCode != 0 || envData.isEmpty()) {
           EnvironmentReaderException ex =  new EnvironmentReaderException("command " + command +
