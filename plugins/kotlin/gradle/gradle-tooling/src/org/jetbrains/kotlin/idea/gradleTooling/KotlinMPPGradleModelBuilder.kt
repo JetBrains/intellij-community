@@ -9,6 +9,7 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
@@ -726,13 +727,15 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         val getClassesDirs = gradleOutputClass.getMethodOrNull("getClassesDirs") ?: return null
         val getResourcesDir = gradleOutputClass.getMethodOrNull("getResourcesDir") ?: return null
         val compileKotlinTaskClass = compileKotlinTask.javaClass
+        val getDestinationDirectory = compileKotlinTaskClass.getMethodOrNull("getDestinationDirectory")
         val getDestinationDir = compileKotlinTaskClass.getMethodOrNull("getDestinationDir")
         val getOutputFile = compileKotlinTaskClass.getMethodOrNull("getOutputFile")
         val classesDirs = getClassesDirs(gradleOutput) as? FileCollection ?: return null
         val resourcesDir = getResourcesDir(gradleOutput) as? File ?: return null
         @Suppress("UNCHECKED_CAST") val destinationDir =
-            getDestinationDir?.invoke(compileKotlinTask) as? File
-            //TODO: Hack for KotlinNativeCompile
+            (getDestinationDirectory?.invoke(compileKotlinTask) as? DirectoryProperty)?.asFile?.orNull
+                ?: getDestinationDir?.invoke(compileKotlinTask) as? File
+                //TODO: Hack for KotlinNativeCompile
                 ?: (getOutputFile?.invoke(compileKotlinTask) as? Property<File>)?.orNull?.parentFile
                 ?: return null
         return KotlinCompilationOutputImpl(classesDirs.files, destinationDir, resourcesDir)
@@ -871,6 +874,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
                                 }
                             }
                         }
+
                         else ->
                             listOf(
                                 // Do nothing but set the correct scope for this dependency if needed and adjust recursively:
@@ -886,6 +890,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
                             )
                     }
                 }
+
                 else -> listOf(dependency)
             }
 
