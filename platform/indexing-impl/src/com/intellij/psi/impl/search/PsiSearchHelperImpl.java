@@ -419,7 +419,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
-  // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
+  // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again,
+  // trying to finish the unprocessed files (i.e. those for which {@code localProcessor} hasn't been called yet).
   // {@code localProcessor} must be as idempotent as possible (and must not return false on progress cancel)
   private static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
                                                                      @NotNull List<? extends VirtualFile> files,
