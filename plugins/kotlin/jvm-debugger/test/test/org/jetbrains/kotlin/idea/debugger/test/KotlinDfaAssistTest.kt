@@ -6,6 +6,7 @@ import com.intellij.debugger.mockJDI.MockStackFrame
 import com.intellij.debugger.mockJDI.MockVirtualMachine
 import com.intellij.debugger.mockJDI.values.MockBooleanValue
 import com.intellij.debugger.mockJDI.values.MockIntegerValue
+import com.intellij.debugger.mockJDI.values.MockObjectReference
 import com.intellij.debugger.mockJDI.values.MockValue
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -29,7 +30,7 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                 
                 fun main() {
                     test(5)
-                }""".trimIndent()) { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+                }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
     fun testSuppression() {
@@ -52,7 +53,7 @@ class KotlinDfaAssistTest : DfaAssistTest() {
 
                 fun main() {
                     obj(5)
-                }""".trimIndent()) { vm, frame -> frame.addVariable("x", MockValue.createValue(1, Integer::class.java, vm)) }
+                }""") { vm, frame -> frame.addVariable("x", MockValue.createValue(1, Integer::class.java, vm)) }
     }
 
     fun testWrapped() {
@@ -69,11 +70,67 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                 
                 fun main() {
                     test(5)
-                }""".trimIndent()) { vm, frame ->
+                }""") { vm, frame ->
             val cls = Class.forName("kotlin.jvm.internal.Ref\$IntRef")
             val box = cls.getConstructor().newInstance()
             cls.getDeclaredField("element").set(box, 6)
             frame.addVariable("y", MockValue.createValue(box, cls, vm))
+        }
+    }
+
+    class Nested(@Suppress("unused") val x:Int)
+
+    fun testThis() {
+        doTest("""package org.jetbrains.kotlin.idea.debugger.test
+            class KotlinDfaAssistTest {
+              class Nested(val x:Int) {
+                fun test() {
+                  <caret>if (x == 5/*TRUE*/) {}
+                }
+              }
+            }
+        """) { vm, frame ->
+            frame.setThisValue(MockObjectReference.createObjectReference(Nested(5), Nested::class.java, vm))
+        }
+    }
+
+    fun testQualified() {
+        doTest("""package org.jetbrains.kotlin.idea.debugger.test
+            class KotlinDfaAssistTest {
+              class Nested(val x:Int)
+            }
+            
+            fun use(n : Nested) {
+                <caret>if (n.x > 5) {}
+            }
+        """) { vm, frame ->
+            frame.addVariable("n", MockValue.createValue(Nested(6), Nested::class.java, vm))
+        }
+    }
+
+    fun testExtensionMethod() {
+        doTest("""fun String.isLong(): Boolean {
+                      <caret>return this.length > 5/*FALSE*/
+                  }
+
+                  fun main() {
+                      "xyz".isLong()
+                  }""") { vm, frame ->
+            frame.addVariable("\$this\$isLong", MockValue.createValue("xyz", String::class.java, vm))
+        }
+    }
+
+    fun testDeconstruction() {
+        doTest("""fun test(x: Pair<Int, Int>) {
+                      val (a, b) = x
+                      <caret>if (a > b/*FALSE*/) {}
+                  }
+                  
+                  fun main() {
+                      test(3 to 5)
+                  }""") { vm, frame ->
+            frame.addVariable("a", MockIntegerValue(vm, 3))
+            frame.addVariable("b", MockIntegerValue(vm, 5))
         }
     }
 

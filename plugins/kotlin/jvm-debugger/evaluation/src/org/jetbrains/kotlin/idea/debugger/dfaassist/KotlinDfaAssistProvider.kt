@@ -14,13 +14,20 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.sun.jdi.Location
+import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.debugger.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KtThisDescriptor
+import org.jetbrains.kotlin.idea.inspections.dfa.KtVariableDescriptor
+import org.jetbrains.kotlin.idea.util.toJvmFqName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class KotlinDfaAssistProvider : DfaAssistProvider {
     override fun locationMatches(element: PsiElement, location: Location): Boolean {
@@ -57,19 +64,48 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
     }
 
     override fun getJdiValueForDfaVariable(proxy: StackFrameProxyEx, dfaVar: DfaVariableValue, anchor: PsiElement): Value? {
-        if (dfaVar.qualifier == null) {
-            val psiVariable = dfaVar.psiVariable
-            if (psiVariable is KtParameter || psiVariable is KtProperty && psiVariable.isLocal) {
-                // TODO: more robust mapping
-                // TODO: take into account non-local parameters (e.g., data class parameters)
+        val qualifier = dfaVar.qualifier
+        val psiVariable = dfaVar.psiVariable
+        if (qualifier == null) {
+            val descriptor = dfaVar.descriptor
+            if (descriptor is KtThisDescriptor) {
+                val declarationDescriptor = descriptor.descriptor
+                if (declarationDescriptor is FunctionDescriptor) {
+                    val thisName = "\$this\$${declarationDescriptor.name}"
+                    val thisVar = proxy.visibleVariableByName(thisName)
+                    if (thisVar != null) {
+                        return postprocess(proxy.getVariableValue(thisVar))
+                    }
+                    return null
+                }
+                val thisObject = proxy.thisObject()
+                if (thisObject != null) {
+                    val signature = AsmType.getType(thisObject.referenceType().signature()).className
+                    val jvmName = declarationDescriptor.fqNameSafe.toJvmFqName
+                    if (signature == jvmName) {
+                        return thisObject
+                    }
+                }
+                // TODO: support `this` references for outer types, etc.
+                return null
+            }
+            else if (descriptor is KtVariableDescriptor && psiVariable is KtCallableDeclaration) {
                 // TODO: check/support inlined functions
                 val variable = proxy.visibleVariableByName((psiVariable as KtNamedDeclaration).name)
                 if (variable != null) {
                     return postprocess(proxy.getVariableValue(variable))
                 }
             }
+        } else {
+            val jdiQualifier = getJdiValueForDfaVariable(proxy, qualifier, anchor)
+            if (jdiQualifier is ObjectReference && psiVariable is KtCallableDeclaration) {
+                val type = jdiQualifier.referenceType()
+                val field = type.fieldByName(psiVariable.name)
+                if (field != null) {
+                    return postprocess(jdiQualifier.getValue(field))
+                }
+            }
         }
-        // TODO: support qualified vars
         return null
     }
 
