@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.idea.SplashManager;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -77,7 +76,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   public static boolean USE_TABBED_WELCOME_SCREEN = Boolean.parseBoolean(SystemProperty.get("use.tabbed.welcome.screen", "true"));
 
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
-  public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 600 : 460;
+  public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 650 : 460;
   public static final int MAX_DEFAULT_WIDTH = 800;
   private final AbstractWelcomeScreen myScreen;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
