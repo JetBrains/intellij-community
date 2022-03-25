@@ -46,14 +46,14 @@ import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
-import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.aliasImportMap
+import org.jetbrains.kotlin.util.findAnnotation
+import org.jetbrains.kotlin.util.getStringValue
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.intellij.lang.annotations.Language as LanguageAnnotation
 
 class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private val absentKotlinInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
@@ -410,12 +410,10 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     }
 
     private fun injectionInfoByAnnotation(annotated: Annotated): InjectionInfo? {
-        val injectAnnotation = annotated.annotations.findAnnotation(FqName(AnnotationUtil.LANGUAGE)) ?: return null
-
-        val languageId = injectAnnotation.argumentValue("value")?.safeAs<StringValue>()?.value ?: return null
-        val prefix = injectAnnotation.argumentValue("prefix")?.safeAs<StringValue>()?.value
-        val suffix = injectAnnotation.argumentValue("suffix")?.safeAs<StringValue>()?.value
-
+        val injectAnnotation = annotated.findAnnotation<LanguageAnnotation>() ?: return null
+        val languageId = injectAnnotation.getStringValue(LanguageAnnotation::value) ?: return null
+        val prefix = injectAnnotation.getStringValue(LanguageAnnotation::prefix)
+        val suffix = injectAnnotation.getStringValue(LanguageAnnotation::suffix)
         return InjectionInfo(languageId, prefix, suffix)
     }
 

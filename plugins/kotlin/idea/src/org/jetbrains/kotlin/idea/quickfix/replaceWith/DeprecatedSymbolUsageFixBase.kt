@@ -38,16 +38,12 @@ import org.jetbrains.kotlin.psi.psiUtil.isCallee
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
-import org.jetbrains.kotlin.resolve.constants.AnnotationValue
-import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.util.constructors
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.util.*
 
 //TODO: different replacements for property accessors
 
@@ -90,13 +86,9 @@ abstract class DeprecatedSymbolUsageFixBase(
             replaceInWholeProject: Boolean
         ): ReplaceWith? {
             val annotation = descriptor.annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
-            val replaceWithValue =
-                annotation.argumentValue(Deprecated::replaceWith.name)?.safeAs<AnnotationValue>()?.value ?: return null
-            val pattern = replaceWithValue.argumentValue(kotlin.ReplaceWith::expression.name)?.safeAs<StringValue>()?.value ?: return null
-            if (pattern.isEmpty()) return null
-            val importValues = replaceWithValue.argumentValue(kotlin.ReplaceWith::imports.name)?.safeAs<ArrayValue>()?.value ?: return null
-            if (importValues.any { it !is StringValue }) return null
-            val imports = importValues.map { (it as StringValue).value }
+            val replaceWithValue = annotation.getAnnotationValue(Deprecated::replaceWith) ?: return null
+            val pattern = replaceWithValue.getStringValue(kotlin.ReplaceWith::expression)?.takeIf { it.isNotEmpty() } ?: return null
+            val imports = replaceWithValue.getArrayValue(kotlin.ReplaceWith::imports)?.mapAll { (it as? StringValue)?.value } ?: return null
 
             // should not be available for descriptors with optional parameters if we cannot fetch default values for them (currently for library with no sources)
             if (descriptor is CallableDescriptor && descriptor.valueParameters.any {
