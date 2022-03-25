@@ -173,12 +173,11 @@ fun <T> BaseTreeLayout(
     focusedTreeElement: Tree.Element<T>? = null,
     onFocusChanged: (Tree.Element<T>?) -> Unit,
     onTreeNodeToggle: (Tree.Element.Node<T>) -> Unit,
-    onTreeElementClick: MouseClickScope.(Tree.Element<T>) -> Unit,
+    onTreeElementClick: MouseClickScope.(Int, Tree.Element<T>) -> Unit,
     onTreeElementDoubleClick: (Tree.Element<T>) -> Unit,
     rowContent: @Composable RowScope.(Tree.Element<T>) -> Unit
 ) {
     var isFocused by remember { mutableStateOf(TreeViewState.fromBoolean(false)) }
-    println("$isFocused ${System.currentTimeMillis()}")
     val appearance = style.appearance(isFocused)
     val appearanceTransitionState = updateTreeViewAppearanceTransition(appearance)
 
@@ -206,7 +205,7 @@ fun <T> BaseTreeLayout(
                         if (isElementSelected) onFocusChanged(treeElement)
                     }
                     .onKeyEvent { onKeyPressed(it, index, treeElementWithDepth) }
-                    .mouseClickable { onTreeElementClick(treeElement) }
+                    .mouseClickable { onTreeElementClick(index, treeElement) }
                     .appendIf(focusedTreeElement == treeElement) { border(2.dp, Color.Red) },
 //                    .combinedClickable(
 //                        onClick = { EmptyClickContext.onTreeElementClick(treeElement) },
@@ -358,7 +357,7 @@ fun <T> TreeLayout(
         focusedTreeElement = focusedTreeElement,
         tree = tree,
         onTreeNodeToggle = { onTreeNodeToggle(it) },
-        onTreeElementClick = { treeElement ->
+        onTreeElementClick = { index, treeElement ->
             val isMultiSelectionKeyPressed = when {
                 hostOs.isWindows || hostOs.isLinux -> keyboardModifiers.isCtrlPressed
                 hostOs.isMacOS -> keyboardModifiers.isMetaPressed
@@ -373,8 +372,7 @@ fun <T> TreeLayout(
                 else -> tree.selectOnly(treeElement)
             }
             onTreeChanged(newTree)
-            focusedTreeElement = treeElement.withSelection(true)
-
+            focusedTreeElement = newTree.flattenedTree.getOrNull(index)?.treeElement
         },
         onTreeElementDoubleClick = onTreeElementDoubleClick,
         rowContent = rowContent
