@@ -87,6 +87,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
     facetImport(moduleImportDataList, context, postTasks)
 
+    MavenUtil.invokeAndWaitWriteAction(project) { modelsProvider.dispose() }
     configureMavenProjects(moduleImportDataList, project)
   }
 
