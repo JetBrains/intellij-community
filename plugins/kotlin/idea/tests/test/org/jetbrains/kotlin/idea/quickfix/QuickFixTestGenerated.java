@@ -440,6 +440,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addConversionCall")
+    public static class AddConversionCall extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("toByte.kt")
+        public void testToByte() throws Exception {
+            runTest("testData/quickfix/addConversionCall/toByte.kt");
+        }
+
+        @TestMetadata("toByteExtraParenthesis.kt")
+        public void testToByteExtraParenthesis() throws Exception {
+            runTest("testData/quickfix/addConversionCall/toByteExtraParenthesis.kt");
+        }
+
+        @TestMetadata("toShort.kt")
+        public void testToShort() throws Exception {
+            runTest("testData/quickfix/addConversionCall/toShort.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addCrossinline")
     public static class AddCrossinline extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
