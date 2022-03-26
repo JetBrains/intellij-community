@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi2ir.deparenthesize
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -40,12 +42,22 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         val callee = element.calleeExpression ?: return null
         val (fromFunctionName, toFunctionName, _, _) = conversions[callee.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
-        val lambdaBody = element.singleLambdaArgumentExpression()?.bodyExpression ?: return null
-        if (lambdaBody.anyDescendantOfType<KtReturnExpression>()) return null
+        val lambda = element.singleLambdaArgumentExpression() ?: return null
+        val lambdaBody = lambda.bodyExpression ?: return null
+        val lastStatement = lambdaBody.statements.lastOrNull() ?: return null
+        if (lambdaBody.anyDescendantOfType<KtReturnExpression> { it != lastStatement }) return null
 
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull() !in fqNames) return null
-        if (lambdaBody.statements.lastOrNull()?.getType(context)?.isBoolean() != true) return null
+        val predicate = when (lastStatement) {
+            is KtReturnExpression -> {
+                val targetFunctionDescriptor = lastStatement.getTargetFunctionDescriptor(context)
+                val lambdaDescriptor = context[BindingContext.FUNCTION, lambda.functionLiteral]
+                if (targetFunctionDescriptor == lambdaDescriptor) lastStatement.returnedExpression else null
+            }
+            else -> lastStatement
+        } ?: return null
+        if (predicate.getType(context)?.isBoolean() != true) return null
 
         setTextGetter(KotlinBundle.lazyMessage("replace.0.with.1", fromFunctionName, toFunctionName))
         return callee.textRange
@@ -54,11 +66,17 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         val (_, toFunctionName, negateCall, negatePredicate) = conversions[element.calleeExpression?.text] ?: return
         val lambda = element.singleLambdaArgumentExpression() ?: return
-        val predicate = lambda.bodyExpression?.statements?.lastOrNull() ?: return
+        val lastStatement = lambda.bodyExpression?.statements?.lastOrNull() ?: return
+        val returnExpression = lastStatement.safeAs<KtReturnExpression>()
+        val predicate = returnExpression?.returnedExpression ?: lastStatement
         if (negatePredicate) negate(predicate)
+        val psiFactory = KtPsiFactory(element)
+        if (returnExpression?.getLabelName() == element.calleeExpression?.text) {
+            returnExpression?.labelQualifier?.replace(psiFactory.createLabelQualifier(toFunctionName))
+        }
         val callOrQualified = element.getQualifiedExpressionForSelectorOrThis()
         val parentNegatedExpression = callOrQualified.parentNegatedExpression()
-        KtPsiFactory(element).buildExpression {
+        psiFactory.buildExpression {
             val addNegation = negateCall && parentNegatedExpression == null
             if (addNegation && callOrQualified !is KtSafeQualifiedExpression) {
                 appendFixedText("!")
@@ -115,6 +133,10 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
         if (KtPsiUtil.areParenthesesUseless(this)) {
             this.replace(innerExpression)
         }
+    }
+
+    private fun KtPsiFactory.createLabelQualifier(labelName: String): KtContainerNode {
+        return (createExpression("return@$labelName 1") as KtReturnExpression).labelQualifier!!
     }
 
     companion object {

@@ -5243,6 +5243,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn2.kt");
+                }
+
                 @TestMetadata("nullable.kt")
                 public void testNullable() throws Exception {
                     runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable.kt");
@@ -5299,6 +5309,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public static class Uncategorized extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn2.kt");
                 }
 
                 @TestMetadata("nullable.kt")
@@ -5487,6 +5507,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public static class Uncategorized extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn2.kt");
                 }
 
                 @TestMetadata("nullable.kt")
