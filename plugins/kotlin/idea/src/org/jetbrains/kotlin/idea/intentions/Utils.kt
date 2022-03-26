@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtContainerNode.description(): String? {
     when (node.elementType) {
@@ -404,11 +403,14 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
     }
     appendNonFormattedText(newFunctionName)
     call.valueArgumentList?.let { appendNonFormattedText(it.text) }
-    call.lambdaArguments.firstOrNull()?.let { appendNonFormattedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let {
+        if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
+        appendNonFormattedText(it.text)
+    }
 }
 
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
-    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs<KtLambdaExpression>() ?: getLastLambdaExpression()
+    return lambdaArguments.singleOrNull()?.getArgumentExpression()?.unpackFunctionLiteral() ?: getLastLambdaExpression()
 }
 
 private val rangeTypes = setOf(
