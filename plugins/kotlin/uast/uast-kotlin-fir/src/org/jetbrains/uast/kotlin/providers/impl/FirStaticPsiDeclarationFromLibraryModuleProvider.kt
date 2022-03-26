@@ -13,7 +13,10 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
+import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.providers.impl.AbstractDeclarationFromLibraryModuleProvider
+import org.jetbrains.kotlin.analysis.utils.caches.*
+import org.jetbrains.kotlin.analysis.utils.collections.ConcurrentMapBasedCache
 import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -21,6 +24,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 import org.jetbrains.uast.kotlin.providers.KotlinPsiDeclarationProvider
 import org.jetbrains.uast.kotlin.providers.KotlinPsiDeclarationProviderFactory
+import java.util.concurrent.ConcurrentHashMap
 
 private class FirStaticPsiDeclarationFromLibraryModuleProvider(
     private val project: Project,
@@ -30,17 +34,26 @@ private class FirStaticPsiDeclarationFromLibraryModuleProvider(
 ) : KotlinPsiDeclarationProvider(), AbstractDeclarationFromLibraryModuleProvider {
     private val psiManager by lazy { PsiManager.getInstance(project) }
 
+    private val clsFilesByFqNameCache by softCachedValue(
+        project,
+        project.createProjectWideOutOfBlockModificationTracker()
+    ) {
+        ConcurrentMapBasedCache<FqName, List<ClsClassImpl>>(ConcurrentHashMap())
+    }
+
     private fun clsClassImplsByFqName(
         fqName: FqName,
         isPackageName: Boolean = true,
     ): Collection<ClsClassImpl> {
-        return libraryModules
-            .flatMap {
-                virtualFilesFromModule(it, fqName, isPackageName)
-            }
-            .mapNotNull {
-                createClsJavaClassFromVirtualFile(it)
-            }
+        return clsFilesByFqNameCache.getOrPut(fqName) {
+            libraryModules
+                .flatMap {
+                    virtualFilesFromModule(it, fqName, isPackageName)
+                }
+                .mapNotNull {
+                    createClsJavaClassFromVirtualFile(it)
+                }
+        }
     }
 
     private fun createClsJavaClassFromVirtualFile(
@@ -101,7 +114,16 @@ class KotlinStaticPsiDeclarationProviderFactory(
     private val libraryModules: Collection<KtLibraryModule>,
     private val jarFileSystem: CoreJarFileSystem,
 ) : KotlinPsiDeclarationProviderFactory() {
+    private val cache by softCachedValue(
+        project,
+        project.createProjectWideOutOfBlockModificationTracker()
+    ) {
+        ConcurrentMapBasedCache<GlobalSearchScope, KotlinPsiDeclarationProvider>(ConcurrentHashMap())
+    }
+
     override fun createPsiDeclarationProvider(searchScope: GlobalSearchScope): KotlinPsiDeclarationProvider {
-        return FirStaticPsiDeclarationFromLibraryModuleProvider(project, searchScope, libraryModules, jarFileSystem)
+        return cache.getOrPut(searchScope) {
+            FirStaticPsiDeclarationFromLibraryModuleProvider(project, searchScope, libraryModules, jarFileSystem)
+        }
     }
 }
