@@ -383,7 +383,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
     fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
+            annotation class MyAnnotation
+
             class Foo {
+                @MyAnnotation
                 @JvmSynthetic
                 fun bar() {}
             }
@@ -399,6 +402,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolved = uCallExpression.resolve()
             .orFail("cant resolve from $uCallExpression")
         TestCase.assertEquals("bar", resolved.name)
+
+        TestCase.assertEquals(2, resolved.annotations.size)
+        TestCase.assertTrue(resolved.hasAnnotation("MyAnnotation"))
+        TestCase.assertTrue(resolved.hasAnnotation("kotlin.jvm.JvmSynthetic"))
     }
 
     fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
