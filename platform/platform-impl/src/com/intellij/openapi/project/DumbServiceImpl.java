@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.codeWithMe.ClientId;
@@ -55,9 +55,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
-
-import static com.intellij.openapi.project.IndexingStatisticsCollector.IndexingFinishType.FINISHED;
-import static com.intellij.openapi.project.IndexingStatisticsCollector.IndexingFinishType.TERMINATED;
 
 @ApiStatus.Internal
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
@@ -606,6 +603,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
+      DumbModeProgressTitle.getInstance(myProject).attachDumbModeProgress(visibleIndicator);
 
       StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
 
@@ -626,6 +624,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           LOG.error(unexpected);
         }
         finally {
+          DumbModeProgressTitle.getInstance(myProject).removeDumpModeProgress(visibleIndicator);
+
           // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
           // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
           // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
@@ -635,7 +635,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           //this used to be called in EDT from getNextTask(), but moved it here to simplify
           queueUpdateFinished();
 
-          IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed() ? TERMINATED : FINISHED);
+          IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
+                                                                   ? IndexingStatisticsCollector.IndexingFinishType.TERMINATED
+                                                                   : IndexingStatisticsCollector.IndexingFinishType.FINISHED);
         }
       });
     }

@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.TitledIndicator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
@@ -642,7 +643,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  class MyInlineProgressIndicator extends InlineProgressIndicator {
+  class MyInlineProgressIndicator extends InlineProgressIndicator implements TitledIndicator {
     private ProgressIndicatorEx myOriginal;
     PresentationModeProgressPanel myPresentationModeProgressPanel;
     Balloon myPresentationModeBalloon;
@@ -830,6 +831,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     public boolean showInPresentationMode() {
       return !isProcessWindowOpen();
+    }
+
+    @Override
+    public void setTitle(@NotNull @NlsContexts.ProgressTitle String title) {
+      setProcessNameValue(title);
     }
   }
 
