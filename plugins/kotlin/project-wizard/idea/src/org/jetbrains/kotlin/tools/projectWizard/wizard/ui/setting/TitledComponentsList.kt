@@ -16,6 +16,8 @@ open class TitledComponentsList(
     private val stretchY: Boolean = false,
     private val globalMaxWidth: Int? = null,
     useBigYGap: Boolean = false,
+    var xPadding: Int = xPanelPadding,
+    var yPadding: Int = yPanelPadding
 ) : DynamicComponent(context) {
     private val ui = BorderLayoutPanel()
 
@@ -80,7 +82,7 @@ open class TitledComponentsList(
         componentsWithLabels.forEach { (_, tooltipConst, component, _, _, componentMaxWidth) ->
             val maxWidth = componentMaxWidth ?: globalMaxWidth
             if (maxWidth == null) {
-                component[SpringLayout.EAST] = layout.getConstraint(SpringLayout.EAST, this) - xPanelPadding.asSpring()
+                component[SpringLayout.EAST] = layout.getConstraint(SpringLayout.EAST, this) - xPadding.asSpring()
             } else {
                 component.width = maxWidth.asSpring()
             }
@@ -93,7 +95,7 @@ open class TitledComponentsList(
 
         for (data in componentsWithLabels) {
             val (label, tooltip, component) = data
-            label.x = xPanelPadding.asSpring()
+            label.x = xPadding.asSpring()
             tooltip?.x = label[SpringLayout.EAST] + xGap
             component.x = maxLabelWidth + 2 * xGap
             if (tooltipWidth != null)
@@ -105,9 +107,9 @@ open class TitledComponentsList(
                 tooltip?.y = label.y
                 component.y = constraint
             } else {
-                label.y = data.centerConstraint() + yPanelPadding
+                label.y = data.centerConstraint() + yPadding
                 tooltip?.y = label.y
-                component.y = yPanelPadding.asSpring()
+                component.y = yPadding.asSpring()
             }
 
             lastLabel = label
