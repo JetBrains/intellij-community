@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -30,6 +30,7 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
@@ -445,10 +446,14 @@ public class TabLabel extends JPanel implements Accessible {
 
     myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
-    myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
+    boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
+    int offset = ExperimentalUI.isNewUI() ? 3 : 0;
+    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, offset, 1, 0)
+                                      : JBUI.Borders.empty(1, 0, 1, offset);
+    myActionPanel.setBorder(border);
     toggleShowActions(false);
 
-    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+    add(myActionPanel, buttonsOnTheRight ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
   }
