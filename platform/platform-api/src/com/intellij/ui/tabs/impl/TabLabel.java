@@ -447,9 +447,8 @@ public class TabLabel extends JPanel implements Accessible {
     myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
     boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
-    int offset = ExperimentalUI.isNewUI() ? 3 : 0;
-    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, offset, 1, 0)
-                                      : JBUI.Borders.empty(1, 0, 1, offset);
+    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, ExperimentalUI.isNewUI() ? 3 : 0, 1, 0)
+                                      : JBUI.Borders.empty(1, 0, 1, 3);
     myActionPanel.setBorder(border);
     toggleShowActions(false);
 
