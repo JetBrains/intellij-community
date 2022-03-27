@@ -194,7 +194,16 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
     matchedBrace.setEffectColor(lightForeground);
     scheme.setAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES, matchedBrace);
     TextAttributes unmatchedBrace = matchedBrace.clone();
-    unmatchedBrace.setEffectColor(ColorUtil.mix(background, Color.RED, 0.5));
+    Color errorColor = ColorUtil.mix(background, Color.RED, 0.5);
+    unmatchedBrace.setEffectColor(errorColor);
+
+    TextAttributes markedForRemoval = scheme.getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    if (markedForRemoval != null) {
+      markedForRemoval = markedForRemoval.clone();
+      if (markedForRemoval.getEffectColor() == null) markedForRemoval.setEffectType(EffectType.STRIKEOUT);
+      markedForRemoval.setEffectColor(errorColor);
+      scheme.setAttributes(CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES, markedForRemoval);
+    }
 
     TextAttributes visibilityModifier = new TextAttributes();
     scheme.setAttributes(JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES, visibilityModifier);
