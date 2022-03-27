@@ -139,6 +139,11 @@ fun isAnnotationArgumentArrayInitializer(ktCallElement: KtCallElement, fqNameOfC
     return ktCallElement.isAnnotationArgument && fqNameOfCallee in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 }
 
+val KtBlockExpression.isFunctionBody: Boolean
+    get() {
+        return (parent as? KtNamedFunction)?.bodyBlockExpression == this
+    }
+
 /**
  * Depending on type owner kind, type conversion to [PsiType] would vary. For example, we need to convert `Unit` to `void` only if the given
  * type is used as a return type of a function. Usually, the "context" of type conversion would be the owner of the type to be converted,
