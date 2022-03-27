@@ -28,39 +28,40 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- *  @author dsl
- */
 public class LibraryTest extends ModuleRootManagerTestCase {
   public void testLibrarySerialization() throws IOException {
-    final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
+    long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
 
     File projectDir = new File(myProject.getBasePath());
-    File localJDomJar = new File(projectDir, getFastUtilJar().getName());
-    File localJDomSources = new File(projectDir, getJDomSources().getName());
+    File localFastUtilJar = new File(projectDir, "lib.jar");
+    Path sources = getLibSources();
+    File localSources = new File(projectDir, "lib-sources.zip");
 
-    FileUtil.copy(new File(getFastUtilJar().getPath().replace("!", "")), localJDomJar);
-    FileUtil.copy(new File(getJDomSources().getPath().replace("!", "")), localJDomSources);
+    FileUtil.copy(new File(getFastUtilJar().getPath().replace("!", "")), localFastUtilJar);
+    FileUtil.copy(sources.toFile(), localSources);
 
     PsiTestUtil.addProjectLibrary(
-      myModule, "junit",
-      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomJar)),
-      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomSources)));
+      myModule,
+      "junit",
+      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localFastUtilJar)),
+      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localSources))
+    );
 
     assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
     assertThat(serializeLibraries(myProject)).isEqualTo(
       "<library name=\"junit\">\n" +
       "  <CLASSES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/intellij-deps-fastutil-8.5.8-11.jar\" />\n" +
+      "    <root url=\"file://$PROJECT_DIR$/lib.jar\" />\n" +
       "  </CLASSES>\n" +
       "  <JAVADOC />\n" +
       "  <SOURCES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/intellij-deps-fastutil-8.5.8-11-sources.jar\" />\n" +
+      "    <root url=\"file://$PROJECT_DIR$/lib-sources.zip\" />\n" +
       "  </SOURCES>\n" +
       "</library>"
     );

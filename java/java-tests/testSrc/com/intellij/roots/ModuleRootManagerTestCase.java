@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
@@ -30,8 +31,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return getMockJdk17WithRtJarOnly();
   }
 
-  @NotNull
-  protected static Sdk getMockJdk17WithRtJarOnly() {
+  protected static @NotNull Sdk getMockJdk17WithRtJarOnly() {
     return retainRtJarOnlyAndSetVersion(IdeaTestUtil.getMockJdk17());
   }
 
@@ -39,9 +39,8 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return retainRtJarOnlyAndSetVersion(IdeaTestUtil.getMockJdk18());
   }
 
-  @NotNull
   @Contract(pure = true)
-  private static Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
+  private static @NotNull Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
     try {
       jdk = (Sdk)jdk.clone();
     }
@@ -72,12 +71,12 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return getMockJdk18WithRtJarOnly().getRootProvider().getFiles(OrderRootType.CLASSES)[0];
   }
 
-  protected VirtualFile getFastUtilJar() {
+  protected static VirtualFile getFastUtilJar() {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
   }
 
-  protected VirtualFile getJDomSources() {
-    return IntelliJProjectConfiguration.getSourceJarFromSingleJarProjectLibrary("fastutil-min");
+  protected static Path getLibSources() {
+    return IntelliJProjectConfiguration.getJarPathFromSingleJarProjectLibrary("assertJ");
   }
 
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {
@@ -105,10 +104,6 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
       model.commit();
       return library;
     });
-  }
-
-  protected Library createJDomLibrary() {
-    return createLibrary("jdom", getFastUtilJar(), getJDomSources());
   }
 
   protected Library createAsmLibrary() {

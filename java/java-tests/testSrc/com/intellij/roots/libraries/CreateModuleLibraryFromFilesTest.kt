@@ -1,104 +1,112 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.roots.libraries;
+package com.intellij.roots.libraries
 
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.roots.ui.configuration.classpath.CreateModuleLibraryChooser;
-import com.intellij.roots.ModuleRootManagerTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.roots.ui.configuration.classpath.CreateModuleLibraryChooser
+import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.IntelliJProjectConfiguration.Companion.getProjectLibrary
+import com.intellij.roots.ModuleRootManagerTestCase
+import com.intellij.testFramework.UsefulTestCase
+import org.assertj.core.api.Assertions.assertThat
 
-import java.util.Arrays;
-import java.util.List;
+class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
+  private var modifiableModel: LibraryTable.ModifiableModel? = null
+  private var modifiableRootModel: ModifiableRootModel? = null
 
-public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase {
-  private LibraryTable.ModifiableModel myModifiableModel;
-  private ModifiableRootModel myModifiableRootModel;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myModifiableRootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    myModifiableModel = myModifiableRootModel.getModuleLibraryTable().getModifiableModel();
+  override fun setUp() {
+    super.setUp()
+    modifiableRootModel = ModuleRootManager.getInstance(myModule).modifiableModel
+    modifiableModel = modifiableRootModel!!.moduleLibraryTable.modifiableModel
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  override fun tearDown() {
     try {
-      myModifiableRootModel.dispose();
+      modifiableRootModel!!.dispose()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      myModifiableModel = null;
-      myModifiableRootModel = null;
-      super.tearDown();
+      modifiableModel = null
+      modifiableRootModel = null
+      super.tearDown()
     }
   }
 
-  public void testSingleJar() {
-    Library library = assertOneElement(createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES)));
-    assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar());
-    assertEmpty(library.getFiles(OrderRootType.SOURCES));
+  fun testSingleJar() {
+    val library = UsefulTestCase.assertOneElement(createLibraries(OrderRoot(getFastUtilJar(), OrderRootType.CLASSES)))
+    assertThat(library.name).isNull()
+    assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(getFastUtilJar())
+    assertThat(library.getFiles(OrderRootType.SOURCES)).isEmpty()
   }
 
-  public void testTwoJars() {
-    List<Library> libraries = createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-                                              new OrderRoot(getAsmJar(), OrderRootType.CLASSES));
-    assertEquals(2, libraries.size());
-    assertNull(libraries.get(0).getName());
-    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getFastUtilJar());
-    assertNull(libraries.get(1).getName());
-    assertSameElements(libraries.get(1).getFiles(OrderRootType.CLASSES), getAsmJar());
+  fun testTwoJars() {
+    val libraries = createLibraries(OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
+                                    OrderRoot(asmJar, OrderRootType.CLASSES))
+    assertThat(libraries).hasSize(2)
+    assertThat(libraries[0].name).isNull()
+    assertThat(libraries[0].getFiles(OrderRootType.CLASSES)).containsExactly(getFastUtilJar())
+    assertThat(libraries[1].name).isNull()
+    assertThat(libraries[1].getFiles(OrderRootType.CLASSES)).containsExactly(asmJar)
   }
 
-  public void testJarAndSources() {
-    Library library = assertOneElement(createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-                                                       new OrderRoot(getJDomSources(), OrderRootType.SOURCES)));
-    assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar());
-    assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomSources());
+  fun testJarAndSources() {
+    // classesUrls of assertJ is used as sources JAR because sources maybe not downloaded in test mode
+    val assertJJar = getProjectLibrary("assertJ")
+
+    val library = createLibraries(
+      OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
+      OrderRoot(IntelliJProjectConfiguration.getVirtualFile(assertJJar), OrderRootType.SOURCES),
+    ).single()
+    assertThat(library.name).isNull()
+    assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(getFastUtilJar())
+    assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(assertJJar.classesUrls)
   }
 
-  public void testJarWithSourcesInside() {
-    Library library = assertOneElement(createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-                                                       new OrderRoot(getFastUtilJar(), OrderRootType.SOURCES)));
-    assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar());
-    assertSameElements(library.getFiles(OrderRootType.SOURCES), getFastUtilJar());
+  fun testJarWithSourcesInside() {
+    val fastUtilJar = getFastUtilJar()
+    val library = createLibraries(OrderRoot(fastUtilJar, OrderRootType.CLASSES), OrderRoot(fastUtilJar, OrderRootType.SOURCES)).single()
+    assertThat(library.name).isNull()
+    assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(fastUtilJar)
+    assertThat(library.getFiles(OrderRootType.SOURCES)).containsExactly(fastUtilJar)
   }
 
-  public void testTwoJarAndSources() {
-    List<Library> libraries = createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-                                              new OrderRoot(getAsmJar(), OrderRootType.CLASSES),
-                                              new OrderRoot(getJDomSources(), OrderRootType.SOURCES));
-    Library library = assertOneElement(libraries);
-    assertNull(library.getName());
-    assertSameElements(library.getFiles(OrderRootType.CLASSES), getFastUtilJar(), getAsmJar());
-    assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomSources());
+  fun testTwoJarAndSources() {
+    val assertJLib = getProjectLibrary("assertJ")
+
+    val fastUtilJar = getFastUtilJar()
+    val libraries = createLibraries(
+      OrderRoot(fastUtilJar, OrderRootType.CLASSES),
+      OrderRoot(asmJar, OrderRootType.CLASSES),
+      OrderRoot(IntelliJProjectConfiguration.getVirtualFile(assertJLib), OrderRootType.SOURCES),
+    )
+    val library = libraries.single()
+    assertThat(library.name).isNull()
+    assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(fastUtilJar, asmJar)
+    assertThat(library.getUrls(OrderRootType.SOURCES).asList()).isEqualTo(assertJLib.classesUrls)
   }
 
-  public void testTwoJarWithSourcesInside() {
-    List<Library> libraries = createLibraries(new OrderRoot(getFastUtilJar(), OrderRootType.CLASSES),
-                                              new OrderRoot(getAsmJar(), OrderRootType.CLASSES),
-                                              new OrderRoot(getFastUtilJar(), OrderRootType.SOURCES),
-                                              new OrderRoot(getAsmJar(), OrderRootType.SOURCES));
-    assertEquals(2, libraries.size());
-    assertNull(libraries.get(0).getName());
-    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getFastUtilJar());
-    assertSameElements(libraries.get(0).getFiles(OrderRootType.SOURCES), getFastUtilJar());
-    assertNull(libraries.get(1).getName());
-    assertSameElements(libraries.get(1).getFiles(OrderRootType.CLASSES), getAsmJar());
-    assertSameElements(libraries.get(1).getFiles(OrderRootType.SOURCES), getAsmJar());
+  fun testTwoJarWithSourcesInside() {
+    val fastUtilJar = getFastUtilJar()
+    val libraries = createLibraries(OrderRoot(fastUtilJar, OrderRootType.CLASSES),
+                                    OrderRoot(asmJar, OrderRootType.CLASSES),
+                                    OrderRoot(fastUtilJar, OrderRootType.SOURCES),
+                                    OrderRoot(asmJar, OrderRootType.SOURCES))
+    assertEquals(2, libraries.size)
+    assertNull(libraries[0].name)
+    UsefulTestCase.assertSameElements(libraries[0].getFiles(OrderRootType.CLASSES), fastUtilJar)
+    UsefulTestCase.assertSameElements(libraries[0].getFiles(OrderRootType.SOURCES), fastUtilJar)
+    assertNull(libraries[1].name)
+    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.CLASSES), asmJar)
+    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.SOURCES), asmJar)
   }
 
-  @NotNull
-  private List<Library> createLibraries(OrderRoot... roots) {
-    return CreateModuleLibraryChooser.createLibrariesFromRoots(Arrays.asList(roots), myModifiableModel);
+  private fun createLibraries(vararg roots: OrderRoot): List<Library> {
+    return CreateModuleLibraryChooser.createLibrariesFromRoots(roots.asList(), modifiableModel)
   }
 }
