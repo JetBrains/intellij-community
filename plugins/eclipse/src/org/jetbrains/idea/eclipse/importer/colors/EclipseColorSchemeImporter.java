@@ -54,7 +54,6 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
     CodeInsightColors.WEAK_WARNING_ATTRIBUTES,
     CodeInsightColors.INFORMATION_ATTRIBUTES,
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES,
-    CodeInsightColors.DEPRECATED_ATTRIBUTES,
     CodeInsightColors.LINE_FULL_COVERAGE,
     CodeInsightColors.LINE_PARTIAL_COVERAGE,
     CodeInsightColors.LINE_NONE_COVERAGE,
