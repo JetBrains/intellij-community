@@ -5,170 +5,142 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.skiko.Cursor
+import kotlin.experimental.ExperimentalTypeInference
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 @Composable
-fun <T : Any> Table(
+fun <T> Table(
     tableData: Array<Array<T>>,
     modifier: Modifier = Modifier,
     dividerWidth: Dp = 1.dp,
-    content: @Composable (T) -> Unit
+    content: @Composable BoxScope.(T) -> Unit
 ) {
-    var prevTableWidthPx by remember { mutableStateOf(-1) }
+    if (tableData.isEmpty()) return
+    val columnsCount = tableData.first().size
+    val rowSize = tableData.size
+    val state = rememberLazyListState()
+    // TODO validate model sizes
+
+    val dividerWidthPx = with(LocalDensity.current) { dividerWidth.toPx().roundToInt() }
     BoxWithConstraints(modifier) {
-        var elementXPositionsPx by remember { mutableStateOf(emptyList<Int>()) }
-
-        val rowCount = tableData.size
-        val columnCount = tableData.firstOrNull()?.size ?: 0
-
-        val dividerSizePx = with(LocalDensity.current) { dividerWidth.toPx().roundToInt() }
         val tableWidthPx = with(LocalDensity.current) { maxWidth.toPx().roundToInt() }
-
-        if (tableWidthPx < 0) return@BoxWithConstraints
-
-        elementXPositionsPx = if (elementXPositionsPx.isEmpty()) {
-            // TODO allow column weights
-            calculateInitialOffsets(columnCount, dividerSizePx, tableWidthPx)
-        } else {
-            // Scale cells to accommodate table width changes
-            val elementDeltaPx = (tableWidthPx - prevTableWidthPx) / columnCount
-            // Skip first cell, that needs to stick at x = 0
-            val elementsSize = elementXPositionsPx.size
-            buildList(capacity = elementsSize) {
-                for (i in 1 until elementsSize) {
-                    val cumulativeOffsetPx = elementDeltaPx * i
-                    add(elementXPositionsPx[i] + cumulativeOffsetPx)
+        val cellWidthPx = remember(tableWidthPx, dividerWidthPx, columnsCount) {
+            val totalDividersPx = dividerWidthPx * (columnsCount - 1)
+            (tableWidthPx - totalDividersPx) / columnsCount
+        }
+        val dividerOffsets = remember {
+            buildSnapshotMap {
+                for (i in 0 until columnsCount - 1) {
+                    put(i, (i + 1) * cellWidthPx + i * dividerWidthPx)
                 }
             }
         }
-
-        prevTableWidthPx = tableWidthPx
 
         LazyColumn {
-            if (elementXPositionsPx.isNotEmpty()) {
-                items(rowCount) { rowIndex ->
-                    require(tableData[rowIndex].size == columnCount) {
-                        "Row $rowIndex has ${tableData[rowIndex].size} columns but was supposed to have $columnCount"
+            items(rowSize) { rowIndex ->
+                Layout(content = {
+                    for (columnIndex in 0 until columnsCount) {
+                        val cellId = TableLayoutId.Cell(columnIndex)
+                        Box(modifier = Modifier.layoutId(cellId)) {
+                            content(tableData[rowIndex][columnIndex])
+                        }
+                        if (columnIndex != columnsCount - 1) {
+                            val dividerId = TableLayoutId.Divider(columnIndex)
+                            Box(
+                                modifier = Modifier.layoutId(dividerId)
+                                    .width(dividerWidth)
+                                    .background(Color.Green) // TODO pass this in/get from theme
+                                    .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+                                    .draggable(
+                                        orientation = Orientation.Horizontal,
+                                        state = rememberDraggableState { delta ->
+                                            dividerOffsets[dividerId.dividerIndex] =
+                                                dividerOffsets.getValue(dividerId.dividerIndex) + delta.roundToInt()
+                                        }
+                                    )
+                            )
+                        }
+                    }
+                }) { measurables, constraints ->
+                    // First pass: calculate maxHeight
+                    var maxHeight = 0
+                    val measures = measurables.mapNotNull { measurable ->
+                        val dimensions = when (val layoutId = measurable.layoutId) {
+                            is TableLayoutId.Cell -> {
+                                val newCellWidth = when (layoutId.cellIndex) {
+                                    0 -> dividerOffsets.getValue(0)
+                                    columnsCount - 1 -> tableWidthPx - dividerOffsets.getValue(layoutId.cellIndex - 1)
+                                    else -> dividerOffsets.getValue(layoutId.cellIndex) - dividerOffsets.getValue(layoutId.cellIndex - 1) - dividerWidthPx
+                                }
+                                MeasurableDimensions(newCellWidth, measurable.maxIntrinsicHeight(cellWidthPx), measurable)
+                            }
+                            is TableLayoutId.Divider -> MeasurableDimensions(dividerWidthPx, measurable.maxIntrinsicHeight(cellWidthPx), measurable)
+                            else -> null
+                        }
+                        dimensions?.let { maxHeight = max(maxHeight, it.height) }
+                        dimensions
                     }
 
-                    TableRow(
-                        rowData = tableData[rowIndex],
-                        rowWidthPx = tableWidthPx,
-                        dividerWidth = dividerWidth,
-                        elementXPositionsPx = elementXPositionsPx,
-                        onElementPositionsChange = { elementXPositionsPx = it },
-                        content = content
-                    )
+                    // Second pass: measure children with height = maxHeight
+                    val placeables = measures.map { dimension ->
+                        dimension.measurable.measure(Constraints.fixed(dimension.width, maxHeight))
+                    }
+
+                    // Set the size of the layout as big as it can
+                    layout(constraints.maxWidth, maxHeight) {
+                        // Track the y co-ord we have placed children up to
+                        var xPosition = 0
+
+                        // Place children in the parent layout
+                        placeables.forEach { placeable ->
+                            // Position item on the screen
+                            placeable.placeRelative(x = xPosition, y = 0)
+
+                            // Record the y co-ord placed up to
+                            xPosition += placeable.width
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-private data class MeasurableDimensions(val width: Int, val height: Int)
+@OptIn(ExperimentalTypeInference::class)
+private fun <K, V> buildSnapshotMap(
+    @BuilderInference builder: SnapshotStateMap<K, V>.() -> Unit
+) =
+    SnapshotStateMap<K, V>().apply(builder)
 
-@Composable
-private fun <T : Any> LazyItemScope.TableRow(
-    rowData: Array<T>,
-    rowWidthPx: Int,
-    dividerWidth: Dp,
-    elementXPositionsPx: List<Int>,
-    onElementPositionsChange: (List<Int>) -> Unit,
-    content: @Composable (T) -> Unit
-) {
-    val columnCount = rowData.size
-    val columnAndDividersCount = columnCount * 2 - 1
+private data class MeasurableDimensions(val width: Int, val height: Int, val measurable: Measurable) {
 
-    Layout(
-        content = {
-            repeat(columnAndDividersCount) { elementIndex ->
-                if (elementIndex % 2 == 0) {
-                    content(rowData[elementIndex / 2])
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .width(dividerWidth)
-                            .background(Color.Green) // TODO pass this in/get from theme
-                            .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
-                            .draggable(
-                                orientation = Orientation.Horizontal,
-                                state = rememberDraggableState { delta ->
-                                    val newElementXPositionsPx = buildList(capacity = elementXPositionsPx.size) {
-                                        addAll(elementXPositionsPx.subList(0, elementIndex))
-                                        add(elementXPositionsPx[elementIndex] + delta.roundToInt())
-                                        add(elementXPositionsPx[elementIndex + 1] + delta.roundToInt())
-
-                                        if (elementIndex < elementXPositionsPx.size - 1) {
-                                            addAll(elementXPositionsPx.subList(elementIndex + 1, elementXPositionsPx.size))
-                                        }
-                                    }
-                                    onElementPositionsChange(newElementXPositionsPx)
-                                }
-                            )
-                    )
-                }
-            }
-        }
-    ) { measurables, constraints ->
-        // First pass: calculate maxHeight
-        val measures = measurables.mapIndexed { elementIndex, measurable ->
-            val nextElementX = if (elementIndex < elementXPositionsPx.lastIndex) elementXPositionsPx[elementIndex + 1] else rowWidthPx
-            val elementWidth = nextElementX - elementXPositionsPx[elementIndex] - 1
-            MeasurableDimensions(elementWidth, measurable.maxIntrinsicHeight(elementWidth))
-        }
-
-        val maxHeight = measures.maxByOrNull { it.height }!!.height
-
-        // Second pass: measure children with height = maxHeight
-        val placeables = measurables.mapIndexed { elementIndex, measurable ->
-            measurable.measure(Constraints.fixed(measures[elementIndex].width, maxHeight))
-        }
-
-        // Set the size of the layout as big as it can
-        layout(constraints.maxWidth, placeables.maxByOrNull { it.height }!!.height) {
-            // Track the y co-ord we have placed children up to
-            var xPosition = 0
-
-            // Place children in the parent layout
-            placeables.forEach { placeable ->
-                // Position item on the screen
-                placeable.placeRelative(x = xPosition, y = 0)
-
-                // Record the y co-ord placed up to
-                xPosition += placeable.width
-            }
-        }
-    }
+    override fun toString() = "[${Measurable::class.simpleName} $width x $height]"
 }
 
-private fun calculateInitialOffsets(columnCount: Int, dividerSizePx: Int, totalWidthPx: Int) = buildList(capacity = columnCount * 2 - 1) {
-    val totalDividersWidthPx = (columnCount - 1) * dividerSizePx
-    val totalAvailableWidthPx = totalWidthPx - totalDividersWidthPx
-    val cellWidthPx = totalAvailableWidthPx / columnCount
+private sealed class TableLayoutId {
 
-    var currentXPx = 0
-    for (i in 0 until columnCount * 2 - 1) {
-        // Odd elements are dividers, even elements are cells
-        add(currentXPx)
-        currentXPx += if (i % 2 == 0) cellWidthPx else dividerSizePx
-    }
+    data class Divider(val dividerIndex: Int) : TableLayoutId()
+    data class Cell(val cellIndex: Int) : TableLayoutId()
 }
+
