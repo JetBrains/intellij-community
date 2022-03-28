@@ -17,8 +17,8 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.CheckboxTree
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SmartExpander
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
@@ -35,6 +35,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import java.awt.Component
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
@@ -44,6 +45,7 @@ import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
 internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
@@ -152,6 +154,9 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
                                                DiffBundle.message("settings.external.diff.table.remove.dialog.message"))
     if (dialog.guessWindowAndAsk()) {
       treeModel.removeNodeFromParent(node)
+      if (parentNode.childCount == 0) {
+        treeModel.removeNodeFromParent(parentNode)
+      }
     }
   }
 
@@ -445,8 +450,9 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     val model = mutableMapOf<ExternalToolGroup, List<ExternalTool>>()
 
     for (group in root.children()) {
-      val groupNode = group as DefaultMutableTreeNode
+      if (group.childCount == 0) continue
 
+      val groupNode = group as DefaultMutableTreeNode
       val tools = mutableListOf<ExternalTool>()
       for (child in group.children()) {
         val childNode = child as DefaultMutableTreeNode
@@ -465,6 +471,8 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     root.removeAllChildren()
 
     value.toSortedMap().forEach { (group, tools) ->
+      if (tools.isEmpty()) return@forEach
+
       val groupNode = DefaultMutableTreeNode(group)
       tools.forEach { groupNode.add(DefaultMutableTreeNode(it)) }
       insertNodeInto(groupNode, root, root.childCount)
