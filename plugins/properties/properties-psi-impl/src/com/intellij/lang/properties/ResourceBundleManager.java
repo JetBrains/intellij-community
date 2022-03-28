@@ -176,6 +176,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
               myNotificationManager.notify(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
                                            PropertiesBundle.message("notification.content.resource.bundle.plugin.advertisement"), project, notification -> {
                 notification.setSuggestionType(true);
+                notification.setDisplayId("resource.bundle.editor");
                 if (pluginDescriptor == null) {
                   notification.addAction(NotificationAction.createSimpleExpiring(PropertiesBundle.message("notification.content.install.plugin"), () -> {
                     PluginsAdvertiser.installAndEnable(project, Collections.singleton(pluginId), true, () -> {});
