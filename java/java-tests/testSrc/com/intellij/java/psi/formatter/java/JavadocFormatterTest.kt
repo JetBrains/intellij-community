@@ -1822,11 +1822,8 @@ public class Test {
   fun testSnippetHasSpacesBetweenSnippetAttributes() {
     doTextTest(
       """
-        /** {@snippet:
-          *   /**
+        /** 
           * {@snippet class = ExternalSnippets region = join2}
-          *    public void demo() {}
-          *}
           */
         public class Main {
         }
@@ -1834,11 +1831,7 @@ public class Test {
 
       """
         /**
-         * {@snippet:
-         *   /**
-         *{@snippet class = ExternalSnippets region = join2}
-         *    public void demo() {}
-         *}
+         * {@snippet class = ExternalSnippets region = join2}
          */
         public class Main {
         }
