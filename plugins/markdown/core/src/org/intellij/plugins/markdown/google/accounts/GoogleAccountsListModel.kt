@@ -4,10 +4,10 @@ package org.intellij.plugins.markdown.google.accounts
 import com.intellij.collaboration.auth.ui.AccountsListModelBase
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.awt.RelativePoint
@@ -69,35 +69,31 @@ class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCrede
     private val process: (userCred: GoogleCredentials, userInfo: GoogleUserInfo) -> Unit
   ) : Task.Modal(null, parentComponent, MarkdownBundle.message("markdown.google.account.login.progress.title"), true) {
 
-    private var credentials: GoogleCredentials? = null
-    private var userInfo: GoogleUserInfo? = null
+    private lateinit var credentialsFuture: CompletableFuture<GoogleCredentials>
+
+    private lateinit var credentials: GoogleCredentials
+    private lateinit var userInfo: GoogleUserInfo
 
     override fun run(indicator: ProgressIndicator) {
-      var credentialsFuture: CompletableFuture<GoogleCredentials> = CompletableFuture()
+      val request = getGoogleAuthRequest()
+      credentialsFuture = service<GoogleOAuthService>().authorize(request)
+      credentials = ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
 
-      try {
-        val request = getGoogleAuthRequest()
-        credentialsFuture = service<GoogleOAuthService>().authorize(request)
-        credentials = ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
-
-        val userInfoFuture = credentials?.let { userInfoService.acquireUserInfo(it.accessToken, indicator) }
-        userInfo = userInfoFuture?.let { ProgressIndicatorUtils.awaitWithCheckCanceled(it) }
-      }
-      catch (t: Throwable) {
-        when (t) {
-          is ProcessCanceledException -> LOG.info("The authorization process has been canceled")
-          is GoogleAppCredentialsException -> parentComponent?.let { showNetworkErrorMessage(it) }
-          else -> LOG.info(t.localizedMessage)
-        }
-
-        credentialsFuture.cancel(true)
-      }
+      val userInfoFuture = userInfoService.acquireUserInfo(credentials.accessToken, ProgressWrapper.wrap(indicator))
+      userInfo = ProgressIndicatorUtils.awaitWithCheckCanceled(userInfoFuture, indicator)
     }
 
     override fun onSuccess() {
-      if (credentials != null && userInfo != null) {
-        process(credentials!!, userInfo!!)
-      }
+      process(credentials, userInfo)
+    }
+
+    override fun onThrowable(error: Throwable) {
+      if (error is GoogleAppCredentialsException) parentComponent?.let { showNetworkErrorMessage(it) }
+      else LOG.info(error.localizedMessage)
+    }
+
+    override fun onCancel() {
+      credentialsFuture.cancel(true)
     }
   }
 }
