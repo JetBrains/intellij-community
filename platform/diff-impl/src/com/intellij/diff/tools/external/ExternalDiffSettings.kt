@@ -142,7 +142,7 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
 
         // save old settings
         state.defaultToolConfiguration = ExternalToolConfiguration().apply {
-          if (state.isDiffEnabled && state.diffExePath.isNotEmpty()) {
+          if (state.diffExePath.isNotEmpty()) {
             val oldDiffTool = ExternalTool(StringUtil.capitalize(PathUtilRt.getFileName(state.diffExePath)),
                                            state.diffExePath, state.diffParameters,
                                            false, ExternalToolGroup.DIFF_TOOL)
@@ -150,7 +150,7 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
             diffToolName = oldDiffTool.name
           }
 
-          if (state.isMergeEnabled && state.mergeExePath.isNotEmpty()) {
+          if (state.mergeExePath.isNotEmpty()) {
             val oldMergeTool = ExternalTool(StringUtil.capitalize(PathUtilRt.getFileName(state.mergeExePath)),
                                             state.mergeExePath, state.mergeParameters,
                                             state.isMergeTrustExitCode, ExternalToolGroup.MERGE_TOOL)
