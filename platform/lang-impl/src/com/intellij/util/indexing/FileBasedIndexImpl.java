@@ -426,9 +426,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Path versionFile = IndexInfrastructure.getVersionFile(name);
 
     IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
-    if (name == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
-      diff = IndexVersion.IndexVersionDiff.UP_TO_DATE;
-    }
     versionRegistrationStatusSink.setIndexVersionDiff(name, diff);
     if (diff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
       final boolean versionFileExisted = Files.exists(versionFile);
