@@ -28,7 +28,7 @@ class StubBasedPackageMemberDeclarationProvider(
         val fqNameAsString = fqName.asString()
         val result = ArrayList<KtDeclaration>()
 
-        fun addFromIndex(index: AbstractStringStubIndexExtension<out KtNamedDeclaration>) {
+        fun addFromIndex(index: KotlinStringStubIndexExtension<out KtNamedDeclaration>) {
             index.processElements(fqNameAsString, project, searchScope) {
                 if (nameFilter(it.nameAsSafeName)) {
                     result.add(it)

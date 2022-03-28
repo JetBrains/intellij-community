@@ -33,6 +33,7 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
+    "kotlin.base.indices",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
