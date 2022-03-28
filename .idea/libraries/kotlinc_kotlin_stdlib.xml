@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20-RC-release-240">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20-RC2-release-264">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
       </exclude>
@@ -9,17 +9,17 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.20-RC-release-240/kotlin-stdlib-jdk8-1.6.20-RC-release-240.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.20-RC-release-240/kotlin-stdlib-1.6.20-RC-release-240.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20-RC-release-240/kotlin-stdlib-common-1.6.20-RC-release-240.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.20-RC-release-240/kotlin-stdlib-jdk7-1.6.20-RC-release-240.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.20-RC2-release-264/kotlin-stdlib-jdk8-1.6.20-RC2-release-264.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.20-RC2-release-264/kotlin-stdlib-1.6.20-RC2-release-264.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20-RC2-release-264/kotlin-stdlib-common-1.6.20-RC2-release-264.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.20-RC2-release-264/kotlin-stdlib-jdk7-1.6.20-RC2-release-264.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.20-RC-release-240/kotlin-stdlib-jdk8-1.6.20-RC-release-240-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.20-RC-release-240/kotlin-stdlib-1.6.20-RC-release-240-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20-RC-release-240/kotlin-stdlib-common-1.6.20-RC-release-240-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.20-RC-release-240/kotlin-stdlib-jdk7-1.6.20-RC-release-240-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.20-RC2-release-264/kotlin-stdlib-jdk8-1.6.20-RC2-release-264-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.6.20-RC2-release-264/kotlin-stdlib-1.6.20-RC2-release-264-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20-RC2-release-264/kotlin-stdlib-common-1.6.20-RC2-release-264-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.20-RC2-release-264/kotlin-stdlib-jdk7-1.6.20-RC2-release-264-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
