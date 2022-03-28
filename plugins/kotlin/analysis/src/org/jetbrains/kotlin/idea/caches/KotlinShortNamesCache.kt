@@ -48,7 +48,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
     override fun processAllClassNames(processor: Processor<in String>): Boolean {
         if (disableSearch.get()) return true
-        return KotlinClassShortNameIndex.getInstance().processAllKeys(project, processor) &&
+        return KotlinClassShortNameIndex.processAllKeys(project, processor) &&
                 KotlinFileFacadeShortNameIndex.processAllKeys(project, processor)
     }
 
@@ -99,7 +99,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         }
 
         val allKtClassOrObjectsProcessed = StubIndex.getInstance().processElements(
-            KotlinClassShortNameIndex.getInstance().key,
+            KotlinClassShortNameIndex.key,
             name,
             project,
             effectiveScope,

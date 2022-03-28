@@ -42,7 +42,7 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
         val targetFqName = FqName.fromSegments(qualifiedName)
 
         val functions = KotlinFunctionShortNameIndex.getInstance().get(shortName, project, scope).asSequence()
-        val classes = KotlinClassShortNameIndex.getInstance().get(shortName, project, scope).asSequence()
+        val classes = KotlinClassShortNameIndex.get(shortName, project, scope).asSequence()
 
         val descriptors = (functions + classes).filter { it.fqName == targetFqName }
             .map { it.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL) } // TODO Filter out not visible due dependencies config descriptors

@@ -62,7 +62,7 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
                 val type = functionDescriptor.returnType ?: return null
                 val returnTypeText = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
                 if (returnTypeText != functionName) return null
-                val classOrObject = KotlinClassShortNameIndex.getInstance()[functionName, project, project.allScope()].singleOrNull()
+                val classOrObject = KotlinClassShortNameIndex.get(functionName, project, project.allScope()).singleOrNull()
                     ?: return null
                 getOriginalPsiClassOrCreateLightClass(classOrObject, module)
             }

@@ -79,7 +79,7 @@ class ClassUsageReplacementStrategy(
     private fun replaceConstructorCallWithOtherTypeConstruction(callExpression: KtCallElement): KtElement {
         val referenceExpression = typeReplacement?.referenceExpression ?: error("Couldn't find referenceExpression")
         val classFromReplacement = KotlinClassShortNameIndex
-            .getInstance()[referenceExpression.text, callExpression.project, callExpression.resolveScope]
+            .get(referenceExpression.text, callExpression.project, callExpression.resolveScope)
             .firstOrNull()
 
         val replacementTypeArgumentList = typeReplacement.typeArgumentList

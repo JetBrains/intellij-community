@@ -73,7 +73,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
     }
 
     fun getKotlinClassesByName(name: Name): Collection<KtClassOrObject> {
-        return KotlinClassShortNameIndex.getInstance().get(name.asString(), project, scope)
+        return KotlinClassShortNameIndex.get(name.asString(), project, scope)
     }
 
     fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> {

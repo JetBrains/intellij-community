@@ -173,7 +173,7 @@ class KotlinExprTypePredicate(
                 fq -> if (KotlinFullClassNameIndex.getInstance()[className, project, scope].any {
                         it.getKotlinFqName() == type.fqName
                     }) return true
-                else -> if (KotlinClassShortNameIndex.getInstance()[className, project, scope].any {
+                else -> if (KotlinClassShortNameIndex.get(className, project, scope).any {
                         it.getKotlinFqName() == type.fqName
                     }) return true
             }

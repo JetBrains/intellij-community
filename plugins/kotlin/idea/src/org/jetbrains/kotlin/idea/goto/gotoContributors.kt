@@ -24,7 +24,7 @@ class KotlinGotoClassContributor : GotoClassContributor {
     override fun getQualifiedNameSeparator() = "."
 
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> {
-        val classes = KotlinClassShortNameIndex.getInstance().getAllKeys(project)
+        val classes = KotlinClassShortNameIndex.getAllKeys(project)
         val typeAliases = KotlinTypeAliasShortNameIndex.getInstance().getAllKeys(project)
         return (classes + typeAliases).toTypedArray()
     }
@@ -32,7 +32,7 @@ class KotlinGotoClassContributor : GotoClassContributor {
     override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
         val globalScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
         val scope = KotlinSourceFilterScope.projectSourceAndClassFiles(globalScope, project)
-        val classesOrObjects = KotlinClassShortNameIndex.getInstance().get(name, project, scope)
+        val classesOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
         val typeAliases = KotlinTypeAliasShortNameIndex.getInstance().get(name, project, scope)
 
         if (classesOrObjects.isEmpty() && typeAliases.isEmpty()) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY
@@ -50,7 +50,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> = listOf(
         KotlinFunctionShortNameIndex.getInstance(),
         KotlinPropertyShortNameIndex.getInstance(),
-        KotlinClassShortNameIndex.getInstance(),
+        KotlinClassShortNameIndex,
         KotlinTypeAliasShortNameIndex.getInstance(),
         KotlinJvmNameAnnotationIndex
     ).flatMap {
@@ -70,7 +70,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
             LightClassUtil.getLightClassBackingField(it) == null ||
                     it.containingClass()?.isInterface() ?: false
         }
-        result += KotlinClassShortNameIndex.getInstance().get(name, project, noLibrarySourceScope).filter {
+        result += KotlinClassShortNameIndex.get(name, project, noLibrarySourceScope).filter {
             it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType
         }
         result += KotlinTypeAliasShortNameIndex.getInstance().get(name, project, noLibrarySourceScope)

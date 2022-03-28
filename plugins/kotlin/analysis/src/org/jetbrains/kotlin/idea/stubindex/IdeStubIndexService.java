@@ -65,7 +65,7 @@ public class IdeStubIndexService extends StubIndexService {
         processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
 
         if (stub.isInterface()) {
-            sink.occurrence(KotlinClassShortNameIndex.getInstance().getKey(), JvmAbi.DEFAULT_IMPLS_CLASS_NAME);
+            sink.occurrence(KotlinClassShortNameIndex.INSTANCE.getKey(), JvmAbi.DEFAULT_IMPLS_CLASS_NAME);
         }
 
         indexSuperNames(stub, sink);
@@ -122,7 +122,7 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName,
             boolean level) {
         if (shortName != null) {
-            sink.occurrence(KotlinClassShortNameIndex.getInstance().getKey(), shortName);
+            sink.occurrence(KotlinClassShortNameIndex.INSTANCE.getKey(), shortName);
         }
 
         if (fqName != null) {
