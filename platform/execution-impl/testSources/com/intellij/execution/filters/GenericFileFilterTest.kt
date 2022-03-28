@@ -24,6 +24,7 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import kotlin.random.Random
@@ -348,5 +349,15 @@ class GenericFileFilterTest {
       flatMap { it.resultItems }.map { (it.getHyperlinkInfo() as OpenFileHyperlinkInfo).virtualFile!!.path })
       .containsExactlyElementsIn(paths)
       .inOrder()
+  }
+
+  /**
+   * Originally from `com.android.testutils.MockitoKt`.
+   *
+   * @see Mockito.eq
+   */
+  private fun <T> eq(value: T): T {
+    Mockito.eq(value)
+    return value
   }
 }
