@@ -256,9 +256,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       })
     }
     private val programPathField = TextFieldWithBrowseButton().apply {
-      addBrowseFolderListener(DiffBundle.message("select.external.diff.program.dialog.title"),
-                              null,
-                              null,
+      addBrowseFolderListener(DiffBundle.message("select.external.program.dialog.title"), null, null,
                               FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
       textField.document.addDocumentListener(object : DocumentListener {
         override fun insertUpdate(event: DocumentEvent) {
