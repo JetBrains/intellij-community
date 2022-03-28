@@ -85,6 +85,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return GotoDeclarationOrUsageHandler2.INSTANCE;
   }
 
+  @Deprecated
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     return GotoDeclarationOrUsageHandler2.getCtrlMouseInfo(editor, file, offset);

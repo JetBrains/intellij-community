@@ -45,6 +45,8 @@ internal class GTTDActionData(
 
   private fun typeSymbols() = targetData.typeSymbols(editor, offset)
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   fun ctrlMouseInfo(): CtrlMouseInfo? {
     val typeSymbols = typeSymbols().take(2).toList()
     return when (typeSymbols.size) {
