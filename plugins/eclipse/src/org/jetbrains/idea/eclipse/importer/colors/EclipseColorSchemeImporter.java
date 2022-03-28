@@ -195,6 +195,7 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
     TextAttributes unmatchedBrace = matchedBrace.clone();
     Color errorColor = ColorUtil.mix(background, Color.RED, 0.5);
     unmatchedBrace.setEffectColor(errorColor);
+    scheme.setAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES, unmatchedBrace);
 
     TextAttributes markedForRemoval = scheme.getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     if (markedForRemoval != null) {
