@@ -136,6 +136,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         if (path != null) {
           load(path, null, 0);
         }
+        else if (((String)myPath.getEditor().getItem()).isBlank()) {
+          load(null, null, 0);
+        }
       }
     });
 
