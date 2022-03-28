@@ -7,8 +7,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,12 +23,10 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
         vfsDisposable = KotlinTestUtils.allowRootAccess(this, projectRoot.path)
     }
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { KotlinTestUtils.disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
+    override fun tearDown(): Unit = runAll(
+        ThrowableRunnable { KotlinTestUtils.disposeVfsRootAccess(vfsDisposable) },
+        ThrowableRunnable { super.tearDown() },
+    )
 
     override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
         val originalDir = IDEA_TEST_DATA_DIR.resolve("configuration").resolve(projectName)
@@ -37,11 +35,10 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
         val projectRoot = (if (projectFile.exists()) projectFile else projectRoot).toPath()
 
         val testName = getTestName(true).toLowerCase()
-        val originalStdlibFile = when {
-            testName.contains("latestruntime") -> KotlinArtifacts.instance.kotlinStdlib
-            testName.endsWith("withstdlib") -> KotlinArtifacts.instance.kotlinStdlib
-            else -> null
-        }
+        val originalStdlibFile = if (testName.contains("latestruntime") || testName.endsWith("withstdlib"))
+            KotlinArtifacts.instance.kotlinStdlib
+        else
+            null
 
         if (originalStdlibFile != null) {
             val stdlibPath = "lib/kotlin-stdlib.jar"
