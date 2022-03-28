@@ -204,6 +204,10 @@ class NotebookOutputInlayController private constructor(
       InnerComponent.Constraint(newComponent.widthStretching, newComponent.limitHeight),
       pos,
     )
+
+    // DS-1972 Without revalidation, the component would be just invalidated, and would be rendered only after anything else requests
+    // for repainting the editor.
+    newComponent.component.revalidate()
   }
 
   private fun <K : NotebookOutputDataKey> createOutputGuessingFactory(outputDataKey: K): NotebookOutputComponentFactory.CreatedComponent<*>? =
