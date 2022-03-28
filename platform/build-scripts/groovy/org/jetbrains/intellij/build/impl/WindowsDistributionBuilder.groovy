@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -23,7 +23,10 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Supplier
 
@@ -253,7 +256,11 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"
       Path outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
-      List<JpsModule> resourceModules = List.of(buildContext.findApplicationInfoModule(), buildContext.findModule("intellij.platform.icons"))
+      List<JpsModule> resourceModules = List.of(
+        buildContext.findApplicationInfoModule(),
+        buildContext.findModule("intellij.platform.icons"),
+        buildContext.findModule("intellij.platform.util.jdom"),
+      )
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
