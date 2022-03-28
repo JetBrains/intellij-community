@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public class JavaCollectionBreakpointProperties extends JavaBreakpointProperties<JavaCollectionBreakpointProperties> {
+  public boolean SHOULD_SAVE_COLLECTION_HISTORY = true;
+
   @Attribute("field")
   @NlsSafe
   public String myFieldName;
@@ -34,6 +36,7 @@ public class JavaCollectionBreakpointProperties extends JavaBreakpointProperties
   @Override
   public void loadState(@NotNull JavaCollectionBreakpointProperties state) {
     super.loadState(state);
+    SHOULD_SAVE_COLLECTION_HISTORY = state.SHOULD_SAVE_COLLECTION_HISTORY;
     myFieldName = state.myFieldName;
     myClassName = state.myClassName;
   }
