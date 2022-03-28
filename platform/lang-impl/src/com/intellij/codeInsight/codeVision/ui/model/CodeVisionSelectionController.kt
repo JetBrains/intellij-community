@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.rd.swing.componentHoverPoint
 import com.jetbrains.rd.util.asProperty
 import com.jetbrains.rd.util.debounceNotNull
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -75,7 +74,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
             editor.mouseReleased().advise(entryLifetime) {
               val mouseEvent: MouseEvent = it.mouseEvent
-              checkEditorMousePosition(editor.contentComponent.componentHoverPoint()) ?: return@advise
+              checkEditorMousePosition(mouseEvent.point) ?: return@advise
 
               if (mouseEvent.isPopupTrigger) it.consume()
             }
