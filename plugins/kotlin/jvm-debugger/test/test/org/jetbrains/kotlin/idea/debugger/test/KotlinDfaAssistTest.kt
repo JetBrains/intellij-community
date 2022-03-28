@@ -100,8 +100,8 @@ class KotlinDfaAssistTest : DfaAssistTest() {
               class Nested(val x:Int)
             }
             
-            fun use(n : Nested) {
-                <caret>if (n.x > 5) {}
+            fun use(n : KotlinDfaAssistTest.Nested) {
+                <caret>if (n.x > 5/*TRUE*/) {}
             }
         """) { vm, frame ->
             frame.addVariable("n", MockValue.createValue(Nested(6), Nested::class.java, vm))
