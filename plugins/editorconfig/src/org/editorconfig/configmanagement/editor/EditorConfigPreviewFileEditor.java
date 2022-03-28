@@ -34,10 +34,11 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   public EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
     myEditor = editor;
     myPreviewFile = previewFile;
+    JComponent headerComponent = getHeaderComponent();
     if (myEditor instanceof EditorEx) {
-      ((EditorEx)myEditor).setPermanentHeaderComponent(getHeaderComponent());
+      ((EditorEx)myEditor).setPermanentHeaderComponent(headerComponent);
     }
-    myEditor.setHeaderComponent(getHeaderComponent());
+    myEditor.setHeaderComponent(headerComponent);
     final EditorSettings editorSettings = myEditor.getSettings();
     editorSettings.setWhitespacesShown(true);
     editorSettings.setGutterIconsShown(false);

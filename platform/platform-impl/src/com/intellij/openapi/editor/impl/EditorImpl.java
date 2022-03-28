@@ -1972,7 +1972,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setHeaderComponent(JComponent header) {
     myHeaderPanel.removeAll();
-    header = header == null ? getPermanentHeaderComponent() : header;
+    JComponent permanentHeader = getPermanentHeaderComponent();
+    if (header == null) {
+      header = permanentHeader;
+    }
+    else if (permanentHeader != null && header != permanentHeader) {
+      JPanel headerPanel = new JPanel(new BorderLayout());
+      headerPanel.add(permanentHeader, BorderLayout.NORTH);
+      headerPanel.add(header, BorderLayout.SOUTH);
+      header = headerPanel;
+    }
     if (header != null) {
       myHeaderPanel.add(header);
     }
