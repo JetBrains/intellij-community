@@ -18,11 +18,11 @@ class RollingFileHandler @JvmOverloads constructor(
   val append: Boolean,
   val onRotate: Runnable? = null
 ) : StreamHandler() {
-  private lateinit var meter: MeteredOutputStream
+  @Volatile private lateinit var meter: MeteredOutputStream
 
   private class MeteredOutputStream(
     private val delegate: OutputStream,
-    var written: Long,
+    @Volatile var written: Long,
   ) : OutputStream() {
     override fun write(b: Int) {
       delegate.write(b)
@@ -66,9 +66,14 @@ class RollingFileHandler @JvmOverloads constructor(
     super.publish(record)
     flush()
     if (limit > 0 && meter.written >= limit) {
-      rotate()
+      synchronized(this) {
+        if (meter.written >= limit) {
+          rotate()
+        }
+      }
     }
   }
+
 
   private fun rotate() {
     onRotate?.run()
