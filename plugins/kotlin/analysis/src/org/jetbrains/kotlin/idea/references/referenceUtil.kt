@@ -63,7 +63,7 @@ fun DeclarationDescriptor.findPsiDeclarations(project: Project, resolveScope: Gl
 
     fun Collection<KtNamedDeclaration>.fqNameFilter() = filter { it.fqName == fqName }
     return when (this) {
-        is DeserializedClassDescriptor -> KotlinFullClassNameIndex.getInstance()[fqName.asString(), project, resolveScope]
+        is DeserializedClassDescriptor -> KotlinFullClassNameIndex.get(fqName.asString(), project, resolveScope)
         is DeserializedTypeAliasDescriptor -> KotlinTypeAliasShortNameIndex.getInstance()[fqName.shortName()
             .asString(), project, resolveScope].fqNameFilter()
         is DeserializedSimpleFunctionDescriptor, is FunctionImportedFromObject -> KotlinFunctionShortNameIndex.getInstance()[fqName.shortName()

@@ -90,7 +90,7 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
         assert(kotlinFunctionConfiguration.configuration is JUnitConfiguration)
         manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinFunctionConfiguration.configuration))
 
-        val obj = KotlinFullClassNameIndex.getInstance().get("MyKotlinTest", project, project.allScope()).single()
+        val obj = KotlinFullClassNameIndex.get("MyKotlinTest", project, project.allScope()).single()
         val rename = RefactoringFactory.getInstance(project).createRename(obj, "MyBarKotlinTest")
         rename.run()
 
@@ -114,7 +114,7 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
         assert((kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.TEST_OBJECT == JUnitConfiguration.TEST_METHOD)
         manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinFunctionConfiguration.configuration))
 
-        val obj: KtClassOrObject = KotlinFullClassNameIndex.getInstance().get("MyKotlinTest", project, project.allScope()).single()
+        val obj: KtClassOrObject = KotlinFullClassNameIndex.get("MyKotlinTest", project, project.allScope()).single()
         val method = (obj as KtClass).findFunctionByName("testA")
         assert(method != null)
         val rename = RefactoringFactory.getInstance(project).createRename(method!!, "testA1")

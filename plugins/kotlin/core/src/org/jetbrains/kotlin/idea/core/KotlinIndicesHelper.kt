@@ -479,8 +479,7 @@ class KotlinIndicesHelper(
             }
             true
         }
-        KotlinFullClassNameIndex.getInstance()
-            .processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, classOrObjectProcessor)
+        KotlinFullClassNameIndex.processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, classOrObjectProcessor)
     }
 
     fun processTopLevelTypeAliases(nameFilter: (String) -> Boolean, processor: (TypeAliasDescriptor) -> Unit) {

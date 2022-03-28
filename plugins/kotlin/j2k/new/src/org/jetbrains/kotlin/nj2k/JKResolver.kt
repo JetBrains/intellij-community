@@ -47,7 +47,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
 
     private fun resolveFqNameOfKtClassByIndex(fqName: FqName): KtDeclaration? {
         val fqNameString = fqName.asString()
-        val classesPsi = KotlinFullClassNameIndex.getInstance()[fqNameString, project, scope]
+        val classesPsi = KotlinFullClassNameIndex.get(fqNameString, project, scope)
         val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, project, scope)
 
         return selectNearest(classesPsi, typeAliasesPsi)

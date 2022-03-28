@@ -227,7 +227,7 @@ object SourceNavigationHelper {
     }
 
     private fun findClassOrObject(decompiledClassOrObject: KtClassOrObject, navigationKind: NavigationKind): KtClassOrObject? {
-        return findFirstMatchingInIndex<KtClassOrObject>(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex.getInstance())
+        return findFirstMatchingInIndex<KtClassOrObject>(decompiledClassOrObject, navigationKind, KotlinFullClassNameIndex)
     }
 
     private fun getInitialTopLevelCandidates(

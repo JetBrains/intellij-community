@@ -59,7 +59,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         return project.runReadActionInSmartMode {
-            KotlinFullClassNameIndex.getInstance().get(
+            KotlinFullClassNameIndex.get(
                 fqName.asString(),
                 project,
                 KotlinSourceFilterScope.sourceAndClassFiles(searchScope, project)

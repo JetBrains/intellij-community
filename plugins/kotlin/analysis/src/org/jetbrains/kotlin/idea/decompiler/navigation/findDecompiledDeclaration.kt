@@ -70,7 +70,7 @@ private fun findCandidateDeclarationsInIndex(
 ): Collection<KtDeclaration?> {
     val containingClass = DescriptorUtils.getParentOfType(referencedDescriptor, ClassDescriptor::class.java, false)
     if (containingClass != null) {
-        return KotlinFullClassNameIndex.getInstance().get(containingClass.fqNameSafe.asString(), project, scope)
+        return KotlinFullClassNameIndex.get(containingClass.fqNameSafe.asString(), project, scope)
     }
 
     val topLevelDeclaration =

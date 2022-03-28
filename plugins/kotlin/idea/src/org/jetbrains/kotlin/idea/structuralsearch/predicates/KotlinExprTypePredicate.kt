@@ -170,7 +170,7 @@ class KotlinExprTypePredicate(
 
             // Kotlin indexes
             when {
-                fq -> if (KotlinFullClassNameIndex.getInstance()[className, project, scope].any {
+                fq -> if (KotlinFullClassNameIndex.get(className, project, scope).any {
                         it.getKotlinFqName() == type.fqName
                     }) return true
                 else -> if (KotlinClassShortNameIndex.get(className, project, scope).any {

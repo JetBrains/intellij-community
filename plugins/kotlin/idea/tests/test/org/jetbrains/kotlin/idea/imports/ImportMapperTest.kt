@@ -19,12 +19,11 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
 
     private val javaFullClassNameIndex get() = JavaFullClassNameIndex.getInstance()
-    private val kotlinFullClassNameIndex get() = KotlinFullClassNameIndex.getInstance()
     private val kotlinTypeAliasShortNameIndex get() = KotlinTypeAliasShortNameIndex.getInstance()
 
     private fun findInIndex(fqName: FqName, scope: GlobalSearchScope): PsiElement? =
         javaFullClassNameIndex.get(fqName.asString(), project, scope)?.firstOrNull()
-            ?: kotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
+            ?: KotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
     fun test() {
         val scope = GlobalSearchScope.everythingScope(project)

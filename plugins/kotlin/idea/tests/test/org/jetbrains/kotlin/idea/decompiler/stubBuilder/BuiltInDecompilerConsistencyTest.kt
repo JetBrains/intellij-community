@@ -101,11 +101,10 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
 }
 
 internal fun findDir(packageFqName: String, project: Project): VirtualFile {
-    val classNameIndex = KotlinFullClassNameIndex.getInstance()
-    val randomClassInPackage = classNameIndex.getAllKeys(project).first {
+    val randomClassInPackage = KotlinFullClassNameIndex.getAllKeys(project).first {
         it.startsWith("$packageFqName.") && "." !in it.substringAfter("$packageFqName.")
     }
-    val classes = classNameIndex.get(randomClassInPackage, project, GlobalSearchScope.allScope(project))
+    val classes = KotlinFullClassNameIndex.get(randomClassInPackage, project, GlobalSearchScope.allScope(project))
     val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $randomClassInPackage (package name $packageFqName)")
     return firstClass.containingFile.virtualFile.parent
 }

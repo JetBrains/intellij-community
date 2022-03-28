@@ -126,7 +126,7 @@ public class IdeStubIndexService extends StubIndexService {
         }
 
         if (fqName != null) {
-            sink.occurrence(KotlinFullClassNameIndex.getInstance().getKey(), fqName.asString());
+            sink.occurrence(KotlinFullClassNameIndex.INSTANCE.getKey(), fqName.asString());
 
             if (level) {
                 sink.occurrence(KotlinTopLevelClassByPackageIndex.getInstance().getKey(), fqName.parent().asString());

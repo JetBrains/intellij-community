@@ -37,7 +37,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         nameFilter: (Name) -> Boolean,
         psiFilter: (element: KtClassOrObject) -> Boolean = { true }
     ): Collection<KtClassOrObject> {
-        val index = KotlinFullClassNameIndex.getInstance()
+        val index = KotlinFullClassNameIndex
         return index.getAllKeys(project).asSequence()
             .onEach { ProgressManager.checkCanceled() }
             .filter { fqName -> nameFilter(getShortName(fqName)) }

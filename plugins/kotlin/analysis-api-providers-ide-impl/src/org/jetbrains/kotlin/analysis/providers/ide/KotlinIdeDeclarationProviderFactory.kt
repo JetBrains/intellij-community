@@ -50,7 +50,7 @@ private class KotlinIdeDeclarationProvider(
 
     override fun getClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
         return KotlinFullClassNameIndex
-            .getInstance()[classId.asStringForIndexes(), project, searchScope]
+            .get(classId.asStringForIndexes(), project, searchScope)
             .filter { candidate -> candidate.containingKtFile.packageFqName == classId.packageFqName }
     }
 

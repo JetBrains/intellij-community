@@ -142,8 +142,6 @@ private fun KtPsiFactory.createCollectionLiteral(expressions: List<KtExpression>
         (expressions.map { it.text } + lastExpression).joinToString(prefix = "[", postfix = "]")
     ) as KtCollectionLiteralExpression
 
-private fun FqName.fqNameIsExists(module: Module): Boolean = KotlinFullClassNameIndex.getInstance()[
-        asString(),
-        module.project,
-        GlobalSearchScope.moduleWithLibrariesScope(module)
-].isNotEmpty()
+private fun FqName.fqNameIsExists(module: Module): Boolean {
+    return KotlinFullClassNameIndex.get(asString(), module.project, GlobalSearchScope.moduleWithLibrariesScope(module)).isNotEmpty()
+}

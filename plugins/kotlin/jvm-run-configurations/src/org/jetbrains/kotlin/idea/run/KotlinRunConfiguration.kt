@@ -447,7 +447,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 } else {
                     project.runReadActionInSmartMode {
                         KotlinFileFacadeFqNameIndex.get(fqName, project, scope).takeIf { it.isNotEmpty() }
-                            ?: KotlinFullClassNameIndex.getInstance().get(fqName, project, scope)
+                            ?: KotlinFullClassNameIndex.get(fqName, project, scope)
                                 .flatMap { it.findMainFunCandidates() }
                                 .map { it.containingKtFile }
                     }

@@ -174,7 +174,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
         val runConfiguration = createConfigurationFromObject("renameTest.Foo")
 
-        val obj = KotlinFullClassNameIndex.getInstance().get("renameTest.Foo", project, project.allScope()).single()
+        val obj = KotlinFullClassNameIndex.get("renameTest.Foo", project, project.allScope()).single()
         val rename = RefactoringFactory.getInstance(project).createRename(obj, "Bar")
         rename.run()
 
@@ -247,7 +247,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
     }
 
     private fun createConfigurationFromObject(@Suppress("SameParameterValue") objectFqn: String): KotlinRunConfiguration {
-        val obj = KotlinFullClassNameIndex.getInstance().get(objectFqn, project, project.allScope()).single()
+        val obj = KotlinFullClassNameIndex.get(objectFqn, project, project.allScope()).single()
         val mainFunction = obj.declarations.single { it is KtFunction && it.getName() == "main" }
         return createConfigurationFromElement(mainFunction, true) as KotlinRunConfiguration
     }
@@ -354,7 +354,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     ?: run {
                         val className = StringUtil.getPackageName(mainFqn)
                         val shortName = StringUtil.getShortName(mainFqn)
-                        KotlinFullClassNameIndex.getInstance().get(className, project, scope)
+                        KotlinFullClassNameIndex.get(className, project, scope)
                             .flatMap { it.declarations }
                             .filterIsInstance<KtNamedFunction>()
                             .firstOrNull { it.name == shortName }
