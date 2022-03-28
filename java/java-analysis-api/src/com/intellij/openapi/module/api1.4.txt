@@ -2020,3 +2020,4 @@ javax.transaction.xa.XAResource
 javax.transaction.xa.XAException
 sun.security.pkcs11.P11Signature#engineGetParameters()
 sun.security.pkcs11.P11PSSSignature#engineGetParameters()
+java.rmi.activation.ActivationException#getCause()
