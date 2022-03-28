@@ -609,6 +609,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testInElvisBlock() throws Exception {
             runTest("testData/quickfix/addElseBranchToIf/inElvisBlock.kt");
         }
+
+        @TestMetadata("inElvisWithoutThen.kt")
+        public void testInElvisWithoutThen() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/inElvisWithoutThen.kt");
+        }
+
+        @TestMetadata("withoutCloseParenthesisInCondition.kt")
+        public void testWithoutCloseParenthesisInCondition() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/withoutCloseParenthesisInCondition.kt");
+        }
+
+        @TestMetadata("withoutCondition.kt")
+        public void testWithoutCondition() throws Exception {
+            runTest("testData/quickfix/addElseBranchToIf/withoutCondition.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
