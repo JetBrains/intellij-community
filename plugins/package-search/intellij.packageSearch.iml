@@ -35,7 +35,6 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
