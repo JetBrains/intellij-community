@@ -77,7 +77,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
     }
 
     fun getTopLevelExtensions(nameFilter: (Name) -> Boolean, receiverTypeNames: Set<String>): Collection<KtCallableDeclaration> {
-        val index = KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE
+        val index = KotlinTopLevelExtensionsByReceiverTypeIndex
 
         return index.getAllKeys(project).asSequence()
             .onEach { ProgressManager.checkCanceled() }
@@ -88,7 +88,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
     }
 
     fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
+        val index = KotlinTypeAliasByExpansionShortNameIndex
         val out = mutableSetOf<String>()
 
         fun searchRecursively(typeName: String) {

@@ -19,7 +19,7 @@ object StaticFacadeIndexUtil {
         project: Project
     ): Collection<KtFile> = runReadAction {
         PackagePartClassUtils.getFilesWithCallables(
-            KotlinFileFacadeFqNameIndex.INSTANCE.get(partFqName.asString(), project, searchScope)
+            KotlinFileFacadeFqNameIndex.get(partFqName.asString(), project, searchScope)
         )
     }
 
@@ -29,6 +29,6 @@ object StaticFacadeIndexUtil {
         searchScope: GlobalSearchScope,
         project: Project
     ): Collection<KtFile> = runReadAction {
-        KotlinMultifileClassPartIndex.INSTANCE.get(partFqName.asString(), project, searchScope)
+        KotlinMultiFileClassPartIndex.get(partFqName.asString(), project, searchScope)
     }
 }

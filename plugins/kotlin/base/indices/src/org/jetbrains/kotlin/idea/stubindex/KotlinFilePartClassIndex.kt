@@ -9,21 +9,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
+object KotlinFilePartClassIndex : StringStubIndexExtension<KtFile>() {
+    private val KEY: StubIndexKey<String, KtFile> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFilePartClassIndex")
 
-class KotlinFilePartClassIndex private constructor() : StringStubIndexExtension<KtFile>() {
     override fun getKey(): StubIndexKey<String, KtFile> = KEY
 
-    override fun get(key: String, project: Project, scope: GlobalSearchScope) =
-        StubIndex.getElements(KEY, key, project, scope, KtFile::class.java)
-
-    companion object {
-        private val KEY: StubIndexKey<String, KtFile> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFilePartClassIndex")
-
-        @JvmField
-        val INSTANCE: KotlinFilePartClassIndex = KotlinFilePartClassIndex()
-
-        @JvmStatic
-        fun getInstance(): KotlinFilePartClassIndex = INSTANCE
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
+        return StubIndex.getElements(KEY, key, project, scope, KtFile::class.java)
     }
 }

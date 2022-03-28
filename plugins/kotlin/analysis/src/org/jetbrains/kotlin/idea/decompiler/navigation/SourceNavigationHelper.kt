@@ -307,7 +307,7 @@ object SourceNavigationHelper {
         override fun visitClass(klass: KtClass, data: Unit) = findClassOrObject(klass, navigationKind)
 
         override fun visitTypeAlias(typeAlias: KtTypeAlias, data: Unit) =
-            findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex.getInstance())
+            findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex)
 
         override fun visitParameter(parameter: KtParameter, data: Unit): KtDeclaration? {
             val callableDeclaration = parameter.parent.parent as KtCallableDeclaration

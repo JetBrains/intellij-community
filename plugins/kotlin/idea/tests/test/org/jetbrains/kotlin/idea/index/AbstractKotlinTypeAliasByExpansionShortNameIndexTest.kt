@@ -42,7 +42,7 @@ abstract class AbstractKotlinTypeAliasByExpansionShortNameIndexTest : KotlinLigh
     private val regex = "\\(key=\"(.*?)\"[, ]*value=\"(.*?)\"\\)".toRegex()
 
     fun assertIndexContains(record: String) {
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
+        val index = KotlinTypeAliasByExpansionShortNameIndex
         val (_, key, value) = regex.find(record)!!.groupValues
         val result = index.get(key, project, scope)
         if (value !in result.map { it.name }) {

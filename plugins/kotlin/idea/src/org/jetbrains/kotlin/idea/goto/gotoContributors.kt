@@ -52,7 +52,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
         KotlinPropertyShortNameIndex.getInstance(),
         KotlinClassShortNameIndex.getInstance(),
         KotlinTypeAliasShortNameIndex.getInstance(),
-        KotlinJvmNameAnnotationIndex.getInstance()
+        KotlinJvmNameAnnotationIndex
     ).flatMap {
         StubIndex.getInstance().getAllKeys(it.key, project)
     }.toTypedArray()
@@ -74,7 +74,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
             it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType
         }
         result += KotlinTypeAliasShortNameIndex.getInstance().get(name, project, noLibrarySourceScope)
-        result += KotlinJvmNameAnnotationIndex.getInstance().get(name, project, noLibrarySourceScope)
+        result += KotlinJvmNameAnnotationIndex.get(name, project, noLibrarySourceScope)
 
         return result.toTypedArray()
     }
@@ -96,4 +96,4 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
     override fun getQualifiedNameSeparator(): String = "."
 }
 
-class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.KEY)
+class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.key)

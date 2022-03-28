@@ -9,19 +9,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-class KotlinOverridableInternalMembersShortNameIndex private constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
+object KotlinOverridableInternalMembersShortNameIndex : StringStubIndexExtension<KtCallableDeclaration>() {
+    private val KEY: StubIndexKey<String, KtCallableDeclaration> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex")
+
     override fun getKey() = KEY
 
     override fun get(name: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return StubIndex.getElements(KEY, name, project, scope, KtCallableDeclaration::class.java)
-    }
-
-    companion object {
-
-        @JvmField
-        val Instance = KotlinOverridableInternalMembersShortNameIndex()
-
-        private val KEY: StubIndexKey<String, KtCallableDeclaration> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex")
     }
 }

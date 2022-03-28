@@ -9,19 +9,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-class KotlinProbablyContractedFunctionShortNameIndex : StringStubIndexExtension<KtNamedFunction>() {
+object KotlinProbablyContractedFunctionShortNameIndex : StringStubIndexExtension<KtNamedFunction>() {
+    private val KEY: StubIndexKey<String, KtNamedFunction> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex")
+
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = KEY
 
-    override fun get(name: String, project: Project, scope: GlobalSearchScope): MutableCollection<KtNamedFunction> =
-        StubIndex.getElements(KEY, name, project, scope, KtNamedFunction::class.java)
-
-    companion object {
-        private val KEY: StubIndexKey<String, KtNamedFunction> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex")
-
-        private val ourInstance = KotlinProbablyContractedFunctionShortNameIndex()
-
-        @JvmStatic
-        fun getInstance(): KotlinProbablyContractedFunctionShortNameIndex = ourInstance
+    override fun get(name: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
+        return StubIndex.getElements(KEY, name, project, scope, KtNamedFunction::class.java)
     }
 }

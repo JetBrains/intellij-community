@@ -37,15 +37,14 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         val facadeFilesInPackage = project.runReadActionInSmartMode {
-            KotlinFileFacadeClassByPackageIndex.getInstance().get(packageFqName.asString(), project, scope)
+            KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
         }
         return facadeFilesInPackage.map { it.javaFileFacadeFqName.shortName().asString() }.toSet()
     }
 
     override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
         val facadeFilesInPackage = runReadAction {
-            KotlinFileFacadeClassByPackageIndex.getInstance()
-                .get(packageFqName.asString(), project, scope).platformSourcesFirst()
+            KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope).platformSourcesFirst()
         }
         val groupedByFqNameAndModuleInfo = facadeFilesInPackage.groupBy {
             Pair(it.javaFileFacadeFqName, it.getModuleInfoPreferringJvmPlatform())
@@ -171,7 +170,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     }
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        return KotlinScriptFqnIndex.instance.get(scriptFqName.asString(), project, scope).mapNotNull {
+        return KotlinScriptFqnIndex.get(scriptFqName.asString(), project, scope).mapNotNull {
             getLightClassForScript(it)
         }
     }
@@ -231,7 +230,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> {
         return runReadAction {
-            KotlinFileFacadeFqNameIndex.INSTANCE.get(facadeFqName.asString(), project, scope).platformSourcesFirst()
+            KotlinFileFacadeFqNameIndex.get(facadeFqName.asString(), project, scope).platformSourcesFirst()
         }
     }
 

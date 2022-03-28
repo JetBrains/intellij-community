@@ -148,7 +148,7 @@ class KotlinIndicesHelper(
         if (receiverTypes.isEmpty()) return emptyList()
 
         val suitableTopLevelExtensions = mutableListOf<CallableDescriptor>()
-        KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
+        KotlinTopLevelExtensionsByReceiverTypeIndex.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
@@ -179,7 +179,7 @@ class KotlinIndicesHelper(
     ) {
         if (receiverTypes.isEmpty()) return
 
-        KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.processSuitableExtensions(
+        KotlinExtensionsInObjectsByReceiverTypeIndex.processSuitableExtensions(
             receiverTypes,
             nameFilter,
             declarationFilter,
@@ -191,12 +191,11 @@ class KotlinIndicesHelper(
     fun resolveTypeAliasesUsingIndex(type: KotlinType, originalTypeName: String): Set<TypeAliasDescriptor> {
         val typeConstructor = type.constructor
 
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
         val out = LinkedHashMap<FqName, TypeAliasDescriptor>()
 
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            index[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope].asSequence()
                 .filter { it in scope }
                 .flatMap { it.resolveToDescriptors<TypeAliasDescriptor>().asSequence() }
                 .filter { it.expandedType.constructor == typeConstructor }
@@ -244,12 +243,11 @@ class KotlinIndicesHelper(
     }
 
     private fun possibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
-        val index = KotlinTypeAliasByExpansionShortNameIndex.INSTANCE
         val out = mutableSetOf<String>()
 
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            index[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope].asSequence()
                 .filter { it in scope }
                 .mapNotNull(KtTypeAlias::getName)
                 .filter(out::add)
@@ -412,7 +410,7 @@ class KotlinIndicesHelper(
             true
         }
 
-        KotlinSubclassObjectNameIndex.getInstance().processAllElements(project, scope, processor = objectDeclarationProcessor)
+        KotlinSubclassObjectNameIndex.processAllElements(project, scope, processor = objectDeclarationProcessor)
     }
 
     /**
@@ -495,7 +493,7 @@ class KotlinIndicesHelper(
             }
             true
         }
-        KotlinTopLevelTypeAliasFqNameIndex.getInstance()
+        KotlinTopLevelTypeAliasFqNameIndex
             .processAllElements(project, scope, { nameFilter(it.substringAfterLast('.')) }, typeAliasProcessor)
     }
 

@@ -90,7 +90,7 @@ private fun findCandidateDeclarationsInIndex(
 
         is PropertyDescriptor -> KotlinTopLevelPropertyFqnNameIndex.getInstance().get(fqName, project, scope)
 
-        is TypeAliasDescriptor -> KotlinTopLevelTypeAliasFqNameIndex.getInstance().get(fqName, project, scope)
+        is TypeAliasDescriptor -> KotlinTopLevelTypeAliasFqNameIndex.get(fqName, project, scope)
 
         else -> error("Referenced non local declaration that is not inside top level function, property, class or typealias:\n $referencedDescriptor")
     }

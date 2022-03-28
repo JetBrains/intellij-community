@@ -9,19 +9,30 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class KotlinTypeAliasByExpansionShortNameIndex : StringStubIndexExtension<KtTypeAlias>() {
+object KotlinTypeAliasByExpansionShortNameIndex : StringStubIndexExtension<KtTypeAlias>() {
+    val KEY: StubIndexKey<String, KtTypeAlias> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex")
+
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
 
-    override fun get(key: String, project: Project, scope: GlobalSearchScope) =
-        StubIndex.getElements(KEY, key, project, scope, KtTypeAlias::class.java)
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
+        return StubIndex.getElements(KEY, key, project, scope, KtTypeAlias::class.java)
+    }
 
-    companion object {
-        val KEY: StubIndexKey<String, KtTypeAlias> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex")
+    @JvmField
+    @Suppress("REDECLARATION")
+    val Companion: Companion = getJavaClass<Companion>().getField("INSTANCE").get(null) as Companion
 
-        val INSTANCE = KotlinTypeAliasByExpansionShortNameIndex()
-
+    @Suppress("REDECLARATION")
+    object Companion {
+        @Deprecated(
+            "Use KotlinTypeAliasByExpansionShortNameIndex as object instead.",
+            ReplaceWith("KotlinTypeAliasByExpansionShortNameIndex"),
+            DeprecationLevel.ERROR
+        )
         @JvmStatic
-        fun getInstance() = INSTANCE
+        fun getInstance() = KotlinTypeAliasByExpansionShortNameIndex
     }
 }
+
+private inline fun <reified T: Any> getJavaClass(): Class<T> = T::class.java

@@ -60,13 +60,13 @@ private class KotlinIdeDeclarationProvider(
 
     override fun getTypeAliasNamesInPackage(packageFqName: FqName): Set<Name> {
         return KotlinTopLevelTypeAliasByPackageIndex
-            .getInstance()[packageFqName.asStringForIndexes(), project, searchScope]
+            .get(packageFqName.asStringForIndexes(), project, searchScope)
             .mapNotNullTo(mutableSetOf()) { it.nameAsName }
     }
 
     override fun getPropertyNamesInPackage(packageFqName: FqName): Set<Name> {
         return KotlinTopLevelPropertyByPackageIndex
-            .getInstance()[packageFqName.asStringForIndexes(), project, searchScope]
+            .getInstance().get(packageFqName.asStringForIndexes(), project, searchScope)
             .mapNotNullTo(mutableSetOf()) { it.nameAsName }
     }
 
@@ -77,27 +77,25 @@ private class KotlinIdeDeclarationProvider(
     }
 
     override fun getFacadeFilesInPackage(packageFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeClassByPackageIndex.getInstance()
+        return KotlinFileFacadeClassByPackageIndex
             .get(packageFqName.asString(), project, searchScope)
     }
 
-
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeFqNameIndex.INSTANCE.get(
+        return KotlinFileFacadeFqNameIndex.get(
             key = facadeFqName.asString(),
             project = project,
             scope = searchScope
         ) //TODO original LC has platformSourcesFirst()
     }
 
-    private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? = firstMatchingOrNull<String, KtTypeAlias>(
-        KotlinTopLevelTypeAliasFqNameIndex.KEY,
-        key = classId.asStringForIndexes(),
-    ) { candidate -> candidate.containingKtFile.packageFqName == classId.packageFqName }
-        ?: firstMatchingOrNull<String, KtTypeAlias>(
-            KotlinInnerTypeAliasClassIdIndex.KEY,
-            key = classId.asString(),
-        )
+    private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
+        return firstMatchingOrNull(
+            stubKey = KotlinTopLevelTypeAliasFqNameIndex.KEY,
+            key = classId.asStringForIndexes(),
+            filter = { candidate -> candidate.containingKtFile.packageFqName == classId.packageFqName }
+        ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.key, key = classId.asString())
+    }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
         KotlinTopLevelPropertyFqnNameIndex.getInstance()[callableId.asStringForIndexes(), project, searchScope]
@@ -110,7 +108,6 @@ private class KotlinIdeDeclarationProvider(
         KotlinTopLevelClassByPackageIndex.getInstance()
             .get(packageFqName.asStringForIndexes(), project, searchScope)
             .mapNotNullTo(hashSetOf()) { it.nameAsName }
-
 
     companion object {
         private fun CallableId.asStringForIndexes(): String =

@@ -9,9 +9,9 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
-object KotlinFileFacadeClassByPackageIndex : StringStubIndexExtension<KtFile>() {
+object KotlinMultiFileClassPartIndex : StringStubIndexExtension<KtFile>() {
     private val KEY: StubIndexKey<String, KtFile> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeClassByPackageIndex")
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinMultifileClassPartIndex")
 
     override fun getKey(): StubIndexKey<String, KtFile> = KEY
 

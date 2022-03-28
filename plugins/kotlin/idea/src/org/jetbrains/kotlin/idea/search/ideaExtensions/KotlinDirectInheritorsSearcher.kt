@@ -30,11 +30,11 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
         val names = mutableSetOf(baseClassName)
         val project = file.project
 
-        val typeAliasIndex = KotlinTypeAliasByExpansionShortNameIndex.getInstance()
-
         fun searchForTypeAliasesRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            typeAliasIndex[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex
+                .get(typeName, project, scope)
+                .asSequence()
                 .map { it.name }
                 .filterNotNull()
                 .filter { it !in names }

@@ -74,12 +74,13 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
     private fun JKAnnotation.tryConvertRepeatableAnnotation(): Boolean {
         if (classSymbol.fqName == JvmAnnotationNames.REPEATABLE_ANNOTATION.asString() && moduleApiVersion >= ApiVersion.KOTLIN_1_6) {
             val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
-            KotlinTopLevelTypeAliasFqNameIndex.getInstance()[
+            KotlinTopLevelTypeAliasFqNameIndex
+                .get(
                     jvmRepeatable,
-                    context.project,
-                    context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
-                        ?: ProjectScope.getLibrariesScope(context.project)
-            ].ifEmpty {
+                     context.project,
+                     context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
+                         ?: ProjectScope.getLibrariesScope(context.project)
+                ).ifEmpty {
                 return false
             }
 

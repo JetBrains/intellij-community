@@ -14,20 +14,13 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
  * The key is stringified [org.jetbrains.kotlin.name.ClassId] by the rules described in [org.jetbrains.kotlin.name.ClassId.asString]:
  * packages are delimited by '/' and classes by '.', e.g. "kotlin/Map.Entry"
  */
-class KotlinInnerTypeAliasClassIdIndex : StringStubIndexExtension<KtTypeAlias>() {
+object KotlinInnerTypeAliasClassIdIndex : StringStubIndexExtension<KtTypeAlias>() {
+    private val KEY: StubIndexKey<String, KtTypeAlias> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinInnerTypeAliasClassIdIndex")
+
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
-
-    companion object {
-        val KEY: StubIndexKey<String, KtTypeAlias> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinInnerTypeAliasClassIdIndex")
-
-        val INSTANCE = KotlinInnerTypeAliasClassIdIndex()
-
-        @JvmStatic
-        fun getInstance() = INSTANCE
+    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
+        return StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
     }
 }
-

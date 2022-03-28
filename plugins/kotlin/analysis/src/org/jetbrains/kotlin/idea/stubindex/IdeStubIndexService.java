@@ -55,7 +55,7 @@ public class IdeStubIndexService extends StubIndexService {
                     continue;
                 }
                 FqName multiFileClassPartFqName = packageFqName.child(Name.identifier(partName));
-                sink.occurrence(KotlinMultifileClassPartIndex.INSTANCE.getKey(), multiFileClassPartFqName.asString());
+                sink.occurrence(KotlinMultiFileClassPartIndex.INSTANCE.getKey(), multiFileClassPartFqName.asString());
             }
         }
     }
@@ -98,7 +98,7 @@ public class IdeStubIndexService extends StubIndexService {
         }
 
         if (prime) {
-            sink.occurrence(KotlinPrimeSymbolNameIndex.Companion.getKEY(), name);
+            sink.occurrence(KotlinPrimeSymbolNameIndex.INSTANCE.getKey(), name);
         }
     }
 
@@ -112,7 +112,7 @@ public class IdeStubIndexService extends StubIndexService {
         indexPrime(stub, sink);
 
         if (shortName != null && !stub.isObjectLiteral() && !stub.getSuperNames().isEmpty()) {
-            sink.occurrence(KotlinSubclassObjectNameIndex.getInstance().getKey(), shortName);
+            sink.occurrence(KotlinSubclassObjectNameIndex.INSTANCE.getKey(), shortName);
         }
     }
 
@@ -174,7 +174,7 @@ public class IdeStubIndexService extends StubIndexService {
             }
 
             if (stub.mayHaveContract()) {
-                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.getInstance().getKey(), name);
+                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.INSTANCE.getKey(), name);
             }
 
             indexPrime(stub, sink);
@@ -206,14 +206,14 @@ public class IdeStubIndexService extends StubIndexService {
         FqName fqName = stub.getFqName();
         if (fqName != null) {
             if (stub.isTopLevel()) {
-                sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.getInstance().getKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.getInstance().getKey(), fqName.parent().asString());
+                sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.INSTANCE.getKey(), fqName.asString());
+                sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
             }
         }
 
         ClassId classId = stub.getClassId();
         if (classId != null && !stub.isTopLevel()) {
-            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.getInstance().getKey(), classId.asString());
+            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.INSTANCE.getKey(), classId.asString());
         }
     }
 
@@ -289,7 +289,7 @@ public class IdeStubIndexService extends StubIndexService {
 
     @Override
     public void indexScript(@NotNull KotlinScriptStub stub, @NotNull IndexSink sink) {
-        sink.occurrence(KotlinScriptFqnIndex.getInstance().getKey(), stub.getFqName().asString());
+        sink.occurrence(KotlinScriptFqnIndex.INSTANCE.getKey(), stub.getFqName().asString());
     }
 
     @NotNull

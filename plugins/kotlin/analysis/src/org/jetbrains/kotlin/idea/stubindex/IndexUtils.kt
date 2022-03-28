@@ -15,11 +15,11 @@ import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+    KotlinTopLevelExtensionsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
 fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+    KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
 private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
@@ -118,7 +118,7 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     if (stub.isTopLevel()) return
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.Instance.key, name)
+        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.key, name)
     }
 }
 
@@ -153,7 +153,7 @@ fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     }
 
     if (annotatedElementName != jvmName) {
-        sink.occurrence(KotlinJvmNameAnnotationIndex.INSTANCE.key, jvmName)
+        sink.occurrence(KotlinJvmNameAnnotationIndex.key, jvmName)
     }
 }
 

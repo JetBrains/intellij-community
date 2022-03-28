@@ -24,7 +24,7 @@ private fun Project.resolveFqNameOfJavaClassByIndex(fqNameString: String, scope:
 
 private fun Project.resolveFqNameOfKtClassByIndex(fqNameString: String, scope: GlobalSearchScope): KtDeclaration? {
     val classesPsi = KotlinFullClassNameIndex.getInstance()[fqNameString, this, scope]
-    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.getInstance()[fqNameString, this, scope]
+    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, this, scope)
 
     return scope.selectNearest(classesPsi, typeAliasesPsi)
 }

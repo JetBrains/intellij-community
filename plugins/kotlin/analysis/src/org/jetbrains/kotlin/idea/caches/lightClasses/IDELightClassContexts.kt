@@ -309,7 +309,7 @@ internal object IDELightClassContexts {
     private fun anyInternalMembersWithThisName(name: String, project: Project): Boolean {
         var result = false
         StubIndex.getInstance().processElements(
-            KotlinOverridableInternalMembersShortNameIndex.Instance.key, name, project,
+            KotlinOverridableInternalMembersShortNameIndex.key, name, project,
             EverythingGlobalScope(project), KtCallableDeclaration::class.java
         ) {
             result = true

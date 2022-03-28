@@ -13,8 +13,9 @@ abstract class KotlinExtensionsByReceiverTypeIndex : KotlinStringStubIndexExtens
 
     fun callableNameFromKey(key: String): String = key.substringAfter(SEPARATOR, "")
 
-    final override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> =
-      StubIndex.getElements(key, s, project, scope, KtCallableDeclaration::class.java)
+    final override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
+        return StubIndex.getElements(key, s, project, scope, KtCallableDeclaration::class.java)
+    }
 
     private companion object {
         private const val SEPARATOR = '\n'

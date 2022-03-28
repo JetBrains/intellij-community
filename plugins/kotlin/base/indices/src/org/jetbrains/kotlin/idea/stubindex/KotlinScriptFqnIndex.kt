@@ -9,18 +9,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtScript
 
-class KotlinScriptFqnIndex private constructor() : StringStubIndexExtension<KtScript>() {
+object KotlinScriptFqnIndex : StringStubIndexExtension<KtScript>() {
+    private val KEY: StubIndexKey<String, KtScript> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex")
+
     override fun getKey() = KEY
 
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtScript> {
         return StubIndex.getElements(KEY, fqName, project, scope, KtScript::class.java)
-    }
-
-    companion object {
-        private val KEY: StubIndexKey<String, KtScript> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex")
-
-        @JvmStatic
-        val instance = KotlinScriptFqnIndex()
     }
 }

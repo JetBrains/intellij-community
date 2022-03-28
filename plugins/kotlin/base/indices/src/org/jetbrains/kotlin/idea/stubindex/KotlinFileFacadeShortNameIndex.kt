@@ -9,20 +9,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinFileFacadeShortNameIndex private constructor() : StringStubIndexExtension<KtFile>() {
+object KotlinFileFacadeShortNameIndex : StringStubIndexExtension<KtFile>() {
+    private val KEY: StubIndexKey<String, KtFile> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex")
+
     override fun getKey(): StubIndexKey<String, KtFile> = KEY
 
-    override fun get(key: String, project: Project, scope: GlobalSearchScope) =
-        StubIndex.getElements(KEY, key, project, scope, KtFile::class.java)
-
-    companion object {
-        private val KEY: StubIndexKey<String, KtFile> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex")
-
-        @JvmField
-        val INSTANCE: KotlinFileFacadeShortNameIndex = KotlinFileFacadeShortNameIndex()
-
-        @JvmStatic
-        fun getInstance(): KotlinFileFacadeShortNameIndex = INSTANCE
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
+        return StubIndex.getElements(KEY, key, project, scope, KtFile::class.java)
     }
 }

@@ -8,19 +8,13 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class KotlinTopLevelTypeAliasByPackageIndex : KotlinStringStubIndexExtension<KtTypeAlias>(KtTypeAlias::class.java) {
+object KotlinTopLevelTypeAliasByPackageIndex : KotlinStringStubIndexExtension<KtTypeAlias>(KtTypeAlias::class.java) {
+    val KEY: StubIndexKey<String, KtTypeAlias> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasByPackageIndex")
+
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
-
-    companion object {
-        val KEY: StubIndexKey<String, KtTypeAlias> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasByPackageIndex")
-
-        val INSTANCE = KotlinTopLevelTypeAliasByPackageIndex()
-
-        @JvmStatic
-        fun getInstance() = INSTANCE
+    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
+        return StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
     }
 }

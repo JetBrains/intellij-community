@@ -5,14 +5,12 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 
-class KotlinPrimeSymbolNameIndex : StringStubIndexExtension<NavigatablePsiElement>() {
+object KotlinPrimeSymbolNameIndex : StringStubIndexExtension<NavigatablePsiElement>() {
+    private val KEY: StubIndexKey<String, NavigatablePsiElement> = StubIndexKey.createIndexKey("kotlin.primeIndexKey")
+
     override fun getKey(): StubIndexKey<String, NavigatablePsiElement> = KEY
 
     override fun getVersion(): Int {
         return super.getVersion() + 0
-    }
-
-    companion object {
-        val KEY: StubIndexKey<String, NavigatablePsiElement> = StubIndexKey.createIndexKey("kotlin.primeIndexKey")
     }
 }

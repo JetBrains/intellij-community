@@ -39,7 +39,7 @@ class StubBasedPackageMemberDeclarationProvider(
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK)) {
             addFromIndex(KotlinTopLevelClassByPackageIndex.getInstance())
-            addFromIndex(KotlinTopLevelTypeAliasByPackageIndex.getInstance())
+            addFromIndex(KotlinTopLevelTypeAliasByPackageIndex)
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.FUNCTIONS_MASK)) {
@@ -69,7 +69,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getScriptDeclarations(name: Name): Collection<KtScriptInfo> = runReadAction {
-        KotlinScriptFqnIndex.instance.get(childName(name), project, searchScope)
+        KotlinScriptFqnIndex.get(childName(name), project, searchScope)
             .map(::KtScriptInfo)
     }
 
@@ -103,7 +103,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getTypeAliasDeclarations(name: Name): Collection<KtTypeAlias> {
-        return KotlinTopLevelTypeAliasFqNameIndex.getInstance().get(childName(name), project, searchScope)
+        return KotlinTopLevelTypeAliasFqNameIndex.get(childName(name), project, searchScope)
     }
 
     private fun childName(name: Name): String {

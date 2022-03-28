@@ -9,19 +9,12 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
-class KotlinJvmNameAnnotationIndex private constructor() : StringStubIndexExtension<KtAnnotationEntry>() {
+object KotlinJvmNameAnnotationIndex : StringStubIndexExtension<KtAnnotationEntry>() {
+    private val KEY: StubIndexKey<String, KtAnnotationEntry> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex")
+
     override fun getKey(): StubIndexKey<String, KtAnnotationEntry> = KEY
 
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> =
         StubIndex.getElements(KEY, key, project, scope, KtAnnotationEntry::class.java)
-
-    companion object {
-        private val KEY: StubIndexKey<String, KtAnnotationEntry> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex")
-
-        val INSTANCE: KotlinJvmNameAnnotationIndex = KotlinJvmNameAnnotationIndex()
-
-        @JvmStatic
-        fun getInstance(): KotlinJvmNameAnnotationIndex = INSTANCE
-    }
 }
