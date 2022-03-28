@@ -19,8 +19,10 @@ import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
@@ -47,11 +49,9 @@ class ExternalDiffSettingsPanel {
           cell(treePanel.component)
             .label(DiffBundle.message("settings.external.diff.panel.tree.title"), LabelPosition.TOP)
             .horizontalAlign(HorizontalAlign.FILL)
-            .bind(
-              { treePanel.getData() },
-              { _, value -> treePanel.updateData(value) },
-              settings::externalTools.toMutableProperty()
-            )
+            .onIsModified { treePanel.onModified(settings) }
+            .onApply { treePanel.onApply(settings) }
+            .onReset { treePanel.onReset(settings) }
         }.bottomGap(BottomGap.MEDIUM)
 
         row {
