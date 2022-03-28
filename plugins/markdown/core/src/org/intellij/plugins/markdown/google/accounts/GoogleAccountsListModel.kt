@@ -6,8 +6,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.awt.RelativePoint
@@ -79,8 +79,9 @@ class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCrede
       credentialsFuture = service<GoogleOAuthService>().authorize(request)
       credentials = ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
 
-      val userInfoFuture = userInfoService.acquireUserInfo(credentials.accessToken, ProgressWrapper.wrap(indicator))
-      userInfo = ProgressIndicatorUtils.awaitWithCheckCanceled(userInfoFuture, indicator)
+      userInfo = runBlockingCancellable {
+        userInfoService.acquireUserInfo(credentials.accessToken)
+      }
     }
 
     override fun onSuccess() {
