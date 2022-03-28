@@ -70,6 +70,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
   init {
     val decoratedTree = ToolbarDecorator.createDecorator(tree)
       .setAddAction { addTool() }
+      .setRemoveActionUpdater { isExternalToolSelected(tree.selectionPath) }
       .setRemoveAction { removeData() }
       .setEditActionUpdater { isExternalToolSelected(tree.selectionPath) }
       .setEditAction { editData() }
@@ -140,12 +141,6 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
   private fun removeData() {
     val treePath = tree.selectionPath ?: return
     val node = treePath.lastPathComponent as DefaultMutableTreeNode
-    if (node.userObject !is ExternalTool) {
-      Messages.showWarningDialog(DiffBundle.message("settings.external.tool.tree.remove.group.warning.message"),
-                                 DiffBundle.message("settings.external.tool.tree.remove.group.warning.title"))
-      return
-    }
-
     val parentNode = treePath.parentPath.lastPathComponent as DefaultMutableTreeNode
     val toolGroup = parentNode.userObject as ExternalToolGroup
 
