@@ -21,7 +21,7 @@ object PackageIndexUtil {
         packageFqName: FqName,
         searchScope: GlobalSearchScope,
         project: Project
-    ): Collection<KtFile> = KotlinExactPackagesIndex.getInstance().get(packageFqName.asString(), project, searchScope)
+    ): Collection<KtFile> = KotlinExactPackagesIndex.get(packageFqName.asString(), project, searchScope)
 
     /**
      * Return true if exists package with exact [fqName] OR there are some subpackages of [fqName]
