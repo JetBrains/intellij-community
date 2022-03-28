@@ -260,7 +260,7 @@ public class IdeStubIndexService extends StubIndexService {
         if (name == null) {
             return;
         }
-        sink.occurrence(KotlinAnnotationsIndex.getInstance().getKey(), name);
+        sink.occurrence(KotlinAnnotationsIndex.INSTANCE.getKey(), name);
 
         KotlinFileStub fileStub = getContainingFileStub(stub);
         if (fileStub != null) {
@@ -268,7 +268,7 @@ public class IdeStubIndexService extends StubIndexService {
             for (KotlinImportDirectiveStub importStub : aliasImportStubs) {
                 FqName importedFqName = importStub.getImportedFqName();
                 if (importedFqName != null) {
-                    sink.occurrence(KotlinAnnotationsIndex.getInstance().getKey(), importedFqName.shortName().asString());
+                    sink.occurrence(KotlinAnnotationsIndex.INSTANCE.getKey(), importedFqName.shortName().asString());
                 }
             }
         }
