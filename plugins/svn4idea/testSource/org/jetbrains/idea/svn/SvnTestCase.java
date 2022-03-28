@@ -59,7 +59,7 @@ import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -105,9 +105,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   @BeforeClass
-  public static void assumeNotMacUnderTeamCity() {
-    String message = "Mac svn binaries are not added yet";
-    assumeFalse(message, IS_UNDER_TEAMCITY && SystemInfo.isMac && CpuArch.isIntel64());
+  public static void assumeSupportedTeamCityAgentArch() {
+    if (IS_UNDER_TEAMCITY) {
+      assumeTrue(SystemInfo.OS_NAME + '/' + CpuArch.CURRENT + " is not supported", !SystemInfo.isMac && CpuArch.isIntel64());
+    }
   }
 
   @Before
