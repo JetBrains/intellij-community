@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -37,6 +37,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.system.CpuArch
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.*
@@ -68,6 +69,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private val resetHappened = AtomicBoolean()
 
   @Before fun setUp() {
+    assumeTrue("${SystemInfo.OS_NAME}/${CpuArch.CURRENT} is not supported", !CpuArch.isArm64() || SystemInfo.isMac)
+
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()
@@ -121,9 +124,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     files.forEach { refresh(it) }
     files.forEach { watch(it, false) }
 
-    assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
-    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.map { it to 'D' }.toMap())
-    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
+    assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
+    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.associateWith { 'D' })
+    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.associateWith { 'C' })
   }
 
   @Test fun testFileRootRecursive() {
@@ -131,9 +134,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     files.forEach { refresh(it) }
     files.forEach { watch(it, true) }
 
-    assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
-    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.map { it to 'D' }.toMap())
-    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
+    assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
+    assertEvents({ files.forEach { assertTrue(it.delete()) } }, files.associateWith { 'D' })
+    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.associateWith { 'C' })
   }
 
   @Test fun testNonCanonicallyNamedFileRoot() {
@@ -142,7 +145,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file = tempDir.newFile("test.txt")
     refresh(file)
 
-    watch(File(file.path.toUpperCase(Locale.US)))
+    watch(File(file.path.uppercase(Locale.US)))
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
     assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
@@ -599,7 +602,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ assertTrue(file.renameTo(newFile)) }, mapOf(newFile to 'P'))
   }
 
-  // tests the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
+  // the following tests verify the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
   @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newDirectory("top"))
   @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newDirectory("top"))
   @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newDirectory("top"))
