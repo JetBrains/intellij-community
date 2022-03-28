@@ -22,3 +22,4 @@ stale_outputs_checked
 **/build.gradle.kts
 !**/testData/**/build.gradle.kts
 !**/testdata/**/build.gradle.kts
+/android
