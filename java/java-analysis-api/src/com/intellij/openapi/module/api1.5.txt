@@ -1771,3 +1771,6 @@ sun.jvmstat.perfdata.monitor.PerfStringConstantMonitor
 sun.jvmstat.perfdata.monitor.PerfStringVariableMonitor
 sun.jvmstat.perfdata.monitor.AbstractPerfDataBufferPrologue
 jdk.internal.agent.ConnectorAddressLink
+java.util.jar.Pack200
+java.awt.peer.ContainerPeer#restack()
+java.awt.peer.ContainerPeer#isRestackSupported()
