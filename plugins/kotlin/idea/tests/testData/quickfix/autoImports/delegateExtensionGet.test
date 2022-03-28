@@ -1,6 +1,6 @@
 // FILE: first.before.kt
 // "Import" "true"
-// ERROR: Type 'DelegateImpl<Int>' has no method 'getValue(BigTest, KProperty<*>)' and thus it cannot serve as a delegate
+// ERROR: Type 'DelegateImpl<Int>' has no method 'setValue(BigTest, KProperty<*>, [Error type: Error delegation type for DelegateImpl<Int>()])' and thus it cannot serve as a delegate for var (read-write property)
 
 package testing
 
@@ -27,7 +27,7 @@ public operator fun <T> DelegateImpl<T>.getValue(thisRef: Any?, property: KPrope
 
 // FILE: first.after.kt
 // "Import" "true"
-// ERROR: Type 'DelegateImpl<Int>' has no method 'getValue(BigTest, KProperty<*>)' and thus it cannot serve as a delegate
+// ERROR: Type 'DelegateImpl<Int>' has no method 'setValue(BigTest, KProperty<*>, [Error type: Error delegation type for DelegateImpl<Int>()])' and thus it cannot serve as a delegate for var (read-write property)
 
 package testing
 
