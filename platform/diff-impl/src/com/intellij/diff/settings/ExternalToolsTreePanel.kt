@@ -71,6 +71,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     val decoratedTree = ToolbarDecorator.createDecorator(tree)
       .setAddAction { addTool() }
       .setRemoveAction { removeData() }
+      .setEditActionUpdater { isExternalToolSelected(tree.selectionPath) }
       .setEditAction { editData() }
       .disableUpDownActions()
       .createPanel()
@@ -189,6 +190,16 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     return when (externalToolGroup) {
       ExternalToolGroup.DIFF_TOOL -> configurations.any { it.diffToolName == externalTool.name }
       ExternalToolGroup.MERGE_TOOL -> configurations.any { it.mergeToolName == externalTool.name }
+    }
+  }
+
+  private fun isExternalToolSelected(selectionPath: TreePath?): Boolean {
+    if (selectionPath == null) return false
+
+    val node = selectionPath.lastPathComponent as DefaultMutableTreeNode
+    return when (node.userObject) {
+      is ExternalTool -> true
+      else -> false
     }
   }
 
