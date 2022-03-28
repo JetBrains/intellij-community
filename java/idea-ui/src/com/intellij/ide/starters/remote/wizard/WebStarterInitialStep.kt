@@ -10,6 +10,7 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ValidationFunctions.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.AbstractWizard
+import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
