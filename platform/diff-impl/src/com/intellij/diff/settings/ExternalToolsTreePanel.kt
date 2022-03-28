@@ -18,8 +18,8 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CheckboxTree
-import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SmartExpander
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PathUtilRt
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -48,10 +49,11 @@ import javax.swing.tree.TreePath
 internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
   private var treeState: TreeState
   private val treeModel = models.treeModel
-  private val root = treeModel.root as CheckedTreeNode
-  private val tree = CheckboxTree(ExternalToolsTreeCellRenderer(), root).apply {
+  private val root = treeModel.root as DefaultMutableTreeNode
+  private val tree = Tree(treeModel).apply {
     visibleRowCount = 8
-    model = treeModel
+    isRootVisible = false
+    cellRenderer = ExternalToolsTreeCellRenderer()
     treeState = TreeState.createOn(this)
 
     addMouseListener(object : MouseAdapter() {
@@ -61,7 +63,6 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
           mouseEvent.consume()
           val node = treePath.lastPathComponent as DefaultMutableTreeNode
           when (node.userObject) {
-            is ExternalToolGroup -> if (isExpanded(treePath)) collapsePath(treePath) else expandPath(treePath)
             is ExternalTool -> editData()
             else -> {}
           }
@@ -77,6 +78,8 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
         treeState = TreeState.createOn(this@apply)
       }
     })
+
+    SmartExpander.installOn(this)
   }
 
   val component: JComponent
@@ -192,26 +195,24 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     }
   }
 
-  private class ExternalToolsTreeCellRenderer : CheckboxTree.CheckboxTreeCellRenderer() {
-    override fun customizeRenderer(tree: JTree?,
-                                   value: Any?,
-                                   selected: Boolean,
-                                   expanded: Boolean,
-                                   leaf: Boolean,
-                                   row: Int,
-                                   hasFocus: Boolean) {
-      val renderer = textRenderer
-      val text = when (val item = (value as DefaultMutableTreeNode).userObject) {
-        null -> return
-        is ExternalToolGroup -> {
-          if (value.childCount == 0) return
-          item.groupName // NON-NLS
-        }
-        is ExternalTool -> item.name // NON-NLS
-        else -> item.toString() // NON-NLS
-      }
+  private class ExternalToolsTreeCellRenderer : TreeCellRenderer {
+    private val renderer = SimpleColoredComponent()
 
-      renderer.append(text)
+    override fun getTreeCellRendererComponent(tree: JTree, value: Any,
+                                              selected: Boolean, expanded: Boolean,
+                                              leaf: Boolean, row: Int, hasFocus: Boolean): Component {
+      return renderer.apply {
+        val node = value as DefaultMutableTreeNode
+        val text = when (val userObject = node.userObject) {
+          null -> "" // Special for root (not visible in tree)
+          is ExternalToolGroup -> userObject.groupName // NON-NLS
+          is ExternalTool -> userObject.name // NON-NLS
+          else -> userObject.toString() // NON-NLS
+        }
+
+        clear()
+        append(text)
+      }
     }
   }
 
