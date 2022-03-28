@@ -248,6 +248,8 @@ public final class EnvironmentUtil {
         reader = SHELL_ENV_COMMAND + "' '" + ENV_ZERO_ARGUMENT;
       }
 
+      // The temporary file is not pre-created, as writing to an already existing file using pipe might not be available
+      // if the 'noclobber' option is set for the shell
       Path envDataFileDir = Files.createTempDirectory("ij-env-tmp-dir");
       Path envDataFile = envDataFileDir.resolve("ij-shell-env-data.tmp");
 
@@ -354,7 +356,7 @@ public final class EnvironmentUtil {
           .start();
         final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
+        final String envData = Files.exists(envDataFile) ? new String(Files.readAllBytes(envDataFile), Charset.defaultCharset()) : "";
         final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
         if (exitCode != 0 || envData.isEmpty()) {
           EnvironmentReaderException ex =  new EnvironmentReaderException("command " + command +
