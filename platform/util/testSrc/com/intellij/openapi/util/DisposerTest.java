@@ -550,4 +550,24 @@ public class DisposerTest extends TestCase {
     assertTrue(d2.isDisposed());
     assertTrue(disposable.isDisposed());
   }
+
+  public void testDoubleRegisterMustNotLeakOneOfTheInstances() {
+    LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+    Disposable parent = new MyLoggingDisposable("parent");
+    class MyChildDisposable extends MyLoggingDisposable {
+      private MyChildDisposable(String aName) {
+        super(aName);
+      }
+    }
+    Disposable child = new MyChildDisposable("child");
+    Disposer.register(parent, child);
+    Disposer.register(parent, child);
+    Disposer.dispose(child);
+    //noinspection UnusedAssignment
+    child = null;
+    myDisposedObjects.clear();
+    LeakHunter.checkLeak(Disposer.getTree(), MyChildDisposable.class);
+    Disposer.dispose(parent);
+    LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+  }
 }

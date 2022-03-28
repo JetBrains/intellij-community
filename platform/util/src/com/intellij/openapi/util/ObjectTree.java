@@ -50,20 +50,8 @@ final class ObjectTree {
       if (child instanceof Disposer.CheckedDisposableImpl) {
         ((Disposer.CheckedDisposableImpl)child).isDisposed = false;
       }
-      ObjectNode parentNode = getNode(parent);
-      if (parentNode == null) parentNode = createNodeFor(parent, null);
-
-      ObjectNode childNode = getNode(child);
-      if (childNode == null) {
-        childNode = createNodeFor(child, parentNode);
-      }
-      else {
-        ObjectNode oldParent = childNode.getParent();
-        if (oldParent != null) {
-          oldParent.removeChild(childNode);
-        }
-      }
-      myRootObjects.remove(child);
+      ObjectNode parentNode = getOrCreateParentNode(parent);
+      ObjectNode childNode = getOrCreateChildNode(parentNode, child);
 
       RuntimeException e = checkWasNotAddedAlreadyAsChild(parentNode, childNode);
       if (e != null) return e;
@@ -89,14 +77,31 @@ final class ObjectTree {
   }
 
   @NotNull
-  private ObjectNode createNodeFor(@NotNull Disposable object, @Nullable ObjectNode parentNode) {
-    ObjectNode newNode = new ObjectNode(object, parentNode);
-    if (parentNode == null) {
-      myRootObjects.add(object);
-    }
-    myObject2NodeMap.put(object, newNode);
-    return newNode;
+  private ObjectNode getOrCreateParentNode(@NotNull Disposable parent) {
+    return myObject2NodeMap.computeIfAbsent(parent, p -> {
+      myRootObjects.add(p);
+      return new ObjectNode(p, null);
+    });
   }
+  @NotNull
+  private ObjectNode getOrCreateChildNode(@NotNull ObjectNode parentNode, @NotNull Disposable child) {
+    return myObject2NodeMap.compute(child, (c, oldNode) -> {
+      if (oldNode == null) {
+        oldNode = new ObjectNode(c, parentNode);
+      }
+      else {
+        ObjectNode oldParent = oldNode.getParent();
+        if (oldParent == null) {
+          myRootObjects.remove(c);
+        }
+        else {
+          oldParent.removeChild(oldNode);
+        }
+      }
+      return oldNode;
+    });
+  }
+
 
   private void runWithTrace(@NotNull Supplier<? extends @NotNull List<Disposable>> removeFromTreeAction) {
     boolean needTrace = Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
