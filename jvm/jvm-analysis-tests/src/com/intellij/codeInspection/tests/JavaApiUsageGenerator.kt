@@ -17,6 +17,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.lang.JavaVersion
 import org.junit.Ignore
 
+@Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
     override fun getSdk(): Sdk {
@@ -24,7 +25,6 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  @Ignore
   fun testCollectSinceApiUsages() {
     doCollectSinceApiUsages()
   }
