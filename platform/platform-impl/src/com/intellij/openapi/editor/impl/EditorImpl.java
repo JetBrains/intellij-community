@@ -3273,7 +3273,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
-      return PlatformUtils.isDataGrip() && caret != null
+      return caret != null
              ? isCaretInsideSelection(caret)
              : getSelectionModel().hasSelection(true);
     }
@@ -3292,7 +3292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean isCutVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
       return isCutEnabled(dataContext) &&
-             (PlatformUtils.isDataGrip() && caret != null
+             (caret != null
               ? isCaretInsideSelection(caret)
               : getSelectionModel().hasSelection(true));
     }

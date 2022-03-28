@@ -40,7 +40,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -1134,7 +1133,7 @@ public final class EditorUtil {
   }
 
   public static boolean contextMenuInvokedOutsideOfSelection(@NotNull AnActionEvent e) {
-    if (!PlatformUtils.isDataGrip() || e.getPlace() != ActionPlaces.EDITOR_POPUP) return false;
+    if (!ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) return false;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor != null && editor.getSelectionModel().hasSelection() &&
            !isCaretInsideSelection(e.getData(CommonDataKeys.CARET));
