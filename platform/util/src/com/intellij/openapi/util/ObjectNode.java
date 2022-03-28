@@ -13,18 +13,13 @@ import java.util.List;
 import java.util.function.Predicate;
 
 final class ObjectNode {
-  private final ObjectTree myTree;
-
   ObjectNode myParent; // guarded by myTree.treeLock
   private final Disposable myObject;
 
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
   private Throwable myTrace; // guarded by myTree.treeLock
 
-  ObjectNode(@NotNull ObjectTree tree,
-             @Nullable ObjectNode parentNode,
-             @NotNull Disposable object) {
-    myTree = tree;
+  ObjectNode(@NotNull Disposable object, @Nullable ObjectNode parentNode) {
     myParent = parentNode;
     myObject = object;
 
@@ -61,8 +56,8 @@ final class ObjectNode {
     return myParent;
   }
 
-  void getAndRemoveRecursively(@NotNull List<? super Disposable> result) {
-    getAndRemoveChildrenRecursively(result, null);
+  void getAndRemoveRecursively(@NotNull ObjectTree myTree, @NotNull List<? super Disposable> result) {
+    getAndRemoveChildrenRecursively(myTree, result, null);
     myTree.removeObjectFromTree(this);
     // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
     if (myTree.rememberDisposedTrace(myObject) == null) {
@@ -75,12 +70,13 @@ final class ObjectNode {
   /**
    * {@code predicate} is used only for direct children.
    */
-  void getAndRemoveChildrenRecursively(@NotNull List<? super Disposable> result, @Nullable Predicate<? super Disposable> predicate) {
+  void getAndRemoveChildrenRecursively(@NotNull ObjectTree myTree,
+                                       @NotNull List<? super Disposable> result, @Nullable Predicate<? super Disposable> predicate) {
     if (myChildren != null) {
       for (int i = myChildren.size() - 1; i >= 0; i--) {
         ObjectNode childNode = myChildren.get(i);
         if (predicate == null || predicate.test(childNode.getObject())) {
-          childNode.getAndRemoveRecursively(result);
+          childNode.getAndRemoveRecursively(myTree, result);
         }
       }
     }

@@ -34,17 +34,10 @@ final class ObjectTree {
     return myObject2NodeMap.get(object);
   }
 
-  private void putNode(@NotNull Disposable object, @Nullable("null means remove") ObjectNode node) {
-    if (node == null) {
-      myObject2NodeMap.remove(object);
-    }
-    else {
-      myObject2NodeMap.put(object, node);
-    }
-  }
-
   @Nullable RuntimeException register(@NotNull Disposable parent, @NotNull Disposable child) {
-    if (parent == child) return new IllegalArgumentException("Cannot register to itself: "+parent);
+    if (parent == child) {
+      return new IllegalArgumentException("Cannot register to itself: "+parent);
+    }
     synchronized (treeLock) {
       Object wasDisposed = getDisposalInfo(parent);
       if (wasDisposed != null) {
@@ -97,11 +90,11 @@ final class ObjectTree {
 
   @NotNull
   private ObjectNode createNodeFor(@NotNull Disposable object, @Nullable ObjectNode parentNode) {
-    final ObjectNode newNode = new ObjectNode(this, parentNode, object);
+    ObjectNode newNode = new ObjectNode(object, parentNode);
     if (parentNode == null) {
       myRootObjects.add(object);
     }
-    putNode(object, newNode);
+    myObject2NodeMap.put(object, newNode);
     return newNode;
   }
 
@@ -160,7 +153,7 @@ final class ObjectTree {
       }
 
       List<Disposable> disposables = new ArrayList<>();
-      node.getAndRemoveChildrenRecursively(disposables, predicate);
+      node.getAndRemoveChildrenRecursively(this, disposables, predicate);
       return disposables;
     });
   }
@@ -178,7 +171,7 @@ final class ObjectTree {
         }
       }
       else {
-        node.getAndRemoveRecursively(disposables);
+        node.getAndRemoveRecursively(this, disposables);
       }
       return disposables;
     });
@@ -225,7 +218,7 @@ final class ObjectTree {
         while (objectNode.getParent() != null) {
           objectNode = objectNode.getParent();
         }
-        final Throwable trace = objectNode.getTrace();
+        Throwable trace = objectNode.getTrace();
         String message = "Memory leak detected: '" + object + "' of " + object.getClass() + " is registered in Disposer but wasn't disposed.\n" +
                          "Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.\n" +
                          "See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.\n" +
@@ -279,7 +272,7 @@ final class ObjectTree {
   void removeObjectFromTree(@NotNull ObjectNode node) {
     synchronized (treeLock) {
       Disposable myObject = node.getObject();
-      putNode(myObject, null);
+      myObject2NodeMap.remove(myObject);
       ObjectNode parent = node.getParent();
       if (parent == null) {
         myRootObjects.remove(myObject);

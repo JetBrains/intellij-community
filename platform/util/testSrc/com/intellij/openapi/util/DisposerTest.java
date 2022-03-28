@@ -312,11 +312,8 @@ public class DisposerTest extends TestCase {
     Disposer.register(child, grand);
 
     try {
-      Disposer.register(grand, parent);
-      fail("must not allow");
-    }
-    catch (IncorrectOperationException e) {
-      assertEquals("'grand' was already added as a child of 'parent'", e.getMessage());
+      UsefulTestCase.assertThrows(IncorrectOperationException.class, "'grand' was already added as a child of 'parent'",
+                                  () -> Disposer.register(grand, parent));
     }
     finally {
       Disposer.dispose(grand);
@@ -418,13 +415,7 @@ public class DisposerTest extends TestCase {
     }; });
     Disposer.register(parent, last);
 
-    try {
-      Disposer.dispose(parent);
-      fail("Should throw");
-    }
-    catch (Throwable e) {
-      assertEquals("Expected", e.getMessage());
-    }
+    UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
 
     assertTrue(Disposer.isDisposed(parent));
     assertTrue(Disposer.isDisposed(first));
@@ -439,13 +430,7 @@ public class DisposerTest extends TestCase {
 
     Disposer.register(parent, () -> Disposer.register(parent, last));
 
-    try {
-      Disposer.dispose(parent);
-      fail("Must throw");
-    }
-    catch (Throwable e) {
-      assertTrue(e.getMessage(), e.getMessage().startsWith("Sorry but parent"));
-    }
+    UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
 
     assertTrue(Disposer.isDisposed(parent));
   }
@@ -465,8 +450,9 @@ public class DisposerTest extends TestCase {
     }
   }
 
-  public void testDisposerMustHaveIdentitySemanticsForChildren() {
+  public void testDisposerMustUseIdentitySemanticsForChildren() {
     List<Disposable> run = new ArrayList<>();
+    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable0 = new Disposable() {
       @Override
       public void dispose() {
@@ -483,6 +469,7 @@ public class DisposerTest extends TestCase {
         return true;
       }
     };
+    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable1 = new Disposable() {
       @Override
       public void dispose() {
@@ -513,6 +500,7 @@ public class DisposerTest extends TestCase {
 
   public void testDisposerMustHaveIdentitySemanticsForParent() {
     List<Disposable> run = new ArrayList<>();
+    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable0 = new Disposable() {
       @Override
       public void dispose() {
@@ -528,6 +516,7 @@ public class DisposerTest extends TestCase {
         return true;
       }
     };
+    //noinspection EqualsWhichDoesntCheckParameterClass
     Disposable disposable1 = new Disposable() {
       @Override
       public void dispose() {
