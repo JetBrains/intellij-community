@@ -91,7 +91,7 @@ internal class RecentProjectPanelComponentFactory(
             treeModel.insertNodeInto(DefaultMutableTreeNode(child), projectGroupNode, projectGroupNode.childCount)
           }
         }
-        else -> {} // TODO: fix (using sealed interface)
+        is RecentProjectItem -> treeModel.insertNodeInto(DefaultMutableTreeNode(project), root, root.childCount)
       }
     }
 
