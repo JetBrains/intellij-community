@@ -4,7 +4,6 @@ package com.intellij.util.containers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
@@ -73,8 +72,7 @@ fun <T> List<T>.init(): List<T> {
 }
 
 fun <T> List<T>?.nullize(): List<T>? {
-  @Suppress("DEPRECATION")
-  return if (isNullOrEmpty()) null else this
+  return if (this == null || this.isEmpty()) null else this
 }
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
@@ -173,8 +171,8 @@ inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
 
 inline fun <T, reified R> Array<out T>.map2Array(transform: (T) -> R): Array<R> = Array(this.size) { i -> transform(this[i]) }
 
-@Suppress("UNCHECKED_CAST")
 inline fun <T, reified R> Collection<T>.map2Array(transform: (T) -> R): Array<R> {
+  @Suppress("UNCHECKED_CAST")
   return arrayOfNulls<R>(this.size).also { array ->
     this.forEachIndexed { index, t -> array[index] = transform(t) }
   } as Array<R>
