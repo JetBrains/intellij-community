@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.idea.ActionsBundle;
@@ -128,7 +129,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
 
-    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar();
+    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getNavBarLocation() == NavBarLocation.BOTTOM &&
+                   uiSettings.getShowNavigationBar();
 
     myRefreshIcon = new JLabel(new AnimatedIcon.FS());
     myRefreshIcon.setVisible(false);
@@ -521,23 +523,22 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar();
+    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() &&
+                   uiSettings.getNavBarLocation() == NavBarLocation.BOTTOM;
 
     BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
     Component c = layout.getLayoutComponent(BorderLayout.CENTER);
-    if (c != null) {
-      myRefreshAndInfoPanel.remove(c);
-    }
+    if (c != null) myRefreshAndInfoPanel.remove(c);
 
     c = layout.getLayoutComponent(BorderLayout.WEST);
-    if (c != null) {
-      myRefreshAndInfoPanel.remove(c);
-    }
+    if (c != null) myRefreshAndInfoPanel.remove(c);
 
     if (myShowNavBar) {
       if (myCentralComponent != null) {
-        myRefreshAndInfoPanel.add(myCentralComponent, BorderLayout.CENTER);
-        myCentralComponent.updateUI();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myRefreshAndInfoPanel.add(myCentralComponent, BorderLayout.CENTER);
+          myCentralComponent.updateUI();
+        });
       }
     }
     else {

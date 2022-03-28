@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-final class ViewToolbarActionsGroup extends DefaultActionGroup implements DumbAware {
+public class ViewToolbarActionsGroup extends DefaultActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

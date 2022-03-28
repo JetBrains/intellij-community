@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions.navbar;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewNavigationBarAction extends ToggleAction implements DumbAware {
@@ -18,5 +19,11 @@ public class ViewNavigationBarAction extends ToggleAction implements DumbAware {
     UISettings uiSettings = UISettings.getInstance();
     uiSettings.setShowNavigationBar(state);
     uiSettings.fireUISettingsChanged();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabledAndVisible(!ExperimentalUI.isNewUI());
   }
 }
