@@ -15,11 +15,8 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsLi
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.write
 
 class KotlinMigrationProjectService(val project: Project) : Disposable {
-    private val lock = ReentrantReadWriteLock()
     private var currentState: MigrationState? = null
 
     private fun updateState(languageVersion: LanguageVersion?, apiVersion: ApiVersion?) {
@@ -33,7 +30,7 @@ class KotlinMigrationProjectService(val project: Project) : Disposable {
             MigrationState(languageVersion, apiVersion)
         }
 
-        val oldState = lock.write { currentState.also { currentState = newState } }
+        val oldState = synchronized(this) { currentState.also { currentState = newState } }
         val migrationInfo = prepareMigrationInfo(old = oldState, new = newState) ?: return
         ReadAction.nonBlocking<Boolean> { applicableMigrationToolExists(migrationInfo) || isUnitTestMode() }
             .expireWith(this)
