@@ -12,6 +12,10 @@ import javax.script.ScriptEngine
 @Suppress("unused") // used in javax.script.ScriptEngineFactory META-INF file
 class KotlinJsr223StandardScriptEngineFactory4Idea : KotlinJsr223JvmScriptEngineFactoryBase() {
 
+    override fun getEngineName(): String {
+        return "Kotlin - Beta"
+    }
+
     override fun getScriptEngine(): ScriptEngine =
         KotlinJsr223JvmScriptEngine4Idea(
             this,
