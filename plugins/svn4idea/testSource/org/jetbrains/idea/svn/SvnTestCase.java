@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -29,6 +29,7 @@ import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -106,7 +107,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @BeforeClass
   public static void assumeNotMacUnderTeamCity() {
     String message = "Mac svn binaries are not added yet";
-    assumeFalse(message, IS_UNDER_TEAMCITY && SystemInfo.isMac);
+    assumeFalse(message, IS_UNDER_TEAMCITY && SystemInfo.isMac && CpuArch.isIntel64());
   }
 
   @Before
