@@ -14,7 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.EditorTabPreview.Companion.registerEscapeHandler
+import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.openPreview
+import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.wm.IdeFocusManager
@@ -117,7 +118,7 @@ abstract class EditorDiffPreview(protected val project: Project,
     }
 
     registerEscapeHandler(previewFile, escapeHandler)
-    EditorTabPreview.openPreview(project, previewFile, requestFocus)
+    openPreview(project, previewFile, requestFocus)
     return true
   }
 
@@ -175,7 +176,7 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
     if (ExternalDiffTool.isEnabled()) {
       val diffProducers = ListSelection.createAt(changesBrowser.selectedChanges, 0)
         .map { change -> changesBrowser.getDiffRequestProducer(change, false) }
-      if (EditorTabPreview.showExternalToolIfNeeded(project, diffProducers)) {
+      if (EditorTabPreviewBase.showExternalToolIfNeeded(project, diffProducers)) {
         return true
       }
     }
