@@ -9,6 +9,7 @@ import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.diff.tools.external.ExternalDiffToolUtil
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -38,29 +39,42 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
+  private var treeState: TreeState
   private val treeModel = models.treeModel
   private val root = treeModel.root as CheckedTreeNode
   private val tree = CheckboxTree(ExternalToolsTreeCellRenderer(), root).apply {
     visibleRowCount = 8
     model = treeModel
+    treeState = TreeState.createOn(this)
+
     addMouseListener(object : MouseAdapter() {
       override fun mousePressed(mouseEvent: MouseEvent) {
         val treePath = selectionPath ?: return
         if (mouseEvent.clickCount == 2 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
           mouseEvent.consume()
-          when ((treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
-            is ExternalToolGroup -> {
-              if (isExpanded(treePath)) collapsePath(treePath)
-              else expandPath(treePath)
-            }
+          val node = treePath.lastPathComponent as DefaultMutableTreeNode
+          when (node.userObject) {
+            is ExternalToolGroup -> if (isExpanded(treePath)) collapsePath(treePath) else expandPath(treePath)
             is ExternalTool -> editData()
             else -> {}
           }
         }
+      }
+    })
+    addTreeExpansionListener(object : TreeExpansionListener {
+      override fun treeExpanded(event: TreeExpansionEvent) {
+        treeState = TreeState.createOn(this@apply)
+      }
+
+      override fun treeCollapsed(event: TreeExpansionEvent) {
+        treeState = TreeState.createOn(this@apply)
       }
     })
   }
@@ -80,36 +94,16 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
     component = decoratedTree
   }
 
-  fun getData(): MutableMap<ExternalToolGroup, List<ExternalTool>> {
-    val data = mutableMapOf<ExternalToolGroup, List<ExternalTool>>()
+  fun onModified(settings: ExternalDiffSettings): Boolean = treeModel.toMap() != settings.externalTools
 
-    for (group in root.children()) {
-      val groupNode = group as DefaultMutableTreeNode
-
-      val tools = mutableListOf<ExternalTool>()
-      for (child in group.children()) {
-        val childNode = child as DefaultMutableTreeNode
-        val tool = childNode.userObject as ExternalTool
-        tools.add(tool)
-      }
-
-      data[groupNode.userObject as ExternalToolGroup] = tools
-    }
-
-    return data
+  fun onApply(settings: ExternalDiffSettings) {
+    settings.externalTools = treeModel.toMap()
+    treeState = TreeState.createOn(tree)
   }
 
-  fun updateData(value: Map<ExternalToolGroup, List<ExternalTool>>) {
-    root.removeAllChildren()
-
-    value.toSortedMap().forEach { (group, tools) ->
-      val groupNode = DefaultMutableTreeNode(group)
-      tools.forEach { groupNode.add(DefaultMutableTreeNode(it)) }
-      treeModel.insertNodeInto(groupNode, root, root.childCount)
-    }
-
-    treeModel.nodeStructureChanged(root)
-    TreeUtil.expandAll(tree)
+  fun onReset(settings: ExternalDiffSettings) {
+    treeModel.update(settings.externalTools)
+    treeState.applyTo(tree)
   }
 
   private fun addTool() {
@@ -443,6 +437,39 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
         Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.merge"))
       }
     }
+  }
+
+  private fun DefaultTreeModel.toMap(): MutableMap<ExternalToolGroup, List<ExternalTool>> {
+    val root = this.root as DefaultMutableTreeNode
+    val model = mutableMapOf<ExternalToolGroup, List<ExternalTool>>()
+
+    for (group in root.children()) {
+      val groupNode = group as DefaultMutableTreeNode
+
+      val tools = mutableListOf<ExternalTool>()
+      for (child in group.children()) {
+        val childNode = child as DefaultMutableTreeNode
+        val tool = childNode.userObject as ExternalTool
+        tools.add(tool)
+      }
+
+      model[groupNode.userObject as ExternalToolGroup] = tools
+    }
+
+    return model
+  }
+
+  private fun DefaultTreeModel.update(value: Map<ExternalToolGroup, List<ExternalTool>>) {
+    val root = this.root as DefaultMutableTreeNode
+    root.removeAllChildren()
+
+    value.toSortedMap().forEach { (group, tools) ->
+      val groupNode = DefaultMutableTreeNode(group)
+      tools.forEach { groupNode.add(DefaultMutableTreeNode(it)) }
+      insertNodeInto(groupNode, root, root.childCount)
+    }
+
+    nodeStructureChanged(root)
   }
 
   private fun ListTableModel<ExternalDiffSettings.ExternalToolConfiguration>.updateEntities(
