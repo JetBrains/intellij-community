@@ -138,7 +138,7 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     private fun migrateOldSettings(state: ExternalDiffSettings) {
       if (!state.isSettingsMigrated) {
         // load old settings
-        state.isExternalToolsEnabled = state.isDiffEnabled
+        state.isExternalToolsEnabled = state.isDiffEnabled || state.isMergeEnabled
 
         // save old settings
         state.defaultToolConfiguration = ExternalToolConfiguration().apply {
