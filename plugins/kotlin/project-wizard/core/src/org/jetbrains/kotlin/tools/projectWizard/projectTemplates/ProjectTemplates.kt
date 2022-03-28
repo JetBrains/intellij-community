@@ -74,7 +74,11 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
-            NodeJsApplicationProjectTemplate
+            NodeJsApplicationProjectTemplate,
+            ComposeDesktopApplicationProjectTemplate,
+            ComposeMultiplatformApplicationProjectTemplate,
+            ComposeWebApplicationProjectTemplate,
+            ConsoleApplicationProjectTemplateWithSample
         )
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
