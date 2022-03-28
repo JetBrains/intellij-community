@@ -118,15 +118,7 @@ internal fun KotlinType.toPsiType(
             StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit.asSingleFqName() -> {
-                when {
-                    typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
-                        PsiType.VOID.orBoxed()
-                    typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
-                        PsiType.VOID.orBoxed()
-                    else -> null
-                }
-            }
+            StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, typeOwnerKind, boxed)
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
                 when (val typeConstructor = this.constructor) {

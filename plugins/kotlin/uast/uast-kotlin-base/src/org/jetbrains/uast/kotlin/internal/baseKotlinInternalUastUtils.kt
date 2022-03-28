@@ -139,7 +139,7 @@ fun isAnnotationArgumentArrayInitializer(ktCallElement: KtCallElement, fqNameOfC
     return ktCallElement.isAnnotationArgument && fqNameOfCallee in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 }
 
-val KtBlockExpression.isFunctionBody: Boolean
+private val KtBlockExpression.isFunctionBody: Boolean
     get() {
         return (parent as? KtNamedFunction)?.bodyBlockExpression == this
     }
@@ -165,6 +165,21 @@ val KtElement.typeOwnerKind: TypeOwnerKind
         is KtExpression -> TypeOwnerKind.EXPRESSION
         else -> TypeOwnerKind.UNKNOWN
     }
+
+fun convertUnitToVoidIfNeeded(
+    context: KtElement,
+    typeOwnerKind: TypeOwnerKind,
+    boxed: Boolean
+): PsiType? {
+    fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
+    return when {
+        typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
+            PsiType.VOID.orBoxed()
+        typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
+            PsiType.VOID.orBoxed()
+        else -> null
+    }
+}
 
 /** Returns true if the given element is written in Kotlin. */
 fun isKotlin(element: PsiElement?): Boolean {

@@ -120,15 +120,7 @@ internal fun KtAnalysisSession.toPsiType(
             StandardClassIds.Char -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit -> {
-                when {
-                    typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
-                        PsiType.VOID.orBoxed()
-                    typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
-                        PsiType.VOID.orBoxed()
-                    else -> null
-                }
-            }
+            StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, typeOwnerKind, boxed)
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
         }
