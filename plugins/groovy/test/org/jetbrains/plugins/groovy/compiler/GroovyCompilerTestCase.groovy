@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -45,7 +45,8 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
-import org.junit.jupiter.api.Assumptions
+import org.junit.Assume
+import org.junit.runner.RunWith
 
 import java.nio.file.Path
 
@@ -55,6 +56,7 @@ import java.nio.file.Path
  */
 @Slow
 @CompileStatic
+@RunWith(JUnit38AssumeSupportRunner.class)
 abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase implements CompilerMethods {
   protected CompilerTester myCompilerTester
 
@@ -78,7 +80,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       ModuleGroupTestsKt.renameModule(module, "mainModule")
 
       def javaHome = System.getenv("JDK_11_x64")
-      Assumptions.assumeTrue(javaHome != null)
+      Assume.assumeTrue(javaHome != null)
       javaHome = FileUtil.toSystemIndependentName(javaHome)
       javaHome = StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre')
       VfsRootAccess.allowRootAccess(testRootDisposable, javaHome)
