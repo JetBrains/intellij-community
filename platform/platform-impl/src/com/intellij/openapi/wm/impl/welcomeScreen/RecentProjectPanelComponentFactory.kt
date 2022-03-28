@@ -1,18 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.ide.*
+import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel.FilePathChecker
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.Root
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.WelcomeScreenProjectItem
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
@@ -35,39 +39,36 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
 
-// TODO: fix (using sealed interface)
 internal class RecentProjectPanelComponentFactory(
   private val parentDisposable: Disposable
 ) {
-  private val recentProjectActions: List<AnAction> = RecentProjectListActionProvider.getInstance().getProjectActions()
-  private var filePathChecker: FilePathChecker? = null
+  private val recentProjects: List<WelcomeScreenProjectItem> = RecentProjectListActionProvider.getInstance().collectProjects()
 
   fun createComponent(): ProjectActionFilteringTree {
-    val root = initializeTree(recentProjectActions)
+    val root = initializeTree(recentProjects)
     val tree = Tree(root).apply {
-      isRootVisible = false
-      cellRenderer = ProjectActionRenderer(::isProjectPathValid)
+      val treeUpdater = Runnable {
+        if (isShowing) {
+          revalidate()
+          repaint()
+        }
+      }
+      val filePathChecker = FilePathChecker(treeUpdater, recentProjects.map { action -> action.name() })
+      Disposer.register(parentDisposable, filePathChecker)
 
       setEmptyState(IdeBundle.message("empty.text.no.project.open.yet"))
       addMouseListener(ProjectActionMouseListener(this))
+      putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
       putClientProperty(
         RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
-        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), true, true) } // TODO: fix JList
+        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), true, true) }
       )
 
       SmartExpander.installOn(this)
       TreeHoverListener.DEFAULT.addTo(this)
-    }
 
-    if (Registry.`is`("autocheck.availability.welcome.screen.projects")) {
-      filePathChecker = FilePathChecker(
-        Runnable {
-          if (tree.isShowing) {
-            tree.revalidate()
-            tree.repaint()
-          }
-        }, recentProjectActions.filterIsInstance(ReopenProjectAction::class.java).map { action -> action.projectPath })
-      Disposer.register(parentDisposable, filePathChecker!!)
+      isRootVisible = false
+      cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
     }
 
     val filteringTree = ProjectActionFilteringTree(tree, root).apply {
@@ -77,16 +78,16 @@ internal class RecentProjectPanelComponentFactory(
     return filteringTree
   }
 
-  private fun initializeTree(recentProjectActions: List<AnAction>): DefaultMutableTreeNode {
-    val root = DefaultMutableTreeNode(Root(recentProjectActions))
+  private fun initializeTree(welcomeScreenProjectItems: List<WelcomeScreenProjectItem>): DefaultMutableTreeNode {
+    val root = DefaultMutableTreeNode(Root(welcomeScreenProjectItems))
     val treeModel = DefaultTreeModel(root)
-    recentProjectActions.map { projectAction ->
-      when (projectAction) {
-        is ReopenProjectAction -> treeModel.insertNodeInto(DefaultMutableTreeNode(projectAction), root, root.childCount)
-        is ProjectGroupActionGroup -> {
-          val projectGroupNode = DefaultMutableTreeNode(projectAction)
+    welcomeScreenProjectItems.map { project ->
+      when (project) {
+        is Root -> {}
+        is RecentProjectGroupItem -> {
+          val projectGroupNode = DefaultMutableTreeNode(project)
           treeModel.insertNodeInto(projectGroupNode, root, root.childCount)
-          projectAction.getChildren(null).forEach { child ->
+          project.children.forEach { child ->
             treeModel.insertNodeInto(DefaultMutableTreeNode(child), projectGroupNode, projectGroupNode.childCount)
           }
         }
@@ -97,26 +98,23 @@ internal class RecentProjectPanelComponentFactory(
     return root
   }
 
-  private fun isProjectPathValid(path: String): Boolean = filePathChecker == null || filePathChecker!!.isValid(path)
-
-  class ProjectActionFilteringTree(tree: Tree, root: DefaultMutableTreeNode) : FilteringTree<DefaultMutableTreeNode, AnAction>(
+  class ProjectActionFilteringTree(
+    tree: Tree,
+    root: DefaultMutableTreeNode
+  ) : FilteringTree<DefaultMutableTreeNode, WelcomeScreenProjectItem>(
     ProjectManager.getInstance().defaultProject, tree, root
   ) {
     override fun getNodeClass() = DefaultMutableTreeNode::class.java
 
-    override fun getText(action: AnAction?): String? = when (action) {
-      is ReopenProjectAction -> action.projectName
-      is ProjectGroupActionGroup -> action.group.name
-      else -> ""
-    }
+    override fun getText(item: WelcomeScreenProjectItem?): String = item?.name().orEmpty()
 
-    override fun getChildren(action: AnAction): Iterable<AnAction> = when (action) {
-      is Root -> action.getChildren(null).toMutableList()
-      is ProjectGroupActionGroup -> action.getChildren(null).toMutableList()
+    override fun getChildren(item: WelcomeScreenProjectItem): Iterable<WelcomeScreenProjectItem> = when (item) {
+      is Root -> item.children
+      is RecentProjectGroupItem -> item.children
       else -> emptyList()
     }
 
-    override fun createNode(action: AnAction): DefaultMutableTreeNode = DefaultMutableTreeNode(action)
+    override fun createNode(item: WelcomeScreenProjectItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
 
     override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
@@ -126,10 +124,10 @@ internal class RecentProjectPanelComponentFactory(
         border = JBUI.Borders.empty()
 
         textEditor.apply {
-          isOpaque = false;
-          border = JBUI.Borders.empty();
-          emptyText.text = IdeBundle.message("welcome.screen.search.projects.empty.text");
-          accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text");
+          isOpaque = false
+          border = JBUI.Borders.empty()
+          emptyText.text = IdeBundle.message("welcome.screen.search.projects.empty.text")
+          accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text")
         }
       }
     }
@@ -145,17 +143,17 @@ internal class RecentProjectPanelComponentFactory(
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
         mouseEvent.consume()
         val treeNode = treePath.lastPathComponent as DefaultMutableTreeNode
-        when (val action = treeNode.userObject) {
-          is ProjectGroupActionGroup -> {
+        when (val project = treeNode.userObject) {
+          is Root -> {} // Specific for root (not visible in tree)
+          is RecentProjectGroupItem -> {
             if (tree.isExpanded(treePath)) tree.collapsePath(treePath) else tree.expandPath(treePath)
             tree.removeSelectionRow(tree.getRowForPath(treePath))
           }
-          is ReopenProjectAction -> {
+          is RecentProjectItem -> {
             val dataContext = DataManager.getInstance().getDataContext(tree)
             val anActionEvent = AnActionEvent.createFromInputEvent(mouseEvent, ActionPlaces.WELCOME_SCREEN, null, dataContext)
-            action.actionPerformed(anActionEvent)
+            project.openProject(anActionEvent)
           }
-          else -> {}
         }
       }
     }
@@ -166,58 +164,66 @@ internal class RecentProjectPanelComponentFactory(
   ) : TreeCellRenderer {
     private val recentProjectsManager = RecentProjectsManagerBase.instanceEx
 
-    override fun getTreeCellRendererComponent(
-      tree: JTree, value: Any,
-      selected: Boolean, expanded: Boolean,
-      leaf: Boolean, row: Int, hasFocus: Boolean
-    ): Component {
-      return when (val item = (value as DefaultMutableTreeNode).userObject) {
-        is ReopenProjectAction -> createReopenProjectComponent(item)
-        is ProjectGroupActionGroup -> createProjectGroupComponent(item)
-        else -> JBUI.Panels.simplePanel()
-      }
+    // Recent project component
+    private val projectNameLabel = JLabel()
+    private val projectPathLabel = JLabel().apply {
+      foreground = UIUtil.getInactiveTextColor()
     }
-
-    private fun createReopenProjectComponent(action: ReopenProjectAction): JComponent = JBUI.Panels.simplePanel().apply {
+    private val projectIconLabel = JLabel().apply {
+      border = JBUI.Borders.empty(8, 0, 0, 8)
+      horizontalAlignment = SwingConstants.LEFT
+      verticalAlignment = SwingConstants.TOP
+    }
+    private val namePanel = JBUI.Panels.simplePanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.empty(4)
+      add(projectNameLabel, BorderLayout.NORTH)
+      add(projectPathLabel, BorderLayout.SOUTH)
+    }
+    private val recentProjectComponent = JBUI.Panels.simplePanel().apply {
       border = JBUI.Borders.empty(4)
       isOpaque = false
-
-      val isProjectPathValid = isProjectPathValid(action.projectPath)
-      val projectNameLabel = JLabel().apply {
-        text = action.projectNameToDisplay
-        foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
-      }
-      val projectPathLabel = JLabel().apply {
-        text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(action.projectPath), false)
-        foreground = UIUtil.getInactiveTextColor()
-      }
-      val projectIconLabel = JLabel().apply {
-        icon = recentProjectsManager.getProjectIcon(action.projectPath, true)
-        disabledIcon = IconUtil.desaturate(icon)
-        border = JBUI.Borders.empty(8, 0, 0, 8)
-        horizontalAlignment = SwingConstants.LEFT
-        verticalAlignment = SwingConstants.TOP
-        isEnabled = isProjectPathValid
-      }
-      val namePanel = JBUI.Panels.simplePanel().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(4)
-        add(projectNameLabel, BorderLayout.NORTH)
-        add(projectPathLabel, BorderLayout.SOUTH)
-      }
 
       add(namePanel, BorderLayout.CENTER)
       add(projectIconLabel, BorderLayout.WEST)
     }
 
-    private fun createProjectGroupComponent(action: ProjectGroupActionGroup): JComponent = SimpleColoredComponent().apply {
+    // Project group component
+    private val projectGroupComponent = SimpleColoredComponent().apply {
       border = JBUI.Borders.empty(4)
-      append(action.group.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     }
-  }
 
-  // The root node is required for the filtering tree
-  private class Root(private val recentProjectActions: List<AnAction>) : DefaultActionGroup() {
-    override fun getChildren(event: AnActionEvent?): Array<AnAction> = recentProjectActions.toTypedArray()
+    override fun getTreeCellRendererComponent(
+      tree: JTree, value: Any,
+      selected: Boolean, expanded: Boolean,
+      leaf: Boolean, row: Int, hasFocus: Boolean
+    ): Component {
+      return when (val item = (value as DefaultMutableTreeNode).userObject as WelcomeScreenProjectItem) {
+        is Root -> JBUI.Panels.simplePanel()
+        is RecentProjectGroupItem -> createProjectGroupComponent(item)
+        is RecentProjectItem -> createReopenProjectComponent(item)
+      }
+    }
+
+    private fun createReopenProjectComponent(item: RecentProjectItem): JComponent = recentProjectComponent.apply {
+      val isProjectPathValid = isProjectPathValid(item.projectPath)
+      projectNameLabel.apply {
+        text = item.displayName
+        foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
+      }
+      projectPathLabel.apply {
+        text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+      }
+      projectIconLabel.apply {
+        icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
+        disabledIcon = IconUtil.desaturate(icon)
+        isEnabled = isProjectPathValid
+      }
+    }
+
+    private fun createProjectGroupComponent(item: RecentProjectGroupItem): JComponent = projectGroupComponent.apply {
+      clear()
+      append(item.name(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
+    }
   }
 }
