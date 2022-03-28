@@ -133,7 +133,7 @@ Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage
 AssigOp                  = "=" | "+="
 
 ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})+
-ParameterExpansionExpr   = [^}/$`\"]+ | {EscapedChar}+
+ParameterExpansionExpr   = ([^}/$`\"\\] | {EscapedChar})+
 ParamExpansionSeparator  = "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
