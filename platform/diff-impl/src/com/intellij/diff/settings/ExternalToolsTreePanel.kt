@@ -318,20 +318,20 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
           .visibleIf(object : ComponentPredicate() {
             override fun addListener(listener: (Boolean) -> Unit) {
               groupField.addItemListener {
-                val isMergeEnabled = invoke()
-                testDiffButton.isVisible = !isMergeEnabled
-                testThreeSideDiffButton.isVisible = !isMergeEnabled
-                testMergeButton.isVisible = isMergeEnabled
+                val isMergeGroup = invoke()
+                testDiffButton.isVisible = !isMergeGroup
+                testThreeSideDiffButton.isVisible = !isMergeGroup
+                testMergeButton.isVisible = isMergeGroup
 
                 argumentPatternField.text =
-                  if (isMergeEnabled) MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN
+                  if (isMergeGroup) MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN
                   else DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN
 
                 argumentPatternDescription.text =
-                  if (isMergeEnabled) createDescription(ExternalToolGroup.MERGE_TOOL)
+                  if (isMergeGroup) createDescription(ExternalToolGroup.MERGE_TOOL)
                   else createDescription(ExternalToolGroup.DIFF_TOOL)
 
-                listener(isMergeEnabled)
+                listener(isMergeGroup)
               }
             }
 
@@ -343,17 +343,17 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
       }
       row { cell(argumentPatternDescription) }
       row {
-        val isMergeEnabled = isMergeTrustExitCode.isEnabled
-        cell(testDiffButton).visible(!isMergeEnabled)
-        cell(testThreeSideDiffButton).visible(!isMergeEnabled)
-        cell(testMergeButton).visible(isMergeEnabled)
+        val isMergeGroup = isMergeTrustExitCode.isVisible
+        cell(testDiffButton).visible(!isMergeGroup)
+        cell(testThreeSideDiffButton).visible(!isMergeGroup)
+        cell(testMergeButton).visible(isMergeGroup)
       }.topGap(TopGap.MEDIUM)
     }
 
     fun createExternalTool(): ExternalTool = ExternalTool(toolNameField.text,
                                                           programPathField.text,
                                                           argumentPatternField.text,
-                                                          isMergeTrustExitCode.isEnabled && isMergeTrustExitCode.isSelected,
+                                                          isMergeTrustExitCode.isVisible && isMergeTrustExitCode.isSelected,
                                                           groupField.item)
 
     fun getToolGroup(): ExternalToolGroup = groupField.item
