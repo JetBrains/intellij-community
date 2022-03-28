@@ -23,8 +23,8 @@ final class ObjectTree {
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<Disposable> myRootObjects = new ReferenceOpenHashSet<>(); // guarded by treeLock
-  // guarded by treeLock
-  private final Map<Disposable, ObjectNode> myObject2NodeMap = new Reference2ObjectOpenHashMap<>();
+
+  private final Map<Disposable, ObjectNode> myObject2NodeMap = new Reference2ObjectOpenHashMap<>(); // guarded by treeLock
   // Disposable -> trace or boolean marker (if trace unavailable)
   private final Map<Disposable, Object> myDisposedObjects = CollectionFactory.createWeakIdentityMap(100, 0.5f); // guarded by treeLock
 
@@ -214,7 +214,9 @@ final class ObjectTree {
       for (Disposable object : myRootObjects) {
         if (object == null) continue;
         ObjectNode objectNode = getNode(object);
-        if (objectNode == null) continue;
+        if (objectNode == null) {
+          continue;
+        }
         while (objectNode.getParent() != null) {
           objectNode = objectNode.getParent();
         }
@@ -234,8 +236,7 @@ final class ObjectTree {
 
   Throwable getRegistrationTrace(Disposable object) {
     ObjectNode objectNode = getNode(object);
-    if (objectNode == null) return null;
-    return objectNode.getTrace();
+    return objectNode == null ? null : objectNode.getTrace();
   }
 
   @NotNull
@@ -264,8 +265,7 @@ final class ObjectTree {
   <D extends Disposable> D findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull D object) {
     synchronized (treeLock) {
       ObjectNode parentNode = getNode(parentDisposable);
-      if (parentNode == null) return null;
-      return parentNode.findChildEqualTo(object);
+      return parentNode == null ? null : parentNode.findChildEqualTo(object);
     }
   }
 
