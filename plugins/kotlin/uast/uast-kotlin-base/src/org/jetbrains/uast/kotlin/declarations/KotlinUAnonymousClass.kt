@@ -5,9 +5,11 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.uast.*
 
@@ -24,6 +26,13 @@ class KotlinUAnonymousClass(
     override val sourcePsi: KtClassOrObject? = ktClass
 
     override fun getOriginalElement(): PsiElement? = super<AbstractKotlinUClass>.getOriginalElement()
+
+    override fun getNameIdentifier(): PsiIdentifier? {
+        return if (sourcePsi is KtEnumEntry)
+            UastLightIdentifier(psi, ktClass)
+        else
+            psi.nameIdentifier
+    }
 
     override fun getSuperClass(): UClass? = super<AbstractKotlinUClass>.getSuperClass()
     override fun getFields(): Array<UField> = super<AbstractKotlinUClass>.getFields()
