@@ -259,7 +259,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       List<JpsModule> resourceModules = List.of(
         buildContext.findApplicationInfoModule(),
         buildContext.findModule("intellij.platform.icons"),
-        buildContext.findModule("intellij.platform.util.jdom"),
       )
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
@@ -282,6 +281,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
             pathelement(location: it)
           }
           pathelement(location: icoFilesDirectory.toString())
+          pathelement(location: buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())
         }
       }
     }
