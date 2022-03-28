@@ -4,16 +4,16 @@ package com.jetbrains.python.console.actions
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.console.PyConsoleUtil
 import com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY
 import com.jetbrains.python.console.PythonConsoleView
 import icons.PythonIcons
 import javax.swing.Icon
 
 /***
- * action for showing the CommandQueue window
+ * Action for showing the CommandQueue window
  */
 class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
   : ToggleAction(PyBundle.message("python.console.command.queue.show.action.text"),
@@ -23,6 +23,7 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
   companion object {
     private val emptyQueueIcon = PythonIcons.Python.CommandQueue
     private val notEmptyQueueIcon = ExecutionUtil.getLiveIndicator(emptyQueueIcon)
+
     @JvmStatic
     fun isCommandQueueIcon(icon: Icon): Boolean = icon == emptyQueueIcon || icon == notEmptyQueueIcon
   }
@@ -31,10 +32,19 @@ class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
     super.update(e)
     val communication = consoleView.file.getCopyableUserData(CONSOLE_COMMUNICATION_KEY)
     communication?.let {
-      if (service<CommandQueueForPythonConsoleService>().isEmpty(communication)) {
+      if (PyConsoleUtil.isCommandQueueEnabled(consoleView.project)) {
+        e.presentation.isEnabled = true
+
+        if (PyConsoleUtil.isCommandQueueEmpty(communication)) {
+          e.presentation.icon = emptyQueueIcon
+        }
+        else {
+          e.presentation.icon = notEmptyQueueIcon
+        }
+      }
+      else {
         e.presentation.icon = emptyQueueIcon
-      } else {
-        e.presentation.icon = notEmptyQueueIcon
+        e.presentation.isEnabled = false
       }
     }
   }

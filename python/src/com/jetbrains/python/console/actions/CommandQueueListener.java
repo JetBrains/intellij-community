@@ -8,7 +8,12 @@ import org.jetbrains.annotations.NotNull;
  * listener interface, required for rendering CommandQueue
  */
 public interface CommandQueueListener {
+
   void removeCommand(@NotNull ConsoleCommunication.ConsoleCodeFragment command);
+
   void addCommand(@NotNull ConsoleCommunication.ConsoleCodeFragment command);
+
   void removeAll();
+
+   void disableConsole();
 }

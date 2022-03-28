@@ -340,9 +340,6 @@
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true" description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.create.namespace.package.action" defaultValue="false" description="Possibility to create namespace packages from New | Python Package"/>
 
-    <!-- CommandQueueForPythonConsoleService -->
-    <registryKey key="python.console.CommandQueue" defaultValue="true" restartRequired="true" description="Use CommandQueue in PythonConsole"/>
-
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 

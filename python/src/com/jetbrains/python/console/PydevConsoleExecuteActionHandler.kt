@@ -75,7 +75,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
       ++myIpythonInputPromptCount
     }
-    if (RegistryManager.getInstance().`is`("python.console.CommandQueue")) {
+    if (PyConsoleUtil.isCommandQueueEnabled(project)) {
       // add new command to CommandQueue service
       service<CommandQueueForPythonConsoleService>().addNewCommand(this, code)
     } else {
@@ -99,7 +99,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     }
     else {
-      if (RegistryManager.getInstance().`is`("python.console.CommandQueue")) {
+      if (PyConsoleUtil.isCommandQueueEnabled(project)) {
         inPrompt()
       } else {
         executingPrompt()
@@ -191,7 +191,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   override fun runExecuteAction(console: LanguageConsoleView) {
     if (isEnabled) {
-      if (RegistryManager.getInstance().`is`("python.console.CommandQueue")) {
+      if (PyConsoleUtil.isCommandQueueEnabled(project)) {
         doRunExecuteAction(console)
       } else {
         if (!canExecuteNow()) {

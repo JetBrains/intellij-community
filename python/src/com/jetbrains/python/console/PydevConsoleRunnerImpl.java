@@ -241,10 +241,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
     // Show Variables
     actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-      // Show Queue
-      actions.add(new ShowCommandQueueAction(myConsoleView));
-    }
+    // Show Queue
+    actions.add(new ShowCommandQueueAction(myConsoleView));
     // Console History
     actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
     toolbarActions.addAll(actions);
@@ -1094,7 +1092,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         else {
           myConsoleListeners.clear();
         }
-        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
           myConsoleView.restoreQueueWindow(true);
         }
       }
