@@ -10,7 +10,9 @@ import java.util.Locale;
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.info;
 
 /**
- * Prepare JDK for compiling and running build scripts, compiling intellij project
+ * Provides a reasonable stable version of JDK 11 for current platform
+ * <p>
+ * JDK is used for compiling and running build scripts, compiling intellij project
  * It's currently fixed here to be the same on all build agents and also in Docker images
  */
 public final class Jdk11Downloader {
