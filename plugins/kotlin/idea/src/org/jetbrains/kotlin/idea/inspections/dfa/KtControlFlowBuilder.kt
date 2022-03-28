@@ -228,10 +228,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processThisExpression(expr: KtThisExpression) {
         val dfType = expr.getKotlinType().toDfType(expr)
-        val descriptor = expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)[BindingContext.REFERENCE_TARGET, expr.instanceReference]
+        val bindingContext = expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)
+        val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, expr.instanceReference]
         if (descriptor != null) {
             val varDesc = KtThisDescriptor(descriptor, dfType)
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
+            val type = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expr.instanceReference]?.type
+            addImplicitConversion(expr, type, expr.getKotlinType())
         } else {
             addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
         }
