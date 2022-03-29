@@ -101,7 +101,7 @@ private class KotlinIdeDeclarationProvider(
         KotlinTopLevelPropertyFqnNameIndex.getInstance()[callableId.asStringForIndexes(), project, searchScope]
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
-        KotlinTopLevelFunctionFqnNameIndex.getInstance()[callableId.asStringForIndexes(), project, searchScope]
+        KotlinTopLevelFunctionFqnNameIndex.get(callableId.asStringForIndexes(), project, searchScope)
 
 
     override fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =

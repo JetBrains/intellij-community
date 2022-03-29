@@ -237,7 +237,7 @@ object SourceNavigationHelper {
         val scopes = targetScopes(declaration, navigationKind)
 
         val index: StringStubIndexExtension<out KtNamedDeclaration> = when (declaration) {
-            is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex.getInstance()
+            is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex
             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex.getInstance()
             else -> throw IllegalArgumentException("Neither function nor declaration: " + declaration::class.java.name)
         }

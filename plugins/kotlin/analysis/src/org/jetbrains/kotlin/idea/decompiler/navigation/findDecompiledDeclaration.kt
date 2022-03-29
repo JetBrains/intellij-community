@@ -86,7 +86,7 @@ private fun findCandidateDeclarationsInIndex(
     val fqName = topLevelDeclaration.fqNameSafe.asString()
     return when (topLevelDeclaration) {
 
-        is FunctionDescriptor -> KotlinTopLevelFunctionFqnNameIndex.getInstance().get(fqName, project, scope)
+        is FunctionDescriptor -> KotlinTopLevelFunctionFqnNameIndex.get(fqName, project, scope)
 
         is PropertyDescriptor -> KotlinTopLevelPropertyFqnNameIndex.getInstance().get(fqName, project, scope)
 

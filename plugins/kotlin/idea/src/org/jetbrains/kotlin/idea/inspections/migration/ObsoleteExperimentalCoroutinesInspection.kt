@@ -72,7 +72,7 @@ private fun isTopLevelCallForReplace(simpleNameExpression: KtSimpleNameExpressio
 
     val project = simpleNameExpression.project
 
-    val isInIndex = KotlinTopLevelFunctionFqnNameIndex.getInstance()
+    val isInIndex = KotlinTopLevelFunctionFqnNameIndex
         .get(newFqName, project, GlobalSearchScope.allScope(project))
         .isEmpty()
 
@@ -150,7 +150,7 @@ private class ObsoleteExtensionFunctionUsageReporter(
                 if (element !is KtSimpleNameExpression) return
 
                 val importFun =
-                    KotlinTopLevelFunctionFqnNameIndex.getInstance()
+                    KotlinTopLevelFunctionFqnNameIndex
                         .get(fqName, element.project, GlobalSearchScope.allScope(element.project))
                         .asSequence()
                         .map { it.resolveToDescriptorIfAny() }

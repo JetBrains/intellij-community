@@ -350,7 +350,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
         private fun createConfigurationFromMain(project: Project, mainFqn: String): KotlinRunConfiguration {
             val scope = project.allScope()
             val mainFunction =
-                KotlinTopLevelFunctionFqnNameIndex.getInstance().get(mainFqn, project, scope).firstOrNull()
+                KotlinTopLevelFunctionFqnNameIndex.get(mainFqn, project, scope).firstOrNull()
                     ?: run {
                         val className = StringUtil.getPackageName(mainFqn)
                         val shortName = StringUtil.getShortName(mainFqn)

@@ -1289,7 +1289,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
         val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.getInstance().get("test", project, project.allScope()).first()
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
 
         primaryPropagationTargets = listOf(functionBar, functionTest)
     }
@@ -1302,7 +1302,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         val methodBar = classA.methods.first { it.name == "bar" }
         parameterPropagationTargets.add(methodBar)
 
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.getInstance().get("test", project, project.allScope()).first()
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
         parameterPropagationTargets.add(functionTest.getRepresentativeLightMethod()!!)
     }
 
@@ -1311,7 +1311,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
@@ -1320,7 +1320,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
@@ -1338,7 +1338,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 

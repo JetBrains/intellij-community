@@ -184,7 +184,7 @@ public class IdeStubIndexService extends StubIndexService {
             // can have special fq name in case of syntactically incorrect function with no name
             FqName fqName = stub.getFqName();
             if (fqName != null) {
-                sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.getInstance().getKey(), fqName.asString());
+                sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.INSTANCE.getKey(), fqName.asString());
                 sink.occurrence(KotlinTopLevelFunctionByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }

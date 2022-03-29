@@ -113,7 +113,7 @@ class KotlinIndicesHelper(
         }
 
         val filter: (String) -> Boolean = { key -> nameFilter(key.substringAfterLast('.', key)) }
-        KotlinTopLevelFunctionFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
+        KotlinTopLevelFunctionFqnNameIndex.processAllElements(project, scope, filter, callableDeclarationProcessor)
 
         KotlinTopLevelPropertyFqnNameIndex.getInstance().processAllElements(project, scope, filter, callableDeclarationProcessor)
     }

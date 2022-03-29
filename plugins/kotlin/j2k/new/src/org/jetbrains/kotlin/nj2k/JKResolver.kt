@@ -62,7 +62,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
     }
 
     private fun resolveFqNameOfKtFunctionByIndex(fqName: FqName, filter: (KtNamedFunction) -> Boolean = { true }): KtNamedFunction? =
-        KotlinTopLevelFunctionFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull { filter(it) }
+        KotlinTopLevelFunctionFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull { filter(it) }
 
     private fun resolveFqNameOfKtPropertyByIndex(fqName: FqName): KtProperty? =
         KotlinTopLevelPropertyFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull()

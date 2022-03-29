@@ -76,7 +76,7 @@ class StubBasedPackageMemberDeclarationProvider(
 
     override fun getFunctionDeclarations(name: Name): Collection<KtNamedFunction> {
         return runReadAction {
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get(childName(name), project, searchScope)
+            KotlinTopLevelFunctionFqnNameIndex.get(childName(name), project, searchScope)
         }
     }
 

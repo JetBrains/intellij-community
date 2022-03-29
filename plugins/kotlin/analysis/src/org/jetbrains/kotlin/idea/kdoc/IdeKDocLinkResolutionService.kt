@@ -112,14 +112,14 @@ private class GlobalSyntheticPackageViewDescriptor(
             .flatMap { KotlinFullClassNameIndex.get(it.asString(), project, scope).asSequence() }
             .map { it.resolveToDescriptorIfAny() }
 
-        fun getFunctionsByNameFilter(nameFilter: (Name) -> Boolean) = KotlinTopLevelFunctionFqnNameIndex.getInstance()
+        fun getFunctionsByNameFilter(nameFilter: (Name) -> Boolean) = KotlinTopLevelFunctionFqnNameIndex
             .getAllKeys(project)
             .asSequence()
             .filter { it.startsWith(fqName.asString()) }
             .map(::FqName)
             .filter { it.isChildOf(fqName) }
             .filter { nameFilter(it.shortName()) }
-            .flatMap { KotlinTopLevelFunctionFqnNameIndex.getInstance()[it.asString(), project, scope].asSequence() }
+            .flatMap { KotlinTopLevelFunctionFqnNameIndex.get(it.asString(), project, scope).asSequence() }
             .map { it.resolveToDescriptorIfAny() as? DeclarationDescriptor }
 
         fun getSubpackages(nameFilter: (Name) -> Boolean) = PackageIndexUtil.getSubPackageFqNames(fqName, scope, nameFilter)
