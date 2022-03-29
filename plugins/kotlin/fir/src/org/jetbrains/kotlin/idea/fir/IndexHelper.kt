@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 */
 class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) {
     fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =
-        KotlinTopLevelClassByPackageIndex.getInstance()
+        KotlinTopLevelClassByPackageIndex
             .get(packageFqName.asStringForIndexes(), project, scope)
             .mapNotNullTo(hashSetOf()) { it.nameAsName }
 

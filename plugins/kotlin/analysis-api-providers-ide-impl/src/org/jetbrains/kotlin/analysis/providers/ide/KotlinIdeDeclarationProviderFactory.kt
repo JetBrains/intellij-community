@@ -105,7 +105,7 @@ private class KotlinIdeDeclarationProvider(
 
 
     override fun getClassNamesInPackage(packageFqName: FqName): Set<Name> =
-        KotlinTopLevelClassByPackageIndex.getInstance()
+        KotlinTopLevelClassByPackageIndex
             .get(packageFqName.asStringForIndexes(), project, searchScope)
             .mapNotNullTo(hashSetOf()) { it.nameAsName }
 

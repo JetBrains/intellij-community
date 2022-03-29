@@ -38,7 +38,7 @@ class StubBasedPackageMemberDeclarationProvider(
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK)) {
-            addFromIndex(KotlinTopLevelClassByPackageIndex.getInstance())
+            addFromIndex(KotlinTopLevelClassByPackageIndex)
             addFromIndex(KotlinTopLevelTypeAliasByPackageIndex)
         }
 

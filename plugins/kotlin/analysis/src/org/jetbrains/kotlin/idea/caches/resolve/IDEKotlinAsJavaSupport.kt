@@ -84,7 +84,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         packageFqName: FqName,
         searchScope: GlobalSearchScope
     ): Collection<KtClassOrObject> {
-        return KotlinTopLevelClassByPackageIndex.getInstance().get(
+        return KotlinTopLevelClassByPackageIndex.get(
             packageFqName.asString(), project,
             KotlinSourceFilterScope.sourceAndClassFiles(searchScope, project)
         )
