@@ -124,7 +124,8 @@
       "hoverBorderColor": "Grey11",
       "pressedBackground": "Grey10",
       "pressedBorderColor": "Grey10",
-      "focusedBorderColor": "Blue7"
+      "focusedBorderColor": "Blue7",
+      "hoverSeparatorColor": "Grey8"
     },
 
     "Borders.color": "Grey11",
@@ -220,7 +221,10 @@
       "visitedForeground": "Blue4"
     },
 
-    "List.rowHeight": "24",
+    "List": {
+      "rowHeight": "24",
+      "border": "4,0,4,0"
+    },
 
     "Menu": {
       "background": "Grey2",
@@ -270,8 +274,8 @@
 
     "NotificationsToolwindow": {
       "newNotification.background": "Grey11",
-      "newNotification.hoverBackground": "#CFDEFCB3",
-      "Notification.hoverBackground": "#CFDEFCB3"
+      "newNotification.hoverBackground": "Grey11",
+      "Notification.hoverBackground": "Grey12"
     },
 
     "Plugins": {
@@ -304,7 +308,12 @@
 
     "CompletionPopup": {
       "foreground": "Grey2",
-      "matchForeground": "Blue6"
+      "matchForeground": "Blue6",
+      "Advertiser": {
+        "foreground": "Grey7",
+        "background": "Grey12",
+        "borderInsets": "4,12,3,8"
+      }
     },
 
     "ProgressBar": {
@@ -390,13 +399,19 @@
       "foreground": "Grey13",
       "infoForeground": "Grey8",
       "shortcutForeground": "Grey8",
-      "linkForeground": "Blue10"
+      "linkForeground": "Blue10",
+      "borderColor": "Grey2"
     },
 
     "HelpTooltip": {
       "defaultTextBorderInsets": "12,16,16,16",
       "smallTextBorderInsets": "8,12,9,12",
       "verticalGap": 6
+    },
+
+    "GotItTooltip.borderColor": {
+      "os.default": "Grey9",
+      "os.windows": "#B9BDC9"
     },
 
     "ToolWindow": {
@@ -421,7 +436,7 @@
 
     "MainToolbar": {
       "background": "Grey2",
-      "inactiveBackground": "Grey2",
+      "inactiveBackground": "Grey3",
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
@@ -440,10 +455,10 @@
     "OnePixelDivider.background": "Grey11",
 
     "TitlePane": {
-      "background": "Grey2",
-      "inactiveBackground": "Grey3",
+      "background": "Grey12",
+      "inactiveBackground": "Grey12",
       "Button": {
-        "hoverBackground": "Grey3",
+        "hoverBackground": "Grey1",
         "preferredSize": "36,40"
       }
     },
@@ -454,7 +469,8 @@
       "expandedIcon": "/expui/general/chevronDown.svg",
       "expandedSelectedIcon": "/expui/general/chevronDown.svg",
       "rowHeight": 24,
-      "hash": "Grey10"
+      "hash": "Grey10",
+      "border": "4,12,4,12"
     },
 
     "MenuBar.borderColor": "Grey3",

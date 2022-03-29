@@ -119,7 +119,8 @@
       "hoverBorderColor": "Grey3",
       "pressedBackground": "Grey5",
       "pressedBorderColor": "Grey5",
-      "focusedBorderColor": "Blue6"
+      "focusedBorderColor": "Blue6",
+      "hoverSeparatorColor": "Grey6"
     },
 
     "Borders.color": "Grey1",
@@ -212,7 +213,10 @@
       "visitedForeground": "Blue8"
     },
 
-    "List.rowHeight": "24",
+    "List": {
+      "rowHeight": "24",
+      "border": "4,0,4,0"
+    },
 
     "MemoryIndicator": {
       "allocatedBackground": "Grey1",
@@ -243,8 +247,8 @@
 
     "NotificationsToolwindow": {
       "newNotification.background": "Grey3",
-      "newNotification.hoverBackground": "#2E436E99",
-      "Notification.hoverBackground": "#2E436E99"
+      "newNotification.hoverBackground": "Grey3",
+      "Notification.hoverBackground": "Grey2"
     },
 
     "OnePixelDivider.background": "Grey3",
@@ -277,7 +281,12 @@
 
     "CompletionPopup": {
       "foreground": "Grey10",
-      "matchForeground": "Blue7"
+      "matchForeground": "Blue7",
+      "Advertiser": {
+        "foreground": "Grey7",
+        "background": "Grey3",
+        "borderInsets": "4,12,3,8"
+      }
     },
 
     "ProgressBar": {
@@ -358,15 +367,28 @@
     "ToolbarComboWidget.borderInsets": "3,8,3,4",
 
     "ToolTip":{
-      "background": "Grey2",
-      "infoForeground": "Grey7",
-      "shortcutForeground": "Grey7"
+      "background": "Grey3",
+      "borderColor": "Grey4",
+      "foreground": "Grey13",
+      "infoForeground": "Grey9",
+      "shortcutForeground": "Grey9"
     },
 
     "HelpTooltip": {
       "defaultTextBorderInsets": "12,16,16,16",
       "smallTextBorderInsets": "8,12,9,12",
       "verticalGap": 6
+    },
+
+    "GotItTooltip": {
+      "background": "Grey3",
+      "borderColor": "Grey4",
+      "startBackground": "Grey3",
+      "endBackground": "Grey3",
+      "startBorderColor": "Grey7",
+      "endBorderColor": "Grey7",
+      "shortcutForeground": "Grey9",
+      "linkForeground": "Blue9"
     },
 
     "ToolWindow": {
@@ -405,7 +427,8 @@
       "expandedIcon": "/expui/general/chevronDown.svg",
       "expandedSelectedIcon": "/expui/general/chevronDown.svg",
       "rowHeight": 24,
-      "hash": "Grey5"
+      "hash": "Grey5",
+      "border": "4,12,4,12"
     },
 
     "TitlePane.Button.preferredSize": "36,40",
