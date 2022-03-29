@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
@@ -41,16 +41,13 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
     return if (project == null || project.isDefault) null
       else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()) {
         override fun update(e: AnActionEvent) {
-          if (!Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
-            e.presentation.isEnabledAndVisible = false
-          }
-          else {
-            if (project.isInitialized) {
-              val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
-              e.presentation.isEnabledAndVisible = matchMode(project, file, editor)
-            }
-            else {
-              e.presentation.isEnabledAndVisible = false
+          e.presentation.isEnabledAndVisible = false
+          if (Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
+            val p = e.project ?: return
+            if (p.isInitialized) {
+              val textEditor = e.getData(CommonDataKeys.EDITOR) ?: return
+              val file = PsiDocumentManager.getInstance(p).getPsiFile(textEditor.document)?.virtualFile
+              e.presentation.isEnabledAndVisible = matchMode(p, file, textEditor)
             }
           }
         }
@@ -134,7 +131,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
     }
 
     override fun update(e: AnActionEvent) {
-      val project = editor.project ?: return
+      val project = e.project ?: return
       val presentation = e.presentation
 
       if (!ReaderModeSettings.getInstance(project).enabled) {
