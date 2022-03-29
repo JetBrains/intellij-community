@@ -165,7 +165,7 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         }
 
         if (this.isDefinitelyNotNullType) {
-            list.append("!!")
+            list.append("& Any")
         }
     }
 
