@@ -14,7 +14,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   public void testMakeConstant() {
     doTest("int", "int",
            """
-             def dec(fun):
+             def dec(fun) -> int:
                  return 12
 
              @dec
@@ -28,7 +28,9 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   public void testMakeConstantFunction() {
     doTest("int", "() -> int",
            """
-             def dec(fun):
+             from typing import Callable
+             
+             def dec(fun) -> Callable[[], int]:
                  def wrapper():
                      return 12
                  return wrapper
@@ -42,9 +44,11 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testMakeConstantWithArg() {
-    doTest("int", "(boo: str) -> int",
+    doTest("int", "(str) -> int",
            """
-             def dec(fun):
+             from typing import Callable
+             
+             def dec(fun) -> Callable[[str], int]:
                  def wrapper(boo: str):
                      return 12
                  return wrapper
@@ -58,9 +62,11 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testMakeKnownWithArg() {
-    doTest("str", "(boo: str) -> str",
+    doTest("str", "(str) -> str",
            """
-             def dec(fun):
+             from typing import Callable
+             
+             def dec(fun) -> Callable[[str], str]:
                  def wrapper(boo: str):
                      return str(fun())
                  return wrapper
@@ -73,9 +79,11 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testMakeDecoratorWithArg() {
-    doTest("str", "(boo: str) -> str",
+    doTest("str", "(str) -> str",
            """
-             def dec(i):
+             from typing import Callable
+             
+             def dec(i) -> Callable[[Callable[[], float]], Callable[[str], str]]:
                  def dec_(fun):
                      def wrapper(boo: str):
                          return str(fun())
@@ -91,9 +99,11 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testReferenceInside() {
-    doTest("str", "(boo: str) -> str",
+    doTest("str", "(str) -> str",
            """
-             def dec(i):
+             from typing import Callable
+             
+             def dec(i) -> Callable[[Callable[[], float]], Callable[[str], str]]:
                  def dec_(fun):
                      def wrapper(boo: str):
                          return str(fun())
@@ -147,11 +157,12 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testIgnoreWraps() {
-    doTest("str", "(boo: str) -> str",
+    doTest("str", "(str) -> str",
            """
              from functools import wraps
+             from typing import Callable
 
-             def dec(fun):
+             def dec(fun) -> Callable[[str], str]:
                  @wraps(fun)
                  def wrapper(boo: str):
                      print(f'{boo} wrapper')
@@ -190,7 +201,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testMakeDecoratorStack() {
-    doTest("int", "(tt: str) -> int",
+    doTest("int", "(str) -> int",
            """
              from typing import Callable
              from functools import wraps
@@ -202,7 +213,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              def dec1(t: T) -> Callable[[Callable[[], S]], Callable[[], T]]:
                  pass
 
-             def dec2(t: T):
+             def dec2(t: T) -> Callable[[Callable[[], S]], Callable[[T], S]]:
                  def dec(fun: Callable[[], S]):
                      @wraps(fun)
                      def wrapper(tt: T) -> S:
@@ -273,6 +284,66 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
     initMultiFileTest();
     checkMultiFileTest("str", "(Any) -> str", Context.ANALYSIS);
     checkMultiFileTest("str", "(int) -> str", Context.USER_INITIATED);
+  }
+
+  // PY-48338
+  public void testImportDecoratorNotChangeSignatureWithAnnotation() {
+    doMultiFileTest("int", "(str) -> int");
+  }
+
+  // PY-48338
+  public void testImportDecoratorNotChangeSignatureNoAnnotation() {
+    doMultiFileTest("int", "(name_in_func: str) -> int");
+  }
+
+  // PY-48338
+  public void testImportDecoratorChangeSignatureNoAnnotation() {
+    doMultiFileTest("int", "(i: str) -> int");
+  }
+
+  // PY-48338
+  public void testImportDecoratorChangeSignatureWithAnnotation() {
+    doMultiFileTest("str", "(int, bool) -> str");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsFirstChangeSignatureNoAnnotation() {
+    doMultiFileTest("int", "(i: str) -> int");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsFirstChangeSignatureWithAnnotation() {
+    doMultiFileTest("str", "(int, bool) -> str");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsNotChangeSignatureNoAnnotation() {
+    doMultiFileTest("int", "(i: str) -> int");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsNotChangeSignatureWithAnnotation() {
+    doMultiFileTest("int", "(str) -> int");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsSecondChangeSignatureNoAnnotation() {
+    doMultiFileTest("int", "(i: str) -> int");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsSecondChangeSignatureWithAnnotation() {
+    doMultiFileTest("str", "(int, bool) -> str");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsFirstChangeSignatureWithAnnotationParamSpec() {
+    doMultiFileTest("list[int]", "(int, i: str) -> list[int]");
+  }
+
+  // PY-48338
+  public void testImportTwoDecoratorsSecondChangeSignatureWithAnnotationParamSpec() {
+    doMultiFileTest("list[int]", "(int, i: str) -> list[int]");
   }
 
   // PY-49935
