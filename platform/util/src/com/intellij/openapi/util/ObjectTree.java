@@ -9,7 +9,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -234,15 +233,6 @@ final class ObjectTree {
       for (ObjectNode value : myObject2NodeMap.values()) {
         value.clearTrace();
       }
-    }
-  }
-
-  @Nullable
-  @ApiStatus.Internal
-  <D extends Disposable> D findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull D object) {
-    synchronized (treeLock) {
-      ObjectNode parentNode = getNode(parentDisposable);
-      return parentNode == null ? null : parentNode.findChildEqualTo(object);
     }
   }
 

@@ -146,18 +146,4 @@ final class ObjectNode {
       }
     }
   }
-
-  <D extends Disposable> D findChildEqualTo(@NotNull D object) {
-    List<ObjectNode> children = myChildren;
-    if (children != null) {
-      for (ObjectNode node : children) {
-        Disposable nodeObject = node.getObject();
-        if (nodeObject.equals(object)) {
-          //noinspection unchecked
-          return (D)nodeObject;
-        }
-      }
-    }
-    return null;
-  }
 }

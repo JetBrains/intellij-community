@@ -250,14 +250,6 @@ public final class Disposer {
     return ourDebugMode;
   }
 
-  /**
-   * @return object registered on {@code parentDisposable} which is equal to {@code object}, or {@code null} if not found
-   */
-  @Nullable
-  public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {
-    return ourTree.findRegisteredObject(parentDisposable, object);
-  }
-
   public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
     return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
   }

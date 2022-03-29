@@ -307,8 +307,6 @@ public class DisposerTest extends TestCase {
     try {
       Disposer.disposeChildren(parent, null);
       assertFalse(Disposer.isDisposed(parent));
-      assertNull(Disposer.findRegisteredObject(parent, child));
-      assertNull(Disposer.findRegisteredObject(child, grand));
       Disposer.dispose(parent);
       assertTrue(Disposer.isDisposed(parent));
     }
@@ -332,15 +330,11 @@ public class DisposerTest extends TestCase {
     try {
       Disposer.disposeChildren(parent, disposable -> disposable == child1);
       assertFalse(Disposer.isDisposed(parent));
-      assertNull(Disposer.findRegisteredObject(parent, child1));
-      assertNull(Disposer.findRegisteredObject(child1, grand1));
 
       assertFalse(Disposer.isDisposed(child2));
-      assertNotNull(Disposer.findRegisteredObject(parent, child2));
 
       Disposer.dispose(parent);
       assertTrue(Disposer.isDisposed(parent));
-      assertNull(Disposer.findRegisteredObject(parent, child2));
     }
     finally {
       Disposer.dispose(grand1);
