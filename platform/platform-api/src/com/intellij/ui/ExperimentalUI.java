@@ -157,6 +157,9 @@ public final class ExperimentalUI {
     paths.put("general/add.svg", "/expui/general/add.svg");
     paths.put("general/remove.svg", "/expui/general/remove.svg");
     paths.put("general/locate.svg", "/expui/general/locate.svg");
+    paths.put("general/layoutEditorOnly.svg", "/expui/general/editorOnly.svg");
+    paths.put("general/layoutEditorPreview.svg", "/expui/general/editorPreview.svg");
+    paths.put("general/layoutPreviewOnly.svg", "/expui/general/previewOnly.svg");
     paths.put("general/balloonError.svg", "/expui/status/error.svg");
     paths.put("general/balloonInformation.svg", "/expui/status/info.svg");
     paths.put("general/balloonWarning.svg", "/expui/status/warning.svg");
