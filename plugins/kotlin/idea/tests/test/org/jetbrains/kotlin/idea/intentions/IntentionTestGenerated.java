@@ -5235,6 +5235,24 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                     runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAny/simple.kt");
                 }
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
+            public static class Uncategorized extends AbstractIntentionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable.kt");
+                }
+
+                @TestMetadata("nullable2.kt")
+                public void testNullable2() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable2.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -5273,6 +5291,24 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 @TestMetadata("simple.kt")
                 public void testSimple() throws Exception {
                     runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
+            public static class Uncategorized extends AbstractIntentionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/nullable.kt");
+                }
+
+                @TestMetadata("nullable2.kt")
+                public void testNullable2() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/nullable2.kt");
                 }
             }
         }
@@ -5443,6 +5479,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 @TestMetadata("simple.kt")
                 public void testSimple() throws Exception {
                     runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeUnlessToTakeIf/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
+            public static class Uncategorized extends AbstractIntentionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/nullable.kt");
                 }
             }
         }
@@ -8358,6 +8407,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("startsWithStringExpression.kt")
         public void testStartsWithStringExpression() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/startsWithStringExpression.kt");
+        }
+
+        @TestMetadata("stringTemplateInCurryBraces.kt")
+        public void testStringTemplateInCurryBraces() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/stringTemplateInCurryBraces.kt");
         }
 
         @TestMetadata("tricky.kt")

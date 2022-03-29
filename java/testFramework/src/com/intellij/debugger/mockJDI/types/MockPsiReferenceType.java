@@ -9,6 +9,7 @@ import com.intellij.debugger.mockJDI.members.MockPsiMethod;
 import com.intellij.debugger.mockJDI.values.MockClassLoaderReference;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
@@ -28,7 +29,7 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
 
   @Override
   public String name() {
-    return myClass.getQualifiedName();
+    return ClassUtil.getJVMClassName(myClass);
   }
 
   @Override

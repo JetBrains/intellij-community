@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -123,7 +124,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
-    if (data.requiredLength > data.toFitLength && !label.isPinned()) {
+    if (data.requiredLength > data.toFitLength && !(label.isPinned() && TabLayout.showPinnedTabsSeparately())) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getStrategy().getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {

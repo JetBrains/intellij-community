@@ -127,6 +127,8 @@ final class PlatformModules {
 
   private static final String UTIL_JAR = "util.jar"
 
+  private static final String UTIL_RT_JAR = "util_rt.jar"
+
   public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
     // jna uses native lib
     "jna", PackMode.STANDALONE_MERGED,
@@ -204,17 +206,22 @@ final class PlatformModules {
       layout.moduleExcludes.putValues(entry.key, entry.value)
     }
 
+    jar(UTIL_RT_JAR, List.of(
+      "intellij.platform.util.rt",
+      ), productLayout, layout)
+
+
     jar(UTIL_JAR, List.of(
       "intellij.platform.util.rt.java8",
       "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
       "intellij.platform.bootstrap",
-      "intellij.platform.util.rt",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
       "intellij.platform.util.diff",
       "intellij.platform.util.xmlDom",
+      "intellij.platform.util.jdom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.boot",
@@ -293,10 +300,7 @@ final class PlatformModules {
       }
     }
 
-    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
-      "JDOM",
-      "Trove4j",
-      ))
+    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of("Trove4j"))
 
     for (ProjectLibraryData item in additionalProjectLevelLibraries) {
       String name = item.libraryName

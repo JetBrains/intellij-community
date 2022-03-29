@@ -275,7 +275,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.MavenKotlinBuildSystemType"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.LookupCancelService"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.project.KotlinLibraryToSourceAnalysisStateComponent"/>
 

@@ -160,7 +160,7 @@ public final class ConversionServiceImpl extends ConversionService {
     }
   }
 
-  private static @NotNull String getProviderId(@NotNull Supplier<ConverterProvider> supplier, @Nullable String id) {
+  private static @NotNull String getProviderId(@NotNull Supplier<? extends ConverterProvider> supplier, @Nullable String id) {
     return id == null ? supplier.get().getDeprecatedId() : id;
   }
 

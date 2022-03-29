@@ -5,9 +5,18 @@ jdk.nio.Channels.SelectableChannelCloser
 jdk.nio.Channels
 com.sun.crypto.provider.ChaCha20Cipher
 jdk.internal.platform.Metrics
+sun.nio.ch.SelectorImpl#select(java.util.function.Consumer<java.nio.channels.SelectionKey>;long;)
+sun.nio.ch.SelectorImpl#select(java.util.function.Consumer<java.nio.channels.SelectionKey>;)
+sun.nio.ch.SelectorImpl#selectNow(java.util.function.Consumer<java.nio.channels.SelectionKey>;)
+sun.nio.ch.SelectionKeyImpl#interestOpsOr(int;)
+sun.nio.ch.SelectionKeyImpl#interestOpsAnd(int;)
+sun.nio.ch.ChannelInputStream#readNBytes(int;)
 sun.security.rsa.MGF1
 sun.security.rsa.RSAUtil
 sun.security.rsa.RSAPSSSignature
+sun.security.rsa.RSAPublicKeyImpl#getParams()
+sun.security.rsa.RSAPrivateKeyImpl#getParams()
+sun.security.rsa.RSAPrivateCrtKeyImpl#getParams()
 sun.security.util.SignatureUtil
 java.io.Reader#nullReader()
 java.io.Writer#nullWriter()
@@ -20,6 +29,7 @@ java.io.FileWriter#FileWriter(java.io.File;java.nio.charset.Charset;boolean;)
 java.io.InputStream#nullInputStream()
 java.io.InputStream#readNBytes(int;)
 java.io.OutputStream#nullOutputStream()
+java.io.FileInputStream#readNBytes(int;)
 java.io.ByteArrayOutputStream#writeBytes(byte[];)
 java.nio.file.Path#of(java.lang.String;java.lang.String[];)
 java.nio.file.Path#of(java.net.URI;)
@@ -94,6 +104,10 @@ java.util.function.Predicate#not(java.util.function.Predicate<? super T>;)
 java.util.concurrent.TimeUnit#convert(java.time.Duration;)
 java.util.Optional#isEmpty()
 java.util.Collection#toArray(java.util.function.IntFunction<T[]>;)
+java.util.Collections.UnmodifiableCollection#toArray(java.util.function.IntFunction<T[]>;)
+java.util.Collections.SynchronizedCollection#toArray(java.util.function.IntFunction<T[]>;)
+java.util.Collections.CheckedCollection#toArray(java.util.function.IntFunction<T[]>;)
+java.util.Collections.AsLIFOQueue#toArray(java.util.function.IntFunction<T[]>;)
 java.util.OptionalInt#isEmpty()
 java.util.OptionalLong#isEmpty()
 java.util.OptionalDouble#isEmpty()

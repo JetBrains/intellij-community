@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration;
 
@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.InternalArgument;
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
-import org.jetbrains.kotlin.config.*;
+import org.jetbrains.kotlin.config.JvmTarget;
+import org.jetbrains.kotlin.config.KotlinFacetSettings;
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider;
+import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
@@ -112,6 +115,14 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testProjectWithoutFacetWithRuntime106WithoutLanguageLevel() {
         assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion());
+
+        KotlinCommonCompilerArgumentsHolder.Companion.getInstance(myProject).update(settings -> {
+            settings.setLanguageVersion(LanguageVersion.KOTLIN_1_6.getVersionString());
+            return null;
+        });
+
+        assertEquals(LanguageVersion.KOTLIN_1_6, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_6, PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion());
     }
 
     public void testProjectWithoutFacetWithRuntime11WithoutLanguageLevel() {

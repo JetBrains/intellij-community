@@ -108,8 +108,8 @@ public final class Disposer {
 
   /**
    * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
-   * This overrides parent disposable for {@code child}, i.e. if {@code child} is already registered with {@code oldParent},
-   * it's unregistered from {@code oldParent} before registering with {@code parent}.
+   * This method overrides parent disposable for the {@code child}, i.e., if {@code child} is already registered with {@code oldParent},
+   * then it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
    * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
    *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
@@ -251,7 +251,7 @@ public final class Disposer {
   }
 
   /**
-   * @return object registered on {@code parentDisposable} which is equal to object, or {@code null} if not found
+   * @return object registered on {@code parentDisposable} which is equal to {@code object}, or {@code null} if not found
    */
   @Nullable
   public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {

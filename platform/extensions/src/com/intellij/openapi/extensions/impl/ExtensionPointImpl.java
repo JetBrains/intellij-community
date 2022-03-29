@@ -171,7 +171,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   /**
    * There are valid cases where we need to register a lot of extensions programmatically,
-   * e.g. see SqlDialectTemplateRegistrar, so, special method for bulk insertion is introduced.
+   * e.g., see SqlDialectTemplateRegistrar, so, special method for bulk insertion is introduced.
    */
   public final void registerExtensions(@NotNull List<? extends T> extensions) {
     for (ExtensionComponentAdapter adapter : adapters) {
@@ -272,8 +272,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   /**
-   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
-   * events will be fired during iteration and probably it will be not expected.
+   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable:
+   * events will be fired during iteration which probably not expected.
    * <p>
    * Use only for interface extension points, not for bean.
    * <p>
@@ -325,10 +325,11 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   // null id means that instance was created and extension element cleared
-  public final void processIdentifiableImplementations(@NotNull BiConsumer<@NotNull Supplier<@Nullable T>, @Nullable String> consumer) {
+  public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<? extends @Nullable T>, ? super @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      consumer.accept(() -> adapter.createInstance(componentManager), adapter.getOrderId());
+      Supplier<@Nullable T> supplier = () -> adapter.createInstance(componentManager);
+      consumer.accept(supplier, adapter.getOrderId());
     }
   }
 
@@ -632,11 +633,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final synchronized void unregisterExtension(@NotNull T extension) {
-    if (!unregisterExtensions((__, adapter) -> {
-      return !adapter.isInstanceCreated$intellij_platform_extensions() ||
-             adapter.createInstance(componentManager) != extension;
-    }, true)) {
-      // there is a possible case that particular extension was replaced in particular environment, e.g. Upsource
+    if (!unregisterExtensions((__, adapter) ->
+                                !adapter.isInstanceCreated$intellij_platform_extensions() ||
+                                adapter.createInstance(componentManager) != extension, true)) {
+      // there is a possible case that particular extension was replaced in particular environment, e.g., Upsource
       // replaces some IntelliJ extensions (important for CoreApplicationEnvironment), so, just log as error instead of throw error
       LOG.warn("Extension to be removed not found: " + extension);
     }
@@ -992,7 +992,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     List<T> extensionsCache = cachedExtensions;
     if (extensionsCache == null) {
       for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-        // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
+        // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
         try {
           if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
             //noinspection unchecked

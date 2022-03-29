@@ -128,6 +128,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
     }
 
+    showInvalidDebugLayoutWarning()
+
     if (needToRun) {
       // Normally this step should not be shown!
       task {

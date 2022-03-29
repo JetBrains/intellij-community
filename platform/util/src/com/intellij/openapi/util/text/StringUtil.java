@@ -61,7 +61,7 @@ public class StringUtil extends StringUtilRt {
       myIsSkipStyleTag = isSkipStyleTag;
     }
 
-    public void parse(@NotNull Reader in) throws IOException {
+    void parse(@NotNull Reader in) throws IOException {
       myBuffer.setLength(0);
       new ParserDelegator().parse(in, this, Boolean.TRUE);
     }
@@ -99,7 +99,7 @@ public class StringUtil extends StringUtilRt {
       }
     }
 
-    public @NotNull String getText() {
+    @NotNull String getText() {
       return myBuffer.toString();
     }
   }
@@ -130,8 +130,6 @@ public class StringUtil extends StringUtilRt {
   public static @NotNull <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
     return Object::toString;
   }
-
-  public static final @NotNull java.util.function.Function<String, String> TRIMMER = StringUtil::trim;
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
@@ -195,7 +193,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case insensitive
+   * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case-insensitive
    */
   @Contract(pure = true)
   public static int indexOfIgnoreCase(@NotNull CharSequence where, @NotNull CharSequence what, int fromIndex) {
@@ -840,7 +838,7 @@ public class StringUtil extends StringUtilRt {
           StringBuilder sb = new StringBuilder(count);
           for (int pos = idx + suffixLen; pos < length && count > 0; ++pos) {
             char chl = s.charAt(pos);
-            if (!(radix == 0x10 && StringUtil.isHexDigit(chl) || radix == 8 && StringUtil.isOctalDigit(chl))) {
+            if (!(radix == 0x10 && isHexDigit(chl) || radix == 8 && isOctalDigit(chl))) {
               break;
             }
             sb.append(chl);
@@ -874,7 +872,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Pluralize English word. Could be used when e.g. generating collection name by element type.
+   * Pluralize English word. Could be used when e.g., generating collection name by element type.
    * Do not use this method in localized context, as it works for English language only.
    *
    * @param word word to pluralize
@@ -893,15 +891,15 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String capitalizeWords(@NotNull String text,
-                                                @NotNull String tokenizerDelim,
+                                                @NotNull String tokenizerDelimiters,
                                                 boolean allWords,
-                                                boolean leaveOriginalDelims) {
-    final StringTokenizer tokenizer = new StringTokenizer(text, tokenizerDelim, leaveOriginalDelims);
+                                                boolean leaveOriginalDelimiters) {
+    final StringTokenizer tokenizer = new StringTokenizer(text, tokenizerDelimiters, leaveOriginalDelimiters);
     final StringBuilder out = new StringBuilder(text.length());
     boolean toCapitalize = true;
     while (tokenizer.hasMoreTokens()) {
       final String word = tokenizer.nextToken();
-      if (!leaveOriginalDelims && out.length() > 0) {
+      if (!leaveOriginalDelimiters && out.length() > 0) {
         out.append(' ');
       }
       out.append(toCapitalize ? capitalize(word) : word);
@@ -918,10 +916,10 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * The same as {@link Introspector#decapitalize(String)}, but enables to ignore abbreveations in the beginning (e.g., URLMapping).
+   * The same as {@link Introspector#decapitalize(String)}, but enables to ignore abbreviations in the beginning (e.g., URLMapping).
    *
-   * @param s                  string to process
-   * @param ignoreAbbreviation whether abbreveation should be ignored
+   * @param s string to process
+   * @param ignoreAbbreviation whether abbreviation should be ignored
    * @return decapitalized string
    */
   @Contract(pure = true)
@@ -1381,7 +1379,7 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * @param text text to get word ranges in.
-   * @param separatorsSet if not null, only these characters will be considered as separators (i.e. not a part of word).
+   * @param separatorsSet if not null, only these characters will be considered as separators (i.e., not a part of word).
    *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
    * @return ranges ranges of words in passed text.
    */
@@ -2117,23 +2115,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean isEscapedBackslash(char @NotNull [] chars, int startOffset, int backslashOffset) {
-    if (chars[backslashOffset] != '\\') {
-      return true;
-    }
-    boolean escaped = false;
-    for (int i = startOffset; i < backslashOffset; i++) {
-      if (chars[i] == '\\') {
-        escaped = !escaped;
-      }
-      else {
-        escaped = false;
-      }
-    }
-    return escaped;
-  }
-
-  @Contract(pure = true)
   public static boolean isEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
     if (text.charAt(backslashOffset) != '\\') {
       return true;
@@ -2486,7 +2467,7 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Splits string by lines, keeping all line separators at the line ends and in the empty lines.
-   * <br> E.g. splitting text
+   * <br> E.g., splitting text
    * <blockquote>
    *   foo\r\n<br>
    *   \n<br>
@@ -2635,30 +2616,12 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
-    int d = c1 - c2;
-    if (d == 0 || !ignoreCase) {
-      return d;
-    }
-    // If characters don't match but case may be ignored,
-    // try converting both characters to uppercase.
-    // If the results match, then the comparison scan should
-    // continue.
-    char u1 = StringUtilRt.toUpperCase(c1);
-    char u2 = StringUtilRt.toUpperCase(c2);
-    d = u1 - u2;
-    if (d != 0) {
-      // Unfortunately, conversion to uppercase does not work properly
-      // for the Georgian alphabet, which has strange rules about case
-      // conversion.  So we need to make one last check before
-      // exiting.
-      d = StringUtilRt.toLowerCase(u1) - StringUtilRt.toLowerCase(u2);
-    }
-    return d;
+    return Strings.compare(c1, c2, ignoreCase);
   }
 
   @Contract(pure = true)
   public static @NotNull String formatLinks(@NotNull String message) {
-    Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9./\\-+]+");
+    Pattern linkPattern = Pattern.compile("http://[a-zA-Z\\d./\\-+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);
     while (m.find()) {
@@ -2911,7 +2874,7 @@ public class StringUtil extends StringUtilRt {
       return false;
   }
 
-  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-fA-F]{4}");
+  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[\\da-fA-F]{4}");
 
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
@@ -2941,7 +2904,7 @@ public class StringUtil extends StringUtilRt {
     private int i;
     private boolean myDefused;
 
-    public BombedCharSequence(@NotNull CharSequence sequence) {
+    protected BombedCharSequence(@NotNull CharSequence sequence) {
       delegate = sequence;
     }
 

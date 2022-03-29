@@ -9,11 +9,9 @@ import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.Shape
 import java.awt.image.BufferedImage
-import java.util.function.Supplier
 import javax.swing.text.Element
 import javax.swing.text.Position
 import javax.swing.text.View
-import javax.swing.text.html.ImageView
 
 class HiDpiScalingImageView(elem: Element, private val originalView: View) : View(elem) {
 
@@ -52,6 +50,6 @@ class HiDpiScalingImageView(elem: Element, private val originalView: View) : Vie
   override fun viewToModel(x: Float, y: Float, a: Shape?, biasReturn: Array<out Position.Bias>?): Int =
     originalView.viewToModel(x, y, a, biasReturn)
 
-  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String =
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
     originalView.getToolTipText(x, y, allocation)
 }

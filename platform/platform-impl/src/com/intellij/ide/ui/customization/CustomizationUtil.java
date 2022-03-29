@@ -90,8 +90,7 @@ public final class CustomizationUtil {
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
-    final List<ActionUrl> actions = schema.getActions();
-    for (ActionUrl actionUrl : actions) {
+    for (ActionUrl actionUrl : schema.getActions()) {
       if (actionUrl.getParentGroup() == null) continue;
       if ((actionUrl.getParentGroup().equals(text) ||
            actionUrl.getParentGroup().equals(defaultGroupName) ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.analysis.AnalysisScope;
@@ -27,7 +27,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
 
   @NotNull
-  protected LocalQuickFix getInvertBooleanFix(boolean onTheFly) {
+  private LocalQuickFix getInvertBooleanFix(boolean onTheFly) {
     return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.method.quickfix")) {
       @Override
       public void doFix(@NotNull PsiElement element) {
@@ -129,7 +129,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   }
 
   @Override
-  public QuickFix getQuickFix(final String hint) {
+  public LocalQuickFix getQuickFix(final String hint) {
     return getInvertBooleanFix(false);
   }
 
@@ -161,12 +161,11 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   }
 
   private static void checkMethodCall(RefElement refWhat, final PsiElement element) {
-    if (!(refWhat instanceof RefMethod)) return;
+    if (refWhat.getUserData(ALWAYS_INVERTED) != Boolean.TRUE) return;
     final RefMethod refMethod = (RefMethod)refWhat;
     final PsiElement psiElement = refMethod.getPsiElement();
     if (!(psiElement instanceof PsiMethod)) return;
     final PsiMethod psiMethod = (PsiMethod)psiElement;
-    if (!PsiType.BOOLEAN.equals(psiMethod.getReturnType())) return;
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
@@ -199,8 +198,8 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     @Override
     public void onInitialize(RefElement refElement) {
       if (!(refElement instanceof RefMethod) || ((RefMethod)refElement).isConstructor()) return;
-      final UMethod element = (UMethod)((RefMethod)refElement).getUastElement();
-      if (!PsiType.BOOLEAN.equals(element.getReturnType())) return;
+      final UMethod method = (UMethod)((RefMethod)refElement).getUastElement();
+      if (!PsiType.BOOLEAN.equals(method.getReturnType())) return;
       refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
     }
 

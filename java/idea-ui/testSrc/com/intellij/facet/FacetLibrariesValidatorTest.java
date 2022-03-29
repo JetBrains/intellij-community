@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet;
 
@@ -21,11 +21,14 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 public class FacetLibrariesValidatorTest extends FacetTestCase {
   private MockFacetValidatorsManager myValidatorsManager;
-  private static final LibraryInfo JDOM = new LibraryInfo("jdom.jar", (String)null, null, null, "org.jdom.Element");
+  private static final LibraryInfo
+    FAST_UTIL = new LibraryInfo("fastutil.jar", (String)null, null, null, "it.unimi.dsi.fastutil.objects.ObjectOpenHashSet");
   private static final LibraryInfo JUNIT = new LibraryInfo("junit.jar", (String)null, null, null, "junit.framework.TestCase");
-  private VirtualFile myJDomJar;
+  private VirtualFile myFastUtilJar;
   private VirtualFile myJUnitJar;
   @NonNls private static final String LIB_NAME = "lib";
   private MockFacet myFacet;
@@ -36,7 +39,7 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     super.setUp();
     myValidatorsManager = new MockFacetValidatorsManager();
     myFacet = createFacet();
-    myJDomJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
+    myFastUtilJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
     myJUnitJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JUnit3");
     myDescription = new MockFacetLibrariesValidatorDescription(LIB_NAME);
   }
@@ -65,8 +68,8 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
   }
 
   public void testShowError() {
-    final FacetLibrariesValidator validator = createValidator(JDOM);
-    assertError("jdom.jar");
+    final FacetLibrariesValidator validator = createValidator(FAST_UTIL);
+    assertError("fastutil.jar");
 
     validator.setRequiredLibraries(LibraryInfo.EMPTY_ARRAY);
     assertNoErrors();
@@ -76,10 +79,10 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
   }
 
   public void testAddJars() {
-    final FacetLibrariesValidatorImpl validator = createValidator(JDOM, JUNIT);
+    final FacetLibrariesValidatorImpl validator = createValidator(FAST_UTIL, JUNIT);
     assertError("");
 
-    ModuleRootModificationUtil.addModuleLibrary(myModule, myJDomJar.getUrl());
+    ModuleRootModificationUtil.addModuleLibrary(myModule, myFastUtilJar.getUrl());
     myValidatorsManager.validate();
     assertError("junit");
 
@@ -88,25 +91,23 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     validator.onFacetInitialized(createFacet());
 
     final List<VirtualFile> classpath = Arrays.asList(OrderEnumerator.orderEntries(myModule).getClassesRoots());
-    assertTrue(classpath.contains(myJDomJar));
+    assertTrue(classpath.contains(myFastUtilJar));
     assertTrue(classpath.contains(myJUnitJar));
   }
 
   public void testUnresolvedLibrary() {
-    createValidator(JDOM);
-    assertError("jdom");
+    createValidator(FAST_UTIL);
+    assertError("fastutil.jar");
   }
 
   public void testLibrary() {
-    PsiTestUtil.addProjectLibrary(myModule, "lib1", myJDomJar, myJUnitJar);
-    createValidator(JDOM, JUNIT);
+    PsiTestUtil.addProjectLibrary(myModule, "lib1", myFastUtilJar, myJUnitJar);
+    createValidator(FAST_UTIL, JUNIT);
     assertNoErrors();
   }
 
-  private void assertError(final @NonNls String s) {
-    final String message = myValidatorsManager.getErrorMessage();
-    assertNotNull(message);
-    assertTrue(message.contains(s));
+  private void assertError(@NonNls String s) {
+    assertThat(myValidatorsManager.getErrorMessage()).contains(s);
   }
 
 

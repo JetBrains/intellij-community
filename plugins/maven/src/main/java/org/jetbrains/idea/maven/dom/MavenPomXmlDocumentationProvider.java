@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -12,22 +12,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPomXmlDocumentationProvider implements DocumentationProvider {
-
   private final DocumentationProvider myDelegate = new XmlDocumentationProvider() {
     @Override
     protected String generateDoc(String str, String name, String typeName, String version) {
       if (str != null) {
         str = StringUtil.unescapeXmlEntities(str);
       }
-
       return super.generateDoc(str, name, typeName, version);
     }
   };
-
 
   private static boolean isFromPomXml(PsiElement element) {
     if (element == null) return false;
@@ -36,33 +30,29 @@ public class MavenPomXmlDocumentationProvider implements DocumentationProvider {
     return containingFile != null && containingFile.getName().equals("maven-4.0.0.xsd");
   }
 
-  @Nullable
   @Override
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (!isFromPomXml(element)) return null;
 
     return myDelegate.getQuickNavigateInfo(element, originalElement);
   }
 
-  @Nullable
   @Override
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  public @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     if (!isFromPomXml(element)) return null;
 
     return myDelegate.getUrlFor(element, originalElement);
   }
 
-  @Nullable
   @Override
-  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (!isFromPomXml(element)) return null;
 
     return myDelegate.generateDoc(element, originalElement);
   }
 
-  @Nullable
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if (!isFromPomXml(element)) return null;
 
     return myDelegate.getDocumentationElementForLookupItem(psiManager, object, element);

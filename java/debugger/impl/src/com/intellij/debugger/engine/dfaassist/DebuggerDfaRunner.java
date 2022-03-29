@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class DebuggerDfaRunner {
+public class DebuggerDfaRunner {
   private static final Set<String> COLLECTIONS_WITH_SIZE_FIELD = Set.of(
     CommonClassNames.JAVA_UTIL_ARRAY_LIST, CommonClassNames.JAVA_UTIL_LINKED_LIST, CommonClassNames.JAVA_UTIL_HASH_MAP, "java.util.TreeMap");
   private final @NotNull PsiElement myBody;
@@ -62,7 +62,8 @@ class DebuggerDfaRunner {
     return myStartingState != null;
   }
 
-  @Nullable DebuggerDfaListener interpret() {
+  @Nullable
+  public DebuggerDfaListener interpret() {
     if (myFlow == null || myStartingState == null ||
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return null;

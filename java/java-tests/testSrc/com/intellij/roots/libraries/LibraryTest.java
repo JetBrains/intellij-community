@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots.libraries;
 
 import com.intellij.ProjectTopics;
@@ -28,39 +28,40 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- *  @author dsl
- */
 public class LibraryTest extends ModuleRootManagerTestCase {
   public void testLibrarySerialization() throws IOException {
-    final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
+    long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
 
     File projectDir = new File(myProject.getBasePath());
-    File localJDomJar = new File(projectDir, getJDomJar().getName());
-    File localJDomSources = new File(projectDir, getJDomSources().getName());
+    File localFastUtilJar = new File(projectDir, "lib.jar");
+    Path sources = getLibSources();
+    File localSources = new File(projectDir, "lib-sources.zip");
 
-    FileUtil.copy(new File(getJDomJar().getPath().replace("!", "")), localJDomJar);
-    FileUtil.copy(new File(getJDomSources().getPath().replace("!", "")), localJDomSources);
+    FileUtil.copy(new File(getFastUtilJar().getPath().replace("!", "")), localFastUtilJar);
+    FileUtil.copy(sources.toFile(), localSources);
 
     PsiTestUtil.addProjectLibrary(
-      myModule, "junit",
-      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomJar)),
-      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomSources)));
+      myModule,
+      "junit",
+      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localFastUtilJar)),
+      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localSources))
+    );
 
     assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
     assertThat(serializeLibraries(myProject)).isEqualTo(
       "<library name=\"junit\">\n" +
       "  <CLASSES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/jdom-2.0.6.jar\" />\n" +
+      "    <root url=\"file://$PROJECT_DIR$/lib.jar\" />\n" +
       "  </CLASSES>\n" +
       "  <JAVADOC />\n" +
       "  <SOURCES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/jdom.zip\" />\n" +
+      "    <root url=\"file://$PROJECT_DIR$/lib-sources.zip\" />\n" +
       "  </SOURCES>\n" +
       "</library>"
     );

@@ -1,4 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
@@ -24,6 +25,8 @@ internal fun gotoDeclarationOrUsages(file: PsiFile, offset: Int): GTDUActionData
  */
 internal interface GTDUActionData {
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   fun ctrlMouseInfo(): CtrlMouseInfo?
 
   fun ctrlMouseData(): CtrlMouseData?
@@ -66,6 +69,8 @@ private fun fromTargetData(file: PsiFile, offset: Int): GTDUActionData? {
 internal fun GTDActionData.toGTDUActionData(): GTDUActionData? {
   val gtdActionResult = result() ?: return null                           // nowhere to navigate
   return object : GTDUActionData {
+    @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+    @Deprecated("Unused in v2 implementation")
     override fun ctrlMouseInfo(): CtrlMouseInfo? = this@toGTDUActionData.ctrlMouseInfo()
     override fun ctrlMouseData(): CtrlMouseData? = this@toGTDUActionData.ctrlMouseData()
     override fun result(): GTDUActionResult = GTDUActionResult.GTD(gtdActionResult)
@@ -74,6 +79,8 @@ internal fun GTDActionData.toGTDUActionData(): GTDUActionData? {
 
 private class ShowUsagesGTDUActionData(private val project: Project, private val targetData: TargetData) : GTDUActionData {
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
 
   override fun ctrlMouseData(): CtrlMouseData? = targetData.ctrlMouseData(project)

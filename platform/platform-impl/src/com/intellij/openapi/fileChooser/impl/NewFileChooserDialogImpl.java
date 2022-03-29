@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +46,8 @@ import static java.util.Objects.requireNonNullElseGet;
 final class NewFileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
   private static final String RECENT_FILES_KEY = "file.chooser.recent.files";  // only local paths, VFS format
   private static final int RECENT_FILES_LIMIT = 30;
+
+  @SuppressWarnings("SpellCheckingInspection") private static final String ZIP_FS_TYPE = "zipfs";
 
   private final FileChooserDescriptor myDescriptor;
   private FileChooserPanelImpl myPanel;
@@ -155,23 +157,22 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   }
 
   private @Nullable VirtualFile toVirtualFile(Path path) {
-    var scheme = path.toUri().getScheme();
-
-    if ("file".equals(scheme)) {
+    if (path.getFileSystem() == FileSystems.getDefault()) {
       return myLocalFs.get().refreshAndFindFileByPath(path.toString());
     }
 
-    if ("jar".equals(scheme)) {
-      try {
-        var localUri = Strings.trimEnd(path.getRoot().toUri().getRawSchemeSpecificPart(), "!/");
-        var localFile = toVirtualFile(Path.of(new URI(localUri)));
+    try {
+      var store = path.getFileSystem().getFileStores().iterator().next();
+      if (ZIP_FS_TYPE.equals(store.type())) {
+        var localPath = StringUtil.trimTrailing(store.name(), '/');
+        var localFile = toVirtualFile(Path.of(localPath));
         if (localFile != null) {
           return myJarFs.get().refreshAndFindFileByPath(localFile.getPath() + '!' + path);
         }
       }
-      catch (Exception e) {
-        Logger.getInstance(NewFileChooserDialogImpl.class).warn(e);
-      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(NewFileChooserDialogImpl.class).warn(e);
     }
 
     return null;

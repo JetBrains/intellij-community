@@ -14,7 +14,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -47,7 +49,9 @@ import com.intellij.usages.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +60,7 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
@@ -218,32 +223,29 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       final LocalHistoryAction action = LocalHistory.getInstance().startAction(
         JavaBundle.message("action.description.infer.nullity.annotations"));
       try {
-        WriteCommandAction.writeCommandAction(project).withName(JavaBundle.message("action.title.infer.nullity.annotations")).run(() -> {
-          ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
-            JavaBundle.message("action.description.infer.nullity.annotations"), project, null, indicator -> {
+        ReadAction.run(() -> {
+          final UsageInfo[] infos = computable.compute();
+          if (infos.length > 0) {
+            Runnable command = () -> {
+              final Set<VirtualFile> files =
+                StreamEx.of(infos).map(UsageInfo::getElement).nonNull()
+                  .map(PsiElement::getContainingFile).nonNull()
+                  .map(PsiFile::getVirtualFile).nonNull()
+                  .toCollection(LinkedHashSet::new);
+              if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, files)) return;
 
-              final UsageInfo[] infos = computable.compute();
-              if (infos.length > 0) {
-
-                final Set<PsiElement> elements = new LinkedHashSet<>();
-                for (UsageInfo info : infos) {
-                  final PsiElement element = info.getElement();
-                  if (element != null) {
-                    ContainerUtil.addIfNotNull(elements, element.getContainingFile());
-                  }
-                }
-                if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
-
-                final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, JavaBundle
-                  .message("action.title.infer.nullity.annotations"), false);
-                progressTask.setMinIterationTime(200);
-                progressTask.setTask(new AnnotateTask(project, progressTask, infos));
-                ProgressManager.getInstance().run(progressTask);
-              }
-              else {
-                NullityInferrer.nothingFoundMessage(project);
-              }
-            });
+              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, JavaBundle
+                .message("action.title.infer.nullity.annotations"));
+              progressTask.setMinIterationTime(200);
+              progressTask.setTask(new AnnotateTask(project, progressTask, infos));
+              ProgressManager.getInstance().run(progressTask);
+            };
+            CommandProcessor.getInstance()
+              .executeCommand(project, command, JavaBundle.message("action.title.infer.nullity.annotations"), null);
+          }
+          else {
+            NullityInferrer.nothingFoundMessage(project);
+          }
         });
       }
       finally {

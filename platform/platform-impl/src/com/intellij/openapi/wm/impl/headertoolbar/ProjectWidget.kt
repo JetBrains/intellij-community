@@ -134,7 +134,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     val actionManager = ActionManager.getInstance()
     val res = mutableMapOf<AnAction, Presentation?>(
       actionManager.createActionPair("NewProject", IdeBundle.message("project.widget.new"), "expui/general/add.svg"),
-      actionManager.createActionPair("ImportProject", IdeBundle.message("project.widget.open"), "expui/toolwindow/project.svg"),
+      actionManager.createActionPair("OpenFile", IdeBundle.message("project.widget.open"), "expui/toolwindow/project.svg"),
       actionManager.createActionPair("ProjectFromVersionControl", IdeBundle.message("project.widget.from.vcs"), "expui/vcs/vcs.svg")
     )
 

@@ -23,7 +23,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
-class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
+final class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
   private final Map<String, String> myLibLevels;
 

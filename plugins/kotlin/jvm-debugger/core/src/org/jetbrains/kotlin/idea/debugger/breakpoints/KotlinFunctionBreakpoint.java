@@ -78,7 +78,7 @@ import static org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt.isUn
 // This class is copied from com.intellij.debugger.ui.breakpoints.MethodBreakpoint.
 // Changed parts are marked with '// MODIFICATION: ' comments.
 // This should be deleted when IDEA opens the method breakpoint API (presumably in 193).
-public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
+public final class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
     private static final Logger LOG = Logger.getInstance(KotlinFunctionBreakpoint.class);
     @Nullable private JVMName mySignature;
     private boolean myIsStatic;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.notification.catchNotificationText
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.junit.Assert
@@ -35,6 +36,40 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
         checkKotlincPresence(false)
+    }
+
+    fun testMigrationNotificationWithStdlib() {
+        val notificationText = catchNotificationText(project) {
+            val application = ApplicationManager.getApplication() as ApplicationImpl
+            application.isSaveAllowed = true
+            val languageVersionSettingsBefore = module.languageVersionSettings
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_5, languageVersionSettingsBefore.languageVersion)
+            Assert.assertEquals(ApiVersion.KOTLIN_1_5, languageVersionSettingsBefore.apiVersion)
+
+            val projectLanguageVersionSettingsBefore = myProject.getLanguageVersionSettings()
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_5, projectLanguageVersionSettingsBefore.languageVersion)
+            Assert.assertEquals(ApiVersion.KOTLIN_1_5, projectLanguageVersionSettingsBefore.apiVersion)
+
+            application.saveAll()
+            checkKotlincPresence(true)
+
+            KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+                languageVersion = LanguageVersion.KOTLIN_1_6.versionString
+            }
+
+            val languageVersionSettingsAfter = module.languageVersionSettings
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_6, languageVersionSettingsAfter.languageVersion)
+            Assert.assertEquals(ApiVersion.KOTLIN_1_5, languageVersionSettingsAfter.apiVersion)
+
+            val projectLanguageVersionSettingsAfter = myProject.getLanguageVersionSettings()
+            Assert.assertEquals(LanguageVersion.KOTLIN_1_6, projectLanguageVersionSettingsAfter.languageVersion)
+            Assert.assertEquals(ApiVersion.KOTLIN_1_5, projectLanguageVersionSettingsAfter.apiVersion)
+        }
+
+        assertEquals(
+            "Migrations for Kotlin code are available<br/><br/>Detected migration:<br/>&nbsp;&nbsp;Language version: 1.5 -> 1.6<br/>",
+            notificationText,
+        )
     }
 
     fun testTwoModulesWithNonDefaultPath_doNotCopyInDefault() {

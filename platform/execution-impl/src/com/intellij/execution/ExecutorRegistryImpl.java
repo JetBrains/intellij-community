@@ -9,6 +9,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.ExecutionManagerImplKt;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runToolbar.*;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -29,8 +30,8 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -327,10 +328,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
       else {
         if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-          Pair<Boolean, String> enabledStatusAndText = getEnabledStatusAndTextForRunCurrentFileAction(e);
-          enabled = enabledStatusAndText.first;
-          //noinspection HardCodedStringLiteral
-          text = enabledStatusAndText.second;
+          RunCurrentFileActionStatus status = getRunCurrentFileActionStatus(e);
+          enabled = status.myEnabled;
+          text = status.myTooltip;
+          presentation.setIcon(status.myIcon);
         }
         else {
           text = getTemplatePresentation().getTextWithMnemonic();
@@ -350,32 +351,59 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       presentation.setText(text);
     }
 
-    private Pair<Boolean, String> getEnabledStatusAndTextForRunCurrentFileAction(@NotNull AnActionEvent e) {
+    private RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e) {
       Project project = Objects.requireNonNull(e.getProject());
       if (DumbService.isDumb(project)) {
-        return Pair.create(false, myExecutor.getStartActionText());
+        return new RunCurrentFileActionStatus(false, myExecutor.getStartActionText(), myExecutor.getIcon());
       }
 
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor == null) {
-        return Pair.create(false, ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.no.focused.editor"));
+        String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.no.focused.editor");
+        return new RunCurrentFileActionStatus(false, tooltip, myExecutor.getIcon());
       }
 
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile == null) {
-        return Pair.create(false, ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable"));
+        String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
+        return new RunCurrentFileActionStatus(false, tooltip, myExecutor.getIcon());
       }
 
-      List<RunnerAndConfigurationSettings> runConfigs = getRunConfigsForCurrentFile(psiFile);
+      List<RunnerAndConfigurationSettings> runConfigs = getRunConfigsForCurrentFile(psiFile, false);
       if (runConfigs.isEmpty()) {
-        return Pair.create(false, ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable"));
+        String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
+        return new RunCurrentFileActionStatus(false, tooltip, myExecutor.getIcon());
       }
 
-      boolean enabled = !filterConfigsThatHaveRunner(runConfigs).isEmpty();
-      return Pair.create(enabled, myExecutor.getStartActionText(psiFile.getName()));
+      List<RunnerAndConfigurationSettings> runnableConfigs = filterConfigsThatHaveRunner(runConfigs);
+      if (runnableConfigs.isEmpty()) {
+        return new RunCurrentFileActionStatus(false, myExecutor.getStartActionText(psiFile.getName()), myExecutor.getIcon());
+      }
+
+      Icon icon = myExecutor.getIcon();
+      if (runnableConfigs.size() == 1) {
+        icon = getInformativeIcon(project, runnableConfigs.get(0));
+      }
+      else {
+        // myExecutor.getIcon() is the least preferred icon
+        // AllIcons.Actions.Restart is more preferred
+        // Other icons are the most preferred ones (like ExecutionUtil.getLiveIndicator())
+        for (RunnerAndConfigurationSettings config : runnableConfigs) {
+          Icon anotherIcon = getInformativeIcon(project, runnableConfigs.get(0));
+          if (icon == myExecutor.getIcon() || (anotherIcon != myExecutor.getIcon() && anotherIcon != AllIcons.Actions.Restart)) {
+            icon = anotherIcon;
+          }
+        }
+      }
+
+      return new RunCurrentFileActionStatus(true, myExecutor.getStartActionText(psiFile.getName()), icon);
     }
 
-    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile) {
+    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
+      if (resetCache) {
+        psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
+      }
+
       // Without this cache, an expensive method `ConfigurationContext.getConfigurationsFromContext()` is called too often for 2 reasons:
       // - there are several buttons on the toolbar (Run, Debug, Profile, etc.), each runs ExecutorAction.update() during each action update session
       // - the state of the buttons on the toolbar is updated several times a second, even if no files are being edited
@@ -401,6 +429,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           configurationsFromContext != null
           ? ContainerUtil.map(configurationsFromContext, ConfigurationFromContext::getConfigurationSettings)
           : Collections.emptyList();
+
+        VirtualFile vFile = psiFile.getVirtualFile();
+        String filePath = vFile != null ? vFile.getPath() : null;
+        for (RunnerAndConfigurationSettings config : runConfigs) {
+          ((RunnerAndConfigurationSettingsImpl)config).setFilePathIfRunningCurrentFile(filePath);
+        }
 
         cache = new RunCurrentFileInfo(psiModCount, runConfigs);
         psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, cache);
@@ -481,7 +515,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       Project project = e.getProject();
       Editor editor = project != null ? e.getData(CommonDataKeys.EDITOR) : null;
       PsiFile psiFile = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
-      List<RunnerAndConfigurationSettings> runConfigs = psiFile != null ? getRunConfigsForCurrentFile(psiFile) : Collections.emptyList();
+      List<RunnerAndConfigurationSettings> runConfigs = psiFile != null ? getRunConfigsForCurrentFile(psiFile, true)
+                                                                        : Collections.emptyList();
       runConfigs = filterConfigsThatHaveRunner(runConfigs);
 
       if (runConfigs.isEmpty()) {
@@ -608,6 +643,18 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
       return true;
+    }
+  }
+
+  private static class RunCurrentFileActionStatus {
+    private final boolean myEnabled;
+    private final @Nls @NotNull String myTooltip;
+    private final @NotNull Icon myIcon;
+
+    private RunCurrentFileActionStatus(boolean enabled, @Nls @NotNull String tooltip, @NotNull Icon icon) {
+      myEnabled = enabled;
+      myTooltip = tooltip;
+      myIcon = icon;
     }
   }
 }

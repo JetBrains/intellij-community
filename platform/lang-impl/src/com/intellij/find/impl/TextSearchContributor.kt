@@ -81,7 +81,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   override fun getSearchProviderId() = ID
   override fun getGroupName() = FindBundle.message("search.everywhere.group.name")
   override fun getSortWeight() = 1500
-  override fun showInFindResults() = true
+  override fun showInFindResults() = enabled()
   override fun isShownInSeparateTab() = true
 
   override fun fetchWeightedElements(pattern: String,

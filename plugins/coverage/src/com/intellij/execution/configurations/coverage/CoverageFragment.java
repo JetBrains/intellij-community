@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
@@ -23,7 +23,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
+public final class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
 
   private final RunConfigurationBase<?> myConfiguration;
 

@@ -2,6 +2,7 @@
 
 package com.intellij.psi.search;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -46,7 +47,7 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 3 + (Registry.is("indexing.filename.over.vfs") ? 0xff : 0);
   }
 
   @Override

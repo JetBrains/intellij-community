@@ -4,11 +4,16 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.actions.documentationTargets
+import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalResolveLinkResult
@@ -64,10 +69,9 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       return
     }
 
-    val lookup = LookupManager.getActiveLookup(editor)
-    val quickSearchComponent = quickSearchComponent(project)
-
-    if (lookup == null && quickSearchComponent == null) {
+    val secondaryPopupContext = lookupPopupContext(editor)
+                                ?: quickSearchPopupContext(project)
+    if (secondaryPopupContext == null) {
       // no popups
       if (toolWindowManager.focusVisibleReusableTab()) {
         // Explicit invocation moves focus to a visible preview tab.
@@ -89,12 +93,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
-
-    val popupContext = when {
-      lookup != null -> LookupPopupContext(lookup)
-      quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
-      else -> DefaultPopupContext(project, editor)
-    }
+    val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
     cs.showDocumentation(request, popupContext)
   }
 
@@ -144,10 +143,10 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       return
     }
     val browser = DocumentationBrowser.createBrowser(project, request)
-    val popup = createDocumentationPopup(project, browser, popupContext)
+    val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
+    val popup = createDocumentationPopup(project, popupUI, popupContext)
     setPopup(popup)
-
-    showPopupLater(popup, browser, popupContext)
+    showPopupLater(popup, popupUI, popupContext.boundsHandler())
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {

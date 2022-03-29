@@ -326,7 +326,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 ?: error("Can not find class \"$GENERATED_CLASS_NAME\"")
             val mainMethod = mainClassType.methods().single { it.name() == GENERATED_FUNCTION_NAME }
             val returnValue = context.invokeMethod(mainClassType, mainMethod, args)
-            EvaluatorValueConverter(context).unref(returnValue)
+            EvaluatorValueConverter.unref(returnValue)
         }
     }
 
@@ -392,7 +392,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun updateLocalVariableValue(converter: EvaluatorValueConverter, ref: VariableFinder.RefWrapper) {
         val frameProxy = converter.context.frameProxy
-        val newValue = converter.unref(ref.wrapper)
+        val newValue = EvaluatorValueConverter.unref(ref.wrapper)
         val variable = frameProxy.safeVisibleVariableByName(ref.localVariableName)
         if (variable != null) {
             try {
@@ -492,13 +492,13 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 else -> throw IllegalStateException("Unknown result value produced by eval4j")
             }
 
-            val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue, context) else null
+            val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue) else null
             return sharedVar?.value ?: jdiValue.asJdiValue(context.vm.virtualMachine, jdiValue.asmType)
         }
 
-        private fun getValueIfSharedVar(value: Eval4JValue, context: ExecutionContext): VariableFinder.Result? {
+        private fun getValueIfSharedVar(value: Eval4JValue): VariableFinder.Result? {
             val obj = value.obj(value.asmType) as? ObjectReference ?: return null
-            return VariableFinder.Result(EvaluatorValueConverter(context).unref(obj))
+            return VariableFinder.Result(EvaluatorValueConverter.unref(obj))
         }
     }
 }

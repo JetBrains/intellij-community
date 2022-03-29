@@ -39,7 +39,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable, ProgressIndicatorWithDelayedPresentation {
+public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, TitledIndicator, ProgressIndicatorWithDelayedPresentation, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
 
   private Runnable myDialogInitialization;
@@ -325,9 +325,17 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @Override
   public void setTitle(@NotNull @ProgressTitle String title) {
     if (!title.equals(myTitle)) {
       myTitle = title;
+
+      delegateProgressChange(each -> {
+        if (each instanceof TitledIndicator) {
+          ((TitledIndicator)each).setTitle(title);
+        }
+      });
+
       update();
     }
   }

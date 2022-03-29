@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,12 +67,10 @@ public class TagsTestDataUtil {
                 String closeSuffix = point.isClosed ? "/" : "";
                 if (attributesString.isEmpty()) {
                     tagText = String.format("<%s%s>", point.getName(), closeSuffix);
-                }
-                else {
+                } else {
                     tagText = String.format("<%s %s%s>", point.getName(), allAttributes, closeSuffix);
                 }
-            }
-            else {
+            } else {
                 tagText = String.format("</%s>", point.getName());
             }
 
@@ -185,12 +184,10 @@ public class TagsTestDataUtil {
                                          sanitizeLineBreaks(highlightInfo.getDescription()),
                                          highlightInfo.forcedTextAttributesKey
                     );
-                }
-                else {
+                } else {
                     return String.format("textAttributesKey=\"%s\"", highlightInfo.forcedTextAttributesKey);
                 }
-            }
-            else {
+            } else {
                 return "";
             }
         }

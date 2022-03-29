@@ -13,15 +13,15 @@ public class JpsBootstrapJdkTest {
   public void allJdkVariantsCouldBeDownloaded() {
     BuildDependenciesCommunityRoot communityRoot = BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory();
 
-    for (JpsBootstrapJdk.OS os : JpsBootstrapJdk.OS.values()) {
-      for (JpsBootstrapJdk.Arch arch : Arrays.asList(JpsBootstrapJdk.Arch.X86_64, JpsBootstrapJdk.Arch.ARM64)) {
-        if (os == JpsBootstrapJdk.OS.WINDOWS && arch == JpsBootstrapJdk.Arch.ARM64) {
+    for (Jdk11Downloader.OS os : Jdk11Downloader.OS.values()) {
+      for (Jdk11Downloader.Arch arch : Arrays.asList(Jdk11Downloader.Arch.X86_64, Jdk11Downloader.Arch.ARM64)) {
+        if (os == Jdk11Downloader.OS.WINDOWS && arch == Jdk11Downloader.Arch.ARM64) {
           // Not supported yet
           continue;
         }
 
-        Path jdkHome = JpsBootstrapJdk.getJdkHome(communityRoot, os, arch);
-        Path javaExecutable = JpsBootstrapJdk.getJavaExecutable(jdkHome);
+        Path jdkHome = Jdk11Downloader.getJdkHome(communityRoot, os, arch);
+        Path javaExecutable = Jdk11Downloader.getJavaExecutable(jdkHome);
         Assertions.assertTrue(Files.exists(javaExecutable));
       }
     }

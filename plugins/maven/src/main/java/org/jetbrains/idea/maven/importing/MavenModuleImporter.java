@@ -56,7 +56,7 @@ public final class MavenModuleImporter {
   private final MavenImportingSettings mySettings;
   private final ModifiableModelsProviderProxy myModifiableModelsProvider;
   @Nullable
-  private MavenModuleType myModuleType;
+  private final MavenModuleType myModuleType;
   private MavenRootModelAdapter myRootModelAdapter;
 
   private IdeModifiableModelsProvider myProviderForExtensions;

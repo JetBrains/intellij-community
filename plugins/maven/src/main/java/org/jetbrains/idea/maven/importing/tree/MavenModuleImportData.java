@@ -61,13 +61,13 @@ public class MavenModuleImportData {
 
     MavenModuleImportData data = (MavenModuleImportData)o;
 
-    if (!mavenProject.equals(data.mavenProject)) return false;
+    if (!moduleData.getModuleName().equals(data.moduleData.getModuleName())) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return mavenProject.hashCode();
+    return moduleData.getModuleName().hashCode();
   }
 }

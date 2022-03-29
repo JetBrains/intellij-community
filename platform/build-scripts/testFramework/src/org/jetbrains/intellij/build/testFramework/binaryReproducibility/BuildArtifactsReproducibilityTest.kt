@@ -11,7 +11,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
-internal class BuildArtifactsReproducibilityTest {
+class BuildArtifactsReproducibilityTest {
   private val buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLongOrNull()
   private val randomSeedNumber = Random().nextLong()
   private lateinit var diffDirectory: Path
@@ -26,7 +26,7 @@ internal class BuildArtifactsReproducibilityTest {
     options.randomSeedNumber = randomSeedNumber
     // FIXME IJI-823 workaround
     options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
-    if (options.targetOS != BuildOptions.OS_NONE) {
+    if (options.targetOS != BuildOptions.OS_NONE && options.targetOS != OsFamily.currentOs.osId) {
       // only Linux build is reproducible for now
       options.targetOS = BuildOptions.OS_LINUX
     }
@@ -43,7 +43,7 @@ internal class BuildArtifactsReproducibilityTest {
       val artifacts2 = context2.getOsDistributionBuilder(os)?.getArtifactNames(context2) ?: emptyList()
       assert(artifacts1 == artifacts2)
       artifacts1.map { "artifacts/$it" } + "dist.${os.distSuffix}"
-    }.plus("dist.all").mapNotNull {
+    }.plus("dist.all").plus("dist").mapNotNull {
       val path1 = context1.paths.buildOutputDir.resolve(it)
       val path2 = context2.paths.buildOutputDir.resolve(it)
       if (!path1.exists() && !path2.exists()) {

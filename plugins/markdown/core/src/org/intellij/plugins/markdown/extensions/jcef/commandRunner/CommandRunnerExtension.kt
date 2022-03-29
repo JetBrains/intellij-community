@@ -303,14 +303,16 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor, place: RunnerPlace): Boolean {
       val dataContext = createDataContext(project, localSession, workingDirectory, executor)
       val trimmedCmd = command.trim()
-      for (provider in RunAnythingProvider.EP_NAME.extensionList) {
-        val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
-        return TrustedProjectUtil.executeIfTrusted(project) {
-          RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass)
-          provider.execute(dataContext, value)
+      return runReadAction {
+        for (provider in RunAnythingProvider.EP_NAME.extensionList) {
+          val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
+          return@runReadAction TrustedProjectUtil.executeIfTrusted(project) {
+            RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass)
+            provider.execute(dataContext, value)
+          }
         }
+        return@runReadAction false
       }
-      return false
     }
 
     private fun createDataContext(project: Project, localSession: Boolean, workingDirectory: String?, executor: Executor? = null): DataContext {

@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import static com.intellij.util.xmlb.XmlSerializer.deserialize;
 
-public class JpsMavenModelSerializationExtension extends JpsModelSerializerExtension {
+public final class JpsMavenModelSerializationExtension extends JpsModelSerializerExtension {
   private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
   private static final String MAVEN_MODULE_ATTRIBUTE = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
   private static final String MAVEN_SYSTEM_ID = "Maven";

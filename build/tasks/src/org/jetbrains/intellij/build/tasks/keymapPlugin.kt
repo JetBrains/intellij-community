@@ -21,18 +21,7 @@ fun buildKeymapPlugins(buildNumber: String, targetDir: Path, keymapDir: Path): F
       arrayOf("Mac OS X", "Mac OS X 10.5+"),
       arrayOf("Default for GNOME"),
       arrayOf("Default for KDE"),
-      arrayOf("Default for XWin"),
-      arrayOf("Eclipse", "Eclipse (Mac OS X)"),
-      arrayOf("Emacs"),
-      arrayOf("NetBeans 6.5"),
-      arrayOf("ReSharper", "ReSharper OSX"),
-      arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
-      arrayOf("Visual Studio", "Visual Studio OSX"),
-      arrayOf("Visual Studio 2022"),
-      arrayOf("Visual Assist", "Visual Assist OSX"),
-      arrayOf("VSCode", "VSCode OSX"),
-      arrayOf("Visual Studio for Mac"),
-      arrayOf("Xcode")
+      arrayOf("Default for XWin")
     ).map {
       ForkJoinTask.adapt(Callable { buildKeymapPlugin(it, buildNumber, targetDir, keymapDir) })
     }).map { it.rawResult }

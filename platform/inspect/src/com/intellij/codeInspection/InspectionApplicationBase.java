@@ -885,44 +885,59 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   private class InspectionProgressIndicator extends ProgressIndicatorBase implements ProgressIndicatorWithDelayedPresentation {
     private String lastPrefix = "";
     private int myLastPercent = -1;
+    private int nestingLevel;
 
     private InspectionProgressIndicator() {
       setText("");
     }
 
     @Override
+    public void pushState() {
+      super.pushState();
+      nestingLevel++;
+    }
+
+    @Override
+    public void popState() {
+      super.popState();
+      nestingLevel--;
+    }
+
+    @Override
     public void setText(String text) {
-      if (text.equals(getText())) {
+      if (Comparing.equal(text, getText())) {
         return;
       }
       super.setText(text);
-      if (myVerboseLevel == 0) return;
-
-      if (myVerboseLevel == 1) {
-        String prefix = getPrefix(text);
-        if (prefix.equals(lastPrefix)) {
-          reportMessageNoLineBreak(1, ".");
-          return;
-        }
-        lastPrefix = prefix;
-        reportMessage(1, "");
-        reportMessage(1, prefix);
-        return;
-      }
-
-      if (myVerboseLevel == 3) {
-        if (!isIndeterminate() && getFraction() > 0) {
-          int percent = (int)(getFraction() * 100);
-          if (myLastPercent == percent) return;
+      if (text == null) return;
+      switch (myVerboseLevel) {
+        case 0:
+          break;
+        case 1:
           String prefix = getPrefix(text);
-          myLastPercent = percent;
-          String msg = prefix + " " + percent + "%";
-          reportMessage(2, msg);
-        }
-        return;
+          if (prefix.equals(lastPrefix)) {
+            reportMessageNoLineBreak(1, ".");
+          }
+          else {
+            lastPrefix = prefix;
+            reportMessage(1, "");
+            reportMessage(1, prefix);
+          }
+          break;
+        case 2:
+          reportMessage(2, text);
+          break;
+        case 3:
+          int percent = (int)(getFraction() * 100);
+          if (!isIndeterminate() && getFraction() > 0 && myLastPercent != percent && nestingLevel == 0) {
+            // do not print duplicate "processing xx%"
+            // do not print nested excessively verbose "Searching for this symbol.... done"
+            myLastPercent = percent;
+            String msg = getPrefix(text) + " " + percent + "%";
+            reportMessage(2, msg);
+          }
+          break;
       }
-
-      reportMessage(2, text);
     }
 
     @Override

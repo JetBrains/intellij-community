@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.util.io.exists
-import org.jetbrains.kotlin.cli.common.arguments.unfrozen
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
@@ -24,15 +23,15 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             val jpsPluginSettings = project.getServiceSafe<KotlinJpsPluginSettings>()
             if (!isUnbundledJpsExperimentalFeatureEnabled(project)) {
                 // Delete compiler version in kotlinc.xml when feature flag is off
-                jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply { version = "" }
+                jpsPluginSettings.update { version = "" }
                 return null
             }
+
             if (jpsPluginSettings.settings.version.isEmpty()) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
-                jpsPluginSettings.settings = jpsPluginSettings.settings.unfrozen().apply {
-                    version = DEFAULT_VERSION
-                }
+                jpsPluginSettings.update { version = DEFAULT_VERSION }
             }
+
             return jpsPluginSettings
         }
 

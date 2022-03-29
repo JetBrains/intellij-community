@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
@@ -86,7 +85,6 @@ class PluginDeclarationProviderFactory(
                 oldPackageExists = $oldPackageExists,
                 SPI.packageExists = $spiPackageExists,
                 OOCB count = ${KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker.modificationCount}
-                PT count = ${KotlinPackageModificationListener.getInstance(project).packageTracker.modificationCount}
                 moduleModificationCount = $moduleModificationCount
             """.trimIndent()
 

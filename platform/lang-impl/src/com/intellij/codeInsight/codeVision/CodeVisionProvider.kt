@@ -34,6 +34,10 @@ interface CodeVisionProvider<T> {
    */
   @JvmDefault
   fun isAvailableFor(project: Project) = true
+
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile) {
+  }
   
   /**
    * Computes some data on UI thread, before the background thread invocation

@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -14,7 +13,6 @@ import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.idea.syncPublisherWithDisposeCheck
 import kotlin.reflect.KClass
 
 abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(private val project: Project) :
@@ -24,7 +22,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         private val defaultBeans = HashMap<Class<*>, Any>()
 
         private fun createDefaultBean(beanClass: Class<Any>): Any {
-            return ReflectionUtil.newInstance<Any>(beanClass).apply {
+            return ReflectionUtil.newInstance(beanClass).apply {
                 if (this is K2JSCompilerArguments) {
                     sourceMapPrefix = ""
                 }
@@ -60,12 +58,16 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
     var settings: T
         get() = _settings
         set(value) {
+            val oldSettings = _settings
             validateNewSettings(value)
             _settings = value
 
-            ApplicationManager.getApplication().invokeLater {
-                project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(value)
-            }
+            KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+
+            project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                oldSettings = oldSettings,
+                newSettings = _settings,
+            )
         }
 
     fun update(changer: T.() -> Unit) {
@@ -74,7 +76,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 
     protected fun validateInheritedFieldsUnchanged(settings: T) {
         @Suppress("UNCHECKED_CAST")
-        val inheritedProperties = collectProperties<T>(settings::class as KClass<T>, true)
+        val inheritedProperties = collectProperties(settings::class as KClass<T>, true)
         val defaultInstance = createSettings()
         val invalidFields = inheritedProperties.filter { it.get(settings) != it.get(defaultInstance) }
         if (invalidFields.isNotEmpty()) {
@@ -99,18 +101,22 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
             XmlSerializer.deserializeInto(this, state)
         }
 
-        ApplicationManager.getApplication().invokeLater {
-            project.syncPublisherWithDisposeCheck(KotlinCompilerSettingsListener.TOPIC).settingsChanged(settings)
-        }
+        KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+
+        project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+            oldSettings = null,
+            newSettings = settings,
+        )
     }
 
     public override fun clone(): Any = super.clone()
 }
 
 interface KotlinCompilerSettingsListener {
-    fun <T> settingsChanged(newSettings: T)
+    fun <T> settingsChanged(oldSettings: T?, newSettings: T?)
 
     companion object {
+        @Topic.ProjectLevel
         val TOPIC = Topic.create("KotlinCompilerSettingsListener", KotlinCompilerSettingsListener::class.java)
     }
 }

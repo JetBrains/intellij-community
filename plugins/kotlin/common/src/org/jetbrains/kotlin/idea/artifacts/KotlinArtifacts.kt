@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.artifacts
 
@@ -7,9 +7,11 @@ import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 import java.security.MessageDigest
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.notExists
 
-const val KOTLINC_DIST_JPS_LIB_XML_NAME = "kotlinc_kotlin_dist.xml"
+private const val KOTLINC_DIST_JPS_LIB_XML_NAME = "kotlinc_kotlin_dist.xml"
 
 abstract class KotlinArtifacts(val kotlincDirectory: File) {
     companion object {

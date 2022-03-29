@@ -8,6 +8,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.util.executeEnterHandler
 import org.jetbrains.kotlin.psi.*
@@ -44,7 +47,12 @@ class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenE
 }
 
 class AddIfElseBranchFix(element: KtIfExpression) : AddElseBranchFix<KtIfExpression>(element) {
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element?.`else` == null
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        val ktIfExpression = element ?: return false
+        return ktIfExpression.`else` == null &&
+                ktIfExpression.condition != null &&
+                ktIfExpression.children.firstOrNull { it.elementType == KtNodeTypes.THEN }?.firstChild !is PsiErrorElement
+    }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

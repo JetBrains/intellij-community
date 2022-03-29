@@ -26,7 +26,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.NaturalComparator;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
@@ -49,7 +49,6 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -136,6 +135,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         var path = typedPath();
         if (path != null) {
           load(path, null, 0);
+        }
+        else if (((String)myPath.getEditor().getItem()).isBlank()) {
+          load(null, null, 0);
         }
       }
     });
@@ -404,7 +406,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
         if (directory != null) {
           var pathToSelect = focusOn != null ? focusOn :
-                             childDir != null && childDir.getParent() == null && isJar(childDir.toUri()) ? parent(childDir) :
+                             childDir != null && childDir.getParent() == null && !isLocalFs(childDir) ? parent(childDir) :
                              childDir;
           loadDirectory(directory, pathToSelect, id);
         }
@@ -609,16 +611,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   private static @Nullable Path parent(Path path) {
     var parent = path.getParent();
-    if (parent == null) {
-      var uri = path.toUri();
-      if (isJar(uri)) {
-        var fileUri = Strings.trimEnd(uri.getRawSchemeSpecificPart(), SEPARATOR);
-        try {
-          return Path.of(new URI(fileUri));
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
+    if (parent == null && !isLocalFs(path)) {
+      try {
+        return Path.of(storeName(path));
+      }
+      catch (Exception e) {
+        LOG.warn(e);
       }
     }
     return parent;
@@ -647,12 +645,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return NioFiles.toPath(text);
   }
 
-  private static boolean isJar(URI uri) {
-    return "jar".equals(uri.getScheme());
-  }
-
   private static boolean isLocalFs(Path file) {
     return file.getFileSystem() == FileSystems.getDefault();
+  }
+
+  // faster than `Files#getFileStore` (at least for ZipFS); not suitable for local FS
+  private static String storeName(Path path) {
+    return StringUtil.trimTrailing(path.getFileSystem().getFileStores().iterator().next().name(), '/');
   }
 
   private static Future<Void> execute(Runnable operation) {
@@ -693,17 +692,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     public String toString() {
-      var uri = path.toUri();
-      if (isJar(uri)) {
-        var raw = uri.getRawSchemeSpecificPart();
-        var p = raw.lastIndexOf(SEPARATOR);
-        if (p > 0) {
-          try {
-            return Path.of(new URI(raw.substring(0, p))) + raw.substring(p);
+      if (!isLocalFs(path)) {
+        try {
+          var store = storeName(path);
+          if (!store.isBlank()) {
+            return store + '!' + path;
           }
-          catch (Exception e) {
-            LOG.warn(e);
-          }
+        }
+        catch (Exception e) {
+          LOG.warn(e);
         }
       }
       return path.toString();

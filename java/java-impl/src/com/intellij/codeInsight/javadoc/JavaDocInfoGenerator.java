@@ -14,7 +14,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -31,10 +33,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -43,10 +42,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
@@ -1673,8 +1675,8 @@ public class JavaDocInfoGenerator {
   }
 
   @Contract(mutates = "param1")
-  private static void generateSnippetValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
-    if (!(tag instanceof PsiSnippetDocTag)) {
+  private void generateSnippetValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
+    if (!(tag instanceof PsiSnippetDocTagImpl)) {
       LOG.error("Snippet tag must have type PsiSnippetDocTag, but was" + tag.getClass(), tag.getText());
       return;
     }
@@ -1688,11 +1690,109 @@ public class JavaDocInfoGenerator {
     PsiSnippetDocTagBody body = value.getBody();
     if (body != null) {
       buffer.append("<pre>");
-      for (PsiElement contentElement : body.getContent()) {
-        buffer.append('\n').append(contentElement.getText());
+      List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
+      PsiElement element = files != null ? files.get(0).first : null;
+      if (element != null && element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+        generateJavaSnippetBody(buffer, element);
+      }
+      else {
+        for (PsiElement contentElement : body.getContent()) {
+          buffer.append('\n').append(contentElement.getText());
+        }
       }
       buffer.append("</pre>");
     }
+  }
+
+  private void generateJavaSnippetBody(@NotNull StringBuilder buffer, PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    SyntaxTraverser.psiTraverser(containingFile)
+      .filter(e -> e.getFirstChild() == null)
+      .forEach(e -> {
+        String text = e.getText();
+        if (text.isEmpty()) return;
+        if (e instanceof PsiComment && text.startsWith("//")) { //todo: ignore markup as in JDK now
+          int idx = text.lastIndexOf("// @");
+          if (idx >= 0) {
+            buffer.append(text, 0, idx);
+            return;
+          }
+        }
+        JavaDocHighlightingManager manager = getHighlightingManager();
+        if (e instanceof PsiIdentifier) {
+          PsiElement parent = e.getParent();
+          if (parent instanceof PsiJavaCodeReferenceElement) {
+            PsiElement resolve = ((PsiJavaCodeReferenceElement)parent).resolve();
+
+            if (resolve instanceof PsiMember) {
+              String label;
+              boolean externalTarget = resolve.getContainingFile() != containingFile;
+              if (doSemanticHighlightingOfLinks() || doHighlightCodeBlocks() && !externalTarget) {
+                TextAttributes attributes = null;
+                if (resolve instanceof PsiClass) {
+                  attributes = manager.getClassNameAttributes();
+                }
+                else if (resolve instanceof PsiMethod) {
+                  attributes = manager.getMethodCallAttributes();
+                }
+                else if (resolve instanceof PsiField) {
+                  attributes = externalTarget 
+                               ? manager.getFieldDeclarationAttributes((PsiField)resolve) 
+                               : manager.getLocalVariableAttributes();
+                }
+                label = attributes != null ? getStyledSpan(true, attributes, text) : text;
+              }
+              else {
+                label = text;
+              }
+              buffer.append(externalTarget ? generateLink(resolve, label, false, isRendered()) : label);
+              return;
+            }
+          }
+        }
+        TextAttributes attributes = null;
+        if (doHighlightCodeBlocks()) {
+          if (e instanceof PsiKeyword) {
+            attributes = manager.getKeywordAttributes();
+          }
+          else if (e instanceof PsiIdentifier) {
+            PsiElement parent = e.getParent();
+            if (parent instanceof PsiField) {
+              attributes = manager.getLocalVariableAttributes();
+            }
+            else if (parent instanceof PsiParameter) {
+              attributes = manager.getParameterAttributes();
+            }
+            else if (parent instanceof PsiTypeParameter) {
+              attributes = manager.getTypeParameterNameAttributes();
+            }
+          }
+          else if (e instanceof PsiJavaToken) {
+            IElementType tokenType = ((PsiJavaToken)e).getTokenType();
+            if (tokenType == JavaTokenType.LBRACKET || tokenType == JavaTokenType.RBRACKET){
+              attributes = manager.getBracketsAttributes();
+            }
+            else if (tokenType == JavaTokenType.LBRACE || tokenType == JavaTokenType.RBRACE){
+              attributes = manager.getParenthesesAttributes();
+            }
+            else if (tokenType == JavaTokenType.COMMA) {
+              attributes = manager.getCommaAttributes();
+            }
+            else if (tokenType == JavaTokenType.DOT) {
+              attributes = manager.getDotAttributes();
+            }
+            else if (tokenType == JavaTokenType.NULL_KEYWORD || 
+                     tokenType == JavaTokenType.TRUE_KEYWORD || 
+                     tokenType == JavaTokenType.FALSE_KEYWORD) {
+              attributes = manager.getKeywordAttributes();
+            }
+            else if (ElementType.OPERATION_BIT_SET.contains(tokenType)) {
+              attributes = manager.getOperationSignAttributes();
+            }
+          }
+        }
+        buffer.append(attributes != null ? getStyledSpan(true, attributes, text) : text);
+      });
   }
 
   @Contract(pure = true)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.generate
 
@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReferenceDescriptorsImpl
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -19,8 +21,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
-import org.jetbrains.kotlin.util.firstNotNullResult
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -71,6 +71,19 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
             newElement.sourcePsi is KtCallExpression && replaced is KtQualifiedExpression -> replaced.selectorExpression
             else -> replaced
         }?.toUElementOfExpectedTypes(elementType)
+    }
+
+    override fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement? {
+        val sourcePsi = reference.sourcePsi ?: return null
+        if (sourcePsi !is KtSimpleNameExpression) return null
+        return KtSimpleNameReferenceDescriptorsImpl(sourcePsi)
+            .bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+    }
+
+    override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
+        val sourcePsi = reference.sourcePsi ?: return null
+        if (sourcePsi !is KtElement) return null
+        return ShortenReferences.DEFAULT.process(sourcePsi).toUElementOfType()
     }
 }
 

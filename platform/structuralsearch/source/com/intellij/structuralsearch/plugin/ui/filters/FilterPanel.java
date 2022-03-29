@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.*;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -287,12 +289,13 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
       message = SSRBundle.message("no.script.for.0.label", varName);
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
-    statusText.setText(message);
+    statusText.clear();
+    Arrays.stream(message.split("\n")).forEach((@NlsSafe var line) -> statusText.appendLine(line));
     if (isValid()) {
-      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
+      statusText.appendLine(myConstraint instanceof MatchVariableConstraint
                                      ? SSRBundle.message("add.filter.label")
                                      : SSRBundle.message("add.script.label"),
-                                     SimpleTextAttributes.LINK_ATTRIBUTES,
+                                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                      e -> showAddFilterPopup(myFilterTable.getTable(),
                                                              new RelativePoint(MouseInfo.getPointerInfo().getLocation())));
     }

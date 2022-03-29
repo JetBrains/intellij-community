@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import javax.swing.*;
@@ -7,7 +7,7 @@ import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.util.Locale;
 
-public class FontDescriptor {
+public final class FontDescriptor {
   private String myFontName;
   private int myFontSize;
   private int myFontStyle;
@@ -24,10 +24,6 @@ public class FontDescriptor {
 
   public boolean isFixedFont() {
     return mySwingFont == null;
-  }
-
-  public boolean isFullyDefinedFont() {
-    return myFontName != null && myFontSize >= 0 && myFontStyle >= 0;
   }
 
   public static FontDescriptor fromSwingFont(String swingFont) {

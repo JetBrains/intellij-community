@@ -5,10 +5,10 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
 public class MavenJavaVersionHolder {
-  @Nullable final LanguageLevel sourceLevel;
-  @Nullable final LanguageLevel targetLevel;
-  @Nullable final LanguageLevel testSourceLevel;
-  @Nullable final LanguageLevel testTargetLevel;
+  @Nullable public final LanguageLevel sourceLevel;
+  @Nullable public final LanguageLevel targetLevel;
+  @Nullable public final LanguageLevel testSourceLevel;
+  @Nullable public final LanguageLevel testTargetLevel;
 
   public MavenJavaVersionHolder(@Nullable LanguageLevel sourceLevel,
                                 @Nullable LanguageLevel targetLevel,

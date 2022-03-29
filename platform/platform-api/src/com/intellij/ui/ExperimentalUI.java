@@ -238,7 +238,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");
     paths.put("icons/OpenTerminal_13x13.svg", "/expui/toolwindow/terminal.svg");
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
-    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/changes.svg");
+    paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
     paths.put("toolwindows/toolWindowFind.svg", "/expui/toolwindow/find.svg");
     paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
@@ -262,6 +262,8 @@ public final class ExperimentalUI {
     paths.put("actions/findAndShowNextMatches.svg", "expui/general/chevronDown.svg");
     paths.put("actions/findAndShowNextMatchesSmall.svg", "expui/general/chevronDown.svg");
     paths.put("general/linkDropTriangle.svg", "expui/general/chevronDown.svg");
+    paths.put("toolbar/collapse.svg", "expui/general/chevronUpLarge.svg");
+    paths.put("toolbar/expand.svg", "expui/general/chevronDownLarge.svg");
     paths.put("general/filter.svg", "expui/general/filter.svg");
     paths.put("vcs/history.svg", "/expui/general/history.svg");
     paths.put("vcs/changelist.svg", "expui/vcs/changelist.svg");

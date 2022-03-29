@@ -2,10 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
-import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
-import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -14,15 +11,17 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal fun createDocumentationPopup(
   project: Project,
-  browser: DocumentationBrowser,
-  popupContext: PopupContext
+  popupUI: DocumentationPopupUI,
+  popupContext: PopupContext,
 ): AbstractPopup {
   EDT.assertIsEdt()
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
   val builder = JBPopupFactory.getInstance()
     .createComponentPopupBuilder(popupUI.component, popupUI.preferableFocusComponent)
     .setProject(project)
@@ -38,17 +37,23 @@ internal fun createDocumentationPopup(
   return popup
 }
 
-internal fun CoroutineScope.showPopupLater(popup: AbstractPopup, browser: DocumentationBrowser, popupContext: PopupContext) {
+internal fun CoroutineScope.showPopupLater(
+  popup: AbstractPopup,
+  popupUI: DocumentationPopupUI,
+  boundsHandler: PopupBoundsHandler,
+) {
   EDT.assertIsEdt()
+  val resized = popupUI.useStoredSize()
+  popupUI.updatePopup {
+    boundsHandler.updatePopup(popup, resized.get())
+  }
   val showJob = launch(ModalityState.current().asContextElement()) {
-    // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
-    withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
-      browser.waitForContent()
-    }
+    // to avoid flickering: show popup after the UI has anything to show
+    popupUI.ui.waitForContentUpdate()
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
       check(popup.canShow()) // sanity check
-      popupContext.showPopup(popup)
+      boundsHandler.showPopup(popup)
     }
   }
   Disposer.register(popup, showJob::cancel)

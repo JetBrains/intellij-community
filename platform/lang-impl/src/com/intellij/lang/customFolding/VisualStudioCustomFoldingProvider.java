@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * Supports <a href="http://msdn.microsoft.com/en-us/library/9a1ybwek%28v=vs.100%29.aspx">VisualStudio custom foldings.</a>
- * @author Rustam Vishnyakov
  */
 public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
   @Override
