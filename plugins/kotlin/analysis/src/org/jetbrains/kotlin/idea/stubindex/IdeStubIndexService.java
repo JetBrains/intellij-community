@@ -136,7 +136,7 @@ public class IdeStubIndexService extends StubIndexService {
 
     private static void indexSuperNames(KotlinClassOrObjectStub<? extends KtClassOrObject> stub, IndexSink sink) {
         for (String superName : stub.getSuperNames()) {
-            sink.occurrence(KotlinSuperClassIndex.getInstance().getKey(), superName);
+            sink.occurrence(KotlinSuperClassIndex.INSTANCE.getKey(), superName);
         }
 
         if (!(stub instanceof KotlinClassStub)) {
@@ -147,10 +147,10 @@ public class IdeStubIndexService extends StubIndexService {
         if (modifierListStub == null) return;
 
         if (modifierListStub.hasModifier(KtTokens.ENUM_KEYWORD)) {
-            sink.occurrence(KotlinSuperClassIndex.getInstance().getKey(), Enum.class.getSimpleName());
+            sink.occurrence(KotlinSuperClassIndex.INSTANCE.getKey(), Enum.class.getSimpleName());
         }
         if (modifierListStub.hasModifier(KtTokens.ANNOTATION_KEYWORD)) {
-            sink.occurrence(KotlinSuperClassIndex.getInstance().getKey(), Annotation.class.getSimpleName());
+            sink.occurrence(KotlinSuperClassIndex.INSTANCE.getKey(), Annotation.class.getSimpleName());
         }
     }
 
