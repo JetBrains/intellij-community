@@ -18,9 +18,9 @@ import java.util.Set;
 public class VcsFileListenerContextHelper {
   // to ignore by listeners
   private final Set<FilePath> myDeletedContext;
-  private final Set<VirtualFile> myAddContext;
+  private final Set<FilePath> myAddContext;
 
-  VcsFileListenerContextHelper(final Project project) {
+  VcsFileListenerContextHelper() {
     myDeletedContext = new HashSet<>();
     myAddContext = new HashSet<>();
   }
@@ -37,12 +37,12 @@ public class VcsFileListenerContextHelper {
     return myDeletedContext.contains(filePath);
   }
 
-  public void ignoreAdded(final VirtualFile virtualFile) {
-    myAddContext.add(virtualFile);
+  public void ignoreAdded(final FilePath filePath) {
+    myAddContext.add(filePath);
   }
 
-  public boolean isAdditionIgnored(final VirtualFile virtualFile) {
-    return myAddContext.contains(virtualFile);
+  public boolean isAdditionIgnored(final FilePath filePath) {
+    return myAddContext.contains(filePath);
   }
 
   public void clearContext() {
