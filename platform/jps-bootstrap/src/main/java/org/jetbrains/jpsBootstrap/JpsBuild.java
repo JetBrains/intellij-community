@@ -41,6 +41,7 @@ public class JpsBuild {
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
 
+    System.setProperty("aether.connector.resumeDownloads", "false");
     System.setProperty("jps.kotlin.home", kotlincHome.toString());
 
     // Set IDEA home path to something or JPS can't instantiate ClasspathBoostrap.java for Groovy JPS
