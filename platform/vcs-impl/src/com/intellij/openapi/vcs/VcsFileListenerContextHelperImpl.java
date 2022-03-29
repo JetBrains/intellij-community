@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,8 +18,8 @@ public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextH
   }
 
   @Override
-  public void ignoreDeleted(@NotNull FilePath filePath) {
-    myDeletedContext.add(filePath);
+  public void ignoreDeleted(@NotNull Collection<FilePath> filePath) {
+    myDeletedContext.addAll(filePath);
   }
 
   @Override
@@ -27,8 +28,8 @@ public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextH
   }
 
   @Override
-  public void ignoreAdded(@NotNull FilePath filePath) {
-    myAddContext.add(filePath);
+  public void ignoreAdded(@NotNull Collection<FilePath> filePath) {
+    myAddContext.addAll(filePath);
   }
 
   @Override
