@@ -178,7 +178,7 @@ public class TriggerAdditionOrDeletion {
 
       if (!vcs.fileListenerIsSynchronous()) {
         for (FilePath filePath : ContainerUtil.sorted(toBeAdded, FilePathByPathComparator.getInstance())) {
-          myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
+          myVcsFileListenerContextHelper.ignoreAdded(filePath);
         }
 
         Set<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new HashSet<>());
