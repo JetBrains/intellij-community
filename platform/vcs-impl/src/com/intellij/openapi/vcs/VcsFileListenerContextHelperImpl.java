@@ -9,47 +9,47 @@ import java.util.Set;
 
 public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextHelper {
   // to ignore by listeners
-  private final Set<FilePath> myDeletedContext;
-  private final Set<FilePath> myAddContext;
+  private final Set<FilePath> myIgnoredDeleted;
+  private final Set<FilePath> myIgnoredAdded;
 
   VcsFileListenerContextHelperImpl() {
-    myDeletedContext = new HashSet<>();
-    myAddContext = new HashSet<>();
+    myIgnoredDeleted = new HashSet<>();
+    myIgnoredAdded = new HashSet<>();
   }
 
   @Override
   public void ignoreDeleted(@NotNull Collection<FilePath> filePath) {
-    myDeletedContext.addAll(filePath);
+    myIgnoredDeleted.addAll(filePath);
   }
 
   @Override
   public boolean isDeletionIgnored(@NotNull FilePath filePath) {
-    return myDeletedContext.contains(filePath);
+    return myIgnoredDeleted.contains(filePath);
   }
 
   @Override
   public void ignoreAdded(@NotNull Collection<FilePath> filePath) {
-    myAddContext.addAll(filePath);
+    myIgnoredAdded.addAll(filePath);
   }
 
   @Override
   public boolean isAdditionIgnored(@NotNull FilePath filePath) {
-    return myAddContext.contains(filePath);
+    return myIgnoredAdded.contains(filePath);
   }
 
   @Override
   public void clearContext() {
-    myAddContext.clear();
-    myDeletedContext.clear();
+    myIgnoredAdded.clear();
+    myIgnoredDeleted.clear();
   }
 
   @Override
   public boolean isAdditionContextEmpty() {
-    return myAddContext.isEmpty();
+    return myIgnoredAdded.isEmpty();
   }
 
   @Override
   public boolean isDeletionContextEmpty() {
-    return myDeletedContext.isEmpty();
+    return myIgnoredDeleted.isEmpty();
   }
 }
