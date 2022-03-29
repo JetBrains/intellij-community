@@ -177,7 +177,7 @@ public class TriggerAdditionOrDeletion {
       myAffected.addAll(toBeAdded);
 
       if (!vcs.fileListenerIsSynchronous()) {
-        for (FilePath filePath : ContainerUtil.sorted(toBeAdded, FilePathByPathComparator.getInstance())) {
+        for (FilePath filePath : toBeAdded) {
           myVcsFileListenerContextHelper.ignoreAdded(filePath);
         }
 
