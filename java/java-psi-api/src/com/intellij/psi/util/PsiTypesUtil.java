@@ -95,13 +95,13 @@ public final class PsiTypesUtil {
   // Please make this public if needed from outer
   @Nullable
   private static String getDefaultOfTypeFromCustom(PsiType type) {
-    String customType = ourCommonDefaults.get(type.getCanonicalText());
-    return customType == null
+    String defaultExpression = ourCommonDefaults.get(type.getCanonicalText());
+    return defaultExpression == null
            ? ourCommonDefaults.entrySet().stream()
              .flatMap(pair -> type.equalsToText(pair.getKey()) ? Stream.of(pair.getValue()) : Stream.empty())
              .findFirst()
              .orElse(null)
-           : customType;
+           : defaultExpression;
   }
 
   @NotNull
@@ -138,9 +138,9 @@ public final class PsiTypesUtil {
     }
     if (customDefaultValues) {
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
-      String result = rawType != null ? getDefaultOfTypeFromCustom(rawType) : null;
-      if (result != null) {
-        return result;
+      String defaultExpression = rawType != null ? getDefaultOfTypeFromCustom(rawType) : null;
+      if (defaultExpression != null) {
+        return defaultExpression;
       }
     }
     return PsiKeyword.NULL;
