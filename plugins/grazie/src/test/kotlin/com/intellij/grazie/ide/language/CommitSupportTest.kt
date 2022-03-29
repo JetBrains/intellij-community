@@ -21,7 +21,7 @@ class CommitSupportTest : BasePlatformTestCase() {
     myFixture.findSingleIntention("Wrong article")
     myFixture.findSingleIntention("an")
     myFixture.findSingleIntention("Add exception 'a error'")
-    myFixture.findSingleIntention("Rule settings 'Use of 'a' vs. 'an''...")
+    myFixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an''...")
   }
 }
 
