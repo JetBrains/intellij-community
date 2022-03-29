@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static org.jetbrains.idea.maven.importing.MavenModelUtil.*;
@@ -27,7 +28,7 @@ public class MavenProjectImportContextProvider {
   @NotNull
   private final MavenProjectsTree myProjectsTree;
   @NotNull
-  private final Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
+  private final Map<MavenId, MavenProjectChanges> myProjectsToImportWithChanges;
 
   @NotNull
   private final MavenImportingSettings myImportingSettings;
@@ -38,7 +39,8 @@ public class MavenProjectImportContextProvider {
                                            @NotNull MavenImportingSettings importingSettings) {
     myProject = project;
     myProjectsTree = projectsTree;
-    myProjectsToImportWithChanges = changes;
+    myProjectsToImportWithChanges = changes.entrySet().stream()
+      .collect(Collectors.toMap(e -> e.getKey().getMavenId(), e -> e.getValue(), (v1, v2) -> v1));
     myImportingSettings = importingSettings;
   }
 
@@ -70,7 +72,7 @@ public class MavenProjectImportContextProvider {
         continue;
       }
 
-      MavenProjectChanges changes = myProjectsToImportWithChanges.get(project);
+      MavenProjectChanges changes = myProjectsToImportWithChanges.get(project.getMavenId());
       MavenProjectImportData mavenProjectImportData = getModuleImportData(project, moduleName, changes);
 
       if (changes != null && changes.hasChanges()) {

@@ -190,4 +190,28 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     assertModules("project", "project.m1", "project.m1.main", "project.m1.test");
     assertContentRoots("project.m1.main", getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
   }
+
+  @Test
+  public void testReleaseCompilerProperty() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.release>8</maven.compiler.release>" +
+                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
+                  "</properties>" +
+                  "" +
+                  " <build>\n" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <version>3.10.0</version>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>"
+    );
+
+    assertModules("project", "project.main", "project.test");
+  }
 }
