@@ -322,6 +322,74 @@ public class Py3CompletionTest extends PyTestCase {
     assertDoesntContain(suggested, "meta_method");
   }
 
+  // PY-23067
+  public void testFunctoolsWraps() {
+    final List<String> suggested = doTestByText("""
+                                                  import functools
+                                                                                     
+                                                  def raise_python_exceptions(func):
+                                                      @functools.wraps(func)
+                                                      def decorator(*args, **kwargs):
+                                                          try:
+                                                              return func(*args, **kwargs)
+                                                          except Exception as e:
+                                                              raise
+                                                  
+                                                      return decorator
+                                                  
+                                                  
+                                                  class Test(object):
+                                                      def __init__(self):
+                                                          self.a = 1
+                                                  
+                                                      @raise_python_exceptions
+                                                      def get_test_str(self, extra:str) -> str:
+                                                          return "test " + extra
+                                                  
+                                                  
+                                                  class Test2(object):
+                                                      def __init__(self):
+                                                          self.a = 1
+                                                  
+                                                      @raise_python_exceptions
+                                                      def get_the_test(self):
+                                                          return Test()
+                                                  
+                                                  Test2().get_the_test().<caret>""");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "get_test_str");
+  }
+
+  // PY-23067
+  public void _testFunctoolsWrapsElementMetadata() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+                                                  from functools import wraps
+                                                                                
+                                                                                
+                                                  class Route:
+                                                      def __init__(self, url='localhost', port=80):
+                                                          ...
+                                                  
+                                                  
+                                                  class Router:
+                                                      @wraps(Route.__init__)
+                                                      def route(self, *args, **kwargs):
+                                                          route = Route(*args, **kwargs)
+                                                          self.routes.append(route)
+                                                  
+                                                  
+                                                  router = Router()
+                                                  router.<caret>
+                                                 """);
+    myFixture.completeBasic();
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals("route"));
+    assertNotNull(lookupElement);
+    assertEquals("(self, url, port)", TestLookupElementPresentation.renderElement(lookupElement).getTailText());
+  }
+
   // PY-27398
   public void testDataclassPostInit() {
     doMultiFileTest();
