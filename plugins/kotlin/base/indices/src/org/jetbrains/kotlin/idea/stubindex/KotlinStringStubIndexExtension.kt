@@ -11,7 +11,7 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
 
-abstract class KotlinStringStubIndexExtension<Psi: PsiElement>(private val valueClass: Class<Psi>): StringStubIndexExtension<Psi>() {
+abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valueClass: Class<Psi>) : StringStubIndexExtension<Psi>() {
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
@@ -19,7 +19,12 @@ abstract class KotlinStringStubIndexExtension<Psi: PsiElement>(private val value
         StubIndex.getInstance().processElements(key, s, project, scope, valueClass, processor)
     }
 
-    fun processAllElements(project: Project, scope: GlobalSearchScope, filter: (String) -> Boolean = { true }, processor: Processor<in Psi>) {
+    fun processAllElements(
+        project: Project,
+        scope: GlobalSearchScope,
+        filter: (String) -> Boolean = { true },
+        processor: Processor<in Psi>
+    ) {
         val stubIndex = StubIndex.getInstance()
         val indexKey = key
 
@@ -40,8 +45,10 @@ abstract class KotlinStringStubIndexExtension<Psi: PsiElement>(private val value
     }
 }
 
-class CancelableCollectFilterProcessor<T>(collection: Collection<T>, private val filter: (T) -> Boolean) :
-    CommonProcessors.CollectProcessor<T>(collection) {
+class CancelableCollectFilterProcessor<T>(
+    collection: Collection<T>,
+    private val filter: (T) -> Boolean
+) : CommonProcessors.CollectProcessor<T>(collection) {
     override fun process(t: T): Boolean {
         ProgressManager.checkCanceled()
         return super.process(t)
