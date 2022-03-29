@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -9,11 +10,10 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 interface KotlinCacheService {
     companion object {
-        fun getInstance(project: Project): KotlinCacheService = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinCacheService = project.service()
     }
 
     /**

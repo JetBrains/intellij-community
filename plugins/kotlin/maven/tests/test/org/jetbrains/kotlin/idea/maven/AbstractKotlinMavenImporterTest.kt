@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -38,7 +39,6 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -79,7 +79,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         get() = facetSettings("project")
 
     protected fun assertImporterStatePresent() {
-        assertNotNull("Kotlin importer component is not present", myTestFixture.module.getServiceSafe<KotlinImporterComponent>())
+        assertNotNull("Kotlin importer component is not present", myTestFixture.module.getService(KotlinImporterComponent::class.java))
     }
 
     class SimpleKotlinProject5 : AbstractKotlinMavenImporterTest() {

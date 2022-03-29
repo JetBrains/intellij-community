@@ -83,11 +83,6 @@ inline fun isDispatchThread(): Boolean = ApplicationManager.getApplication().isD
 
 inline fun isApplicationInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
 
-inline fun <reified T : Any> ComponentManager.getService(): T? = this.getService(T::class.java)
-
-inline fun <reified T : Any> ComponentManager.getServiceSafe(): T =
-    this.getService(T::class.java) ?: error("Unable to locate service ${T::class.java.name}")
-
 fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.ProgressTitle title: String, block: () -> T): T {
     assert(!ApplicationManager.getApplication().isWriteAccessAllowed) {
         "Rescheduling computation into the background is impossible under the write lock"

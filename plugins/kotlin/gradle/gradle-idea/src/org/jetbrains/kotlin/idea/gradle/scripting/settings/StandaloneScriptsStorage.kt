@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.gradle.scripting.settings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
-import org.jetbrains.kotlin.idea.util.application.getService
 
 @State(
     name = "StandaloneScriptsStorage",
@@ -26,6 +25,6 @@ class StandaloneScriptsStorage : PersistentStateComponent<StandaloneScriptsStora
     }
 
     companion object {
-        fun getInstance(project: Project): StandaloneScriptsStorage? = project.getService()
+        fun getInstance(project: Project): StandaloneScriptsStorage? = project.serviceOrNull()
     }
 }

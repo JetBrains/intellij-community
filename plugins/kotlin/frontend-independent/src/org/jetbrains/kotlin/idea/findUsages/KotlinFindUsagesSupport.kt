@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.findUsages
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 interface KotlinFindUsagesSupport {
 
     companion object {
-        fun getInstance(project: Project): KotlinFindUsagesSupport = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinFindUsagesSupport = project.service()
 
         val KtParameter.isDataClassComponentFunction: Boolean
             get() = getInstance(project).isDataClassComponentFunction(this)

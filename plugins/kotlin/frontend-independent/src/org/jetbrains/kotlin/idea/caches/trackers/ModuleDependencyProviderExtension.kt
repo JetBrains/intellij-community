@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 interface ModuleDependencyProviderExtension {
     @Deprecated("Use #processAdditionalDependencyModules", ReplaceWith("processAdditionalDependencyModules(module, processor)"))
@@ -25,6 +25,6 @@ interface ModuleDependencyProviderExtension {
             override fun getAdditionalDependencyModules(module: Module): Collection<Module> = emptySet()
         }
 
-        fun getInstance(project: Project): ModuleDependencyProviderExtension = project.getServiceSafe()
+        fun getInstance(project: Project): ModuleDependencyProviderExtension = project.service()
     }
 }

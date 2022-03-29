@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -58,7 +57,7 @@ class IdeaResolverForProject(
     modules,
     fallbackModificationTracker,
     delegateResolver,
-    projectContext.project.getServiceSafe<IdePackageOracleFactory>(),
+    projectContext.project.service<IdePackageOracleFactory>(),
 ) {
 
     companion object {

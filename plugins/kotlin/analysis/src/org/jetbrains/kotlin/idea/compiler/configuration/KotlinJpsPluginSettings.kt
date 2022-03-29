@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
@@ -21,7 +21,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         val DEFAULT_VERSION = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
 
         fun getInstance(project: Project): KotlinJpsPluginSettings? {
-            val jpsPluginSettings = project.getServiceSafe<KotlinJpsPluginSettings>()
+            val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
             if (!isUnbundledJpsExperimentalFeatureEnabled(project)) {
                 // Delete compiler version in kotlinc.xml when feature flag is off
                 jpsPluginSettings.update { version = "" }
@@ -45,7 +45,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
          * * it's important not to trigger `.idea/kotlinc.xml` file creation
          */
         fun getInstanceUnsafe(project: Project): KotlinJpsPluginSettings? =
-            if (isUnbundledJpsExperimentalFeatureEnabled(project)) project.getServiceSafe() else null
+            if (isUnbundledJpsExperimentalFeatureEnabled(project)) project.service() else null
 
         fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
             isUnitTestMode() || !project.isDefault &&

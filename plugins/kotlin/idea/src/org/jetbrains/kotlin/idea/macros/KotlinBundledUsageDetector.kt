@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.StartupActivity
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import java.io.File
 import kotlin.coroutines.EmptyCoroutineContext
@@ -84,6 +84,6 @@ class KotlinBundledUsageDetector : Disposable {
     }
 
     companion object {
-        fun getInstance(project: Project): KotlinBundledUsageDetector = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinBundledUsageDetector = project.service()
     }
 }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.configuration.ui
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import org.jetbrains.kotlin.idea.project.isKotlinLanguageVersionConfigured
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -86,7 +86,7 @@ class KotlinConfigurationCheckerService(val project: Project) {
     companion object {
         const val CONFIGURE_NOTIFICATION_GROUP_ID = "Configure Kotlin in Project"
 
-        fun getInstance(project: Project): KotlinConfigurationCheckerService = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinConfigurationCheckerService = project.service()
 
     }
 }

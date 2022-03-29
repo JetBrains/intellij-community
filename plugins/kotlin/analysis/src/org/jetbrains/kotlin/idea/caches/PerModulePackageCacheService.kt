@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -332,7 +332,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         const val FULL_DROP_THRESHOLD = 1000
         private val LOG = Logger.getInstance(this::class.java)
 
-        fun getInstance(project: Project): PerModulePackageCacheService = project.getServiceSafe()
+        fun getInstance(project: Project): PerModulePackageCacheService = project.service()
 
         var Project.DEBUG_LOG_ENABLE_PerModulePackageCache: Boolean
                 by NotNullableUserDataProperty<Project, Boolean>(Key.create("debug.PerModulePackageCache"), false)

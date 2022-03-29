@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.resolve.lazy
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 interface ProbablyContractedCallableNames {
     fun isProbablyContractedCallableName(name: String): Boolean
 
     companion object {
         fun getInstance(project: Project): ProbablyContractedCallableNames =
-            project.getServiceSafe()
+            project.service()
     }
 }

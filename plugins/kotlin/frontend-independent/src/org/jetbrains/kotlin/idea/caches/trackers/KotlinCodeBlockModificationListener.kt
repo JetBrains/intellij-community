@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches.trackers
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
@@ -18,7 +19,6 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGE
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.*
 
 val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
@@ -37,7 +37,7 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
 
     val kotlinOutOfCodeBlockTracker: ModificationTracker = kotlinOutOfCodeBlockTrackerImpl
 
-    private val pureKotlinCodeBlockModificationListener: PureKotlinCodeBlockModificationListener = project.getServiceSafe()
+    private val pureKotlinCodeBlockModificationListener: PureKotlinCodeBlockModificationListener = project.service()
 
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (!PsiModificationTrackerImpl.canAffectPsi(event)) {
@@ -60,7 +60,7 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
     }
 
     companion object {
-        fun getInstance(project: Project): KotlinCodeBlockModificationListener = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinCodeBlockModificationListener = project.service()
     }
 
     init {

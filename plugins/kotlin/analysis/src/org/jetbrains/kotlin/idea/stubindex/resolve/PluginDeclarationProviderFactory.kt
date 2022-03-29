@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
@@ -77,7 +77,7 @@ class PluginDeclarationProviderFactory(
         val spiPackageExists = PackageIndexUtil.packageExists(fqName, project)
         val oldPackageExists = oldPackageExists(fqName)
         val cachedPackageExists =
-            moduleSourceInfo?.let { project.getServiceSafe<PerModulePackageCacheService>().packageExists(fqName, it) }
+            moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it) }
         val moduleModificationCount = moduleSourceInfo?.createModificationTracker()?.modificationCount
 
         val common = """

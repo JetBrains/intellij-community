@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -62,7 +62,7 @@ abstract class ImportInsertHelper {
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): ImportInsertHelper = project.getServiceSafe()
+        fun getInstance(project: Project): ImportInsertHelper = project.service()
     }
 }
 

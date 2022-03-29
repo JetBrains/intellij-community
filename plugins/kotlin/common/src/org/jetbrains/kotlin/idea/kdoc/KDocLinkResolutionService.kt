@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
+import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.resolve.BindingContext
 
 interface KDocLinkResolutionService {
@@ -26,7 +26,7 @@ interface KDocLinkResolutionService {
             resolutionFacade: ResolutionFacade,
             qualifiedName: List<String>
         ): Collection<DeclarationDescriptor> {
-            val instance = resolutionFacade.project.getService<KDocLinkResolutionService>()
+            val instance = resolutionFacade.project.serviceOrNull<KDocLinkResolutionService>()
             return instance?.resolveKDocLink(context, fromDescriptor, resolutionFacade, qualifiedName) ?: emptyList()
         }
     }

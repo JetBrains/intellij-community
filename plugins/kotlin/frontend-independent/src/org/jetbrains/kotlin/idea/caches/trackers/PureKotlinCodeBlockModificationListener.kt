@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -25,7 +26,6 @@ import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -38,7 +38,7 @@ interface PureKotlinOutOfCodeBlockModificationListener {
 
 class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
     companion object {
-        fun getInstance(project: Project): PureKotlinCodeBlockModificationListener = project.getServiceSafe()
+        fun getInstance(project: Project): PureKotlinCodeBlockModificationListener = project.service()
 
         private fun isReplLine(file: VirtualFile): Boolean = file.getUserData(KOTLIN_CONSOLE_KEY) == true
 

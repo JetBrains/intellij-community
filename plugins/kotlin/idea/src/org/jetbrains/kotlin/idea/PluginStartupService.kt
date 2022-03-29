@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.IndexPatternSearch
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
 class PluginStartupService : Disposable {
@@ -39,6 +38,6 @@ class PluginStartupService : Disposable {
     override fun dispose() = Unit
 
     companion object {
-        fun getInstance(project: Project): PluginStartupService = project.getServiceSafe()
+        fun getInstance(project: Project): PluginStartupService = project.service()
     }
 }

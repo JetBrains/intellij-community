@@ -14,6 +14,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.roots.ProjectRootManager
@@ -49,7 +50,6 @@ import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -59,7 +59,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
-    private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.getServiceSafe()
+    private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.service()
 
     private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
         KotlinSourceFilterScope.projectAndLibrariesSources(GlobalSearchScope.allScope(debugProcess.project), debugProcess.project)

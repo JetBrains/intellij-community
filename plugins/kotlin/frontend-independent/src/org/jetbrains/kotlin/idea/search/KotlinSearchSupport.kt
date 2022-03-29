@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -10,7 +11,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -24,7 +24,7 @@ interface KotlinSearchUsagesSupport {
     }
 
     companion object {
-        fun getInstance(project: Project): KotlinSearchUsagesSupport = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinSearchUsagesSupport = project.service()
 
         val KtParameter.dataClassComponentMethodName: String?
             get() = getInstance(project).dataClassComponentMethodName(this)

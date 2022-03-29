@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction.nonBlocking
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
 import org.jetbrains.kotlin.idea.klib.KlibCompatibilityInfo.IncompatibleMetadata
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
@@ -234,6 +234,6 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
         private val NOTIFICATION_TITLE get() = KotlinGradleNativeBundle.message("error.incompatible.libraries.title")
         private const val NOTIFICATION_GROUP_ID = "Incompatible Kotlin/Native libraries"
 
-        fun getInstance(project: Project): KotlinNativeABICompatibilityCheckerService = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinNativeABICompatibilityCheckerService = project.service()
     }
 }

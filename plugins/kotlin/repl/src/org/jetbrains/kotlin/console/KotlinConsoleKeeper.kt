@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinClassPath
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -56,7 +56,7 @@ class KotlinConsoleKeeper(val project: Project) {
         private val LOG = Logger.getInstance("#org.jetbrains.kotlin.console")
 
         @JvmStatic
-        fun getInstance(project: Project): KotlinConsoleKeeper = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinConsoleKeeper = project.service()
 
         fun createReplCommandLine(project: Project, module: Module?): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
             val javaParameters = JavaParametersBuilder(project)

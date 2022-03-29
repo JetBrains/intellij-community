@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.legacy
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class GradleStandaloneScriptActionsManager(val project: Project) {
     private val byFile = mutableMapOf<VirtualFile, GradleStandaloneScriptActions>()
@@ -31,6 +31,6 @@ class GradleStandaloneScriptActionsManager(val project: Project) {
 
     companion object {
         fun getInstance(project: Project): GradleStandaloneScriptActionsManager =
-            project.getServiceSafe()
+            project.service()
     }
 }

@@ -2,16 +2,16 @@
 
 package org.jetbrains.kotlin.idea.framework
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 interface LibraryEffectiveKindProvider {
     fun getEffectiveKind(library: LibraryEx): PersistentLibraryKind<*>?
 
     companion object {
-        fun getInstance(project: Project): LibraryEffectiveKindProvider = project.getServiceSafe()
+        fun getInstance(project: Project): LibraryEffectiveKindProvider = project.service()
     }
 }
 

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.core.script.configuration.utils
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 /**
  * This cache is used by [org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport] only.
@@ -36,6 +35,6 @@ class ScriptClassRootsStorage : PersistentStateComponent<ScriptClassRootsStorage
     }
 
     companion object {
-        fun getInstance(project: Project): ScriptClassRootsStorage = project.getServiceSafe()
+        fun getInstance(project: Project): ScriptClassRootsStorage = project.service()
     }
 }

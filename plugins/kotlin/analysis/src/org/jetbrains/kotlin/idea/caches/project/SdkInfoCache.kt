@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.concurrentMapOf
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.ArrayDeque
@@ -28,7 +28,7 @@ interface SdkInfoCache {
     fun findOrGetCachedSdk(moduleInfo: ModuleInfo): SdkInfo?
 
     companion object {
-        fun getInstance(project: Project): SdkInfoCache = project.getServiceSafe()
+        fun getInstance(project: Project): SdkInfoCache = project.service()
     }
 }
 

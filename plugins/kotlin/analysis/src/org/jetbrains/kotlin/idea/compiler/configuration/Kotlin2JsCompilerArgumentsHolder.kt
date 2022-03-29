@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_TO_JS_COMPILER_ARGUMENTS_SECTION
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @State(name = KOTLIN_TO_JS_COMPILER_ARGUMENTS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class Kotlin2JsCompilerArgumentsHolder(project: Project) : BaseKotlinCompilerSettings<K2JSCompilerArguments>(project) {
@@ -18,7 +17,7 @@ class Kotlin2JsCompilerArgumentsHolder(project: Project) : BaseKotlinCompilerSet
     }
 
     companion object {
-        fun getInstance(project: Project): Kotlin2JsCompilerArgumentsHolder = project.getServiceSafe()
+        fun getInstance(project: Project): Kotlin2JsCompilerArgumentsHolder = project.service()
 
     }
 }

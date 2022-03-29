@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @State(
     name = "KotlinCompilerWorkspaceSettings",
@@ -30,6 +29,6 @@ class KotlinCompilerWorkspaceSettings : PersistentStateComponent<KotlinCompilerW
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): KotlinCompilerWorkspaceSettings = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinCompilerWorkspaceSettings = project.service()
     }
 }

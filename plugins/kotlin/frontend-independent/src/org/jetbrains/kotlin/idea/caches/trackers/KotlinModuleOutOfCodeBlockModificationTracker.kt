@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.Processors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) : ModificationTracker {
@@ -58,7 +58,7 @@ class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) 
 
     companion object {
         internal fun getUpdaterInstance(project: Project): Updater =
-            project.getServiceSafe()
+            project.service()
 
         @TestOnly
         fun getModificationCount(module: Module): Long = getUpdaterInstance(module.project).getModificationCount(module)

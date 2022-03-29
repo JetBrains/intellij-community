@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriorit
 import org.jetbrains.kotlin.idea.debugger.BinaryCacheKey
 import org.jetbrains.kotlin.idea.debugger.createWeakBytecodeDebugInfoStorage
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledDataDescriptor
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -81,7 +81,7 @@ class KotlinDebuggerCaches(project: Project) {
         @get:TestOnly
         var LOG_COMPILATIONS: Boolean = false
 
-        fun getInstance(project: Project): KotlinDebuggerCaches = project.getServiceSafe()
+        fun getInstance(project: Project): KotlinDebuggerCaches = project.service()
 
         fun compileCodeFragmentCacheAware(
             codeFragment: KtCodeFragment,
