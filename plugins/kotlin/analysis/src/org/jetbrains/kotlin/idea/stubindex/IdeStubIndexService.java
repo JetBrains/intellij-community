@@ -163,7 +163,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexFunction(@NotNull KotlinFunctionStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null) {
-            sink.occurrence(KotlinFunctionShortNameIndex.getInstance().getKey(), name);
+            sink.occurrence(KotlinFunctionShortNameIndex.INSTANCE.getKey(), name);
 
             if (IndexUtilsKt.isDeclaredInObject(stub)) {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);

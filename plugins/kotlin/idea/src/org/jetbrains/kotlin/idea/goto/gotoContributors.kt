@@ -48,7 +48,7 @@ class KotlinGotoClassContributor : GotoClassContributor {
 * */
 class KotlinGotoSymbolContributor : GotoClassContributor {
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> = listOf(
-        KotlinFunctionShortNameIndex.getInstance(),
+        KotlinFunctionShortNameIndex,
         KotlinPropertyShortNameIndex.getInstance(),
         KotlinClassShortNameIndex,
         KotlinTypeAliasShortNameIndex.getInstance(),
@@ -62,7 +62,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
         val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(baseScope, project)
 
         val result = ArrayList<NavigationItem>()
-        result += KotlinFunctionShortNameIndex.getInstance().get(name, project, noLibrarySourceScope).filter {
+        result += KotlinFunctionShortNameIndex.get(name, project, noLibrarySourceScope).filter {
             val method = LightClassUtil.getLightClassMethod(it)
             method == null || it.name != method.name
         }

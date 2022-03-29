@@ -63,14 +63,22 @@ fun DeclarationDescriptor.findPsiDeclarations(project: Project, resolveScope: Gl
 
     fun Collection<KtNamedDeclaration>.fqNameFilter() = filter { it.fqName == fqName }
     return when (this) {
-        is DeserializedClassDescriptor -> KotlinFullClassNameIndex.get(fqName.asString(), project, resolveScope)
-        is DeserializedTypeAliasDescriptor -> KotlinTypeAliasShortNameIndex.getInstance()[fqName.shortName()
-            .asString(), project, resolveScope].fqNameFilter()
-        is DeserializedSimpleFunctionDescriptor, is FunctionImportedFromObject -> KotlinFunctionShortNameIndex.getInstance()[fqName.shortName()
-            .asString(), project, resolveScope].fqNameFilter()
-        is DeserializedPropertyDescriptor, is PropertyImportedFromObject -> KotlinPropertyShortNameIndex.getInstance()[fqName.shortName()
-            .asString(), project, resolveScope].fqNameFilter()
+        is DeserializedClassDescriptor ->
+            KotlinFullClassNameIndex.get(fqName.asString(), project, resolveScope)
+
+        is DeserializedTypeAliasDescriptor ->
+            KotlinTypeAliasShortNameIndex.getInstance().get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
+
+        is DeserializedSimpleFunctionDescriptor,
+        is FunctionImportedFromObject ->
+            KotlinFunctionShortNameIndex.get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
+
+        is DeserializedPropertyDescriptor,
+        is PropertyImportedFromObject ->
+            KotlinPropertyShortNameIndex.getInstance().get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
+
         is DeclarationDescriptorWithSource -> listOfNotNull(source.getPsi())
+
         else -> emptyList()
     }
 }

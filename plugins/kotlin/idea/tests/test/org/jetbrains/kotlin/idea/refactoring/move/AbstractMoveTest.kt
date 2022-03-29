@@ -290,7 +290,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             val project = mainFile.project
             val method =
-                KotlinFunctionShortNameIndex.getInstance().get(config.getString("methodToMove"), project, project.projectScope()).first()
+                KotlinFunctionShortNameIndex.get(config.getString("methodToMove"), project, project.projectScope()).first()
             val methodParameterName = config.getNullableString("methodParameter")
             val sourcePropertyName = config.getNullableString("sourceProperty")
             val targetObjectName = config.getNullableString("targetObject")

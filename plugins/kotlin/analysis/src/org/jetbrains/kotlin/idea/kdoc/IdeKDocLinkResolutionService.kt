@@ -41,7 +41,7 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
 
         val targetFqName = FqName.fromSegments(qualifiedName)
 
-        val functions = KotlinFunctionShortNameIndex.getInstance().get(shortName, project, scope).asSequence()
+        val functions = KotlinFunctionShortNameIndex.get(shortName, project, scope).asSequence()
         val classes = KotlinClassShortNameIndex.get(shortName, project, scope).asSequence()
 
         val descriptors = (functions + classes).filter { it.fqName == targetFqName }

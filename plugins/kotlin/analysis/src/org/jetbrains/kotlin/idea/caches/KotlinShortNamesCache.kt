@@ -165,7 +165,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
     private fun processAllMethodNames(processor: Processor<in String>): Boolean {
         if (disableSearch.get()) return true
-        if (!KotlinFunctionShortNameIndex.getInstance().processAllKeys(project, processor)) {
+        if (!KotlinFunctionShortNameIndex.processAllKeys(project, processor)) {
             return false
         }
 
@@ -182,7 +182,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     ): Boolean {
         if (disableSearch.get()) return true
         val allFunctionsProcessed = StubIndex.getInstance().processElements(
-            KotlinFunctionShortNameIndex.getInstance().key,
+            KotlinFunctionShortNameIndex.key,
             name,
             project,
             scope,
