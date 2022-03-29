@@ -82,7 +82,7 @@ class StubBasedPackageMemberDeclarationProvider(
 
     override fun getPropertyDeclarations(name: Name): Collection<KtProperty> {
         return runReadAction {
-            KotlinTopLevelPropertyFqnNameIndex.getInstance().get(childName(name), project, searchScope)
+            KotlinTopLevelPropertyFqnNameIndex.get(childName(name), project, searchScope)
         }
     }
 

@@ -65,7 +65,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
         KotlinTopLevelFunctionFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull { filter(it) }
 
     private fun resolveFqNameOfKtPropertyByIndex(fqName: FqName): KtProperty? =
-        KotlinTopLevelPropertyFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull()
+        KotlinTopLevelPropertyFqnNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
 
     private fun resolveFqName(fqName: FqName): PsiElement? {

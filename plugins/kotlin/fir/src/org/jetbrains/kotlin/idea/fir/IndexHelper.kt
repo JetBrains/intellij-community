@@ -55,7 +55,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
                 .filter { it.receiverTypeReference == null }
 
         val functions = sequenceOfElements(KotlinTopLevelFunctionFqnNameIndex)
-        val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex.getInstance())
+        val properties = sequenceOfElements(KotlinTopLevelPropertyFqnNameIndex)
 
         return (functions + properties).toList()
     }

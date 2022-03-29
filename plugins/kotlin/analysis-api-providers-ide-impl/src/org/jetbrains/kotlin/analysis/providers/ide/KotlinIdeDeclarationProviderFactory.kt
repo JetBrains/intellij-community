@@ -98,7 +98,7 @@ private class KotlinIdeDeclarationProvider(
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
-        KotlinTopLevelPropertyFqnNameIndex.getInstance()[callableId.asStringForIndexes(), project, searchScope]
+        KotlinTopLevelPropertyFqnNameIndex.get(callableId.asStringForIndexes(), project, searchScope)
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
         KotlinTopLevelFunctionFqnNameIndex.get(callableId.asStringForIndexes(), project, searchScope)

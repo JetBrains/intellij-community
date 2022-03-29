@@ -237,7 +237,7 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName = stub.getFqName();
             // can have special fq name in case of syntactically incorrect property with no name
             if (fqName != null) {
-                sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.getInstance().getKey(), fqName.asString());
+                sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.INSTANCE.getKey(), fqName.asString());
                 sink.occurrence(KotlinTopLevelPropertyByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
