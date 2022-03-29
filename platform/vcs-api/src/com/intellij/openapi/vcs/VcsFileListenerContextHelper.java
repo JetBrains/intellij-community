@@ -17,6 +17,7 @@ import java.util.Collection;
  * For ADDED files {@link VFileCreateEvent} CAN be fired BEFORE {@link #ignoreAdded} method invocation, in the same command.
  */
 public interface VcsFileListenerContextHelper {
+
   static VcsFileListenerContextHelper getInstance(@NotNull Project project) {
     return project.getService(VcsFileListenerContextHelper.class);
   }
@@ -25,7 +26,9 @@ public interface VcsFileListenerContextHelper {
 
   boolean isDeletionIgnored(@NotNull FilePath filePath);
 
-  void ignoreAdded(@NotNull Collection<FilePath> filePath);
+  void ignoreAdded(@NotNull Collection<FilePath> filePaths);
+
+  void ignoreAddedRecursive(@NotNull Collection<FilePath> filePaths);
 
   boolean isAdditionIgnored(@NotNull FilePath filePath);
 
