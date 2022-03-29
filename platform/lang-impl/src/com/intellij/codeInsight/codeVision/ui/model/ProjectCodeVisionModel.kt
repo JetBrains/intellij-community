@@ -47,7 +47,8 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
 
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == HIDE_PROVIDER_ID) {
-      CodeVisionSettings.instance().setProviderEnabled(entry.providerId, false)
+      val id = CodeVisionHost.getInstance(project).getProviderById(entry.providerId)?.groupId ?: entry.providerId
+      CodeVisionSettings.instance().setProviderEnabled(id, false)
       CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
       return
     }
