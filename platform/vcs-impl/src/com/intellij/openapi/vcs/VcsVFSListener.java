@@ -430,7 +430,7 @@ public abstract class VcsVFSListener implements Disposable {
   private boolean allowedAddition(@NotNull VFileEvent event) {
     if (myVcsFileListenerContextHelper.isAdditionContextEmpty()) return true;
 
-    return !myVcsFileListenerContextHelper.isAdditionIgnored(event.getFile());
+    return !myVcsFileListenerContextHelper.isAdditionIgnored(VcsUtil.getFilePath(event.getPath()));
   }
 
   @RequiresBackgroundThread
