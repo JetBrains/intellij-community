@@ -3,7 +3,7 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.codeInspection.tests.DependencyInspectionTestBase
 
 class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
-  fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFoo, "ImportClientJava.kt", """
+  fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFooFile, "ImportClientJava.kt", """
       package pkg.client
       
       import <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">pkg.api.JavaFoo</error>
@@ -13,7 +13,7 @@ class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
       }
     """.trimIndent())
 
-  fun `test illegal imported dependency Kotlin API`() = dependencyViolationTest(kotlinFoo, "ImportClientKotlin.kt", """
+  fun `test illegal imported dependency Kotlin API`() = dependencyViolationTest(kotlinFooFile, "ImportClientKotlin.kt", """
       package pkg.client
       
       import <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'ImportClientKotlin'.' is violated">pkg.api.KotlinFoo</error>
@@ -23,7 +23,7 @@ class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
       }
     """.trimIndent())
 
-  fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFoo, "FqClientJava.kt", """
+  fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFooFile, "FqClientJava.kt", """
       package pkg.client
       
       fun main() {
@@ -31,7 +31,7 @@ class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
       }
     """.trimIndent())
 
-  fun `test illegal fully qualified dependency Kotlin API`() = dependencyViolationTest(kotlinFoo, "FqClientKotlin.kt", """
+  fun `test illegal fully qualified dependency Kotlin API`() = dependencyViolationTest(kotlinFooFile, "FqClientKotlin.kt", """
       package pkg.client
       
       fun main() {
