@@ -178,7 +178,7 @@ class HintsTypeRenderer private constructor(val options: HintsDescriptorRenderer
         }
 
         if (this.isDefinitelyNotNullType) {
-            list.append("!!")
+            list.append("& Any")
         }
     }
 
