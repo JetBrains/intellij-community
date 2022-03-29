@@ -228,7 +228,7 @@ public class IdeStubIndexService extends StubIndexService {
             }
 
             if (TypeIndexUtilKt.isProbablyNothing(stub.getPsi().getTypeReference())) {
-                sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.getInstance().getKey(), name);
+                sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.INSTANCE.getKey(), name);
             }
             indexPrime(stub, sink);
         }
