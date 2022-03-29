@@ -30,14 +30,7 @@ private val initializeTracer by lazy {
   }
 }
 
-fun createBuildContext(
-  homePath: String, productProperties: ProductProperties,
-  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  skipDependencySetup: Boolean = false,
-  communityHomePath: String = "$homePath/community",
-  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
-): BuildContext {
-  val options = BuildOptions()
+fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.isSkipDependencySetup = skipDependencySetup
   options.isIsTestBuild = true
   options.buildStepsToSkip.addAll(listOf(
@@ -53,6 +46,17 @@ fun createBuildContext(
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
   options.isUseCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
+}
+
+fun createBuildContext(
+  homePath: String, productProperties: ProductProperties,
+  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  skipDependencySetup: Boolean = false,
+  communityHomePath: String = "$homePath/community",
+  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+): BuildContext {
+  val options = BuildOptions()
+  customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
