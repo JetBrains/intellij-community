@@ -51,11 +51,16 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         val answer = ErrorNotificationPanel(fileEditor)
         val badRootFiles = badVersionedRoots.map { it.file }
 
-        val kotlinLibraries = findAllUsedLibraries(project).keySet()
-        val badRuntimeLibraries = kotlinLibraries.filter { library ->
-            val runtimeJar = LibraryJarDescriptor.STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
-            val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
-            badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)
+        val badRuntimeLibraries: List<Library> = ArrayList<Library>().also { list ->
+            project.forEachAllUsedLibraries { library ->
+                val runtimeJar = LibraryJarDescriptor.STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+                val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+                if (badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)) {
+                    list.add(library)
+                    return@forEachAllUsedLibraries true
+                }
+                return@forEachAllUsedLibraries true
+            }
         }
 
         val isPluginOldForAllRoots = badVersionedRoots.all { it.supportedVersion < it.version }

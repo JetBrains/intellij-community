@@ -344,15 +344,20 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     ) {
         val project = module.project
 
+        var foundLibrary: Library? = null
         // TODO: in our case any PROJECT (not module) library (especially unused)
         //  would fit but I failed to find API for traversing such libraries.
         //  Current solution traverses only used project libraries
-        findAllUsedLibraries(project).keySet()
-            .firstOrNull { libraryJarDescriptor.findExistingJar(it) != null && it.safeAs<LibraryEx>()?.module?.equals(null) == true }
-            ?.let {
-                ModuleRootModificationUtil.addDependency(module, it, scope, false)
-                return
+        project.forEachAllUsedLibraries {
+            if (libraryJarDescriptor.findExistingJar(it) != null && it.safeAs<LibraryEx>()?.module?.equals(null) == true) {
+                foundLibrary = it
+                return@forEachAllUsedLibraries false
             }
+            return@forEachAllUsedLibraries true
+        }
+        foundLibrary?.let {
+            ModuleRootModificationUtil.addDependency(module, it, scope, false)
+        }
 
         val kotlinStdlibVersion = module.findLibrary { isKotlinLibrary(it, project) }
             ?.safeAs<LibraryEx>()?.properties?.safeAs<RepositoryLibraryProperties>()?.version

@@ -7,13 +7,12 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiRequiresStatement;
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleKt;
 import org.jetbrains.kotlin.utils.PathUtil;
+import org.jetbrains.plugins.groovy.config.GroovyHomeKind;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
@@ -144,24 +144,28 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testJsLibraryVersion11() {
-        Library jsRuntime = KotlinRuntimeLibraryUtilKt.findAllUsedLibraries(myProject).keySet().iterator().next();
+        Library jsRuntime = getFirstLibrary(myProject);
         IdeKotlinVersion version = JsLibraryStdDetectionUtil.INSTANCE.getJsLibraryStdVersion(jsRuntime, myProject);
         assertEquals(new KotlinVersion(1, 1, 0), version.getKotlinVersion());
     }
 
     public void testJsLibraryVersion106() {
-        Library jsRuntime = KotlinRuntimeLibraryUtilKt.findAllUsedLibraries(myProject).keySet().iterator().next();
+        Library jsRuntime = getFirstLibrary(myProject);
         IdeKotlinVersion version = JsLibraryStdDetectionUtil.INSTANCE.getJsLibraryStdVersion(jsRuntime, myProject);
         assertEquals(new KotlinVersion(1, 0, 6), version.getKotlinVersion());
     }
 
     public void testMavenProvidedTestJsKind() {
-        LibraryEx jsTest = (LibraryEx) ContainerUtil.find(
-                KotlinRuntimeLibraryUtilKt.findAllUsedLibraries(myProject).keySet(),
-                (library) -> library.getName().contains("kotlin-test-js")
-        );
-        assertEquals(RepositoryLibraryType.REPOSITORY_LIBRARY_KIND, jsTest.getKind());
-        assertEquals(JSLibraryKind.INSTANCE, LibraryEffectiveKindProviderKt.effectiveKind(jsTest, myProject));
+        Ref<LibraryEx> jsTest = new Ref<>();
+        OrderEnumerator.orderEntries(myProject).forEachLibrary((library) -> {
+            if (library.getName().contains("kotlin-test-js")) {
+                jsTest.set((LibraryEx) library);
+                return false;
+            }
+            return true;
+        });
+        assertEquals(RepositoryLibraryType.REPOSITORY_LIBRARY_KIND, jsTest.get().getKind());
+        assertEquals(JSLibraryKind.INSTANCE, LibraryEffectiveKindProviderKt.effectiveKind(jsTest.get(), myProject));
     }
 
     public void testJvmProjectWithV1FacetConfig() {
@@ -339,6 +343,15 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
 
     public void testProjectWithoutFacetWithJvmTarget18() {
         assertEquals(JvmPlatforms.INSTANCE.getJvm8(), PlatformKt.getPlatform(getModule()));
+    }
+
+    private static Library getFirstLibrary(@NotNull Project project) {
+        Ref<Library> ref = new Ref<>();
+        OrderEnumerator.orderEntries(project).forEachLibrary((library) ->{
+            ref.set(library);
+            return true;
+        });
+        return ref.get();
     }
 
     private static class LibraryCountingRootPolicy extends RootPolicy<Integer> {

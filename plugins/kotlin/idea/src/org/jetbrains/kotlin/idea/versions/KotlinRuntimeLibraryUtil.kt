@@ -4,20 +4,17 @@ package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ScalarIndexExtension
 import org.jetbrains.annotations.Nls
@@ -45,20 +42,8 @@ fun getLibraryRootsWithAbiIncompatibleForKotlinJs(module: Module): Collection<Bi
     return getLibraryRootsWithAbiIncompatibleVersion(module, JsMetadataVersion.INSTANCE, KotlinJsMetadataVersionIndex)
 }
 
-fun findAllUsedLibraries(project: Project): MultiMap<Library, Module> {
-    val libraries = MultiMap<Library, Module>()
-
-    for (module in ModuleManager.getInstance(project).modules) {
-        val moduleRootManager = ModuleRootManager.getInstance(module)
-
-        for (entry in moduleRootManager.orderEntries.filterIsInstance<LibraryOrderEntry>()) {
-            val library = entry.library ?: continue
-
-            libraries.putValue(library, module)
-        }
-    }
-
-    return libraries
+fun Project.forEachAllUsedLibraries(processor: (Library) -> Boolean) {
+    OrderEnumerator.orderEntries(this).forEachLibrary(processor)
 }
 
 enum class LibraryJarDescriptor(val mavenArtifactId: String) {
