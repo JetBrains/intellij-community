@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.serialization.deserialization.KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 internal class FunctionsHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
     AfterAnalysisHighlightingVisitor(holder, bindingContext) {
@@ -48,7 +47,7 @@ internal class FunctionsHighlightingVisitor(holder: HighlightInfoHolder, binding
 
         val extensions = HighlighterExtension.EP_NAME.extensionList
 
-        (extensions.firstNotNullResult { extension ->
+        (extensions.firstNotNullOfOrNull { extension ->
             extension.highlightCall(callee, resolvedCall)
         } ?: when {
             calleeDescriptor.fqNameOrNull() == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME -> KEYWORD

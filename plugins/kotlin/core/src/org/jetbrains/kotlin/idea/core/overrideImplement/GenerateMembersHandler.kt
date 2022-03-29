@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 abstract class GenerateMembersHandler : AbstractGenerateMembersHandler<OverrideMemberChooserObject>() {
 
@@ -86,12 +85,12 @@ abstract class GenerateMembersHandler : AbstractGenerateMembersHandler<OverrideM
                 if (index == -1) return lastElement
                 val classDescriptor = classOrObject.descriptor as? ClassDescriptor ?: return lastElement
 
-                val upperElement = ((index - 1) downTo 0).firstNotNullResult {
+                val upperElement = ((index - 1) downTo 0).firstNotNullOfOrNull {
                     classDescriptor.findElement(superMemberDescriptors[it])
                 }
                 if (upperElement != null) return upperElement
 
-                val lowerElement = ((index + 1) until superMemberDescriptors.size).firstNotNullResult {
+                val lowerElement = ((index + 1) until superMemberDescriptors.size).firstNotNullOfOrNull {
                     classDescriptor.findElement(superMemberDescriptors[it])
                 }
                 if (lowerElement != null) return lowerElement.prevSiblingOfSameType() ?: classLeftBrace

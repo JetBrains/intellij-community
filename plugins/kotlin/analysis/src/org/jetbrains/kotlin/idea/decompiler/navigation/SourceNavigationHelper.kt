@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -220,7 +219,7 @@ object SourceNavigationHelper {
         index: StringStubIndexExtension<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
-        return targetScopes(entity, navigationKind).firstNotNullResult { scope ->
+        return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
             index.get(classFqName.asString(), entity.project, scope).minByOrNull { it.isExpectDeclaration() }
         }

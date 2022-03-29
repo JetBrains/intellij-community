@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.prevSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 internal abstract class KtGenerateMembersHandler : AbstractGenerateMembersHandler<KtClassMember>() {
     @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
@@ -67,7 +66,7 @@ internal abstract class KtGenerateMembersHandler : AbstractGenerateMembersHandle
                     }
                 }
             }
-            insertedBlocks.firstOrNull()?.declarations?.firstNotNullResult { it.element }?.let {
+            insertedBlocks.firstOrNull()?.declarations?.firstNotNullOfOrNull { it.element }?.let {
                 moveCaretIntoGeneratedElement(editor, it)
             }
         }

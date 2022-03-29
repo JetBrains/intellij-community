@@ -53,7 +53,6 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
-import org.jetbrains.kotlin.util.firstNotNullResult
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -308,7 +307,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                     when (val component = it.kotlinComponent) {
                         is KotlinCompilation -> component
                             .declaredSourceSets
-                            .firstNotNullResult { sourceSetToRunTasks[it] }
+                            .firstNotNullOfOrNull { sourceSetToRunTasks[it] }
                             .orEmpty()
                         is KotlinSourceSet -> sourceSetToRunTasks[component]
                             .orEmpty()
