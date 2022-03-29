@@ -11,8 +11,9 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.artifacts.getExpectedMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
+import org.jetbrains.kotlin.idea.artifacts.resolveMavenArtifactInMavenRepo
 import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 import java.nio.file.Path
@@ -132,9 +133,6 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
     }
 
     override val jpsPluginJar: File by lazy {
-        KotlinPathsProvider.getExpectedMavenArtifactJarPath(
-            KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-            bundledJpsVersion
-        )
+        getExpectedMavenArtifactJarPath(KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, bundledJpsVersion)
     }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.getExpectedMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -83,6 +84,6 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             get() = KotlinVersionVerbose.parse("1.5.10").let { it ?: error("JPS Minimum version is not valid") }.plainVersion
 
         fun getKotlinJpsClasspathLocation(version: String) =
-            KotlinPathsProvider.getExpectedMavenArtifactJarPath(KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
+            getExpectedMavenArtifactJarPath(KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
     }
 }

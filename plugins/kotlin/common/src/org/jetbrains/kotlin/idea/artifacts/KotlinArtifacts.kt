@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.artifacts
 
+import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
-import java.security.MessageDigest
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.notExists
@@ -94,3 +94,12 @@ fun lazyUnpackJar(jar: File, destination: File): File {
     check(destination.isDirectory)
     return destination
 }
+
+fun resolveMavenArtifactInMavenRepo(mavenRepo: File, artifactId: String, version: String) =
+    mavenRepo.resolve(KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID.replace(".", "/"))
+        .resolve(artifactId)
+        .resolve(version)
+        .resolve("$artifactId-$version.jar")
+
+fun getExpectedMavenArtifactJarPath(artifactId: String, version: String) =
+    resolveMavenArtifactInMavenRepo(JarRepositoryManager.getLocalRepositoryPath(), artifactId, version)
