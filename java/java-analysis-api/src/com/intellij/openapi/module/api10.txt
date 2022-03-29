@@ -90,3 +90,13 @@ java.lang.management.ThreadMXBean#dumpAllThreads(boolean;boolean;int;)
 java.lang.management.RuntimeMXBean#getPid()
 com.sun.nio.file.ExtendedOpenOption#DIRECT
 sun.security.pkcs11.wrapper.CK_GCM_PARAMS
+javafx.scene.control.skin.VirtualContainerBase#createVirtualFlow()
+javafx.scene.control.skin.VirtualContainerBase#getVirtualFlow()
+javafx.scene.control.TabPane#tabDragPolicyProperty()
+javafx.scene.control.TabPane.TabDragPolicy
+javafx.scene.control.MenuButton#onShowingProperty()
+javafx.scene.control.MenuButton#onShownProperty()
+javafx.scene.control.MenuButton#onHidingProperty()
+javafx.scene.control.MenuButton#onHiddenProperty()
+jdk.packager.services.singleton.SingleInstanceService
+jdk.packager.services.singleton.SingleInstanceListener

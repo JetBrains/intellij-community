@@ -103,3 +103,4 @@ com.sun.source.doctree.DocTree.Kind#SYSTEM_PROPERTY
 com.sun.source.doctree.DocTreeVisitor#visitSystemProperty(com.sun.source.doctree.SystemPropertyTree;P;)
 com.sun.source.doctree.SystemPropertyTree
 javax.lang.model.SourceVersion#RELEASE_12
+com.sun.source.tree.BreakTree#getValue()

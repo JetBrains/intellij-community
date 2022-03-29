@@ -178,3 +178,6 @@ sun.security.pkcs11.wrapper.CK_CCM_PARAMS
 sun.security.pkcs11.wrapper.CK_RSA_PKCS_PSS_PARAMS
 sun.security.pkcs11.P11AEADCipher
 sun.security.pkcs11.P11PSSSignature
+java.lang.String#stripIndent()
+java.lang.String#translateEscapes()
+java.lang.String#formatted(java.lang.Object[];)

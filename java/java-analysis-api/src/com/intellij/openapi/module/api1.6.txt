@@ -2058,3 +2058,15 @@ sun.security.pkcs11.P11ECDHKeyAgreement
 sun.security.pkcs11.P11TlsKeyMaterialGenerator
 sun.security.pkcs11.P11TlsMasterSecretGenerator
 sun.security.pkcs11.P11TlsRsaPremasterSecretGenerator
+com.sun.corba.se.impl.io.IIOPInputStream
+com.sun.corba.se.impl.io.IIOPInputStream#defaultReadObjectDelegate()
+com.sun.corba.se.impl.io.IIOPInputStream#enableResolveObjectDelegate(boolean;)
+com.sun.corba.se.impl.io.IIOPInputStream#readObjectDelegate()
+com.sun.corba.se.impl.io.IIOPOutputStream
+com.sun.corba.se.impl.io.IIOPOutputStream#defaultWriteObjectDelegate()
+com.sun.corba.se.impl.io.IIOPOutputStream#enableReplaceObjectDelegate(boolean;)
+com.sun.corba.se.impl.io.IIOPOutputStream#simpleWriteObject(java.lang.Object;byte;)
+com.sun.corba.se.impl.io.IIOPOutputStream#writeObjectOverride(java.lang.Object;)
+com.sun.jmx.mbeanserver.OpenConverter
+java.net.InetSocketAddress#getHostString()
+java.util.concurrent.locks.AbstractQueuedLongSynchronizer.ConditionObject

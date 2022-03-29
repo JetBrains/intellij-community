@@ -40,3 +40,29 @@ com.sun.management.OperatingSystemMXBean#getFreeMemorySize()
 com.sun.management.OperatingSystemMXBean#getTotalMemorySize()
 com.sun.management.OperatingSystemMXBean#getCpuLoad()
 jdk.nio.mapmode.ExtendedMapMode
+jdk.internal.PreviewFeature
+sun.reflect.annotation.TypeAnnotation.TypeAnnotationTarget#RECORD_COMPONENT
+java.lang.reflect.RecordComponent
+java.lang.runtime.ObjectMethods
+java.lang.Class#getRecordComponents()
+java.lang.Class#isRecord()
+java.lang.annotation.ElementType#RECORD_COMPONENT
+java.lang.Record
+com.sun.source.tree.Tree.Kind#BINDING_PATTERN
+com.sun.source.tree.Tree.Kind#RECORD
+com.sun.source.tree.PatternTree
+com.sun.source.tree.TreeVisitor#visitBindingPattern(com.sun.source.tree.BindingPatternTree;P;)
+com.sun.source.tree.InstanceOfTree#getPattern()
+com.sun.source.tree.BindingPatternTree
+javax.lang.model.util.Elements#recordComponentFor(javax.lang.model.element.ExecutableElement;)
+javax.lang.model.util.ElementFilter#recordComponentsIn(java.lang.Iterable<? extends javax.lang.model.element.Element>;)
+javax.lang.model.util.ElementFilter#recordComponentsIn(java.util.Set<? extends javax.lang.model.element.Element>;)
+javax.lang.model.util.ElementScanner14
+javax.lang.model.util.SimpleElementVisitor14
+javax.lang.model.util.AbstractElementVisitor14
+javax.lang.model.element.ElementKind#RECORD
+javax.lang.model.element.ElementKind#RECORD_COMPONENT
+javax.lang.model.element.ElementKind#BINDING_VARIABLE
+javax.lang.model.element.TypeElement#getRecordComponents()
+javax.lang.model.element.ElementVisitor#visitRecordComponent(javax.lang.model.element.RecordComponentElement;P;)
+javax.lang.model.element.RecordComponentElement

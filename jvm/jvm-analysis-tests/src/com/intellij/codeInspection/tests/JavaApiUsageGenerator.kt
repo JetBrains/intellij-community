@@ -16,6 +16,12 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.lang.JavaVersion
 import org.junit.Ignore
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.extension
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.writeLines
 
 @Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
@@ -23,6 +29,52 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     override fun getSdk(): Sdk {
       return IdeaTestUtil.createMockJdk("java-gen", JDK_HOME)
     }
+  }
+
+  /**
+   * Generates removed entries. This can be useful when re-generating API lists for whatever reason. When using a modern JDK to generate the
+   * API lists it will lose tagged API that got removed. This script can be used to compare new and old API lists and find removed API.
+   */
+  fun testGenerateRemovedEntries() {
+    removedEntries(Path.of(NEW_API_DIR), Path.of(OLD_API_DIR))
+  }
+
+  private fun removedEntries(current: Path, previous: Path) {
+    val result = Files.createDirectory(previous.resolve("result"))
+    current.listDirectoryEntries().filter { it.name.startsWith("api") && it.extension == "txt" }.forEach { currentEntry ->
+      val previousEntry = previous.resolve(currentEntry.name)
+      val resultEntry = Files.createFile(result.resolve(currentEntry.name))
+      val currentLines = Files.readAllLines(currentEntry)
+      val previousLines = Files.readAllLines(previousEntry)
+      val missingLines = previousLines.mapNotNull {  previousLine ->
+        val matches = currentLines.firstOrNull { isSameSignature(it, previousLine) } != null
+        if (!matches) previousLine else null
+      }
+      resultEntry.writeLines(missingLines)
+    }
+  }
+
+  private fun isSameSignature(first: String, second: String): Boolean {
+    val classFirst = first.substringBefore('#')
+    val classSecond = second.substringBefore('#')
+    if (classFirst != classSecond) return false
+    val methodFirst = first.substringAfter('#')
+    val methodSecond = first.substringAfter('#')
+    val methodNameFirst = methodFirst.substringBefore('(')
+    val methodNameSecond = methodSecond.substringBefore('(')
+    if (methodNameFirst != methodNameSecond) return false
+    val argListFirst = methodFirst.substringAfter('(').removeSuffix(")").split(',')
+    val argListSecond = methodFirst.substringAfter('(').removeSuffix(")").split(',')
+    if (argListFirst.size != argListSecond.size) return false
+    argListFirst.forEachIndexed { i, firstArg ->
+      val secondArg = argListSecond[i]
+      if (firstArg != secondArg) { // check simple name if both don't match, one could be qualified and the other could be simple
+        val simpleNameFirst = firstArg.substringAfterLast(".")
+        val simpleNameSecond = secondArg.substringAfterLast(".")
+        if (simpleNameFirst != simpleNameSecond) return false
+      }
+    }
+    return true
   }
 
   fun testCollectSinceApiUsages() {
@@ -90,6 +142,9 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   }
 
   companion object {
+    private const val NEW_API_DIR = "REPLACE_ME"
+    private const val OLD_API_DIR = "REPLACE_ME"
+
     private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-18"
     private const val JDK_HOME = "/home/me/.jdks/openjdk-18"
     private val LANGUAGE_LEVEL = LanguageLevel.JDK_18

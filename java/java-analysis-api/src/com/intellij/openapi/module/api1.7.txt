@@ -784,3 +784,6 @@ com.sun.security.sasl.ntlm.FactoryImpl
 sun.security.pkcs11.wrapper.CK_AES_CTR_PARAMS
 sun.security.pkcs11.P11AEADCipher#engineUpdateAAD(byte[];int;int;)
 sun.security.pkcs11.P11AEADCipher#engineUpdateAAD(java.nio.ByteBuffer;)
+java.lang.invoke.MethodHandles.Lookup
+java.beans.IndexedPropertyDescriptor#IndexedPropertyDescriptor(java.lang.Class<?>;java.lang.String;java.lang.reflect.Method;java.lang.reflect.Method;java.lang.reflect.Method;java.lang.reflect.Method;)
+java.beans.PropertyDescriptor#PropertyDescriptor(java.lang.Class<?>;java.lang.String;java.lang.reflect.Method;java.lang.reflect.Method;)
