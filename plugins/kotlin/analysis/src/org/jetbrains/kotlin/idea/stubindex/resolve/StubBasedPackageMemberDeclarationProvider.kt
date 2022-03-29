@@ -43,7 +43,7 @@ class StubBasedPackageMemberDeclarationProvider(
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.FUNCTIONS_MASK)) {
-            addFromIndex(KotlinTopLevelFunctionByPackageIndex.getInstance())
+            addFromIndex(KotlinTopLevelFunctionByPackageIndex)
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.VARIABLES_MASK)) {

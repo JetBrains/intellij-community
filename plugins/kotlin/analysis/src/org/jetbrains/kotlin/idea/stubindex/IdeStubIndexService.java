@@ -185,7 +185,7 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName = stub.getFqName();
             if (fqName != null) {
                 sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.getInstance().getKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelFunctionByPackageIndex.getInstance().getKey(), fqName.parent().asString());
+                sink.occurrence(KotlinTopLevelFunctionByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }

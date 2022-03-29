@@ -72,7 +72,7 @@ private class KotlinIdeDeclarationProvider(
 
     override fun getFunctionsNamesInPackage(packageFqName: FqName): Set<Name> {
         return KotlinTopLevelFunctionByPackageIndex
-            .getInstance()[packageFqName.asStringForIndexes(), project, searchScope]
+            .get(packageFqName.asStringForIndexes(), project, searchScope)
             .mapNotNullTo(mutableSetOf()) { it.nameAsName }
     }
 
