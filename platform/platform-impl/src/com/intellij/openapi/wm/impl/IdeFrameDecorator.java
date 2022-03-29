@@ -218,9 +218,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings == null) {
-      // true by default if no settings is available (e.g. during the initial IDE setup wizard) and not overridden
-      return isCustomDecorationAvailable()
-             && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
+      // true by default if no settings is available (e.g. during the initial IDE setup wizard) and not overridden (only for Windows)
+      return isCustomDecorationAvailable() && getDefaultCustomDecorationState();
     }
 
     // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
@@ -233,5 +232,9 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         if (override != null) return override;
         return settings.getMergeMainMenuWithWindowTitle();
       });
+  }
+
+  private static boolean getDefaultCustomDecorationState() {
+    return SystemInfo.isWindows && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
   }
 }
