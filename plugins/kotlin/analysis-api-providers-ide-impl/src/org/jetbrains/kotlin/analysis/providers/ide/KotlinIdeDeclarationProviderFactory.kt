@@ -66,7 +66,7 @@ private class KotlinIdeDeclarationProvider(
 
     override fun getPropertyNamesInPackage(packageFqName: FqName): Set<Name> {
         return KotlinTopLevelPropertyByPackageIndex
-            .getInstance().get(packageFqName.asStringForIndexes(), project, searchScope)
+            .get(packageFqName.asStringForIndexes(), project, searchScope)
             .mapNotNullTo(mutableSetOf()) { it.nameAsName }
     }
 
