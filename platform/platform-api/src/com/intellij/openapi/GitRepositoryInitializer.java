@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Initializes a Git repository in the specified place.
+ *
+ * @see GitSilentFileAdderProvider#create(Project)
  */
 public interface GitRepositoryInitializer {
   ExtensionPointName<GitRepositoryInitializer> EP_NAME = ExtensionPointName.create("com.intellij.gitRepositoryInitializer");
