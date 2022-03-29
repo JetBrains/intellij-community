@@ -59,7 +59,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     if (myNameLabel != null) add(myNameLabel);
     add(myValueLabel);
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
-    add(new JLabel(AllIcons.Ide.Statusbar_arrows));
+    add(new JLabel(AllIcons.General.ArrowDown));
 
     installChangeListener(() -> {
       myValueLabel.revalidate();
