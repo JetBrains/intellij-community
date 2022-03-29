@@ -13,37 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ProjectGroup;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.ReopenProjectAction;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 
 /**
  * @author Konstantin Bulenkov
  */
-public class RemoveSelectedProjectsFromGroupsAction extends RecentProjectsWelcomeScreenActionBase {
-  public RemoveSelectedProjectsFromGroupsAction() {
-    getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.RemoveSelectedProjectsFromGroupsAction.text"));
+class RemoveSelectedProjectsFromGroupsAction : RecentProjectsWelcomeScreenActionBase() {
+  init {
+    templatePresentation.setText(IdeBundle.messagePointer("action.presentation.RemoveSelectedProjectsFromGroupsAction.text"))
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final List<AnAction> elements = getSelectedElements(e);
-    for (AnAction element : elements) {
-      if (element instanceof ReopenProjectAction) {
-        for (ProjectGroup group : RecentProjectsManager.getInstance().getGroups()) {
-          group.removeProject(((ReopenProjectAction)element).getProjectPath());
-        }
+  override fun actionPerformed(e: AnActionEvent) {
+    val item = getSelectedItem(e)
+    if (item is RecentProjectItem) {
+      for (group in RecentProjectsManager.getInstance().groups) {
+        group.removeProject(item.projectPath)
       }
     }
-
-    rebuildRecentProjectsList(e);
   }
 }

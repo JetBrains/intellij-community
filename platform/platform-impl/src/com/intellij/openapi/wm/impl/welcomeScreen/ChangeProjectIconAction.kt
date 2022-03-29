@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
-import com.intellij.ide.ReopenProjectAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
@@ -36,8 +36,8 @@ import com.intellij.ide.RecentProjectsManagerBase.Companion.instanceEx as Projec
  * @author Konstantin Bulenkov
  */
 class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val projectPath = (getSelectedElements(e).first() as ReopenProjectAction).projectPath
+  override fun actionPerformed(event: AnActionEvent) {
+    val projectPath = (getSelectedItem(event) as RecentProjectItem).projectPath
     val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
@@ -77,8 +77,8 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     }
   }
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = getSelectedElements(e).size == 1 && !hasGroupSelected(e)
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabled = getSelectedItem(event) != null && !hasGroupSelected(event)
   }
 }
 

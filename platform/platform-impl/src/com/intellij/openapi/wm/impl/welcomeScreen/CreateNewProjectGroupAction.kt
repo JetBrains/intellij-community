@@ -1,47 +1,46 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ProjectGroup;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.ProjectGroup
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.InputValidator
+import com.intellij.openapi.ui.Messages
 
 /**
  * @author Konstantin Bulenkov
  */
-public class CreateNewProjectGroupAction extends RecentProjectsWelcomeScreenActionBase {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final InputValidator validator = new InputValidator() {
-      @Override
-      public boolean checkInput(String inputString) {
-        inputString = inputString.trim();
-        return getGroup(inputString) == null;
+class CreateNewProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val validator = object : InputValidator {
+      override fun checkInput(inputString: String): Boolean {
+        val text = inputString.trim()
+        return getGroup(text) == null
       }
 
-      @Override
-      public boolean canClose(String inputString) {
-        return true;
+      override fun canClose(inputString: String): Boolean {
+        return true
       }
-    };
-    final String newGroup = Messages.showInputDialog((Project)null, IdeBundle.message("dialog.message.project.group.name"),
-                                                     IdeBundle.message("dialog.title.create.new.project.group"), null, null, validator);
+    }
+
+    val newGroup = Messages.showInputDialog(null as Project?, IdeBundle.message("dialog.message.project.group.name"),
+                                            IdeBundle.message("dialog.title.create.new.project.group"), null, null, validator)
     if (newGroup != null) {
-      RecentProjectsManager.getInstance().addGroup(new ProjectGroup(newGroup));
-      rebuildRecentProjectsList(e);
+      RecentProjectsManager.getInstance().addGroup(ProjectGroup(newGroup))
     }
   }
 
-  private static ProjectGroup getGroup(String name) {
-    for (ProjectGroup group : RecentProjectsManager.getInstance().getGroups()) {
-      if (group.getName().equals(name)) {
-        return group;
+  companion object {
+    private fun getGroup(name: String): ProjectGroup? {
+      for (group in RecentProjectsManager.getInstance().groups) {
+        if (group.name == name) {
+          return group
+        }
       }
+
+      return null
     }
-    return null;
   }
 }

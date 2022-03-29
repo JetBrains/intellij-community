@@ -1,84 +1,53 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.ide.ProjectGroupActionGroup;
-import com.intellij.ide.RecentProjectListActionProvider;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.ide.ProjectGroupActionGroup
+import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.WelcomeScreenProjectItem
+import com.intellij.ui.treeStructure.Tree
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAction implements LightEditCompatible {
-  @Nullable
-  public static DefaultListModel getDataModel(@NotNull AnActionEvent e) {
-    JList list = getList(e);
-    if (list != null) {
-      ListModel model = list.getModel();
-      if (model instanceof NameFilteringListModel) {
-        model = ((NameFilteringListModel)model).getOriginalModel();
-        if (model instanceof DefaultListModel) {
-          return (DefaultListModel)model;
+abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightEditCompatible {
+  companion object {
+    @JvmStatic
+    fun getDataModel(event: AnActionEvent): DefaultTreeModel? {
+      val tree = getTree(event)
+      if (tree != null) {
+        val model = tree.model
+        if (model is DefaultTreeModel) {
+          return model
         }
       }
-    }
-    return null;
-  }
 
-  @NotNull
-  public static List<AnAction> getSelectedElements(@NotNull AnActionEvent e) {
-    JList list = getList(e);
-    List<AnAction> actions = new ArrayList<>();
-    if (list != null) {
-      for (Object value : list.getSelectedValuesList()) {
-        if (value instanceof AnAction) {
-          actions.add((AnAction)value);
-        }
-      }
+      return null
     }
-    return actions;
-  }
 
-  @Nullable
-  public static JList getList(@NotNull AnActionEvent e) {
-    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (component instanceof JList) {
-      return (JList)component;
+    @JvmStatic
+    fun getSelectedItem(event: AnActionEvent): WelcomeScreenProjectItem? {
+      val tree = getTree(event)
+      val node = tree?.selectionPath?.lastPathComponent?.let { it as DefaultMutableTreeNode }
+                 ?: return null
+
+      return node.userObject as WelcomeScreenProjectItem
     }
-    return null;
-  }
 
-  public static boolean hasGroupSelected(@NotNull AnActionEvent e) {
-    for (AnAction action : getSelectedElements(e)) {
-      if (action instanceof ProjectGroupActionGroup) {
-        return true;
-      }
+    @JvmStatic
+    fun getTree(event: AnActionEvent): Tree? {
+      val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+      return if (component is Tree) component
+      else null
     }
-    return false;
-  }
 
-  public static void rebuildRecentProjectsList(@NotNull AnActionEvent e) {
-    DefaultListModel model = getDataModel(e);
-    if (model != null) {
-      rebuildRecentProjectDataModel(model);
+    @JvmStatic
+    fun hasGroupSelected(event: AnActionEvent): Boolean {
+      return getSelectedItem(event) is ProjectGroupActionGroup
     }
-  }
-
-  public static void rebuildRecentProjectDataModel(@NotNull ListModel<? super AnAction> model) {
-    ListUtil.removeAllItems(model);
-    List<AnAction> actions = RecentProjectListActionProvider.getInstance().getActions(false, true);
-    ListUtil.addAllItems(model, actions);
   }
 }

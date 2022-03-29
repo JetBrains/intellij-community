@@ -13,67 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package com.intellij.openapi.wm.impl.welcomeScreen
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ProjectGroupActionGroup;
-import com.intellij.ide.ReopenProjectAction;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.event.InputEvent;
-import java.util.List;
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.Root
+import java.awt.event.InputEvent
 
 /**
  * @author Konstantin Bulenkov
  */
-public class OpenSelectedProjectsAction extends RecentProjectsWelcomeScreenActionBase {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    List<AnAction> elements = getSelectedElements(e);
-    e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), InputEvent.SHIFT_MASK);
-    for (AnAction element : elements) {
-      if (element instanceof ProjectGroupActionGroup) {
-        for (AnAction action : ((ProjectGroupActionGroup)element).getChildren(e)) {
-          action.actionPerformed(e);
-        }
-      } else {
-        element.actionPerformed(e);
-      }
+class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
+  override fun actionPerformed(event: AnActionEvent) {
+    val item = getSelectedItem(event)
+    val newEvent = AnActionEvent(event.inputEvent, event.dataContext, event.place,
+                                 event.presentation, event.actionManager, InputEvent.SHIFT_DOWN_MASK)
+    when (item) {
+      is RecentProjectGroupItem -> item.children.forEach { child -> child.openProject(newEvent) }
+      is RecentProjectItem -> item.openProject(newEvent)
+      is Root -> {}
     }
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    List<AnAction> selectedElements = getSelectedElements(e);
-    boolean hasProject = false;
-    boolean hasGroup = false;
-    for (AnAction element : selectedElements) {
-      if (element instanceof ReopenProjectAction) {
-        hasProject = true;
-      }
-      if (element instanceof ProjectGroupActionGroup) {
-        hasGroup = true;
+  override fun update(event: AnActionEvent) {
+    val presentation = event.presentation
+    val item = getSelectedItem(event) ?: return
+
+    if (ActionPlaces.WELCOME_SCREEN == event.place) {
+      presentation.isEnabledAndVisible = true
+      when (item) {
+        is RecentProjectGroupItem -> presentation.setText(
+          IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group")
+        )
+        else -> presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.selected"))
       }
 
-      if (hasGroup && hasProject) {
-        e.getPresentation().setEnabled(false);
-        return;
-      }
+      return
     }
-    if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
-      presentation.setEnabledAndVisible(true);
-      if (selectedElements.size() == 1 && selectedElements.get(0) instanceof ProjectGroupActionGroup) {
-        presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group"));
-      } else {
-        presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.selected"));
-      }
-    } else {
-      presentation.setEnabledAndVisible(false);
-    }
+
+    presentation.isEnabledAndVisible = false
   }
 }
