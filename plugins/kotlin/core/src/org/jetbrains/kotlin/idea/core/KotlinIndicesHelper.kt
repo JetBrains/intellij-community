@@ -69,7 +69,7 @@ class KotlinIndicesHelper(
     fun getTopLevelCallablesByName(name: String): Collection<CallableDescriptor> {
         val declarations = LinkedHashSet<KtNamedDeclaration>()
         declarations.addTopLevelNonExtensionCallablesByName(KotlinFunctionShortNameIndex, name)
-        declarations.addTopLevelNonExtensionCallablesByName(KotlinPropertyShortNameIndex.getInstance(), name)
+        declarations.addTopLevelNonExtensionCallablesByName(KotlinPropertyShortNameIndex, name)
         return declarations
             .flatMap { it.resolveToDescriptors<CallableDescriptor>() }
             .filter { descriptorFilter(it) }
@@ -449,7 +449,7 @@ class KotlinIndicesHelper(
         processor: (CallableDescriptor) -> Unit
     ) {
         val functions: Sequence<KtCallableDeclaration> = KotlinFunctionShortNameIndex.get(name, project, scope).asSequence()
-        val properties: Sequence<KtNamedDeclaration> = KotlinPropertyShortNameIndex.getInstance().get(name, project, scope).asSequence()
+        val properties: Sequence<KtNamedDeclaration> = KotlinPropertyShortNameIndex.get(name, project, scope).asSequence()
         val processed = HashSet<CallableDescriptor>()
         for (declaration in functions + properties) {
             ProgressManager.checkCanceled()
@@ -520,7 +520,7 @@ class KotlinIndicesHelper(
             KotlinFunctionShortNameIndex.processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
         }
         if (descriptorKindFilter.kindMask.and(DescriptorKindFilter.VARIABLES_MASK) != 0) {
-            KotlinPropertyShortNameIndex.getInstance().processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
+            KotlinPropertyShortNameIndex.processAllElements(project, scope, nameFilter, namedDeclarationProcessor)
         }
     }
 

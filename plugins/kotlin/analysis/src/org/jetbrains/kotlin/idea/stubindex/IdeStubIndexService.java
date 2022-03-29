@@ -221,7 +221,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexProperty(@NotNull KotlinPropertyStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null) {
-            sink.occurrence(KotlinPropertyShortNameIndex.getInstance().getKey(), name);
+            sink.occurrence(KotlinPropertyShortNameIndex.INSTANCE.getKey(), name);
 
             if (IndexUtilsKt.isDeclaredInObject(stub)) {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
@@ -250,7 +250,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexParameter(@NotNull KotlinParameterStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null && stub.hasValOrVar()) {
-            sink.occurrence(KotlinPropertyShortNameIndex.getInstance().getKey(), name);
+            sink.occurrence(KotlinPropertyShortNameIndex.INSTANCE.getKey(), name);
         }
     }
 

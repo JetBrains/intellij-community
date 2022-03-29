@@ -169,7 +169,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             return false
         }
 
-        return KotlinPropertyShortNameIndex.getInstance().processAllKeys(project) { name ->
+        return KotlinPropertyShortNameIndex.processAllKeys(project) { name ->
             return@processAllKeys processor.process(JvmAbi.setterName(name)) && processor.process(JvmAbi.getterName(name))
         }
     }
@@ -200,7 +200,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
         for (propertyName in getPropertyNamesCandidatesByAccessorName(Name.identifier(name))) {
             val allProcessed = StubIndex.getInstance().processElements(
-                KotlinPropertyShortNameIndex.getInstance().key,
+                KotlinPropertyShortNameIndex.key,
                 propertyName.asString(),
                 project,
                 scope,
@@ -272,7 +272,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
     private fun processAllFieldNames(processor: Processor<in String>): Boolean {
         if (disableSearch.get()) return true
-        return KotlinPropertyShortNameIndex.getInstance().processAllKeys(project, processor)
+        return KotlinPropertyShortNameIndex.processAllKeys(project, processor)
     }
 
     override fun processFieldsWithName(
@@ -283,7 +283,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     ): Boolean {
         if (disableSearch.get()) return true
         return StubIndex.getInstance().processElements(
-            KotlinPropertyShortNameIndex.getInstance().key,
+            KotlinPropertyShortNameIndex.key,
             name,
             project,
             scope,

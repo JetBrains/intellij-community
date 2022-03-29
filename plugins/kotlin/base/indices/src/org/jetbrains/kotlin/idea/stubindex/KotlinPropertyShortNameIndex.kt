@@ -1,39 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.stubindex
 
-package org.jetbrains.kotlin.idea.stubindex;
+import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.stubs.StubIndexKey;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.KtNamedDeclaration;
-import java.util.Collection;
+object KotlinPropertyShortNameIndex : KotlinStringStubIndexExtension<KtNamedDeclaration>(KtNamedDeclaration::class.java) {
+    private val KEY: StubIndexKey<String, KtNamedDeclaration> =
+        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex")
 
-public class KotlinPropertyShortNameIndex extends KotlinStringStubIndexExtension<KtNamedDeclaration> {
-    private static final StubIndexKey<String, KtNamedDeclaration> KEY =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex");
+    override fun getKey(): StubIndexKey<String, KtNamedDeclaration> = KEY
 
-    private static final KotlinPropertyShortNameIndex ourInstance = new KotlinPropertyShortNameIndex();
-
-    public static KotlinPropertyShortNameIndex getInstance() {
-        return ourInstance;
+    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedDeclaration> {
+        return StubIndex.getElements(KEY, s, project, scope, KtNamedDeclaration::class.java)
     }
-
-    private KotlinPropertyShortNameIndex() {
-        super(KtNamedDeclaration.class);
-    }
-
-    @NotNull
-    @Override
-    public StubIndexKey<String, KtNamedDeclaration> getKey() {
-        return KEY;
-    }
-
-    @NotNull
-    @Override
-    public Collection<KtNamedDeclaration> get(@NotNull String s, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-        return StubIndex.getElements(KEY, s, project, scope, KtNamedDeclaration.class);
-    }
-
 }

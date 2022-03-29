@@ -65,7 +65,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
             KotlinFunctionShortNameIndex.get(name.asString(), project, scope).asSequence()
 
         val properties: Sequence<KtNamedDeclaration> =
-            KotlinPropertyShortNameIndex.getInstance().get(name.asString(), project, scope).asSequence()
+            KotlinPropertyShortNameIndex.get(name.asString(), project, scope).asSequence()
 
         return (functions + properties)
             .filterIsInstance<KtCallableDeclaration>()

@@ -75,7 +75,7 @@ fun DeclarationDescriptor.findPsiDeclarations(project: Project, resolveScope: Gl
 
         is DeserializedPropertyDescriptor,
         is PropertyImportedFromObject ->
-            KotlinPropertyShortNameIndex.getInstance().get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
+            KotlinPropertyShortNameIndex.get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
 
         is DeclarationDescriptorWithSource -> listOfNotNull(source.getPsi())
 

@@ -296,8 +296,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetObjectName = config.getNullableString("targetObject")
             val targetVariable = when {
                 methodParameterName != null -> method.valueParameters.find { it.name == methodParameterName }!!
-                sourcePropertyName != null -> KotlinPropertyShortNameIndex.getInstance()
-                    .get(sourcePropertyName, project, project.projectScope()).first()
+                sourcePropertyName != null -> KotlinPropertyShortNameIndex.get(sourcePropertyName, project, project.projectScope()).first()
                 else -> KotlinFullClassNameIndex.get(targetObjectName!!, project, project.projectScope()).first()
 
             }
