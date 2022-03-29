@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -8,48 +10,67 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextHelper {
-  // to ignore by listeners
-  private final Set<FilePath> myIgnoredDeleted;
-  private final Set<FilePath> myIgnoredAdded;
-
-  VcsFileListenerContextHelperImpl() {
-    myIgnoredDeleted = new HashSet<>();
-    myIgnoredAdded = new HashSet<>();
-  }
+  private final Object LOCK = new Object();
+  private final Set<FilePath> myIgnoredDeleted = new HashSet<>();
+  private final Set<FilePath> myIgnoredAdded = new HashSet<>();
+  private final RecursiveFilePathSet myIgnoredAddedRecursive = new RecursiveFilePathSet(SystemInfo.isFileSystemCaseSensitive);
 
   @Override
   public void ignoreDeleted(@NotNull Collection<FilePath> filePath) {
-    myIgnoredDeleted.addAll(filePath);
+    synchronized (LOCK) {
+      myIgnoredDeleted.addAll(filePath);
+    }
   }
 
   @Override
   public boolean isDeletionIgnored(@NotNull FilePath filePath) {
-    return myIgnoredDeleted.contains(filePath);
+    synchronized (LOCK) {
+      return myIgnoredDeleted.contains(filePath);
+    }
   }
 
   @Override
-  public void ignoreAdded(@NotNull Collection<FilePath> filePath) {
-    myIgnoredAdded.addAll(filePath);
+  public void ignoreAdded(@NotNull Collection<FilePath> filePaths) {
+    synchronized (LOCK) {
+      myIgnoredAdded.addAll(filePaths);
+    }
+  }
+
+  @Override
+  public void ignoreAddedRecursive(@NotNull Collection<FilePath> filePaths) {
+    synchronized (LOCK) {
+      myIgnoredAddedRecursive.addAll(filePaths);
+    }
   }
 
   @Override
   public boolean isAdditionIgnored(@NotNull FilePath filePath) {
-    return myIgnoredAdded.contains(filePath);
+    synchronized (LOCK) {
+      return myIgnoredAdded.contains(filePath) ||
+             myIgnoredAddedRecursive.hasAncestor(filePath);
+    }
   }
 
   @Override
   public void clearContext() {
-    myIgnoredAdded.clear();
-    myIgnoredDeleted.clear();
+    synchronized (LOCK) {
+      myIgnoredAdded.clear();
+      myIgnoredAddedRecursive.clear();
+      myIgnoredDeleted.clear();
+    }
   }
 
   @Override
   public boolean isAdditionContextEmpty() {
-    return myIgnoredAdded.isEmpty();
+    synchronized (LOCK) {
+      return myIgnoredAdded.isEmpty() && myIgnoredAddedRecursive.isEmpty();
+    }
   }
 
   @Override
   public boolean isDeletionContextEmpty() {
-    return myIgnoredDeleted.isEmpty();
+    synchronized (LOCK) {
+      return myIgnoredDeleted.isEmpty();
+    }
   }
 }
