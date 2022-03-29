@@ -138,7 +138,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       myDiff.remove(pluginDescriptor);
       PluginId pluginId = pluginDescriptor.getPluginId();
 
-      if (!PluginInstaller.uninstallDynamicPlugin(parent, pluginDescriptor, false)) {
+      if (!PluginInstaller.uninstallDynamicPlugin(parent, pluginDescriptor, false) ||
+          needRestart) {
         uninstallsRequiringRestart.add(pluginId);
       }
       else {
@@ -155,7 +156,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
       PluginId pluginId = pendingPluginInstall.getPluginDescriptor().getPluginId();
-      if (!uninstallsRequiringRestart.contains(pluginId)) {
+      if (!needRestart &&
+          !uninstallsRequiringRestart.contains(pluginId)) {
         InstalledPluginsState.getInstance().trackPluginInstallation(() -> {
           if (!PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(),
                                                            parent,
