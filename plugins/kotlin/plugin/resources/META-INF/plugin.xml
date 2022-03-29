@@ -31,7 +31,7 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
     </ul>
     Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.20">changelog</a>.
     <br>
-    For more details, see [What’s New in Kotlin 1.6.20](https://kotlinlang.org/docs/whatsnew1620.html) and [this blog post](https://blog.jetbrains.com/kotlin/2022/03/kotlin-1-6-20-released/).
+    For more details, see [What’s New in Kotlin 1.6.20](https://kotlinlang.org/docs/whatsnew1620.html).
     <br><br>
     <h3>1.6.0</h3>
     <ul>
