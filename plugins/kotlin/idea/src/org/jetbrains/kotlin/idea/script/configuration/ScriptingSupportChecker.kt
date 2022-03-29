@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.script.configuration
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import java.util.function.Function
 import javax.swing.JComponent
 
-class ScriptingSupportChecker: EditorNotificationProvider, DumbAware {
+class ScriptingSupportChecker: EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
         if (!Registry.`is`("kotlin.scripting.support.warning") || file.isNonScript()) {
             return EditorNotificationProvider.CONST_NULL
@@ -37,7 +36,7 @@ class ScriptingSupportChecker: EditorNotificationProvider, DumbAware {
                 EditorNotificationPanel(it).apply {
                     text = KotlinBundle.message("kotlin.script.in.project.sources")
                     createActionLabel(
-                        KotlinBundle.message("kotlin.script.in.project.sources.more.info"),
+                        KotlinBundle.message("kotlin.script.warning.more.info"),
                         Runnable {
                             BrowserUtil.browse(KotlinBundle.message("kotlin.script.in.project.sources.link"))
                         },
@@ -53,7 +52,7 @@ class ScriptingSupportChecker: EditorNotificationProvider, DumbAware {
                 EditorNotificationPanel(it).apply {
                     text = KotlinBundle.message("kotlin.script.in.beta.stage")
                     createActionLabel(
-                        KotlinBundle.message("kotlin.script.in.beta.stage.more.info"),
+                        KotlinBundle.message("kotlin.script.warning.more.info"),
                         Runnable {
                             BrowserUtil.browse(KotlinBundle.message("kotlin.script.in.beta.stage.link"))
                         },
@@ -66,26 +65,27 @@ class ScriptingSupportChecker: EditorNotificationProvider, DumbAware {
 
         return EditorNotificationProvider.CONST_NULL
     }
-
-    private fun EditorNotificationPanel.addHideAction(
-        file: VirtualFile,
-        project: Project
-    ) {
-        createActionLabel(
-            KotlinBundle.message("kotlin.script.in.project.sources.hide"),
-            Runnable {
-                file.scriptingSupportLimitationWarning = true
-                val fileEditorManager = FileEditorManager.getInstance(project)
-                fileEditorManager.getSelectedEditor(file)?.let { editor ->
-                    fileEditorManager.removeTopComponent(editor, this)
-                }
-            },
-            false
-        )
-    }
-
-    private fun VirtualFile.supportedScriptExtensions() =
-        name.endsWith(".main.kts") || name.endsWith(".space.kts") || name.endsWith(".gradle.kts")
 }
+
+
+private fun EditorNotificationPanel.addHideAction(
+    file: VirtualFile,
+    project: Project
+) {
+    createActionLabel(
+        KotlinBundle.message("kotlin.script.in.project.sources.hide"),
+        Runnable {
+            file.scriptingSupportLimitationWarning = true
+            val fileEditorManager = FileEditorManager.getInstance(project)
+            fileEditorManager.getSelectedEditor(file)?.let { editor ->
+                fileEditorManager.removeTopComponent(editor, this)
+            }
+        },
+        false
+    )
+}
+
+private fun VirtualFile.supportedScriptExtensions() =
+    name.endsWith(".main.kts") || name.endsWith(".space.kts") || name.endsWith(".gradle.kts")
 
 private var VirtualFile.scriptingSupportLimitationWarning: Boolean? by UserDataProperty(Key.create("SCRIPTING_SUPPORT_LIMITATION"))
