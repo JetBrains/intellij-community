@@ -1061,6 +1061,81 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  // PY-48338
+  public void testDecoratedFunctionParametersFromOriginalFunction() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionParametersEmptyParameters() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("<no parameters>",
+                                                          ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                          new String[]{"<no parameters>"});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionParametersFromParamSpec() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionParametersTwoDecorators() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionParametersCallOriginalWithOtherParameters() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionParametersWrapperWithOtherParameters() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: str, input_a: int, input_b: float",
+                                                          new String[]{"...: str, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionParametersWrapperHasUnknownDecorator() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedDataClassParameters() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("bar: int",
+                                                          new String[]{"bar: int"},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionDifferentParametersFromAnnotation() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: int",
+                                                          new String[]{"...: int"},
+                                                          new String[]{""});
+  }
+
   // PY-46053
   public void testLongTypeHintReplaceWithAnnotation() {
     final Map<String, PsiElement> test = loadTest(2);

@@ -1561,6 +1561,222 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-48338
+  public void testDecoratedFunctionHasOriginalFunctionType() {
+    doTest("(input_a: int, input_b: float) -> float | Any",
+           "import functools\n" +
+           "\n" +
+           "def decorator(func):\n" +
+           "    @functools.wraps(func)\n" +
+           "    def wrapper(*args, **kwargs):\n" +
+           "        print(\"using_decorator\")\n" +
+           "        return func(*args, **kwargs)\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "@decorator\n" +
+           "def function(input_a: int, input_b: float):\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "if __name__ == '__main__':\n" +
+           "    expr = function\n");
+  }
+
+  // PY-48338
+  public void testDecoratedFromOtherFileFunctionHasOriginalFunctionType() {
+    doMultiFileTest("(input_a: int, input_b: float) -> float | Any",
+           "import functools\n" +
+           "from dec_mod import decorator\n" +
+           "\n" +
+           "\n" +
+           "@decorator\n" +
+           "def function(input_a: int, input_b: float):\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "if __name__ == '__main__':\n" +
+           "    expr = function");
+  }
+
+  // PY-48338
+  public void testTwiceDecoratedFunctionHasUnionOfOriginalFunctionAndUnknownCallableType() {
+    doTest("(input_a: int, input_b: float) -> float | Any",
+           "import functools\n" +
+           "\n" +
+           "\n" +
+           "def decorator1(func):\n" +
+           "    @functools.wraps(func)\n" +
+           "    def wrapper(*args, **kwargs):\n" +
+           "        print(\"using_decorator1\")\n" +
+           "        return func(*args, **kwargs)\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "def decorator2(func):\n" +
+           "    @functools.wraps(func)\n" +
+           "    def wrapper(*args, **kwargs):\n" +
+           "        print(\"using_decorator2\")\n" +
+           "        return func(*args, **kwargs)\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "@decorator1\n" +
+           "@decorator2\n" +
+           "def function(input_a: int, input_b: float):\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "if __name__ == '__main__':\n" +
+           "    expr = function");
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionWithUnknownWrapperDecoratorHasUnionOriginalFunctionAndUnknownCallableType() {
+    doTest("(input_a: int, input_b: float) -> float | Any",
+           "import functools\n" +
+           "\n" +
+           "\n" +
+           "def unknown_decorator(func):\n" +
+           "    @functools.wraps(func)\n" +
+           "    def wrapper(*args, **kwargs):\n" +
+           "        print(\"using_decorator\")\n" +
+           "        return func(*args, **kwargs)\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "def decorator(func):\n" +
+           "    @unknown_decorator\n" +
+           "    def wrapper(*args, **kwargs):\n" +
+           "        print(\"using_decorator\")\n" +
+           "        return func(*args, **kwargs)\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "@decorator\n" +
+           "def function(input_a: int, input_b: float):\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "if __name__ == '__main__':\n" +
+           "    expr = function");
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionWithOtherWrapperParametersHasWrapperType() {
+    doTest("(str, input_a: int, input_b: float) -> float | Any",
+           "import functools\n" +
+           "from typing import Callable, ParamSpec, TypeVar, Concatenate\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "R = TypeVar(\"R\")\n" +
+           "\n" +
+           "\n" +
+           "def decorator(func: Callable[P, R]) -> Callable[[Concatenate[str, P]], R]:\n" +
+           "    @functools.wraps(func)\n" +
+           "    def wrapper(input_c: str, input_a: int, input_b: float):\n" +
+           "        print(\"using_decorator\")\n" +
+           "        return func(input_a, input_b)\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "@decorator\n" +
+           "def function(input_a: int, input_b: float):\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "if __name__ == '__main__':\n" +
+           "    expr = function");
+  }
+
+  // PY-48338
+  public void testDecoratedFunctionHasTypeFromParamSpec() {
+    doTest("(input_a: int, input_b: float) -> float",
+           "import functools\n" +
+           "from typing import ParamSpec, TypeVar, Callable\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "R = TypeVar(\"R\")\n" +
+           "\n" +
+           "\n" +
+           "def decorator(func: Callable[P, R]) -> Callable[P, R]:\n" +
+           "    @functools.wraps(func)\n" +
+           "    def wrapper(*args, **kwargs):\n" +
+           "        print(\"using_decorator\")\n" +
+           "        return func(1, 2)\n" +
+           "\n" +
+           "    return wrapper\n" +
+           "\n" +
+           "\n" +
+           "@decorator\n" +
+           "def function(input_a: int, input_b: float) -> float:\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "expr = function");
+  }
+
+  // PY-48338
+  public void testDecoratedFromOtherFileFunctionHasTypeFromParamSpec() {
+    doMultiFileTest("(input_a: int, input_b: float) -> float",
+           "import functools\n" +
+           "from dec_mod import decorator\n"+
+           "\n" +
+           "\n" +
+           "@decorator\n" +
+           "def function(input_a: int, input_b: float) -> float:\n" +
+           "    return input_a + input_b\n" +
+           "\n" +
+           "\n" +
+           "expr = function");
+  }
+
+  // PY-60104
+  public void testDecoratedFunctionChangedTypeFromParamSpec() {
+    doTest("(str, a: int, b: int) -> None",
+           """
+              import functools
+              from typing import Any, Callable, Concatenate, ParamSpec, reveal_type, TypeVar
+              
+              P = ParamSpec('P')
+              T = TypeVar('T')
+              
+              
+              def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[str, P], T]:
+                  @functools.wraps(f)
+                  def wrapper(ignored: Any, *args: P.args, **kwargs: P.kwargs) -> T:
+                      return f(*args, **kwargs)
+              
+                  return wrapper
+              
+              
+              @changing_signature
+              def f(a: int, b: int) -> None:
+                  print(a, b)
+              
+              
+              expr = f
+             """);
+  }
+
+  public void testDecoratedClassTypeNoChange() {
+    doTest("Type[C]", """
+       from typing import reveal_type
+                                                                                 
+       def changing_interface(cls):
+           cls.new_attr = 42
+           return cls
+       
+       
+       @changing_interface
+       class C:
+           def __init__(self, p: int) -> None:
+               self.attr = p
+       
+       
+       expr = C
+      """);
+  }
+
   /**
    * @see #testRecursiveDictTopDown()
    * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()

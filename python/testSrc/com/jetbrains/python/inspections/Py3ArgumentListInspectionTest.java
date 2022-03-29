@@ -18,6 +18,48 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     return ourPyLatestDescriptor;
   }
 
+  // PY-23067
+  public void testUnfilledParametersFunctoolsWrapsNoWarning() {
+    doTestByText("""
+                   from functools import wraps
+                                   
+                                   
+                   def foo(a: int, b: str) -> int:
+                       return a + int(b)
+                   
+                   
+                   @wraps(foo)
+                   def test(*args, **kwargs) -> int:
+                       return a + int(b)
+                   
+                   
+                   test()
+                   """);
+  }
+
+  // PY-23067
+  public void testUnfilledParametersFunctoolsWrapsDecoratorWrapperNoWarning() {
+    doTestByText("""
+                   from functools import wraps
+                                   
+                                   
+                   def decorator_without_params(func):
+                       @wraps(func)
+                       def wrapper(*args, **kwargs):
+                           func(*args, **kwargs)
+                   
+                       return wrapper
+                   
+                   
+                   @decorator_without_params
+                   def test(a: int, b: str) -> int:
+                       return a + int(b)
+                   
+                   
+                   test()
+                   """);
+  }
+
   // PY-36158
   public void testDataclassesStarImportNoUnexpectedArgumentWarning() {
     doTestByText("""
