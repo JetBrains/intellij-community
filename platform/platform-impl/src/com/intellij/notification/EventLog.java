@@ -238,8 +238,8 @@ public final class EventLog {
     List<RangeMarker> boldMarkers = new ArrayList<>();
     List<RangeMarker> italicMarkers = new ArrayList<>();
 
-    boolean hasHtml = parseHtmlContent(addIndents(notification.getContent(), ""), notification, logDoc, new AtomicBoolean(false), links,
-                                       lineSeparators, boldMarkers, italicMarkers);
+    boolean hasHtml = parseHtmlContent(notification.getContent(), notification, logDoc, new AtomicBoolean(false), links, lineSeparators,
+                                       boldMarkers, italicMarkers);
 
     indentNewLines(logDoc, lineSeparators, null, hasHtml, "");
 
