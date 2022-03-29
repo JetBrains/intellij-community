@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * Allows excluding specific files from being processed by {@link VcsVFSListener}.
  * <p>
@@ -19,11 +21,11 @@ public interface VcsFileListenerContextHelper {
     return project.getService(VcsFileListenerContextHelper.class);
   }
 
-  void ignoreDeleted(@NotNull FilePath filePath);
+  void ignoreDeleted(@NotNull Collection<FilePath> filePath);
 
   boolean isDeletionIgnored(@NotNull FilePath filePath);
 
-  void ignoreAdded(@NotNull FilePath filePath);
+  void ignoreAdded(@NotNull Collection<FilePath> filePath);
 
   boolean isAdditionIgnored(@NotNull FilePath filePath);
 
