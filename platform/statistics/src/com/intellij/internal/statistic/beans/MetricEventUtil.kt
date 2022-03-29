@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.beans
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -142,6 +142,26 @@ fun <T, V> addIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaul
   addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {
     val fields = data ?: mutableListOf()
     fields.add(field.with(it))
+    eventId.metric(fields)
+  }
+}
+
+/**
+ * Adds counter value if count is greater than 0
+ */
+fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: VarargEventId, count: Int) {
+  if (count > 0) {
+    set.add(eventId.metric(EventFields.Count.with(count)))
+  }
+}
+
+/**
+ * Adds counter value if count is greater than 0
+ */
+fun <T> addCounterIfNotZero(set: MutableSet<in MetricEvent>, eventId: VarargEventId, count: Int, data: MutableList<EventPair<*>>? = null) {
+  if (count > 0) {
+    val fields = data ?: mutableListOf()
+    fields.add(EventFields.Count.with(count))
     eventId.metric(fields)
   }
 }
