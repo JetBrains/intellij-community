@@ -63,7 +63,7 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
         private fun allAliases(file: KtFile): ConcurrentMap<String, Boolean> = CachedValuesManager.getCachedValue(file) {
             val importAliases = file.importDirectives.mapNotNull { it.aliasName }.toSet()
             val map = ConcurrentFactoryMap.createMap<String, Boolean> { s ->
-                s in importAliases || KotlinTypeAliasShortNameIndex.getInstance().get(s, file.project, file.resolveScope).isNotEmpty()
+                s in importAliases || KotlinTypeAliasShortNameIndex.get(s, file.project, file.resolveScope).isNotEmpty()
             }
             CachedValueProvider.Result.create<ConcurrentMap<String, Boolean>>(map, PsiModificationTracker.MODIFICATION_COUNT)
         }

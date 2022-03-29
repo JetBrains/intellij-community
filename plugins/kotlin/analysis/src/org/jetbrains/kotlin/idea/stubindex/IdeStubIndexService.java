@@ -197,7 +197,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexTypeAlias(@NotNull KotlinTypeAliasStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null) {
-            sink.occurrence(KotlinTypeAliasShortNameIndex.getInstance().getKey(), name);
+            sink.occurrence(KotlinTypeAliasShortNameIndex.INSTANCE.getKey(), name);
             indexPrime(stub, sink);
         }
 

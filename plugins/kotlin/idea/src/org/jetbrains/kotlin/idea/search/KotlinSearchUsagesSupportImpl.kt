@@ -98,7 +98,7 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
         org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperMethodsNoWrapping(method)
 
     override fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> =
-        KotlinTypeAliasShortNameIndex.getInstance().get(shortName, project, scope)
+        KotlinTypeAliasShortNameIndex.get(shortName, project, scope)
 
     override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean =
         ProjectRootsUtil.isInProjectSource(element, includeScriptsOutsideSourceRoots)

@@ -67,7 +67,7 @@ fun DeclarationDescriptor.findPsiDeclarations(project: Project, resolveScope: Gl
             KotlinFullClassNameIndex.get(fqName.asString(), project, resolveScope)
 
         is DeserializedTypeAliasDescriptor ->
-            KotlinTypeAliasShortNameIndex.getInstance().get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
+            KotlinTypeAliasShortNameIndex.get(fqName.shortName().asString(), project, resolveScope).fqNameFilter()
 
         is DeserializedSimpleFunctionDescriptor,
         is FunctionImportedFromObject ->

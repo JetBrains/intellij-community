@@ -25,7 +25,7 @@ class KotlinGotoClassContributor : GotoClassContributor {
 
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> {
         val classes = KotlinClassShortNameIndex.getAllKeys(project)
-        val typeAliases = KotlinTypeAliasShortNameIndex.getInstance().getAllKeys(project)
+        val typeAliases = KotlinTypeAliasShortNameIndex.getAllKeys(project)
         return (classes + typeAliases).toTypedArray()
     }
 
@@ -33,7 +33,7 @@ class KotlinGotoClassContributor : GotoClassContributor {
         val globalScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
         val scope = KotlinSourceFilterScope.projectSourceAndClassFiles(globalScope, project)
         val classesOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
-        val typeAliases = KotlinTypeAliasShortNameIndex.getInstance().get(name, project, scope)
+        val typeAliases = KotlinTypeAliasShortNameIndex.get(name, project, scope)
 
         if (classesOrObjects.isEmpty() && typeAliases.isEmpty()) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY
 
@@ -51,7 +51,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
         KotlinFunctionShortNameIndex,
         KotlinPropertyShortNameIndex,
         KotlinClassShortNameIndex,
-        KotlinTypeAliasShortNameIndex.getInstance(),
+        KotlinTypeAliasShortNameIndex,
         KotlinJvmNameAnnotationIndex
     ).flatMap {
         StubIndex.getInstance().getAllKeys(it.key, project)
@@ -73,7 +73,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
         result += KotlinClassShortNameIndex.get(name, project, noLibrarySourceScope).filter {
             it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType
         }
-        result += KotlinTypeAliasShortNameIndex.getInstance().get(name, project, noLibrarySourceScope)
+        result += KotlinTypeAliasShortNameIndex.get(name, project, noLibrarySourceScope)
         result += KotlinJvmNameAnnotationIndex.get(name, project, noLibrarySourceScope)
 
         return result.toTypedArray()

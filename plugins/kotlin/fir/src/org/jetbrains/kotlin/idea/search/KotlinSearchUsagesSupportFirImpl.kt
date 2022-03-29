@@ -218,7 +218,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return KotlinTypeAliasShortNameIndex.getInstance().get(shortName, project, scope)
+        return KotlinTypeAliasShortNameIndex.get(shortName, project, scope)
     }
 
     override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean {
