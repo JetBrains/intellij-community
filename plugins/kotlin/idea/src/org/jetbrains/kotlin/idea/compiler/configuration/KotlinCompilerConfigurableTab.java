@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask;
@@ -383,15 +384,15 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<String>> onFinish) {
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                        KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID, KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID))
+                        KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID, KotlinArtifacts.KOTLIN_DIST_ARTIFACT_ID))
                 .onProcessed(distVersions -> {
                     if (distVersions == null) {
                         onFinish.accept(null);
                         return;
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                                    KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
-                                    KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
+                                    KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID,
+                                    KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
                                     onFinish.accept(null);

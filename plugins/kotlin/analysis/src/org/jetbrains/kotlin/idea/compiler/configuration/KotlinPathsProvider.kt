@@ -4,21 +4,19 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import java.io.File
 
 object KotlinPathsProvider {
-    const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
-    const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
-    val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID)
-
     fun getKotlinPaths(version: String) = KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
 
     fun getKotlinPaths(project: Project) =
