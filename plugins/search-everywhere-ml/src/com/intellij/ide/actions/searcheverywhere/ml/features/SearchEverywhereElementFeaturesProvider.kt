@@ -19,9 +19,16 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     }
 
     fun getFeatureProvidersForContributor(contributorId: String): List<SearchEverywhereElementFeaturesProvider> {
-      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) }
+      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) || it.isApplicableToEveryContributor }
     }
   }
+
+  /**
+   * If a feature provider is applicable to every contributor of Search Everywhere,
+   * instead of specifying each one in the constructor, this value can be overriden
+   * and set to true.
+   */
+  open val isApplicableToEveryContributor: Boolean = false
 
   /**
    * Returns data to be cached in the search session

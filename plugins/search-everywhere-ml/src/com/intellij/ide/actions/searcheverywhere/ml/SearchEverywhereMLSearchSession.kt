@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.Search
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
@@ -75,7 +76,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       if (project != null) {
-        val statisticianService = SearchEverywhereStatisticianService.getInstance(project)
+        val statisticianService = service<SearchEverywhereStatisticianService>()
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
       }
 
