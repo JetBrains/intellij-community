@@ -15,6 +15,10 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="completion.ml.genericFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.GenericFeatureProvider"/>
+    </extensionPoint>
+
     <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
     </extensionPoint>
