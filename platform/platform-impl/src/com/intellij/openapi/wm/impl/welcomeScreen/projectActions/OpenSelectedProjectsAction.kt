@@ -14,7 +14,7 @@ import java.awt.event.InputEvent
  */
 class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
   override fun actionPerformed(event: AnActionEvent) {
-    val item = getSelectedItem(event)
+    val item = getSelectedItem(event) ?: return
     val newEvent = AnActionEvent(event.inputEvent, event.dataContext, event.place,
                                  event.presentation, event.actionManager, InputEvent.SHIFT_DOWN_MASK)
     when (item) {
