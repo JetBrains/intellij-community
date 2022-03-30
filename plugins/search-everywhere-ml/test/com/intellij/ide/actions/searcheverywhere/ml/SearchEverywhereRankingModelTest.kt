@@ -21,20 +21,25 @@ internal abstract class SearchEverywhereRankingModelTest
 
   protected abstract fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>>
 
-  protected fun performSearchFor(searchQuery: String): RankingAssertion {
+  protected fun performSearchFor(searchQuery: String, featuresProviderCache: Any? = null): RankingAssertion {
     VirtualFileManager.getInstance().syncRefresh()
     val rankedElements: List<FoundItemDescriptor<*>> = filterElements(searchQuery)
-      .map { it.withMlWeight(getMlWeight(it, searchQuery)) }
+      .map { it.withMlWeight(getMlWeight(it, searchQuery, featuresProviderCache)) }
       .sortedByDescending { it.mlWeight }
 
     return RankingAssertion(rankedElements)
   }
 
-  private fun getMlWeight(item: FoundItemDescriptor<*>, searchQuery: String) = model.predict(getElementFeatures(item, searchQuery))
+  private fun getMlWeight(item: FoundItemDescriptor<*>,
+                          searchQuery: String,
+                          featuresProviderCache: Any?) = model.predict(getElementFeatures(item, searchQuery, featuresProviderCache))
 
-  private fun getElementFeatures(foundItem: FoundItemDescriptor<*>, searchQuery: String): Map<String, Any> {
-    return featuresProviders.map { it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight, null) }
-      .fold(emptyMap()) { acc, value -> acc + value }
+  private fun getElementFeatures(foundItem: FoundItemDescriptor<*>,
+                                 searchQuery: String,
+                                 featuresProviderCache: Any?): Map<String, Any> {
+    return featuresProviders.map {
+      it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight, featuresProviderCache)
+    }.fold(emptyMap()) { acc, value -> acc + value }
   }
 
   private fun FoundItemDescriptor<*>.withMlWeight(mlWeight: Double) = FoundItemDescriptor(this.item, this.weight, mlWeight)
