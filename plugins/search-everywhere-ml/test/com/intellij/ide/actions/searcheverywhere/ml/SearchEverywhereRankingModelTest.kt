@@ -52,12 +52,14 @@ internal abstract class SearchEverywhereRankingModelTest
 
     inner class ElementAssertion(private val element: FoundItemDescriptor<*>) {
       fun isWithinTop(n: Int) {
+        val errorMessage = "The index of the element is actually ${results.indexOf(element)}, it's not within the top $n."
         val top = n.coerceAtMost(results.size)
-        assertTrue(results.subList(0, top).contains(element))
+        assertTrue(errorMessage, results.subList(0, top).contains(element))
       }
 
       fun isAtIndex(index: Int) {
-        assertEquals(element, results[index])
+        val errorMessage = "The index of the element is actually ${results.indexOf(element)}, not ${index} as expected."
+        assertEquals(errorMessage, element, results[index])
       }
     }
   }
