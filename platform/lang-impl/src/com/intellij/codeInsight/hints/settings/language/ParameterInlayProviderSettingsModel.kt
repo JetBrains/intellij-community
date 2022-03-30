@@ -79,6 +79,7 @@ class ParameterInlayProviderSettingsModel(
                                                }
                                              }, DaemonProgressIndicator())
     return Runnable {
+      if (editor.isDisposed) return@Runnable
       ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
       pass.doApplyInformationToEditor()
     }
