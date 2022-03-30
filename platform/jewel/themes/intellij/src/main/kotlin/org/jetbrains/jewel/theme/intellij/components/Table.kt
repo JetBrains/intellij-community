@@ -3,19 +3,22 @@
 package org.jetbrains.jewel.theme.intellij.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.mapSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,14 +34,16 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.skiko.Cursor
 import kotlin.experimental.ExperimentalTypeInference
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
-class TableModel<T>(
+class Table<T>(
     val columnsCount: Int,
     private val contents: List<List<T>>
 ) {
 
-    val rowsCount = contents.size
+    val rowsCount
+        get() = contents.size
 
     init {
         require(contents.all { it.size == columnsCount }) { "One or more rows contain an unexpected number of cells" }
@@ -51,11 +56,11 @@ class TableModel<T>(
         return contents[rowIndex][columnIndex]
     }
 
-    operator fun set(rowIndex: Int, columnIndex: Int, newContent: T): TableModel<T> {
+    operator fun set(rowIndex: Int, columnIndex: Int, newContent: T): Table<T> {
         ensureValidCoordinates(rowIndex, columnIndex)
         val newRow = contents[rowIndex].replace(columnIndex, newContent)
         val newContents = contents.replace(rowIndex, newRow)
-        return TableModel(columnsCount, newContents)
+        return Table(columnsCount, newContents)
     }
 
     private fun <V> List<V>.replace(index: Int, newValue: V): List<V> = buildList {
@@ -70,49 +75,181 @@ class TableModel<T>(
     }
 }
 
-inline fun <reified T> TableModel(rowsCount: Int, columnsCount: Int, contentsProducer: (Int, Int) -> T): TableModel<T> {
+inline fun <reified T> Table(rowsCount: Int, columnsCount: Int, contentsProducer: (Int, Int) -> T): Table<T> {
     val model: List<List<T>> = List(rowsCount) { i -> List(columnsCount) { j -> contentsProducer(i, j) } }
-    return TableModel(columnsCount, model)
+    return Table(columnsCount, model)
+}
+
+interface TableDividersState {
+
+    fun updateDividerOffset(dividerIndex: Int, delta: Float)
+
+    fun getDividerOffset(dividerIndex: Int): Float
+}
+
+class TableState(
+    initialFirstVisibleRowIndex: Int = 0,
+    initialFirstVisibleRowScrollOffset: Int = 0,
+    initialColumnsSizeInPx: Map<Int, Float> = emptyMap()
+) : TableDividersState {
+
+    companion object {
+
+        val Saver: Saver<TableState, *> = mapSaver(
+            save = {
+                mapOf(
+                    "initialFirstVisibleRowIndex" to it.firstVisibleRowIndex,
+                    "initialFirstVisibleRowScrollOffset" to it.firstVisibleRowScrollOffset,
+                    *it.dividerOffsets.map { (k, v) -> it.toString() to v }.toTypedArray()
+                )
+            },
+            restore = {
+                val mutableMap = it.toMutableMap()
+                TableState(
+                    initialFirstVisibleRowIndex = mutableMap.remove("initialFirstVisibleRowIndex") as Int,
+                    initialFirstVisibleRowScrollOffset = mutableMap.remove("initialFirstVisibleRowScrollOffset") as Int,
+                    initialColumnsSizeInPx = mutableMap.entries.associate { (k, v) -> k.toInt() to (v as Float) }
+                )
+            }
+        )
+    }
+
+    internal val listState = LazyListState(initialFirstVisibleRowIndex, initialFirstVisibleRowScrollOffset)
+    internal val dividerOffsets = SnapshotStateMap<Int, Float>().apply { putAll(initialColumnsSizeInPx) }
+
+    val firstVisibleRowIndex
+        get() = listState.firstVisibleItemIndex
+
+    val firstVisibleRowScrollOffset
+        get() = listState.firstVisibleItemScrollOffset
+
+    private var dividerWidthPx = 1f
+    private var tableWidthPx = 1f
+    private var columnsCount = 0
+
+    private var isInitialized = false
+
+    @Composable
+    internal fun initializeState(tableWidthPx: Float, dividerWidthPx: Float, columnsCount: Int) = remember(dividerWidthPx, columnsCount) {
+        check(!isInitialized) { "Already initialized." }
+        isInitialized = true
+        if (dividerOffsets.isNotEmpty()) {
+            val sortedMap = dividerOffsets.entries.sortedBy { it.key }
+            require(sortedMap.map { it.value }.isSorted()) { "One or more offset is not ordered" }
+            require(sortedMap.last().value + dividerWidthPx <= tableWidthPx) { "Last element is outside the table." }
+            require(dividerOffsets.size == columnsCount - 1) {
+                "initialColumnsSizeInPx has size ${dividerOffsets.size} while current model has $columnsCount columns"
+            }
+        } else {
+            val totalDividersPx = dividerWidthPx * (columnsCount - 1)
+            val cellWidthPx = (tableWidthPx - totalDividersPx) / columnsCount
+
+            for (i in 0 until columnsCount - 1) {
+                dividerOffsets[i] = (i + 1) * cellWidthPx + i * dividerWidthPx
+            }
+        }
+
+        this.tableWidthPx = tableWidthPx
+        this.dividerWidthPx = dividerWidthPx
+        this.columnsCount = columnsCount
+    }
+
+    internal fun onTableResize(newTableWidthPx: Float) {
+        checkInitialized()
+        if (newTableWidthPx == tableWidthPx) return
+        val scaleFactor = newTableWidthPx / tableWidthPx
+        for (i in 0 until columnsCount - 1) {
+            dividerOffsets[i] = dividerOffsets.getValue(i) * scaleFactor
+        }
+        tableWidthPx = newTableWidthPx
+    }
+
+    override fun updateDividerOffset(dividerIndex: Int, delta: Float) {
+        checkInitialized()
+        check(dividerIndex in 0 until columnsCount) { "Invalid divider index $dividerIndex" }
+        if (delta == 0f) return
+        val currentOffset = dividerOffsets.getValue(dividerIndex)
+        val newOffset = when {
+            delta > 0 && dividerIndex == dividerOffsets.size - 1 -> min(currentOffset + delta, tableWidthPx - dividerWidthPx - 1)
+            delta > 0 -> min(currentOffset + delta, dividerOffsets.getValue(dividerIndex + 1) - dividerWidthPx - 1)
+            delta < 0 && dividerIndex == 0 -> max(currentOffset + delta, 1f)
+            delta < 0 -> max(currentOffset + delta, dividerOffsets.getValue(dividerIndex - 1) + dividerWidthPx + 1)
+            else -> error("How did I get here?")
+        }
+        dividerOffsets[dividerIndex] = newOffset
+    }
+
+    override fun getDividerOffset(dividerIndex: Int): Float {
+        checkInitialized()
+        return dividerOffsets.getValue(dividerIndex)
+    }
+
+    private fun checkInitialized() {
+        check(isInitialized) { "State has not been initialized." }
+    }
+
+    suspend fun animateScrollToRow(
+        index: Int,
+        scrollOffset: Int = 0
+    ) = listState.animateScrollToItem(index, scrollOffset)
+
+    suspend fun scrollToRow(
+        index: Int,
+        scrollOffset: Int = 0
+    ) = listState.scrollToItem(index, scrollOffset)
+}
+
+private fun <T : Comparable<T>> Iterable<T>.isSorted(): Boolean {
+    var previous: T? = null
+    forEach { current ->
+        when {
+            previous == null -> previous = current
+            previous!! > current -> return false
+        }
+    }
+    return true
 }
 
 @Composable
-fun <T> Table(
-    tableData: TableModel<T>,
+fun rememberTableState(
+    initialFirstVisibleRowIndex: Int = 0,
+    initialFirstVisibleRowScrollOffset: Int = 0,
+    initialColumnsSizeInPx: Map<Int, Float> = emptyMap()
+): TableState = rememberSaveable(saver = TableState.Saver) {
+    TableState(
+        initialFirstVisibleRowIndex = initialFirstVisibleRowIndex,
+        initialFirstVisibleRowScrollOffset = initialFirstVisibleRowScrollOffset,
+        initialColumnsSizeInPx = initialColumnsSizeInPx
+    )
+}
+
+@Composable
+fun <T> TableView(
+    tableData: Table<T>,
     modifier: Modifier = Modifier,
     dividerWidth: Dp = 1.dp,
-    content: @Composable BoxScope.(T, Int, Int) -> Unit
+    state: TableState = rememberTableState(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    reverseLayout: Boolean = false,
+    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+    content: @Composable (T, Int, Int) -> Unit
 ) {
     if (tableData.isEmpty()) return
 
     val dividerWidthPx = with(LocalDensity.current) { dividerWidth.toPx() }
-    var previousTableWidthPx: Float by remember { mutableStateOf(-1f) }
 
-    BoxWithConstraints(modifier) {
+    BoxWithConstraints(modifier = modifier) {
         val tableWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
-
-        // TODO replace with a proper state object (and validate to avoid overlaps etc)
-        val dividerOffsets = remember {
-            val totalDividersPx = dividerWidthPx * (tableData.columnsCount - 1)
-            val cellWidthPx = (tableWidthPx - totalDividersPx) / tableData.columnsCount
-            buildSnapshotMap {
-                for (i in 0 until tableData.columnsCount - 1) {
-                    put(i, ((i + 1) * cellWidthPx + i * dividerWidthPx))
-                }
-            }
-        }
-
-        if (previousTableWidthPx > 0) {
-            val cellWidthDifference = (tableWidthPx - previousTableWidthPx) / tableData.columnsCount
-            for (i in 0 until tableData.columnsCount - 1) {
-                dividerOffsets[i] = dividerOffsets.getValue(i) + cellWidthDifference * (i + 1)
-            }
-        }
-
-        previousTableWidthPx = tableWidthPx
-
-        LazyColumn {
+        state.initializeState(tableWidthPx, dividerWidthPx, tableData.columnsCount)
+        state.onTableResize(tableWidthPx)
+        LazyColumn(
+            state = state.listState,
+            contentPadding = contentPadding,
+            reverseLayout = reverseLayout,
+            flingBehavior = flingBehavior
+        ) {
             items(tableData.rowsCount) { rowIndex ->
-                Row(tableData.columnsCount, tableData, rowIndex, dividerOffsets, tableWidthPx, dividerWidthPx, content)
+                Row(tableData.columnsCount, tableData, rowIndex, state, tableWidthPx, dividerWidthPx, content)
             }
         }
     }
@@ -121,12 +258,12 @@ fun <T> Table(
 @Composable
 private fun <T> Row(
     columnsCount: Int,
-    tableData: TableModel<T>,
+    tableData: Table<T>,
     rowIndex: Int,
-    dividerOffsets: SnapshotStateMap<Int, Float>,
+    dividersState: TableDividersState,
     tableWidthPx: Float,
     dividerWidthPx: Float,
-    content: @Composable (BoxScope.(T, Int, Int) -> Unit)
+    content: @Composable (T, Int, Int) -> Unit
 ) {
     Layout(content = {
         for (columnIndex in 0 until columnsCount) {
@@ -145,10 +282,7 @@ private fun <T> Row(
                         .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
                         .draggable(
                             orientation = Orientation.Horizontal,
-                            state = rememberDraggableState { delta ->
-                                dividerOffsets[dividerId.dividerIndex] =
-                                    dividerOffsets.getValue(dividerId.dividerIndex) + delta
-                            }
+                            state = rememberDraggableState { delta -> dividersState.updateDividerOffset(dividerId.dividerIndex, delta) }
                         )
                 )
             }
@@ -160,9 +294,9 @@ private fun <T> Row(
 
             val elementWidth = when (val layoutId = measurable.layoutId) {
                 is TableLayoutId.Cell -> when (layoutId.cellIndex) {
-                    0 -> dividerOffsets.getValue(0)
-                    columnsCount - 1 -> tableWidthPx - totalWidthPx
-                    else -> dividerOffsets.getValue(layoutId.cellIndex) - dividerOffsets.getValue(layoutId.cellIndex - 1) - dividerWidthPx
+                    0 -> dividersState.getDividerOffset(0)
+                    columnsCount - 1 -> tableWidthPx - totalWidthPx // assign all remaining pixels due to rounding errors to last cell
+                    else -> dividersState.getDividerOffset(layoutId.cellIndex) - dividersState.getDividerOffset(layoutId.cellIndex - 1) - dividerWidthPx
                 }
                 is TableLayoutId.Divider -> dividerWidthPx
                 else -> error("Unknown layoutId $layoutId")
@@ -175,7 +309,7 @@ private fun <T> Row(
             measurable.withWidth(elementWidth)
         }
 
-        check(totalWidthPx == tableWidthPx) { "Table contents aren't taking up the whole width of the table" }
+        check(totalWidthPx >= tableWidthPx) { "Table contents aren't taking up the whole width of the table" }
 
         val placeables = measures.map { dimension ->
             dimension.measurable.measure(Constraints.fixed(dimension.width, maxHeightPx))
