@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -38,13 +38,17 @@ public final class PsiUtil {
 
   private PsiUtil() { }
 
-  public static boolean isInstantiable(@NotNull PsiClass cls) {
-    PsiModifierList modList = cls.getModifierList();
-    if (modList == null || cls.isInterface() || modList.hasModifierProperty(PsiModifier.ABSTRACT) || !isPublicOrStaticInnerClass(cls)) {
+  public static boolean isInstantiable(@NotNull PsiClass psiClass) {
+    if (psiClass.isInterface() ||
+        psiClass.isAnnotationType() ||
+        psiClass instanceof PsiTypeParameter ||
+        psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+        psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
+        !isInnerStaticClass(psiClass)) {
       return false;
     }
 
-    PsiMethod[] constructors = cls.getConstructors();
+    PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
@@ -56,12 +60,11 @@ public final class PsiUtil {
     return false;
   }
 
-  public static boolean isPublicOrStaticInnerClass(@NotNull PsiClass cls) {
-    PsiModifierList modifiers = cls.getModifierList();
-    if (modifiers == null) return false;
+  private static boolean isInnerStaticClass(@NotNull PsiClass cls) {
+    if (cls.getContainingClass() == null) return true;
 
-    return modifiers.hasModifierProperty(PsiModifier.PUBLIC) &&
-           (cls.getContainingClass() == null || modifiers.hasModifierProperty(PsiModifier.STATIC));
+    return cls.hasModifierProperty(PsiModifier.STATIC) &&
+           !cls.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
   @Nullable
