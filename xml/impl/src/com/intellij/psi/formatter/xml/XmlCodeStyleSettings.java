@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 
 /**
  * Moved from CodeStyleSettings
- * @author Rustam Vishnyakov
  */
 public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
 

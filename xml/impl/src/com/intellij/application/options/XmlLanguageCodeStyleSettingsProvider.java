@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
   @NotNull
