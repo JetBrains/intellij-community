@@ -27,6 +27,8 @@ internal abstract class SearchEverywhereRankingModelTest
       .map { it.withMlWeight(getMlWeight(it, searchQuery, featuresProviderCache)) }
       .sortedByDescending { it.mlWeight }
 
+    assert(rankedElements.size > 1) { "Found ${rankedElements.size} which is unsuitable for ranking assertions" }
+
     return RankingAssertion(rankedElements)
   }
 
