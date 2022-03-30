@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.versions
+package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -19,7 +19,7 @@ import java.nio.file.Path
  * Component forces update for built-in libraries in plugin directory. They are ignored because of
  * com.intellij.util.indexing.FileBasedIndex.isUnderConfigOrSystem()
  */
-internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
+internal class KotlinBundledRefresher : StartupActivity.DumbAware {
     init {
         if (isUnitTestMode()) {
             throw ExtensionNotApplicableException.create()
