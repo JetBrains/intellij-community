@@ -9,6 +9,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -30,6 +31,10 @@ public final class ExtensionDeclarationRelatedItemLineMarkerProvider extends Dev
   protected void process(@NotNull PsiElement identifier,
                          @NotNull PsiClass psiClass,
                          @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
+    if (!PsiUtil.isInstantiable(psiClass)) {
+      return;
+    }
+
     List<ExtensionCandidate> targets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
     if (targets.isEmpty()) {
       return;
