@@ -175,7 +175,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   override fun dispose() {
-    repository.close()   // todo synchronize
+    if (this::repository.isInitialized) {
+      repository.close()   // todo synchronize
+    }
   }
 
   override fun collectCurrentSnapshot(): SettingsSnapshot {
