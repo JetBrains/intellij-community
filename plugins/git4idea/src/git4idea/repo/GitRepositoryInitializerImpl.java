@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.GitRepositoryInitializer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -33,13 +34,13 @@ public class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
       return;
     }
 
-    GitInit.refreshAndConfigureVcsMappings(project, root, root.getPath());
+    GitInit.configureVcsMappings(project, root);
     GitUtil.generateGitignoreFileIfNeeded(project, root);
     // make sure .idea/.gitignore is created before adding files
     project.getService(GitIgnoreInStoreDirGenerator.class).generateGitignoreInStoreDirIfNeeded();
 
     if (addFilesToVcs) {
-      project.save(); // ensure vcs.xml is up-to-date
+      StoreUtil.saveSettings(project, true); // ensure vcs.xml is up-to-date
 
       try {
         GitFileUtils.addFiles(project, root, Collections.singletonList(root));
