@@ -144,7 +144,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
     return ((NamespaceContainer)namespace).getNamespace().getPrefix();
   }
 
-  private final void recurseElementText(Element element, StringBuilder sb) {
+  private void recurseElementText(Element element, StringBuilder sb) {
     for (Iterator<?> it = element.getContent().iterator(); it.hasNext(); ) {
       Content c = (Content)it.next();
       if (c instanceof Element) {

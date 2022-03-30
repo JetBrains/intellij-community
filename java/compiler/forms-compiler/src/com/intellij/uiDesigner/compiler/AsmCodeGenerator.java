@@ -416,10 +416,7 @@ public final class AsmCodeGenerator {
             componentType = Type.getType(componentClass.getDescriptor());
           }
         }
-        catch (ClassNotFoundException e) {
-          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
-        }
-        catch (IOException e) {
+        catch (ClassNotFoundException | IOException e) {
           throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
         }
       }
@@ -564,10 +561,7 @@ public final class AsmCodeGenerator {
             continue;
           }
         }
-        catch (IOException e) {
-          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
-        }
-        catch (ClassNotFoundException e) {
+        catch (IOException | ClassNotFoundException e) {
           throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
         }
 
@@ -748,10 +742,7 @@ public final class AsmCodeGenerator {
             }
           }
         }
-        catch (IOException e) {
-          throw new CodeGenerationException(rootContainer.getId(), e.getMessage(), e);
-        }
-        catch (ClassNotFoundException e) {
+        catch (IOException | ClassNotFoundException e) {
           throw new CodeGenerationException(rootContainer.getId(), e.getMessage(), e);
         }
       }

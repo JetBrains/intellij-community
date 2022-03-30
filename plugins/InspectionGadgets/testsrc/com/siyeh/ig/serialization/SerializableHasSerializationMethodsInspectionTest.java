@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class SerializableHasSerializationMethodsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testExternalizable() {
+    //noinspection ExternalizableWithoutPublicNoArgConstructor
     doTest("class Test implements java.io.Externalizable {" +
            "    @Override" +
            "    public void writeExternal(java.io.ObjectOutput out) {" +

@@ -117,7 +117,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
       .filter(classFilter -> classFilter.INCLUDE == include).toArray(ClassFilter[]::new);
   }
 
-  protected boolean canHavePerTestCoverage() {
+  private boolean canHavePerTestCoverage() {
     return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
 

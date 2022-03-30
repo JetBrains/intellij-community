@@ -264,7 +264,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
-    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException, JDOMException {
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
     LOG.assertTrue(myName != null);
     LOG.assertTrue(myModuleFilePath != null);
 

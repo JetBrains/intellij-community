@@ -83,7 +83,7 @@ public final class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<Ja
     @Nullable private JVMName mySignature;
     private boolean myIsStatic;
 
-    protected KotlinFunctionBreakpoint(@NotNull Project project, XBreakpoint breakpoint) {
+    KotlinFunctionBreakpoint(@NotNull Project project, XBreakpoint breakpoint) {
         super(project, breakpoint);
     }
 
