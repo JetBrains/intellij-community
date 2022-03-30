@@ -35,6 +35,10 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings> {
 
+  /**
+   * Creates collector that extracts problems for current file and reports them in editor.
+   * Right now collector creates inlay hint for element with broken usages and adds weak warning to it.
+   */
   @Nullable
   @Override
   public InlayHintsCollector getCollectorFor(@NotNull PsiFile file,

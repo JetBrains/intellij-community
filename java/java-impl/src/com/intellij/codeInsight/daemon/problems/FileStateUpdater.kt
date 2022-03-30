@@ -4,8 +4,16 @@ package com.intellij.codeInsight.daemon.problems
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
 
+/**
+ * Mapping between psi members and their properties model.
+ * These properties are used to determine if member state has changed or not.
+ */
 internal typealias Snapshot = Map<SmartPsiElementPointer<PsiMember>, ScopedMember>
 
+/**
+ * Pair of snapshot and changes.
+ * Changes contain mapping between psi members and their previous state.
+ */
 internal data class FileState(val snapshot: Snapshot, val changes: Map<PsiMember, ScopedMember?>)
 
 internal class FileStateUpdater(private val prevState: FileState?) : JavaElementVisitor() {
@@ -34,6 +42,9 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
 
   companion object {
 
+    /**
+     * Extracts current file state from cache or creates a new one if it is not in cache.
+     */
     @JvmStatic
     @JvmName("getState")
     internal fun getState(psiFile: PsiFile): FileState? {
@@ -46,6 +57,15 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       return FileState(snapshot, emptyMap())
     }
 
+    /**
+     * Constructs new state based on a previous one
+     * 
+     * Construction contains three stages:
+     * 1. analyze current state of psi file. for each member that already was in a snapshot check if it changed.
+     * 2. put elements that were removed from psi file into set of changes
+     * 3. add related changes to set of changes
+     * (e.g. if additional method was added to functional interface then it cannot be used in lambdas and we have to check its usages)
+     */
     @JvmStatic
     @JvmName("findState")
     internal fun findState(psiFile: PsiFile, prevSnapshot: Snapshot, prevChanges: Map<PsiMember, ScopedMember?>): FileState {
@@ -63,6 +83,9 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       return FileState(snapshot, changes)
     }
 
+    /**
+     * Restore file state based on changes in snapshot
+     */
     @JvmStatic
     @JvmName("setPreviousState")
     internal fun setPreviousState(psiFile: PsiFile) {

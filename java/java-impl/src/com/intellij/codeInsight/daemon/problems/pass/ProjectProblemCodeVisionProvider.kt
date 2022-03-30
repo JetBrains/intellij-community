@@ -50,7 +50,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     if (previewProblems != null) {
       val problem = previewProblems.first()
       val lenseColor = getCodeVisionColor()
-      val lensPair = createLensPair(problem.context as PsiMethod, lenseColor, previewProblems) ?: return emptyList()
+      val lensPair = createLensPair(problem.context as PsiMethod, lenseColor, previewProblems)
       return listOf(lensPair)
     }
     val problems = ProjectProblemUtils.getReportedProblems(editor)
@@ -88,7 +88,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
         psiMember,
         PsiNameIdentifierOwner::class.java) ?: return@forEach
       val identifier = namedElement.nameIdentifier ?: return@forEach
-      val lensPair = createLensPair(psiMember, lenseColor, memberProblems) ?: return@forEach
+      val lensPair = createLensPair(psiMember, lenseColor, memberProblems)
       lenses.add(lensPair)
       highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember!!, identifier))
     }
@@ -98,7 +98,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     return lenses
   }
 
-  private fun createLensPair(psiMember: PsiMember, lenseColor: Color, memberProblems: Set<Problem?>): Pair<TextRange, ClickableRichTextCodeVisionEntry>? {
+  private fun createLensPair(psiMember: PsiMember, lenseColor: Color, memberProblems: Set<Problem?>): Pair<TextRange, ClickableRichTextCodeVisionEntry> {
     val text = JavaBundle.message("project.problems.hint.text", memberProblems.size)
     val richText = RichText(text)
     richText.setForeColor(lenseColor)
