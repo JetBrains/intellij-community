@@ -59,8 +59,9 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     if (!(gParent instanceof PsiJavaCodeReferenceElement) ||
         isParameterizedReference((PsiJavaCodeReferenceElement)gParent)) return null;
 
-    if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW) {
-      return null;
+    if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW &&
+        !(gParent.getParent() instanceof PsiCaseLabelElementList)) {
+        return null;
     }
 
     PsiElement resolved = refExpr.resolve();

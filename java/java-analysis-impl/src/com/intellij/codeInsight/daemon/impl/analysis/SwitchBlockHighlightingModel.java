@@ -231,10 +231,12 @@ public class SwitchBlockHighlightingModel {
 
   @Nullable
   static HighlightInfo createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
-    if (expr.getQualifier() != null) {
-      return createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
-    }
-    return null;
+    PsiElement qualifier = expr.getQualifier();
+    if (qualifier == null) return null;
+    HighlightInfo result = createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
+    QuickFixAction.registerQuickFixAction(result, getFixFactory().createDeleteFix(qualifier, JavaErrorBundle.message(
+      "qualified.enum.constant.in.switch.remove.fix")));
+    return result;
   }
 
   static QuickFixFactory getFixFactory() {
