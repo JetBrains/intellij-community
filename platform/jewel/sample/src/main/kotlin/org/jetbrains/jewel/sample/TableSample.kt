@@ -9,20 +9,29 @@ import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Table
-import org.jetbrains.jewel.theme.intellij.components.TableModel
+import org.jetbrains.jewel.theme.intellij.components.TableView
 import org.jetbrains.jewel.theme.toolbox.components.Text
 
 fun main() {
     singleWindowApplication {
         IntelliJThemeDark {
             Surface(modifier = Modifier.fillMaxSize()) {
-                val modelContents = TableModel(30, 6) { i, j -> "Hello ${((i + 1) * (j + 1) - 1)}" }
-                Table(modelContents, Modifier.matchParentSize(), 3.dp) { model, i, _ ->
+                val modelContents = Table(30, 6) { i, j -> "Hello ${((i + 1) * (j + 1) - 1)}" }
+                TableView(modelContents, Modifier.matchParentSize(), 3.dp) { model, i, j ->
                     Text(
                         model,
                         softWrap = false,
                         modifier = Modifier.background(
-                            if (i % 2 == 0) Color.Red else Color.Blue
+                            when {
+                                j % 2 == 0 -> when {
+                                    i % 2 == 0 -> Color.Red
+                                    else -> Color.Blue
+                                }
+                                else -> when {
+                                    i % 2 != 0 -> Color.Red
+                                    else -> Color.Blue
+                                }
+                            }
                         ).fillMaxSize()
                     )
                 }
