@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.artifacts
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.inputStream
@@ -35,11 +38,21 @@ object AdditionalKotlinArtifacts {
 
     @JvmStatic
     val compilerTestDataDir = run {
-        val testDataJar = getMavenArtifactJarPath(
-            KOTLIN_MAVEN_GROUP_ID,
-            "kotlin-compiler-testdata-for-ide",
-            getJpsLibraryVersion("kotlinc_kotlin_compiler_testdata.xml")
-        )
+        val anyJarInMavenLocal = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) } ?: error("Can't find any ")
+        val artifactId = "kotlin-compiler-testdata-for-ide"
+        // Such a weird algorithm because you can't use getMavenArtifactJarPath in this code. That's the only reliable way to find a
+        // maven artifact in Maven local
+        val testDataJar = generateSequence(anyJarInMavenLocal) { it.parentFile }
+            .map {
+                resolveMavenArtifactInMavenRepo(
+                    it,
+                    KOTLIN_MAVEN_GROUP_ID,
+                    artifactId,
+                    getJpsLibraryVersion("kotlinc_kotlin_compiler_testdata.xml")
+                )
+            }
+            .firstOrNull { it.exists() }
+            ?: error("Can't find $artifactId in maven local")
         lazyUnpackJar(testDataJar, File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata-2"))
     }
 

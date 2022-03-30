@@ -121,7 +121,8 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
         val stdlibFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
             ?: error("Can't find kotlin-stdlib.jar in Maven Local")
 
-        // IDEA should have downloaded the library as a part of dependency resolution in the 'kotlin.util.compiler-dependencies' module
+        // Such a weird algorithm because you can't use getMavenArtifactJarPath in this code. That's the only reliable way to find a
+        // maven artifact in Maven local
         val packedDist = generateSequence(stdlibFile) { it.parentFile }
             .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
             .firstOrNull { it.exists() }
