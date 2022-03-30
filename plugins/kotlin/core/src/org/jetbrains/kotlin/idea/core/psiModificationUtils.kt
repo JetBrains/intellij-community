@@ -131,6 +131,7 @@ fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
 fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
     if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) return false
     val lastLambdaExpression = getLastLambdaExpression() ?: return false
+    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) return false
 
     val callee = calleeExpression
     if (callee is KtNameReferenceExpression) {
@@ -173,6 +174,10 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
     }
 
     return true
+}
+
+private fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
+    return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
 }
 
 private fun KotlinType.allowsMoveOutsideParentheses(
