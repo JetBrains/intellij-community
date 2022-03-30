@@ -44,7 +44,6 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PatternResolveState;
@@ -1229,9 +1228,8 @@ public final class HighlightUtil {
         }
         text = text.substring(1, text.length() - 1);
 
-        StringBuilder chars = new StringBuilder();
-        boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
-        if (!success) {
+        CharSequence chars = CodeInsightUtilCore.parseStringCharacters(text, null);
+        if (chars == null) {
           String message = JavaErrorBundle.message("illegal.escape.character.in.character.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
@@ -1271,9 +1269,7 @@ public final class HighlightUtil {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
 
-          StringBuilder chars = new StringBuilder();
-          boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
-          if (!success) {
+          if (CodeInsightUtilCore.parseStringCharacters(text, null) == null) {
             String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
@@ -1287,7 +1283,7 @@ public final class HighlightUtil {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
           }
           else {
-            StringBuilder chars = new StringBuilder();
+            StringBuilder chars = new StringBuilder(text.length());
             int[] offsets = new int[text.length() + 1];
             boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets);
             if (!success) {

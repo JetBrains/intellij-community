@@ -54,9 +54,8 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
       }
       final String text = expression.getText();
       final int[] offsets = new int[text.length() + 1];
-      final StringBuilder result = new StringBuilder();
-      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
-      if (success) {
+      final CharSequence result = CodeInsightUtilCore.parseStringCharacters(text, offsets);
+      if (result != null) {
         for (int i = 0, max = result.length(); i < max; i++) {
           final char c = result.charAt(i);
           if (c == '\n' || c == '\r') {

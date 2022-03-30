@@ -231,9 +231,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
       final String text = expression.getText();
       final int[] offsets = new int[text.length() + 1];
-      final StringBuilder result = new StringBuilder();
-      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
-      if (!success) {
+      final CharSequence result = CodeInsightUtilCore.parseStringCharacters(text, offsets);
+      if (result == null) {
         return;
       }
       for (int i = 0, length = result.length(); i < length; i++) {
