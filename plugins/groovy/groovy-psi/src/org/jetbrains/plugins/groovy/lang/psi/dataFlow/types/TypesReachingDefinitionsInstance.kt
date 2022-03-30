@@ -25,7 +25,7 @@ class TypesReachingDefinitionsInstance(private val flow : Array<Instruction>) : 
     is FunctionalBlockEndInstruction -> {
       val topState = m.topClosureState
       if (topState == null) {
-        LOG.error("Incorrect CFG", Attachment("cfg", flow.contentDeepToString()))
+        LOG.error("Incorrect CFG, at ${instruction.num()}", Attachment("cfg.txt", flow.contentDeepToString()))
         m
       } else {
         m.withMerged(topState).withoutClosureContext()
