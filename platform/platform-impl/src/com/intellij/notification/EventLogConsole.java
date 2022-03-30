@@ -103,9 +103,15 @@ public final class EventLogConsole {
     @Nullable String getFontName();
 
     @Nullable Float getFontSize();
+
+    default @Nullable Float getLineSpacing() {
+      return null;
+    }
   }
 
-  public static void installNotificationsFont(@NotNull EditorEx editor, @NotNull Disposable parentDisposable, @NotNull  FontProvider provider) {
+  public static void installNotificationsFont(@NotNull EditorEx editor,
+                                              @NotNull Disposable parentDisposable,
+                                              @NotNull FontProvider provider) {
     DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
       @Override
       public String getEditorFontName() {
@@ -161,6 +167,18 @@ public final class EventLogConsole {
 
       @Override
       public void setConsoleFontSize(float fontSize) {
+      }
+
+      @Override
+      public float getLineSpacing() {
+        Float spacing = provider.getLineSpacing();
+        return spacing == null ? super.getLineSpacing() : spacing;
+      }
+
+      @Override
+      public float getConsoleLineSpacing() {
+        Float spacing = provider.getLineSpacing();
+        return spacing == null ? super.getConsoleLineSpacing() : spacing;
       }
     };
 

@@ -62,6 +62,7 @@ import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.CaretEvent
 import javax.swing.event.DocumentEvent
@@ -805,6 +806,7 @@ private class NotificationComponent(val project: Project,
 
   var myTextEditor: EditorEx? = null
   var myDisposable: Disposable? = null
+  private var myTextEditorRemoveCallback: Runnable? = null
 
   init {
     isOpaque = true
@@ -843,6 +845,7 @@ private class NotificationComponent(val project: Project,
 
     val centerPanel = JPanel(VerticalLayout(JBUI.scale(8)))
     centerPanel.isOpaque = false
+    centerPanel.border = JBUI.Borders.emptyRight(10)
 
     var titlePanel: JPanel? = null
 
@@ -893,8 +896,9 @@ private class NotificationComponent(val project: Project,
       textEditor.settings.isWhitespacesShown = false
       textEditor.settings.isUseSoftWraps = true
       textEditor.settings.isPaintSoftWraps = false
-      textEditor.scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-      textEditor.scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+      textEditor.settings.isWheelFontChangeEnabled = false
+      textEditor.setHorizontalScrollbarVisible(false)
+      textEditor.setVerticalScrollbarVisible(false)
       textEditor.setBorder(null)
       textEditor.setCaretEnabled(false)
       textEditor.setCaretVisible(false)
@@ -904,9 +908,11 @@ private class NotificationComponent(val project: Project,
         override fun getFontName() = UIUtil.getLabelFont().fontName
 
         override fun getFontSize() = UIUtil.getLabelFont().size2D
+
+        override fun getLineSpacing() = 1f
       })
 
-      EventLog.formatContent(textEditor, notification)
+      myTextEditorRemoveCallback = EventLog.formatContent(textEditor, notification, Supplier { myNotificationWrapper.notification })
       UIUtil.setNotOpaqueRecursively(textEditor.component)
       (textEditor as? EditorImpl)?.softWrapModel?.setSoftWrapPainter(object : SoftWrapPainter {
         override fun paint(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
@@ -1133,6 +1139,11 @@ private class NotificationComponent(val project: Project,
     val dropDownAction = UIUtil.findComponentOfType(this, MyDropDownAction::class.java)
     if (dropDownAction != null) {
       DataManager.removeDataProvider(dropDownAction)
+    }
+
+    if (myTextEditorRemoveCallback != null) {
+      myTextEditorRemoveCallback!!.run()
+      myTextEditorRemoveCallback = null
     }
   }
 
