@@ -279,7 +279,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final VirtualFile[] selectedFiles =
-        FileChooser.chooseFiles(new FileChooserDescriptor(true, true, false, false,
+        FileChooser.chooseFiles(new FileChooserDescriptor(true, false, false, false,
                                                           false, true), myProject, null);
 
       Set<VirtualFile> validFiles = new HashSet<>();
