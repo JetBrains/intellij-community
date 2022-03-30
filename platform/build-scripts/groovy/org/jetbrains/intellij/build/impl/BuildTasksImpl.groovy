@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
@@ -233,6 +236,7 @@ final class BuildTasksImpl extends BuildTasks {
           if (Files.notExists(targetFile)) {
             context.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
           }
+          context.productProperties.customizeBuiltinModules(context, targetFile)
           context.notifyArtifactWasBuilt(targetFile)
         }
       })
@@ -1063,5 +1067,51 @@ idea.fatal.error.notification=disabled
       Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
+  }
+
+  private static void setArrayNodeElementsInBuiltinModules(@NotNull BuildContext context, @NotNull Path file, @NotNull JsonNode root, @NotNull String sectionName, @NotNull List<String> valuesList) {
+    ArrayNode node = root.get(sectionName) as ArrayNode
+    if (node == null) {
+      context.messages.error("'$sectionName' was not found in $file:\n" + Files.readString(file))
+    }
+
+    List<String> existingValues = node.toList().collect { it.asText() }
+    node.removeAll()
+    for (String value : valuesList) {
+      if (!existingValues.contains(value)) {
+        context.messages.error("Value '$value' in '$sectionName' was not found across existing values in $file:\n" +
+                               Files.readString(file))
+      }
+      node.add(value)
+    }
+  }
+
+  static void customizeBuiltinModulesAllowOnlySpecified(
+    @NotNull BuildContext context,
+    @NotNull Path builtinModulesFile,
+    @Nullable List<String> moduleNames,
+    @Nullable List<String> pluginNames,
+    @Nullable List<String> fileExtensions
+  ) {
+    context.messages.info("File $builtinModulesFile before modification:\n" + Files.readString(builtinModulesFile))
+
+    ObjectMapper objectMapper = new ObjectMapper()
+    JsonNode root = objectMapper.readTree(builtinModulesFile.toFile())
+
+    if (moduleNames != null) {
+      setArrayNodeElementsInBuiltinModules(context, builtinModulesFile, root, "modules", moduleNames)
+    }
+
+    if (pluginNames != null) {
+      setArrayNodeElementsInBuiltinModules(context, builtinModulesFile, root, "plugins", pluginNames)
+    }
+
+    if (fileExtensions != null) {
+      setArrayNodeElementsInBuiltinModules(context, builtinModulesFile, root, "extensions", fileExtensions)
+    }
+
+    Files.write(builtinModulesFile, objectMapper.writeValueAsBytes(root))
+
+    context.messages.info("File $builtinModulesFile AFTER modification:\n" + Files.readString(builtinModulesFile))
   }
 }
