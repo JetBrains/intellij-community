@@ -1113,18 +1113,47 @@ public class JBTabsImpl extends JComponent
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, renderer -> {
 
       return new DefaultListCellRenderer() {
-        MouseListener listMouseListener = null;
+        MouseAdapter listMouseListener = null;
+        private static final String HOVER_KEY = "popupHoverIndex";
 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           @SuppressWarnings("unchecked")
           Component rendererComponent = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           TabInfo info = (TabInfo)value;
-          JLabel label = new JLabel(AllIcons.Actions.Close);
-          if (info.isPinned()) label.setIcon(AllIcons.Actions.PinTab);
+          Icon icon = AllIcons.Actions.Close;
+          if (Objects.equals(list.getClientProperty(HOVER_KEY), index)) {
+            icon = AllIcons.Actions.CloseHovered;
+          }
+          if (info.isPinned()) {
+            icon = AllIcons.Actions.PinTab;
+          }
+          JLabel label = new JLabel(icon);
           label.putClientProperty("info", info);
           if (listMouseListener == null) {
             listMouseListener = new MouseAdapter() {
+              @Override
+              public void mouseMoved(MouseEvent e) {
+                Point point = e.getLocationOnScreen();
+                SwingUtilities.convertPointFromScreen(point, list);
+                int hoveredIndex = list.locationToIndex(point);
+                Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
+                updateHoveredIconIndex(UIUtil.getClientProperty(renderer, "info") != null ? hoveredIndex : -1);
+              }
+
+              @Override
+              public void mouseExited(MouseEvent e) {
+                updateHoveredIconIndex(-1);
+              }
+
+              private void updateHoveredIconIndex(int hoveredIndex) {
+                Object oldValue = list.getClientProperty(HOVER_KEY);
+                list.putClientProperty(HOVER_KEY, hoveredIndex);
+                if (!Objects.equals(oldValue, list.getClientProperty(HOVER_KEY))) {
+                  list.repaint();
+                }
+              }
+
               @Override
               public void mouseReleased(MouseEvent e) {
                 Point point = e.getLocationOnScreen();
@@ -1165,9 +1194,13 @@ public class JBTabsImpl extends JComponent
               }
             };
             MouseListener[] listeners = list.getMouseListeners();
+            MouseMotionListener[] motionListeners = list.getMouseMotionListeners();
             Arrays.stream(listeners).forEach(list::removeMouseListener);
+            Arrays.stream(motionListeners).forEach(list::removeMouseMotionListener);
             list.addMouseListener(listMouseListener);
+            list.addMouseMotionListener(listMouseListener);
             Arrays.stream(listeners).forEach(list::addMouseListener);
+            Arrays.stream(motionListeners).forEach(list::addMouseMotionListener);
           }
 
           Color background = UIUtil.getListBackground(isSelected, true);
