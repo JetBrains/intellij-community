@@ -61,7 +61,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * This Walker implementation walks a list of Content in it's original RAW
+ * This Walker implementation walks a list of Content in its original RAW
  * format. There is no text manipulation, and all content will be returned as
  * the input type. In other words, next() will never be null, and text() will
  * always be null.
@@ -103,20 +103,6 @@ final class WalkerPRESERVE implements Walker {
     else {
       iter = content.iterator();
       alltext = false;
-      //			final int len = content.size();
-      //			boolean at = true;
-      //			for (int i = 0 ; i < len && at ; i++) {
-      //			    switch (content.get(i).getCType()) {
-      //			        case Text:
-      //			        case CDATA:
-      //			        case EntityRef:
-      //			            break;
-      //			        default :
-      //			            at = false;
-      //			            break;
-      //			    }
-      //			}
-      //			alltext = at;
     }
   }
 

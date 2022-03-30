@@ -86,7 +86,7 @@ import java.util.List;
  * <p>
  * <b><i>Subclasses of this should have reentrant methods.</i></b> This is
  * easiest to accomplish simply by not allowing any instance fields. If your
- * sub-class has an instance field/variable, then it's probably broken.
+ * subclass has an instance field/variable, then it's probably broken.
  * <p>
  * <h2>The Stacks</h2>
  * <p>
@@ -105,7 +105,7 @@ import java.util.List;
  * <p>
  * <h2>Content Processing</h2>
  * <p>
- * This class delegates the formatting of the content to the Walker classes
+ * This class delegates the formatting of the content to the Walker classes,
  * and you can create your own custom walker by overriding the
  * {@link #buildWalker(FormatStack, List, boolean)} method.
  *
@@ -138,55 +138,49 @@ public abstract class AbstractDOMOutputProcessor extends
    */
 
   @Override
-  public org.w3c.dom.Document process(org.w3c.dom.Document basedoc,
-                                      Format format, Document doc) {
+  public org.w3c.dom.Document process(org.w3c.dom.Document basedoc, Format format, Document doc) {
     return printDocument(new FormatStack(format), new NamespaceStack(),
                          basedoc, doc);
   }
 
   @Override
-  public org.w3c.dom.Element process(org.w3c.dom.Document basedoc,
-                                     Format format, Element element) {
-    return printElement(new FormatStack(format), new NamespaceStack(),
-                        basedoc, element);
+  public org.w3c.dom.Element process(org.w3c.dom.Document basedoc, Format format, Element element) {
+    return printElement(new FormatStack(format), new NamespaceStack(), basedoc, element);
   }
 
   @Override
-  public List<Node> process(org.w3c.dom.Document basedoc,
-                            Format format, List<? extends Content> list) {
-    List<Node> ret = new ArrayList<Node>(
-      list.size());
-    FormatStack fstack = new FormatStack(format);
-    NamespaceStack nstack = new NamespaceStack();
+  public List<Node> process(org.w3c.dom.Document basedoc, Format format, List<? extends Content> list) {
+    List<Node> ret = new ArrayList<Node>(list.size());
+    FormatStack formatStack = new FormatStack(format);
+    NamespaceStack namespaceStack = new NamespaceStack();
     for (Content c : list) {
-      fstack.push();
+      formatStack.push();
       try {
-        Node node = helperContentDispatcher(fstack, nstack,
+        Node node = helperContentDispatcher(formatStack, namespaceStack,
                                             basedoc, c);
         if (node != null) {
           ret.add(node);
         }
       }
       finally {
-        fstack.pop();
+        formatStack.pop();
       }
     }
     return ret;
   }
 
   @Override
-  public CDATASection process(org.w3c.dom.Document basedoc,
-                              Format format, CDATA cdata) {
+  public CDATASection process(org.w3c.dom.Document document, Format format, CDATA cdata) {
     final List<CDATA> list = Collections.singletonList(cdata);
-    final FormatStack fstack = new FormatStack(format);
-    final Walker walker = buildWalker(fstack, list, false);
+    final FormatStack formatStack = new FormatStack(format);
+    final Walker walker = buildWalker(formatStack, list, false);
     if (walker.hasNext()) {
       final Content c = walker.next();
       if (c == null) {
-        return printCDATA(fstack, basedoc, new CDATA(walker.text()));
+        return printCDATA(document, new CDATA(walker.text()));
       }
       if (c.getCType() == CType.CDATA) {
-        return printCDATA(fstack, basedoc, (CDATA)c);
+        return printCDATA(document, (CDATA)c);
       }
     }
     // return an empty string if nothing happened.
@@ -194,18 +188,17 @@ public abstract class AbstractDOMOutputProcessor extends
   }
 
   @Override
-  public org.w3c.dom.Text process(org.w3c.dom.Document basedoc,
-                                  Format format, Text text) {
+  public org.w3c.dom.Text process(org.w3c.dom.Document document, Format format, Text text) {
     final List<Text> list = Collections.singletonList(text);
-    final FormatStack fstack = new FormatStack(format);
-    final Walker walker = buildWalker(fstack, list, false);
+    final FormatStack formatStack = new FormatStack(format);
+    final Walker walker = buildWalker(formatStack, list, false);
     if (walker.hasNext()) {
       final Content c = walker.next();
       if (c == null) {
-        return printText(fstack, basedoc, new Text(walker.text()));
+        return printText(document, new Text(walker.text()));
       }
       if (c.getCType() == CType.Text) {
-        return printText(fstack, basedoc, (Text)c);
+        return printText(document, (Text)c);
       }
     }
     // return an empty string if nothing happened.
@@ -213,28 +206,24 @@ public abstract class AbstractDOMOutputProcessor extends
   }
 
   @Override
-  public org.w3c.dom.Comment process(org.w3c.dom.Document basedoc,
-                                     Format format, Comment comment) {
-    return printComment(new FormatStack(format), basedoc, comment);
+  public org.w3c.dom.Comment process(org.w3c.dom.Document document, Format format, Comment comment) {
+    return printComment(document, comment);
   }
 
   @Override
-  public org.w3c.dom.ProcessingInstruction process(
-    org.w3c.dom.Document basedoc, Format format,
+  public org.w3c.dom.ProcessingInstruction process(org.w3c.dom.Document document, Format format,
     ProcessingInstruction pi) {
-    return printProcessingInstruction(new FormatStack(format), basedoc, pi);
+    return printProcessingInstruction(document, pi);
   }
 
   @Override
-  public EntityReference process(org.w3c.dom.Document basedoc,
-                                 Format format, EntityRef entity) {
-    return printEntityRef(new FormatStack(format), basedoc, entity);
+  public EntityReference process(org.w3c.dom.Document basedoc, Format format, EntityRef entity) {
+    return printEntityRef(basedoc, entity);
   }
 
   @Override
-  public Attr process(org.w3c.dom.Document basedoc, Format format,
-                      Attribute attribute) {
-    return printAttribute(new FormatStack(format), basedoc, attribute);
+  public Attr process(org.w3c.dom.Document basedoc, Format format, Attribute attribute) {
+    return printAttribute(basedoc, attribute);
   }
 
   /* *******************************************
@@ -270,7 +259,7 @@ public abstract class AbstractDOMOutputProcessor extends
         Node n = null;
         switch (c.getCType()) {
           case Comment:
-            n = printComment(fstack, basedoc, (Comment)c);
+            n = printComment(basedoc, (Comment)c);
             break;
           case DocType:
             // cannot simply add a DocType to a DOM object
@@ -281,7 +270,7 @@ public abstract class AbstractDOMOutputProcessor extends
             n = printElement(fstack, nstack, basedoc, (Element)c);
             break;
           case ProcessingInstruction:
-            n = printProcessingInstruction(fstack, basedoc,
+            n = printProcessingInstruction(basedoc,
                                            (ProcessingInstruction)c);
             break;
           default:
@@ -299,14 +288,13 @@ public abstract class AbstractDOMOutputProcessor extends
   /**
    * This will handle printing of a {@link ProcessingInstruction}.
    *
-   * @param fstack  the FormatStack
    * @param basedoc The org.w3c.dom.Document for creating DOM Nodes
    * @param pi      <code>ProcessingInstruction</code> to write.
    * @return The input JDOM ProcessingInstruction converted to a DOM
    * ProcessingInstruction.
    */
-  protected org.w3c.dom.ProcessingInstruction printProcessingInstruction(
-    final FormatStack fstack, final org.w3c.dom.Document basedoc,
+  private static org.w3c.dom.ProcessingInstruction printProcessingInstruction(
+    final org.w3c.dom.Document basedoc,
     final ProcessingInstruction pi) {
     String target = pi.getTarget();
     String rawData = pi.getData();
@@ -319,26 +307,23 @@ public abstract class AbstractDOMOutputProcessor extends
   /**
    * This will handle printing of a {@link Comment}.
    *
-   * @param fstack  the FormatStack
    * @param basedoc The org.w3c.dom.Document for creating DOM Nodes
    * @param comment <code>Comment</code> to write.
    * @return The input JDOM Comment converted to a DOM Comment
    */
-  protected org.w3c.dom.Comment printComment(final FormatStack fstack,
-                                             final org.w3c.dom.Document basedoc, final Comment comment) {
+  private static org.w3c.dom.Comment printComment(final org.w3c.dom.Document basedoc, final Comment comment) {
     return basedoc.createComment(comment.getText());
   }
 
   /**
    * This will handle printing of an {@link EntityRef}.
    *
-   * @param fstack  the FormatStack
    * @param basedoc The org.w3c.dom.Document for creating DOM Nodes
    * @param entity  <code>EntotyRef</code> to write.
    * @return The input JDOM EntityRef converted to a DOM EntityReference
    */
-  protected EntityReference printEntityRef(
-    final FormatStack fstack, final org.w3c.dom.Document basedoc,
+  private static EntityReference printEntityRef(
+    final org.w3c.dom.Document basedoc,
     final EntityRef entity) {
     return basedoc.createEntityReference(entity.getName());
   }
@@ -346,13 +331,11 @@ public abstract class AbstractDOMOutputProcessor extends
   /**
    * This will handle printing of a {@link CDATA}.
    *
-   * @param fstack  the FormatStack
    * @param basedoc The org.w3c.dom.Document for creating DOM Nodes
    * @param cdata   <code>CDATA</code> to write.
    * @return The input JDOM CDATA converted to a DOM CDATASection
    */
-  protected CDATASection printCDATA(final FormatStack fstack,
-                                    final org.w3c.dom.Document basedoc, final CDATA cdata) {
+  private static CDATASection printCDATA(final org.w3c.dom.Document basedoc, final CDATA cdata) {
     // CDATAs are treated like text, not indented/newline content.
     return basedoc.createCDATASection(cdata.getText());
   }
@@ -360,31 +343,23 @@ public abstract class AbstractDOMOutputProcessor extends
   /**
    * This will handle printing of a {@link Text}.
    *
-   * @param fstack  the FormatStack
    * @param basedoc The org.w3c.dom.Document for creating DOM Nodes
    * @param text    <code>Text</code> to write.
    * @return The input JDOM Text converted to a DOM Text
    */
-  protected org.w3c.dom.Text printText(final FormatStack fstack,
-                                       final org.w3c.dom.Document basedoc, final Text text) {
+  protected org.w3c.dom.Text printText(final org.w3c.dom.Document basedoc, final Text text) {
     return basedoc.createTextNode(text.getText());
   }
 
   /**
    * This will handle printing of a {@link Attribute}.
    *
-   * @param fstack    the FormatStack
    * @param basedoc   The org.w3c.dom.Document for creating DOM Nodes
    * @param attribute <code>Attribute</code> to write.
    * @return The input JDOM Attribute converted to a DOM Attr
    */
-  protected Attr printAttribute(final FormatStack fstack,
-                                final org.w3c.dom.Document basedoc, final Attribute attribute) {
-    if (!attribute.isSpecified() && fstack.isSpecifiedAttributesOnly()) {
-      return null;
-    }
-    Attr attr = basedoc.createAttributeNS(
-      attribute.getNamespaceURI(), attribute.getQualifiedName());
+  private static Attr printAttribute(org.w3c.dom.Document basedoc, Attribute attribute) {
+    Attr attr = basedoc.createAttributeNS(attribute.getNamespaceURI(), attribute.getQualifiedName());
     attr.setValue(attribute.getValue());
     return attr;
   }
@@ -405,9 +380,9 @@ public abstract class AbstractDOMOutputProcessor extends
    * @param element <code>Element</code> to write.
    * @return The input JDOM Element converted to a DOM Element
    */
-  protected org.w3c.dom.Element printElement(final FormatStack fstack,
-                                             final NamespaceStack nstack, final org.w3c.dom.Document basedoc,
-                                             final Element element) {
+  private org.w3c.dom.Element printElement(final FormatStack fstack,
+                                           final NamespaceStack nstack, final org.w3c.dom.Document basedoc,
+                                           final Element element) {
 
     nstack.push(element);
     try {
@@ -437,10 +412,8 @@ public abstract class AbstractDOMOutputProcessor extends
 
       if (element.hasAttributes()) {
         for (Attribute att : element.getAttributes()) {
-          final Attr a = printAttribute(fstack, basedoc, att);
-          if (a != null) {
-            ret.setAttributeNodeNS(a);
-          }
+          Attr a = printAttribute(basedoc, att);
+          ret.setAttributeNodeNS(a);
         }
       }
 
@@ -490,9 +463,9 @@ public abstract class AbstractDOMOutputProcessor extends
    * @param target  the DOM node this content should be appended to.
    * @param walker  <code>List</code> of <code>Content</code> to write.
    */
-  protected void printContent(final FormatStack fstack,
-                              final NamespaceStack nstack, final org.w3c.dom.Document basedoc,
-                              final Node target, final Walker walker) {
+  private void printContent(final FormatStack fstack,
+                            final NamespaceStack nstack, final org.w3c.dom.Document basedoc,
+                            final Node target, final Walker walker) {
 
     while (walker.hasNext()) {
       final Content c = walker.next();
@@ -501,10 +474,10 @@ public abstract class AbstractDOMOutputProcessor extends
         // Formatted Text or CDATA
         final String text = walker.text();
         if (walker.isCDATA()) {
-          n = printCDATA(fstack, basedoc, new CDATA(text));
+          n = printCDATA(basedoc, new CDATA(text));
         }
         else {
-          n = printText(fstack, basedoc, new Text(text));
+          n = printText(basedoc, new Text(text));
         }
       }
       else {
@@ -528,23 +501,21 @@ public abstract class AbstractDOMOutputProcessor extends
    * @param content The content to dispatch
    * @return the input JDOM Content converted to a DOM Node.
    */
-  protected Node helperContentDispatcher(
-    final FormatStack fstack, final NamespaceStack nstack,
-    final org.w3c.dom.Document basedoc, final Content content) {
+  private Node helperContentDispatcher(FormatStack fstack, NamespaceStack nstack, org.w3c.dom.Document basedoc, Content content) {
     switch (content.getCType()) {
       case CDATA:
-        return printCDATA(fstack, basedoc, (CDATA)content);
+        return printCDATA(basedoc, (CDATA)content);
       case Comment:
-        return printComment(fstack, basedoc, (Comment)content);
+        return printComment(basedoc, (Comment)content);
       case Element:
         return printElement(fstack, nstack, basedoc, (Element)content);
       case EntityRef:
-        return printEntityRef(fstack, basedoc, (EntityRef)content);
+        return printEntityRef(basedoc, (EntityRef)content);
       case ProcessingInstruction:
-        return printProcessingInstruction(fstack, basedoc,
+        return printProcessingInstruction(basedoc,
                                           (ProcessingInstruction)content);
       case Text:
-        return printText(fstack, basedoc, (Text)content);
+        return printText(basedoc, (Text)content);
       case DocType:
         return null;
       default:

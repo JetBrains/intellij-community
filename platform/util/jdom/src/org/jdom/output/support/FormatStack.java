@@ -77,7 +77,7 @@ import java.util.Arrays;
  * @author Rolf Lear
  * @since JDOM2
  */
-public final class FormatStack {
+final class FormatStack {
   private int capacity = 16; // can grow if more than 16 levels in XML
   private int depth = 0; // current level in XML
 
@@ -121,11 +121,6 @@ public final class FormatStack {
    * &lt;tagName&gt;&lt;/tagName&gt; - default is <code>false</code>
    */
   private final boolean expandEmptyElements;
-
-  /**
-   * Whether to output 'specified' Attributes only
-   */
-  private final boolean specifiedAttributesOnly;
 
   /**
    * entity escape logic
@@ -180,7 +175,7 @@ public final class FormatStack {
    *
    * @param format the Format instance to seed the stack with.
    */
-  public FormatStack(Format format) {
+  FormatStack(Format format) {
     indent = format.getIndent();
     lineSeparator = format.getLineSeparator();
 
@@ -190,7 +185,6 @@ public final class FormatStack {
     expandEmptyElements = format.getExpandEmptyElements();
     escapeStrategy = format.getEscapeStrategy();
     defaultMode = format.getTextMode();
-    specifiedAttributesOnly = format.isSpecifiedAttributesOnly();
 
     mode[depth] = format.getTextMode();
     if (mode[depth] == TextMode.PRESERVE) {
@@ -249,47 +243,32 @@ public final class FormatStack {
   /**
    * @return the original {@link Format#getOmitDeclaration()}
    */
-  public boolean isOmitDeclaration() {
+  boolean isOmitDeclaration() {
     return omitDeclaration;
-  }
-
-  /**
-   * Indicate whether only those Attributes specified in the XML
-   * should be output.
-   *
-   * @return true if only the specified Attributes should be output,
-   * false if those Attributes defaulted from the DTD or XML schema
-   * should be output too.
-   */
-  public boolean isSpecifiedAttributesOnly() {
-    return specifiedAttributesOnly;
   }
 
   /**
    * @return the original {@link Format#getOmitEncoding()}
    */
-  public boolean isOmitEncoding() {
+  boolean isOmitEncoding() {
     return omitEncoding;
   }
 
   /**
    * @return the original {@link Format#getExpandEmptyElements()}
    */
-  public boolean isExpandEmptyElements() {
+  boolean isExpandEmptyElements() {
     return expandEmptyElements;
   }
 
-  /**
-   * @return the original {@link Format#getEscapeStrategy()}
-   */
-  public EscapeStrategy getEscapeStrategy() {
+  EscapeStrategy getEscapeStrategy() {
     return escapeStrategy;
   }
 
   /**
    * @return the current depth's {@link Format#getIgnoreTrAXEscapingPIs()}
    */
-  public boolean isIgnoreTrAXEscapingPIs() {
+  boolean isIgnoreTrAXEscapingPIs() {
     return ignoreTrAXEscapingPIs[depth];
   }
 
@@ -298,7 +277,7 @@ public final class FormatStack {
    *
    * @param ignoreTrAXEscapingPIs the boolean value to set.
    */
-  public void setIgnoreTrAXEscapingPIs(boolean ignoreTrAXEscapingPIs) {
+  void setIgnoreTrAXEscapingPIs(boolean ignoreTrAXEscapingPIs) {
     this.ignoreTrAXEscapingPIs[depth] = ignoreTrAXEscapingPIs;
   }
 
@@ -309,7 +288,7 @@ public final class FormatStack {
    *
    * @return the current depth's escapeOutput flag.
    */
-  public boolean getEscapeOutput() {
+  boolean getEscapeOutput() {
     return escapeOutput[depth];
   }
 
@@ -320,7 +299,7 @@ public final class FormatStack {
    *
    * @param escape what to set the current level's escapeOutput flag to.
    */
-  public void setEscapeOutput(boolean escape) {
+  void setEscapeOutput(boolean escape) {
     escapeOutput[depth] = escape;
   }
 
@@ -328,7 +307,7 @@ public final class FormatStack {
    * @return the TextMode that was originally set for this stack before
    * any modifications.
    */
-  public TextMode getDefaultMode() {
+  TextMode getDefaultMode() {
     return defaultMode;
   }
 
@@ -339,7 +318,7 @@ public final class FormatStack {
    * @return the String EOL sequence followed by an indent. Null if it should
    * be ignored
    */
-  public String getPadBetween() {
+  String getPadBetween() {
     return levelEOLIndent[depth];
   }
 
@@ -350,21 +329,21 @@ public final class FormatStack {
    * @return the String EOL sequence followed by an indent. Null if it should
    * be ignored
    */
-  public String getPadLast() {
+  String getPadLast() {
     return termEOLIndent[depth];
   }
 
   /**
    * @return the current depth's End-Of-Line sequence, may be null
    */
-  public String getLevelEOL() {
+  String getLevelEOL() {
     return levelEOL[depth];
   }
 
   /**
    * @return the current depth's {@link Format#getTextMode()}
    */
-  public TextMode getTextMode() {
+  TextMode getTextMode() {
     return mode[depth];
   }
 
@@ -373,7 +352,7 @@ public final class FormatStack {
    *
    * @param mode the new mode to set.
    */
-  public void setTextMode(TextMode mode) {
+  void setTextMode(TextMode mode) {
     if (this.mode[depth] == mode) {
       return;
     }

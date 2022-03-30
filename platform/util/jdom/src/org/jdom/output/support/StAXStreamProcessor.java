@@ -78,14 +78,14 @@ import java.util.List;
  * <code>process(XMLStreamWriter,Format,*)</code> method may (will) be called concurrently from different threads.
  * </ol>
  * <p>
- * The {@link AbstractXMLOutputProcessor} class is a full implementation of this
+ * The {@link XmlOutputProcessorImpl} class is a full implementation of this
  * interface and is fully customisable. People who want a custom XMLOutputter
  * are encouraged to extend the AbstractXMLOutputProcessor rather than do a full
  * re-implementation of this interface.
  *
  * @author Rolf Lear
  * @see XMLOutputter2
- * @see AbstractXMLOutputProcessor
+ * @see XmlOutputProcessorImpl
  * @since JDOM2
  */
 public interface StAXStreamProcessor {

@@ -63,7 +63,7 @@ import java.util.Locale;
 
 /**
  * Class to encapsulate XMLOutputter format options.
- * Typically users adapt the standard format configurations obtained by
+ * Typically, users adapt the standard format configurations obtained by
  * {@link #getRawFormat} (no whitespace changes),
  * {@link #getPrettyFormat} (whitespace beautification), and
  * {@link #getCompactFormat} (whitespace normalization).
@@ -73,7 +73,7 @@ import java.util.Locale;
  * <p>
  * <b>Note about Line Separator:</b>
  * <p>
- * By default JDOM will always use the CRNL sequence "\r\n" for output. This
+ * By default, JDOM will always use the CRNL sequence "\r\n" for output. This
  * can be changed in a number of different ways. See the {@link LineSeparator}
  * enumeration for more information.
  * <p>
@@ -91,53 +91,34 @@ import java.util.Locale;
  */
 public final class Format implements Cloneable {
   /**
-   * An EscapeStrategy suitable for UTF-8 an UTF-16. We want the class to
-   * have its own name.
+   * An EscapeStrategy suitable for UTF-8 an UTF-16
    */
-  private static final class EscapeStrategyUTF implements EscapeStrategy {
+  private static final EscapeStrategy UTFEscapeStrategy = new EscapeStrategy() {
     @Override
     public boolean shouldEscape(char ch) {
       return Verifier.isHighSurrogate(ch);
     }
-  }
-
-  /**
-   * An EscapeStrategy suitable for UTF-8 an UTF-16
-   */
-  private static final EscapeStrategy UTFEscapeStrategy = new EscapeStrategyUTF();
-
-  /**
-   * An EscapeStrategy suitable for 8-bit charsets. We want the class to have
-   * its own name.
-   */
-  private static final class EscapeStrategy8Bits implements EscapeStrategy {
-    @Override
-    public boolean shouldEscape(final char ch) {
-      return (ch >>> 8) != 0;
-    }
-  }
+  };
 
   /**
    * An EscapeStrategy suitable for 8-bit charsets
    */
-  private static final EscapeStrategy Bits8EscapeStrategy = new EscapeStrategy8Bits();
-
-  /**
-   * An EscapeStrategy suitable for 7-bit charsets. We want the class to
-   * have its own name.
-   */
-  private static final class EscapeStrategy7Bits implements EscapeStrategy {
+  private static final EscapeStrategy Bits8EscapeStrategy = new EscapeStrategy() {
     @Override
     public boolean shouldEscape(final char ch) {
-      return (ch >>> 7) != 0;
+      return (ch >>> 8) != 0;
     }
-  }
+  };
 
   /**
    * An EscapeStrategy suitable for 7-bit charsets
    */
-  private static final EscapeStrategy Bits7EscapeStrategy =
-    new EscapeStrategy7Bits();
+  private static final EscapeStrategy Bits7EscapeStrategy = new EscapeStrategy() {
+      @Override
+      public boolean shouldEscape(final char ch) {
+        return (ch >>> 7) != 0;
+      }
+    };
 
   /**
    * An EscapeStrategy suitable for 'unknown' charsets
@@ -157,10 +138,9 @@ public final class Format implements Cloneable {
    * Handles Charsets.
    */
   private final static class DefaultCharsetEscapeStrategy implements EscapeStrategy {
-
     private final CharsetEncoder encoder;
 
-    DefaultCharsetEscapeStrategy(CharsetEncoder cse) {
+    private DefaultCharsetEscapeStrategy(CharsetEncoder cse) {
       encoder = cse;
     }
 
@@ -608,12 +588,6 @@ public final class Format implements Cloneable {
   boolean omitEncoding = false;
 
   /**
-   * Whether Attributes that are defaulted from the DTD or Schema
-   * are output.
-   */
-  boolean specifiedAttributesOnly = false;
-
-  /**
    * Whether or not to expand empty elements to
    * &lt;tagName&gt;&lt;/tagName&gt; - default is <code>false</code>
    */
@@ -640,17 +614,6 @@ public final class Format implements Cloneable {
    */
   private Format() {
     setEncoding(STANDARD_ENCODING);
-  }
-
-  /**
-   * Sets the {@link EscapeStrategy} to use for character escaping.
-   *
-   * @param strategy the EscapeStrategy to use
-   * @return a pointer to this Format for chaining
-   */
-  public Format setEscapeStrategy(EscapeStrategy strategy) {
-    escapeStrategy = strategy;
-    return this;
   }
 
   /**
@@ -932,29 +895,6 @@ public final class Format implements Cloneable {
     return encoding;
   }
 
-
-  /**
-   * Will Attributes defaulted from the DTD or XMLSchema
-   * be output
-   *
-   * @return true if the defaulted Attributes will be output
-   */
-  public boolean isSpecifiedAttributesOnly() {
-    return specifiedAttributesOnly;
-  }
-
-  /**
-   * Set whether only those Attributes specified in the input XML should
-   * be output. Other Attributes (those defaulted or 'fixed' in the DTD
-   * or XMLSchema) should be ignored.
-   *
-   * @param specifiedAttributesOnly true if the defaulted
-   *                                Attributes should be ignored, false if they should be output
-   */
-  public void setSpecifiedAttributesOnly(boolean specifiedAttributesOnly) {
-    this.specifiedAttributesOnly = specifiedAttributesOnly;
-  }
-
   @Override
   public Format clone() {
     Format format = null;
@@ -982,7 +922,7 @@ public final class Format implements Cloneable {
    *       Resulting behavior.
    *     </th>
    *   </tr>
-   *
+   * <p>
    *   <tr valign="top">
    *     <td>
    *       <i>PRESERVE (Default)</i>
@@ -992,7 +932,7 @@ public final class Format implements Cloneable {
    *       or line separators are are added or removed.
    *     </td>
    *   </tr>
-   *
+   * <p>
    *   <tr valign="top">
    *     <td>
    *       TRIM_FULL_WHITE
@@ -1003,7 +943,7 @@ public final class Format implements Cloneable {
    *       all printed verbatim, whitespace and all.
    *     </td>
    *   </tr>
-   *
+   * <p>
    *   <tr valign="top">
    *     <td>
    *       TRIM
@@ -1012,7 +952,7 @@ public final class Format implements Cloneable {
    *       All leading and trailing whitespace is trimmed.
    *     </td>
    *   </tr>
-   *
+   * <p>
    *   <tr valign="top">
    *     <td>
    *       NORMALIZE

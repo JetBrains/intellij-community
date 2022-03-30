@@ -51,7 +51,6 @@
  on the JDOM Project, please see <http://www.jdom.org/>.
 
  */
-
 package org.jdom.output.support;
 
 import org.jdom.Content;
@@ -64,18 +63,7 @@ import java.util.List;
  * @author Rolf Lear
  * @since JDOM2
  */
-public abstract class AbstractOutputProcessor {
-
-  /*
-   * ========================================================================
-   * Support methods for Text-content formatting. Should all be protected. The
-   * following are used when printing Text-based data. Because of complicated
-   * multi-sequential text sometimes the requirements are odd. All Text
-   * content will be output using these methods, which is why there is the None
-   * version.
-   * ========================================================================
-   */
-
+abstract class AbstractOutputProcessor {
   /**
    * Create a walker to process Content List values.
    * <p>
@@ -83,25 +71,23 @@ public abstract class AbstractOutputProcessor {
    * then you probably want to override this method to build the walker you
    * want.
    *
-   * @param fstack  The current FormatStack for the walker (this should not be
-   *                modified by the Walker).
-   * @param content The list of content to walk.
-   * @param escape  If you want the Text values to be XMLEscaped then supply
-   *                a non-null EscapeStrategy to use.
+   * @param formatStack The current FormatStack for the walker (this should not be
+   *                    modified by the Walker).
+   * @param content     The list of content to walk.
+   * @param escape      If you want the Text values to be XMLEscaped then supply
+   *                    a non-null EscapeStrategy to use.
    * @return the created walker.
    */
-  protected Walker buildWalker(final FormatStack fstack,
-                               final List<? extends Content> content, boolean escape) {
-
-    switch (fstack.getTextMode()) {
+  Walker buildWalker(FormatStack formatStack, List<? extends Content> content, boolean escape) {
+    switch (formatStack.getTextMode()) {
       case PRESERVE:
         return new WalkerPRESERVE(content);
       case NORMALIZE:
-        return new WalkerNORMALIZE(content, fstack, escape);
+        return new WalkerNORMALIZE(content, formatStack, escape);
       case TRIM:
-        return new WalkerTRIM(content, fstack, escape);
+        return new WalkerTRIM(content, formatStack, escape);
       case TRIM_FULL_WHITE:
-        return new WalkerTRIM_FULL_WHITE(content, fstack, escape);
+        return new WalkerTRIM_FULL_WHITE(content, formatStack, escape);
     }
     // all cases should be handled in the switch statement above. If someone
     // creates a new TextMode though, then it will create a warning in

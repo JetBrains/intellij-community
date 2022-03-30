@@ -54,8 +54,11 @@
 
 package org.jdom;
 
+import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter2;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Map;
 
 /**
@@ -211,24 +214,20 @@ public final class ProcessingInstruction extends Content {
     return stringData.toString();
   }
 
-  /**
-   * This returns a <code>String</code> representation of the
-   * <code>ProcessingInstruction</code>, suitable for debugging. If the XML
-   * representation of the <code>ProcessingInstruction</code> is desired,
-   * {@link XMLOutputter2#outputString(ProcessingInstruction)}
-   * should be used.
-   *
-   * @return <code>String</code> - information about the
-   * <code>ProcessingInstruction</code>
-   */
   @Override
   public String toString() {
-    return "[ProcessingInstruction: " + new XMLOutputter2().outputString(this) + "]";
+    StringWriter out = new StringWriter();
+    try {
+      XMLOutputter2.DEFAULT_PROCESSOR.process(out, Format.getRawFormat(), this);
+      out.flush();
+    }
+    catch (IOException ignore) {
+    }
+    return "[ProcessingInstruction: " + out + "]";
   }
 
   @Override
   public ProcessingInstruction clone() {
-
     // target and raw-data are immutable and references copied by
     // Object.clone()
 
@@ -250,8 +249,8 @@ public final class ProcessingInstruction extends Content {
    * Thrown when a target is supplied in construction of a JDOM {@link
    * ProcessingInstruction}, and that name breaks XML naming conventions.
    */
-  public static final class IllegalTargetException extends IllegalArgumentException {
-    IllegalTargetException(String target, String reason) {
+  private static final class IllegalTargetException extends IllegalArgumentException {
+    private IllegalTargetException(String target, String reason) {
       super("The target \"" + target + "\" is not legal for JDOM/XML Processing Instructions: " + reason + ".");
     }
   }

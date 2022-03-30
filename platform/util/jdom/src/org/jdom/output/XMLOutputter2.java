@@ -55,9 +55,8 @@
 package org.jdom.output;
 
 import org.jdom.*;
-import org.jdom.output.support.AbstractXMLOutputProcessor;
-import org.jdom.output.support.FormatStack;
 import org.jdom.output.support.XMLOutputProcessor;
+import org.jdom.output.support.XmlOutputProcessorImpl;
 
 import java.io.*;
 import java.util.List;
@@ -89,11 +88,6 @@ import java.util.List;
  * the <code>{@link Format#setEncoding}</code> method. The default encoding is
  * UTF-8.
  * <p>
- * The methods <code>{@link #outputString outputString(...)}</code> are for
- * convenience only; for top performance you should call one of the <code>{@link
- * #output output(...)}</code> methods and pass in your own Writer or
- * OutputStream if possible.
- * <p>
  * <b>All</b> of the <code>output*(...)</code> methods will flush the
  * destination Writer or OutputStream before returning, and <b>none</b> of them
  * will <code>close()</code> the destination.
@@ -110,14 +104,7 @@ import java.util.List;
  * configured with <code>{@link Format#setExpandEmptyElements}</code> to cause
  * them to be expanded to &lt;empty&gt;&lt;/empty&gt;.
  * <p>
- * If changing the {@link Format} settings are insufficient for your output
- * needs you can customise this XMLOutputter further by setting a different
- * {@link XMLOutputProcessor} with the
- * {@link #setXMLOutputProcessor(XMLOutputProcessor)} method or an appropriate
- * constructor. A fully-enabled Abstract class
- * {@link AbstractXMLOutputProcessor} is available to be further extended to
- * your needs if all you want to do is tweak some details.
- *
+
  * @author Brett McLaughlin
  * @author Jason Hunter
  * @author Jason Reid
@@ -128,15 +115,7 @@ import java.util.List;
  * @author Alex Chaffee
  * @author Bradley S. Huffman
  */
-
 public final class XMLOutputter2 implements Cloneable {
-
-  /*
-   * =====================================================================
-   * Static content.
-   * =====================================================================
-   */
-
   /**
    * Get an OutputStreamWriter, use specified encoding.
    *
@@ -145,65 +124,15 @@ public final class XMLOutputter2 implements Cloneable {
    * @return An Writer (Buffered) that delegates to the specified output steam
    * @throws UnsupportedEncodingException
    */
-  private static Writer makeWriter(final OutputStream out,
-                                   final Format format)
-    throws UnsupportedEncodingException {
-    return new BufferedWriter(new OutputStreamWriter(
-      new BufferedOutputStream(out), format.getEncoding()));
-  }
-
-  /**
-   * Create a final and static instance of the AbstractXMLOutputProcessor The
-   * final part is important because it improves performance.
-   * <p>
-   * The JDOM user can change the actual XMLOutputProcessor with the
-   * {@link XMLOutputter2#setXMLOutputProcessor(XMLOutputProcessor)} method.
-   *
-   * @author rolf
-   */
-  private static final class DefaultXMLProcessor
-    extends AbstractXMLOutputProcessor {
-
-    /**
-     * A helper method to implement backward-compatibility with JDOM1
-     *
-     * @param str    The String to output.
-     * @param format The format details to use.
-     * @return The input String escaped as an attribute value.
-     * @see XMLOutputter2#escapeAttributeEntities(String)
-     */
-    public String escapeAttributeEntities(String str, Format format) {
-      StringWriter sw = new StringWriter();
-      try {
-        super.attributeEscapedEntitiesFilter(sw, new FormatStack(format), str);
-      }
-      catch (IOException e) {
-        // no IOException on StringWriter....
-      }
-      return sw.toString();
-    }
-
-    /**
-     * A helper method to implement backward-compatibility with JDOM1
-     *
-     * @param str    The String to output.
-     * @param format The format details to use.
-     * @return The input String escaped as an element text value.
-     * @see XMLOutputter2#escapeElementEntities(String)
-     */
-    public String escapeElementEntities(final String str,
-                                        final Format format) {
-      return Format.escapeText(format.getEscapeStrategy(),
-                               format.getLineSeparator(), str);
-    }
+  private static Writer makeWriter(OutputStream out, Format format) throws UnsupportedEncodingException {
+    return new BufferedWriter(new OutputStreamWriter(new BufferedOutputStream(out), format.getEncoding()));
   }
 
   /**
    * This constant XMLOutputProcessor is used for all non-customised
    * XMLOutputters
    */
-  private static final DefaultXMLProcessor DEFAULTPROCESSOR =
-    new DefaultXMLProcessor();
+  public static final XMLOutputProcessor DEFAULT_PROCESSOR = new XmlOutputProcessorImpl();
 
   /*
    * =====================================================================
@@ -212,10 +141,10 @@ public final class XMLOutputter2 implements Cloneable {
    */
 
   // For normal output
-  private Format myFormat;
+  private Format format;
 
   // The actual XMLOutputProcessor to delegate to.
-  private XMLOutputProcessor myProcessor;
+  private final XMLOutputProcessor processor;
 
   /*
    * =====================================================================
@@ -239,9 +168,9 @@ public final class XMLOutputter2 implements Cloneable {
    * @param processor The XMLOutputProcessor to delegate output to. If null the
    *                  XMLOutputter will use the default XMLOutputProcessor.
    */
-  public XMLOutputter2(Format format, XMLOutputProcessor processor) {
-    myFormat = format == null ? Format.getRawFormat() : format.clone();
-    myProcessor = processor == null ? DEFAULTPROCESSOR : processor;
+  private XMLOutputter2(Format format, XMLOutputProcessor processor) {
+    this.format = format == null ? Format.getRawFormat() : format.clone();
+    this.processor = processor == null ? DEFAULT_PROCESSOR : processor;
   }
 
   /**
@@ -261,7 +190,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @param that the XMLOutputter to clone
    */
   public XMLOutputter2(XMLOutputter2 that) {
-    this(that.myFormat, null);
+    this(that.format, null);
   }
 
   /**
@@ -305,7 +234,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @see #getFormat()
    */
   public void setFormat(Format newFormat) {
-    this.myFormat = newFormat.clone();
+    this.format = newFormat.clone();
   }
 
   /**
@@ -317,27 +246,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @return the current Format instance used by this XMLOutputter.
    */
   public Format getFormat() {
-    return myFormat;
-  }
-
-  /**
-   * Returns the current XMLOutputProcessor instance in use by the
-   * XMLOutputter.
-   *
-   * @return the current XMLOutputProcessor instance.
-   */
-  public XMLOutputProcessor getXMLOutputProcessor() {
-    return myProcessor;
-  }
-
-  /**
-   * Sets a new XMLOutputProcessor instance for this XMLOutputter. Note the
-   * processor object is expected to be thread-safe.
-   *
-   * @param processor the new XMLOutputProcesor to use for output
-   */
-  public void setXMLOutputProcessor(XMLOutputProcessor processor) {
-    this.myProcessor = processor;
+    return format;
   }
 
   /*
@@ -359,7 +268,7 @@ public final class XMLOutputter2 implements Cloneable {
    */
   public void output(Document doc, OutputStream out)
     throws IOException {
-    output(doc, makeWriter(out, myFormat));
+    output(doc, makeWriter(out, format));
   }
 
   /**
@@ -372,7 +281,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(DocType doctype, OutputStream out) throws IOException {
-    output(doctype, makeWriter(out, myFormat));
+    output(doctype, makeWriter(out, format));
   }
 
   /**
@@ -385,24 +294,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(Element element, OutputStream out) throws IOException {
-    output(element, makeWriter(out, myFormat));
-  }
-
-  /**
-   * This will handle printing out an <code>{@link
-   * Element}</code>'s content only, not including its tag, and attributes.
-   * This can be useful for printing the content of an element that contains
-   * HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param element <code>Element</code> to output.
-   * @param out     <code>OutputStream</code> to use.
-   * @throws IOException          if there's any problem writing.
-   * @throws NullPointerException if the specified content is null.
-   */
-  public void outputElementContent(Element element, OutputStream out)
-    throws IOException {
-    outputElementContent(element, makeWriter(out, myFormat));
+    output(element, makeWriter(out, format));
   }
 
   /**
@@ -422,7 +314,7 @@ public final class XMLOutputter2 implements Cloneable {
    */
   public void output(List<? extends Content> list, OutputStream out)
     throws IOException {
-    output(list, makeWriter(out, myFormat)); // output() flushes
+    output(list, makeWriter(out, format)); // output() flushes
   }
 
   /**
@@ -434,7 +326,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(CDATA cdata, OutputStream out) throws IOException {
-    output(cdata, makeWriter(out, myFormat)); // output() flushes
+    output(cdata, makeWriter(out, format)); // output() flushes
   }
 
   /**
@@ -447,7 +339,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(Text text, OutputStream out) throws IOException {
-    output(text, makeWriter(out, myFormat)); // output() flushes
+    output(text, makeWriter(out, format)); // output() flushes
   }
 
   /**
@@ -459,7 +351,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(Comment comment, OutputStream out) throws IOException {
-    output(comment, makeWriter(out, myFormat)); // output() flushes
+    output(comment, makeWriter(out, format)); // output() flushes
   }
 
   /**
@@ -472,7 +364,7 @@ public final class XMLOutputter2 implements Cloneable {
    */
   public void output(ProcessingInstruction pi, OutputStream out)
     throws IOException {
-    output(pi, makeWriter(out, myFormat)); // output() flushes
+    output(pi, makeWriter(out, format)); // output() flushes
   }
 
   /**
@@ -484,7 +376,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(EntityRef entity, OutputStream out) throws IOException {
-    output(entity, makeWriter(out, myFormat)); // output() flushes
+    output(entity, makeWriter(out, format)); // output() flushes
   }
 
   /*
@@ -647,27 +539,6 @@ public final class XMLOutputter2 implements Cloneable {
   }
 
   /**
-   * Return a string representing a {@link ProcessingInstruction}.
-   * <p>
-   * <b>Warning</b>: a String is Unicode, which may not match the outputter's
-   * specified encoding.
-   *
-   * @param pi <code>ProcessingInstruction</code> to format.
-   * @return the input content formatted as an XML String.
-   * @throws NullPointerException if the specified content is null.
-   */
-  public String outputString(ProcessingInstruction pi) {
-    StringWriter out = new StringWriter();
-    try {
-      output(pi, out); // output() flushes
-    }
-    catch (IOException e) {
-      // swallow - will never happen.
-    }
-    return out.toString();
-  }
-
-  /**
    * Return a string representing an {@link EntityRef}.
    * <p>
    * <b>Warning</b>: a String is Unicode, which may not match the outputter's
@@ -681,31 +552,6 @@ public final class XMLOutputter2 implements Cloneable {
     StringWriter out = new StringWriter();
     try {
       output(entity, out); // output() flushes
-    }
-    catch (IOException e) {
-      // swallow - will never happen.
-    }
-    return out.toString();
-  }
-
-  /**
-   * This will handle printing out an <code>{@link
-   * Element}</code>'s content only, not including its tag, and attributes.
-   * This can be useful for printing the content of an element that contains
-   * HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   * <p>
-   * <b>Warning</b>: a String is Unicode, which may not match the outputter's
-   * specified encoding.
-   *
-   * @param element <code>Element</code> to output.
-   * @return the input content formatted as an XML String.
-   * @throws NullPointerException if the specified content is null.
-   */
-  public String outputElementContentString(Element element) {
-    StringWriter out = new StringWriter();
-    try {
-      outputElementContent(element, out); // output() flushes
     }
     catch (IOException e) {
       // swallow - will never happen.
@@ -735,7 +581,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(Document doc, Writer out) throws IOException {
-    myProcessor.process(out, myFormat, doc);
+    processor.process(out, format, doc);
     out.flush();
   }
 
@@ -748,7 +594,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(DocType doctype, Writer out) throws IOException {
-    myProcessor.process(out, myFormat, doctype);
+    processor.process(out, format, doctype);
     out.flush();
   }
 
@@ -764,25 +610,7 @@ public final class XMLOutputter2 implements Cloneable {
   public void output(Element element, Writer out) throws IOException {
     // If this is the root element we could pre-initialize the
     // namespace stack with the namespaces
-    myProcessor.process(out, myFormat, element);
-    out.flush();
-  }
-
-  /**
-   * This will handle printing out an <code>{@link
-   * Element}</code>'s content only, not including its tag, and attributes.
-   * This can be useful for printing the content of an element that contains
-   * HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param element <code>Element</code> to output.
-   * @param out     <code>Writer</code> to use.
-   * @throws IOException          - if there's any problem writing.
-   * @throws NullPointerException if the specified content is null.
-   */
-  public void outputElementContent(Element element, Writer out)
-    throws IOException {
-    myProcessor.process(out, myFormat, element.getContent());
+    processor.process(out, format, element);
     out.flush();
   }
 
@@ -798,7 +626,7 @@ public final class XMLOutputter2 implements Cloneable {
    */
   public void output(List<? extends Content> list, Writer out)
     throws IOException {
-    myProcessor.process(out, myFormat, list);
+    processor.process(out, format, list);
     out.flush();
   }
 
@@ -811,7 +639,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(CDATA cdata, Writer out) throws IOException {
-    myProcessor.process(out, myFormat, cdata);
+    processor.process(out, format, cdata);
     out.flush();
   }
 
@@ -825,7 +653,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(Text text, Writer out) throws IOException {
-    myProcessor.process(out, myFormat, text);
+    processor.process(out, format, text);
     out.flush();
   }
 
@@ -838,7 +666,7 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(Comment comment, Writer out) throws IOException {
-    myProcessor.process(out, myFormat, comment);
+    processor.process(out, format, comment);
     out.flush();
   }
 
@@ -850,9 +678,8 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws IOException          - if there's any problem writing.
    * @throws NullPointerException if the specified content is null.
    */
-  public void output(ProcessingInstruction pi, Writer out)
-    throws IOException {
-    myProcessor.process(out, myFormat, pi);
+  public void output(ProcessingInstruction pi, Writer out) throws IOException {
+    processor.process(out, format, pi);
     out.flush();
   }
 
@@ -865,43 +692,9 @@ public final class XMLOutputter2 implements Cloneable {
    * @throws NullPointerException if the specified content is null.
    */
   public void output(EntityRef entity, Writer out) throws IOException {
-    myProcessor.process(out, myFormat, entity);
+    processor.process(out, format, entity);
     out.flush();
   }
-
-  /*
-   * ========================================================================
-   * SpecialCaseMethods for maintaining API Compatibility
-   * ========================================================================
-   */
-
-  /**
-   * Escape any characters in the input string in such a way that the returned
-   * value is valid as output in an XML Attribute value.
-   *
-   * @param str the input String to escape
-   * @return the escaped version of the input String
-   */
-  public String escapeAttributeEntities(String str) {
-    return DEFAULTPROCESSOR.escapeAttributeEntities(str, myFormat);
-  }
-
-  /**
-   * Escape any characters in the input string in such a way that the returned
-   * value is valid as output in an XML Element text.
-   *
-   * @param str the input String to escape
-   * @return the escaped version of the input String
-   */
-  public String escapeElementEntities(String str) {
-    return DEFAULTPROCESSOR.escapeElementEntities(str, myFormat);
-  }
-
-  /*
-   * ========================================================================
-   * Basic Support methods.
-   * ========================================================================
-   */
 
   /**
    * Returns a cloned copy of this XMLOutputter.
@@ -934,23 +727,23 @@ public final class XMLOutputter2 implements Cloneable {
   public String toString() {
     StringBuilder buffer = new StringBuilder();
     buffer.append("XMLOutputter[omitDeclaration = ");
-    buffer.append(myFormat.omitDeclaration);
+    buffer.append(format.omitDeclaration);
     buffer.append(", ");
     buffer.append("encoding = ");
-    buffer.append(myFormat.encoding);
+    buffer.append(format.encoding);
     buffer.append(", ");
     buffer.append("omitEncoding = ");
-    buffer.append(myFormat.omitEncoding);
+    buffer.append(format.omitEncoding);
     buffer.append(", ");
     buffer.append("indent = '");
-    buffer.append(myFormat.indent);
+    buffer.append(format.indent);
     buffer.append("'");
     buffer.append(", ");
     buffer.append("expandEmptyElements = ");
-    buffer.append(myFormat.expandEmptyElements);
+    buffer.append(format.expandEmptyElements);
     buffer.append(", ");
     buffer.append("lineSeparator = '");
-    for (char ch : myFormat.lineSeparator.toCharArray()) {
+    for (char ch : format.lineSeparator.toCharArray()) {
       switch (ch) {
         case '\r':
           buffer.append("\\r");
@@ -962,13 +755,13 @@ public final class XMLOutputter2 implements Cloneable {
           buffer.append("\\t");
           break;
         default:
-          buffer.append("[" + ((int)ch) + "]");
+          buffer.append("[").append((int)ch).append("]");
           break;
       }
     }
     buffer.append("', ");
     buffer.append("textMode = ");
-    buffer.append(myFormat.mode + "]");
+    buffer.append(format.mode).append("]");
     return buffer.toString();
   }
 }

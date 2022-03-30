@@ -216,7 +216,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * Override this method if you are a subclasser, and you want to clear the
    * state of your SAXHandler instance in preparation for a new parse.
    */
-  protected void resetSubCLass() {
+  private void resetSubCLass() {
     // override this if you subclass SAXHandler.
     // it will be called after the base core SAXHandler is reset.
   }
@@ -297,7 +297,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * build.
    * @see #setExpandEntities
    */
-  public boolean getExpandEntities() {
+  boolean getExpandEntities() {
     return expand;
   }
 
@@ -335,7 +335,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * ignored during build.
    * @see #setIgnoringBoundaryWhitespace
    */
-  public boolean getIgnoringBoundaryWhitespace() {
+  boolean getIgnoringBoundaryWhitespace() {
     return ignoringBoundaryWhite;
   }
 
@@ -348,7 +348,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * ignored during build.
    * @see #setIgnoringElementContentWhitespace
    */
-  public boolean getIgnoringElementContentWhitespace() {
+  boolean getIgnoringElementContentWhitespace() {
     return ignoringWhite;
   }
 
@@ -782,17 +782,17 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * @param data string to flush
    * @throws SAXException if the state of the handler does not allow this.
    */
-  protected void flushCharacters(final String data) throws SAXException {
+  private void flushCharacters(final String data) throws SAXException {
     if (data.length() == 0 && !inCDATA) {
       previousCDATA = inCDATA;
       return;
     }
 
-    /**
-     * This is commented out because of some problems with the inline DTDs
-     * that Xerces seems to have. if (!inDTD) { if (inEntity) {
-     * getCurrentElement().setContent(factory.text(data)); } else {
-     * getCurrentElement().addContent(factory.text(data)); }
+    /*
+      This is commented out because of some problems with the inline DTDs
+      that Xerces seems to have. if (!inDTD) { if (inEntity) {
+      getCurrentElement().setContent(factory.text(data)); } else {
+      getCurrentElement().addContent(factory.text(data)); }
      */
 
     if (previousCDATA) {
@@ -907,13 +907,13 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
         pub = ids[0]; // may be null, that's OK
         sys = ids[1]; // may be null, that's OK
       }
-      /**
-       * if no current element, this entity belongs to an attribute in
-       * these cases, it is an error on the part of the parser to call
-       * startEntity but this will help in some cases. See
-       * org/xml/sax/
-       * ext/LexicalHandler.html#startEntity(java.lang.String) for
-       * more information
+      /*
+        if no current element, this entity belongs to an attribute in
+        these cases, it is an error on the part of the parser to call
+        startEntity but this will help in some cases. See
+        org/xml/sax/
+        ext/LexicalHandler.html#startEntity(java.lang.String) for
+        more information
        */
       if (!atRoot) {
         flushCharacters();

@@ -151,31 +151,16 @@ import java.util.List;
  * @see XMLOutputProcessor
  * @since JDOM2
  */
-public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
-  implements XMLOutputProcessor {
-
+public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implements XMLOutputProcessor {
   /**
    * Simple constant for an open-CDATA
    */
-  protected static final String CDATAPRE = "<![CDATA[";
+  private static final String CDATAPRE = "<![CDATA[";
   /**
    * Simple constant for a close-CDATA
    */
-  protected static final String CDATAPOST = "]]>";
+  private static final String CDATAPOST = "]]>";
 
-
-
-  /* *******************************************
-   * XMLOutputProcessor implementation.
-   * *******************************************
-   */
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.jdom.output.XMLOutputProcessor#process(java.io.Writer,
-   * org.jdom.Document, org.jdom.output.Format)
-   */
   @Override
   public void process(final Writer out, final Format format,
                       final Document doc) throws IOException {
@@ -275,7 +260,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
   @Override
   public void process(final Writer out, final Format format,
                       final Comment comment) throws IOException {
-    printComment(out, new FormatStack(format), comment);
+    printComment(out, comment);
     out.flush();
   }
 
@@ -286,12 +271,11 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * org.jdom.ProcessingInstruction, org.jdom.output.Format)
    */
   @Override
-  public void process(final Writer out, final Format format,
-                      final ProcessingInstruction pi) throws IOException {
-    FormatStack fstack = new FormatStack(format);
+  public void process(Writer out, Format format, ProcessingInstruction pi) throws IOException {
+    FormatStack stack = new FormatStack(format);
     // Output PI verbatim, disregarding TrAX escaping PIs.
-    fstack.setIgnoreTrAXEscapingPIs(true);
-    printProcessingInstruction(out, fstack, pi);
+    stack.setIgnoreTrAXEscapingPIs(true);
+    printProcessingInstruction(out, stack, pi);
     out.flush();
   }
 
@@ -304,7 +288,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
   @Override
   public void process(final Writer out, final Format format,
                       final EntityRef entity) throws IOException {
-    printEntityRef(out, new FormatStack(format), entity);
+    printEntityRef(out, entity);
     out.flush();
   }
 
@@ -323,7 +307,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param str The String to write (can be null).
    * @throws IOException if the out Writer fails.
    */
-  protected void write(final Writer out, final String str) throws IOException {
+  private void write(final Writer out, final String str) throws IOException {
     if (str == null) {
       return;
     }
@@ -337,7 +321,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param c   The char to write.
    * @throws IOException if the Writer fails.
    */
-  protected void write(final Writer out, final char c) throws IOException {
+  private void write(final Writer out, final char c) throws IOException {
     out.write(c);
   }
 
@@ -369,8 +353,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @throws IOException          if the destination Writer fails.
    * @throws IllegalDataException if an entity can not be escaped
    */
-  protected void attributeEscapedEntitiesFilter(final Writer out,
-                                                final FormatStack fstack, final String value) throws IOException {
+  private void attributeEscapedEntitiesFilter(final Writer out, final FormatStack fstack, final String value) throws IOException {
 
     if (!fstack.getEscapeOutput()) {
       // no escaping...
@@ -391,7 +374,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param str the String to write.
    * @throws IOException if the Writer fails.
    */
-  protected void textRaw(final Writer out, final String str) throws IOException {
+  private void textRaw(final Writer out, final String str) throws IOException {
     write(out, str);
   }
 
@@ -405,7 +388,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param ch  the char to write.
    * @throws IOException if the Writer fails.
    */
-  protected void textRaw(final Writer out, final char ch) throws IOException {
+  private void textRaw(final Writer out, final char ch) throws IOException {
     write(out, ch);
   }
 
@@ -416,7 +399,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param name the EntityRef's name.
    * @throws IOException if the Writer fails.
    */
-  protected void textEntityRef(final Writer out, final String name) throws IOException {
+  private void textEntityRef(final Writer out, final String name) throws IOException {
     textRaw(out, '&');
     textRaw(out, name);
     textRaw(out, ';');
@@ -429,7 +412,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param text the CDATA text
    * @throws IOException if the Writer fails.
    */
-  protected void textCDATA(final Writer out, final String text) throws IOException {
+  private void textCDATA(final Writer out, final String text) throws IOException {
     textRaw(out, CDATAPRE);
     textRaw(out, text);
     textRaw(out, CDATAPOST);
@@ -491,7 +474,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
         else {
           switch (c.getCType()) {
             case Comment:
-              printComment(out, fstack, (Comment)c);
+              printComment(out, (Comment)c);
               break;
             case DocType:
               printDocType(out, fstack, (DocType)c);
@@ -610,13 +593,13 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param pi     <code>ProcessingInstruction</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printProcessingInstruction(final Writer out,
-                                            final FormatStack fstack, final ProcessingInstruction pi)
+  private void printProcessingInstruction(final Writer out,
+                                          final FormatStack fstack, final ProcessingInstruction pi)
     throws IOException {
     String target = pi.getTarget();
     boolean piProcessed = false;
 
-    if (fstack.isIgnoreTrAXEscapingPIs() == false) {
+    if (!fstack.isIgnoreTrAXEscapingPIs()) {
       if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
         // special case... change the FormatStack
         fstack.setEscapeOutput(false);
@@ -628,7 +611,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
         piProcessed = true;
       }
     }
-    if (piProcessed == false) {
+    if (!piProcessed) {
       String rawData = pi.getData();
 
       // Write <?target data?> or if no data then just <?target?>
@@ -651,12 +634,10 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * This will handle printing of a {@link Comment}.
    *
    * @param out     <code>Writer</code> to use.
-   * @param fstack  the FormatStack
    * @param comment <code>Comment</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printComment(final Writer out, final FormatStack fstack,
-                              final Comment comment) throws IOException {
+  private void printComment(final Writer out, final Comment comment) throws IOException {
     write(out, "<!--");
     write(out, comment.getText());
     write(out, "-->");
@@ -666,12 +647,10 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * This will handle printing of an {@link EntityRef}.
    *
    * @param out    <code>Writer</code> to use.
-   * @param fstack the FormatStack
    * @param entity <code>EntotyRef</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printEntityRef(final Writer out, final FormatStack fstack,
-                                final EntityRef entity) throws IOException {
+  private void printEntityRef(final Writer out, final EntityRef entity) throws IOException {
     // EntityRefs are treated like text, not indented/newline content.
     textEntityRef(out, entity.getName());
   }
@@ -680,12 +659,10 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * This will handle printing of a {@link CDATA}.
    *
    * @param out    <code>Writer</code> to use.
-   * @param fstack the FormatStack
    * @param cdata  <code>CDATA</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printCDATA(final Writer out, final FormatStack fstack,
-                            final CDATA cdata) throws IOException {
+  private void printCDATA(final Writer out, final CDATA cdata) throws IOException {
     // CDATAs are treated like text, not indented/newline content.
     textCDATA(out, cdata.getText());
   }
@@ -721,8 +698,8 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param element <code>Element</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printElement(final Writer out, final FormatStack fstack,
-                              final NamespaceStack nstack, final Element element) throws IOException {
+  private void printElement(final Writer out, final FormatStack fstack,
+                            final NamespaceStack nstack, final Element element) throws IOException {
 
     nstack.push(element);
     try {
@@ -832,8 +809,8 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * <li>identify one of the three types (consecutive, stand-alone, non-text)
    * <li>do indent if any is specified.
    * <li>send the type to the respective print* handler (e.g.
-   * {@link #printCDATA(Writer, FormatStack, CDATA)}, or
-   * {@link #printComment(Writer, FormatStack, Comment)},
+   * {@link #printCDATA(Writer, CDATA)}, or
+   * {@link #printComment(Writer, Comment)},
    * <li>do a newline if one is specified.
    * <li>loop back to 1. until there's no more content to process.
    * </ol>
@@ -844,9 +821,9 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param walker {@link Walker} of <code>Content</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printContent(final Writer out,
-                              final FormatStack fstack, final NamespaceStack nstack,
-                              final Walker walker)
+  private void printContent(final Writer out,
+                            final FormatStack fstack, final NamespaceStack nstack,
+                            final Walker walker)
     throws IOException {
 
     while (walker.hasNext()) {
@@ -864,10 +841,10 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
       else {
         switch (c.getCType()) {
           case CDATA:
-            printCDATA(out, fstack, (CDATA)c);
+            printCDATA(out, (CDATA)c);
             break;
           case Comment:
-            printComment(out, fstack, (Comment)c);
+            printComment(out, (Comment)c);
             break;
           case DocType:
             printDocType(out, fstack, (DocType)c);
@@ -876,7 +853,7 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
             printElement(out, fstack, nstack, (Element)c);
             break;
           case EntityRef:
-            printEntityRef(out, fstack, (EntityRef)c);
+            printEntityRef(out, (EntityRef)c);
             break;
           case ProcessingInstruction:
             printProcessingInstruction(out, fstack,
@@ -899,8 +876,8 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param ns     <code>Namespace</code> to print definition of
    * @throws IOException if the output fails
    */
-  protected void printNamespace(final Writer out, final FormatStack fstack,
-                                final Namespace ns) throws IOException {
+  private void printNamespace(final Writer out, final FormatStack fstack,
+                              final Namespace ns) throws IOException {
     final String prefix = ns.getPrefix();
     final String uri = ns.getURI();
 
@@ -922,12 +899,9 @@ public abstract class AbstractXMLOutputProcessor extends AbstractOutputProcessor
    * @param attribute <code>Attribute</code> to output
    * @throws IOException if the output fails
    */
-  protected void printAttribute(final Writer out, final FormatStack fstack,
-                                final Attribute attribute) throws IOException {
+  private void printAttribute(final Writer out, final FormatStack fstack,
+                              final Attribute attribute) throws IOException {
 
-    if (!attribute.isSpecified() && fstack.isSpecifiedAttributesOnly()) {
-      return;
-    }
     write(out, " ");
     write(out, attribute.getQualifiedName());
     write(out, "=");

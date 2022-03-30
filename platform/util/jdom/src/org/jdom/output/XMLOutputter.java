@@ -116,9 +116,10 @@ public class XMLOutputter implements Cloneable {
   private Format userFormat = Format.getRawFormat();
 
   // For xml:space="preserve"
-  protected static final Format preserveFormat = Format.getRawFormat();
+  private static final Format preserveFormat = Format.getRawFormat();
 
   // What's currently in use
+  @SuppressWarnings("WeakerAccess")
   protected Format currentFormat = userFormat;
 
   /**
@@ -225,22 +226,6 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * This will handle printing out an <code>{@link
-   * Element}</code>'s content only, not including its tag, and
-   * attributes.  This can be useful for printing the content of an
-   * element that contains HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param element <code>Element</code> to output.
-   * @param out     <code>OutputStream</code> to use.
-   */
-  public void outputElementContent(Element element, OutputStream out)
-    throws IOException {
-    Writer writer = makeWriter(out);
-    outputElementContent(element, writer);  // output() flushes
-  }
-
-  /**
    * This will handle printing out a list of nodes.
    * This can be useful for printing the content of an element that
    * contains HTML, like "&lt;description&gt;JDOM is
@@ -332,11 +317,10 @@ public class XMLOutputter implements Cloneable {
       enc = "UTF8";
     }
 
-    Writer writer = new BufferedWriter(
+    return new BufferedWriter(
       (new OutputStreamWriter(
         new BufferedOutputStream(out), enc)
       ));
-    return writer;
   }
 
   // * * * * * * * * * * Output to a Writer * * * * * * * * * *
@@ -358,7 +342,7 @@ public class XMLOutputter implements Cloneable {
    */
   public void output(Document doc, Writer out) throws IOException {
 
-    printDeclaration(out, doc, userFormat.encoding);
+    printDeclaration(out, userFormat.encoding);
 
     // Print out root element, as well as any root level
     // comments and processing instructions,
@@ -544,7 +528,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(doc, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -561,7 +545,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(doctype, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -578,7 +562,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(element, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -594,7 +578,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(list, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -611,7 +595,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(cdata, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -628,7 +612,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(text, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -646,7 +630,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(comment, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -663,7 +647,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(pi, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -680,7 +664,7 @@ public class XMLOutputter implements Cloneable {
     try {
       output(entity, out);  // output() flushes
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return out.toString();
   }
@@ -692,13 +676,10 @@ public class XMLOutputter implements Cloneable {
    * This will handle printing of the declaration.
    * Assumes XML version 1.0 since we don't directly know.
    *
-   * @param doc      <code>Document</code> whose declaration to write.
    * @param out      <code>Writer</code> to use.
    * @param encoding The encoding to add to the declaration
    */
-  protected void printDeclaration(Writer out, Document doc,
-                                  String encoding) throws IOException {
-
+  private void printDeclaration(Writer out, String encoding) throws IOException {
     // Only print the declaration if it's not being omitted
     if (!userFormat.omitDeclaration) {
       // Assume 1.0 version
@@ -721,7 +702,7 @@ public class XMLOutputter implements Cloneable {
    * @param docType <code>Document</code> whose declaration to write.
    * @param out     <code>Writer</code> to use.
    */
-  protected void printDocType(Writer out, DocType docType)
+  private void printDocType(Writer out, DocType docType)
     throws IOException {
 
     String publicID = docType.getPublicID();
@@ -778,7 +759,7 @@ public class XMLOutputter implements Cloneable {
     String target = pi.getTarget();
     boolean piProcessed = false;
 
-    if (currentFormat.ignoreTrAXEscapingPIs == false) {
+    if (!currentFormat.ignoreTrAXEscapingPIs) {
       if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
         escapeOutput = false;
         piProcessed = true;
@@ -788,7 +769,7 @@ public class XMLOutputter implements Cloneable {
         piProcessed = true;
       }
     }
-    if (piProcessed == false) {
+    if (!piProcessed) {
       String rawData = pi.getData();
 
       // Write <?target data?> or if no data then just <?target?>
@@ -816,7 +797,7 @@ public class XMLOutputter implements Cloneable {
    * @param entity <code>EntityRef</code> to output.
    * @param out    <code>Writer</code> to use.
    */
-  protected void printEntityRef(Writer out, EntityRef entity)
+  private void printEntityRef(Writer out, EntityRef entity)
     throws IOException {
     out.write("&");
     out.write(entity.getName());
@@ -829,7 +810,7 @@ public class XMLOutputter implements Cloneable {
    * @param cdata <code>CDATA</code> to output.
    * @param out   <code>Writer</code> to use.
    */
-  protected void printCDATA(Writer out, CDATA cdata) throws IOException {
+  private void printCDATA(Writer out, CDATA cdata) throws IOException {
     String str = (currentFormat.mode == Format.TextMode.NORMALIZE)
                  ? cdata.getTextNormalize()
                  : ((currentFormat.mode == Format.TextMode.TRIM) ?
@@ -877,8 +858,8 @@ public class XMLOutputter implements Cloneable {
    * @param level      <code>int</code> level of indention.
    * @param namespaces <code>List</code> stack of Namespaces in scope.
    */
-  protected void printElement(Writer out, Element element,
-                              int level, NamespaceStack namespaces)
+  private void printElement(Writer out, Element element,
+                            int level, NamespaceStack namespaces)
     throws IOException {
 
     List attributes = element.getAttributes();
@@ -916,7 +897,7 @@ public class XMLOutputter implements Cloneable {
 
     // Print out attributes
     if (attributes != null) {
-      printAttributes(out, attributes, element, namespaces);
+      printAttributes(out, attributes, namespaces);
     }
 
     // Depending on the settings (newlines, textNormalize, etc), we may
@@ -1153,8 +1134,7 @@ public class XMLOutputter implements Cloneable {
    * @param attributes <code>List</code> of Attribute objcts
    * @param out        <code>Writer</code> to use
    */
-  protected void printAttributes(Writer out, List attributes, Element parent,
-                                 NamespaceStack namespaces)
+  private void printAttributes(Writer out, List<Attribute> attributes, NamespaceStack namespaces)
     throws IOException {
 
     // I do not yet handle the case where the same prefix maps to
@@ -1163,7 +1143,7 @@ public class XMLOutputter implements Cloneable {
     // if someone tries to do this
     // Set prefixes = new HashSet();
     for (int i = 0; i < attributes.size(); i++) {
-      Attribute attribute = (Attribute)attributes.get(i);
+      Attribute attribute = attributes.get(i);
       Namespace ns = attribute.getNamespace();
       if ((ns != Namespace.NO_NAMESPACE) &&
           (ns != Namespace.XML_NAMESPACE)) {
@@ -1366,7 +1346,7 @@ public class XMLOutputter implements Cloneable {
    * @throws IllegalArgumentException if an entity can not be escaped
    */
   public String escapeAttributeEntities(String str) {
-    StringBuffer buffer;
+    StringBuilder buffer;
     int ch, pos;
     String entity;
     EscapeStrategy strategy = currentFormat.escapeStrategy;
@@ -1434,7 +1414,7 @@ public class XMLOutputter implements Cloneable {
         if (entity != null) {
           // An entity occurred, so we'll have to use StringBuffer
           // (allocate room for it plus a few more entities).
-          buffer = new StringBuffer(str.length() + 20);
+          buffer = new StringBuilder(str.length() + 20);
           // Copy previous skipped characters and fall through
           // to pickup current character
           buffer.append(str, 0, pos);
@@ -1469,9 +1449,9 @@ public class XMLOutputter implements Cloneable {
    * @throws IllegalArgumentException if an entity can not be escaped
    */
   public String escapeElementEntities(String str) {
-    if (escapeOutput == false) return str;
+    if (!escapeOutput) return str;
 
-    StringBuffer buffer;
+    StringBuilder buffer;
     int ch, pos;
     String entity;
     EscapeStrategy strategy = currentFormat.escapeStrategy;
@@ -1529,7 +1509,7 @@ public class XMLOutputter implements Cloneable {
         if (entity != null) {
           // An entity occurred, so we'll have to use StringBuffer
           // (allocate room for it plus a few more entities).
-          buffer = new StringBuffer(str.length() + 20);
+          buffer = new StringBuilder(str.length() + 20);
           // Copy previous skipped characters and fall through
           // to pickup current character
           buffer.append(str, 0, pos);
@@ -1581,7 +1561,7 @@ public class XMLOutputter implements Cloneable {
    * @return a string listing the settings for this XMLOutputter instance
    */
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     if (userFormat.lineSeparator != null) {
       for (int i = 0; i < userFormat.lineSeparator.length(); i++) {
         char ch = userFormat.lineSeparator.charAt(i);
@@ -1596,7 +1576,7 @@ public class XMLOutputter implements Cloneable {
             buffer.append("\\t");
             break;
           default:
-            buffer.append("[" + ((int)ch) + "]");
+            buffer.append("[").append((int)ch).append("]");
             break;
         }
       }
@@ -1634,8 +1614,8 @@ public class XMLOutputter implements Cloneable {
    * declare a NamespaceStack parameter, but we don't want to
    * declare the parent NamespaceStack class as public.
    */
-  protected static class NamespaceStack
-    extends org.jdom.output.NamespaceStack {
+  @SuppressWarnings("WeakerAccess")
+  protected static final class NamespaceStack extends org.jdom.output.NamespaceStack {
   }
 
   // Support method to print a name without using elt.getQualifiedName()
