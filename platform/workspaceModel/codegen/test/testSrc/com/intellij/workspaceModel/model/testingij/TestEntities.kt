@@ -1,17 +1,14 @@
 package com.intellij.workspaceModel.storage.entities
 
+import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.IntellijWsTestIj.IntellijWsTestIj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
-import com.intellij.workspaceModel.storage.EntitySource
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.fields.*
 
 
 
@@ -54,14 +51,14 @@ abstract class MyData(val myData: MyContainer)
 data class MyContainer(val info: String)
 
 fun WorkspaceEntityStorageBuilder.addSampleEntity(
-    stringProperty: String,
-    source: EntitySource = SampleEntitySource("test"),
-    booleanProperty: Boolean = false,
-    stringListProperty: MutableList<String> = ArrayList(),
-    stringSetProperty: MutableSet<String> = LinkedHashSet(),
-    virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-    fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
-    info: String = ""
+  stringProperty: String,
+  source: EntitySource = SampleEntitySource("test"),
+  booleanProperty: Boolean = false,
+  stringListProperty: MutableList<String> = ArrayList(),
+  stringSetProperty: MutableSet<String> = LinkedHashSet(),
+  virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+  fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
+  info: String = ""
 ): SampleEntity {
     val sampleEntity = SampleEntity {
         this.stringProperty = stringProperty

@@ -189,7 +189,7 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstrac
   } as? Sequence<Child> ?: emptySequence()
 }
 
-internal fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyParent(
+fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyParent(
     connectionId: ConnectionId,
     child: WorkspaceEntity
 ): Parent? {

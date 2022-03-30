@@ -94,9 +94,9 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal var id: EntityId = 0
+  var id: EntityId = 0
 
-  internal lateinit var snapshot: WorkspaceEntityStorage
+  lateinit var snapshot: WorkspaceEntityStorage
 
   override val name: String? get() = TODO()
   override val parent: Obj? get() = TODO()
@@ -203,8 +203,8 @@ data class ExtRefKey(
 abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
   var diff: WorkspaceEntityStorageBuilder? = null
 
-  internal val modifiable = ThreadLocal.withInitial { false }
-  internal val changedProperty: MutableSet<String> = mutableSetOf()
+  val modifiable = ThreadLocal.withInitial { false }
+  val changedProperty: MutableSet<String> = mutableSetOf()
 
   /**
    * For the state
@@ -237,7 +237,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     }
   }
 
-  internal inline fun allowModifications(action: () -> Unit) {
+  inline fun allowModifications(action: () -> Unit) {
     modifiable.set(true)
     try {
       action()
@@ -347,7 +347,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   fun isEntitySourceInitialized(): Boolean = ::entitySource.isInitialized
 
-  internal fun createEntityId(): EntityId = createEntityId(id, ClassConversion.entityDataToEntity(javaClass).toClassId())
+  fun createEntityId(): EntityId = createEntityId(id, ClassConversion.entityDataToEntity(javaClass).toClassId())
 
   abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
 

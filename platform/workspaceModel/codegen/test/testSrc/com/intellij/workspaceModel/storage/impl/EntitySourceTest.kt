@@ -22,6 +22,7 @@ class EntitySourceTest {
     fun `check entity source create`() {
         val mainBuilder = WorkspaceEntityStorageBuilder.create()
 
+
         val builder = WorkspaceEntityStorageBuilder.create()
         builder as WorkspaceEntityStorageBuilderImpl
         val entity = ParentEntity {
