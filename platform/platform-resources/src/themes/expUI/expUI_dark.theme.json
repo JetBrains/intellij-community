@@ -431,7 +431,12 @@
       "border": "4,12,4,12"
     },
 
-    "TitlePane.Button.preferredSize": "36,40",
+    "TitlePane": {
+      "Button": {
+        "preferredSize": "36,40",
+        "hoverBackground": "#FFFFFF10"
+      }
+    },
 
     "VersionControl": {
       "Log.Commit": {
