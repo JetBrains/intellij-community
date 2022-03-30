@@ -31,7 +31,7 @@ private class TaskIdRuleValidator : CustomValidationRule() {
 
   private fun KLesson.getTaskCount(): Int {
     val context = ExtractTaskCountContext()
-    lessonContent(context)
+    fullLessonContent(context)
     return context.taskCount
   }
 }
