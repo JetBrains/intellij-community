@@ -63,6 +63,7 @@ class NewInlayProviderSettingsModel<T : Any>(
       cases.forEachIndexed { index, c -> c.value = backup[index] }
     }
     return Runnable {
+      if (editor.isDisposed) return@Runnable
       collectorWrapper.applyToEditor(file, editor, hintsBuffer)
     }
   }
