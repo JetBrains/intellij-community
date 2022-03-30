@@ -33,7 +33,9 @@ class GitSilentFileAdderImpl(private val project: Project) : GitSilentFileAdder 
   }
 
   override fun markFileForAdding(file: VirtualFile) {
-    addFile(VcsUtil.getFilePath(file))
+    if (file.isInLocalFileSystem) {
+      addFile(VcsUtil.getFilePath(file))
+    }
   }
 
   override fun markFileForAdding(file: File) {
