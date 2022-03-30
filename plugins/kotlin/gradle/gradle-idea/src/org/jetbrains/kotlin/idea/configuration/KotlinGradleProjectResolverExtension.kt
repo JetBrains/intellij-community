@@ -38,8 +38,6 @@ var DataNode<ModuleData>.hasKotlinPlugin
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("HAS_KOTLIN_PLUGIN"), false)
 var DataNode<ModuleData>.compilerArgumentsBySourceSet
         by CopyableDataNodeUserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
-var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
-        by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 var DataNode<ModuleData>.coroutines
         by CopyableDataNodeUserDataProperty(Key.create<String>("KOTLIN_COROUTINES"))
 var DataNode<out ModuleData>.isHmpp
@@ -50,6 +48,8 @@ var DataNode<ModuleData>.kotlinNativeHome
         by CopyableDataNodeUserDataProperty(Key.create<String>("KOTLIN_NATIVE_HOME"))
 var DataNode<out ModuleData>.implementedModuleNames
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<List<String>>("IMPLEMENTED_MODULE_NAME"), emptyList())
+var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("TASK_PROPERTIES_MAP"), mutableMapOf())
 
 // Project is usually the same during all import, thus keeping Map Project->Dependencies makes model a bit more complicated but allows to avoid future problems
 var DataNode<out ModuleData>.dependenciesCache
@@ -227,7 +227,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         ideModule.isResolved = true
         ideModule.hasKotlinPlugin = gradleModel.hasKotlinPlugin
         ideModule.compilerArgumentsBySourceSet = gradleModel.compilerArgumentsBySourceSet.deepCopy()
-        ideModule.kotlinTaskPropertiesBySourceSet = gradleModel.kotlinTaskProperties
+        ideModule.kotlinTaskPropertiesBySourceSet.putAll(gradleModel.kotlinTaskProperties)
         ideModule.coroutines = gradleModel.coroutines
         ideModule.platformPluginId = gradleModel.platformPluginId
 
