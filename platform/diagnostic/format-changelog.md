@@ -23,7 +23,7 @@
  * add `base LaF creation`, `base LaF initialization`, `base LaF defaults getting`.
 
 ## 32
- * `prepareAppInitActivities` is removed in favour if `items`.
+ * `prepareAppInitActivities` is removed in favour of `items`.
  * `totalDurationComputed` is removed.
  * `totalDurationActual` is renamed to `totalDuration`.
 

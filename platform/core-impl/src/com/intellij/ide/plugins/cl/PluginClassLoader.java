@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
-  public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
+  private static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
   static {
     boolean parallelCapable = registerAsParallelCapable();
@@ -212,7 +212,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   /**
-   * See https://stackoverflow.com/a/5428795 about resolve flag.
+   * See <a href="https://stackoverflow.com/a/5428795">https://stackoverflow.com/a/5428795</a> about resolve flag.
    */
   @Override
   public @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
@@ -592,7 +592,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     private final @NotNull List<Enumeration<URL>> list;
     private int myIndex;
 
-    DeepEnumeration(@NotNull List<Enumeration<URL>> enumerations) {
+    private DeepEnumeration(@NotNull List<Enumeration<URL>> enumerations) {
       list = enumerations;
     }
 
