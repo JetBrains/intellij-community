@@ -85,7 +85,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
                                                                                @field:JvmField internal val isNewUi: Boolean,
                                                                                private val explicitButtonManager: ToolWindowButtonManager?,
                                                                                private val isEdtRequired: Boolean)
-  : ToolWindowManagerEx(), PersistentStateComponent<Element?>, Disposable {
+  : ToolWindowManagerEx(), PersistentStateComponent<Element>, Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
   private var oldLayout: DesktopLayout? = null
@@ -1681,6 +1681,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   override fun loadState(state: Element) {
     var layoutIsScheduled = false
     for (element in state.children) {
+      if (JDOMUtil.isEmpty(element)) {
+        // make sure that layoutIsScheduled is not set if empty layout for some reason is provided
+        continue
+      }
+
       when (element.name) {
         DesktopLayout.TAG -> {
           val layout = DesktopLayout()
