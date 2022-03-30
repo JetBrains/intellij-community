@@ -88,15 +88,16 @@ public final class PluginInstaller {
     return false;
   }
 
-  private static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
+  @ApiStatus.Internal
+  public static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
     addActionCommand(new DeleteCommand(pluginPath));
   }
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
                                                @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                                                boolean isUpdate) {
-    boolean uninstalledWithoutRestart = DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
-    if (uninstalledWithoutRestart && pluginDescriptor.isEnabled()) {
+    boolean uninstalledWithoutRestart = true;
+    if (pluginDescriptor.isEnabled()) {
       DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
         .withDisable(false)
         .withUpdate(isUpdate)
