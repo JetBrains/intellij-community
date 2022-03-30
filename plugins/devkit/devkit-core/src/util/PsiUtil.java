@@ -38,13 +38,20 @@ public final class PsiUtil {
 
   private PsiUtil() { }
 
+  /**
+   * @return {@code true} if given class can be instantiated by container at runtime
+   */
   public static boolean isInstantiable(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface() ||
         psiClass.isAnnotationType() ||
         psiClass instanceof PsiTypeParameter ||
         psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
-        psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        !isInnerStaticClass(psiClass)) {
+        psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+
+    if (psiClass.getContainingClass() != null &&
+        !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
 
@@ -58,13 +65,6 @@ public final class PsiUtil {
       }
     }
     return false;
-  }
-
-  private static boolean isInnerStaticClass(@NotNull PsiClass cls) {
-    if (cls.getContainingClass() == null) return true;
-
-    return cls.hasModifierProperty(PsiModifier.STATIC) &&
-           !cls.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
   @Nullable
