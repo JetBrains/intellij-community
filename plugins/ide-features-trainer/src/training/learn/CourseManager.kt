@@ -102,10 +102,15 @@ class CourseManager internal constructor() : Disposable {
    * @param projectWhereToOpen -- where to open projectWhereToOpen
    * @param forceStartLesson -- force start lesson without check for passed status (passed lessons will be opened as completed text)
    */
-  fun openLesson(projectWhereToOpen: Project, lesson: Lesson?, startingWay: LessonStartingWay, forceStartLesson: Boolean = false) {
+  fun openLesson(projectWhereToOpen: Project,
+                 lesson: Lesson?,
+                 startingWay: LessonStartingWay,
+                 forceStartLesson: Boolean = false,
+                 forceOpenLearningProject: Boolean = false,
+  ) {
     LessonManager.instance.stopLesson()
     if (lesson == null) return //todo: remove null lessons
-    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson, startingWay))
+    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson, startingWay, forceOpenLearningProject))
   }
 
   fun findLessonById(lessonId: String): Lesson? {

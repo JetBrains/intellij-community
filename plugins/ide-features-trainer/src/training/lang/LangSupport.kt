@@ -7,6 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import training.dsl.LessonContext
+import training.learn.course.KLesson
 import training.learn.exceptons.InvalidSdkException
 import training.learn.exceptons.NoSdkException
 import training.util.OnboardingFeedbackData
@@ -46,6 +48,10 @@ interface LangSupport {
   /** Language can specify default scratch file name for scratch lessons */
   val scratchFileName: String
     get() = "Learning"
+
+  /** Language support can add tasks to check common requirements  */
+  val commonCheckContent: LessonContext.(lesson: KLesson) -> Unit
+    get() = {}
 
   companion object {
     const val EP_NAME = "training.ift.language.extension"
