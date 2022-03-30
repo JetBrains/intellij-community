@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.getName
@@ -23,9 +20,7 @@ class GHRepositorySelectorComponentFactory {
                                            hasFocus: Boolean) {
           if (value is ComboBoxWithActionsModel.Item.Wrapper) {
             val mapping = value.wrappee.castSafelyTo<GHGitRepositoryMapping>() ?: return
-            val repositoryName = GHUIUtil.getRepositoryDisplayName(model.items.map(GHGitRepositoryMapping::ghRepositoryCoordinates),
-                                                                   mapping.ghRepositoryCoordinates,
-                                                                   true)
+            val repositoryName = repositoryName(model, mapping)
             val remoteName = mapping.gitRemoteUrlCoordinates.remote.name
             append(repositoryName).append(" ").append(remoteName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
@@ -38,6 +33,29 @@ class GHRepositorySelectorComponentFactory {
       isUsePreferredSizeAsMinimum = false
       isOpaque = false
       isSwingPopup = true
+    }.also {
+      installSpeedSearch(it, model)
+    }
+  }
+
+  private fun repositoryName(model: ComboBoxWithActionsModel<GHGitRepositoryMapping>, mapping: GHGitRepositoryMapping): String {
+    return GHUIUtil.getRepositoryDisplayName(model.items.map(GHGitRepositoryMapping::ghRepositoryCoordinates),
+                                             mapping.ghRepositoryCoordinates,
+                                             true)
+  }
+
+  private fun installSpeedSearch(comboBox: ComboBox<ComboBoxWithActionsModel.Item<GHGitRepositoryMapping>>,
+                                 model: ComboBoxWithActionsModel<GHGitRepositoryMapping>) {
+    ComboboxSpeedSearch.installSpeedSearch(comboBox) {
+      if (it is ComboBoxWithActionsModel.Item.Wrapper) {
+        repositoryName(model, it.wrappee)
+      }
+      else if (it is ComboBoxWithActionsModel.Item.Action) {
+        it.action.getName()
+      }
+      else {
+        it.toString()
+      }
     }
   }
 }
