@@ -13,7 +13,7 @@ import java.util.*
 import javax.swing.JFrame
 
 class WindowActionPromoter: ActionPromoter {
-  override fun promote(actions: MutableList<out AnAction>, context: DataContext): MutableList<AnAction> {
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     val window = ComponentUtil.getWindow(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     if (window != null && window !is JFrame
         && !JBPopupFactory.getInstance().isPopupActive

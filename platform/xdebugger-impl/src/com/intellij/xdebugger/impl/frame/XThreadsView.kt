@@ -59,7 +59,7 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
 
         }
 
-        override fun addExecutionStack(executionStacks: MutableList<out XExecutionStack>, last: Boolean) {
+        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
           val children = XValueChildrenList()
           executionStacks.map { FramesContainer(it) }.forEach { children.add("", it) }
           node.addChildren(children, last)
@@ -74,7 +74,7 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
         override fun errorOccurred(errorMessage: String) {
         }
 
-        override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, last: Boolean) {
+        override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
           val children = XValueChildrenList()
           stackFrames.forEach { children.add("", FrameValue(it)) }
           node.addChildren(children, last)
