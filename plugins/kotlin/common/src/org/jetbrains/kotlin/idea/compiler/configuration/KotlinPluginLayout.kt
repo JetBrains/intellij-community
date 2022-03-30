@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
+import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
@@ -16,8 +14,10 @@ import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import org.jetbrains.kotlin.idea.artifacts.resolveMavenArtifactInMavenRepo
 import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.inputStream
 import kotlin.io.path.nameWithoutExtension
 
 sealed class KotlinPluginLayout {
@@ -52,7 +52,7 @@ sealed class KotlinPluginLayout {
         val instance: KotlinPluginLayout by lazy {
             val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
 
-            val layout = if (ideaDirectory.isDirectory() && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
+            val layout = if (Files.isDirectory(ideaDirectory) && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
                 KotlinPluginLayoutWhenRunFromSources(ideaDirectory)
             } else {
                 val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
@@ -89,9 +89,9 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
 private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Path) : KotlinPluginLayout() {
     private val bundledJpsVersion by lazy {
         val distLibraryFile = ideaDirectory.resolve("libraries/kotlinc_kotlin_dist.xml")
-        require(distLibraryFile.isFile()) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }
+        require(Files.isRegularFile(distLibraryFile)) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }
 
-        val distLibraryElement = JDOMUtil.load(distLibraryFile).getChild("library")
+        val distLibraryElement = distLibraryFile.inputStream().use(::readXmlAsModel).getChild("library")
             ?: error("Can't find the 'library' element in ${distLibraryFile}")
 
         val propertiesElement = distLibraryElement.getChild("properties")
