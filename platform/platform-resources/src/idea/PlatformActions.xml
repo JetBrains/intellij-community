@@ -1023,19 +1023,19 @@
     </group>
 
     <group id="WelcomeScreenRecentProjectActionGroup">
-      <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
-      <action id="WelcomeScreen.RevealIn" class="com.intellij.openapi.wm.impl.welcomeScreen.RevealProjectDirAction" />
-      <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
+      <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.OpenSelectedProjectsAction"/>
+      <action id="WelcomeScreen.RevealIn" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RevealProjectDirAction" />
+      <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.CopyProjectPathAction"
               use-shortcut-of="CopyPaths"/>
       <separator/>
-      <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction"/>
-      <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.MoveProjectToGroupActionGroup"
+      <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.CreateNewProjectGroupAction"/>
+      <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.MoveProjectToGroupActionGroup"
              popup="true"/>
-      <action id="WelcomeScreen.EditGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.EditProjectGroupAction"/>
+      <action id="WelcomeScreen.EditGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.EditProjectGroupAction"/>
       <separator/>
-      <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction"/>
+      <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectIconAction"/>
       <separator/>
-      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
+      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction"
               use-shortcut-of="$Delete"/>
     </group>
 
