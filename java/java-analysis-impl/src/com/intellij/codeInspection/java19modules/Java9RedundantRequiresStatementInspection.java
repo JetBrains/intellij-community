@@ -44,6 +44,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (!requiredModules.isEmpty()) {
             List<CommonProblemDescriptor> descriptors = new ArrayList<>();
             for (RefJavaModule.RequiredModule requiredModule : requiredModules) {
+              if (requiredModule.isTransitive) continue;
               String requiredModuleName = requiredModule.moduleName;
 
               boolean isJavaBase = PsiJavaModule.JAVA_BASE.equals(requiredModuleName);
@@ -108,7 +109,9 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
   private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
     private final String myRequiredModuleName;
+    @SafeFieldForPreview
     private final Set<String> myImportedPackages;
+    @SafeFieldForPreview
     private final Set<String> myDependencies;
 
     DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages,
