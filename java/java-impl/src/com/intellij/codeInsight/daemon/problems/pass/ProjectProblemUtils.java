@@ -36,7 +36,6 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,6 +82,7 @@ public final class ProjectProblemUtils {
     if (relatedProblems.size() == 1) {
       Problem problem = relatedProblems.iterator().next();
       PsiElement reportedElement = problem.getReportedElement();
+      if (reportedElement == null) return;
       VirtualFile fileWithProblem = reportedElement.getContainingFile().getVirtualFile();
       TextRange elementRange = reportedElement.getTextRange();
       int offset = elementRange != null ? elementRange.getStartOffset() : -1;
@@ -97,11 +97,16 @@ public final class ProjectProblemUtils {
       presentation.setTabName(title);
       presentation.setTabText(title);
 
-      Usage[] usages = ContainerUtil.map2Array(relatedProblems, new Usage[relatedProblems.size()], e -> {
-        PsiElement reportedElement = e.getReportedElement();
-        UsageInfo usageInfo = new UsageInfo(e.getContext());
-        return new BrokenUsage(usageInfo, reportedElement);
-      });
+      Usage[] usages = relatedProblems.stream()
+        .map(e -> {
+          PsiElement reportedElement = e.getReportedElement();
+          PsiElement context = e.getContext();
+          if (context == null) return null;
+          UsageInfo usageInfo = new UsageInfo(context);
+          return new BrokenUsage(usageInfo, reportedElement);
+        })
+        .filter(usage -> usage != null)
+        .toArray(size -> new Usage[size]);
 
       class MemberInfo {
         private final String myText;

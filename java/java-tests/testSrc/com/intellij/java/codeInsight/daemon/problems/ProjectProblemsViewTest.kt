@@ -43,7 +43,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     for (refClass in refClasses) {
       val element = PsiTreeUtil.findChildOfAnyType(refClass, false, T::class.java)!!
       val problems = getProblems()
-      if (problems.none { problemElement -> PsiTreeUtil.isAncestor(element, problemElement, false) }) return false
+      if (problems.none { problemElement -> PsiTreeUtil.isAncestor(element, problemElement!!, false) }) return false
     }
     return true
   }
