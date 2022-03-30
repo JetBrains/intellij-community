@@ -189,6 +189,8 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testSpockTableWithComments() throws Throwable { doTest() }
 
+  void testSpockTableWithFullwidthCharacters() throws Throwable { doTest() }
+
   void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false
     doTest()
