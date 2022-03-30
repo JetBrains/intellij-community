@@ -16,6 +16,9 @@ sealed class GtwToClientMessage {
 
   @Serializable
   object GatewayClose : GtwToClientMessage()
+
+  @Serializable
+  data class GatewayLogs(val gtwLogs: String) : GtwToClientMessage()
 }
 
 
@@ -27,6 +30,9 @@ sealed class ClientToGtwMessage {
   // ask GTW to prepare restart flag and response with RestartReady
   @Serializable
   object ClientRestart : ClientToGtwMessage()
+
+  @Serializable
+  object ClientAsksLogs : ClientToGtwMessage()
 
   @Serializable
   data class ProjectOpenFailed(val exitCode: Int) : ClientToGtwMessage()
