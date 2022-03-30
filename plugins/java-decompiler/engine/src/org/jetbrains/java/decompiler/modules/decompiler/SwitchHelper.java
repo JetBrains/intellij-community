@@ -86,21 +86,44 @@ public final class SwitchHelper {
   private static Map<Exprent, Exprent> evaluateCaseLabelsToFieldsMapping(@NotNull List<List<Exprent>> caseValues,
                                                                          @NotNull ArrayExprent array) {
     Map<Exprent, Exprent> mapping = new HashMap<>(caseValues.size());
-    FieldExprent arrayField = (FieldExprent)array.getArray();
-    ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(arrayField.getClassname());
-    if (classNode == null) return mapping;
-    MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
-    if (wrapper != null && wrapper.root != null) {
-      wrapper.getOrBuildGraph().iterateExprents(exprent -> {
-        if (exprent instanceof AssignmentExprent) {
-          AssignmentExprent assignment = (AssignmentExprent)exprent;
-          Exprent left = assignment.getLeft();
-          if (left.type == Exprent.EXPRENT_ARRAY && ((ArrayExprent)left).getArray().equals(arrayField)) {
-            mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
+    if (array.getArray().type == Exprent.EXPRENT_FIELD) { // Javac compiler
+      FieldExprent arrayField = (FieldExprent)array.getArray();
+      ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(arrayField.getClassname());
+      if (classNode == null) return mapping;
+      MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
+      if (wrapper != null && wrapper.root != null) {
+        wrapper.getOrBuildGraph().iterateExprents(exprent -> {
+          if (exprent instanceof AssignmentExprent) {
+            AssignmentExprent assignment = (AssignmentExprent)exprent;
+            Exprent left = assignment.getLeft();
+            if (left.type == Exprent.EXPRENT_ARRAY && ((ArrayExprent)left).getArray().equals(arrayField)) {
+              mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
+            }
           }
-        }
-        return 0;
-      });
+          return 0;
+        });
+      }
+
+    } else if (array.getArray().type == Exprent.EXPRENT_INVOCATION) { // Eclipse compiler
+      InvocationExprent invocationExprent = (InvocationExprent) array.getArray();
+      ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invocationExprent.getClassName());
+      if (classNode == null) return mapping;
+      MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(invocationExprent.getName(), "()[I");
+      if (wrapper != null && wrapper.root != null) {
+        wrapper.getOrBuildGraph().iterateExprents(exprent -> {
+          if (exprent instanceof AssignmentExprent) {
+            AssignmentExprent assignment = (AssignmentExprent)exprent;
+            Exprent left = assignment.getLeft();
+            if (left.type == Exprent.EXPRENT_ARRAY) {
+              Exprent indexExprent = ((ArrayExprent)left).getIndex();
+              if (indexExprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent) indexExprent).getName().equals("ordinal")) {
+                mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
+              }
+            }
+          }
+          return 0;
+        });
+      }
     }
     return mapping;
   }
@@ -134,9 +157,12 @@ public final class SwitchHelper {
     if (!(exprent instanceof ArrayExprent)) return false;
     Exprent field = ((ArrayExprent)exprent).getArray();
     Exprent index = ((ArrayExprent)exprent).getIndex();
-    return field instanceof FieldExprent &&
-           (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
-            (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
+    boolean isJavacEnumArray = field instanceof FieldExprent &&
+      (((FieldExprent)field).getName().startsWith("$SwitchMap") ||
+        (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
+    boolean isEclipseEnumArray = field instanceof InvocationExprent &&
+      ((InvocationExprent)field).getName().startsWith("$SWITCH_TABLE");
+    return isJavacEnumArray || isEclipseEnumArray;
   }
 
   static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {

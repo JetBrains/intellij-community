@@ -120,6 +120,7 @@ public class SingleClassesTest {
           "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
           "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
   @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
+  @Test public void testSwitchOnEnumEclipse() { doTest("pkg/TestSwitchOnEnumEclipse"); }
   @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
   @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
@@ -215,8 +216,6 @@ public class SingleClassesTest {
   @Test public void testNestedType() { doTest("pkg/NestedType"); }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
-
-
   @Test public void testInstanceofWithPattern() {
     doTest("patterns/TestInstanceofWithPattern");
   }
