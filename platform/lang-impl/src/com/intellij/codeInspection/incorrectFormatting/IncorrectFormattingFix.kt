@@ -47,7 +47,8 @@ object ReformatQuickFix : LocalQuickFix {
   override fun getFamilyName() = LangBundle.message("inspection.incorrect.formatting.fix.reformat")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val file = descriptor.psiElement.containingFile
+    val innerFile = descriptor.psiElement.containingFile
+    val file = innerFile.viewProvider.run { getPsi(baseLanguage) }
     CodeStyleManager.getInstance(project).reformatText(file, 0, file.textLength)
   }
 }
