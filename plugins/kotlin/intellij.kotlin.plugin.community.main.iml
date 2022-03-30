@@ -7,6 +7,7 @@
     <orderEntry type="module" module-name="kotlin.plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.base.util" exported="" />
     <orderEntry type="module" module-name="kotlin.base.indices" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" exported="" />
     <orderEntry type="module" module-name="kotlin.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />

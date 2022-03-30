@@ -35,6 +35,7 @@ final class KotlinPluginBuilder {
   public static final List<String> MODULES = List.of(
     "kotlin.base.util",
     "kotlin.base.indices",
+    "kotlin.base.compiler-configuration",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",

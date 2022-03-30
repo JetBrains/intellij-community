@@ -84,9 +84,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         }
     }
 
-    protected open fun validateNewSettings(settings: T) {
-
-    }
+    protected open fun validateNewSettings(settings: T) {}
 
     protected abstract fun createSettings(): T
 
