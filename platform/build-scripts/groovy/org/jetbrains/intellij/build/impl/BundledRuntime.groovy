@@ -198,7 +198,6 @@ final class BundledRuntime {
 
   /**
    * Update this method together with:
-   *  `build/dependencies/setupJdk.gradle`
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
    *  `UploadingAndSigning#getMissingJbrs(java.lang.String)`
   */

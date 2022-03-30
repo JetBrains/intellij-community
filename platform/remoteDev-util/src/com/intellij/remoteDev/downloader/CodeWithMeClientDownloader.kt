@@ -188,7 +188,6 @@ object CodeWithMeClientDownloader {
    * @returns Pair(path/to/thin/client, path/to/jre)
    *
    * Update this method (any jdk-related stuff) together with:
-   *  `setupJdk.gradle`
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
   fun downloadClientAndJdk(clientBuildVersion: String,
