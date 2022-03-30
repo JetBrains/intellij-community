@@ -768,7 +768,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               hoverIcon = scaleIcon(hoverIcon);
               int iconX = offset - hoverIcon.getIconWidth();
               int iconY = y + (visLinesIterator.getLineHeight() - hoverIcon.getIconHeight()) / 2;
-              GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, 0.5f); //todo[kb] move transparency to theming options
+              float alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
+              alpha = alpha > 1f ? 1f : Math.max(alpha, 0f);
+              GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
               hoverIcon.paintIcon(this, g, iconX, iconY);
               config.restore();
             }

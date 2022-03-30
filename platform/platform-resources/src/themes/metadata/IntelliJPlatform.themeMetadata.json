@@ -55,6 +55,10 @@
       "description": "The button border color for the currently selected bookmark mnemonic."
     },
     {
+      "key": "Breakpoint.iconHoverAlpha",
+      "description": "Transparency for breakpoint icon which pops up while hovering the gutter. A float in [0.0, 1.0]"
+    },
+    {
       "key": "BigSpinner.background",
       "description": "A translucent overlay background for decorated panel while loading"
     },
