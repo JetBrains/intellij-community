@@ -53,7 +53,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         -Declaration redundancy
          -Redundant 'requires' directive in module-info
           -some.module
-           Redundant directive 'requires M2'
+           Redundant directive 'requires M2'. No usages of module packages are found.
       """.trimIndent())
 
     view.globalInspectionContext.uiOptions.SHOW_STRUCTURE = true
@@ -74,7 +74,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
          -Redundant 'requires' directive in module-info
           -${LightProjectDescriptor.TEST_MODULE_NAME}
            -some.module
-            Redundant directive 'requires M2'
+            Redundant directive 'requires M2'. No usages of module packages are found.
       """.trimIndent())
   }
 

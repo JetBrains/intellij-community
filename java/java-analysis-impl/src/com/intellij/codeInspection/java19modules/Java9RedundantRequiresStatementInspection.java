@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -46,15 +46,30 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
             for (RefJavaModule.RequiredModule requiredModule : requiredModules) {
               String requiredModuleName = requiredModule.moduleName;
 
-              if (PsiJavaModule.JAVA_BASE.equals(requiredModuleName) ||
+              boolean isJavaBase = PsiJavaModule.JAVA_BASE.equals(requiredModuleName);
+              if (isJavaBase ||
                   isDependencyUnused(requiredModule.packagesExportedByModule, moduleImportedPackages, refJavaModule.getName())) {
                 PsiRequiresStatement requiresStatement = ContainerUtil.find(
                   psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
                 if (requiresStatement != null && !isSuppressedFor(requiresStatement)) {
+                  PsiJavaModule dependentModule = requiresStatement.resolve();
+                  DeleteRedundantRequiresStatementFix requiresStatementFix =
+                    new DeleteRedundantRequiresStatementFix(requiredModuleName, moduleImportedPackages, dependentModule, psiJavaModule);
+                  String message = JavaAnalysisBundle.message("inspection.redundant.requires.statement.description", requiredModuleName) + " ";
+                  if (isJavaBase) {
+                    message += JavaAnalysisBundle.message("inspection.redundant.requires.statement.message.java.base.implicitly.required");
+                  }
+                  else if (!requiresStatementFix.hasReexportedDependencies()) {
+                    message += JavaAnalysisBundle.message("inspection.redundant.requires.statement.message.module.unused");
+                  }
+                  else {
+                    message += JavaAnalysisBundle.message("inspection.redundant.requires.statement.message.transitive.dependencies.on.can.be.used.directly",
+                                                          StringUtil.join(requiresStatementFix.myDependencies, "', '"));
+                  }
                   CommonProblemDescriptor descriptor = manager.createProblemDescriptor(
                     requiresStatement,
-                    JavaAnalysisBundle.message("inspection.redundant.requires.statement.description", requiredModuleName),
-                    new DeleteRedundantRequiresStatementFix(requiredModuleName, moduleImportedPackages),
+                    message,
+                    requiresStatementFix,
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
                   descriptors.add(descriptor);
                 }
@@ -94,10 +109,18 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
   private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
     private final String myRequiredModuleName;
     private final Set<String> myImportedPackages;
+    private final Set<String> myDependencies;
 
-    DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
+    DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages,
+                                        PsiJavaModule dependentModule,
+                                        PsiJavaModule currentModule) {
       myRequiredModuleName = requiredModuleName;
       myImportedPackages = importedPackages;
+      myDependencies = getReexportedDependencies(currentModule, dependentModule);
+    }
+    
+    boolean hasReexportedDependencies() {
+      return !myDependencies.isEmpty();
     }
 
     @Nls
@@ -124,6 +147,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       statementToDelete.delete();
     }
 
+    @NotNull
     private Set<String> getReexportedDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule dependencyModule) {
       Set<String> directDependencies = StreamEx
         .of(currentModule.getRequires().iterator())
@@ -158,21 +182,10 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       PsiElement parent = statementToDelete.getParent();
       if (parent instanceof PsiJavaModule) {
         PsiJavaModule currentModule = (PsiJavaModule)parent;
-        Optional.of(statementToDelete)
-          .map(PsiRequiresStatement::resolve)
-          .map(dependencyModule -> getReexportedDependencies(currentModule, dependencyModule))
-          .ifPresent(reexportedDependencies -> addReexportedDependencies(reexportedDependencies, currentModule, statementToDelete));
-      }
-    }
-
-    private static void addReexportedDependencies(@NotNull Set<String> reexportedDependencies,
-                                                  @NotNull PsiJavaModule currentModule,
-                                                  @NotNull PsiElement addingPlace) {
-      if (!reexportedDependencies.isEmpty()) {
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
-        for (String dependencyName : reexportedDependencies) {
+        for (String dependencyName : myDependencies) {
           PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(PsiKeyword.REQUIRES + ' ' + dependencyName, null);
-          currentModule.addAfter(requiresStatement, addingPlace);
+          currentModule.addAfter(requiresStatement, statementToDelete);
         }
       }
     }
