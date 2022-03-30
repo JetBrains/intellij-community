@@ -63,6 +63,8 @@ inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = Applicat
  */
 inline fun <reified T : Any> Project.service(): T = getService(T::class.java)
 
+inline fun <reified T : Any> Project.serviceOrNull(): T? = getService(T::class.java)
+
 inline fun <reified T : Any> Project.serviceIfCreated(): T? = getServiceIfCreated(T::class.java)
 
 inline fun <reified T : Any> Project.services(includeLocal: Boolean): List<T> = getServices(T::class.java, includeLocal)
