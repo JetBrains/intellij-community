@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Contains settings for non-language options, for example, text files.
- *
- * @author Rustam Vishnyakov
  */
 public class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSettingsProvider {
 

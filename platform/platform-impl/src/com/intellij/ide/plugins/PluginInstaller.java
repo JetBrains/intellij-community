@@ -95,9 +95,10 @@ public final class PluginInstaller {
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
                                                @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                                                boolean isUpdate) {
-    boolean uninstalledWithoutRestart = true;
-    if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions().withDisable(false)
+    boolean uninstalledWithoutRestart = DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
+    if (uninstalledWithoutRestart && pluginDescriptor.isEnabled()) {
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+        .withDisable(false)
         .withUpdate(isUpdate)
         .withWaitForClassloaderUnload(true);
 

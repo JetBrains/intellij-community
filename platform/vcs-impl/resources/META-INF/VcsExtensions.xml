@@ -207,7 +207,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
+                    serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelperImpl"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>

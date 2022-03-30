@@ -20,7 +20,7 @@ internal fun createKotlinMPPGradleModel(
         targets = targets.toList(),
         extraFeatures = extraFeatures,
         kotlinNativeHome = kotlinNativeHome,
-        partialCacheAware = CompilerArgumentsCacheAwareImpl()
+        cacheAware = CompilerArgumentsCacheAwareImpl()
     )
 }
 

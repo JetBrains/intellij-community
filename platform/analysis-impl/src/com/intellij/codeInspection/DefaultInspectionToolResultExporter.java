@@ -165,10 +165,15 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
                                @NotNull RefEntity refEntity,
                                @NotNull Consumer<? super Element> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
-    final var keys = Arrays.stream(descriptors).map(desc -> new ProblemDescriptorKey(desc));
-    for (ProblemDescriptorKey key : keys.sorted().collect(Collectors.toList())) {
+    final List<ProblemDescriptorKey> keys = Arrays
+      .stream(descriptors)
+      .filter(desc -> !isDescriptorExcluded.test(desc))
+      .map(desc -> new ProblemDescriptorKey(desc))
+      .sorted()
+      .collect(Collectors.toList());
+
+    for (ProblemDescriptorKey key : keys) {
       final var descriptor = key.descriptor;
-      if (isDescriptorExcluded.test(descriptor)) continue;
       Element element = null;
       try {
         element = refEntity.getRefManager().export(refEntity, key.lineNumber);
@@ -536,20 +541,23 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     private ProblemDescriptorKey(CommonProblemDescriptor desc) {
       descriptor = desc;
+      if (desc instanceof ProblemDescriptor) {
+        lineNumber = ((ProblemDescriptor)desc).getLineNumber();
+      }
       if (desc instanceof ProblemDescriptorBase) {
         final ProblemDescriptorBase descriptorBase = (ProblemDescriptorBase)desc;
         file = descriptorBase.getContainingFile();
-        lineNumber = descriptorBase.getLineNumber();
-        position = descriptorBase.getLineStartOffset();
+        final TextRange textRange = descriptorBase.getTextRange();
+        position = textRange != null ? textRange.getStartOffset() : 0;
         descriptionTemplate = desc.getDescriptionTemplate();
       }
     }
 
     @Override
     public int compareTo(@NotNull ProblemDescriptorKey o) {
-      if (file == null && o.file == null) return 0;
-      if (file == null) return 1;
-      if (o.file == null) return -1;
+      if (file == null || o.file == null) {
+        return Boolean.compare(file == null, o.file == null);
+      }
 
       int comparison = file.getPath().compareTo(o.file.getPath());
       if (comparison == 0) comparison = Integer.compare(lineNumber, o.lineNumber);

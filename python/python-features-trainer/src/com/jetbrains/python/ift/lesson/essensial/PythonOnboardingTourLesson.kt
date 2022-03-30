@@ -107,6 +107,7 @@ class PythonOnboardingTourLesson :
     prepareRuntimeTask {
       usedInterpreterAtStart = project.pythonSdk?.versionString ?: "none"
       useDelay = true
+      invokeActionForFocusContext(getActionById("Stop"))
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectUtils.getCurrentLearningProjectRoot()
@@ -347,6 +348,8 @@ class PythonOnboardingTourLesson :
   private fun LessonContext.checkUiSettings() {
     hideToolStripesPreference = uiSettings.hideToolStripes
     showNavigationBarPreference = uiSettings.showNavigationBar
+
+    showInvalidDebugLayoutWarning()
 
     if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
       // a small hack to have same tasks count. It is needed to track statistics result.

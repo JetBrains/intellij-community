@@ -13,7 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.JpsBootstrapJdk;
+import org.jetbrains.intellij.build.dependencies.Jdk11Downloader;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -134,7 +134,7 @@ public class JpsBootstrapMain {
   private void main() throws Throwable {
     Path jdkHome;
     if (JpsBootstrapUtil.underTeamCity) {
-      jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+      jdkHome = Jdk11Downloader.getJdkHome(communityHome);
     }
     else {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
@@ -155,7 +155,7 @@ public class JpsBootstrapMain {
 
     if (underTeamCity) {
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", JpsBootstrapJdk.getJavaExecutable(jdkHome).toString());
+        "jps.bootstrap.java.executable", Jdk11Downloader.getJavaExecutable(jdkHome).toString());
       System.out.println(setParameterServiceMessage.asString());
     }
   }

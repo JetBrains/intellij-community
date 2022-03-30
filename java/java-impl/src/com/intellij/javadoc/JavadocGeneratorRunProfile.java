@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -282,6 +282,12 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
             String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
             writer.println("-classpath");
             writer.println(StringUtil.wrapWithDoubleQuote(path));
+
+            if (!sourceRoots.isEmpty()) {
+              String sourcePath = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--source-path");
+              writer.println(StringUtil.wrapWithDoubleQuote(sourcePath));
+            }
           }
         }
 

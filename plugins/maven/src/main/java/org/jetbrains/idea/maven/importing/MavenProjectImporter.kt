@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
+import org.jetbrains.idea.maven.importing.tree.workspace.MavenProjectTreeImporterToWorkspaceModel
 import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
 import org.jetbrains.idea.maven.project.*
 
@@ -25,6 +26,10 @@ interface MavenProjectImporter {
                        importingSettings: MavenImportingSettings,
                        dummyModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled()) {
+        if (isImportToTreeStructureEnabled(project)) {
+          return MavenProjectTreeImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
+                                                          importingSettings, modelsProvider, project)
+        }
         return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges, importingSettings,
                                                     VirtualFileUrlManager.getInstance(project), project)
       }

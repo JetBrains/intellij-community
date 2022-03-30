@@ -108,7 +108,7 @@ internal fun runJavaWithOutputToFile(mainClass: String,
           .start()
 
         fun javaRunFailed(reason: String) {
-          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (args=$args, vmOptions=$jvmArgs): $reason"
+          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts) (args=$args, vmOptions=$jvmArgs): $reason"
           span.setStatus(StatusCode.ERROR, message)
           if (Files.exists(outputFile)) {
             span.setAttribute("processOutput", Files.readString(outputFile))

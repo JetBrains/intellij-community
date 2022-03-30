@@ -28,6 +28,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -49,6 +50,8 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
+
+import static javax.swing.SwingConstants.CENTER;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
@@ -333,6 +336,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         }
         else {
           myCurrentOverContainer.add(myContent, point);
+          ObjectUtils.consumeIfCast(myCurrentOverContainer, DockableEditorTabbedContainer.class, container -> {
+            //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
+            if (container.getCurrentDropSide() == CENTER) e.consume();
+          });
         }
         stopCurrentDragSession();
       }

@@ -11,6 +11,7 @@ import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractWizard
+import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger

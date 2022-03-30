@@ -66,6 +66,9 @@ data class PluginFeatureMap(
   constructor(map: Map<String, MutableSet<PluginData>>) : this(convertMap(map))
 
   fun update(newFeatureMap: Map<String, Set<PluginData>>) {
+    // this also removes extension features that are no longer present in the marketplace
+    featureMap.clear()
+
     for ((id, plugins) in newFeatureMap) {
       featureMap.computeIfAbsent(id) { PluginDataSet() }.dataSet.addAll(plugins)
     }

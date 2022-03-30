@@ -21,6 +21,9 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -771,7 +774,13 @@ private class NotificationComponent(val project: Project,
                                     val singleSelectionHandler: TextSelectionHandler) : JPanel() {
 
   companion object {
-    val BG_COLOR = UIUtil.getListBackground()
+    val BG_COLOR: Color
+      get() {
+        if (ExperimentalUI.isNewUI()) {
+          return JBUI.CurrentTheme.ToolWindow.background()
+        }
+        return UIUtil.getListBackground()
+      }
     val INFO_COLOR = JBColor.namedColor("Label.infoForeground", JBColor(Gray.x80, Gray.x8C))
     internal const val NEW_COLOR_NAME = "NotificationsToolwindow.newNotification.background"
     internal val NEW_DEFAULT_COLOR = JBColor(0xE6EEF7, 0x45494A)
@@ -898,6 +907,19 @@ private class NotificationComponent(val project: Project,
       })
 
       EventLog.formatContent(textEditor, notification)
+      UIUtil.setNotOpaqueRecursively(textEditor.component)
+      (textEditor as? EditorImpl)?.softWrapModel?.setSoftWrapPainter(object : SoftWrapPainter {
+        override fun paint(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
+
+        override fun getDrawingHorizontalOffset(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
+
+        override fun getMinDrawingWidth(drawingType: SoftWrapDrawingType) = 0
+
+        override fun canUse() = true
+
+        override fun reinit() {
+        }
+      })
       myTextEditor = textEditor
 
       singleSelectionHandler.add(textEditor)
@@ -1192,9 +1214,6 @@ private class NotificationComponent(val project: Project,
 
   private fun setColor(color: Color) {
     myRoundColor = color
-    if (myTextEditor != null) {
-      myTextEditor!!.backgroundColor = color
-    }
     repaint()
   }
 

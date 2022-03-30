@@ -67,19 +67,18 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-
     companion object {
         val ALL = listOf(
-            ConsoleApplicationProjectTemplateWithSample,
+            FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
-            FullStackWebApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ComposeDesktopApplicationProjectTemplate,
             ComposeMultiplatformApplicationProjectTemplate,
-            ComposeWebApplicationProjectTemplate
+            ComposeWebApplicationProjectTemplate,
+            ConsoleApplicationProjectTemplateWithSample
         )
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {

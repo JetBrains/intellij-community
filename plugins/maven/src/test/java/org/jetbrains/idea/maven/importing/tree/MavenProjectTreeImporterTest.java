@@ -11,13 +11,11 @@ import java.io.IOException;
 import java.util.List;
 
 public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     MavenProjectsManager.getInstance(myProject).getImportingSettings().setImportToTreeStructure(true);
   }
-
   @Test
   public void testSimpleImport() {
     createModulePom("m1",
@@ -46,7 +44,6 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
                   "</modules>");
     assertModules("project", "m1", "m2");
   }
-
   @Test
   public void testImportWithTestSourceAndTestTargetVersion() throws IOException {
     createModulePom("m1",
@@ -132,7 +129,6 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     assertExcludes("project.m1.test");
     assertExcludes("project.m2.test");
   }
-
   @Test
   public void testMultiplyContentRootsWithGeneratedSources() throws IOException {
     createProjectSubFile("target/generated-sources/src1/com/GenA.java", "package com; class GenA {}");
@@ -156,7 +152,6 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("src/main")));
     Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("target/generated-sources/src1")));
   }
-
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
     createModulePom("m1",
@@ -194,5 +189,29 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
 
     assertModules("project", "project.m1", "project.m1.main", "project.m1.test");
     assertContentRoots("project.m1.main", getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
+  }
+
+  @Test
+  public void testReleaseCompilerProperty() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.release>8</maven.compiler.release>" +
+                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
+                  "</properties>" +
+                  "" +
+                  " <build>\n" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <version>3.10.0</version>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>"
+    );
+
+    assertModules("project", "project.main", "project.test");
   }
 }

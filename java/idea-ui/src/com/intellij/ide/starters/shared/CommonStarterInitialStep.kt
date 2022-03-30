@@ -76,6 +76,7 @@ abstract class CommonStarterInitialStep(
         .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
                                createLocationWarningValidator(locationProperty))
         .columns(COLUMNS_MEDIUM)
+        .gap(RightGap.SMALL)
         .focused()
 
       installNameGenerators(moduleBuilder.builderId, entityNameProperty)

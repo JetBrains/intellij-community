@@ -178,13 +178,5 @@ internal class DocumentationBrowser private constructor(
       browser.reload() // init loading
       return browser
     }
-
-    /**
-     * @return `true` if a loaded page has some content,
-     * or `false` if a loaded page is empty
-     */
-    suspend fun DocumentationBrowser.waitForContent(): Boolean {
-      return pageFlow.first().waitForContent()
-    }
   }
 }

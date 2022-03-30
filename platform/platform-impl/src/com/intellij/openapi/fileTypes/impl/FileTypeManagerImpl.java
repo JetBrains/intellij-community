@@ -208,7 +208,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (extension.implementationClass != null) {
           FileType fileType = findFileTypeByName(extension.name);
           if (fileType != null) {
-            doUnregisterFileType(fileType);
+            doUnregisterFileType(fileType, pluginDescriptor);
           }
         }
         else {
@@ -865,10 +865,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations, @NotNull Disposable disposable) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations, @NotNull Disposable disposable,
+                               @NotNull PluginDescriptor pluginDescriptor) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
     doRegisterFileType(type, defaultAssociations);
-    Disposer.register(disposable, () -> doUnregisterFileType(type));
+    Disposer.register(disposable, () -> doUnregisterFileType(type, pluginDescriptor));
   }
 
   private void doRegisterFileType(FileType type, List<? extends FileNameMatcher> defaultAssociations) {
@@ -880,12 +881,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  public void unregisterFileType(@NotNull FileType fileType) {
+  public void unregisterFileType(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
-    doUnregisterFileType(fileType);
+    doUnregisterFileType(fileType, pluginDescriptor);
   }
 
-  private void doUnregisterFileType(FileType fileType) {
+  private void doUnregisterFileType(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
@@ -893,7 +894,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType instanceof LanguageFileType) {
         Language language = ((LanguageFileType)fileType).getLanguage();
         if (fileType.getClass().getClassLoader().equals(language.getClass().getClassLoader())) {
-          Language.unregisterLanguage(language);
+          language.unregisterLanguage(pluginDescriptor);
         }
       }
       fireFileTypesChanged(null, fileType);

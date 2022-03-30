@@ -18,6 +18,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * @see CollectionFactory
@@ -2791,5 +2793,18 @@ public final class ContainerUtil {
       result = accumulator.apply(result, t);
     }
     return result;
+  }
+
+  public static <T> Stream<List<? extends T>> splitListToChunks(@NotNull List<? extends T> list, int chunkSize) {
+    if (chunkSize <= 0) {
+      throw new IllegalArgumentException("invalid chunkSize: " + chunkSize);
+    }
+    int listSize = list.size();
+    if (listSize == 0) {
+      return Stream.empty();
+    }
+    int numberOfChunks = listSize / chunkSize;
+    return IntStream.range(0, numberOfChunks * chunkSize == listSize ? numberOfChunks : numberOfChunks + 1)
+      .mapToObj(i -> list.subList(i * chunkSize, Math.min(listSize, i * chunkSize + chunkSize)));
   }
 }

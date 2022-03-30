@@ -1972,7 +1972,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setHeaderComponent(JComponent header) {
     myHeaderPanel.removeAll();
-    header = header == null ? getPermanentHeaderComponent() : header;
+    JComponent permanentHeader = getPermanentHeaderComponent();
+    if (header == null) {
+      header = permanentHeader;
+    }
+    else if (permanentHeader != null && header != permanentHeader) {
+      JPanel headerPanel = new JPanel(new BorderLayout());
+      headerPanel.add(permanentHeader, BorderLayout.NORTH);
+      headerPanel.add(header, BorderLayout.SOUTH);
+      header = headerPanel;
+    }
     if (header != null) {
       myHeaderPanel.add(header);
     }
@@ -3264,7 +3273,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
-      return PlatformUtils.isDataGrip() && caret != null
+      return caret != null
              ? isCaretInsideSelection(caret)
              : getSelectionModel().hasSelection(true);
     }
@@ -3283,7 +3292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean isCutVisible(@NotNull DataContext dataContext) {
       Caret caret = dataContext.getData(CommonDataKeys.CARET);
       return isCutEnabled(dataContext) &&
-             (PlatformUtils.isDataGrip() && caret != null
+             (caret != null
               ? isCaretInsideSelection(caret)
               : getSelectionModel().hasSelection(true));
     }

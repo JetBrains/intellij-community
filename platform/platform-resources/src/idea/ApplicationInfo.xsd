@@ -454,15 +454,14 @@
   <xs:complexType name="whatsNewUrlType">
     <xs:attribute type="xs:anyURI" name="url" use="required">
       <xs:annotation>
-        <xs:documentation>An URL for the "Help | What's New" action. See also 'eligibility' attribute.</xs:documentation>
+        <xs:documentation>An URL for the "Help | What's New" action. See also 'show-on-update' attribute.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="whatsNewEligibilityType" name="eligibility">
+    <xs:attribute type="xs:boolean" name="show-on-update">
       <xs:annotation>
         <xs:documentation>
-          Set to 'embed' to show the URL in the built-in (CEF) browser (the page must be optimized accordingly).
-          Set to 'auto' to automatically show the URL in an editor tab after a major upgrade (implies 'embed').
-          When missing, the URL will be opened in an external browser.
+          Set to 'true' to automatically show the URL in an editor tab after a major upgrade.
+          If the built-in (CEF) browser is not available, the IDE will display a notification instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -510,7 +509,7 @@
   </xs:complexType>
   <xs:complexType name="zendeskFormType">
     <xs:sequence>
-      <xs:element name="field" type="zendeskFieldType" maxOccurs="unbounded"/>
+      <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute type="xs:string" name="url" use="required"/>
     <xs:attribute type="xs:string" name="zendesk-form-id"/>

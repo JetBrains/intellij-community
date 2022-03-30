@@ -159,7 +159,7 @@ object IdeaDocCommentConverter : DocCommentConverter {
                     appendPendingText()
                     val grandParent = element.parent.parent
                     if (grandParent is HtmlTag && (grandParent.name == "code" || grandParent.name == "literal"))
-                        markdownBuilder.append(StringUtil.unescapeXml(element.text))
+                        markdownBuilder.append(StringUtil.unescapeXmlEntities(element.text))
                     else
                         markdownBuilder.append(element.text)
                 }

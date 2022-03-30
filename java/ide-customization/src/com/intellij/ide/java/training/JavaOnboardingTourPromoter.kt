@@ -2,13 +2,13 @@
 package com.intellij.ide.java.training
 
 import com.intellij.openapi.application.ApplicationNamesInfo
-import training.FeaturesTrainerIcons
+import com.intellij.openapi.util.IconLoader
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 import javax.swing.JPanel
 
 class JavaOnboardingTourPromoter : OnboardingLessonPromoter("java.onboarding", "Java") {
-  override fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon  // todo: Replace with Java-specific icon
+  override fun promoImage(): Icon = IconLoader.getIcon("img/idea-onboarding-tour.png", JavaOnboardingTourPromoter::class.java.classLoader)
 
   override fun getPromotionForInitialState(): JPanel? {
     if (ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("IDEA Edu")) {

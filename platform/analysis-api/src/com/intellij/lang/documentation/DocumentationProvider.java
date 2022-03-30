@@ -49,11 +49,10 @@ import java.util.function.Consumer;
  * @see ExternalDocumentationHandler
  */
 public interface DocumentationProvider {
-
   /**
    * Please use {@code com.intellij.lang.documentationProvider} instead of this for language-specific documentation.
    */
-  ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
+  ExtensionPointName<DocumentationProvider> EP_NAME = new ExtensionPointName<>("com.intellij.documentationProvider");
 
   /**
    * Returns the text to show in the Ctrl-hover popup for the specified element.

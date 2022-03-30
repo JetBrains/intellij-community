@@ -238,7 +238,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         g.setColor(selectionForeground);
       }
       if (useCheckAndArrow()){
-        arrowIcon.paintIcon(comp, g, d.x, d.y);
+        IconUtil.paintSelectionAwareIcon(arrowIcon, comp, g, d.x, d.y, isSelected(jmenuitem));
       }
     }
     g.setColor(color2);

@@ -11,10 +11,7 @@ import java.awt.Component
 import java.awt.Insets
 import java.awt.Point
 import java.awt.event.*
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JScrollBar
-import javax.swing.JScrollPane
+import javax.swing.*
 
 internal fun getEditorBackground() = EditorColorsManager.getInstance().globalScheme.defaultBackground
 
@@ -232,9 +229,21 @@ open class NotebookOutputNonStickyScrollPane(
       // to the situation when components not intended to receive mouse events receive
       // them. This makes the events invisible to the underlying parent components.
       // The code below ensures that events will reach parents that may be interested in them.
+      val source = e.source as Component  // source of MouseEvent should always be Component, see constructor of MouseEvent
       e.takeUnless { it.isConsumed }?.source?.castSafelyTo<Component>()?.parent?.let {
+        val adjustedPoint = SwingUtilities.convertPoint(source, e.point, it)
         it.dispatchEvent(MouseEvent(
-          it, e.id, e.`when`, e.modifiersEx, e.x, e.y, e.xOnScreen, e.yOnScreen, e.clickCount, e.isPopupTrigger, e.button,
+          it,
+          e.id,
+          e.`when`,
+          e.modifiersEx,
+          adjustedPoint.x,
+          adjustedPoint.y,
+          e.xOnScreen,
+          e.yOnScreen,
+          e.clickCount,
+          e.isPopupTrigger,
+          e.button,
         ))
       }
     }

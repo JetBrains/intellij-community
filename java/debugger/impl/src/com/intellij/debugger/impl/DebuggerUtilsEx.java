@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerUtilsEx
@@ -17,8 +17,11 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.execution.filters.ExceptionFilters;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -52,10 +55,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.jdi.ArrayReferenceImpl;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
@@ -70,6 +77,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -360,6 +368,39 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (threads.size() > 0) {
       panel.selectStackFrame(0);
     }
+  }
+
+  public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {
+    XValueContainer container = node.getValueContainer();
+    if (container instanceof JavaValue) {
+      ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+      if (descriptor instanceof FieldDescriptor) {
+        Field field = ((FieldDescriptor)descriptor).getField();
+        String clsName = field.declaringType().name().replace("$", ".");
+        String fieldName = field.name();
+        addCollectionHistoryTab(session, clsName, fieldName, node);
+      }
+    }
+  }
+
+  public static void addCollectionHistoryTab(@NotNull XDebugSession session,
+                                             @NotNull String clsName,
+                                             @NotNull String fieldName,
+                                             @Nullable XValueNodeImpl node) {
+    XDebugProcess process = session.getDebugProcess();
+    RunnerLayoutUi ui = session.getUI();
+    String title = JavaDebuggerBundle.message("collection.history.tab.title", clsName + "." + fieldName);
+    for (Content content : ui.getContents()) {
+      if (title.equals(content.getDisplayName())) {
+        ui.removeContent(content, true);
+      }
+    }
+    JComponent view = new CollectionHistoryView(clsName, fieldName, process, node).getComponent();
+    Content content = ui.createContent(title, view, title, null, null);
+    content.setCloseable(true);
+    content.setDescription(JavaDebuggerBundle.message("collection.history"));
+    ui.addContent(content);
+    ui.selectAndFocus(content, true, true);
   }
 
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ public class TabListAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setIcon(ExperimentalUI.isNewUI() ? IconLoader.getIcon("expui/general/chevronDownLarge.svg", AllIcons.class) : AllIcons.Actions.FindAndShowNextMatches);
+    e.getPresentation().setIcon(ExperimentalUI.isNewUI() ? AllIcons.Toolbar.Expand : AllIcons.Actions.FindAndShowNextMatches);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

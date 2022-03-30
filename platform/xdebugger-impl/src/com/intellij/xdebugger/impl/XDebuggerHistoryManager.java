@@ -59,9 +59,8 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
     return ContainerUtil.notNullize(myRecentExpressions.get(id));
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element state = new Element(STATE_TAG);
     for (String id : myRecentExpressions.keySet()) {
       LinkedList<XExpression> expressions = myRecentExpressions.get(id);

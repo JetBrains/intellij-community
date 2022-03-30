@@ -103,6 +103,7 @@ final class PassExecutorService implements Disposable {
                     @NotNull Map<Document, List<FileEditor>> documentToEditors,
                     @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) return;
+    assert !ApplicationManager.getApplication().isDispatchThread();
 
     Map<FileEditor, List<TextEditorHighlightingPass>> documentBoundPasses = new HashMap<>();
     Map<FileEditor, List<EditorBoundHighlightingPass>> editorBoundPasses = new HashMap<>();
@@ -180,14 +181,18 @@ final class PassExecutorService implements Disposable {
   }
 
   private void assignUniqueId(@NotNull TextEditorHighlightingPass pass, @NotNull Int2ObjectMap<TextEditorHighlightingPass> id2Pass) {
-    int id = pass.getId();
-    if (id == -1 || id == 0) {
+    int oldId = pass.getId();
+    int id;
+    if (oldId == -1 || oldId == 0) {
       id = nextAvailablePassId.incrementAndGet();
       pass.setId(id);
     }
+    else {
+      id = oldId;
+    }
     TextEditorHighlightingPass prevPass = id2Pass.put(id, pass);
     if (prevPass != null) {
-      LOG.error("Duplicate pass id found: "+id+". Both passes returned the same getId(): "+prevPass+" ("+prevPass.getClass() +") and "+pass+" ("+pass.getClass()+")");
+      LOG.error("Duplicate pass id found: "+id+". Both passes returned the same getId(): "+prevPass+" ("+prevPass.getClass() +") and "+pass+" ("+pass.getClass()+"). oldId="+oldId);
     }
   }
 

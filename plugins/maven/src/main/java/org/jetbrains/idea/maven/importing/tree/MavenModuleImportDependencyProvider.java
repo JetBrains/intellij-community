@@ -27,7 +27,7 @@ import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextP
 import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.SplittedMainAndTestModules;
 
 public class MavenModuleImportDependencyProvider {
-  private static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 5;
+  public static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 4;
 
   @NotNull private final Project project;
   @NotNull private final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;

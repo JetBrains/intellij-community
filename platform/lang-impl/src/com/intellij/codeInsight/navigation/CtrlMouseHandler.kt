@@ -277,7 +277,7 @@ class CtrlMouseHandler2(
     editor.scrollingModel.addVisibleAreaListener(this)
     editor.contentComponent.addKeyListener(this)
     if (result.isNavigatable) {
-      editor.setCustomCursor(CtrlMouseHandler::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      editor.setCustomCursor(CtrlMouseHandler2::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
     val attributes = textAttributes(result.isNavigatable)
     val highlighters = result.ranges.map { range ->
@@ -292,7 +292,7 @@ class CtrlMouseHandler2(
         for (highlighter in highlighters) {
           highlighter.dispose()
         }
-        editor.setCustomCursor(CtrlMouseHandler::class.java, null)
+        editor.setCustomCursor(CtrlMouseHandler2::class.java, null)
         editor.contentComponent.removeKeyListener(this)
         editor.scrollingModel.removeVisibleAreaListener(this)
       }

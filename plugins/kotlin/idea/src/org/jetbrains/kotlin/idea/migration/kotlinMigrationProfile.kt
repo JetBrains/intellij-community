@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.migration
 
@@ -12,7 +12,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 
 fun createMigrationProfile(
@@ -49,7 +48,7 @@ fun createMigrationProfile(
     return model
 }
 
-fun applicableMigrationTools(migrationInfo: MigrationInfo) = applicableMigrationToolsImpl(migrationInfo)
+fun applicableMigrationToolExists(migrationInfo: MigrationInfo): Boolean = applicableMigrationToolsImpl(migrationInfo).isNotEmpty()
 
 private fun applicableMigrationToolsImpl(migrationInfo: MigrationInfo?): List<InspectionToolWrapper<*, *>> {
     val rootProfile = InspectionProfileManager.getInstance().currentProfile

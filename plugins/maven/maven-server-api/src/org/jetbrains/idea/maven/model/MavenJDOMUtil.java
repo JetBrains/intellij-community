@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.Comparing;
@@ -19,7 +19,7 @@ import java.util.List;
  * in Maven server classes.
  */
 final class MavenJDOMUtil {
-  public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
+  static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
@@ -27,6 +27,7 @@ final class MavenJDOMUtil {
            && isAttributesEqual(e1.getAttributes(), e2.getAttributes())
            && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
   }
+
   private static boolean contentListsEqual(final List c1, final List c2) {
     if (c1 == null && c2 == null) return true;
     if (c1 == null || c2 == null) return false;
@@ -62,11 +63,14 @@ final class MavenJDOMUtil {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
+  private static final Filter<Text> CONTENT_FILTER = new Filter<Text>() {
+    @Override
+    public boolean matches(Object obj) {
+      return !(obj instanceof Text) || !StringUtilRt.isEmptyOrSpaces(((Text)obj).getText());
+    }
+  };
 
-  private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
-
-
-  public static int getTreeHash(@NotNull Element root) {
+  static int getTreeHash(@NotNull Element root) {
     return addToHash(0, root);
   }
 
@@ -94,12 +98,5 @@ final class MavenJDOMUtil {
 
   private static int addToHash(int i, @NotNull String s) {
     return i * 31 + s.hashCode();
-  }
-
-  private static class EmptyTextFilter implements Filter {
-    @Override
-    public boolean matches(Object obj) {
-      return !(obj instanceof Text) || !StringUtilRt.isEmptyOrSpaces(((Text)obj).getText());
-    }
   }
 }

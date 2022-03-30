@@ -240,8 +240,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
               int borderOffset = JBUI.scale(12);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
               int controlOffset = painter.getControlOffset(control, depth, leaf);
-              int left = Math.min(helper.getX() + borderOffset, controlOffset < 0 ? rendererOffset : controlOffset);
-              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, rendererOffset + bounds.width + JBUI.scale(4));
+              int left = Math.min(helper.getX() + borderOffset, insets.left + (controlOffset < 0 ? rendererOffset : controlOffset));
+              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, insets.left + rendererOffset + bounds.width + JBUI.scale(4));
               int[] rows = tree.getSelectionRows();
               boolean shouldPaintTop = false;
               boolean shouldPaintBottom = false;

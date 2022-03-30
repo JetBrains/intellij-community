@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
@@ -40,13 +40,13 @@ class MavenProjectImporterToWorkspaceModel(
   private fun importModules(builder: WorkspaceEntityStorageBuilder) {
     val allProjects = myProjectsTree.projects.toMutableSet()
     allProjects.addAll(projectsToImportWithChanges.keys)
-    val createdModules = ArrayList<Pair<MavenProject, ModuleEntity>>()
+    val createdModules = ArrayList<Pair<MavenProject, ModuleId>>()
     val mavenProjectToModuleName = HashMap<MavenProject, String>()
     MavenModuleNameMapper.map(allProjects, emptyMap(), mavenProjectToModuleName, HashMap(), mavenImportingSettings.dedicatedModuleDir)
     for (mavenProject in allProjects) {
       val moduleEntity = WorkspaceModuleImporter(mavenProject, virtualFileUrlManager, mavenProjectsTree, builder,
                                                  mavenImportingSettings, mavenProjectToModuleName, project).importModule()
-      createdModules.add(mavenProject to moduleEntity)
+      createdModules.add(mavenProject to moduleEntity.persistentId())
     }
     val mavenProjectToModule = HashMap<MavenProject, Module>()
     MavenUtil.invokeAndWaitWriteAction(project) {
@@ -54,7 +54,9 @@ class MavenProjectImporterToWorkspaceModel(
         current.replaceBySource({ (it as? JpsImportedEntitySource)?.externalSystemId == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID }, builder)
       }
       val storage = WorkspaceModel.getInstance(project).entityStorage.current
-      for ((mavenProject, moduleEntity) in createdModules) {
+      for ((mavenProject, moduleId) in createdModules) {
+        val moduleEntity = storage.resolve(moduleId)
+        if (moduleEntity == null) continue
         val module = storage.findModuleByEntity(moduleEntity)
         if (module != null) {
           createdModulesList.add(module)

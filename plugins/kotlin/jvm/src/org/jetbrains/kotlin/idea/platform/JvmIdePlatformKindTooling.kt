@@ -13,11 +13,8 @@ import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.getGenericTestIcon
-import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
-import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkResult
-import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
-import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.testIntegration.framework.*
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.PathUtil
@@ -47,35 +44,20 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
     }
 
     private fun calculateUrls(declaration: KtNamedDeclaration, includeSlowProviders: Boolean? = null): List<String>? {
-        for (lightTestFramework in LightTestFramework.EXTENSION_NAME.extensionList) {
-            val relevantProvider = includeSlowProviders == null || includeSlowProviders == lightTestFramework.slowProvider
-            // in case of slowProvider it is necessary to check if fast provider is applicable, if so - nothing could be found for slow one
-            val detectFramework = if (relevantProvider || includeSlowProviders == true) {
-                lightTestFramework.detectFramework(declaration)
-            } else {
-                continue
-            }
-            when (detectFramework) {
-                is UnsureLightTestFrameworkResult -> continue
-                is NoLightTestFrameworkResult -> return null
-                is ResolvedLightTestFrameworkResult ->
-                    if (!relevantProvider) {
-                        // fast provider is found in case of lookup among slow ones
-                        return null
-                    }
-            }
+        val testFramework = KotlinTestFramework.getApplicableFor(declaration) ?: return null
 
-            val qualifiedName = lightTestFramework.qualifiedName(declaration) ?: return null
-            return when (declaration) {
-                is KtClassOrObject -> listOf("java:suite://$qualifiedName")
-                is KtNamedFunction -> listOf(
-                    "java:test://$qualifiedName/${declaration.name}",
-                    "java:test://$qualifiedName.${declaration.name}"
-                )
-                else -> null
-            }
+        val relevantProvider = includeSlowProviders == null || includeSlowProviders == testFramework.isSlow
+        if (relevantProvider) return null
+
+        val qualifiedName = testFramework.qualifiedName(declaration) ?: return null
+        return when (declaration) {
+            is KtClassOrObject -> listOf("java:suite://$qualifiedName")
+            is KtNamedFunction -> listOf(
+                "java:test://$qualifiedName/${declaration.name}",
+                "java:test://$qualifiedName.${declaration.name}"
+            )
+            else -> null
         }
-        return null
     }
 
     override fun getTestIcon(

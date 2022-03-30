@@ -1,0 +1,16 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
+
+@RequiresOptIn
+annotation class Marker
+
+open class FooBase
+
+@Marker
+class Foo : FooBase()
+
+@OptIn(Marker::class)
+fun makeFoo(x: FooBase? = null): FooBase = Foo()
+
+@OptIn(<caret>Marker::class)
+val foo = makeFoo()

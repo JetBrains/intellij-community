@@ -38,7 +38,7 @@
     <field id="22996310" type="needsupport"/>
     <field id="28116681" type="topic"/>
   </feedback>
-  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" eligibility="auto"/>
+  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" show-on-update="true"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>

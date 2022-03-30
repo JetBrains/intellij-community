@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -25,14 +25,14 @@ import java.util.Arrays;
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("BulkFileAttributesRead")
 public abstract class FileAttributesReadingTest {
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
-      assumeFalse(SystemInfo.isMac && CpuArch.isArm64());  // macOS/ARM64 only supports NIO2 mediator
+      assumeTrue(SystemInfo.OS_NAME + '/' + CpuArch.CURRENT + " is not supported", CpuArch.isIntel64());
       assertEquals(SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix", getMediatorName());
     }
   }
@@ -261,19 +261,16 @@ public abstract class FileAttributesReadingTest {
   public void selfLink() throws IOException {
     assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newDirectory("dir");
-    File link = new File(dir, "link");
-    createSymbolicLink(link.toPath(), dir.toPath());
+    File link = new File(tempDir.getRoot(), "self_link");
+    createSymbolicLink(link.toPath(), link.toPath());
 
     FileAttributes attributes = getAttributes(link);
-    assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType());
+    assertNull(attributes.getType());
     assertTrue(attributes.isSymLink());
     assertFalse(attributes.isHidden());
     assertTrue(attributes.isWritable());
-    assertTimestampsEqual(dir.lastModified(), attributes.lastModified);
-
-    String target = resolveSymLink(link);
-    assertEquals(dir.getPath(), target);
+    assertTimestampsEqual(0, attributes.lastModified);
+    assertNull(resolveSymLink(link));
   }
 
   @Test

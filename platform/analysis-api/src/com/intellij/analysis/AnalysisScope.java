@@ -559,11 +559,6 @@ public class AnalysisScope {
   }
 
   public int getFileCount() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) { //clear text after building analysis scope set
-      indicator.setText("");
-      indicator.setText2("");
-    }
     return getFileSet().size();
   }
 

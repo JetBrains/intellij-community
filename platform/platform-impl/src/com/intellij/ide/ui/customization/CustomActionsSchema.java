@@ -144,11 +144,15 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
   }
 
+  /**
+   * Mutable list is returned.
+   */
   public @NotNull List<ActionUrl> getActions() {
     return actions;
   }
 
   public void setActions(@NotNull List<ActionUrl> newActions) {
+    assert actions != newActions;
     actions.clear();
     actions.addAll(newActions);
     actions.sort(ActionUrlComparator.INSTANCE);

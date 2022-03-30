@@ -23,6 +23,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -641,7 +643,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     if (!JavaLanguage.INSTANCE.equals(changeInfo.getLanguage()) || !(changeInfo instanceof JavaChangeInfo)) return false;
     final PsiElement element = changeInfo.getMethod();
     LOG.assertTrue(element instanceof PsiMethod);
-    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
+    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
+      return false;
+    }
+    if (!(element.isPhysical() || element instanceof LightRecordMethod || element instanceof LightRecordCanonicalConstructor)) {
+      return false;
+    }
     if (changeInfo.isGenerateDelegate()) {
       generateDelegate((JavaChangeInfo)changeInfo);
     }
@@ -766,9 +773,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  private static void processPrimaryMethod(JavaChangeInfo changeInfo, PsiMethod method,
-                                           PsiMethod baseMethod,
-                                           boolean isOriginal) throws IncorrectOperationException {
+  public static void processPrimaryMethod(JavaChangeInfo changeInfo, PsiMethod method,
+                                          PsiMethod baseMethod,
+                                          boolean isOriginal) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
 
     if (changeInfo.isVisibilityChanged()) {

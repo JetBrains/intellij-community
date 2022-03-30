@@ -7,7 +7,6 @@ import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -424,19 +423,16 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   protected void installNorthComponents(@NotNull Project project) {
     UISettings uiSettings = UISettings.getShadowInstance();
-    if (ExperimentalUI.isNewToolbar()) {
-      myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project, it -> it instanceof StatusBarCentralWidget);
-    }
-    else {
-      myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
-      if (myNorthComponents.isEmpty()) {
-        return;
-      }
+    myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project, it -> it instanceof StatusBarCentralWidget);
 
-      for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-        myNorthPanel.add(northComponent.getComponent());
-        northComponent.uiSettingsChanged(uiSettings);
-      }
+    myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
+    if (myNorthComponents.isEmpty()) {
+      return;
+    }
+
+    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+      myNorthPanel.add(northComponent.getComponent());
+      northComponent.uiSettingsChanged(uiSettings);
     }
   }
 

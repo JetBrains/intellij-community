@@ -512,7 +512,7 @@ object DynamicPlugins {
 
           for (classLoader in classLoaders) {
             IconLoader.detachClassLoader(classLoader)
-            Language.unregisterLanguages(classLoader)
+            Language.unregisterAllLanguagesIn(classLoader, pluginDescriptor)
           }
           serviceIfCreated<IconDeferrer>()?.clearCache()
 

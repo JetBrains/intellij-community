@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Exportable part of file template settings. User-specific (local) settings are handled by FileTemplateManagerImpl.
- *
- * @author Rustam Vishnyakov
  */
 @State(
   name = "ExportableFileTemplateSettings",

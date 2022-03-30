@@ -9295,6 +9295,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride4.kt");
         }
 
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals.kt");
+        }
+
+        @TestMetadata("equals2.kt")
+        public void testEquals2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals2.kt");
+        }
+
+        @TestMetadata("equals3.kt")
+        public void testEquals3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals3.kt");
+        }
+
+        @TestMetadata("equals4.kt")
+        public void testEquals4() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals4.kt");
+        }
+
+        @TestMetadata("equals5.kt")
+        public void testEquals5() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/equals5.kt");
+        }
+
         @TestMetadata("getterWithDerivedProperty.kt")
         public void testGetterWithDerivedProperty() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/getterWithDerivedProperty.kt");
@@ -9313,6 +9338,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("getterWithDerivedProperty4.kt")
         public void testGetterWithDerivedProperty4() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/getterWithDerivedProperty4.kt");
+        }
+
+        @TestMetadata("hashCode.kt")
+        public void testHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/hashCode.kt");
         }
 
         @TestMetadata("javaPackagePrivate.kt")
@@ -9358,6 +9388,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("singleExpressionFunction.kt")
         public void testSingleExpressionFunction() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/singleExpressionFunction.kt");
+        }
+
+        @TestMetadata("toString.kt")
+        public void testToString() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/toString.kt");
         }
 
         @TestMetadata("twoInterfaces.kt")
@@ -15121,6 +15156,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFqAnnotation.kt");
         }
 
+        @TestMetadata("necessaryFunctionLambdaArgument.kt")
+        public void testNecessaryFunctionLambdaArgument() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionLambdaArgument.kt");
+        }
+
+        @TestMetadata("necessaryFunctionLambdaArgument2.kt")
+        public void testNecessaryFunctionLambdaArgument2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionLambdaArgument2.kt");
+        }
+
+        @TestMetadata("necessaryFunctionOptionalArgument.kt")
+        public void testNecessaryFunctionOptionalArgument() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionOptionalArgument.kt");
+        }
+
+        @TestMetadata("necessaryFunctionReturnValue.kt")
+        public void testNecessaryFunctionReturnValue() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionReturnValue.kt");
+        }
+
+        @TestMetadata("necessaryFunctionReturnValue2.kt")
+        public void testNecessaryFunctionReturnValue2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionReturnValue2.kt");
+        }
+
         @TestMetadata("necessaryImportAlias.kt")
         public void testNecessaryImportAlias() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryImportAlias.kt");
@@ -15236,6 +15296,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueParameter.kt");
         }
 
+        @TestMetadata("necessaryValueUsage1.kt")
+        public void testNecessaryValueUsage1() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueUsage1.kt");
+        }
+
+        @TestMetadata("necessaryValueUsage2.kt")
+        public void testNecessaryValueUsage2() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueUsage2.kt");
+        }
+
+        @TestMetadata("necessaryValueUsage3.kt")
+        public void testNecessaryValueUsage3() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueUsage3.kt");
+        }
+
         @TestMetadata("necessaryWasExperimental.kt")
         public void testNecessaryWasExperimental() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryWasExperimental.kt");
@@ -15279,6 +15354,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("redundantClassTwoMarkersBothUseless.kt")
         public void testRedundantClassTwoMarkersBothUseless() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkersBothUseless.kt");
+        }
+
+        @TestMetadata("redundantFunctionBody.kt")
+        public void testRedundantFunctionBody() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantFunctionBody.kt");
         }
 
         @TestMetadata("redundantImportAlias.kt")

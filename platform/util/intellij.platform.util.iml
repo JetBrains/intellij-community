@@ -25,7 +25,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />

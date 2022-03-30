@@ -24,7 +24,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="completion-ranking-kotlin" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
@@ -71,5 +71,6 @@
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
   </component>
 </module>

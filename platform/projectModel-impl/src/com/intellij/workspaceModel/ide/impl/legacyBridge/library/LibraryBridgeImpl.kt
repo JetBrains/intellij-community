@@ -146,13 +146,20 @@ class LibraryBridgeImpl(
 
   private fun checkDisposed() {
     if (isDisposed) {
-      val libraryEntity = entityStorage.cachedValue(librarySnapshotCached).libraryEntity
-      val isDisposedGlobally = WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(libraryEntity)?.isDisposed
+      val libraryEntity = try {
+        entityStorage.cachedValue(librarySnapshotCached).libraryEntity
+      }
+      catch (t: Throwable) {
+        null
+      }
+      val isDisposedGlobally = libraryEntity?.let {
+        WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(it)?.isDisposed
+      }
       val message = """
         Library $entityId already disposed:
         Library id: $libraryId
         Entity: ${libraryEntity.run { "$name, $this" }}
-        Is disposed in project model: $isDisposedGlobally
+        Is disposed in project model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace
         """.trimIndent()
       try {

@@ -535,7 +535,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     mySwitchAction = new SwitchAction();
 
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, pinAction, mySwitchAction);
+      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, new Separator(), pinAction, mySwitchAction);
     final ActionManager actionManager = ActionManager.getInstance();
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
@@ -557,8 +557,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     });
     final String text = SSRBundle.message("search.target.label");
     final JLabel searchTargetLabel = new JLabel(text);
-    searchTargetLabel.setLabelFor(myTargetComboBox);
-    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
+    myTargetComboBox.setLabel(searchTargetLabel);
 
     final JBCheckBox injected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
     injected.setOpaque(false);

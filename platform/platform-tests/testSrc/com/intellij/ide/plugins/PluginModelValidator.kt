@@ -4,10 +4,10 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager.getHomePath
-import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.StringWriter
 import java.nio.file.Files
@@ -127,7 +127,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
     for (pluginInfo in pluginIdToInfo.values) {
       val descriptor = pluginInfo.descriptor
 
-      val dependenciesElements = descriptor.getChildren("dependencies")
+      val dependenciesElements = descriptor.children("dependencies").toList()
       if (dependenciesElements.size > 1) {
         _errors.add(PluginValidationError(
           "The only `dependencies` tag is expected",

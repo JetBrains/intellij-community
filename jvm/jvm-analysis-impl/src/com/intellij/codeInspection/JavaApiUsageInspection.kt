@@ -32,7 +32,7 @@ import javax.swing.*
 /**
  * In order to add the support for new API in the most recent JDK execute:
  * <ol>
- *   <li>Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase#testCollectSinceApiUsages]</li>
+ *   <li>Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageGenerator#testCollectSinceApiUsages]</li>
  *   <li>Put the generated text file under community/java/java-analysis-api/src/com/intellij/openapi/module</li>
  *   <li>Add two new entries to the {@link com.intellij.openapi.module.LanguageLevelUtil.ourPresentableShortMessage}:
  *    <ul>

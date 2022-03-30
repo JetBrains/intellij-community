@@ -108,6 +108,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
     return null;
   }
 
+  @Deprecated
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     return GotoTypeDeclarationHandler2.getCtrlMouseInfo(file, offset);

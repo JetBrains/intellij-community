@@ -7,10 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
 import org.jetbrains.idea.maven.importing.ModuleModelProxy;
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
@@ -34,7 +32,7 @@ public class MavenProjectImportContextProvider {
   @NotNull
   private final MavenProjectsTree myProjectsTree;
   @NotNull
-  private final Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
+  private final Map<MavenId, MavenProjectChanges> myProjectsToImportWithChanges;
   @NotNull
   private final ModuleModelProxy myModuleModel;
   @NotNull
@@ -47,7 +45,8 @@ public class MavenProjectImportContextProvider {
                                            @NotNull MavenImportingSettings importingSettings) {
     myProject = project;
     myProjectsTree = projectsTree;
-    myProjectsToImportWithChanges = changes;
+    myProjectsToImportWithChanges = changes.entrySet().stream()
+      .collect(Collectors.toMap(e -> e.getKey().getMavenId(), e -> e.getValue(), (v1, v2) -> v1));
     myModuleModel = moduleModel;
     myImportingSettings = importingSettings;
   }
@@ -88,7 +87,7 @@ public class MavenProjectImportContextProvider {
         continue;
       }
 
-      MavenProjectChanges changes = myProjectsToImportWithChanges.get(project);
+      MavenProjectChanges changes = myProjectsToImportWithChanges.get(project.getMavenId());
       MavenProjectImportData mavenProjectImportData = getModuleImportData(project, moduleName, moduleByName, changes);
 
       if (changes != null && changes.hasChanges()) {
@@ -159,38 +158,11 @@ public class MavenProjectImportContextProvider {
     deleteExistingModuleByName(moduleName);
   }
 
-  @NotNull
-  public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
-    MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
-    return projectsTree != null ? getModuleName(mavenProject, projectsTree, new HashMap<>()) : StringUtils.EMPTY;
-  }
-
-  @NotNull
-  private static String getModuleName(@NotNull MavenProject project,
-                                      @NotNull MavenProjectsTree projectsTree,
-                                      @NotNull Map<MavenProject, String> moduleNameMap) {
-    String moduleName = moduleNameMap.get(project);
-    if (moduleName != null) return moduleName;
-    moduleName = project.getMavenId().getArtifactId();
-    if (moduleName == null) return StringUtils.EMPTY;
-    if (project.getParentId() != null) {
-      MavenProject parentProject = projectsTree.findProject(project.getParentId());
-      if (parentProject != null) {
-        String parentName = getModuleName(parentProject, projectsTree, moduleNameMap);
-        if (StringUtil.isNotEmpty(parentName)) {
-          moduleName = parentName + "." + moduleName;
-        }
-      }
-    }
-    moduleNameMap.put(project, moduleName);
-    return moduleName;
-  }
-
   private MavenProjectImportData getModuleImportData(MavenProject project,
                                                      String moduleName,
                                                      Map<String, Module> moduleByName,
                                                      MavenProjectChanges changes) {
-    MavenJavaVersionHolder javaVersions = MavenModelUtil.getMavenJavaVersions(project);
+    MavenJavaVersionHolder javaVersions = getMavenJavaVersions(project);
     MavenModuleType type = getModuleType(project, javaVersions);
 
     ModuleData moduleData = getModuleData(project, moduleName, type, javaVersions, moduleByName);

@@ -21,14 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class LeakHunter {
   @TestOnly
   public static void checkProjectLeak() throws AssertionError {
@@ -107,12 +103,12 @@ public final class LeakHunter {
     checkLeak(() -> Collections.singletonMap(root, "Root object"), suspectClass, isReallyLeak);
   }
 
+  @TestOnly
   public static @NotNull Supplier<Map<Object, String>> allRoots() {
     return () -> {
       ClassLoader classLoader = LeakHunter.class.getClassLoader();
       // inspect static fields of all loaded classes
-      @SuppressWarnings("UseOfObsoleteCollectionType")
-      Vector<?> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
+      Collection<?> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
 
       // Remove expired invocations, so they are not used as object roots.
       LaterInvocator.purgeExpiredItems();

@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

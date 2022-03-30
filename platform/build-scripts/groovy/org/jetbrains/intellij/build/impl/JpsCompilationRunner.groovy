@@ -63,6 +63,9 @@ final class JpsCompilationRunner {
     setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
     setSystemPropertyIfUndefined(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
     setSystemPropertyIfUndefined(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
+
+    // https://youtrack.jetbrains.com/issue/IDEA-269280
+    System.setProperty("aether.connector.resumeDownloads", "false")
   }
 
   private final CompilationContext context

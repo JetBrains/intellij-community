@@ -399,6 +399,7 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
     val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
     if (callOrQualified is KtQualifiedExpression) {
         appendExpression(callOrQualified.receiverExpression)
+        if (callOrQualified is KtSafeQualifiedExpression) appendFixedText("?")
         appendFixedText(".")
     }
     appendNonFormattedText(newFunctionName)

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
@@ -40,7 +41,16 @@ class CodeVisionPass(
     fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>) : CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
       collect(EmptyProgressIndicator(), editor, file, providerIdToLenses, providers)
-      return CodeVisionData(providerIdToLenses)
+      val allProviders = CodeVisionProviderFactory.createAllProviders(file.project)
+      val dataForAllProviders = HashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
+      val modificationStamp = file.modificationStamp
+      for (provider in allProviders) {
+        if (provider !is CodeVisionProviderAdapter) continue
+        val providerId = provider.id
+        dataForAllProviders[providerId] = providerIdToLenses[providerId]
+                                          ?: DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(emptyList(), modificationStamp)
+      }
+      return CodeVisionData(dataForAllProviders)
     }
 
     private fun collect(progress: ProgressIndicator,
@@ -57,18 +67,16 @@ class CodeVisionPass(
       })
     }
 
-    private fun updateProviders(project: Project,
-                                editor: Editor,
-                                providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
+    internal fun updateProviders(project: Project,
+                                 editor: Editor,
+                                 providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
       val codeVisionHost = CodeVisionHost.getInstance(project)
-      for (providerId in providerIdToLenses.keys) {
-        codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
-      }
+      codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
     }
 
     internal fun saveToCache(project: Project,
-                            editor: Editor,
-                            providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
+                             editor: Editor,
+                             providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
       val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
       for ((providerId, results) in providerIdToLenses) {
         cacheService.storeVisionDataForEditor(editor, providerId, results)
@@ -106,15 +114,6 @@ class CodeVisionPass(
       ApplicationManager.getApplication().assertIsDispatchThread()
       saveToCache(project, editor, providerIdToLenses)
       updateProviders(project, editor, providerIdToLenses)
-    }
-
-    fun addStrikeout(enabled: Boolean): CodeVisionData {
-      return if (enabled) this
-      else CodeVisionData(providerIdToLenses.mapValues { entry -> DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(entry.value.codeVisionEntries.map {
-        val richText = RichText()
-        richText.append(it.second.longPresentation, SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null))
-        Pair(it.first, RichTextCodeVisionEntry(it.second.providerId, richText))}, entry.value.modificationStamp)
-      })
     }
 
     override fun toString(): String {

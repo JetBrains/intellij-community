@@ -364,6 +364,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               }
 
               @Override
+              public void tooManyChildren(int remaining, @NotNull Runnable addNextChildren) {
+                node.tooManyChildren(remaining, addNextChildren);
+              }
+
+              @Override
               public void setAlreadySorted(boolean alreadySorted) {
                 node.setAlreadySorted(alreadySorted);
               }

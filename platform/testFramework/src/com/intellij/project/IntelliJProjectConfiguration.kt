@@ -1,13 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.JpsProject
@@ -17,31 +16,35 @@ import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Assert
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries without
- * hardcoding paths to their JARs.
+ * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries
+ * without hard-coding paths to their JARs.
  */
 class IntelliJProjectConfiguration {
   private val projectHome = PathManager.getHomePath()
   private val projectLibraries: Map<String, LibraryRoots>
   private val moduleLibraries: Map<String, Map<String, LibraryRoots>>
 
-  private val remoteRepositoryDescriptions : List<JpsRemoteRepositoryDescription>
+  private val remoteRepositoryDescriptions: List<JpsRemoteRepositoryDescription>
 
   init {
     val project = loadIntelliJProject(projectHome)
-    fun extractLibrariesRoots(collection: JpsLibraryCollection) = collection.libraries.associateBy({ it.name }, {
-      LibraryRoots(SmartList(it.getFiles(JpsOrderRootType.COMPILED)), SmartList(it.getFiles(JpsOrderRootType.SOURCES)))
-    })
+    fun extractLibrariesRoots(collection: JpsLibraryCollection): Map<@NlsSafe String, LibraryRoots> {
+      return collection.libraries.associateBy(keySelector = { it.name }, valueTransform = {
+        LibraryRoots(
+          classes = java.util.List.copyOf(it.getFiles(JpsOrderRootType.COMPILED)),
+          sources = java.util.List.copyOf(it.getFiles(JpsOrderRootType.SOURCES)),
+        )
+      })
+    }
     projectLibraries = extractLibrariesRoots(project.libraryCollection)
     moduleLibraries = project.modules.associateBy({it.name}, {
       val libraries = extractLibrariesRoots(it.libraryCollection)
-      if (libraries.isNotEmpty()) libraries else emptyMap()
+      libraries.ifEmpty { emptyMap() }
     })
 
     remoteRepositoryDescriptions = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(project)!!.repositories
@@ -81,10 +84,19 @@ class IntelliJProjectConfiguration {
 
     @JvmStatic
     fun getJarFromSingleJarProjectLibrary(projectLibraryName: String): VirtualFile {
-      val jarUrl = UsefulTestCase.assertOneElement(getProjectLibraryClassesRootUrls(projectLibraryName))
-      val jarRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl)
-      Assert.assertNotNull(jarRoot)
-      return jarRoot!!
+      return getVirtualFile(getProjectLibrary(projectLibraryName))
+    }
+
+    @JvmStatic
+    fun getVirtualFile(lib: LibraryRoots): VirtualFile {
+      val url = lib.classesUrls.single()
+      return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url)
+             ?: throw IllegalStateException("Cannot find virtual file by $url (nio file exists: ${lib.classes.single().exists()})")
+    }
+
+    @JvmStatic
+    fun getJarPathFromSingleJarProjectLibrary(libName: String): Path {
+      return getProjectLibrary(libName).classes.single().toPath()
     }
 
     @JvmStatic

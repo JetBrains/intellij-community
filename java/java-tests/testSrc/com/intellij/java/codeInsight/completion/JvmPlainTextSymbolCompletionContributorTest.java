@@ -2,9 +2,9 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor;
 import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiFile;

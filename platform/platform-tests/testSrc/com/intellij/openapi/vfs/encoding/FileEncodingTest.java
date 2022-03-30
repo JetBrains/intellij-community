@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -43,6 +44,7 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -1023,7 +1025,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }
 
     FileType foo = new MyFT();
-    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable());
+    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable(), PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
 
     VirtualFile file = createTempFile("my", NO_BOM, StringUtil.repeat("c", 20), US_ASCII);
     FileEditorManager.getInstance(getProject()).openFile(file, false);
@@ -1127,7 +1129,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     FileEncodingProvider encodingProvider = __ -> StandardCharsets.UTF_16;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
-    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable());
+    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable(),
+                                     PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     VirtualFile file = createTempFile(ext, NO_BOM, "some", StandardCharsets.UTF_8);
     assertEquals(fileType, file.getFileType());
     assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());

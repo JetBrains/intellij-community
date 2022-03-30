@@ -12,7 +12,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
-import org.jetbrains.intellij.build.dependencies.JpsBootstrapJdk
+import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -100,7 +100,7 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private static void defineJavaSdk(CompilationContext context) {
-    Path homePath = JpsBootstrapJdk.getJdkHome(context.paths.buildDependenciesCommunityRoot)
+    Path homePath = Jdk11Downloader.getJdkHome(context.paths.buildDependenciesCommunityRoot)
     String jbrHome = toCanonicalPath(homePath.toString())
     def jbrVersionName = "11"
 

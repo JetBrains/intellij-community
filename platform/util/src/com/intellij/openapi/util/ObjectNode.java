@@ -13,22 +13,53 @@ import java.util.List;
 import java.util.function.Predicate;
 
 final class ObjectNode {
-  private final ObjectTree myTree;
-
-  ObjectNode myParent; // guarded by myTree.treeLock
+  private ObjectNode myParent; // guarded by myTree.treeLock
   private final Disposable myObject;
-
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
   private Throwable myTrace; // guarded by myTree.treeLock
 
-  ObjectNode(@NotNull ObjectTree tree,
-             @Nullable ObjectNode parentNode,
-             @NotNull Disposable object) {
-    myTree = tree;
+  ObjectNode(@NotNull Disposable object, @NotNull ObjectNode parentNode) {
     myParent = parentNode;
     myObject = object;
 
-    myTrace = parentNode == null && Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
+    myTrace = parentNode.isRoot() && Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
+  }
+
+  // root
+  private ObjectNode() {
+    myObject = ROOT_DISPOSABLE;
+    myParent = this;
+  }
+  private static final Disposable ROOT_DISPOSABLE = Disposer.newDisposable();
+
+  void assertNoChildren(boolean throwError) {
+    if (myChildren != null) {
+      for (ObjectNode childNode : myChildren) {
+        if (childNode == null) {
+          continue;
+        }
+        Disposable object = childNode.getObject();
+        Throwable trace = childNode.getTrace();
+        String message = "Memory leak detected: '" + object + "' of " + object.getClass() + " is registered in Disposer but wasn't disposed.\n" +
+                         "Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.\n" +
+                         "See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.\n" +
+                         "The corresponding Disposer.register() stacktrace is shown as the cause:\n";
+        RuntimeException exception = new RuntimeException(message, trace);
+        if (throwError) {
+          throw exception;
+        }
+        ObjectTree.getLogger().error(exception);
+      }
+    }
+  }
+
+  private boolean isRoot() {
+    return myObject == ROOT_DISPOSABLE;
+  }
+
+  @NotNull
+  static ObjectNode createRoot() {
+    return new ObjectNode();
   }
 
   void addChild(@NotNull ObjectNode child) {
@@ -54,15 +85,15 @@ final class ObjectNode {
         }
       }
     }
-    child.myParent = null;
   }
 
+  @NotNull
   ObjectNode getParent() {
     return myParent;
   }
 
-  void getAndRemoveRecursively(@NotNull List<? super Disposable> result) {
-    getAndRemoveChildrenRecursively(result, null);
+  void getAndRemoveRecursively(@NotNull ObjectTree myTree, @NotNull List<? super Disposable> result) {
+    getAndRemoveChildrenRecursively(myTree, result, null);
     myTree.removeObjectFromTree(this);
     // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
     if (myTree.rememberDisposedTrace(myObject) == null) {
@@ -75,12 +106,13 @@ final class ObjectNode {
   /**
    * {@code predicate} is used only for direct children.
    */
-  void getAndRemoveChildrenRecursively(@NotNull List<? super Disposable> result, @Nullable Predicate<? super Disposable> predicate) {
+  void getAndRemoveChildrenRecursively(@NotNull ObjectTree myTree,
+                                       @NotNull List<? super Disposable> result, @Nullable Predicate<? super Disposable> predicate) {
     if (myChildren != null) {
       for (int i = myChildren.size() - 1; i >= 0; i--) {
         ObjectNode childNode = myChildren.get(i);
         if (predicate == null || predicate.test(childNode.getObject())) {
-          childNode.getAndRemoveRecursively(result);
+          childNode.getAndRemoveRecursively(myTree, result);
         }
       }
     }

@@ -151,7 +151,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.shortenName())
     } else {
       e.presentation.putClientProperty(COLOR, RunButtonColors.BLUE)
-      e.presentation.icon = AllIcons.Actions.Execute
+      e.presentation.icon = iconFor(RUN)
       e.presentation.text = ExecutionBundle.message("run.toolbar.widget.run.text")
       e.presentation.description = ExecutionBundle.message("run.toolbar.widget.run.description")
     }
@@ -166,12 +166,12 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
 
   private fun iconFor(executorId: String): Icon {
     return when (executorId) {
-      DefaultRunExecutor.EXECUTOR_ID -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
-      ToolWindowId.DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
+      RUN -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
+      DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
       LOADING -> spinningIcon
       RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
-      else -> AllIcons.Actions.Execute
+      else -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
     }
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.history.LocalHistory;
@@ -29,13 +15,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMigration;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.generate.UastCodeGenerationPluginKt;
 
 import java.util.ArrayList;
 
@@ -155,7 +144,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
         String newName = entry.getNewName();
         PsiElement element = entry.getType() == MigrationMapEntry.PACKAGE ? MigrationUtil.findOrCreatePackage(myProject, psiMigration, newName)
                                                                           : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName)[0];
-        doMigration(element, newName, usages, myRefsToShorten);
+        MigrationUtil.doMigration(element, newName, usages, myRefsToShorten);
         if (!sameShortNames && Comparing.strEqual(StringUtil.getShortName(entry.getOldName()), StringUtil.getShortName(entry.getNewName()))) {
           sameShortNames = true;
         }
@@ -171,23 +160,15 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected void doMigration(
-    PsiElement elementToBind,
-    String newQName,
-    UsageInfo[] usages,
-    ArrayList<? super SmartPsiElementPointer<PsiElement>> refsToShorten
-  ) {
-    MigrationUtil.doMigration(elementToBind, newQName, usages, refsToShorten);
-  }
-
-
   @Override
   protected void performPsiSpoilingRefactoring() {
-    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     for (SmartPsiElementPointer<PsiElement> pointer : myRefsToShorten) {
       PsiElement element = pointer.getElement();
       if (element != null) {
-        styleManager.shortenClassReferences(element);
+        UElement uElement = UastContextKt.toUElement(element);
+        if (uElement instanceof UReferenceExpression) {
+          UastCodeGenerationPluginKt.shortenReference((UReferenceExpression)uElement);
+        }
       }
     }
   }

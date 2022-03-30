@@ -1107,6 +1107,9 @@ public class JBTabsImpl extends JComponent
         return value.getText();
       }
     };
+    ObjectUtils.consumeIfCast(this.getClientProperty("morePopupAutoSelection"), Integer.class, i -> {
+      step.setDefaultOptionIndex(i);
+    });
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, renderer -> {
 
       return new DefaultListCellRenderer() {
@@ -1116,18 +1119,41 @@ public class JBTabsImpl extends JComponent
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           @SuppressWarnings("unchecked")
           Component rendererComponent = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-          JLabel label = new JLabel(isSelected ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close);
-          label.putClientProperty("info", value);
+          TabInfo info = (TabInfo)value;
+          JLabel label = new JLabel(AllIcons.Actions.Close);
+          if (info.isPinned()) label.setIcon(AllIcons.Actions.PinTab);
+          label.putClientProperty("info", info);
           if (listMouseListener == null) {
             listMouseListener = new MouseAdapter() {
               @Override
               public void mouseReleased(MouseEvent e) {
+                Point point = e.getLocationOnScreen();
+                SwingUtilities.convertPointFromScreen(point, list);
+                int clickedIndex = list.locationToIndex(point);
                 Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
                 if (renderer instanceof JLabel) {
                   ObjectUtils.consumeIfCast(((JLabel)renderer).getClientProperty("info"), TabInfo.class, info -> {
                     e.consume();
-                    removeTab(info);
+                    boolean clickToUnpin = false;
+                    if (info.isPinned()) {
+                      AnAction action = ArrayUtil.getLastElement(info.getTabLabelActions().getChildren(null));
+                      // The last one is expected to be 'CloseTab'
+                      if (action != null) {
+                        JComponent component = info.getComponent();
+                        boolean wasShowing = UIUtil.isShowing(component);
+                        try {
+                          UIUtil.markAsShowing(component, true);
+                          ActionManager.getInstance().tryToExecute(action, e, info.getComponent(), info.getTabActionPlace(), true);
+                        } finally {
+                          UIUtil.markAsShowing(component, wasShowing);
+                        }
+                        clickToUnpin = true;
+                        JBTabsImpl.this.putClientProperty("morePopupAutoSelection", clickedIndex);
+                      }
+                    }
+                    if (!clickToUnpin) {
+                      removeTab(info);
+                    }
                     JBPopup popup = PopupUtil.getPopupContainerFor(list);
                     if (popup != null) {
                       popup.cancel();
@@ -1148,8 +1174,11 @@ public class JBTabsImpl extends JComponent
           JPanel wrapper = new JPanel(new BorderLayout());
           wrapper.setBackground(background);
           wrapper.add(rendererComponent, BorderLayout.CENTER);
-          wrapper.add(label, BorderLayout.EAST);
-          wrapper.setBorder(JBUI.Borders.emptyRight(5));
+          if (UISettings.getShadowInstance().getShowCloseButton()) {
+            wrapper.add(label, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+            wrapper.setBorder(UISettings.getShadowInstance().getCloseTabButtonOnTheRight()
+                              ? JBUI.Borders.emptyRight(5) : JBUI.Borders.emptyLeft(5));
+          }
           UIUtil.setBackgroundRecursively(wrapper, background);
           return wrapper;
         }
@@ -1157,6 +1186,14 @@ public class JBTabsImpl extends JComponent
     });
     myMorePopupState.prepareToShow(popup);
     popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          JBTabsImpl.this.putClientProperty("morePopupAutoSelection", null);
+        });
+      }
+    });
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
   }
 
