@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-public class JpsBootstrapJdkTest {
+public class Jdk11DownloaderTest {
   @Test
   public void allJdkVariantsCouldBeDownloaded() {
     BuildDependenciesCommunityRoot communityRoot = BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory();
@@ -22,7 +22,7 @@ public class JpsBootstrapJdkTest {
 
         Path jdkHome = Jdk11Downloader.getJdkHome(communityRoot, os, arch);
         Path javaExecutable = Jdk11Downloader.getJavaExecutable(jdkHome);
-        Assertions.assertTrue(Files.exists(javaExecutable));
+        Assert.assertTrue(Files.exists(javaExecutable));
       }
     }
   }
