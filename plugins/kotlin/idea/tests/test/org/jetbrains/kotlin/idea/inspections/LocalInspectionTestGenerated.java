@@ -7325,6 +7325,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/suspendLambda.kt");
         }
 
+        @TestMetadata("towLabels.kt")
+        public void testTowLabels() throws Exception {
+            runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/towLabels.kt");
+        }
+
         @TestMetadata("typeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter.kt");
