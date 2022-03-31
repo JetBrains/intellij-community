@@ -435,8 +435,8 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param doc    <code>Document</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printDocument(final Writer out, final FormatStack fstack,
-                               final NamespaceStack nstack, final Document doc) throws IOException {
+  private void printDocument(final Writer out, final FormatStack fstack,
+                             final NamespaceStack nstack, final Document doc) throws IOException {
 
 
     // If there is no root element then we cannot use the normal ways to
@@ -675,8 +675,8 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param text   <code>Text</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  protected void printText(final Writer out, final FormatStack fstack,
-                           final Text text) throws IOException {
+  private void printText(final Writer out, final FormatStack fstack,
+                         final Text text) throws IOException {
     if (fstack.getEscapeOutput()) {
       textRaw(out, Format.escapeText(fstack.getEscapeStrategy(),
                                      fstack.getLineSeparator(), text.getText()));
