@@ -21,7 +21,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     override fun actionPerformed(e: AnActionEvent) {
       MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.KILL_MAVEN_CONNECTOR)
       val connector = tableView.selectedObject ?: return;
-      connector.shutdown(true)
+      MavenServerManager.getInstance().shutdownConnector(connector, true)
       this@ConnectorTable.refreshValues()
     }
 
@@ -66,7 +66,8 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     return arrayOf(refresh, stop)
   }
 
-  private class TableColumn(@NlsContexts.ColumnName name: String, val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
+  private class TableColumn(@NlsContexts.ColumnName name: String,
+                            val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
     name) {
 
     override fun getDescription(element: MavenServerConnector?): String? = null;

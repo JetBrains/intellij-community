@@ -97,9 +97,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   public abstract void removeDownloadListener(MavenServerDownloadListener listener);
 
   @ApiStatus.Internal
-  public void shutdown(boolean wait) {
-    myManager.cleanUp(this);
-  }
+  abstract void stop(boolean wait);
 
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
     try {
@@ -125,7 +123,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   @Override
   public void dispose() {
-    shutdown(true);
+    MavenServerManager.getInstance().shutdownConnector(this, true);
   }
 
   @NotNull

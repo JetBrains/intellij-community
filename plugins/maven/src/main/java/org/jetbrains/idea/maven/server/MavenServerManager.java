@@ -68,7 +68,7 @@ public final class MavenServerManager implements Disposable {
     return set;
   }
 
-  public void cleanUp(MavenServerConnector connector) {
+  void cleanUp(MavenServerConnector connector) {
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
@@ -142,7 +142,7 @@ public final class MavenServerManager implements Disposable {
     else {
       if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
         MavenLog.LOG.info("[connector] " + connector + " is incompatible, restarting");
-        connector.shutdown(false);
+        shutdownConnector(connector, false);
         connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk);
         connector.connect();
       }
@@ -209,7 +209,7 @@ public final class MavenServerManager implements Disposable {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> connector.shutdown(true));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, true));
     });
   }
 
@@ -260,16 +260,23 @@ public final class MavenServerManager implements Disposable {
   }
 
 
+  public boolean shutdownConnector(MavenServerConnector connector, boolean wait) {
+    synchronized (myMultimoduleDirToConnectorMap) {
+      if (!myMultimoduleDirToConnectorMap.values().remove(connector)) {
+        return false;
+      }
+    }
+    connector.stop(wait);
+    return true;
+  }
+
   public void shutdown(boolean wait) {
     Collection<MavenServerConnector> values;
     synchronized (myMultimoduleDirToConnectorMap) {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
-    values.forEach(c -> c.shutdown(wait));
-    if (wait) {
-      assert myMultimoduleDirToConnectorMap.isEmpty();
-    }
+    values.forEach(c -> shutdownConnector(c, wait));
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
@@ -476,7 +483,7 @@ public final class MavenServerManager implements Disposable {
       protected synchronized void cleanup() {
         super.cleanup();
         if (myConnector != null) {
-          myConnector.shutdown(false);
+          shutdownConnector(myConnector, false);
         }
       }
     };
