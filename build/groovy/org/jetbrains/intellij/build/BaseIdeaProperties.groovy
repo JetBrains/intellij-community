@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -112,11 +112,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/junit/lib/junit5-rt.jar"                       : "1.8",
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"   : "1.6",
     "plugins/gradle/lib/gradle-tooling-extension-impl.jar"  : "1.6",
-    "plugins/maven/lib/maven-server-api.jar"                : "1.6",
-    "plugins/maven/lib/maven2-server.jar"                   : "1.6",
-    "plugins/maven/lib/maven3-server-common.jar"            : "1.6",
-    "plugins/maven/lib/maven30-server.jar"                  : "1.6",
-    "plugins/maven/lib/maven3-server.jar"                   : "1.6",
+    "plugins/maven/lib/maven-server-api.jar"                : "1.8",
+    "plugins/maven/lib/maven2-server.jar"                   : "1.8",
+    "plugins/maven/lib/maven3-server-common.jar"            : "1.8",
+    "plugins/maven/lib/maven30-server.jar"                  : "1.8",
+    "plugins/maven/lib/maven3-server.jar"                   : "1.8",
     "plugins/maven/lib/artifact-resolver-m2.jar"            : "1.6",
     "plugins/maven/lib/artifact-resolver-m3.jar"            : "1.6",
     "plugins/maven/lib/artifact-resolver-m31.jar"           : "1.6",
