@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -2741,18 +2742,20 @@ public final class ContainerUtil {
   }
 
   /**
-   * Weak keys hard values hash map.
-   * Null keys are NOT allowed
-   * Null values are allowed
+   * @deprecated use {@link java.util.WeakHashMap} instead
    */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K,V> Map<@NotNull K,V> createWeakMap() {
-    return createWeakMap(4);
+    return new WeakHashMap<>();
   }
 
-  @Contract(value = "_ -> new", pure = true)
+  /**
+   * @deprecated use {@link java.util.WeakHashMap} instead
+   */
+  @Deprecated
   public static @NotNull <K,V> Map<@NotNull K,V> createWeakMap(int initialCapacity) {
-    return CollectionFactory.createWeakMap(initialCapacity, 0.8f, HashingStrategy.canonical());
+    return new WeakHashMap<>(initialCapacity);
   }
 
   @Contract(value = " -> new", pure = true)

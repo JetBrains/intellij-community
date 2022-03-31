@@ -6,18 +6,18 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author Alexander Lobas
  */
 class PluginLogoIcon implements PluginLogoIconProvider {
-  static final Map<Icon, Icon> disabledIcons = ContainerUtil.createWeakMap(200);
+  static final Map<Icon, Icon> disabledIcons = new WeakHashMap<>(200);
 
   private final Icon myPluginLogo;
   private final Icon myPluginLogoError;

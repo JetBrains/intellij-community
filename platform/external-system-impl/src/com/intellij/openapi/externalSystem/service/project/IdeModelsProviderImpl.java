@@ -54,9 +54,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   protected final Project myProject;
 
   @NotNull
-  private final Map<ModuleData, Module> myIdeModulesCache = ContainerUtil.createWeakMap();
+  private final Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
 
-  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = ContainerUtil.createWeakMap();
+  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = new WeakHashMap<>();
 
   public IdeModelsProviderImpl(@NotNull Project project) {
     myProject = project;

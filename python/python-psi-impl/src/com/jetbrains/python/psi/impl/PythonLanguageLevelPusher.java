@@ -67,7 +67,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     levels.put(l2, l1);
   }
 
-  private final Map<Module, Sdk> myModuleSdks = ContainerUtil.createWeakMap();
+  private final Map<Module, Sdk> myModuleSdks = new WeakHashMap<>();
 
   @Override
   public void initExtra(@NotNull Project project) {

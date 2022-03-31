@@ -25,13 +25,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
-  private final Map<@NotNull Document,FileStatus> myDocumentToStatusMap = CollectionFactory.createWeakMap(); // all dirty if absent
+  private final Map<@NotNull Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
   FileStatusMap(@NotNull Project project) {

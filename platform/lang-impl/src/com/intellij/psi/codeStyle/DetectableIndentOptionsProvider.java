@@ -35,6 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import static com.intellij.psi.codeStyle.DetectAndAdjustIndentOptionsTask.getDefaultIndentOptions;
@@ -44,7 +45,7 @@ import static com.intellij.psi.codeStyle.DetectAndAdjustIndentOptionsTask.getDef
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private boolean myIsEnabledInTest;
-  private final Map<VirtualFile, IndentOptions> myDiscardedOptions = CollectionFactory.createWeakMap();
+  private final Map<VirtualFile, IndentOptions> myDiscardedOptions = new WeakHashMap<>();
 
   @Nullable
   @Override

@@ -31,6 +31,7 @@ import com.intellij.ui.TreeActions
 import com.intellij.util.containers.ContainerUtil
 import java.awt.event.HierarchyEvent
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.JTree
 
 class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
@@ -190,7 +191,7 @@ class CommitSessionCollector(val project: Project) {
    * See [com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl]
    */
   internal class MyAnActionListener : AnActionListener {
-    private val ourStats: MutableMap<AnActionEvent, Project> = ContainerUtil.createWeakMap()
+    private val ourStats: MutableMap<AnActionEvent, Project> = WeakHashMap()
 
     override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       val project = event.project ?: return

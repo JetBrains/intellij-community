@@ -12,6 +12,8 @@ import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
+import java.util.*
+import kotlin.collections.HashMap
 
 @Service
 internal class FacetEventsPublisher(private val project: Project) {
@@ -139,7 +141,7 @@ internal class FacetEventsPublisher(private val project: Project) {
     val typeId = facet.typeId
     var facets = facetsByType[typeId]
     if (facets == null) {
-      facets = ContainerUtil.createWeakMap()
+      facets = WeakHashMap()
       facetsByType[typeId] = facets
     }
     val firstFacetOfType = facets.isEmpty()
