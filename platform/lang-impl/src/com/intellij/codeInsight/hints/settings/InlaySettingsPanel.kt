@@ -249,6 +249,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           continuation.run()
         }
       }
+      .expireWhen { editor.isDisposed }
       .inSmartMode(project)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
