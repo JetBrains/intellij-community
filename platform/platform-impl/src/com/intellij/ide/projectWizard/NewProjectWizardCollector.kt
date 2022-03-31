@@ -19,7 +19,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 6)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 7)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
@@ -45,7 +45,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val prev = GROUP.registerVarargEvent("navigate.prev", sessionIdField, screenNumField, inputMaskField)
     private val projectCreated = GROUP.registerVarargEvent("project.created", screenNumField)
     private val search = GROUP.registerVarargEvent("search", sessionIdField, screenNumField, typedCharsField, hitsField)
-    private val generator = GROUP.registerVarargEvent("search", sessionIdField, screenNumField, generatorTypeField)
+    private val generator = GROUP.registerVarargEvent("generator.selected", sessionIdField, screenNumField, generatorTypeField)
     private val location = GROUP.registerVarargEvent("project.location.changed", sessionIdField, screenNumField, generatorTypeField)
     private val name = GROUP.registerVarargEvent("project.name.changed", sessionIdField, screenNumField, generatorTypeField)
     private val languageSelected = GROUP.registerVarargEvent("select.language", sessionIdField, screenNumField, languageField)
