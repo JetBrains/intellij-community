@@ -4,7 +4,6 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.List;
@@ -96,7 +95,7 @@ public class AnnotationExprent extends Exprent {
 
     AnnotationExprent ann = (AnnotationExprent)o;
     return className.equals(ann.className) &&
-           InterpreterUtil.equalLists(parNames, ann.parNames) &&
-           InterpreterUtil.equalLists(parValues, ann.parValues);
+           parNames.equals(ann.parNames) &&
+           parValues.equals(ann.parValues);
   }
 }
