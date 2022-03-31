@@ -56,7 +56,6 @@ package org.jdom.input.sax;
 
 import org.jdom.Document;
 import org.jdom.JDOMException;
-import org.jdom.JDOMFactory;
 import org.xml.sax.InputSource;
 
 import java.io.File;
@@ -74,14 +73,6 @@ import java.net.URL;
  * @see org.jdom.input.sax
  */
 public interface SAXEngine {
-
-  /**
-   * Returns the current {@link JDOMFactory} in use.
-   *
-   * @return the factory in use
-   */
-  JDOMFactory getJDOMFactory();
-
   /**
    * Returns whether validation is to be performed during the build.
    *

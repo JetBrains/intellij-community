@@ -56,9 +56,11 @@ package org.jdom.input.sax;
 
 import org.jdom.Document;
 import org.jdom.JDOMException;
-import org.jdom.JDOMFactory;
 import org.jdom.input.JDOMParseException;
-import org.xml.sax.*;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.XMLReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,21 +114,10 @@ public final class SAXBuilderEngine implements SAXEngine {
    * @param handler    The SAXHandler that processes the SAX Events.
    * @param validating True if this is a validating system.
    */
-  public SAXBuilderEngine(final XMLReader reader, final SAXHandler handler,
-                          final boolean validating) {
+  public SAXBuilderEngine(XMLReader reader, final SAXHandler handler, boolean validating) {
     saxParser = reader;
     saxHandler = handler;
     this.validating = validating;
-  }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.jdom.input.sax.SAXEngine#getJDOMFactory()
-   */
-  @Override
-  public JDOMFactory getJDOMFactory() {
-    return saxHandler.getFactory();
   }
 
   /*

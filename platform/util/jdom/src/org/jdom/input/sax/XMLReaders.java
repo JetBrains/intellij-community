@@ -247,17 +247,12 @@ public enum XMLReaders implements XMLReaderJDOMFactory {
       FactorySupplier supplier = getSupplier();
       return supplier.supply().newSAXParser().getXMLReader();
     }
-    catch (SAXException e) {
-      throw new JDOMException(
-        "Unable to create a new XMLReader instance", e);
-    }
-    catch (ParserConfigurationException e) {
+    catch (SAXException | ParserConfigurationException e) {
       throw new JDOMException(
         "Unable to create a new XMLReader instance", e);
     }
     catch (Exception e) {
-      throw new JDOMException("It was not possible to configure a "
-                              + "suitable XMLReader to support " + this, e);
+      throw new JDOMException("It was not possible to configure a suitable XMLReader to support " + this, e);
     }
   }
 

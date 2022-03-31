@@ -81,19 +81,9 @@ public final class SAXBuilder implements SAXEngine {
    */
   private static final SAXHandlerFactory DEFAULTSAXHANDLERFAC = new DefaultSAXHandlerFactory();
 
-  /**
-   * Default source of JDOM Content
-   */
-  private static final JDOMFactory DEFAULTJDOMFAC = new DefaultJDOMFactory();
+  private static final JDOMFactory DEFAULT_JDOM_FACTORY = new DefaultJDOMFactory();
 
-  /*
-   * ====================================================================
-   */
-
-  /**
-   * The XMLReader pillar of SAXBuilder
-   */
-  private XMLReaderJDOMFactory readerfac;
+  private XMLReaderJDOMFactory readerFactory;
 
   /**
    * The SAXHandler pillar of SAXBuilder
@@ -103,13 +93,7 @@ public final class SAXBuilder implements SAXEngine {
   /**
    * The JDOMFactory pillar for creating new JDOM objects
    */
-  private JDOMFactory jdomfac;
-
-  /*
-   * ========================================================================
-   * Configuration settings for SAX parsing.
-   * ========================================================================
-   */
+  private JDOMFactory jdomFactory = DEFAULT_JDOM_FACTORY;
 
   /**
    * User-specified features to be set on the SAX parser
@@ -146,105 +130,39 @@ public final class SAXBuilder implements SAXEngine {
    */
   private SAXEngine engine = null;
 
-  /**
-   * Creates a new JAXP-based SAXBuilder. The underlying parser will not
-   * validate.
-   *
-   * @see SAXBuilder#SAXBuilder(XMLReaderJDOMFactory, SAXHandlerFactory,
-   * JDOMFactory)
-   * @see XMLReaders#NONVALIDATING
-   * @see DefaultJDOMFactory
-   */
   public SAXBuilder() {
-    this(null, null, null);
+    this(XMLReaders.NONVALIDATING, null);
   }
 
   /**
-   * Creates a new JAXP-based SAXBuilder. The underlying parser will validate
-   * (using DTD) or not according to the given parameter. If you want Schema
-   * validation then use SAXBuilder(XMLReaders.XSDVALIDATOR)
-   *
-   * @param validate <code>boolean</code> indicating if DTD validation should occur.
-   * @see SAXBuilder#SAXBuilder(XMLReaderJDOMFactory, SAXHandlerFactory,
-   * JDOMFactory)
-   * @see XMLReaders#NONVALIDATING
-   * @see XMLReaders#DTDVALIDATING
-   * @see DefaultJDOMFactory
-   * @see org.jdom.input.sax for important details on SAXBuilder
    * @deprecated use {@link SAXBuilder#SAXBuilder(XMLReaderJDOMFactory)} with
    * either {@link XMLReaders#DTDVALIDATING}
    * or {@link XMLReaders#NONVALIDATING}
    */
   @Deprecated
   public SAXBuilder(final boolean validate) {
-    this(validate
-         ? XMLReaders.DTDVALIDATING
-         : XMLReaders.NONVALIDATING,
-         null, null);
+    this(validate ? XMLReaders.DTDVALIDATING : XMLReaders.NONVALIDATING);
   }
 
   /**
    * Creates a new SAXBuilder with the specified XMLReaderJDOMFactory.
    * <p>
    *
-   * @param readersouce the {@link XMLReaderJDOMFactory} that supplies XMLReaders. If the
+   * @param factory the {@link XMLReaderJDOMFactory} that supplies XMLReaders. If the
    *                    value is null then a Non-Validating JAXP-based SAX2.0 parser will
    *                    be used.
-   * @see SAXBuilder#SAXBuilder(XMLReaderJDOMFactory, SAXHandlerFactory,
-   * JDOMFactory)
    * @see XMLReaderJDOMFactory
    * @see XMLReaders#NONVALIDATING
    * @see DefaultJDOMFactory
    * @see org.jdom.input.sax for important details on SAXBuilder
    */
-  public SAXBuilder(final XMLReaderJDOMFactory readersouce) {
-    this(readersouce, null, null);
+  public SAXBuilder(XMLReaderJDOMFactory factory) {
+    this(factory == null ? XMLReaders.NONVALIDATING : factory, null);
   }
 
-  /**
-   * Creates a new SAXBuilder. This is the base constructor for all other
-   * SAXBuilder constructors: they all find a way to create a
-   * JDOMXMLReaderFactory and then call this constructor with that factory,
-   * <p>
-   *
-   * @param xmlreaderfactory a {@link XMLReaderJDOMFactory} that creates XMLReaders. Specify
-   *                         null for the default.
-   * @param handlerfactory   a {@link SAXHandlerFactory} that creates SAXHandlers Specify null
-   *                         for the default.
-   * @param jdomfactory      a {@link JDOMFactory} that creates JDOM Content. Specify null for
-   *                         the default.
-   * @see XMLReaderJDOMFactory
-   * @see XMLReaders#NONVALIDATING
-   * @see SAXHandlerFactory
-   * @see JDOMFactory
-   * @see DefaultJDOMFactory
-   * @see org.jdom.input.sax for important details on SAXBuilder
-   */
-  public SAXBuilder(XMLReaderJDOMFactory xmlreaderfactory, SAXHandlerFactory handlerfactory, JDOMFactory jdomfactory) {
-    this.readerfac = xmlreaderfactory == null ? XMLReaders.NONVALIDATING : xmlreaderfactory;
-    this.handlerfac = handlerfactory == null ? DEFAULTSAXHANDLERFAC : handlerfactory;
-    this.jdomfac = jdomfactory == null ? DEFAULTJDOMFAC : jdomfactory;
-  }
-
-  /**
-   * Returns the current {@link JDOMFactory} in use.
-   *
-   * @return the factory in use
-   * @deprecated as it is replaced by {@link #getJDOMFactory()}
-   */
-  @Deprecated
-  public JDOMFactory getFactory() {
-    return getJDOMFactory();
-  }
-
-  /**
-   * Returns the current {@link JDOMFactory} in use.
-   *
-   * @return the factory in use
-   */
-  @Override
-  public JDOMFactory getJDOMFactory() {
-    return jdomfac;
+  private SAXBuilder(XMLReaderJDOMFactory factory, SAXHandlerFactory handlerFactory) {
+    this.readerFactory = factory;
+    this.handlerfac = handlerFactory == null ? DEFAULTSAXHANDLERFAC : handlerFactory;
   }
 
   /**
@@ -266,7 +184,7 @@ public final class SAXBuilder implements SAXEngine {
    * @param factory <code>JDOMFactory</code> to use
    */
   public void setJDOMFactory(final JDOMFactory factory) {
-    this.jdomfac = factory;
+    this.jdomFactory = factory;
     engine = null;
   }
 
@@ -276,7 +194,7 @@ public final class SAXBuilder implements SAXEngine {
    * @param rfac the JDOMXMLReaderFactory to set. A null rfac will indicate the default {@link XMLReaders#NONVALIDATING}
    */
   public void setXMLReaderFactory(XMLReaderJDOMFactory rfac) {
-    readerfac = rfac == null ? XMLReaders.NONVALIDATING : rfac;
+    readerFactory = rfac == null ? XMLReaders.NONVALIDATING : rfac;
     engine = null;
   }
 
@@ -309,7 +227,7 @@ public final class SAXBuilder implements SAXEngine {
    */
   @Override
   public boolean isValidating() {
-    return readerfac.isValidating();
+    return readerFactory.isValidating();
   }
 
   /**
@@ -494,30 +412,15 @@ public final class SAXBuilder implements SAXEngine {
    * @throws JDOMException if there is any problem initialising the engine.
    */
   private SAXEngine buildEngine() throws JDOMException {
-    // Create and configure the content handler.
-    final SAXHandler contentHandler = handlerfac.createSAXHandler(jdomfac);
+    SAXHandler contentHandler = handlerfac.createSAXHandler(jdomFactory);
 
     contentHandler.setExpandEntities(expand);
     contentHandler.setIgnoringElementContentWhitespace(ignoringWhite);
     contentHandler.setIgnoringBoundaryWhitespace(ignoringBoundaryWhite);
 
-    final XMLReader parser = createParser();
-    // Configure parser
+    XMLReader parser = readerFactory.createXMLReader();
     configureParser(parser, contentHandler);
-    final boolean valid = readerfac.isValidating();
-
-    return new SAXBuilderEngine(parser, contentHandler, valid);
-  }
-
-  /**
-   * Allow overriding classes access to the Parser before it is used in a
-   * SAXBuilderEngine.
-   *
-   * @return a XMLReader parser.
-   * @throws JDOMException if there is a problem
-   */
-  private XMLReader createParser() throws JDOMException {
-    return readerfac.createXMLReader();
+    return new SAXBuilderEngine(parser, contentHandler, readerFactory.isValidating());
   }
 
   /**
@@ -529,7 +432,6 @@ public final class SAXBuilder implements SAXEngine {
    * @throws JDOMException if there is any problem initializing the engine.
    */
   private SAXEngine getEngine() throws JDOMException {
-
     if (engine != null) {
       return engine;
     }
@@ -574,10 +476,7 @@ public final class SAXBuilder implements SAXEngine {
                          contentHandler);
       success = true;
     }
-    catch (final SAXNotSupportedException e) {
-      // No lexical reporting available
-    }
-    catch (final SAXNotRecognizedException e) {
+    catch (final SAXNotSupportedException | SAXNotRecognizedException e) {
       // No lexical reporting available
     }
 
@@ -587,10 +486,7 @@ public final class SAXBuilder implements SAXEngine {
         parser.setProperty(SAX_PROPERTY_LEXICAL_HANDLER_ALT,
                            contentHandler);
       }
-      catch (final SAXNotSupportedException e) {
-        // No lexical reporting available
-      }
-      catch (final SAXNotRecognizedException e) {
+      catch (final SAXNotSupportedException | SAXNotRecognizedException e) {
         // No lexical reporting available
       }
     }
@@ -601,8 +497,8 @@ public final class SAXBuilder implements SAXEngine {
     }
 
     // Set any user-specified features on the parser (always includes entity expansion true/false).
-    for (final Map.Entry<String, Boolean> me : features.entrySet()) {
-      internalSetFeature(parser, me.getKey(), me.getValue().booleanValue(), me.getKey());
+    for (Map.Entry<String, Boolean> me : features.entrySet()) {
+      internalSetFeature(parser, me.getKey(), me.getValue(), me.getKey());
     }
 
     // Try setting the DeclHandler if entity expansion is off
@@ -610,10 +506,7 @@ public final class SAXBuilder implements SAXEngine {
       try {
         parser.setProperty(SAX_PROPERTY_DECLARATION_HANDLER, contentHandler);
       }
-      catch (final SAXNotSupportedException e) {
-        // No lexical reporting available
-      }
-      catch (final SAXNotRecognizedException e) {
+      catch (final SAXNotSupportedException | SAXNotRecognizedException e) {
         // No lexical reporting available
       }
     }
@@ -775,15 +668,7 @@ public final class SAXBuilder implements SAXEngine {
   @Override
   public Document build(final Reader characterStream, final String systemId)
     throws JDOMException, IOException {
-
-    try {
-      return getEngine().build(characterStream, systemId);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+    return getEngine().build(characterStream, systemId);
   }
 
   /**

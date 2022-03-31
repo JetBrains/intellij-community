@@ -135,16 +135,7 @@ public abstract class AbstractDOMAdapter implements DOMAdapter {
         "setInternalSubset", String.class);
       setInternalSubset.invoke(dt, s);
     }
-    catch (InvocationTargetException e) {
-      // ignore
-    }
-    catch (NoSuchMethodException e) {
-      // ignore
-    }
-    catch (SecurityException e) {
-      // ignore
-    }
-    catch (IllegalAccessException e) {
+    catch (InvocationTargetException | IllegalAccessException | SecurityException | NoSuchMethodException e) {
       // ignore
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.util.JdomKt;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -90,7 +89,7 @@ public class InspectionProfileConvertor {
     try {
       Element root = JDOMUtil.load(files[0].toPath());
       if (root.getAttributeValue(VERSION_ATT) == null){
-        JdomKt.write(root, directoryPath.resolve(OLD_DEFAUL_PROFILE + XML_EXTENSION));
+        JDOMUtil.write(root, directoryPath.resolve(OLD_DEFAUL_PROFILE + XML_EXTENSION));
         FileUtil.delete(files[0]);
       }
     }

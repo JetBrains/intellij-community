@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.SmartList
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.isEmpty
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
@@ -144,7 +144,7 @@ fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIpr
 }
 
 fun wrapState(element: Element, project: Project): Element {
-  if (element.isEmpty() || !project.isDirectoryBased) {
+  if (JDOMUtil.isEmpty(element) || !project.isDirectoryBased) {
     element.name = "state"
     return element
   }

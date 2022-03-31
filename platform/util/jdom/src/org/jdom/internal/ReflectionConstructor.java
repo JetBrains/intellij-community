@@ -92,10 +92,7 @@ public final class ReflectionConstructor {
     catch (NoSuchMethodException e) {
       throw new IllegalArgumentException("Unable to locate class no-arg constructor '" + classname + "'.", e);
     }
-    catch (SecurityException e) {
-      throw new IllegalStateException("Unable to access class constructor '" + classname + "'.", e);
-    }
-    catch (IllegalAccessException e) {
+    catch (SecurityException | IllegalAccessException e) {
       throw new IllegalStateException("Unable to access class constructor '" + classname + "'.", e);
     }
     catch (InstantiationException e) {

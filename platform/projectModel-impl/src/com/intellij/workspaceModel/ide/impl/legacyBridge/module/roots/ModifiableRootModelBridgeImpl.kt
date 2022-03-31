@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
@@ -17,8 +17,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -253,7 +251,7 @@ internal class ModifiableRootModelBridgeImpl(
       else {
         val libraryName = name
         if (libraryName.isNullOrEmpty()) {
-          error("Library name is null or empty: ${this}")
+          error("Library name is null or empty: $this")
         }
 
         LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(table.tableLevel))
@@ -476,24 +474,24 @@ internal class ModifiableRootModelBridgeImpl(
 
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
-          customImlDataEntity == null && !element.isEmpty() -> diff.addModuleCustomImlDataEntity(
+          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff.addModuleCustomImlDataEntity(
             module = moduleEntity,
             rootManagerTagCustomData = elementAsString,
             customModuleOptions = emptyMap(),
             source = moduleEntity.entitySource
           )
 
-          customImlDataEntity == null && element.isEmpty() -> Unit
+          customImlDataEntity == null && JDOMUtil.isEmpty(element) -> Unit
 
-          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && element.isEmpty() ->
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && JDOMUtil.isEmpty(element) ->
             diff.removeEntity(customImlDataEntity)
 
-          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && element.isEmpty() ->
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && JDOMUtil.isEmpty(element) ->
             diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlDataEntity) {
               rootManagerTagCustomData = null
             }
 
-          customImlDataEntity != null && !element.isEmpty() -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
+          customImlDataEntity != null && !JDOMUtil.isEmpty(element) -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
             customImlDataEntity) {
             rootManagerTagCustomData = elementAsString
           }
@@ -683,7 +681,7 @@ internal class ModifiableRootModelBridgeImpl(
           val module = entry.module
           if (module != null) {
             if (result == null) {
-              result = SmartList()
+              result = ArrayList()
             }
             result.add(module)
           }

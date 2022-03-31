@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.diagnostic.AttachmentFactory
@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.io.exists
-import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -32,7 +31,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.util.*
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
@@ -248,7 +247,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val elem = sourceRootElement.clone()
           elem.removeAttribute(URL_ATTRIBUTE)
           elem.removeAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE)
-          if (!elem.isEmpty()) {
+          if (!JDOMUtil.isEmpty(elem)) {
             builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem))
           }
         }
@@ -270,8 +269,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val moduleLibraryNames = mutableSetOf<String>()
     var nextUnnamedLibraryIndex = 1
     val dependencyItems = rootManagerElement.getChildrenAndDetach(ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
-      val orderEntryType = dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)
-      when (orderEntryType) {
+      when (val orderEntryType = dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
         SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
         JDK_TYPE -> ModuleDependencyItem.SdkDependency(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),
                                                        dependencyElement.getAttributeValue(JDK_TYPE_ATTRIBUTE))
@@ -323,7 +321,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       module = moduleEntity,
       source = entitySource
     )
-    if (!rootManagerElement.isEmpty()) {
+    if (!JDOMUtil.isEmpty(rootManagerElement)) {
       val customImlData = moduleEntity.customImlData
       if (customImlData == null) {
         builder.addModuleCustomImlDataEntity(
@@ -686,7 +684,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
     return ModuleManagerBridgeImpl.getPathsToModuleFiles(moduleManagerTag).map {
-      Paths.get(it.path).toVirtualFileUrl(virtualFileManager) to it.group
+      Path.of(it.path).toVirtualFileUrl(virtualFileManager) to it.group
     }
   }
 

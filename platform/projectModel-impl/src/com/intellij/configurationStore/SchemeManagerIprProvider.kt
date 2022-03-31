@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
@@ -75,7 +74,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     for (child in state.getChildren(subStateTagName)) {
       // https://youtrack.jetbrains.com/issue/RIDER-10052
       // ignore empty elements
-      if (child.isEmpty()) {
+      if (JDOMUtil.isEmpty(child)) {
         continue
       }
 
