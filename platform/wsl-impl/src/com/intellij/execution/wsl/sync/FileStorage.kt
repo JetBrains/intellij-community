@@ -10,17 +10,23 @@ import com.intellij.execution.wsl.AbstractWslDistribution
  * [OtherSideFileType] is for other side.
  * [FilePathRelativeToDir] are relative to [dir]
  */
-internal abstract class FileStorage<MyFileType, OtherSideFileType>(
+abstract class FileStorage<MyFileType, OtherSideFileType>(
   protected val dir: MyFileType,
   protected val distro: AbstractWslDistribution,
   protected val onlyExtensions: Array<String>
 ) {
 
   /**
-   * File names relative to [dir] as strings
+   * Create links in `source->target` format
    */
-  abstract fun getAllFilesInDir(): Collection<FilePathRelativeToDir>
-  abstract fun getHashes(): List<WslHashRecord>
+  abstract fun createSymLinks(links: Map<FilePathRelativeToDir, FilePathRelativeToDir>)
+
+  /**
+   * List of [WslHashRecord] (file + hash) and map of `source->target` links.
+   * [skipHashCalculation] saves time by skipping hash (hence [WslHashRecord.hash] is 0).
+   * Such records can't be used for sync, but only to copy all files
+   */
+  abstract fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>>
 
   /**
    * is [dir] empty
@@ -35,4 +41,5 @@ internal abstract class FileStorage<MyFileType, OtherSideFileType>(
    */
   abstract fun tarAndCopyTo(files: Collection<FilePathRelativeToDir>, destTar: OtherSideFileType)
   abstract fun unTar(tarFile: MyFileType)
+  abstract fun removeLinks(vararg linksToRemove: FilePathRelativeToDir)
 }

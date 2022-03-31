@@ -7,9 +7,10 @@ It then reports IP and port via stdout
 EOF (close stream) written to the stdin kills process.
 
 wslhash
-Calculates hashes for all files in certain folder to implement custom rsync-like functionality. `rsync` may be missing on some WSL distros,
+Calculates hashes and for all files in certain folder to implement custom rsync-like functionality. `rsync` may be missing on some WSL distros,
 and also it may be slow: access from WSL to Windows takes a lot of time.
 This tool runs on WSL only, so it is fast. See WslSync.kt
+It also reports symbolic links
 
 To build tool use Makefile. We link it statically because WSL may lack glibc. Kernel ABI is backward compatible, so use some old Linux
 

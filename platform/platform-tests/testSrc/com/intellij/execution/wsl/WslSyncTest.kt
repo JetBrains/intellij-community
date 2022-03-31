@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl
 
-import com.intellij.execution.wsl.sync.WslSync
+import com.intellij.execution.wsl.sync.*
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createFile
@@ -21,6 +21,7 @@ import org.junit.runners.Parameterized.Parameters
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.writeText
@@ -51,6 +52,14 @@ class WslSyncTest(private val linToWin: Boolean) {
     @ClassRule
     @JvmField
     val ruleChain: RuleChain = RuleChain.outerRule(appRule).around(wslRule)
+    private fun createAndGetLinks(storage: FileStorage<*, *>,
+                                  target: FilePathRelativeToDir,
+                                  vararg sources: FilePathRelativeToDir): Map<FilePathRelativeToDir, FilePathRelativeToDir> {
+      for (source in sources) {
+        storage.createSymLinks(mapOf(Pair(source, target)))
+      }
+      return storage.getHashesAndLinks(false).second
+    }
   }
 
   @JvmField
@@ -67,6 +76,67 @@ class WslSyncTest(private val linToWin: Boolean) {
 
   private val linuxDirAsPath: Path
     get() = wslRule.wsl.getUNCRootVirtualFile(true)!!.toNioPath().resolve(linuxDirRule.dir)
+
+  @Test
+  fun testLinksReported() {
+    val sources = arrayOf("source1", "another_source").map { FilePathRelativeToDir(it) }.toTypedArray()
+    val storage: FileStorage<*, *>
+    if (linToWin) {
+      val dir = linuxDirRule.dir
+      wslRule.wsl.executeOnWsl(1000, "mkdir", "${dir}/target")
+      storage = LinuxFileStorage(dir, wslRule.wsl, emptyArray())
+    }
+    else {
+      val dir = winDirRule.newDirectoryPath()
+      val targetDir = dir.resolve("target")
+      targetDir.createDirectory()
+      storage = WindowsFileStorage(dir, wslRule.wsl, emptyArray())
+    }
+
+    val links = createAndGetLinks(storage, FilePathRelativeToDir("target"), *sources)
+    for (source in sources) {
+      Assert.assertEquals(FilePathRelativeToDir("target"), links[source])
+    }
+  }
+
+  @Test
+  fun testLinks() {
+    val sources = arrayOf("source", "source_2").map { FilePathRelativeToDir(it) }.toTypedArray()
+    val from: FileStorage<*, *>
+    val to: FileStorage<*, *>
+    val winRoot = winDirRule.newDirectoryPath()
+    val linRoot = linuxDirRule.dir
+    val win = WindowsFileStorage(winRoot, wslRule.wsl, emptyArray())
+    val lin = LinuxFileStorage(linRoot, wslRule.wsl, emptyArray())
+    if (!linToWin) {
+      winRoot.resolve("target dir").createDirectory().resolve("file.txt").createFile()
+      winRoot.resolve("dir_to_ignore").createDirectory()
+      from = win
+      to = lin
+    }
+    else {
+      wslRule.wsl.runCommand("mkdir", "$linRoot/target dir")
+      wslRule.wsl.runCommand("mkdir", "$linRoot/dir_to_ignore")
+      wslRule.wsl.runCommand("touch", "$linRoot/target dir/file.txt")
+      from = lin
+      to = win
+    }
+    for (source in sources) {
+      from.createSymLinks(mapOf(Pair(source, FilePathRelativeToDir("target dir"))))
+    }
+    to.createSymLinks(mapOf(Pair(FilePathRelativeToDir("dir_to_ignore/foo"), FilePathRelativeToDir("target dir"))))
+    WslSync.syncWslFolders(linRoot, winRoot, wslRule.wsl, linToWinCopy = linToWin)
+    val links = to.getHashesAndLinks(false).second
+    for (source in sources) {
+      Assert.assertEquals("target dir", links[source]?.asWindowsPath)
+    }
+    to.createSymLinks(mapOf(Pair(FilePathRelativeToDir("remove_me"), FilePathRelativeToDir("target dir"))))
+    WslSync.syncWslFolders(linRoot, winRoot, wslRule.wsl, linToWinCopy = linToWin)
+    Assert.assertEquals(null, to.getHashesAndLinks(false).second[FilePathRelativeToDir("remove_me")])
+    for (source in sources) {
+      Assert.assertEquals("target dir", links[source]?.asWindowsPath)
+    }
+  }
 
   /**
    * Create lowercase file on Linux and uppercase on Windows.

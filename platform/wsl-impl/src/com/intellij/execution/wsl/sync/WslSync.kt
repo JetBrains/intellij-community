@@ -50,25 +50,39 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
   init {
     if (dest.isEmpty()) { //Shortcut: no need to sync anything, just copy everything
       LOGGER.info("Destination folder is empty, will copy all files")
-      copyFilesInParallel(source.getAllFilesInDir())
+      val hashesAndLinks = source.getHashesAndLinks(true)
+      copyFilesInParallel(hashesAndLinks.first.map { it.file })
+      copyAllLinks(hashesAndLinks.second)
     }
     else {
       syncFoldersInternal()
     }
   }
 
+  private fun copyAllLinks(toCreate: Map<FilePathRelativeToDir, FilePathRelativeToDir>,
+                           current: Map<FilePathRelativeToDir, FilePathRelativeToDir> = emptyMap()) {
+    val linksToCreate = toCreate.filterNot { current[it.key] == it.value }
+    val linksToRemove = current.filterNot { toCreate[it.key] == it.value }.keys
+
+    LOGGER.info("Will create ${linksToCreate.size} links and remove ${linksToRemove.size}")
+    dest.removeLinks(*linksToRemove.toTypedArray())
+    dest.createSymLinks(linksToCreate)
+  }
+
   private fun syncFoldersInternal() {
     val sourceHashesFuture = supplyAsync({
-                                           source.getHashes()
+                                           source.getHashesAndLinks(false)
                                          }, ProcessIOExecutorService.INSTANCE)
     val destHashesFuture = supplyAsync({
-                                         dest.getHashes()
+                                         dest.getHashesAndLinks(false)
                                        }, ProcessIOExecutorService.INSTANCE)
 
-    val sourceHashes: MutableMap<String, WslHashRecord> = sourceHashesFuture.get().associateBy { it.fileLowerCase }.toMutableMap()
-    val destHashes: List<WslHashRecord> = destHashesFuture.get()
+    val sourceHashAndLinks = sourceHashesFuture.get()
+    val sourceHashes: MutableMap<FilePathRelativeToDir, WslHashRecord> = sourceHashAndLinks.first.associateBy { it.fileLowerCase }.toMutableMap()
+    val destHashAndLinks = destHashesFuture.get()
+    val destHashes: List<WslHashRecord> = destHashAndLinks.first
 
-    val destFilesToRemove = ArrayList<String>(AVG_NUM_FILES)
+    val destFilesToRemove = ArrayList<FilePathRelativeToDir>(AVG_NUM_FILES)
     for (destRecord in destHashes) {
       // Lowercase is to ignore case when comparing files since Win is case-insensitive
       val sourceHashAndName = sourceHashes[destRecord.fileLowerCase]
@@ -85,13 +99,14 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
 
     copyFilesInParallel(sourceHashes.values.map { it.file })
     dest.removeFiles(destFilesToRemove)
+    copyAllLinks(sourceHashAndLinks.second, destHashAndLinks.second)
   }
 
   /**
    * Copies [filesToCopy] from src to dst
    * It may split files to the several chunks to copy them in parallel, see [MIN_CHUNK_SIZE]
    */
-  private fun copyFilesInParallel(filesToCopy: Collection<String>) {
+  private fun copyFilesInParallel(filesToCopy: Collection<FilePathRelativeToDir>) {
     if (filesToCopy.isEmpty()) {
       LOGGER.info("Nothing to copy: all files are same")
     }
@@ -117,7 +132,7 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
     LOGGER.info("Copied")
   }
 
-  private fun copyFilesToOtherSide(files: Collection<String>) {
+  private fun copyFilesToOtherSide(files: Collection<FilePathRelativeToDir>) {
     val destTar = dest.createTempFile()
     source.tarAndCopyTo(files, destTar)
     dest.unTar(destTar)

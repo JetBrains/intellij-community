@@ -10,24 +10,25 @@ internal fun AbstractWslDistribution.createWslCommandLine(vararg commands: Strin
 /**
  * Waits for process to complete and returns stdout as String. Uses [waitProcess] under the hood
  */
-fun AbstractWslDistribution.runCommand(vararg commands: String): String {
+fun AbstractWslDistribution.runCommand(vararg commands: String,
+                                       ignoreExitCode: Boolean = false): String {
   val process = createWslCommandLine(*commands).createProcess()
   val stdout = CompletableFuture.supplyAsync {
     process.inputStream.readAllBytes()
   }
-  waitProcess(process, commands.joinToString(" "))
+  waitProcess(process, commands.joinToString(" "), ignoreExitCode)
   return stdout.get().decodeToString().trimEnd('\n')
 }
 
 /**
  * Waits for process, and in case of error (exit code != 0) throws exception with stderr
  */
-internal fun waitProcess(process: Process, tool: String) {
+internal fun waitProcess(process: Process, tool: String, ignoreExitCode: Boolean = false) {
   val stderr = CompletableFuture.supplyAsync {
     process.errorStream.readAllBytes()
   }
   val exitCode = process.waitFor()
-  if (exitCode != 0) {
+  if (exitCode != 0 && !ignoreExitCode) {
     throw Exception("Can't execute $tool: $exitCode. ${stderr.get().decodeToString()}")
   }
 }
