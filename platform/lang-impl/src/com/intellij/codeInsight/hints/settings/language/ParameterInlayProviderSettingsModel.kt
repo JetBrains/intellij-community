@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
@@ -66,16 +67,19 @@ class ParameterInlayProviderSettingsModel(
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
+                                               val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
                                                backup.reset()
                                                try {
                                                  apply()
                                                  val case = CASE_KEY.get(editor)
                                                  ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, case != null && !case.value)
                                                  provider.supportedOptions.forEach { it.set(true) }
+                                                 setShowParameterHintsForLanguage(true, language)
                                                  pass.collectInformation(ProgressIndicatorBase())
                                                }
                                                finally {
                                                  backup.apply()
+                                                 setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
     return Runnable {
