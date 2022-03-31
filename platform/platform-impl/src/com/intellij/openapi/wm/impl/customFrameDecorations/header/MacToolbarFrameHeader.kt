@@ -86,4 +86,9 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
     border = if (isFullscreen) JBUI.Borders.empty() else JBUI.Borders.emptyLeft(GAP_FOR_BUTTONS)
   }
+
+  override fun updateActive() {
+    super.updateActive()
+    myToolbar?.background = getHeaderBackground(myActive)
+  }
 }

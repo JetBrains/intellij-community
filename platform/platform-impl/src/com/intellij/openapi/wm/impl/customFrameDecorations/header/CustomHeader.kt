@@ -101,6 +101,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   init {
     isOpaque = true
+    background = getHeaderBackground()
 
     fun onClose() {
       Disposer.dispose(this)
@@ -131,11 +132,6 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     }
 
     setCustomFrameTopBorder()
-  }
-
-  override fun getBackground(): Color {
-    val active = SwingUtilities.getWindowAncestor(this)?.isActive ?: true
-    return getHeaderBackground(active)
   }
 
   open protected fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)

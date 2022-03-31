@@ -37,12 +37,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val disposable = Disposer.newDisposable()
 
   init {
+    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-  }
-
-  override fun getBackground(): Color {
-    val active = SwingUtilities.getWindowAncestor(this)?.isActive ?: true
-    return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
