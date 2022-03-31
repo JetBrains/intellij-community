@@ -38,6 +38,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -206,6 +207,11 @@ public class VcsUtil {
   @NotNull
   public static FilePath getFilePath(@NotNull File file) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+  }
+
+  @NotNull
+  public static FilePath getFilePath(@NotNull Path path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull

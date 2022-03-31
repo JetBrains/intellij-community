@@ -235,7 +235,7 @@ public class MavenModuleBuilderHelper {
         if (artifactId != null) {
           File sourceDir = new File(workingDir, artifactId);
           File targetDir = new File(pom.getParent().getPath());
-          vcsFileAdder.markFileForAdding(targetDir); // VFS is refreshed below
+          vcsFileAdder.markFileForAdding(targetDir, true); // VFS is refreshed below
           FileUtil.copyDir(sourceDir, targetDir);
         }
         FileUtil.delete(workingDir);
