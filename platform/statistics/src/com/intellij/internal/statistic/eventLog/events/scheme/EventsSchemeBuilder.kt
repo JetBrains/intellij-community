@@ -77,18 +77,16 @@ object EventsSchemeBuilder {
     return fieldsDescriptors
   }
 
-  @JvmStatic
-  fun buildEventsScheme(): List<GroupDescriptor> = buildEventsScheme(null)
-
   /**
    * @param pluginId id of the plugin, only groups registered in that plugin will be used to build scheme.
    * If null, all registered groups will be used.
    */
   @JvmStatic
-  fun buildEventsScheme(pluginId: String?): List<GroupDescriptor> {
+  @JvmOverloads
+  fun buildEventsScheme(recorder: String, pluginId: String? = null): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
     val counterCollectors = FUCounterUsageLogger.instantiateCounterCollectors(pluginId)
-    result.addAll(collectGroupsFromExtensions("counter", counterCollectors))
+    result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
     val stateCollectors = ArrayList<FeatureUsagesCollector>()
     ApplicationUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
@@ -101,18 +99,20 @@ object EventsSchemeBuilder {
         stateCollectors.add(collector)
       }
     }
-    result.addAll(collectGroupsFromExtensions("state", stateCollectors))
+    result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
     result.sortBy(GroupDescriptor::id)
     return result
   }
 
   fun collectGroupsFromExtensions(groupType: String,
-                                  collectors: Collection<FeatureUsagesCollector>): MutableCollection<GroupDescriptor> {
+                                  collectors: Collection<FeatureUsagesCollector>,
+                                  recorder: String): MutableCollection<GroupDescriptor> {
     val result = HashMap<String, GroupDescriptor>()
     for (collector in collectors) {
       val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
       validateGroupId(collector)
       val group = collector.group ?: continue
+      if (group.recorder != recorder) continue
       val existingGroup = result[group.id]
       if (existingGroup != null && group.version != existingGroup.version) {
         throw IllegalStateException("If group is reused in multiple collectors classes (e.g Project and Application collector), " +

@@ -65,7 +65,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     val topToolbarActions = DefaultActionGroup()
     topToolbarActions.add(RecordStateStatisticsEventLogAction(recorderId, false))
     topToolbarActions.add(ShowChangedStateEventsAction(recorderId))
-    topToolbarActions.add(com.intellij.internal.statistic.devkit.actions.OpenEventLogFileAction(recorderId))
+    topToolbarActions.add(OpenEventLogFileAction(recorderId))
     topToolbarActions.addSeparator(StatisticsBundle.message("stats.events.scheme"))
     topToolbarActions.add(ConfigureEventsSchemeFileAction(recorderId))
     topToolbarActions.add(UpdateEventsSchemeAction(recorderId))
@@ -74,9 +74,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     topToolbarActions.add(AddGroupToTestSchemeAction(recorderId))
     topToolbarActions.add(CleanupEventsTestSchemeAction(recorderId))
     topToolbarActions.add(EditEventsTestSchemeAction(recorderId))
-    if (recorderId == "FUS") {
-      topToolbarActions.add(GenerateEventsScheme())
-    }
+    topToolbarActions.add(GenerateEventsScheme(recorderId))
     val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
     toolbar.setShowSeparatorTitles(true)
     toolbar.targetComponent = this

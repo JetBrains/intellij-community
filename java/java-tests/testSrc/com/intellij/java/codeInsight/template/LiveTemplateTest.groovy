@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -1287,7 +1287,7 @@ class Foo {
   }
 
   void "test log livetemplate started event"() {
-    def events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents {
+    def events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(testRootDisposable) {
       configureFromFileText("empty.java", "")
       TemplateManager manager = TemplateManager.getInstance(getProject())
       Template template = manager.createTemplate("empty", "user", '$VAR$')

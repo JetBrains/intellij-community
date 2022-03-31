@@ -41,13 +41,13 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (!checkLogRecordingEnabled(project, DEFAULT_RECORDER)) return
+    if (!checkLogRecordingEnabled(project, recorderId)) return
 
     val message = StatisticsBundle.message("stats.collecting.feature.usages.in.event.log")
     ProgressManager.getInstance().run(object : Backgroundable(project, message, false) {
       override fun run(indicator: ProgressIndicator) {
         rollOver()
-        val state = FusStatesRecorder.recordStateAndWait(project, indicator)
+        val state = FusStatesRecorder.recordStateAndWait(project, indicator, recorderId)
         if (state == null) {
           StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
         }
@@ -62,7 +62,8 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     val logFile = getConfig().getActiveLogFile()
     val virtualFile = if (logFile != null) LocalFileSystem.getInstance().findFileByIoFile(logFile.file) else null
     ApplicationManager.getApplication().invokeLater {
-      val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events", NotificationType.INFORMATION)
+      val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events",
+                                      NotificationType.INFORMATION)
       if (virtualFile != null) {
         notification.addAction(NotificationAction.createSimple(
           StatisticsBundle.message("stats.open.log.notification.action"),
@@ -74,7 +75,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val isTestMode = recorderId == DEFAULT_RECORDER && StatisticsRecorderUtil.isTestModeEnabled(DEFAULT_RECORDER)
+    val isTestMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
     e.presentation.isEnabled = isTestMode && !FusStatesRecorder.isRecordingInProgress()
   }
 

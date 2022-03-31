@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.IdeActivityDefinition
@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.*
  * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
  * - Prefer shorter group names; avoid common prefixes (such as "statistics.")
  */
-class EventLogGroup(val id: String, val version: Int) {
+class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, val recorder: String = "FUS") {
   private val registeredEventIds = mutableSetOf<String>()
   private val registeredEvents = mutableListOf<BaseEventId>()
 

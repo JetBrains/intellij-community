@@ -2,13 +2,12 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 
-abstract class BaseEventId(val eventId: String) {
+abstract class BaseEventId @JvmOverloads constructor(val eventId: String, val recorder: String = "FUS") {
+  internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
 
   abstract fun getFields(): List<EventField<*>>
 }
@@ -16,14 +15,14 @@ abstract class BaseEventId(val eventId: String) {
 class EventId(
   private val group: EventLogGroup,
   eventId: String,
-) : BaseEventId(eventId) {
+) : BaseEventId(eventId, group.recorder) {
 
   fun log() {
-    FeatureUsageLogger.log(group, eventId)
+    getLogger().logAsync(group, eventId, false)
   }
 
   fun log(project: Project?) {
-    FeatureUsageLogger.log(group, eventId, FeatureUsageData().addProject(project).build())
+    getLogger().logAsync(group, eventId, FeatureUsageData().addProject(project).build(), false)
   }
 
   fun metric(): MetricEvent {
@@ -37,14 +36,14 @@ class EventId1<in T>(
   private val group: EventLogGroup,
   eventId: String,
   private val field1: EventField<T>,
-) : BaseEventId(eventId) {
+) : BaseEventId(eventId, group.recorder) {
 
   fun log(value1: T) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(value1).build())
+    getLogger().logAsync(group, eventId, buildUsageData(value1).build(), false)
   }
 
   fun log(project: Project?, value1: T) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(value1).addProject(project).build())
+    getLogger().logAsync(group, eventId, buildUsageData(value1).addProject(project).build(), false)
   }
 
   fun metric(value1: T): MetricEvent {
@@ -65,14 +64,14 @@ class EventId2<in T1, in T2>(
   eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
-) : BaseEventId(eventId) {
+) : BaseEventId(eventId, group.recorder) {
 
   fun log(value1: T1, value2: T2) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2).build())
+    getLogger().logAsync(group, eventId, buildUsageData(value1, value2).build(), false)
   }
 
   fun log(project: Project?, value1: T1, value2: T2) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2).addProject(project).build())
+    getLogger().logAsync(group, eventId, buildUsageData(value1, value2).addProject(project).build(), false)
   }
 
   fun metric(value1: T1, value2: T2): MetricEvent {
@@ -95,14 +94,14 @@ class EventId3<in T1, in T2, in T3>(
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
   private val field3: EventField<T3>,
-) : BaseEventId(eventId) {
+) : BaseEventId(eventId, group.recorder) {
 
   fun log(value1: T1, value2: T2, value3: T3) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2, value3).build())
+    getLogger().logAsync(group, eventId, buildUsageData(value1, value2, value3).build(), false)
   }
 
   fun log(project: Project?, value1: T1, value2: T2, value3: T3) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2, value3).addProject(project).build())
+    getLogger().logAsync(group, eventId, buildUsageData(value1, value2, value3).addProject(project).build(), false)
   }
 
   fun metric(value1: T1, value2: T2, value3: T3): MetricEvent {
@@ -124,7 +123,7 @@ class VarargEventId internal constructor(
   private val group: EventLogGroup,
   eventId: String,
   vararg fields: EventField<*>,
-) : BaseEventId(eventId) {
+) : BaseEventId(eventId, group.recorder) {
 
   private val fields = fields.toMutableList()
 
@@ -133,7 +132,7 @@ class VarargEventId internal constructor(
   }
 
   fun log(pairs: List<EventPair<*>>) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(pairs).build())
+    getLogger().logAsync(group, eventId, buildUsageData(pairs).build(), false)
   }
 
   fun log(project: Project?, vararg pairs: EventPair<*>) {
@@ -141,7 +140,7 @@ class VarargEventId internal constructor(
   }
 
   fun log(project: Project?, pairs: List<EventPair<*>>) {
-    FeatureUsageLogger.log(group, eventId, buildUsageData(pairs).addProject(project).build())
+    getLogger().logAsync(group, eventId, buildUsageData(pairs).addProject(project).build(), false)
   }
 
   fun metric(vararg pairs: EventPair<*>): MetricEvent {

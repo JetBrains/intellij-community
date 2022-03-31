@@ -32,7 +32,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
     runBackgroundableTask(message, project, false) { indicator ->
       FeatureUsageLogger.rollOver()
       val oldState = FusStatesRecorder.getCurrentState()
-      val newState = FusStatesRecorder.recordStateAndWait(project, indicator)
+      val newState = FusStatesRecorder.recordStateAndWait(project, indicator, recorderId)
       if (newState == null) {
         StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
       }
@@ -60,7 +60,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
 
   override fun update(event: AnActionEvent) {
     super.update(event)
-    event.presentation.isEnabled = recorderId == StatisticsDevKitUtil.DEFAULT_RECORDER && FusStatesRecorder.isComparisonAvailable()
+    event.presentation.isEnabled = FusStatesRecorder.isComparisonAvailable()
   }
 
   companion object {

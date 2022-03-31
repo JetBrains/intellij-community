@@ -32,7 +32,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
-    val groups = EventsSchemeBuilder.buildEventsScheme(pluginId)
+    val groups = EventsSchemeBuilder.buildEventsScheme("FUS", pluginId)
     val errors = EventSchemeValidator.validateEventScheme(groups)
     if (errors.isNotEmpty()) {
       throw IllegalStateException(errors.joinToString("\n"))

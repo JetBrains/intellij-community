@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.FilePredictionSessionManager
@@ -125,7 +126,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     setCustomCandidateProviderModel(testRootDisposable, FilePredictionReferenceProvider(), FilePredictionNeighborFilesProvider())
     val predictor = predictorProvider.invoke(testRootDisposable)
-    val events = collectLogEvents {
+    val events = collectLogEvents(testRootDisposable) {
       ApplicationManager.getApplication().executeOnPooledThread{
         predictor.onSessionStarted(myFixture.project, file!!)
         predictor.onSessionStarted(myFixture.project, nextFile!!)

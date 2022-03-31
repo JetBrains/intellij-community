@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.metadata
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -71,7 +71,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
-    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)), "FUS")
     assertSize(1, groups)
     val group = groups.first()
     assertNotNull(group)
@@ -82,7 +82,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<FieldDescriptor>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
-    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)), "FUS")
     assertSize(1, groups)
     val group = groups.first()
     assertNotNull(group)
