@@ -60,6 +60,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.job
 import kotlinx.serialization.json.Json
 import kotlin.math.max
 import kotlin.time.Duration
@@ -200,7 +201,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    private val pkgsThreadCount
+    private inline val pkgsThreadCount
         get() = max(1, Runtime.getRuntime().availableProcessors() / 4)
 
     private val installedDependenciesExecutor =
@@ -218,7 +219,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                 installed.parallelUpdatedKeys(changedModules) { it.installedDependencies(cacheDirectory, json) }
             }
             logTrace("installedPackagesStep1LoadingFlow") {
-                "Took ${time} to process diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
+                "Took $time to process diffs for ${changedModules.size} module" + if (changedModules.size > 1) "s" else ""
             }
             result
         }
@@ -228,7 +229,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = emptyMap(),
             retryChannel = retryFromErrorChannel
         )
-        .flowOn(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
+        .flowOn(installedDependenciesExecutor)
         .stateIn(this, SharingStarted.Eagerly, emptyMap())
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
@@ -246,7 +247,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = emptyList(),
             retryChannel = retryFromErrorChannel
         )
-        .flowOn(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
+        .flowOn(installedDependenciesExecutor)
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
     val packageUpgradesStateFlow = combine(
@@ -296,6 +297,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                     )
                 }.launchIn(this)
         }
+        coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
