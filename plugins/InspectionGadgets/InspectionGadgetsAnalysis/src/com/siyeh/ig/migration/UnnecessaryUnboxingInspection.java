@@ -61,7 +61,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("unnecessary.unboxing.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.unboxing.problem.descriptor", infos[0]);
   }
 
   @Override
@@ -89,11 +89,11 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression methodCall)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement referenceNameElement, @NotNull ModPsiUpdater updater) {
+      if (!(referenceNameElement instanceof PsiMethodCallExpression))  {
         return;
       }
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)referenceNameElement;
       final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiExpression strippedQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
@@ -101,9 +101,10 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      if (strippedQualifier instanceof PsiReferenceExpression referenceExpression) {
-        final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiField field) {
+      if (strippedQualifier instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)strippedQualifier;
+        final PsiElement element = referenceExpression.resolve();
+        if (element instanceof PsiField field) {
           final PsiClass containingClass = field.getContainingClass();
           if (containingClass == null) {
             return;
@@ -150,7 +151,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (qualifier == null || isUnboxingNecessary(expression, qualifier)) {
         return;
       }
-      registerMethodCallError(expression);
+      int start = methodExpression.getStartOffsetInParent() + qualifier.getStartOffsetInParent() + qualifier.getTextLength();
+      int length = expression.getTextLength() - start;
+      registerErrorAtOffset(expression, start, length, qualifier.getText());
     }
 
     private boolean isUnboxingNecessary(@NotNull PsiExpression expression, @NotNull PsiExpression unboxedExpression) {

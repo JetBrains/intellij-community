@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,11 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
+    if (infos.length == 0) {
+      return null;
+    }
     return InspectionGadgetsBundle.message(
-      "extends.object.problem.descriptor");
+      "extends.object.problem.descriptor", infos[0]);
   }
 
   @Override
@@ -62,11 +65,7 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement extendClassIdentifier, @NotNull ModPsiUpdater updater) {
-      final PsiClass element = (PsiClass)extendClassIdentifier.getParent();
-      if (element == null) {
-        return;
-      }
-      final PsiReferenceList extendsList = element.getExtendsList();
+      final PsiReferenceList extendsList = (PsiReferenceList)extendClassIdentifier.getParent();
       if (extendsList == null) {
         return;
       }
@@ -96,7 +95,7 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
       final PsiClassType[] types = aClass.getExtendsListTypes();
       for (final PsiClassType type : types) {
         if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          registerClassError(aClass);
+          registerError(type.getPsiContext(), aClass.getName());
         }
       }
     }

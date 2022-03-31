@@ -3,7 +3,7 @@ package com.siyeh.igtest.controlflow.duplicate_condition;
 public class DuplicateCondition {
 
   void x(boolean b) {
-    if (<warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> ) {
+    if (b || <warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> ) {
 
     } else if (<warning descr="Duplicate condition 'b'">b</warning>) {
 
@@ -11,7 +11,7 @@ public class DuplicateCondition {
   }
 
   void x2(boolean b, boolean c) {
-    if(<warning descr="Duplicate condition 'b'">b</warning> || c) {
+    if(b || c) {
       System.out.println("ok");
       return;
     }
@@ -25,7 +25,7 @@ public class DuplicateCondition {
   }
 
   public void test(int x, int y) {
-    if(<warning descr="Duplicate condition 'x < y'">x < y</warning>) {
+    if(x < y) {
       System.out.println("first");
       return;
     }
@@ -33,7 +33,7 @@ public class DuplicateCondition {
       System.out.println("second");
       return;
     }
-    if (<warning descr="Duplicate condition 'x != y'">x != y</warning>) {
+    if (x != y) {
       return;
     }
     if ((<warning descr="Duplicate condition '(y) != x'">(y) != x</warning>)) {
@@ -43,7 +43,7 @@ public class DuplicateCondition {
 
   public void foo()
   {
-    if(<warning descr="Duplicate condition 'bar()'">bar()</warning>||<warning descr="Duplicate condition 'bar()'">bar()</warning>)
+    if(bar()||<warning descr="Duplicate condition 'bar()'">bar()</warning>)
     {
       System.out.println("1");
     }else if(<warning descr="Duplicate condition 'bar()'">bar()</warning>|| true)
@@ -66,7 +66,7 @@ public class DuplicateCondition {
   }
 
   void test(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n, int o, int p) {
-    if (<warning descr="Duplicate condition '(((a + b) + (c + d)) + ((e + f) + (g + h))) + (((i + j) + (k + l)) + ((m + n) + (o + p))) > 0'">(((a + b) + (c + d)) + ((e + f) + (g + h))) + (((i + j) + (k + l)) + ((m + n) + (o + p))) > 0</warning>) {
+    if ((((a + b) + (c + d)) + ((e + f) + (g + h))) + (((i + j) + (k + l)) + ((m + n) + (o + p))) > 0) {
       System.out.println("one");
     }
     else if (<warning descr="Duplicate condition '(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0'">(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0</warning>) {

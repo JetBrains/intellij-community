@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class DuplicateConditionNoSideEffect {
       System.out.println("2");
     }
 
-    if(<warning descr="Duplicate condition 'baz()'">baz()</warning>||<warning descr="Duplicate condition 'baz()'">baz()</warning>)
+    if(baz()||<warning descr="Duplicate condition 'baz()'">baz()</warning>)
     {
       System.out.println("1");
     }else if(<warning descr="Duplicate condition 'baz()'">baz()</warning>|| true)
@@ -38,7 +38,7 @@ public class DuplicateConditionNoSideEffect {
   int x;
 
   public void interrupted() {
-    if(<warning descr="Duplicate condition 'x == 2'">x == 2</warning>) {
+    if(x == 2) {
       System.out.println(1);
       return;
     }

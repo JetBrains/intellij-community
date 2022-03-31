@@ -6,17 +6,17 @@ package com.siyeh.igtest.migration.unnecessary_superfluous_unboxing;
 public class UnnecessarySuperfluousUnboxing {
 
 
-    private void test1(Integer intValue, Long longValue,
-                       Byte shortValue, Double doubleValue,
-                       Float floatValue, Long byteValue,
-                       Boolean booleanValue, Character character) {
-        final int bareIntValue = intValue.intValue();
-        final long bareLongValue = longValue.longValue();
-        final short bareShortValue = shortValue.shortValue();
-        final double bareDoubleValue = doubleValue.doubleValue();
-        final float bareFloatValue = floatValue.floatValue();
-        final byte bareByteValue = byteValue.byteValue();
-        final boolean bareBooleanValue = booleanValue.booleanValue();
+    private void test1(Integer intObject, Long longObject,
+                       Byte shortObject, Double doubleObject,
+                       Float floatObject, Long byteObject,
+                       Boolean booleanObject, Character character) {
+        final int bareIntValue = intObject.intValue();
+        final long bareLongValue = longObject.longValue();
+        final short bareShortValue = shortObject.shortValue();
+        final double bareDoubleValue = doubleObject.doubleValue();
+        final float bareFloatValue = floatObject.floatValue();
+        final byte bareByteValue = byteObject.byteValue();
+        final boolean bareBooleanValue = booleanObject.booleanValue();
         final char bareCharValue = character.charValue();
     }
 
@@ -36,7 +36,7 @@ public class UnnecessarySuperfluousUnboxing {
     }
 
     Integer boxcutter(Integer i) {
-      return i.<warning descr="Unnecessary unboxing">intValue</warning>();
+      return i<warning descr="Unnecessary unboxing 'i'">.intValue()</warning>;
     }
 }
 

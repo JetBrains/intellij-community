@@ -643,7 +643,8 @@
                      implementationClass="com.siyeh.ig.controlflow.DefaultNotLastCaseInSwitchInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleNegation" bundle="messages.InspectionGadgetsBundle" key="double.negation.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.DoubleNegationInspection" cleanupTool="true"/>
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.controlflow.DoubleNegationInspection"
+                     cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateCondition" bundle="messages.InspectionGadgetsBundle" key="duplicate.condition.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DuplicateConditionInspection"/>
@@ -730,7 +731,8 @@
                      implementationClass="com.siyeh.ig.controlflow.PointlessIndexOfComparisonInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PointlessNullCheck" bundle="messages.InspectionGadgetsBundle" key="pointless.nullcheck.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.PointlessNullCheckInspection" cleanupTool="true"/>
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.controlflow.PointlessNullCheckInspection"
+                     cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableBooleanExpression" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.boolean.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
@@ -1063,7 +1065,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantMethodOverride" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.method.override.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.inheritance.RedundantMethodOverrideInspection"/>
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.inheritance.RedundantMethodOverrideInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodDoesntCallSuperMethod" shortName="RefusedBequest" bundle="messages.InspectionGadgetsBundle" key="refused.bequest.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.inheritance.RefusedBequestInspection"/>
@@ -1328,7 +1330,8 @@
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.UnnecessaryBoxingInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="UnnecessaryUnboxing" bundle="messages.InspectionGadgetsBundle" key="unnecessary.unboxing.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids5"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.UnnecessaryUnboxingInspection"/>
+                     enabledByDefault="true" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.siyeh.ig.migration.UnnecessaryUnboxingInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" suppressId="WhileLoopReplaceableByForEach" shortName="WhileCanBeForeach" bundle="messages.InspectionGadgetsBundle"
                      key="while.can.be.foreach.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
@@ -1908,7 +1911,8 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantStringFormatCall" bundle="messages.InspectionGadgetsBundle"
                      key="redundant.string.format.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.RedundantStringFormatCallInspection" cleanupTool="true"/>
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.performance.RedundantStringFormatCallInspection"
+                     cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SetReplaceableByEnumSet" bundle="messages.InspectionGadgetsBundle"
                      key="set.replaceable.by.enum.set.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
@@ -1958,7 +1962,8 @@
                      implementationClass="com.siyeh.ig.performance.UnnecessaryTemporaryOnConversionFromStringInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BoxingBoxedValue" bundle="messages.InspectionGadgetsBundle" key="boxing.boxed.value.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.BoxingBoxedValueInspection" cleanupTool="true"/>
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.performance.BoxingBoxedValueInspection"
+                     cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ListRemoveInLoop" bundle="messages.InspectionGadgetsBundle" key="inspection.list.remove.in.loop.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.ListRemoveInLoopInspection"/>
@@ -2253,7 +2258,8 @@
                      implementationClass="com.siyeh.ig.style.EqualsCalledOnEnumConstantInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ClassExplicitlyExtendsObject" shortName="ExtendsObject" bundle="messages.InspectionGadgetsBundle"
                      key="extends.object.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.style.ExtendsObjectInspection" cleanupTool="true"/>
+                     enabledByDefault="true" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.style.ExtendsObjectInspection"
+                     cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldMayBeFinal" bundle="messages.InspectionGadgetsBundle" key="field.may.be.final.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.FieldMayBeFinalInspection" cleanupTool="true"/>
@@ -2308,7 +2314,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="TypeParameterExplicitlyExtendsObject" shortName="TypeParameterExtendsObject"
                      bundle="messages.InspectionGadgetsBundle" key="type.parameter.extends.object.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.TypeParameterExtendsObjectInspection"/>
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.style.TypeParameterExtendsObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessarilyQualifiedInnerClassAccess" bundle="messages.InspectionGadgetsBundle"
                      key="unnecessarily.qualified.inner.class.access.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
@@ -2368,7 +2374,7 @@
                      implementationClass="com.siyeh.ig.style.UnnecessarySuperQualifierInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryThis" bundle="messages.InspectionGadgetsBundle" key="unnecessary.this.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.UnnecessaryThisInspection"/>
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.siyeh.ig.style.UnnecessaryThisInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnqualifiedFieldAccess" bundle="messages.InspectionGadgetsBundle"
                      key="unqualified.field.access.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"

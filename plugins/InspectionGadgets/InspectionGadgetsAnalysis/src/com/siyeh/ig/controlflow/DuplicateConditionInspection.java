@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,18 +158,13 @@ public class DuplicateConditionInspection extends BaseInspection {
     private void findDuplicates(List<PsiExpression> conditions) {
       final BitSet matched = new BitSet();
       for (int i = 0; i < conditions.size(); i++) {
-        if (matched.get(i)) continue;
         final PsiExpression condition = conditions.get(i);
         for (int j = i + 1; j < conditions.size(); j++) {
           if (matched.get(j)) continue;
-          final PsiExpression testCondition = conditions.get(j);
-          final boolean areEquivalent = EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(condition, testCondition);
+          final PsiExpression comparedCondition = conditions.get(j);
+          final boolean areEquivalent = EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(condition, comparedCondition);
           if (areEquivalent) {
-            registerError(testCondition);
-            if (!matched.get(i)) {
-              registerError(condition);
-            }
-            matched.set(i);
+            registerError(comparedCondition);
             matched.set(j);
           }
         }

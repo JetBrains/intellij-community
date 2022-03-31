@@ -43,8 +43,9 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
+    final String boxedValue = (String)infos[0];
     return InspectionGadgetsBundle.message(
-      "boxing.boxed.value.problem.descriptor");
+      "boxing.boxed.value.problem.descriptor", boxedValue);
   }
 
   @Override
@@ -63,11 +64,15 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiCallExpression parent = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, PsiNewExpression.class);
-      if (parent == null) {
+      if (!(element instanceof PsiCallExpression)) {
         return;
       }
-      parent.replace(element);
+      final PsiCallExpression methodOrConstructor = (PsiCallExpression)element;
+      PsiExpressionList argumentList = methodOrConstructor.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      methodOrConstructor.replace(argumentList.getExpressions()[0]);
     }
   }
 
@@ -86,6 +91,15 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
+      final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+      if (classReference == null) {
+        return;
+      }
+      final PsiElement referenceNameElement =
+        classReference.getReferenceNameElement();
+      if (referenceNameElement == null) {
+        return;
+      }
       final PsiType constructorType = expression.getType();
       if (constructorType == null) {
         return;
@@ -130,7 +144,7 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
       if (!constructorTypeText.equals(argumentTypeText)) {
         return;
       }
-      registerError(argument);
+      registerErrorAtOffset(expression, 0, argumentList.getStartOffsetInParent(), argument.getText());
     }
 
     @Override
@@ -142,6 +156,10 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
       @NonNls
       final String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
+        return;
+      }
+      PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
+      if (referenceNameElement == null) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
@@ -176,7 +194,7 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
       if (!className.equals(argumentTypeText)) {
         return;
       }
-      registerError(argument);
+      registerErrorAtOffset(expression, 0, argumentList.getStartOffsetInParent(), argument.getText());
     }
   }
 }
