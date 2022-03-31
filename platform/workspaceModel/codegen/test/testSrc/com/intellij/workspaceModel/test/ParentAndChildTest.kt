@@ -1,10 +1,7 @@
 import com.intellij.workspace.model.testing.ChildEntity
 import com.intellij.workspace.model.testing.ParentEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import org.jetbrains.deft.IntellijWsTest.modifyEntity
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 

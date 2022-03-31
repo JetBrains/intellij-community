@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.containers
 
-internal fun <B> BidirectionalLongMultiMap<B>.putAll(another: BidirectionalLongMultiMap<B>) {
+/* internal */fun <B> BidirectionalLongMultiMap<B>.putAll(another: BidirectionalLongMultiMap<B>) {
   another.keys.forEach { key -> another.getValues(key).forEach { value -> this.put(key, value) } }
 }
 
-internal fun <T> getDiff(beforeSetCopy: MutableSet<T>, after: Collection<T>): Pair<MutableSet<T>, ArrayList<T>> {
+/* internal */fun <T> getDiff(beforeSetCopy: MutableSet<T>, after: Collection<T>): Pair<MutableSet<T>, ArrayList<T>> {
   val added = ArrayList<T>()
   after.forEach {
     val removed = beforeSetCopy.remove(it)

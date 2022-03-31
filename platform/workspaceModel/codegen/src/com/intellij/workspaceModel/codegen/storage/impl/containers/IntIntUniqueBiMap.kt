@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
-class ImmutableIntIntUniqueBiMap internal constructor(
+class ImmutableIntIntUniqueBiMap /* internal */constructor(
   override val key2Value: Int2IntMap,
   override val value2Key: Int2IntMap
 ) : IntIntUniqueBiMap() {
@@ -138,7 +138,7 @@ sealed class IntIntUniqueBiMap {
   }
 
   @Suppress("PropertyName")
-  @PublishedApi
-  internal val `access$key2Value`: Int2IntMap
+  //@PublishedApi
+  /* internal */val `access$key2Value`: Int2IntMap
     get() = key2Value
 }

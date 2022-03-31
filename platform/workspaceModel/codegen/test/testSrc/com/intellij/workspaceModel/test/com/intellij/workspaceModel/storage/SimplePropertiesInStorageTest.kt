@@ -2,23 +2,17 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.SampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntity.Companion.booleanProperty
-import com.intellij.workspaceModel.storage.entities.SampleEntity.Companion.stringListProperty
-import com.intellij.workspaceModel.storage.entities.SampleEntity.Companion.stringProperty
-import com.intellij.workspaceModel.storage.entities.SecondSampleEntity.Companion.intProperty
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.IntellijWsTestIj.modifyEntity
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-internal fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
+/* internal */fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
 class SimplePropertiesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager

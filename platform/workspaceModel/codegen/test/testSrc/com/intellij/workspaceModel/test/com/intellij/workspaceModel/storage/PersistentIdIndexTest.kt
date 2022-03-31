@@ -4,8 +4,7 @@ package com.intellij.workspaceModel.storage
 import org.jetbrains.deft.IntellijWsTestIj.modifyEntity
 import com.intellij.workspaceModel.storage.entities.PersistentIdEntityImpl
 import com.intellij.workspaceModel.storage.entities.addPersistentIdEntity
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import org.jetbrains.deft.id
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

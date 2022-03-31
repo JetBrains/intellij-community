@@ -2,13 +2,11 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.SampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntity.Companion.stringProperty
 import com.intellij.workspaceModel.storage.entities.SampleEntityImpl
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
-import org.jetbrains.deft.id
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 import org.jetbrains.deft.IntellijWsTestIj.modifyEntity

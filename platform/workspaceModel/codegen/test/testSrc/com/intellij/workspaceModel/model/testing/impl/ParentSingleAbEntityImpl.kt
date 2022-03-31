@@ -25,7 +25,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase() {
     
     companion object {
-        internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java, ChildSingleAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
+        /* internal */val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java, ChildSingleAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
     }
     
     override val factory: ObjType<*, *>

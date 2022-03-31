@@ -11,6 +11,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import MySource
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 
 class StorageIndexiesTest {
     @Test
@@ -95,7 +96,7 @@ class StorageIndexiesTest {
     }
 }
 
-internal class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource{
+/* internal */class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource{
     override val virtualFileUrl: VirtualFileUrl
         get() = vfu
 }

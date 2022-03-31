@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import kotlin.reflect.KClass
 
-internal object ClassConversion {
+/* internal */object ClassConversion {
 
   private val modifiableToEntityCache = HashMap<KClass<*>, KClass<*>>()
   private val entityToEntityDataCache = HashMap<KClass<*>, KClass<*>>()
@@ -52,12 +52,12 @@ internal object ClassConversion {
 
 // TODO: 28.05.2021 Make this value class since kt 1.5
 // Just a wrapper for entity id in THIS store
-internal data class ThisEntityId(val id: EntityId)
+/* internal */data class ThisEntityId(val id: EntityId)
 
 // Just a wrapper for entity id in some other store
-internal data class NotThisEntityId(val id: EntityId)
+/* internal */data class NotThisEntityId(val id: EntityId)
 
-internal fun EntityId.asThis(): ThisEntityId = ThisEntityId(this)
-internal fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
+/* internal */fun EntityId.asThis(): ThisEntityId = ThisEntityId(this)
+/* internal */fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
 
-internal fun currentStackTrace(depth: Int): String = Throwable().stackTrace.take(depth).joinToString(separator = "\n") { it.toString() }
+/* internal */fun currentStackTrace(depth: Int): String = Throwable().stackTrace.take(depth).joinToString(separator = "\n") { it.toString() }

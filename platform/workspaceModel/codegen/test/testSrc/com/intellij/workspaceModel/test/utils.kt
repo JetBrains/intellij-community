@@ -3,10 +3,10 @@ import com.intellij.workspaceModel.storage.EntitySource
 import java.io.File
 import kotlin.test.assertEquals
 
-internal object MySource : EntitySource
-internal object AnotherSource : EntitySource
+/* internal */object MySource : EntitySource
+/* internal */object AnotherSource : EntitySource
 
-internal fun generateEntities() {
+/* internal */fun generateEntities() {
     val deftRoot = File("").absoluteFile
 
     val dir = deftRoot.resolve("plugins/workspaceModel/model")
@@ -15,7 +15,7 @@ internal fun generateEntities() {
     CodeWriter().generate(dir, "ext", "ext/impl", "org.jetbrains.deft.IntellijWsTestIjExt")
 }
 
-internal fun assertEntities() {
+/* internal */fun assertEntities() {
     val deftRoot = File("").absoluteFile
 
     val dir = deftRoot.resolve("plugins/workspaceModel/model")

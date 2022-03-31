@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
+import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
@@ -11,13 +13,13 @@ import com.intellij.workspaceModel.storage.impl.indices.PersistentIdInternalInde
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 
-internal open class StorageIndexes(
+/* internal */open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
-  internal open val softLinks: MultimapStorageIndex,
-  internal open val virtualFileIndex: VirtualFileIndex,
-  internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
-  internal open val persistentIdIndex: PersistentIdInternalIndex,
-  internal open val externalMappings: Map<String, ExternalEntityMappingImpl<*>>
+  /* internal */open val softLinks: MultimapStorageIndex,
+  /* internal */open val virtualFileIndex: VirtualFileIndex,
+  /* internal */open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
+  /* internal */open val persistentIdIndex: PersistentIdInternalIndex,
+  /* internal */open val externalMappings: Map<String, ExternalEntityMappingImpl<*>>
 ) {
 
   constructor(softLinks: MultimapStorageIndex,
@@ -144,7 +146,7 @@ internal open class StorageIndexes(
   }
 }
 
-internal class MutableStorageIndexes(
+/* internal */class MutableStorageIndexes(
   override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
@@ -241,10 +243,10 @@ internal class MutableStorageIndexes(
   }
 
   fun <T : WorkspaceEntity> updatePersistentIdIndexes(builder: WorkspaceEntityStorageBuilderImpl,
-                                                               updatedEntity: WorkspaceEntity,
-                                                               beforePersistentId: PersistentEntityId<*>?,
-                                                               copiedData: WorkspaceEntityData<T>,
-                                                               modifiableEntity: ModifiableWorkspaceEntityBase<*>? = null) {
+                                                      updatedEntity: WorkspaceEntity,
+                                                      beforePersistentId: PersistentEntityId<*>?,
+                                                      copiedData: WorkspaceEntityData<T>,
+                                                      modifiableEntity: ModifiableWorkspaceEntityBase<*>? = null) {
     val entityId = (updatedEntity as WorkspaceEntityBase).id
     if (updatedEntity is WorkspaceEntityWithPersistentId) {
       val newPersistentId = updatedEntity.persistentId

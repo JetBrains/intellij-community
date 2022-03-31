@@ -2,12 +2,10 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.SampleEntity.Companion.stringProperty
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.jetbrains.deft.IntellijWsTestIj.modifyEntity
 import org.junit.jupiter.api.Test

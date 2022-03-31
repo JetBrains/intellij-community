@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 
-internal class VirtualFileNameStore {
+/* internal */class VirtualFileNameStore {
   private val generator = IntIdGenerator()
   private val name2IdStore = HashMap<String, IdPerCount>()
   private val id2NameStore = Int2ObjectOpenHashMap<String>()
@@ -63,7 +63,7 @@ private data class IdPerCount(val id: Int, var usageCount: Long) {
   override fun hashCode() = 31 * id.hashCode()
 }
 
-internal class IntIdGenerator {
+/* internal */class IntIdGenerator {
   private var generator: Int = 0
   fun generateId() = ++generator
 

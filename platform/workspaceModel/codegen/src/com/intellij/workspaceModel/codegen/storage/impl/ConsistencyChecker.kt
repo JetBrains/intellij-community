@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.ints.IntSet
 
-internal fun AbstractEntityStorage.assertConsistency() {
+/* internal */fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace("Checking consistency of $this")
 
   entitiesByType.assertConsistency(this)

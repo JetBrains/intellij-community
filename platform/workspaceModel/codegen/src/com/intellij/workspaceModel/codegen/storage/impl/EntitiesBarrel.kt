@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
-internal open class ImmutableEntitiesBarrel internal constructor(
+/* internal */open class ImmutableEntitiesBarrel /* internal */constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
   constructor(): this(emptyList())
@@ -15,7 +16,7 @@ internal open class ImmutableEntitiesBarrel internal constructor(
   }
 }
 
-internal class MutableEntitiesBarrel private constructor(
+/* internal */class MutableEntitiesBarrel private constructor(
   override var entityFamilies: MutableList<EntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
   fun remove(id: Int, clazz: Int) {
@@ -91,7 +92,7 @@ internal class MutableEntitiesBarrel private constructor(
     }
   }
 
-  internal fun fillEmptyFamilies(unmodifiableEntityId: Int) {
+  /* internal */fun fillEmptyFamilies(unmodifiableEntityId: Int) {
     while (entityFamilies.size <= unmodifiableEntityId) entityFamilies.add(null)
   }
 
@@ -101,8 +102,8 @@ internal class MutableEntitiesBarrel private constructor(
   }
 }
 
-internal sealed class EntitiesBarrel {
-  internal abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
+/* internal */sealed class EntitiesBarrel {
+  /* internal */abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
 
   open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entityFamilies.getOrNull(clazz)
 

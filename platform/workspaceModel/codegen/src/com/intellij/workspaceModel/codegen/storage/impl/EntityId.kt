@@ -3,12 +3,12 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
-internal fun createEntityId(arrayId: Int, clazz: Int): EntityId {
+/* internal */fun createEntityId(arrayId: Int, clazz: Int): EntityId {
   return createPackedEntityId(arrayId, clazz)
 }
 
 /*
-internal data class EntityId(val arrayId: Int, val clazz: Int) {
+/* internal */data class EntityId(val arrayId: Int, val clazz: Int) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
@@ -21,7 +21,7 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
 
 private fun createPackedEntityId(arrayId: Int, clazz: Int) = arrayId.toLong() shl 32 or (clazz.toLong() and 0xffffffffL)
 
-internal typealias EntityId = Long
+/* internal */typealias EntityId = Long
 
 val EntityId.arrayId: Int
   get() = (this shr 32).toInt()

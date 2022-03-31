@@ -85,7 +85,7 @@ class ConnectionId private constructor(
 /**
  * [oneToManyContainer]: [ImmutableNonNegativeIntIntBiMap] - key - child, value - parent
  */
-internal class RefsTable internal constructor(
+/* internal */class RefsTable /* internal */constructor(
   override val oneToManyContainer: Map<ConnectionId, ImmutableNonNegativeIntIntBiMap>,
   override val oneToOneContainer: Map<ConnectionId, ImmutableIntIntUniqueBiMap>,
   override val oneToAbstractManyContainer: Map<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>,
@@ -94,7 +94,7 @@ internal class RefsTable internal constructor(
   constructor() : this(HashMap(), HashMap(), HashMap(), HashMap())
 }
 
-internal class MutableRefsTable(
+/* internal */class MutableRefsTable(
   override val oneToManyContainer: MutableMap<ConnectionId, NonNegativeIntIntBiMap>,
   override val oneToOneContainer: MutableMap<ConnectionId, IntIntUniqueBiMap>,
   override val oneToAbstractManyContainer: MutableMap<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>,
@@ -218,7 +218,7 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, childrenIds: List<ChildEntityId>) {
+  /* internal */fun updateChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, childrenIds: List<ChildEntityId>) {
     when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
@@ -297,7 +297,7 @@ internal class MutableRefsTable(
     copiedMap.putForce(childId, parentId.arrayId)
   }
 
-  internal fun updateParentOfChild(connectionId: ConnectionId, childId: ChildEntityId, parentId: ParentEntityId) {
+  /* internal */fun updateParentOfChild(connectionId: ConnectionId, childId: ChildEntityId, parentId: ParentEntityId) {
     when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
@@ -388,12 +388,12 @@ internal class MutableRefsTable(
   }
 }
 
-internal sealed class AbstractRefsTable {
+/* internal */sealed class AbstractRefsTable {
 
-  internal abstract val oneToManyContainer: Map<ConnectionId, NonNegativeIntIntBiMap>
-  internal abstract val oneToOneContainer: Map<ConnectionId, IntIntUniqueBiMap>
-  internal abstract val oneToAbstractManyContainer: Map<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>
-  internal abstract val abstractOneToOneContainer: Map<ConnectionId, BiMap<ChildEntityId, ParentEntityId>>
+  /* internal */abstract val oneToManyContainer: Map<ConnectionId, NonNegativeIntIntBiMap>
+  /* internal */abstract val oneToOneContainer: Map<ConnectionId, IntIntUniqueBiMap>
+  /* internal */abstract val oneToAbstractManyContainer: Map<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>
+  /* internal */abstract val abstractOneToOneContainer: Map<ConnectionId, BiMap<ChildEntityId, ParentEntityId>>
 
   fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> findConnectionId(parentClass: Class<Parent>, childClass: Class<Child>): ConnectionId? {
     val parentClassId = parentClass.toClassId()
@@ -605,16 +605,16 @@ internal sealed class AbstractRefsTable {
 }
 
 // TODO: 25.05.2021 Make it value class
-internal data class ChildEntityId(val id: EntityId) {
+/* internal */data class ChildEntityId(val id: EntityId) {
   override fun toString(): String {
     return "ChildEntityId(id=${id.asString()})"
   }
 }
-internal data class ParentEntityId(val id: EntityId) {
+/* internal */data class ParentEntityId(val id: EntityId) {
   override fun toString(): String {
     return "ParentEntityId(id=${id.asString()})"
   }
 }
 
-internal fun EntityId.asChild(): ChildEntityId = ChildEntityId(this)
-internal fun EntityId.asParent(): ParentEntityId = ParentEntityId(this)
+/* internal */fun EntityId.asChild(): ChildEntityId = ChildEntityId(this)
+/* internal */fun EntityId.asParent(): ParentEntityId = ParentEntityId(this)

@@ -2,8 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import org.jetbrains.deft.Obj

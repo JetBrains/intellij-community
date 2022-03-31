@@ -1,7 +1,6 @@
 import com.intellij.workspace.model.testing.SampleEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.junit.jupiter.api.Test
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 
 class SampleTest {
@@ -15,7 +14,6 @@ class SampleTest {
     }
 
     @Test
-    @Ignore
     fun `check entity initialized`() {
         val builder = WorkspaceEntityStorageBuilder.create()
         var entity = SampleEntity {

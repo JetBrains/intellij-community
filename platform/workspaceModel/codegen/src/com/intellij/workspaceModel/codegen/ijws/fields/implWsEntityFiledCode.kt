@@ -45,7 +45,7 @@ val Field<*, *>.implWsEntityFieldCode: String
 private val Field<*, *>.implWsBlockingCode: String
     get() = implWsBlockCode(type, name, "")
 
-internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
+/* internal */fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
     return when (fieldType) {
         TInt -> "override var $javaName: ${fieldType.javaType} = 0"
         TBoolean -> "override var $javaName: ${fieldType.javaType} = false"
@@ -108,7 +108,7 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
     }
 }
 
-internal val Field<*, *>.implWsBlockingCodeOverride: String
+/* internal */val Field<*, *>.implWsBlockingCodeOverride: String
     get() {
         val originalField = owner.structure.refsFields.first { it.type.javaType == type.javaType }
         val connectionName = originalField.name.uppercase() + "_CONNECTION_ID"
@@ -129,7 +129,7 @@ internal val Field<*, *>.implWsBlockingCodeOverride: String
         """.trimIndent()
     }
 
-internal val MemberOrExtField<*, *>.referencedField: MemberOrExtField<*, *>
+/* internal */val MemberOrExtField<*, *>.referencedField: MemberOrExtField<*, *>
     get() {
         val ref = type.getRefType()
         val declaredReferenceFromChild =

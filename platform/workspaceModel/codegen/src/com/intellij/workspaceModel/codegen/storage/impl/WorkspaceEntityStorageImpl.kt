@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.storage.impl
+package com.intellij.workspaceModel.codegen.storage.impl
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
@@ -11,7 +13,6 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import com.intellij.openapi.diagnostic.Logger
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -19,14 +20,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
+/* internal */data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
   override fun resolve(storage: WorkspaceEntityStorage): E? {
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
 }
 
-internal class WorkspaceEntityStorageImpl constructor(
+/* internal */class WorkspaceEntityStorageImpl constructor(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes
@@ -59,7 +60,7 @@ internal class WorkspaceEntityStorageImpl constructor(
   }
 }
 
-internal class WorkspaceEntityStorageBuilderImpl(
+/* internal */class WorkspaceEntityStorageBuilderImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
   override val indexes: MutableStorageIndexes,
@@ -67,12 +68,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
   private var trackStackTrace: Boolean = false
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  internal val changeLog = WorkspaceBuilderChangeLog()
+  /* internal */val changeLog = WorkspaceBuilderChangeLog()
 
   // Temporal solution for accessing error in deft project.
-  internal var throwExceptionOnError = false
+  /* internal */var throwExceptionOnError = false
 
-  internal fun incModificationCount() {
+  /* internal */fun incModificationCount() {
     this.changeLog.modificationCount++
   }
 
@@ -474,7 +475,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  internal fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
+  /* internal */fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
     reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
   }
 
@@ -497,7 +498,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // modificationCount is not incremented
-  internal fun removeEntity(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }) {
+  /* internal */fun removeEntity(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }) {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
 
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
@@ -549,7 +550,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     threadName = null
   }
 
-  internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
+  /* internal */fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
     val entityId = pEntityData.createEntityId()
     this.changeLog.addAddEvent(entityId, pEntityData)
   }
@@ -603,7 +604,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       return newBuilder
     }
 
-    internal fun addReplaceEvent(
+    /* internal */fun addReplaceEvent(
       builder: WorkspaceEntityStorageBuilderImpl,
       entityId: EntityId,
       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
@@ -644,16 +645,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 }
 
-internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
+/* internal */sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
-  internal abstract val entitiesByType: EntitiesBarrel
-  internal abstract val refs: AbstractRefsTable
-  internal abstract val indexes: StorageIndexes
+  /* internal */abstract val entitiesByType: EntitiesBarrel
+  /* internal */abstract val refs: AbstractRefsTable
+  /* internal */abstract val indexes: StorageIndexes
 
-  internal var brokenConsistency: Boolean = false
+  /* internal */var brokenConsistency: Boolean = false
 
-  internal var storageIsAlreadyApplied = false
-  internal var applyInfo: String? = null
+  /* internal */var storageIsAlreadyApplied = false
+  /* internal */var applyInfo: String? = null
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     @Suppress("UNCHECKED_CAST")
@@ -664,9 +665,9 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     return entitiesByType[entityClass.toClassId()]?.size() ?: 0
   }
 
-  internal fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
+  /* internal */fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
 
-  internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
+  /* internal */fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
     return entitiesByType[id.clazz]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
@@ -722,7 +723,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
-  internal fun assertConsistencyInStrictMode(message: String,
+  /* internal */fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: ((EntitySource) -> Boolean)?,
                                              left: WorkspaceEntityStorage?,
                                              right: WorkspaceEntityStorage?) {

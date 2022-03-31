@@ -5,6 +5,7 @@ import MySource
 import com.intellij.workspace.model.testing.ChildEntity
 import com.intellij.workspace.model.testing.ParentEntity
 import com.intellij.workspace.model.testing.SampleEntity
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder

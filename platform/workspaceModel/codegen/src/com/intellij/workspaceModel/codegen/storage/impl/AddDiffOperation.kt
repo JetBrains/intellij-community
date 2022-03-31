@@ -4,9 +4,10 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.*
 
-internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
+/* internal */class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
 
   private val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
@@ -221,7 +222,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     replaceRestoreParents(change, newEntityId)
 
     WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
-      originalEntityData, originalParents)
+                                                      originalEntityData, originalParents)
   }
 
   private fun replaceRestoreChildren(

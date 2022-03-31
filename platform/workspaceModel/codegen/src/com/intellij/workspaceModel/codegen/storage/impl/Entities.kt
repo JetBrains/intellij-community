@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.codegen.storage.impl.EntityReferenceImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
@@ -68,7 +71,7 @@ import org.jetbrains.deft.Obj
  *   }
  *   ```
  *
- *   This is an internal representation of WorkspaceEntity. It's not passed to users.
+ *   This is an /* internal */representation of WorkspaceEntity. It's not passed to users.
  *
  *   -------------------------------------------------------------------------------------------------------------------------------
  *
@@ -92,7 +95,7 @@ import org.jetbrains.deft.Obj
 
 abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
-    internal set
+    /* internal */set
 
   var id: EntityId = 0
 
@@ -106,9 +109,9 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     return getReferences(mySnapshot, entityClass)
   }
 
-  internal fun <R : WorkspaceEntity> getReferences(
-      mySnapshot: AbstractEntityStorage,
-      entityClass: Class<R>
+  /* internal */fun <R : WorkspaceEntity> getReferences(
+    mySnapshot: AbstractEntityStorage,
+    entityClass: Class<R>
   ): Sequence<R> {
     var connectionId =
       mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)

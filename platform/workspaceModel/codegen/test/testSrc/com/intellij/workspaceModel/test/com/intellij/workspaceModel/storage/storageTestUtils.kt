@@ -2,8 +2,8 @@
 
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 
 fun WorkspaceEntityStorage.checkConsistency() {
@@ -18,15 +18,15 @@ fun WorkspaceEntityStorage.checkConsistency() {
   }
 }
 
-internal fun createEmptyBuilder(): WorkspaceEntityStorageBuilder {
+/* internal */fun createEmptyBuilder(): WorkspaceEntityStorageBuilder {
   return WorkspaceEntityStorageBuilderImpl.create()
 }
 
-internal fun createBuilderFrom(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder {
+/* internal */fun createBuilderFrom(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder {
   return WorkspaceEntityStorageBuilderImpl.from(storage)
 }
 
-internal inline fun makeBuilder(from: WorkspaceEntityStorage? = null, action: WorkspaceEntityStorageBuilder.() -> Unit): WorkspaceEntityStorageBuilder {
+/* internal */inline fun makeBuilder(from: WorkspaceEntityStorage? = null, action: WorkspaceEntityStorageBuilder.() -> Unit): WorkspaceEntityStorageBuilder {
   val builder = if (from == null) {
     createEmptyBuilder()
   }

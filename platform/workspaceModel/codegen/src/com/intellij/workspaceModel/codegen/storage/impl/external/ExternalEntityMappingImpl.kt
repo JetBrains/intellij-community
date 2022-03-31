@@ -6,9 +6,11 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import java.util.*
 
-internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: BidirectionalMap<EntityId, T>)
+/* internal */open class ExternalEntityMappingImpl<T> /* internal */constructor(/* internal */open val index: BidirectionalMap<EntityId, T>)
   : ExternalEntityMapping<T> {
   protected lateinit var entityStorage: AbstractEntityStorage
 
@@ -25,7 +27,7 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
 
   override fun size(): Int = index.size
 
-  internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
+  /* internal */fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
   }
 
@@ -34,7 +36,7 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
   }
 }
 
-internal class MutableExternalEntityMappingImpl<T> private constructor(
+/* internal */class MutableExternalEntityMappingImpl<T> private constructor(
   // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
   override var index: BidirectionalMap<EntityId, T>,
   private var indexLog: MutableList<IndexLogRecord>,
@@ -49,7 +51,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
   }
 
-  internal fun add(id: EntityId, data: T) {
+  /* internal */fun add(id: EntityId, data: T) {
     startWrite()
     index[id] = data
     indexLog.add(IndexLogRecord.Add(id, data))
@@ -89,13 +91,13 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return removed
   }
 
-  internal fun clearMapping() {
+  /* internal */fun clearMapping() {
     startWrite()
     index.clear()
     indexLog.add(IndexLogRecord.Clear)
   }
 
-  internal fun remove(id: EntityId): T? {
+  /* internal */fun remove(id: EntityId): T? {
     startWrite()
     LOG.trace("Remove $id from external index")
     val removed = index.remove(id)
@@ -183,7 +185,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 }
 
-internal object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
+/* internal */object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
   override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}

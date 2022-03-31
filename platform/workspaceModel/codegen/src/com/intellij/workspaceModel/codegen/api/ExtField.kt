@@ -12,7 +12,7 @@ class ExtField<P : Obj, V>(
     name: String,
     type: ValueType<V>
 ) : MemberOrExtField<P, V>(owner, name, type) {
-    internal lateinit var default: (parent: P) -> V
+    /* internal */lateinit var default: (parent: P) -> V
 
     fun newValue(parent: P): V = default(parent)
 

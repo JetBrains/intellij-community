@@ -6,10 +6,9 @@ import com.intellij.workspaceModel.storage.entities.SourceEntity
 import com.intellij.workspaceModel.storage.entities.SourceEntityImpl
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.createEntityId
-import org.jetbrains.deft.id
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals

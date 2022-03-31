@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 
-internal class ImmutableEntityFamily<E : WorkspaceEntity>(
+/* internal */class ImmutableEntityFamily<E : WorkspaceEntity>(
   override val entities: ArrayList<WorkspaceEntityData<E>?>,
   private val emptySlotsSize: Int
 ) : EntityFamily<E>() {
@@ -22,7 +22,7 @@ internal class ImmutableEntityFamily<E : WorkspaceEntity>(
   }
 }
 
-internal class MutableEntityFamily<E : WorkspaceEntity>(
+/* internal */class MutableEntityFamily<E : WorkspaceEntity>(
   override var entities: ArrayList<WorkspaceEntityData<E>?>,
 
   // if [freezed] is true, [entities] array MUST BE copied before modifying it.
@@ -143,7 +143,7 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
 
   override fun familyCheck() {}
 
-  internal fun isEmpty() = entities.size == amountOfGapsInEntities
+  /* internal */fun isEmpty() = entities.size == amountOfGapsInEntities
 
   /** This method should always be called before any modification */
   private fun startWrite() {
@@ -168,8 +168,8 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   }
 }
 
-internal sealed class EntityFamily<E : WorkspaceEntity> {
-  internal abstract val entities: List<WorkspaceEntityData<E>?>
+/* internal */sealed class EntityFamily<E : WorkspaceEntity> {
+  /* internal */abstract val entities: List<WorkspaceEntityData<E>?>
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
   fun exists(id: Int) = get(id) != null
@@ -200,6 +200,9 @@ internal sealed class EntityFamily<E : WorkspaceEntity> {
         entityAssertion(entity)
       }
     }
-    familyCheck()
+    `access$familyCheck`()
   }
+
+  @PublishedApi
+  internal fun `access$familyCheck`() = familyCheck()
 }

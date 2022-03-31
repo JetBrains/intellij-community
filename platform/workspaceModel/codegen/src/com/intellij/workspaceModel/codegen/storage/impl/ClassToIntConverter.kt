@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicInteger
 
-internal object ClassToIntConverter {
+/* internal */object ClassToIntConverter {
   private val class2Int = HashBiMap.create<Class<*>, Int>()
   private val idGenerator = AtomicInteger()
 
@@ -31,9 +31,9 @@ internal object ClassToIntConverter {
   }
 }
 
-internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInt(this)
+/* internal */fun Class<*>.toClassId(): Int = ClassToIntConverter.getInt(this)
 @Suppress("UNCHECKED_CAST")
-internal inline fun <reified E> Int.findEntityClass(): Class<E> = ClassToIntConverter.getClassOrDie(this) as Class<E>
+/* internal */inline fun <reified E> Int.findEntityClass(): Class<E> = ClassToIntConverter.getClassOrDie(this) as Class<E>
 @Suppress("UNCHECKED_CAST")
-internal fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getClassOrDie(this) as Class<WorkspaceEntity>
+/* internal */fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.getClassOrDie(this) as Class<WorkspaceEntity>
 

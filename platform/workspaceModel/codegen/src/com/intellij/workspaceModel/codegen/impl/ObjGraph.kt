@@ -8,7 +8,7 @@ import org.jetbrains.deft.impl.ObjNamesImpl
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
 
 class ObjGraph(var version: Int, var dataViewId: Int, names: List<ObjName>) {
-  internal var disallowLoad = false
+  /* internal */var disallowLoad = false
   val names = ObjNamesImpl(names)
 
   var owner: SnapshotView? = null
@@ -19,7 +19,7 @@ class ObjGraph(var version: Int, var dataViewId: Int, names: List<ObjName>) {
     return loaded.getOrPut(id) { load(id) as ObjImplWrapper } as T
   }
 
-  internal fun _register(obj: ObjImpl) {
+  /* internal */fun _register(obj: ObjImpl) {
     val id = obj._id
     if (id.isValid()) {
       check(id != ObjId.nothing)

@@ -10,7 +10,7 @@ import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*
 import storage.codegen.patcher.DefType
 
-internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean, simpleTypes: List<DefType>) {
+/* internal */fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean, simpleTypes: List<DefType>) {
     context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${wsFqn("PersistentEntityId")}<*>>") {
         line("val result = HashSet<PersistentEntityId<*>>()")
         operate(this@conditionalLine, simpleTypes) { line("result.add($it)") }
@@ -51,7 +51,7 @@ internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bo
     }
 }
 
-internal fun ObjType<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
+/* internal */fun ObjType<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
     return structure.allFields.noPersistentId().any { field ->
         val type = field.type
         if (field.name == "persistentId") return@any false
@@ -62,7 +62,7 @@ internal fun ObjType<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
     }
 }
 
-internal fun TBlob<*>.isPersistentId(simpleTypes: List<DefType>): Boolean {
+/* internal */fun TBlob<*>.isPersistentId(simpleTypes: List<DefType>): Boolean {
     val thisType = simpleTypes.find { it.name == javaSimpleName } ?: return false
     return thisType
         .def
@@ -70,15 +70,15 @@ internal fun TBlob<*>.isPersistentId(simpleTypes: List<DefType>): Boolean {
         .any { "PersistentEntityId" in it.classifier }
 }
 
-internal fun TBlob<*>.isDataClass(simpleTypes: List<DefType>): Boolean {
+/* internal */fun TBlob<*>.isDataClass(simpleTypes: List<DefType>): Boolean {
     return simpleTypes.find { it.name == this.javaSimpleName }?.def?.kind == WsData
 }
 
-internal fun TBlob<*>.isSealedClass(simpleTypes: List<DefType>): Boolean {
+/* internal */fun TBlob<*>.isSealedClass(simpleTypes: List<DefType>): Boolean {
     return simpleTypes.find { it.name == this.javaSimpleName }?.def?.kind == WsSealed
 }
 
-internal fun TBlob<*>.getDataClass(simpleTypes: List<DefType>): DefType {
+/* internal */fun TBlob<*>.getDataClass(simpleTypes: List<DefType>): DefType {
     return simpleTypes.find { it.name == this.javaSimpleName }!!
 }
 

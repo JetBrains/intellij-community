@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.*
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import org.jetbrains.deft.IntellijWsTestIj.modifyEntity
@@ -11,8 +11,8 @@ import kotlin.test.assertTrue
 
 class WorkspaceBuilderChangeLogTest {
 
-  internal lateinit var builder: WorkspaceEntityStorageBuilder
-  internal lateinit var another: WorkspaceEntityStorageBuilder
+  /* internal */lateinit var builder: WorkspaceEntityStorageBuilder
+  /* internal */lateinit var another: WorkspaceEntityStorageBuilder
 
   @BeforeEach
   fun setUp() {

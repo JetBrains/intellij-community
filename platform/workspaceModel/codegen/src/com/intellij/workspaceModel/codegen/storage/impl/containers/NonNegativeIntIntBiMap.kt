@@ -117,11 +117,11 @@ sealed class NonNegativeIntIntBiMap {
   }
 
   @Suppress("PropertyName")
-  @PublishedApi
-  internal val `access$key2Value`: Int2IntMap
+  //@PublishedApi
+  /* internal */val `access$key2Value`: Int2IntMap
     get() = key2Value
 
   companion object {
-    internal const val DEFAULT_RETURN_VALUE = -1
+    /* internal */const val DEFAULT_RETURN_VALUE = -1
   }
 }
