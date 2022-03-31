@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.json.Json
+import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.seconds
 
@@ -198,6 +199,15 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                 fallbackValue = KnownRepositories.All.EMPTY
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
+
+    private val pkgsThreadCount
+        get() = max(1, Runtime.getRuntime().availableProcessors() / 4)
+
+    private val installedDependenciesExecutor =
+        AppExecutorUtil.createBoundedApplicationPoolExecutor(
+            /* name = */ "${this::class.java.simpleName}InstalledDependenciesExecutor",
+            /* maxThreads = */ pkgsThreadCount
+        ).asCoroutineDispatcher()
 
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
