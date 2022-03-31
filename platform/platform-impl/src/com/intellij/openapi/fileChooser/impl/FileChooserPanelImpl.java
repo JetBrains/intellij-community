@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -120,6 +121,17 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       @Override
       public void focusGained(FocusEvent e) {
         myPathBarActive = true;
+      }
+    });
+    pathEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        if (e.getType() == DocumentEvent.EventType.INSERT && e.getOffset() == 0 && e.getLength() == e.getDocument().getLength()) {
+          var text = pathEditor.getText();
+          if (StringUtil.isQuotedString(text)) {
+            EventQueue.invokeLater(() -> pathEditor.setText(text.substring(1, text.length() - 1)));
+          }
+        }
       }
     });
     var finder = new LocalFsFinder(false).withBaseDir(null);
