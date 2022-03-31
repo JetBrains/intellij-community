@@ -332,7 +332,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       return Collections.singletonList(fromTypeMap);
     }
 
-    Collection<String> fromTypeName = suggestNamesFromTypeName(type, variableKind, getTypeName(type));
+    List<String> fromTypeName = suggestNamesFromTypeName(type, variableKind, getTypeName(type));
     if (!(type instanceof PsiClassType)) {
       return fromTypeName;
     }
