@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
@@ -61,7 +62,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
 import kotlinx.serialization.json.Json
-import java.util.concurrent.Executors
+import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.seconds
 
@@ -197,9 +198,14 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    private val installedDependenciesExecutor = Executors.newFixedThreadPool(
-        (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(1)
-    ).asCoroutineDispatcher()
+    private val pkgsThreadCount
+        get() = max(1, Runtime.getRuntime().availableProcessors() / 4)
+
+    private val installedDependenciesExecutor =
+        AppExecutorUtil.createBoundedApplicationPoolExecutor(
+            /* name = */ "${this::class.java.simpleName}InstalledDependenciesExecutor",
+            /* maxThreads = */ pkgsThreadCount
+        ).asCoroutineDispatcher()
 
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
