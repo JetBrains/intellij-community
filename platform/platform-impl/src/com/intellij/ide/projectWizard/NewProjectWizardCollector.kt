@@ -5,7 +5,6 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -37,12 +36,11 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
     private val groovySourceTypeField = BoundedStringEventField("groovy_sdk_type", "maven", "local")
-    private val pluginField = EventFields.String("plugin", NewProjectWizardLanguageStep.allLanguages.keys.toList())
+    private val pluginField = EventFields.String("plugin_selected", NewProjectWizardLanguageStep.allLanguages.keys.toList())
 
     //events
-    private val activity = GROUP.registerIdeActivity("new_project_wizard", finishEventAdditionalFields = arrayOf(isSucceededField))
-
-    private val open = GROUP.registerVarargEvent("wizard.dialog.open", screenNumField)
+    private val open = GROUP.registerVarargEvent("wizard.dialog.open", sessionIdField, screenNumField)
+    private val finish = GROUP.registerVarargEvent("wizard.dialog.finish", sessionIdField, screenNumField, isSucceededField, EventFields.DurationMs)
     private val next = GROUP.registerVarargEvent("navigate.next", sessionIdField, screenNumField, inputMaskField)
     private val prev = GROUP.registerVarargEvent("navigate.prev", sessionIdField, screenNumField, inputMaskField)
     private val projectCreated = GROUP.registerVarargEvent("project.created", screenNumField)
@@ -78,8 +76,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", sessionIdField, screenNumField, groovySourceTypeField, groovyVersionField)
 
     //logs
-    @JvmStatic fun logStarted(project: Project?) = activity.started(project)
     @JvmStatic fun logOpen(context: WizardContext) = open.log(context.project,screenNumField with context.screen)
+    @JvmStatic fun logFinish(context: WizardContext, success: Boolean, duration: Long) = finish.log(context.project,screenNumField with context.screen, isSucceededField with success, EventFields.DurationMs with duration)
     @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, typedCharsField with min(chars, 10), hitsField with results)
     @JvmStatic fun logLocationChanged(context: WizardContext, generator: Class<*>) = location.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logNameChanged(context: WizardContext, generator: Class<*>) = name.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
@@ -92,7 +90,6 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     @JvmStatic fun logHelpNavigation(context: WizardContext) = helpNavigation.log(context.project,screenNumField with context.screen)
 
     //finish
-    @JvmStatic fun logFinished(activity: StructuredIdeActivity, success: Boolean) = activity.finished { listOf(isSucceededField with success)}
     @JvmStatic fun logProjectCreated(project: Project?, context: WizardContext) = projectCreated.log(project,screenNumField with context.screen)
     @JvmStatic fun logLanguageFinished(context: WizardContext, language: String) = languageFinished.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, languageField with language)
     @JvmStatic fun logGitFinished(context: WizardContext, git: Boolean) = gitFinish.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, gitField with git)
