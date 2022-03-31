@@ -72,7 +72,7 @@ class ParameterInlayProviderSettingsModel(
                                                try {
                                                  apply()
                                                  val case = CASE_KEY.get(editor)
-                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, case != null && !case.value)
+                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, !isEnabled || case != null && !case.value)
                                                  provider.supportedOptions.forEach { it.set(true) }
                                                  setShowParameterHintsForLanguage(true, language)
                                                  pass.collectInformation(ProgressIndicatorBase())
@@ -88,8 +88,7 @@ class ParameterInlayProviderSettingsModel(
     }
   }
 
-  override val description: String?
-    get() = null
+  override val description: String? = provider.description
 
   override fun toString(): String = name
 

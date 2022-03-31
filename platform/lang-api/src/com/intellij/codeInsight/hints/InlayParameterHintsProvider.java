@@ -149,6 +149,9 @@ public interface InlayParameterHintsProvider {
     return SyntaxTraverser.psiTraverser(root);
   }
 
+  @Nls
+  default String getDescription() { return null; }
+
   /**
    * @param key bundle key of the option.
    * @return description of the given option or null (in this case it won't be shown).
