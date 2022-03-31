@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -10,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.ui.JBColor
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.JButton
@@ -77,6 +79,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun createPanel(): DialogPanel {
     val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"))
+    val authService = SettingsSyncAuthService.getInstance()
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
       row {
@@ -98,8 +101,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         cell {
           label("") // The first component must be always visible
           button(message("config.button.login")) {
-            SettingsSyncAuthService.getInstance().login()
-          }.visibleIf(LoggedInPredicate().not())
+            authService.login()
+          }.visibleIf(LoggedInPredicate().not()).enabled(authService.isLoginAvailable())
+          label(message("error.label.login.not.available")).component.apply {
+            isVisible = !authService.isLoginAvailable()
+            icon = AllIcons.General.Error
+            foreground = JBColor.red
+          }
           enableButton = button(message("config.button.enable")) {
             syncEnabler.checkServerState()
           }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not())).enableIf(SyncEnablerRunning().not())
