@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
@@ -34,13 +35,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
@@ -104,19 +107,9 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     myFinder = finder;
     myFilter = filter;
 
-    myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
+    myPathTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        processTextChanged();
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        processTextChanged();
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         processTextChanged();
       }
     });
