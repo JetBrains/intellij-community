@@ -42,9 +42,7 @@ public final class PsiUtil {
    * @return {@code true} if given class can be instantiated by container at runtime
    */
   public static boolean isInstantiable(@NotNull PsiClass psiClass) {
-    if (psiClass.isInterface() ||
-        psiClass.isAnnotationType() ||
-        psiClass instanceof PsiTypeParameter ||
+    if (psiClass instanceof PsiTypeParameter ||
         psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
         psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
