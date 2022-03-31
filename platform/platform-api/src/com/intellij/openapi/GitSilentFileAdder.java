@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * To be used in async Project initialization tasks to add files silently,
@@ -24,11 +25,13 @@ public interface GitSilentFileAdder {
    * Method should be called before firing the corresponding VFS event.
    * Meaning, inside the same write command or before VFS refresh for externally changed files.
    */
-  void markFileForAdding(@NotNull @SystemIndependent String path);
+  void markFileForAdding(@NotNull @SystemIndependent String path, boolean isDirectory);
 
   void markFileForAdding(@NotNull VirtualFile file);
 
-  void markFileForAdding(@NotNull File file);
+  void markFileForAdding(@NotNull File file, boolean isDirectory);
+
+  void markFileForAdding(@NotNull Path path, boolean isDirectory);
 
   /**
    * Notify that marked files can be added on pooled thread.
@@ -39,7 +42,7 @@ public interface GitSilentFileAdder {
 
   class Empty implements GitSilentFileAdder {
     @Override
-    public void markFileForAdding(@NotNull @SystemIndependent String path) {
+    public void markFileForAdding(@NotNull @SystemIndependent String path, boolean isDirectory) {
     }
 
     @Override
@@ -47,7 +50,11 @@ public interface GitSilentFileAdder {
     }
 
     @Override
-    public void markFileForAdding(@NotNull File file) {
+    public void markFileForAdding(@NotNull File file, boolean isDirectory) {
+    }
+
+    @Override
+    public void markFileForAdding(@NotNull Path path, boolean isDirectory) {
     }
 
     @Override

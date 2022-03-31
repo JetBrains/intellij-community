@@ -16,6 +16,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.util.GitFileUtils
 import java.io.File
+import java.nio.file.Path
 
 class GitSilentFileAdderProviderImpl(private val project: Project) : GitSilentFileAdderProvider {
   override fun create(): GitSilentFileAdder = GitSilentFileAdderImpl(project)
@@ -28,8 +29,8 @@ class GitSilentFileAdderImpl(private val project: Project) : GitSilentFileAdder 
 
   private val pendingAddition: MutableSet<FilePath> = HashSet()
 
-  override fun markFileForAdding(path: String) {
-    addFile(VcsUtil.getFilePath(path))
+  override fun markFileForAdding(path: String, isDirectory: Boolean) {
+    addFile(VcsUtil.getFilePath(path, isDirectory))
   }
 
   override fun markFileForAdding(file: VirtualFile) {
@@ -38,8 +39,12 @@ class GitSilentFileAdderImpl(private val project: Project) : GitSilentFileAdder 
     }
   }
 
-  override fun markFileForAdding(file: File) {
-    addFile(VcsUtil.getFilePath(file))
+  override fun markFileForAdding(file: File, isDirectory: Boolean) {
+    addFile(VcsUtil.getFilePath(file, isDirectory))
+  }
+
+  override fun markFileForAdding(path: Path, isDirectory: Boolean) {
+    addFile(VcsUtil.getFilePath(path, isDirectory))
   }
 
   private fun addFile(filePath: FilePath) {
