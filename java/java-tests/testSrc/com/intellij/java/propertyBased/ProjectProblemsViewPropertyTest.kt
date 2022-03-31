@@ -262,7 +262,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     for ((member, memberProblems) in problems) {
       val memberRelatedProblems = mutableSetOf<Problem>()
       for (memberProblem in memberProblems) {
-        val problemFile = memberProblem.reportedElement!!.containingFile
+        val problemFile = memberProblem.reportedElement.containingFile
         if (problemFile.virtualFile in relatedFiles) memberRelatedProblems.add(memberProblem)
       }
       if (memberRelatedProblems.isNotEmpty()) relatedProblems[member] = memberRelatedProblems
@@ -275,8 +275,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
                            val context: String?, val fileErrors: List<HighlightInfo>)
 
     fun getProblemData(problem: Problem): ProblemData {
-      val context = problem.context!!
-      val reportedElement = problem.reportedElement!!
+      val context = problem.context
+      val reportedElement = problem.reportedElement
       val psiFile = reportedElement.containingFile
       val fileName = psiFile.name
       val offset = reportedElement.textOffset
@@ -292,7 +292,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   private fun getFilesReportedByProblemSearch(editor: Editor): Set<VirtualFile> =
     ProjectProblemUtils.getReportedProblems(editor).asSequence()
       .flatMap { it.value.asSequence() }
-      .map { it.reportedElement!!.containingFile }
+      .map { it.reportedElement.containingFile }
       .mapTo(mutableSetOf()) { it.virtualFile }
 
   private sealed class Modification(protected val member: PsiMember, env: ImperativeCommand.Environment) {

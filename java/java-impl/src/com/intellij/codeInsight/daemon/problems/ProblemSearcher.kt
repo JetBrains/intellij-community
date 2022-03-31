@@ -10,31 +10,23 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
 /**
- * Pair of reported element and context.
+ * Pair of reported element and context. 
  * Context is mainly used for display purposes.
  */
-class Problem(reportedElement: PsiElement, context: PsiElement) {
-  private val reportedElementPointer: SmartPsiElementPointer<PsiElement> = SmartPointerManager.createPointer(reportedElement)
-  private val contextPointer: SmartPsiElementPointer<PsiElement> = SmartPointerManager.createPointer(context)
-
-  val context: PsiElement?
-    get() = contextPointer.element
-
-  val reportedElement: PsiElement?
-    get() = reportedElementPointer.element
+class Problem(val reportedElement: PsiElement, val context: PsiElement) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as Problem
 
-    if (contextPointer != other.contextPointer) return false
+    if (context != other.context) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return contextPointer.hashCode()
+    return context.hashCode()
   }
 }
 
@@ -149,7 +141,7 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
     /**
      * Checks if usage is broken due to change in target file.
-     *
+     * 
      * To understand if usage is broken we visit this usage with {@link HighlightVisitorImpl} and check if highlighter reported any problems
      * It is possible that one broken usage led to multiple problems.
      */
