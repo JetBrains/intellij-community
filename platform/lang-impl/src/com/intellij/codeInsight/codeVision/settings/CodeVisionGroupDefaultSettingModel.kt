@@ -40,7 +40,6 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     val daemonBoundProviders = providers.filterIsInstance<CodeVisionProviderAdapter>().map { it.delegate }
     val codeVisionData = CodeVisionPass.collectData(editor, file, daemonBoundProviders)
     return Runnable {
-      if (editor.isDisposed) return@Runnable
       editor.putUserData(CODE_VISION_PREVIEW_ENABLED, isEnabled)
       val project = editor.project ?: return@Runnable
       codeVisionData.applyTo(editor, project)
