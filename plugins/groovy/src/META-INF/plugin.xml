@@ -132,6 +132,7 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.GrInterfaceDefaultMethodMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.XmlMarkupBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.JsonBuilderContributor"/>
