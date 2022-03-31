@@ -2,6 +2,7 @@ import com.intellij.workspace.model.testing.SampleEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SampleTest {
 
@@ -32,8 +33,9 @@ class SampleTest {
         }
         try {
             builder.addEntity(entity)
-        } catch (e: IllegalStateException) {
-            assertEquals("Field SampleEntity#entitySource should be initialized", e.message)
+        } catch (e: Throwable) {
+          assertTrue("entitySource" in e.message!!)
+          assertTrue("initialized" in e.message!!)
         }
     }
 }
