@@ -15,8 +15,6 @@ import java.io.OutputStream;
 
 /**
  * Exports (copies) a scheme to an external file as is.
- *
- * @author Rustam Vishnyakov
  */
 public class SerializableSchemeExporter extends SchemeExporter<Scheme> {
   @Override

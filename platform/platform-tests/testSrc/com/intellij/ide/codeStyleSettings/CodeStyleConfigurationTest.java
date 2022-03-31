@@ -16,9 +16,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   /**
    * Check that indent options are correctly read if mixed with other language options
