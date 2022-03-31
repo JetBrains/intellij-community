@@ -123,8 +123,7 @@ public interface SAXEngine {
    * @throws JDOMException when errors occur in parsing
    * @throws IOException   when an I/O error prevents a document from being fully parsed
    */
-  Document build(InputSource in)
-    throws JDOMException, IOException;
+  Document build(InputSource in) throws JDOMException, IOException;
 
   /**
    * <p>

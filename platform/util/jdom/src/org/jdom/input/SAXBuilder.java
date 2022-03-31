@@ -58,6 +58,7 @@ import org.jdom.*;
 import org.jdom.input.sax.*;
 import org.xml.sax.*;
 
+import javax.xml.XMLConstants;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,51 +71,10 @@ import java.util.Map;
 import static org.jdom.JDOMConstants.*;
 
 /**
- * Builds a JDOM Document using a SAX parser.
- * <p>
- * SAXbuilder uses a third-party SAX parser (chosen by JAXP by default, or you
- * can configure it manually) to handle the parsing duties and uses an instance
- * of a SAXHandler to listen to the SAX events in order to construct a document
- * with JDOM content using a JDOMFactory. Information about SAX can be found at
- * <a href="http://www.saxproject.org">http://www.saxproject.org</a>.
- * <p>
- * For a complete description of how SAXBuilder is used, and how to customise
- * the process you should look at the {@link org.jdom.input.sax} package
- * documentation.
- * <p>
- * JDOM users needing to customise the SAX parsing process have traditionally
- * sub-classed this SAXBuilder class. In JDOM2 this should never be necessary.
- * Please read the full documentation of this class, {@link SAXHandler},
- * {@link SAXHandlerFactory}, {@link JDOMFactory}, and the package documentation
- * for {@link org.jdom.input.sax} before overriding this class. Future versions
- * of JDOM2 may make this class 'final'. I you feel you have a good reason to
- * subclass SAXBuilder please mention it on <a
- * href="http://www.jdom.org/involved/lists.html">jdom-interest</a> mailing list
- * so that SAXBuilder can be extended or adapted to handle your use-case.
- * <p>
- * Neither SAXBuilder nor anything derived from SAXBuilder is thread-safe. You
- * must ensure that SAXBuilder is used in a single thread, or that sufficient
- * locking is in place to ensure that SAXBuilder is not concurrently accessed.
- * See the special note on {@link #buildEngine()}.
- * <p>
- * Known issues:
- * <ul>
- * <li>Relative paths for a {@link DocType} or {@link EntityRef} may be
- * converted by the SAX parser into absolute paths.
- * <li>SAX does not recognise whitespace character content outside the root
- * element (nor does JDOM) so any formatting outside the root Element will be
- * lost.
- * </ul>
- *
- * @author Jason Hunter
- * @author Brett McLaughlin
- * @author Dan Schaffer
- * @author Philip Nelson
- * @author Alex Rosen
- * @author Rolf Lear
- * @see org.jdom.input.sax
+ * @deprecated Please JDOMUtil or JDK API (StAX) or XmlDomReader.readXmlAsModel.
  */
-public class SAXBuilder implements SAXEngine {
+@Deprecated
+public final class SAXBuilder implements SAXEngine {
 
   /**
    * Default source of SAXHandlers
@@ -165,11 +125,6 @@ public class SAXBuilder implements SAXEngine {
    * EntityResolver class to use
    */
   private EntityResolver saxEntityResolver = null;
-
-  /**
-   * DTDHandler class to use
-   */
-  private final DTDHandler saxDTDHandler = null;
 
   /**
    * Whether expansion of entities should occur
@@ -318,13 +273,10 @@ public class SAXBuilder implements SAXEngine {
   /**
    * Set the current XMLReader factory.
    *
-   * @param rfac the JDOMXMLReaderFactory to set. A null rfac will indicate the
-   *             default {@link XMLReaders#NONVALIDATING}
+   * @param rfac the JDOMXMLReaderFactory to set. A null rfac will indicate the default {@link XMLReaders#NONVALIDATING}
    */
-  public void setXMLReaderFactory(final XMLReaderJDOMFactory rfac) {
-    readerfac = rfac == null
-                ? XMLReaders.NONVALIDATING
-                : rfac;
+  public void setXMLReaderFactory(XMLReaderJDOMFactory rfac) {
+    readerfac = rfac == null ? XMLReaders.NONVALIDATING : rfac;
     engine = null;
   }
 
@@ -361,44 +313,11 @@ public class SAXBuilder implements SAXEngine {
   }
 
   /**
-   * This sets validation for the builder.
-   * <p>
-   * <b>Do Not Use</b>
-   * <p>
-   * JDOM2 introduces the concept of XMLReader factories. The XMLReader is
-   * what determines the type of validation. A simple boolean is not enough to
-   * indicate what sort of validation is required. The
-   * {@link #setXMLReaderFactory(XMLReaderJDOMFactory)} method provides a
-   * means to be more specific about validation.
-   * <p>
-   * For backward compatibility this method has been retained, but its use is
-   * discouraged. It does make some logical choices though. The code is
-   * equivalent to:
-   * <p>
-   *
-   * <pre>
-   * setXMLReaderFactory(XMLReaders.DTDVALIDATING)
-   * </pre>
-   * <p>
-   * for true, and
-   *
-   * <pre>
-   * setXMLReaderFactory(XMLReaders.NONVALIDATING)
-   * </pre>
-   * <p>
-   * for false.
-   *
-   * @param validate <code>boolean</code> indicating whether validation should occur.
-   * @see #setXMLReaderFactory(XMLReaderJDOMFactory)
-   * @see XMLReaders#NONVALIDATING
-   * @see XMLReaders#DTDVALIDATING
    * @deprecated use {@link #setXMLReaderFactory(XMLReaderJDOMFactory)}
    */
   @Deprecated
   public void setValidation(final boolean validate) {
-    setXMLReaderFactory(validate
-                        ? XMLReaders.DTDVALIDATING
-                        : XMLReaders.NONVALIDATING);
+    setXMLReaderFactory(validate ? XMLReaders.DTDVALIDATING : XMLReaders.NONVALIDATING);
   }
 
   /**
@@ -574,8 +493,7 @@ public class SAXBuilder implements SAXEngine {
    * current SAXBuilder settings.
    * @throws JDOMException if there is any problem initialising the engine.
    */
-  public SAXEngine buildEngine() throws JDOMException {
-
+  private SAXEngine buildEngine() throws JDOMException {
     // Create and configure the content handler.
     final SAXHandler contentHandler = handlerfac.createSAXHandler(jdomfac);
 
@@ -598,7 +516,7 @@ public class SAXBuilder implements SAXEngine {
    * @return a XMLReader parser.
    * @throws JDOMException if there is a problem
    */
-  protected XMLReader createParser() throws JDOMException {
+  private XMLReader createParser() throws JDOMException {
     return readerfac.createXMLReader();
   }
 
@@ -635,8 +553,7 @@ public class SAXBuilder implements SAXEngine {
    * @param contentHandler The SAXHandler to use for the XMLReader
    * @throws JDOMException if configuration fails.
    */
-  protected void configureParser(final XMLReader parser, final SAXHandler contentHandler)
-    throws JDOMException {
+  private void configureParser(final XMLReader parser, final SAXHandler contentHandler) throws JDOMException {
 
     // Setup SAX handlers.
 
@@ -700,6 +617,12 @@ public class SAXBuilder implements SAXEngine {
         // No lexical reporting available
       }
     }
+
+    try {
+      parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    }
+    catch (Exception ignore) {
+    }
   }
 
   /**
@@ -751,17 +674,8 @@ public class SAXBuilder implements SAXEngine {
    * @throws IOException   when an I/O error prevents a document from being fully parsed
    */
   @Override
-  public Document build(final InputSource in)
-    throws JDOMException, IOException {
-
-    try {
-      return getEngine().build(in);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+  public Document build(InputSource in) throws JDOMException, IOException {
+    return getEngine().build(in);
   }
 
   /**
@@ -775,16 +689,8 @@ public class SAXBuilder implements SAXEngine {
    * @throws IOException   when an I/O error prevents a document from being fully parsed.
    */
   @Override
-  public Document build(final InputStream in)
-    throws JDOMException, IOException {
-    try {
-      return getEngine().build(in);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+  public Document build(final InputStream in) throws JDOMException, IOException {
+    return getEngine().build(in);
   }
 
   /**
@@ -798,16 +704,8 @@ public class SAXBuilder implements SAXEngine {
    * @throws IOException   when an I/O error prevents a document from being fully parsed
    */
   @Override
-  public Document build(final File file)
-    throws JDOMException, IOException {
-    try {
-      return getEngine().build(file);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+  public Document build(final File file) throws JDOMException, IOException {
+    return getEngine().build(file);
   }
 
   /**
@@ -821,16 +719,8 @@ public class SAXBuilder implements SAXEngine {
    * @throws IOException   when an I/O error prevents a document from being fully parsed.
    */
   @Override
-  public Document build(final URL url)
-    throws JDOMException, IOException {
-    try {
-      return getEngine().build(url);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+  public Document build(final URL url) throws JDOMException, IOException {
+    return getEngine().build(url);
   }
 
   /**
@@ -845,16 +735,8 @@ public class SAXBuilder implements SAXEngine {
    * @throws IOException   when an I/O error prevents a document from being fully parsed
    */
   @Override
-  public Document build(final InputStream in, final String systemId)
-    throws JDOMException, IOException {
-    try {
-      return getEngine().build(in, systemId);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+  public Document build(final InputStream in, final String systemId) throws JDOMException, IOException {
+    return getEngine().build(in, systemId);
   }
 
   /**
@@ -873,14 +755,7 @@ public class SAXBuilder implements SAXEngine {
   @Override
   public Document build(final Reader characterStream)
     throws JDOMException, IOException {
-    try {
-      return getEngine().build(characterStream);
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
-    }
+    return getEngine().build(characterStream);
   }
 
   /**
@@ -932,12 +807,11 @@ public class SAXBuilder implements SAXEngine {
    * @throws IOException   when an I/O error prevents a document from being fully parsed
    */
   @Override
-  public Document build(final String systemId)
-    throws JDOMException, IOException {
+  public Document build(final String systemId) throws JDOMException, IOException {
     if (systemId == null) {
-      throw new NullPointerException(
-        "Unable to build a URI from a null systemID.");
+      throw new NullPointerException("Unable to build a URI from a null systemID.");
     }
+
     try {
       return getEngine().build(systemId);
     }
@@ -972,11 +846,6 @@ public class SAXBuilder implements SAXEngine {
       }
       // it is likely not an XML document - re-throw the exception
       throw ioe;
-    }
-    finally {
-      if (!true) {
-        engine = null;
-      }
     }
   }
 }

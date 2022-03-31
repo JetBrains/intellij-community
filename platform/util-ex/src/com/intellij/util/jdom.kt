@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -12,18 +12,15 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
 import org.jdom.input.SAXBuilder
-import org.jdom.input.sax.SAXHandler
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
-import org.xml.sax.XMLReader
 import java.io.CharArrayReader
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
-import javax.xml.XMLConstants
 
 @JvmOverloads
 @Throws(IOException::class)
@@ -85,16 +82,7 @@ private fun getSpecialSaxBuilder(): SAXBuilder {
   val reference = cachedSpecialSaxBuilder.get()
   var saxBuilder = SoftReference.dereference(reference)
   if (saxBuilder == null) {
-    saxBuilder = object : SAXBuilder() {
-      override fun configureParser(parser: XMLReader, contentHandler: SAXHandler?) {
-        super.configureParser(parser, contentHandler)
-        try {
-          parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
-        }
-        catch (ignore: Exception) {
-        }
-      }
-    }
+    saxBuilder = SAXBuilder()
     saxBuilder.setEntityResolver(EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtilRt.EMPTY_CHAR_ARRAY)) })
     cachedSpecialSaxBuilder.set(SoftReference(saxBuilder))
   }
