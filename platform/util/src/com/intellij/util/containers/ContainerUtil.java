@@ -46,8 +46,12 @@ public final class ContainerUtil {
     return new HashMap<>();
   }
 
+  /**
+   * @deprecated use {@link Map#of()} or {@link Map#ofEntries(Map.Entry[])} instead
+   */
   @SafeVarargs
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
     Map<K, V> map = new HashMap<>(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());

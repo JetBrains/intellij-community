@@ -61,8 +61,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
@@ -131,10 +129,9 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          Map<String, String> propertiesFixes = newHashMap(
-            pair("user.dir", projectDir),
-            pair("java.system.class.loader", null)
-          );
+          Map<String, String> propertiesFixes = new HashMap<>();
+          propertiesFixes.put("user.dir", projectDir);
+          propertiesFixes.put("java.system.class.loader", null);
           return maybeFixSystemProperties(() -> f.fun(connection), propertiesFixes);
         }
         catch (ExternalSystemException | ProcessCanceledException e) {

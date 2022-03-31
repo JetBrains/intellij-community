@@ -2,9 +2,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.codehaus.plexus.archiver.jar.Manifest;
 import org.codehaus.plexus.archiver.jar.ManifestException;
 import org.jdom.Element;
@@ -28,13 +26,7 @@ import static org.codehaus.plexus.archiver.jar.Manifest.Attribute;
  */
 public class ManifestBuilder {
 
-  private static final Map<String, String> PACKAGING_PLUGINS = ContainerUtil.newHashMap(
-    Pair.create("jar", "maven-jar-plugin"),
-    Pair.create("ejb", "maven-ejb-plugin"),
-    Pair.create("ejb-client", "maven-ejb-plugin"),
-    Pair.create("war", "maven-war-plugin"),
-    Pair.create("ear", "maven-ear-plugin")
-  );
+  private static final Map<String, String> PACKAGING_PLUGINS = Map.of("jar", "maven-jar-plugin", "ejb", "maven-ejb-plugin", "ejb-client", "maven-ejb-plugin", "war", "maven-war-plugin", "ear", "maven-ear-plugin");
 
   @NotNull private final MavenProject myMavenProject;
   @Nullable private String myJdkVersion;
