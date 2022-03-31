@@ -57,8 +57,8 @@ public final class PsiUtil {
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().isEmpty()
-          && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+      int parametersCount = constructor.getParameterList().getParametersCount();
+      if (parametersCount <= 1) {
         return true;
       }
     }
