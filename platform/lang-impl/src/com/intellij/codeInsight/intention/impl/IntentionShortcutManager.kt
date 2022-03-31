@@ -7,13 +7,12 @@ import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
-import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -137,11 +136,9 @@ class IntentionShortcutManager : Disposable {
 
   override fun dispose() {}
 
-  class InitListener : ApplicationInitializedListener {
-    override fun componentsInitialized() {
-      invokeLater {
-        getInstance().registerIntentionsInActiveKeymap()
-      }
+  class InitListener : ActionConfigurationCustomizer {
+    override fun customize(actionManager: ActionManager) {
+      getInstance().registerIntentionsInActiveKeymap()
     }
   }
 
