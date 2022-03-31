@@ -71,7 +71,7 @@ import org.jetbrains.deft.Obj
  *   }
  *   ```
  *
- *   This is an /* internal */representation of WorkspaceEntity. It's not passed to users.
+ *   This is an internal representation of WorkspaceEntity. It's not passed to users.
  *
  *   -------------------------------------------------------------------------------------------------------------------------------
  *
@@ -95,7 +95,7 @@ import org.jetbrains.deft.Obj
 
 abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
-    /* internal */set
+    internal set
 
   var id: EntityId = 0
 
@@ -109,7 +109,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     return getReferences(mySnapshot, entityClass)
   }
 
-  /* internal */fun <R : WorkspaceEntity> getReferences(
+  internal fun <R : WorkspaceEntity> getReferences(
     mySnapshot: AbstractEntityStorage,
     entityClass: Class<R>
   ): Sequence<R> {

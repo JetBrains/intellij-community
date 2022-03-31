@@ -8,7 +8,7 @@ const val initialCapacity = 2
 
 const val MAX_ARRAY_LENGTH = Int.MAX_VALUE - 8
 
-/* internal */fun newLength(oldLength: Int, minGrowth: Int, prefGrowth: Int): Int {
+internal fun newLength(oldLength: Int, minGrowth: Int, prefGrowth: Int): Int {
     val newLength = minGrowth.coerceAtLeast(prefGrowth) + oldLength
     return when {
         newLength - MAX_ARRAY_LENGTH <= 0 -> newLength
@@ -16,7 +16,7 @@ const val MAX_ARRAY_LENGTH = Int.MAX_VALUE - 8
     }
 }
 
-/* internal */fun hugeLength(oldLength: Int, minGrowth: Int): Int {
+internal fun hugeLength(oldLength: Int, minGrowth: Int): Int {
     val minLength = oldLength + minGrowth
     if (minLength < 0) throw OutOfMemoryError("Required array length too large")
     return when {

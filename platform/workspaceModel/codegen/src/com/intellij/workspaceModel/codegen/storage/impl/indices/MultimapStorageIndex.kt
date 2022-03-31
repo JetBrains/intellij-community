@@ -12,15 +12,15 @@ private typealias BidirectionalMap = BidirectionalLongMultiMap<PersistentEntityI
 //private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
 
 open class MultimapStorageIndex private constructor(
-  /* internal */open val index: BidirectionalMap
+  internal open val index: BidirectionalMap
 ) {
   constructor() : this(BidirectionalMap())
 
-  /* internal */fun getIdsByEntry(entitySource: PersistentEntityId<*>): Set<EntityId> = index.getKeys(entitySource)
+  internal fun getIdsByEntry(entitySource: PersistentEntityId<*>): Set<EntityId> = index.getKeys(entitySource)
 
-  /* internal */fun getEntriesById(id: EntityId): Set<PersistentEntityId<*>> = index.getValues(id)
+  internal fun getEntriesById(id: EntityId): Set<PersistentEntityId<*>> = index.getValues(id)
 
-  /* internal */fun entries(): Collection<PersistentEntityId<*>> = index.values
+  internal fun entries(): Collection<PersistentEntityId<*>> = index.values
 
   class MutableMultimapStorageIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
@@ -29,25 +29,25 @@ open class MultimapStorageIndex private constructor(
 
     private var freezed = true
 
-    /* internal */fun index(id: EntityId, elements: Set<PersistentEntityId<*>>? = null) {
+    internal fun index(id: EntityId, elements: Set<PersistentEntityId<*>>? = null) {
       startWrite()
       index.removeKey(id)
       if (elements == null) return
       elements.forEach { index.put(id, it) }
     }
 
-    /* internal */fun index(id: EntityId, element: PersistentEntityId<*>) {
+    internal fun index(id: EntityId, element: PersistentEntityId<*>) {
       startWrite()
       index.put(id, element)
     }
 
-    /* internal */fun remove(id: EntityId, element: PersistentEntityId<*>) {
+    internal fun remove(id: EntityId, element: PersistentEntityId<*>) {
       startWrite()
       index.remove(id, element)
     }
 
     @TestOnly
-    /* internal */fun clear() {
+    internal fun clear() {
       startWrite()
       index.clear()
     }

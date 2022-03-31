@@ -20,14 +20,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-/* internal */data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
+internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
   override fun resolve(storage: WorkspaceEntityStorage): E? {
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
 }
 
-/* internal */class WorkspaceEntityStorageImpl constructor(
+internal class WorkspaceEntityStorageImpl constructor(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes
@@ -60,7 +60,7 @@ import kotlin.reflect.KProperty1
   }
 }
 
-/* internal */class WorkspaceEntityStorageBuilderImpl(
+internal class WorkspaceEntityStorageBuilderImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
   override val indexes: MutableStorageIndexes,
@@ -68,12 +68,12 @@ import kotlin.reflect.KProperty1
   private var trackStackTrace: Boolean = false
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  /* internal */val changeLog = WorkspaceBuilderChangeLog()
+  internal val changeLog = WorkspaceBuilderChangeLog()
 
   // Temporal solution for accessing error in deft project.
-  /* internal */var throwExceptionOnError = false
+  internal var throwExceptionOnError = false
 
-  /* internal */fun incModificationCount() {
+  internal fun incModificationCount() {
     this.changeLog.modificationCount++
   }
 
@@ -475,7 +475,7 @@ import kotlin.reflect.KProperty1
     }
   }
 
-  /* internal */fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
+  internal fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
     reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
   }
 
@@ -498,7 +498,7 @@ import kotlin.reflect.KProperty1
   }
 
   // modificationCount is not incremented
-  /* internal */fun removeEntity(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }) {
+  internal fun removeEntity(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }) {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
 
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
@@ -550,7 +550,7 @@ import kotlin.reflect.KProperty1
     threadName = null
   }
 
-  /* internal */fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
+  internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
     val entityId = pEntityData.createEntityId()
     this.changeLog.addAddEvent(entityId, pEntityData)
   }
@@ -604,7 +604,7 @@ import kotlin.reflect.KProperty1
       return newBuilder
     }
 
-    /* internal */fun addReplaceEvent(
+    internal fun addReplaceEvent(
       builder: WorkspaceEntityStorageBuilderImpl,
       entityId: EntityId,
       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
@@ -645,16 +645,16 @@ import kotlin.reflect.KProperty1
   }
 }
 
-/* internal */sealed class AbstractEntityStorage : WorkspaceEntityStorage {
+internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
-  /* internal */abstract val entitiesByType: EntitiesBarrel
-  /* internal */abstract val refs: AbstractRefsTable
-  /* internal */abstract val indexes: StorageIndexes
+  internal abstract val entitiesByType: EntitiesBarrel
+  internal abstract val refs: AbstractRefsTable
+  internal abstract val indexes: StorageIndexes
 
-  /* internal */var brokenConsistency: Boolean = false
+  internal var brokenConsistency: Boolean = false
 
-  /* internal */var storageIsAlreadyApplied = false
-  /* internal */var applyInfo: String? = null
+  internal var storageIsAlreadyApplied = false
+  internal var applyInfo: String? = null
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     @Suppress("UNCHECKED_CAST")
@@ -665,9 +665,9 @@ import kotlin.reflect.KProperty1
     return entitiesByType[entityClass.toClassId()]?.size() ?: 0
   }
 
-  /* internal */fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
+  internal fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
 
-  /* internal */fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
+  internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
     return entitiesByType[id.clazz]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
@@ -723,7 +723,7 @@ import kotlin.reflect.KProperty1
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
-  /* internal */fun assertConsistencyInStrictMode(message: String,
+  internal fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: ((EntitySource) -> Boolean)?,
                                              left: WorkspaceEntityStorage?,
                                              right: WorkspaceEntityStorage?) {

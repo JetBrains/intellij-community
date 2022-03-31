@@ -57,7 +57,7 @@ abstract class ObjModule(
         modules.byId[id] = this
     }
 
-    /* internal */lateinit var byId: Array<ObjType<*, *>?>
+    internal lateinit var byId: Array<ObjType<*, *>?>
     private val _dependencies = mutableListOf<ObjModule>()
     val dependencies: List<ObjModule>
         get() = _dependencies.toList()
@@ -134,10 +134,10 @@ abstract class ObjModule(
         initialized = true
     }
 
-    /* internal */fun type(typeId: Int): ObjType<*, *> =
+    internal fun type(typeId: Int): ObjType<*, *> =
         byId[modules.typeIndex(typeId)]!!
 
-    /* internal */fun newBuilder(typeId: Int): ObjBuilder<*> = type(typeId).builder()
+    internal fun newBuilder(typeId: Int): ObjBuilder<*> = type(typeId).builder()
 
     fun <T : Obj, B : ObjBuilder<T>> _loadBuilderFactory(objType: ObjType<T, B>): () -> B {
         if (!useCodegenImpl) return { ObjImplGeneric.Builder(objType) }

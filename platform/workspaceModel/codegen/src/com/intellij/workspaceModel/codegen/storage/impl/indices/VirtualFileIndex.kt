@@ -24,24 +24,24 @@ import org.jetbrains.annotations.TestOnly
  * 3) Object2ObjectOpenHashMap<EntityId, Object2ObjectOpenHashMap<String, VirtualFileUrl>>
  * 4) Object2ObjectOpenHashMap<EntityId, Object2ObjectOpenHashMap<String, ObjectOpenHashSet<VirtualFileUrl>>>
  */
-///* internal */typealias EntityId2Vfu = Object2ObjectOpenHashMap<EntityId, Any>
-///* internal */typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
-///* internal */typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
-/* internal */typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-/* internal */typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
-/* internal */typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
+//internal typealias EntityId2Vfu = Object2ObjectOpenHashMap<EntityId, Any>
+//internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
+//internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
+internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
+internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
-open class VirtualFileIndex /* internal */constructor(
-  /* internal */open val entityId2VirtualFileUrl: EntityId2Vfu,
-  /* internal */open val vfu2EntityId: Vfu2EntityId,
-  /* internal */open val entityId2JarDir: EntityId2JarDir,
+open class VirtualFileIndex internal constructor(
+  internal open val entityId2VirtualFileUrl: EntityId2Vfu,
+  internal open val vfu2EntityId: Vfu2EntityId,
+  internal open val entityId2JarDir: EntityId2JarDir,
 ) : VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
 
   constructor() : this(EntityId2Vfu(), Vfu2EntityId(getHashingStrategy()), EntityId2JarDir())
 
-  /* internal */fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
+  internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
     val result = mutableSetOf<VirtualFileUrl>()
     entityId2VirtualFileUrl[id]?.also { value ->
       when (value) {
@@ -52,7 +52,7 @@ open class VirtualFileIndex /* internal */constructor(
     return result
   }
 
-  /* internal */fun getVirtualFileUrlInfoByEntityId(id: EntityId): Map<String, MutableSet<VirtualFileUrl>> {
+  internal fun getVirtualFileUrlInfoByEntityId(id: EntityId): Map<String, MutableSet<VirtualFileUrl>> {
     val property2VfuMap = entityId2VirtualFileUrl[id] ?: return emptyMap()
     val copiedVfuMap = HashMap<String, MutableSet<VirtualFileUrl>>()
     addVirtualFileUrlsToMap(copiedVfuMap, property2VfuMap)
@@ -81,11 +81,11 @@ open class VirtualFileIndex /* internal */constructor(
 
   fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
 
-  /* internal */fun setTypedEntityStorage(storage: AbstractEntityStorage) {
+  internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
   }
 
-  /* internal */fun assertConsistency() {
+  internal fun assertConsistency() {
     val existingVfuInFirstMap = HashSet<VirtualFileUrl>()
     this.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
       fun assertProperty2Vfu(property: String, vfus: Any) {
@@ -117,7 +117,7 @@ open class VirtualFileIndex /* internal */constructor(
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 
-  /* internal */fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
@@ -135,7 +135,7 @@ open class VirtualFileIndex /* internal */constructor(
     }
 
     @Synchronized
-    /* internal */fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
       startWrite()
       val newVirtualFileUrls = HashSet(virtualFileUrls)
       fun cleanExistingVfu(existingVfu: Any): Boolean {
@@ -182,27 +182,27 @@ open class VirtualFileIndex /* internal */constructor(
     }
 
     @Synchronized
-    /* internal */fun indexJarDirectories(id: EntityId, virtualFileUrls: Set<VirtualFileUrl>) {
+    internal fun indexJarDirectories(id: EntityId, virtualFileUrls: Set<VirtualFileUrl>) {
       entityId2JarDir.removeKey(id)
       if (virtualFileUrls.isEmpty()) return
       virtualFileUrls.forEach { entityId2JarDir.put(id, it) }
     }
 
     @Synchronized
-    /* internal */fun index(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl? = null) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl? = null) {
       startWrite()
       removeByPropertyFromIndexes(id, propertyName)
       if (virtualFileUrl == null) return
       indexVirtualFileUrl(id, propertyName, virtualFileUrl)
     }
 
-    /* internal */fun updateIndex(oldId: EntityId, newId: EntityId, oldIndex: VirtualFileIndex) {
+    internal fun updateIndex(oldId: EntityId, newId: EntityId, oldIndex: VirtualFileIndex) {
       oldIndex.getVirtualFileUrlInfoByEntityId(oldId).forEach { (property, vfus) -> index(newId, property, vfus) }
       oldIndex.entityId2JarDir.getValues(oldId).apply { indexJarDirectories(newId, this.toSet()) }
     }
 
     @Synchronized
-    /* internal */fun removeRecordsByEntityId(id: EntityId) {
+    internal fun removeRecordsByEntityId(id: EntityId) {
       startWrite()
       entityId2JarDir.removeKey(id)
       val removedValue = entityId2VirtualFileUrl.remove(id) ?: return
@@ -215,7 +215,7 @@ open class VirtualFileIndex /* internal */constructor(
     }
 
     @TestOnly
-    /* internal */fun clear() {
+    internal fun clear() {
       startWrite()
       entityId2VirtualFileUrl.clear()
       vfu2EntityId.clear()
@@ -363,7 +363,7 @@ open class VirtualFileIndex /* internal */constructor(
   }
 }
 
-/* internal */fun getHashingStrategy(): Hash.Strategy<VirtualFileUrl> {
+internal fun getHashingStrategy(): Hash.Strategy<VirtualFileUrl> {
   return STANDARD_STRATEGY
 }
 

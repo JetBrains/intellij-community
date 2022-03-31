@@ -11,8 +11,8 @@ import kotlin.test.assertTrue
 
 class WorkspaceBuilderChangeLogTest {
 
-  /* internal */lateinit var builder: WorkspaceEntityStorageBuilder
-  /* internal */lateinit var another: WorkspaceEntityStorageBuilder
+  internal lateinit var builder: WorkspaceEntityStorageBuilder
+  internal lateinit var another: WorkspaceEntityStorageBuilder
 
   @BeforeEach
   fun setUp() {

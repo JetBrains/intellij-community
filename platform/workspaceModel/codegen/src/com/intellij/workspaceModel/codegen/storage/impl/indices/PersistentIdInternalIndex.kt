@@ -7,15 +7,15 @@ import com.intellij.workspaceModel.storage.impl.EntityId
 import org.jetbrains.annotations.TestOnly
 
 open class PersistentIdInternalIndex private constructor(
-  /* internal */open val index: HashBiMap<EntityId, PersistentEntityId<*>>
+  internal open val index: HashBiMap<EntityId, PersistentEntityId<*>>
 ) {
   constructor() : this(HashBiMap.create<EntityId, PersistentEntityId<*>>())
 
-  /* internal */fun getIdsByEntry(persistentId: PersistentEntityId<*>): EntityId? = index.inverse()[persistentId]
+  internal fun getIdsByEntry(persistentId: PersistentEntityId<*>): EntityId? = index.inverse()[persistentId]
 
-  /* internal */fun getEntryById(id: EntityId): PersistentEntityId<*>? = index[id]
+  internal fun getEntryById(id: EntityId): PersistentEntityId<*>? = index[id]
 
-  /* internal */fun entries(): Collection<PersistentEntityId<*>> {
+  internal fun entries(): Collection<PersistentEntityId<*>> {
     return index.values
   }
 
@@ -26,7 +26,7 @@ open class PersistentIdInternalIndex private constructor(
 
     private var freezed = true
 
-    /* internal */fun index(id: EntityId, persistentId: PersistentEntityId<*>? = null) {
+    internal fun index(id: EntityId, persistentId: PersistentEntityId<*>? = null) {
       startWrite()
       if (persistentId == null) {
         index.remove(id)
@@ -36,13 +36,13 @@ open class PersistentIdInternalIndex private constructor(
     }
 
     @TestOnly
-    /* internal */fun clear() {
+    internal fun clear() {
       startWrite()
       index.clear()
     }
 
     @TestOnly
-    /* internal */fun copyFrom(another: PersistentIdInternalIndex) {
+    internal fun copyFrom(another: PersistentIdInternalIndex) {
       startWrite()
       this.index.putAll(another.index)
     }

@@ -120,7 +120,7 @@ open class SnapshotView(
 
 private val ACTIVE = Symbol("ACTIVE")
 
-/* internal */class Symbol(val symbol: String) {
+internal class Symbol(val symbol: String) {
   override fun toString(): String = "<$symbol>"
 
   @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")

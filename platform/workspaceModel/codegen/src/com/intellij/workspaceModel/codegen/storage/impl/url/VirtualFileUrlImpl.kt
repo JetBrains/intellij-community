@@ -10,7 +10,7 @@ import java.nio.file.Path
 /**
  * Represent an URL (in VFS format) of a file or directory.
  */
-open class VirtualFileUrlImpl(val id: Int, /* internal */val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
+open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
   private var cachedUrl: String? = null
 
   override fun getUrl(): String {

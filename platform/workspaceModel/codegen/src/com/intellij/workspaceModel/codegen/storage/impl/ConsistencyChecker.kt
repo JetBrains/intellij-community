@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.ints.IntSet
 
-/* internal */fun AbstractEntityStorage.assertConsistency() {
+internal fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace("Checking consistency of $this")
 
   entitiesByType.assertConsistency(this)

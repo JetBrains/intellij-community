@@ -7,19 +7,19 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.TestOnly
 
 //typealias EntityStorageIndex = BidirectionalSetMap<EntityId, T>
-/* internal */typealias EntityStorageIndex<T> = BidirectionalLongSetMap<T>
+internal typealias EntityStorageIndex<T> = BidirectionalLongSetMap<T>
 
 open class EntityStorageInternalIndex<T> private constructor(
-  /* internal */open val index: EntityStorageIndex<T>,
+  internal open val index: EntityStorageIndex<T>,
   protected val oneToOneAssociation: Boolean
 ) {
   constructor(oneToOneAssociation: Boolean) : this(EntityStorageIndex<T>(), oneToOneAssociation)
 
-  /* internal */fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)?.toList()
+  internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)?.toList()
 
-  /* internal */fun getEntryById(id: EntityId): T? = index[id]
+  internal fun getEntryById(id: EntityId): T? = index[id]
 
-  /* internal */fun entries(): Collection<T> {
+  internal fun entries(): Collection<T> {
     return index.values
   }
 
@@ -31,7 +31,7 @@ open class EntityStorageInternalIndex<T> private constructor(
 
     private var freezed = true
 
-    /* internal */fun index(id: EntityId, entry: T? = null) {
+    internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
       if (entry == null) {
         LOG.trace("Removing $id from index")
@@ -48,13 +48,13 @@ open class EntityStorageInternalIndex<T> private constructor(
     }
 
     @TestOnly
-    /* internal */fun clear() {
+    internal fun clear() {
       startWrite()
       index.clear()
     }
 
     @TestOnly
-    /* internal */fun copyFrom(another: EntityStorageInternalIndex<T>) {
+    internal fun copyFrom(another: EntityStorageInternalIndex<T>) {
       startWrite()
       this.index.putAll(another.index)
     }

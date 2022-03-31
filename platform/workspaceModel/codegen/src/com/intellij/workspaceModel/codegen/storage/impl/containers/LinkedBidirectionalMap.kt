@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.impl.containers
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
-/* internal */class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
+internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
   private val myKeyToValueMap: MutableMap<K, V> = LinkedHashMap()
   private val myValueToKeysMap: MutableMap<V, MutableList<K>> = LinkedHashMap()
 

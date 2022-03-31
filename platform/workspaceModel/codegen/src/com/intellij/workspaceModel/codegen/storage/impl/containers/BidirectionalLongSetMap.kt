@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.longs.LongSet
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-/* internal */class BidirectionalLongSetMap<V> private constructor(
+internal class BidirectionalLongSetMap<V> private constructor(
   private val keyToValueMap: Long2ObjectOpenHashMap<V>,
   private val valueToKeysMap: MutableMap<V, LongOpenHashSet>
 ) {

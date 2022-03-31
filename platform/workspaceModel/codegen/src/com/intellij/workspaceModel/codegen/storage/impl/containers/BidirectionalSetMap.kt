@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-/* internal */class BidirectionalSetMap<K, V> private constructor(private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
+internal class BidirectionalSetMap<K, V> private constructor(private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
                                                              private val valueToKeysMap: MutableMap<V, MutableSet<K>>) : MutableMap<K, V> {
 
   constructor() : this(Object2ObjectOpenHashMap<K, V>(), HashMap<V, MutableSet<K>>())

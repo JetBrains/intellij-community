@@ -23,7 +23,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
     
     companion object {
-        /* internal */val REF_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityList::class.java, AttachedEntityList::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+        internal val REF_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityList::class.java, AttachedEntityList::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
     }
     
     override val factory: ObjType<*, *>

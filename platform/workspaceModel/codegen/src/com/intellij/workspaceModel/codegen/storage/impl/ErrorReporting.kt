@@ -9,7 +9,7 @@ fun reportErrorAndAttachStorage(message: String, storage: WorkspaceEntityStorage
   error(message)
 }
 
-/* internal */fun reportConsistencyIssue(message: String,
+internal fun reportConsistencyIssue(message: String,
                                     e: Throwable,
                                     sourceFilter: ((EntitySource) -> Boolean)?,
                                     left: WorkspaceEntityStorage?,

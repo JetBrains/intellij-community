@@ -11,7 +11,7 @@ import kotlin.collections.component2
  * by using [Object2ObjectOpenHashMap.clone] method and only if several keys contain same value we store as list at [valueToKeysMap]
  * field and at collection copying, we additionally clone only field which contains the list inside
  */
-/* internal */class BidirectionalMap<K, V> private constructor(private val slotsWithList: HashSet<V>,
+internal class BidirectionalMap<K, V> private constructor(private val slotsWithList: HashSet<V>,
                                                           private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
                                                           private val valueToKeysMap: Object2ObjectOpenHashMap<V, Any>) : MutableMap<K, V> {
   constructor() : this(HashSet<V>(), Object2ObjectOpenHashMap<K, V>(), Object2ObjectOpenHashMap<V, Any>())

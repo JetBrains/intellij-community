@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
-/* internal */open class ImmutableEntitiesBarrel /* internal */constructor(
+internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
   constructor(): this(emptyList())
@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
   }
 }
 
-/* internal */class MutableEntitiesBarrel private constructor(
+internal class MutableEntitiesBarrel private constructor(
   override var entityFamilies: MutableList<EntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
   fun remove(id: Int, clazz: Int) {
@@ -92,7 +92,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
     }
   }
 
-  /* internal */fun fillEmptyFamilies(unmodifiableEntityId: Int) {
+  internal fun fillEmptyFamilies(unmodifiableEntityId: Int) {
     while (entityFamilies.size <= unmodifiableEntityId) entityFamilies.add(null)
   }
 
@@ -102,8 +102,8 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
   }
 }
 
-/* internal */sealed class EntitiesBarrel {
-  /* internal */abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
+internal sealed class EntitiesBarrel {
+  internal abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
 
   open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entityFamilies.getOrNull(clazz)
 

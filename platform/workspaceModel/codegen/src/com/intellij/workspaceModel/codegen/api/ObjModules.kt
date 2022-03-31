@@ -4,9 +4,9 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 
 class ObjModules {
-    /* internal */val byId = mutableMapOf<ObjModule.Id, ObjModule>()
+    internal val byId = mutableMapOf<ObjModule.Id, ObjModule>()
 
-    /* internal */fun typeIndex(id: Int) = id - 1
+    internal fun typeIndex(id: Int) = id - 1
 
     operator fun get(id: ObjModule.Id): ObjModule? =
         byId[id]
@@ -14,7 +14,7 @@ class ObjModules {
     fun <T : Obj, B : ObjBuilder<T>> type(id: ObjType.Id<T, B>): ObjType<T, B> = this.get(id)
 
     @OptIn(ObjModule.InitApi::class)
-    /* internal */operator fun <T : Obj, B : ObjBuilder<T>> get(id: ObjType.Id<T, B>): ObjType<T, B> {
+    internal operator fun <T : Obj, B : ObjBuilder<T>> get(id: ObjType.Id<T, B>): ObjType<T, B> {
         val module = byId[id.module]
             ?: error("Module \"${id.module}\" is not loaded")
 

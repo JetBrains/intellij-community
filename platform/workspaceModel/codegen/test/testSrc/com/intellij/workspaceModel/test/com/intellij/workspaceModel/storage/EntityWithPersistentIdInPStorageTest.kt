@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import org.jetbrains.deft.IntellijWsTestIj.modifyEntity
 import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import org.jetbrains.deft.IntellijWsTestIj.modifyEntity
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -93,7 +93,7 @@ class EntityWithPersistentIdInPStorageTest {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
     }
-    catch (e: AssertionError) {
+    catch (e: Throwable) {
       assert(e.cause is PersistentIdAlreadyExistsException)
       assertOneElement(builder.entities(NamedEntity::class.java).toList())
     }

@@ -23,7 +23,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase() {
     
     companion object {
-        /* internal */val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java, ChildNullableEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java, ChildNullableEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
     
     override val factory: ObjType<*, *>

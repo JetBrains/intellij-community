@@ -148,7 +148,7 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
         }
     }
 
-    /* internal */fun onRefUpdate(old: ObjImpl?, new: ObjImpl?) {
+    internal fun onRefUpdate(old: ObjImpl?, new: ObjImpl?) {
         if (old != new) {
             _setRef(new)
         }

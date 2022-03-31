@@ -96,7 +96,7 @@ class StorageIndexiesTest {
     }
 }
 
-/* internal */class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource{
+internal class VFUEntitySource(private val vfu: VirtualFileUrl) : EntitySource{
     override val virtualFileUrl: VirtualFileUrl
         get() = vfu
 }

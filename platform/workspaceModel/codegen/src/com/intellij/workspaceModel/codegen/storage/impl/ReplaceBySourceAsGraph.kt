@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.workspaceModel.codegen.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 
-/* internal */object ReplaceBySourceAsGraph {
+internal object ReplaceBySourceAsGraph {
   /**
    * Here: identificator means [hashCode] or ([PersistentEntityId] in case it exists)
    *
@@ -25,7 +25,7 @@ import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBu
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
    */
-  /* internal */fun replaceBySourceAsGraph(
+  internal fun replaceBySourceAsGraph(
     thisBuilder: WorkspaceEntityStorageBuilderImpl,
     replaceWith: WorkspaceEntityStorage,
     sourceFilter: (EntitySource) -> Boolean,

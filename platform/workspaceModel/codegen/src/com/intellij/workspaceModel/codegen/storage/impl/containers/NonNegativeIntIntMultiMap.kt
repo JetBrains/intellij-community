@@ -33,7 +33,7 @@ sealed class ImmutableNonNegativeIntIntMultiMap(
   override val links: Int2IntMap
 ) : NonNegativeIntIntMultiMap() {
 
-  class ByList /* internal */constructor(values: IntArray, links: Int2IntMap) : ImmutableNonNegativeIntIntMultiMap(values, links) {
+  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutableNonNegativeIntIntMultiMap(values, links) {
     override fun toMutable(): MutableNonNegativeIntIntMultiMap.ByList = MutableNonNegativeIntIntMultiMap.ByList(values, links)
   }
 
@@ -99,12 +99,12 @@ sealed class MutableNonNegativeIntIntMultiMap(
   protected var freezed: Boolean
 ) : NonNegativeIntIntMultiMap() {
 
-  /* internal */val modifiableValues = HashMap<Int, IntList>()
+  internal val modifiableValues = HashMap<Int, IntList>()
 
   class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links,
                                                                                                                              freezed) {
     constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
-    /* internal */constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
+    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
 
     override fun toImmutable(): ImmutableNonNegativeIntIntMultiMap.ByList {
       if (freezed) return ImmutableNonNegativeIntIntMultiMap.ByList(values, links)
@@ -323,8 +323,8 @@ sealed class NonNegativeIntIntMultiMap {
   abstract fun keys(): IntSet
 
   companion object {
-    /* internal */fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
-    /* internal */fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
+    internal fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
+    internal fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
   }
 
   abstract class IntSequence {
@@ -343,7 +343,7 @@ sealed class NonNegativeIntIntMultiMap {
      * Some of implementations doesn't have any memory overhead when using [IntSequence].
      */
     @TestOnly
-    /* internal */fun toArray(): IntArray {
+    internal fun toArray(): IntArray {
       val list = ArrayList<Int>()
       this.forEach { list.add(it) }
       return list.toTypedArray().toIntArray()
@@ -354,7 +354,7 @@ sealed class NonNegativeIntIntMultiMap {
      * Some of implementations doesn't have any memory overhead when using [IntSequence].
      */
     @TestOnly
-    /* internal */fun single(): Int = toArray().single()
+    internal fun single(): Int = toArray().single()
 
     open fun <T> map(transformation: IntFunction<T>): Sequence<T> {
       return Sequence {

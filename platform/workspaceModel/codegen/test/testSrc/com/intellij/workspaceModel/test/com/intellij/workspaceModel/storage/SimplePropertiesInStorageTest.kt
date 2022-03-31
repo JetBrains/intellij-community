@@ -12,7 +12,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/* internal */fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
+internal fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
 class SimplePropertiesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager

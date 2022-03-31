@@ -18,7 +18,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
     
     companion object {
-        /* internal */val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
     
     override val factory: ObjType<*, *>

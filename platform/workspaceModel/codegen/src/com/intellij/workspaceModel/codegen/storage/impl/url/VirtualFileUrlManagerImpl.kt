@@ -68,7 +68,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   @Synchronized
-  /* internal */fun append(parentVfu: VirtualFileUrl, relativePath: String): VirtualFileUrl {
+  internal fun append(parentVfu: VirtualFileUrl, relativePath: String): VirtualFileUrl {
     parentVfu as VirtualFileUrlImpl
     return add(relativePath, id2NodeMapping.get(parentVfu.id))
   }
@@ -79,7 +79,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
   fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull { it.getCachedVirtualFileUrl() }
 
-  /* internal */fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
+  internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
     var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
@@ -126,7 +126,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return getEmptyUrl()
   }
 
-  /* internal */fun remove(path: String) {
+  internal fun remove(path: String) {
     val node = findLatestFilePathNode(path)
     if (node == null) {
       println("File not found")
@@ -154,7 +154,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     while (currentNode.isEmpty())
   }
 
-  /* internal */fun update(oldPath: String, newPath: String) {
+  internal fun update(oldPath: String, newPath: String) {
     val latestPathNode = findLatestFilePathNode(oldPath)
     if (latestPathNode == null) return
     remove(oldPath)
@@ -233,7 +233,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return false
   }
 
-  /* internal */inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
+  internal inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
     private var virtualFileUrl: VirtualFileUrl? = null
     private var children: ObjectOpenCustomHashSet<FilePathNode>? = null
 

@@ -6,19 +6,19 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 
-/* internal */typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
+internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 
 class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
-  /* internal */val changeLog: ChangeLog = LinkedHashMap()
+  internal val changeLog: ChangeLog = LinkedHashMap()
 
-  /* internal */fun clear() {
+  internal fun clear() {
     modificationCount++
     changeLog.clear()
   }
 
-  /* internal */fun addReplaceEvent(
+  internal fun addReplaceEvent(
     entityId: EntityId,
     copiedData: WorkspaceEntityData<out WorkspaceEntity>,
     originalEntity: WorkspaceEntityData<out WorkspaceEntity>,
@@ -80,7 +80,7 @@ class WorkspaceBuilderChangeLog {
     }
   }
 
-  /* internal */fun <T : WorkspaceEntity> addAddEvent(pid: EntityId, pEntityData: WorkspaceEntityData<T>) {
+  internal fun <T : WorkspaceEntity> addAddEvent(pid: EntityId, pEntityData: WorkspaceEntityData<T>) {
     modificationCount++
 
     // XXX: This check should exist, but some tests fails with it.
@@ -89,7 +89,7 @@ class WorkspaceBuilderChangeLog {
     changeLog[pid] = ChangeEntry.AddEntity(pEntityData, pid.clazz)
   }
 
-  /* internal */fun <T : WorkspaceEntity> addChangeSourceEvent(entityId: EntityId,
+  internal fun <T : WorkspaceEntity> addChangeSourceEvent(entityId: EntityId,
                                                           copiedData: WorkspaceEntityData<T>,
                                                           originalSource: EntitySource) {
     modificationCount++
@@ -132,7 +132,7 @@ class WorkspaceBuilderChangeLog {
     }
   }
 
-  /* internal */fun addRemoveEvent(removedEntityId: EntityId,
+  internal fun addRemoveEvent(removedEntityId: EntityId,
                               originalData: WorkspaceEntityData<WorkspaceEntity>,
                               oldParents: Map<ConnectionId, ParentEntityId>) {
     modificationCount++
@@ -158,7 +158,7 @@ class WorkspaceBuilderChangeLog {
   }
 }
 
-/* internal */sealed class ChangeEntry {
+internal sealed class ChangeEntry {
   data class AddEntity(val entityData: WorkspaceEntityData<out WorkspaceEntity>, val clazz: Int) : ChangeEntry()
 
   data class RemoveEntity(
@@ -193,7 +193,7 @@ class WorkspaceBuilderChangeLog {
   }
 }
 
-/* internal */fun WorkspaceEntityStorageBuilderImpl.getOriginalEntityData(id: EntityId): WorkspaceEntityData<*> {
+internal fun WorkspaceEntityStorageBuilderImpl.getOriginalEntityData(id: EntityId): WorkspaceEntityData<*> {
   return this.changeLog.changeLog[id]?.let {
     when (it) {
       is ChangeEntry.ReplaceEntity -> it.oldData
@@ -205,7 +205,7 @@ class WorkspaceBuilderChangeLog {
   } ?: this.entityDataByIdOrDie(id).clone()
 }
 
-/* internal */fun WorkspaceEntityStorageBuilderImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
+internal fun WorkspaceEntityStorageBuilderImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
   return this.changeLog.changeLog[id.id]?.let {
     when (it) {
       is ChangeEntry.ReplaceEntity -> it.oldParents
@@ -217,7 +217,7 @@ class WorkspaceBuilderChangeLog {
   } ?: this.refs.getParentRefsOfChild(id)
 }
 
-/* internal */fun WorkspaceEntityStorageBuilderImpl.getOriginalSource(id: EntityId): EntitySource {
+internal fun WorkspaceEntityStorageBuilderImpl.getOriginalSource(id: EntityId): EntitySource {
   return this.changeLog.changeLog[id]?.let {
     when (it) {
       is ChangeEntry.ChangeEntitySource -> it.originalSource
