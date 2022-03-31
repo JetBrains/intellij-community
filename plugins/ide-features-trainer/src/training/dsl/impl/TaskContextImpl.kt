@@ -21,6 +21,7 @@ import training.dsl.*
 import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
+import training.statistic.LearningProblems
 import training.statistic.StatisticBase
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
@@ -129,9 +130,26 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   /**
    * Should not be called more than once in single task (even with [proposeRestore]
    */
-  override fun showWarning(text: String, restoreTaskWhenResolved: Boolean, warningRequired: TaskRuntimeContext.() -> Boolean) {
+  override fun showWarning(text: String,
+                           restoreTaskWhenResolved: Boolean,
+                           problem: LearningProblems?,
+                           warningRequired: TaskRuntimeContext.() -> Boolean
+  ) {
+    var warningIsLogged = false
     val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
-      if (warningRequired()) RestoreNotification(text) {} else null
+      if (warningRequired()) { // do not spam reports
+        if (!warningIsLogged) {
+          warningIsLogged = true
+          if (problem != null) {
+            StatisticBase.logLearningProblem(problem, this@TaskContextImpl.lessonExecutor.lesson)
+            thisLogger().error("Detected important problem ($problem): $text")
+          }
+          else {
+            thisLogger().warn("Learning warning: $text")
+          }
+        }
+        RestoreNotification(text) {}
+      } else null
     }
     val restoreId = if (restoreTaskWhenResolved) taskId else null
     checkAndShowNotificationIfNeeded(delayMillis = defaultRestoreDelay, restoreId, notificationRequired) {
