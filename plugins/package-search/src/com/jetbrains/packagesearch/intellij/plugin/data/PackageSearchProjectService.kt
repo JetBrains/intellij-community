@@ -198,7 +198,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             )
             .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
-    private val pkgsThreadCount
+    private inline val pkgsThreadCount
         get() = max(1, Runtime.getRuntime().availableProcessors() / 4)
 
     private val installedDependenciesExecutor =
