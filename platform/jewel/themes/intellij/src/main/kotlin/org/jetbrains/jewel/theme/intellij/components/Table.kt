@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,7 +36,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class Table<T>(
+class Table<T> internal constructor(
     val columnsCount: Int,
     private val contents: List<List<T>>
 ) {
@@ -75,17 +74,26 @@ class Table<T>(
     }
 }
 
-inline fun <reified T> Table(rowsCount: Int, columnsCount: Int, contentsProducer: (Int, Int) -> T): Table<T> {
+fun <T> Table(rowsCount: Int, columnsCount: Int, contentsProducer: (Int, Int) -> T): Table<T> {
     val model: List<List<T>> = List(rowsCount) { i -> List(columnsCount) { j -> contentsProducer(i, j) } }
     return Table(columnsCount, model)
 }
 
 interface TableDividersState {
 
+    val dividersCount: Int
+    val lastDividerIndex: Int
+
     fun updateDividerOffset(dividerIndex: Int, delta: Float)
 
     fun getDividerOffset(dividerIndex: Int): Float
 }
+
+val TableDividersState.dividersIndices
+    get() = 0 until dividersCount
+
+val TableDividersState.offsets
+    get() = dividersIndices.map { getDividerOffset(it) }
 
 class TableState(
     initialFirstVisibleRowIndex: Int = 0,
@@ -127,11 +135,17 @@ class TableState(
     private var tableWidthPx = 1f
     private var columnsCount = 0
 
+    override val dividersCount
+        get() = columnsCount - 1
+
+    override val lastDividerIndex
+        get() = dividersCount - 1
+
     private var isInitialized = false
 
-    @Composable
-    internal fun initializeState(tableWidthPx: Float, dividerWidthPx: Float, columnsCount: Int) = remember(dividerWidthPx, columnsCount) {
-        check(!isInitialized) { "Already initialized." }
+    internal fun initializeState(tableWidthPx: Float, dividerWidthPx: Float, columnsCount: Int) {
+        if (isInitialized) return
+
         isInitialized = true
         if (dividerOffsets.isNotEmpty()) {
             val sortedMap = dividerOffsets.entries.sortedBy { it.key }
@@ -170,7 +184,7 @@ class TableState(
         if (delta == 0f) return
         val currentOffset = dividerOffsets.getValue(dividerIndex)
         val newOffset = when {
-            delta > 0 && dividerIndex == dividerOffsets.size - 1 -> min(currentOffset + delta, tableWidthPx - dividerWidthPx - 1)
+            delta > 0 && dividerIndex == lastDividerIndex -> min(currentOffset + delta, tableWidthPx - dividerWidthPx - 1)
             delta > 0 -> min(currentOffset + delta, dividerOffsets.getValue(dividerIndex + 1) - dividerWidthPx - 1)
             delta < 0 && dividerIndex == 0 -> max(currentOffset + delta, 1f)
             delta < 0 -> max(currentOffset + delta, dividerOffsets.getValue(dividerIndex - 1) + dividerWidthPx + 1)
@@ -265,70 +279,84 @@ private fun <T> Row(
     dividerWidthPx: Float,
     content: @Composable (T, Int, Int) -> Unit
 ) {
-    Layout(content = {
-        for (columnIndex in 0 until columnsCount) {
-            val cellId = TableLayoutId.Cell(columnIndex, columnIndex == columnsCount - 1)
+    Layout(
+        content = {
+            for (columnIndex in 0 until columnsCount) {
+                val cellId = TableLayoutId.Cell(columnIndex, columnIndex == columnsCount - 1)
 
-            Box(modifier = Modifier.layoutId(cellId)) {
-                content(tableData[rowIndex, columnIndex], rowIndex, columnIndex)
-            }
-
-            if (columnIndex != columnsCount - 1) {
-                val dividerId = TableLayoutId.Divider(columnIndex)
-                Box(
-                    modifier = Modifier.layoutId(dividerId)
-                        .fillMaxSize()
-                        .background(Color.Green) // TODO pass this in/get from theme
-                        .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
-                        .draggable(
-                            orientation = Orientation.Horizontal,
-                            state = rememberDraggableState { delta -> dividersState.updateDividerOffset(dividerId.dividerIndex, delta) }
-                        )
-                )
-            }
-        }
-    }) { measurables, constraints ->
-        var maxHeightPx = 0
-        var totalWidthPx = 0f
-        val measures = measurables.map { measurable ->
-
-            val elementWidth = when (val layoutId = measurable.layoutId) {
-                is TableLayoutId.Cell -> when (layoutId.cellIndex) {
-                    0 -> dividersState.getDividerOffset(0)
-                    columnsCount - 1 -> tableWidthPx - totalWidthPx // assign all remaining pixels due to rounding errors to last cell
-                    else -> dividersState.getDividerOffset(layoutId.cellIndex) - dividersState.getDividerOffset(layoutId.cellIndex - 1) - dividerWidthPx
+                Box(modifier = Modifier.layoutId(cellId)) {
+                    content(tableData[rowIndex, columnIndex], rowIndex, columnIndex)
                 }
-                is TableLayoutId.Divider -> dividerWidthPx
-                else -> error("Unknown layoutId $layoutId")
-            }.roundToInt()
 
-            totalWidthPx += elementWidth
+                if (columnIndex != columnsCount - 1) {
+                    val dividerId = TableLayoutId.Divider
+                    Box(
+                        modifier = Modifier.layoutId(dividerId)
+                            .fillMaxSize()
+                            .background(Color.Green) // TODO theming
+                            .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+                            .draggable(
+                                orientation = Orientation.Horizontal,
+                                state = rememberDraggableState { delta -> dividersState.updateDividerOffset(columnIndex, delta) }
+                            )
+                    )
+                }
+            }
+        },
+        measurePolicy = { measurables, constraints ->
+            var maxHeightPx = 0
+            var sparePixels = 0f
 
-            val measuredHeightPx = measurable.maxIntrinsicHeight(elementWidth)
-            maxHeightPx = max(maxHeightPx, measuredHeightPx)
-            measurable.withWidth(elementWidth)
-        }
+            val measures = measurables.map { measurable ->
+                val layoutId = measurable.layoutId
 
-        check(totalWidthPx >= tableWidthPx) { "Table contents aren't taking up the whole width of the table" }
+                val rawElementWidth = when (layoutId) {
+                    is TableLayoutId.Cell -> when (layoutId.cellIndex) {
+                        0 -> dividersState.getDividerOffset(0)
+                        columnsCount - 1 -> tableWidthPx - dividersState.getDividerOffset(layoutId.cellIndex - 1) - dividerWidthPx
+                        else -> dividersState.getDividerOffset(layoutId.cellIndex) - dividersState.getDividerOffset(layoutId.cellIndex - 1) - dividerWidthPx
+                    }
+                    is TableLayoutId.Divider -> dividerWidthPx
+                    else -> error("Unknown layoutId $layoutId")
+                }
 
-        val placeables = measures.map { dimension ->
-            dimension.measurable.measure(Constraints.fixed(dimension.width, maxHeightPx))
-        }
+                val roundedElementWidth = rawElementWidth.toInt()
 
-        layout(constraints.maxWidth, maxHeightPx) {
-            var xPosition = 0
-            placeables.forEach { placeable ->
-                placeable.placeRelative(x = xPosition, y = 0)
-                xPosition += placeable.width
+                sparePixels += rawElementWidth - roundedElementWidth
+
+                val finalWidth = when (layoutId) {
+                    is TableLayoutId.Cell -> when {
+                        sparePixels >= 1 && !layoutId.isLast -> {
+                            sparePixels -= 1f
+                            roundedElementWidth + 1
+                        }
+                        layoutId.isLast -> {
+                            roundedElementWidth + sparePixels.roundToInt()
+                        }
+                        else -> roundedElementWidth
+                    }
+                    else -> roundedElementWidth
+                }
+
+                val measuredHeightPx = measurable.maxIntrinsicHeight(finalWidth)
+                maxHeightPx = max(maxHeightPx, measuredHeightPx)
+                measurable.withWidth(finalWidth)
+            }
+
+            val placeables = measures.map { dimension ->
+                dimension.measurable.measure(Constraints.fixed(dimension.width, maxHeightPx))
+            }
+
+            layout(constraints.maxWidth, maxHeightPx) {
+                var xPosition = 0
+                placeables.forEach { placeable ->
+                    placeable.placeRelative(x = xPosition, y = 0)
+                    xPosition += placeable.width
+                }
             }
         }
-    }
+    )
 }
-
-@OptIn(ExperimentalTypeInference::class)
-private fun <K, V> buildSnapshotMap(
-    @BuilderInference builder: SnapshotStateMap<K, V>.() -> Unit
-) = SnapshotStateMap<K, V>().apply(builder)
 
 private data class MeasurableWithWidth(val measurable: Measurable, val width: Int)
 
@@ -336,7 +364,6 @@ private fun Measurable.withWidth(width: Int) = MeasurableWithWidth(this, width)
 
 private sealed class TableLayoutId {
 
-    data class Divider(val dividerIndex: Int) : TableLayoutId()
+    object Divider : TableLayoutId()
     data class Cell(val cellIndex: Int, val isLast: Boolean) : TableLayoutId()
 }
-
