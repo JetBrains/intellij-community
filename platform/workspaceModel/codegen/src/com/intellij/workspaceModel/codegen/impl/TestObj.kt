@@ -41,22 +41,12 @@ class TestObj : ObjImpl() {
             _aId = value?._id ?: ObjId.nothing
         }
 
-    override fun loadFrom(data: Input) {
-        super.loadFrom(data)
-        //_aId = data.readId()
-    }
-
     override fun updateRefIds() {
         super.updateRefIds()
         if (_a != null) _aId = _a!!._id
     }
 
     override fun estimateMaxSize(): Int = (name?.outputMaxBytes ?: 0) + ObjId.bytesCount
-
-    override fun storeTo(output: Output) {
-        super.storeTo(output)
-        //output.writeId(_aId)
-    }
 
     class Builder : ObjBuilderImpl<TestObj>() {
         override val result = TestObj()
@@ -66,8 +56,6 @@ class TestObj : ObjImpl() {
             set(value) {
                 result.a = value
             }
-
-        override fun <V> setValue(field: Field<in TestObj, V>, value: V) = TODO()
     }
 
     companion object : ObjType<TestObj, Builder>(TestObjModule, 1) {

@@ -17,6 +17,5 @@ class RootImpl : ObjImpl(), Root {
         override val parent: Obj? get() = null
         override fun build(): Root = result
         override fun getExtensibleContainer(): ExtensibleImpl = result
-        override fun <V> setValue(field: Field<in Root, V>, value: V) = error("There is no fields in Root")
     }
 }

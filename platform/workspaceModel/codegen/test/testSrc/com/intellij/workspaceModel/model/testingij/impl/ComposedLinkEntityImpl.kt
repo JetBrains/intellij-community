@@ -125,8 +125,6 @@ open class ComposedLinkEntityImpl: ComposedLinkEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in ComposedLinkEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ComposedLinkEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ComposedLinkEntityData = result ?: super.getEntityData() as ComposedLinkEntityData
         override fun getEntityClass(): Class<ComposedLinkEntity> = ComposedLinkEntity::class.java
     }

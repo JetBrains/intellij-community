@@ -233,8 +233,6 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in RightEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in RightEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): RightEntityData = result ?: super.getEntityData() as RightEntityData
         override fun getEntityClass(): Class<RightEntity> = RightEntity::class.java
     }

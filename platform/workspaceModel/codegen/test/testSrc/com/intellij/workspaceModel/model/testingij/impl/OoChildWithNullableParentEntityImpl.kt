@@ -162,8 +162,6 @@ open class OoChildWithNullableParentEntityImpl: OoChildWithNullableParentEntity,
                 
             }
         
-        override fun hasNewValue(field: Field<in OoChildWithNullableParentEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in OoChildWithNullableParentEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): OoChildWithNullableParentEntityData = result ?: super.getEntityData() as OoChildWithNullableParentEntityData
         override fun getEntityClass(): Class<OoChildWithNullableParentEntity> = OoChildWithNullableParentEntity::class.java
     }

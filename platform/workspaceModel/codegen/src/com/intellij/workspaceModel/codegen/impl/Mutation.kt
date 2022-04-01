@@ -20,7 +20,6 @@ class Mutation(
   override val factory: ObjType<Root, *> get() = Root
   override val name: String? get() = null
   override val parent: Obj? get() = null
-  override fun <V> setValue(field: Field<in Root, V>, value: V) = Unit
   override fun getExtensibleContainer(): Extensible = rootBuilder.getExtensibleContainer()
   override fun build(): Root = rootBuilder.build()
 

@@ -192,8 +192,6 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
                 changedProperty.add("data")
             }
         
-        override fun hasNewValue(field: Field<in AttachedEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in AttachedEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): AttachedEntityData = result ?: super.getEntityData() as AttachedEntityData
         override fun getEntityClass(): Class<AttachedEntity> = AttachedEntity::class.java
     }

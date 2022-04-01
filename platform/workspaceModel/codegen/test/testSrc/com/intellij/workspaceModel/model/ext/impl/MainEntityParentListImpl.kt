@@ -190,8 +190,6 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
                     changedProperty.add("children")
                 }
         
-        override fun hasNewValue(field: Field<in MainEntityParentList, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in MainEntityParentList, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): MainEntityParentListData = result ?: super.getEntityData() as MainEntityParentListData
         override fun getEntityClass(): Class<MainEntityParentList> = MainEntityParentList::class.java
     }

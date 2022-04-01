@@ -187,8 +187,6 @@ open class MiddleEntityImpl: MiddleEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in MiddleEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in MiddleEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): MiddleEntityData = result ?: super.getEntityData() as MiddleEntityData
         override fun getEntityClass(): Class<MiddleEntity> = MiddleEntity::class.java
     }

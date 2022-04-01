@@ -190,8 +190,6 @@ open class SourceEntityImpl: SourceEntity, WorkspaceEntityBase() {
                     changedProperty.add("children")
                 }
         
-        override fun hasNewValue(field: Field<in SourceEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in SourceEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): SourceEntityData = result ?: super.getEntityData() as SourceEntityData
         override fun getEntityClass(): Class<SourceEntity> = SourceEntity::class.java
     }

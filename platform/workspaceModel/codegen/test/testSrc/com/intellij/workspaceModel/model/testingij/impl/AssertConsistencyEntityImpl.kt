@@ -117,8 +117,6 @@ open class AssertConsistencyEntityImpl: AssertConsistencyEntity, WorkspaceEntity
                 
             }
         
-        override fun hasNewValue(field: Field<in AssertConsistencyEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in AssertConsistencyEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): AssertConsistencyEntityData = result ?: super.getEntityData() as AssertConsistencyEntityData
         override fun getEntityClass(): Class<AssertConsistencyEntity> = AssertConsistencyEntity::class.java
     }

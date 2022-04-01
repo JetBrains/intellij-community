@@ -72,7 +72,7 @@ fun obj(j: JsonReader): Obj {
                 // todo: extensions
                 val field = structure.allFields.find { it.name == name } ?: error(name)
                 val value = value(j, field.type)
-                obj[field as Field<Obj, Any?>] = value
+                //obj[field as Field<Obj, Any?>] = value
             }
         }
     }

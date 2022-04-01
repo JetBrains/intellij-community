@@ -192,8 +192,6 @@ open class ChildSubSubEntityImpl: ChildSubSubEntity, WorkspaceEntityBase() {
                 changedProperty.add("childData")
             }
         
-        override fun hasNewValue(field: Field<in ChildSubSubEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ChildSubSubEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ChildSubSubEntityData = result ?: super.getEntityData() as ChildSubSubEntityData
         override fun getEntityClass(): Class<ChildSubSubEntity> = ChildSubSubEntity::class.java
     }

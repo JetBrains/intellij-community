@@ -137,8 +137,6 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                 changedProperty.add("boolData")
             }
         
-        override fun hasNewValue(field: Field<in SampleEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in SampleEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): SampleEntityData = result ?: super.getEntityData() as SampleEntityData
         override fun getEntityClass(): Class<SampleEntity> = SampleEntity::class.java
     }

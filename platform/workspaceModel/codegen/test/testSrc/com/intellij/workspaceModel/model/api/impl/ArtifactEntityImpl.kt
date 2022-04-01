@@ -1,11 +1,14 @@
 package com.intellij.workspace.model.api
 
+import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -15,7 +18,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneChildOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
 import org.jetbrains.deft.*
@@ -29,9 +31,9 @@ import org.jetbrains.deft.impl.fields.Field
 open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, CompositePackagingElementEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
-        private val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-        private val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactOutputPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
+        internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, CompositePackagingElementEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
+        internal val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactOutputPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
     
     override val factory: ObjType<*, *>
@@ -103,8 +105,53 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
             val (withBuilder_customProperties, woBuilder_customProperties) = __customProperties.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CUSTOMPROPERTIES_CONNECTION_ID, withBuilder_customProperties)
             this._customProperties = if (woBuilder_customProperties.isNotEmpty()) woBuilder_customProperties else null
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
+            }
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -145,6 +192,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         override var name: String
             get() = getEntityData().name
             set(value) {
+                checkModificationAllowed()
                 getEntityData().name = value
                 changedProperty.add("name")
             }
@@ -152,6 +200,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -160,6 +209,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         override var artifactType: String
             get() = getEntityData().artifactType
             set(value) {
+                checkModificationAllowed()
                 getEntityData().artifactType = value
                 changedProperty.add("artifactType")
             }
@@ -167,6 +217,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         override var includeInProjectBuild: Boolean
             get() = getEntityData().includeInProjectBuild
             set(value) {
+                checkModificationAllowed()
                 getEntityData().includeInProjectBuild = value
                 changedProperty.add("includeInProjectBuild")
             }
@@ -174,6 +225,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         override var outputUrl: VirtualFileUrl?
             get() = getEntityData().outputUrl
             set(value) {
+                checkModificationAllowed()
                 getEntityData().outputUrl = value
                 changedProperty.add("outputUrl")
                 val _diff = diff
@@ -191,14 +243,21 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value != null) {
+                            val access = value::class.memberProperties.single { it.name == "_artifact" } as KMutableProperty1<*, *>
+                            access.setter.call(value, this)
+                        }
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToAbstractOneChildOfParent(ROOTELEMENT_CONNECTION_ID, this, value)
                     }
                     else {
                         if (value != null) {
                             val access = value::class.memberProperties.single { it.name == "_artifact" } as KMutableProperty1<*, *>
-                            // y
                             access.setter.call(value, this)
                         }
                         
@@ -218,8 +277,14 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null) {
+                        for (item_value in value) {
+                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                                _diff.addEntity(item_value)
+                            }
+                        }
                         _diff.updateOneToManyChildrenOfParent(CUSTOMPROPERTIES_CONNECTION_ID, this, value)
                     }
                     else {
@@ -247,7 +312,15 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ArtifactOutputPackagingElementEntityImpl.Builder) {
+                            value._artifact = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, value)
                     }
@@ -262,8 +335,6 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     changedProperty.add("artifactOutputPackagingElement")
                 }
         
-        override fun hasNewValue(field: Field<in ArtifactEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ArtifactEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ArtifactEntityData = result ?: super.getEntityData() as ArtifactEntityData
         override fun getEntityClass(): Class<ArtifactEntity> = ArtifactEntity::class.java
     }
@@ -284,10 +355,12 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ArtifactEntity> {
         val modifiable = ArtifactEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

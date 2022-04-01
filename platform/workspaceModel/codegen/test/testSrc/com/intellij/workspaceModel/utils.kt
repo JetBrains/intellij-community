@@ -10,6 +10,7 @@ internal fun generateEntities() {
     val deftRoot = File("").absoluteFile
 
     val dir = deftRoot.resolve("community/platform/workspaceModel/codegen/test/testSrc/com/intellij/workspaceModel/model")
+    CodeWriter().generate(dir, "api", "api/impl", "org.jetbrains.deft.IntellijWs")
     CodeWriter().generate(dir, "testing", "testing/impl", "org.jetbrains.deft.IntellijWsTest")
     CodeWriter().generate(dir, "testingij", "testingij/impl", "org.jetbrains.deft.IntellijWsTestIj")
     CodeWriter().generate(dir, "ext", "ext/impl", "org.jetbrains.deft.IntellijWsTestIjExt")

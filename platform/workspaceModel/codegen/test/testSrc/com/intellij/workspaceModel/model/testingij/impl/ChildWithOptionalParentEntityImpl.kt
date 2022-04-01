@@ -179,8 +179,6 @@ open class ChildWithOptionalParentEntityImpl: ChildWithOptionalParentEntity, Wor
                     changedProperty.add("optionalParent")
                 }
         
-        override fun hasNewValue(field: Field<in ChildWithOptionalParentEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ChildWithOptionalParentEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ChildWithOptionalParentEntityData = result ?: super.getEntityData() as ChildWithOptionalParentEntityData
         override fun getEntityClass(): Class<ChildWithOptionalParentEntity> = ChildWithOptionalParentEntity::class.java
     }

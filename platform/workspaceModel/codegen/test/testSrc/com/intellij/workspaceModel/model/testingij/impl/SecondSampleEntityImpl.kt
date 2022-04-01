@@ -122,8 +122,6 @@ open class SecondSampleEntityImpl: SecondSampleEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in SecondSampleEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in SecondSampleEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
         override fun getEntityClass(): Class<SecondSampleEntity> = SecondSampleEntity::class.java
     }

@@ -38,9 +38,6 @@ abstract class ObjBuilderImpl<T : Obj> :
     override val factory: ObjType<T, *>
         get() = result.factory as ObjType<T, *>
 
-    override fun hasNewValue(field: Field<in T, *>): Boolean =
-        result.hasNewValue(field as Field<*, *>)
-
     @Suppress("UNCHECKED_CAST")
     override fun build(): T {
         result.freeze()

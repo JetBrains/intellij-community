@@ -128,8 +128,6 @@ open class SecondEntityWithPIdImpl: SecondEntityWithPId, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in SecondEntityWithPId, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in SecondEntityWithPId, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): SecondEntityWithPIdData = result ?: super.getEntityData() as SecondEntityWithPIdData
         override fun getEntityClass(): Class<SecondEntityWithPId> = SecondEntityWithPId::class.java
     }

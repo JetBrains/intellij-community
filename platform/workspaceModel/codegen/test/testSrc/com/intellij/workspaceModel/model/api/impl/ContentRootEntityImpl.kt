@@ -1,10 +1,13 @@
 package com.intellij.workspace.model.api
 
+import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -14,7 +17,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import org.jetbrains.deft.*
 import org.jetbrains.deft.bytes.*
 import org.jetbrains.deft.collections.*
@@ -26,9 +28,9 @@ import org.jetbrains.deft.impl.fields.Field
 open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-        private val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-        private val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
     
     override val factory: ObjType<*, *>
@@ -94,6 +96,33 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
             val (withBuilder_sourceRoots, woBuilder_sourceRoots) = __sourceRoots.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(SOURCEROOTS_CONNECTION_ID, withBuilder_sourceRoots)
             this._sourceRoots = if (woBuilder_sourceRoots.isNotEmpty()) woBuilder_sourceRoots else null
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
             val __module = _module
@@ -101,6 +130,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 builder.addEntity(__module)
             }
             if (__module != null && (__module is ModifiableWorkspaceEntityBase<*>) && __module.diff != null) {
+                // Set field to null (in referenced entity)
                 val __mutContentRoots = (__module as ModuleEntityImpl.Builder)._contentRoots?.toMutableList()
                 __mutContentRoots?.remove(this)
                 __module._contentRoots = if (__mutContentRoots.isNullOrEmpty()) null else __mutContentRoots
@@ -108,6 +138,24 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
             if (__module != null) {
                 applyParentRef(MODULE_CONNECTION_ID, __module)
                 this._module = null
+            }
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
             }
             checkInitialization() // TODO uncomment and check failed tests
         }
@@ -160,7 +208,15 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ModuleEntityImpl.Builder) {
+                            value._contentRoots = (value._contentRoots ?: emptyList()) + this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
                     }
@@ -178,6 +234,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -186,6 +243,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
         override var url: VirtualFileUrl
             get() = getEntityData().url
             set(value) {
+                checkModificationAllowed()
                 getEntityData().url = value
                 changedProperty.add("url")
                 val _diff = diff
@@ -195,6 +253,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
         override var excludedUrls: List<VirtualFileUrl>
             get() = getEntityData().excludedUrls
             set(value) {
+                checkModificationAllowed()
                 getEntityData().excludedUrls = value
                 val _diff = diff
                 if (_diff != null) index(this, "excludedUrls", value.toHashSet())
@@ -204,6 +263,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
         override var excludedPatterns: List<String>
             get() = getEntityData().excludedPatterns
             set(value) {
+                checkModificationAllowed()
                 getEntityData().excludedPatterns = value
                 
                 changedProperty.add("excludedPatterns")
@@ -220,8 +280,14 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null) {
+                        for (item_value in value) {
+                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                                _diff.addEntity(item_value)
+                            }
+                        }
                         _diff.updateOneToManyChildrenOfParent(SOURCEROOTS_CONNECTION_ID, this, value)
                     }
                     else {
@@ -249,7 +315,15 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is SourceRootOrderEntityImpl.Builder) {
+                            value._contentRootEntity = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(SOURCEROOTORDER_CONNECTION_ID, this, value)
                     }
@@ -264,8 +338,6 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     changedProperty.add("sourceRootOrder")
                 }
         
-        override fun hasNewValue(field: Field<in ContentRootEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ContentRootEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ContentRootEntityData = result ?: super.getEntityData() as ContentRootEntityData
         override fun getEntityClass(): Class<ContentRootEntity> = ContentRootEntity::class.java
     }
@@ -285,10 +357,12 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ContentRootEntity> {
         val modifiable = ContentRootEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

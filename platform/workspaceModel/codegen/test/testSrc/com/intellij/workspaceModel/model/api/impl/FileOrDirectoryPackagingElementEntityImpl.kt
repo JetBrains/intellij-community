@@ -2,9 +2,11 @@ package com.intellij.workspace.model.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -23,7 +25,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingElementEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
+        internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
     
     override val factory: ObjType<*, *>
@@ -58,6 +60,33 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
             val __compositePackagingElement = _compositePackagingElement
@@ -65,6 +94,7 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
                 builder.addEntity(__compositePackagingElement)
             }
             if (__compositePackagingElement != null && (__compositePackagingElement is ModifiableWorkspaceEntityBase<*>) && __compositePackagingElement.diff != null) {
+                // Set field to null (in referenced entity)
                 val access = __compositePackagingElement::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
                 val __mutChildren = (access.getter.call(__compositePackagingElement) as? List<*>)?.toMutableList()
                 __mutChildren?.remove(this)
@@ -73,6 +103,24 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
             if (__compositePackagingElement != null) {
                 applyParentRef(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, __compositePackagingElement)
                 this._compositePackagingElement = null
+            }
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
             }
             checkInitialization() // TODO uncomment and check failed tests
         }
@@ -109,7 +157,15 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value != null) {
+                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
+                        }
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToAbstractManyParentOfChild(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this, value)
                     }
@@ -127,6 +183,7 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
         override var filePath: String
             get() = getEntityData().filePath
             set(value) {
+                checkModificationAllowed()
                 getEntityData().filePath = value
                 changedProperty.add("filePath")
             }
@@ -134,13 +191,12 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
             }
         
-        override fun hasNewValue(field: Field<in FileOrDirectoryPackagingElementEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in FileOrDirectoryPackagingElementEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): FileOrDirectoryPackagingElementEntityData = result ?: super.getEntityData() as FileOrDirectoryPackagingElementEntityData
         override fun getEntityClass(): Class<FileOrDirectoryPackagingElementEntity> = FileOrDirectoryPackagingElementEntity::class.java
     }
@@ -156,10 +212,12 @@ class FileOrDirectoryPackagingElementEntityData : WorkspaceEntityData<FileOrDire
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<FileOrDirectoryPackagingElementEntity> {
         val modifiable = FileOrDirectoryPackagingElementEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

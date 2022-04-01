@@ -101,18 +101,10 @@ val <T : Obj> T.id: ObjId<T>
 
 interface ObjBuilder<T : Obj> {
     val factory: ObjType<T, *>
-
-    // todo: rename to hasValue
-    fun hasNewValue(field: Field<in T, *>): Boolean = false
-
-    // not `in T` to not clash with method in Obj
-    fun <V> setValue(field: Field<in T, V>, value: V)
-
     fun build(): T
 }
 
 operator fun <T : Obj, V> ObjBuilder<T>.get(field: Field<in T, V>): V = (this as T).getValue(field)
-operator fun <T : Obj, V> ObjBuilder<T>.set(field: Field<in T, V>, value: V): Unit = setValue(field, value)
 
 
 fun alienFieldError(expectedObjType: ObjType<*, *>, field: Field<*, *>): Nothing {

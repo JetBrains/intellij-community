@@ -179,8 +179,6 @@ open class VFUEntityImpl: VFUEntity, WorkspaceEntityBase() {
                 changedProperty.add("notNullRoots")
             }
         
-        override fun hasNewValue(field: Field<in VFUEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in VFUEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): VFUEntityData = result ?: super.getEntityData() as VFUEntityData
         override fun getEntityClass(): Class<VFUEntity> = VFUEntity::class.java
     }

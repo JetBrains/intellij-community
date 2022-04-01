@@ -175,8 +175,6 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in ParentChainEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ParentChainEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ParentChainEntityData = result ?: super.getEntityData() as ParentChainEntityData
         override fun getEntityClass(): Class<ParentChainEntity> = ParentChainEntity::class.java
     }

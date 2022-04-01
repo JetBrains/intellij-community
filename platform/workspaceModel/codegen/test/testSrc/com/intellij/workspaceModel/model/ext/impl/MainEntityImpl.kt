@@ -127,8 +127,6 @@ open class MainEntityImpl: MainEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in MainEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in MainEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): MainEntityData = result ?: super.getEntityData() as MainEntityData
         override fun getEntityClass(): Class<MainEntity> = MainEntity::class.java
     }

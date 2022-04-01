@@ -187,8 +187,6 @@ open class OoChildForParentWithPidEntityImpl: OoChildForParentWithPidEntity, Wor
                     changedProperty.add("parentEntity")
                 }
         
-        override fun hasNewValue(field: Field<in OoChildForParentWithPidEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in OoChildForParentWithPidEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): OoChildForParentWithPidEntityData = result ?: super.getEntityData() as OoChildForParentWithPidEntityData
         override fun getEntityClass(): Class<OoChildForParentWithPidEntity> = OoChildForParentWithPidEntity::class.java
     }

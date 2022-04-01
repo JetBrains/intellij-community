@@ -1,11 +1,6 @@
 package com.intellij.workspaceModel.storage.entities
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -128,8 +123,6 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in PersistentIdEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in PersistentIdEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): PersistentIdEntityData = result ?: super.getEntityData() as PersistentIdEntityData
         override fun getEntityClass(): Class<PersistentIdEntity> = PersistentIdEntity::class.java
     }

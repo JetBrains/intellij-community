@@ -192,8 +192,6 @@ open class ChildNullableEntityImpl: ChildNullableEntity, WorkspaceEntityBase() {
                     changedProperty.add("parentEntity")
                 }
         
-        override fun hasNewValue(field: Field<in ChildNullableEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ChildNullableEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ChildNullableEntityData = result ?: super.getEntityData() as ChildNullableEntityData
         override fun getEntityClass(): Class<ChildNullableEntity> = ChildNullableEntity::class.java
     }

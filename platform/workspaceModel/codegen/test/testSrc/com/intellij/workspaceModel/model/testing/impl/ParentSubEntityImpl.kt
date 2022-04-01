@@ -186,8 +186,6 @@ open class ParentSubEntityImpl: ParentSubEntity, WorkspaceEntityBase() {
                     changedProperty.add("child")
                 }
         
-        override fun hasNewValue(field: Field<in ParentSubEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ParentSubEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ParentSubEntityData = result ?: super.getEntityData() as ParentSubEntityData
         override fun getEntityClass(): Class<ParentSubEntity> = ParentSubEntity::class.java
     }

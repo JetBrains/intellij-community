@@ -209,8 +209,6 @@ open class ChildFirstEntityImpl: ChildFirstEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in ChildFirstEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ChildFirstEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ChildFirstEntityData = result ?: super.getEntityData() as ChildFirstEntityData
         override fun getEntityClass(): Class<ChildFirstEntity> = ChildFirstEntity::class.java
     }

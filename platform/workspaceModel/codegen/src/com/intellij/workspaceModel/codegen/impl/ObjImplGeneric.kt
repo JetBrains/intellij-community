@@ -58,16 +58,6 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
         super.estimateMaxSize() +
                 factory.structure.allFields.sumOf { it.type.estimateMaxSize(values[it.index]) }
 
-    override fun storeTo(output: Output) {
-        super.storeTo(output)
-        forEach { field, value -> field.type.store(output, value) }
-    }
-
-    override fun loadFrom(data: Input) {
-        super.loadFrom(data)
-        factory.structure.allFields.forEach { values[it.index] = it.type.load(data, this) }
-    }
-
     override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
         return when (method.name) {
             "getImpl" -> this
@@ -125,14 +115,6 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
             return result.getValue(field)
         }
 
-        override fun <V> setValue(field: Field<in T, V>, value: V) {
-            @Suppress("UNCHECKED_CAST")
-            field as Field<out T, V>
-            with(result) {
-                result.values[field.index] = field.type.extSetValue(result, value)
-            }
-        }
-
         @Suppress("UNCHECKED_CAST")
         override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
             return when (method.name) {
@@ -142,7 +124,6 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
                 "build" -> build()
                 "getFactory" -> factory
                 "getValue" -> result.getValue(args!![0] as Field<*, Any?>)
-                "setValue" -> setValue(args!![0] as Field<T, Any?>, args[1] as Field<*, Any?>)
                 "getName" -> name
                 "getParent" -> parent
                 "setName" -> name = args!![0] as String
@@ -156,8 +137,7 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
                             if (field != null) return getValue(field)
                         }
                         name.startsWith("set") -> {
-                            val field = factory.findFieldByAccessorName(name)
-                            if (field != null) return setValue(field, args!![0])
+                            return factory.findFieldByAccessorName(name)
                         }
                     }
 

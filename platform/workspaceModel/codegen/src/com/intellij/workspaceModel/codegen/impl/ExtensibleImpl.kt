@@ -62,25 +62,6 @@ abstract class ExtensibleImpl : Extensible {
         return result
     }
 
-    fun extensionsStoreTo(output: Output) {
-        output.writeInt(extensions.size)
-        _forEachExtensionRaw { field, value ->
-            field.id.writeTo(output)
-            (field as ExtField<Obj, Any?>).type.store(output, value)
-        }
-    }
-
-    fun extensionsLoadFrom(data: Input, module: ObjModule) {
-        repeat(data.readInt()) {
-            val fieldId = ExtFieldId.read(data)
-            // todo: ability to skip fields
-            val fieldModule = module.modules[fieldId.moduleId] ?: error("unknown ext field: $fieldId (unknown module)")
-            val field = fieldModule.getExtField(fieldId.localId) ?: error("unknown ext field: $fieldId (unknown local id)")
-            val value = field.type.load(data, this as? ObjImpl)
-            unsafeAddExtension(field, value, raw = true)
-        }
-    }
-
     override fun <R> unsafeGetExtension(field: ExtField<*, R>): R? {
         val i = extensionsSchema[field] ?: return null
         return maybeUnwrap(field, i)

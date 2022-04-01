@@ -140,8 +140,6 @@ open class ComposedIdSoftRefEntityImpl: ComposedIdSoftRefEntity, WorkspaceEntity
                 
             }
         
-        override fun hasNewValue(field: Field<in ComposedIdSoftRefEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ComposedIdSoftRefEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ComposedIdSoftRefEntityData = result ?: super.getEntityData() as ComposedIdSoftRefEntityData
         override fun getEntityClass(): Class<ComposedIdSoftRefEntity> = ComposedIdSoftRefEntity::class.java
     }

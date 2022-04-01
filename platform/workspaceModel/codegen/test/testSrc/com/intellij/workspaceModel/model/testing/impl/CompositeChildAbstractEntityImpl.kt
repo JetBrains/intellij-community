@@ -294,8 +294,6 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                     changedProperty.add("parentEntity")
                 }
         
-        override fun hasNewValue(field: Field<in CompositeChildAbstractEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in CompositeChildAbstractEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): CompositeChildAbstractEntityData = result ?: super.getEntityData() as CompositeChildAbstractEntityData
         override fun getEntityClass(): Class<CompositeChildAbstractEntity> = CompositeChildAbstractEntity::class.java
     }

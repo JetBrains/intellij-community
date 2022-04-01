@@ -9,18 +9,6 @@ interface OnLink<A, B> {
     fun add(a: A, b: B)
     fun remove(a: A, b: B)
 
-    class Ref<A: Obj, B>(val field: Field<*, B>): OnLink<A, B> {
-        override fun add(a: A, b: B) {
-            aBuilder(a).setValue(field as Field<in Obj, Any?>, b)
-        }
-
-        override fun remove(a: A, b: B) {
-            aBuilder(a).setValue(field as Field<in Obj, Any?>, null)
-        }
-
-        private fun aBuilder(a: A) = a.builder<ObjBuilderImpl<*>>()
-    }
-
     class List<A: Obj, B>(val field: Field<*, MutableList<B>>): OnLink<A, B> {
         override fun add(a: A, b: B) {
             list(a).add(b)

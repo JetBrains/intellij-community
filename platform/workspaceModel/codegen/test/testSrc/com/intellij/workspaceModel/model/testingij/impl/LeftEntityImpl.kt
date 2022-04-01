@@ -233,8 +233,6 @@ open class LeftEntityImpl: LeftEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in LeftEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in LeftEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): LeftEntityData = result ?: super.getEntityData() as LeftEntityData
         override fun getEntityClass(): Class<LeftEntity> = LeftEntity::class.java
     }

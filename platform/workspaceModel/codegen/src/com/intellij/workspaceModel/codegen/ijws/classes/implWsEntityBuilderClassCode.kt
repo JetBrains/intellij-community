@@ -186,8 +186,6 @@ ${
         
         ${structure.allFields.filter { it.name != "persistentId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
         
-        override fun hasNewValue(field: Field<in $javaFullName, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in $javaFullName, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): $javaDataName${if (abstract) "<T>" else ""} = result ?: super.getEntityData() as $javaDataName${if (abstract) "<T>" else ""}
         override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
     }

@@ -140,8 +140,6 @@ open class LinkedListEntityImpl: LinkedListEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun hasNewValue(field: Field<in LinkedListEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in LinkedListEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): LinkedListEntityData = result ?: super.getEntityData() as LinkedListEntityData
         override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
     }

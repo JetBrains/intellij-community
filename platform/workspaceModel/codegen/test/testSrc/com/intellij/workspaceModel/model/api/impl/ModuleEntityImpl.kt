@@ -3,9 +3,11 @@ package com.intellij.workspace.model.api
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -24,12 +26,12 @@ import org.jetbrains.deft.impl.fields.Field
 open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-        private val CUSTOMIMLDATA_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        private val GROUPPATH_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        private val JAVASETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        private val EXMODULEOPTIONS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        private val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val CUSTOMIMLDATA_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val GROUPPATH_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val JAVASETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val EXMODULEOPTIONS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
     
     override val factory: ObjType<*, *>
@@ -129,8 +131,53 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
             val (withBuilder_facets, woBuilder_facets) = __facets.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(FACETS_CONNECTION_ID, withBuilder_facets)
             this._facets = if (woBuilder_facets.isNotEmpty()) woBuilder_facets else null
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
+            }
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -171,6 +218,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
         override var name: String
             get() = getEntityData().name
             set(value) {
+                checkModificationAllowed()
                 getEntityData().name = value
                 changedProperty.add("name")
             }
@@ -178,6 +226,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -186,6 +235,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
         override var type: String?
             get() = getEntityData().type
             set(value) {
+                checkModificationAllowed()
                 getEntityData().type = value
                 changedProperty.add("type")
             }
@@ -193,6 +243,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
         override var dependencies: List<ModuleDependencyItem>
             get() = getEntityData().dependencies
             set(value) {
+                checkModificationAllowed()
                 getEntityData().dependencies = value
                 
                 changedProperty.add("dependencies")
@@ -209,8 +260,14 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null) {
+                        for (item_value in value) {
+                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                                _diff.addEntity(item_value)
+                            }
+                        }
                         _diff.updateOneToManyChildrenOfParent(CONTENTROOTS_CONNECTION_ID, this, value)
                     }
                     else {
@@ -238,7 +295,15 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ModuleCustomImlDataEntityImpl.Builder) {
+                            value._module = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(CUSTOMIMLDATA_CONNECTION_ID, this, value)
                     }
@@ -264,7 +329,15 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ModuleGroupPathEntityImpl.Builder) {
+                            value._module = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(GROUPPATH_CONNECTION_ID, this, value)
                     }
@@ -290,7 +363,15 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is JavaModuleSettingsEntityImpl.Builder) {
+                            value._module = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(JAVASETTINGS_CONNECTION_ID, this, value)
                     }
@@ -316,7 +397,15 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
+                            value._module = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(EXMODULEOPTIONS_CONNECTION_ID, this, value)
                     }
@@ -342,8 +431,14 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null) {
+                        for (item_value in value) {
+                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                                _diff.addEntity(item_value)
+                            }
+                        }
                         _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)
                     }
                     else {
@@ -360,8 +455,6 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     changedProperty.add("facets")
                 }
         
-        override fun hasNewValue(field: Field<in ModuleEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ModuleEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ModuleEntityData = result ?: super.getEntityData() as ModuleEntityData
         override fun getEntityClass(): Class<ModuleEntity> = ModuleEntity::class.java
     }
@@ -380,10 +473,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ModuleEntity> {
         val modifiable = ModuleEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

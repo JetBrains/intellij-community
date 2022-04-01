@@ -2,9 +2,11 @@ package com.intellij.workspace.model.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -21,7 +23,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
     
     override val factory: ObjType<*, *>
@@ -56,6 +58,33 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
             val __module = _module
@@ -63,11 +92,30 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
                 builder.addEntity(__module)
             }
             if (__module != null && (__module is ModifiableWorkspaceEntityBase<*>) && __module.diff != null) {
+                // Set field to null (in referenced entity)
                 (__module as ModuleEntityImpl.Builder)._groupPath = null
             }
             if (__module != null) {
                 applyParentRef(MODULE_CONNECTION_ID, __module)
                 this._module = null
+            }
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
             }
             checkInitialization() // TODO uncomment and check failed tests
         }
@@ -104,7 +152,15 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ModuleEntityImpl.Builder) {
+                            value._groupPath = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
                     }
@@ -122,6 +178,7 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -130,13 +187,12 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
         override var path: List<String>
             get() = getEntityData().path
             set(value) {
+                checkModificationAllowed()
                 getEntityData().path = value
                 
                 changedProperty.add("path")
             }
         
-        override fun hasNewValue(field: Field<in ModuleGroupPathEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ModuleGroupPathEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ModuleGroupPathEntityData = result ?: super.getEntityData() as ModuleGroupPathEntityData
         override fun getEntityClass(): Class<ModuleGroupPathEntity> = ModuleGroupPathEntity::class.java
     }
@@ -152,10 +208,12 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ModuleGroupPathEntity> {
         val modifiable = ModuleGroupPathEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

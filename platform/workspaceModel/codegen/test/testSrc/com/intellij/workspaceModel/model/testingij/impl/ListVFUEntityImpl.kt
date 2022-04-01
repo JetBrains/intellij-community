@@ -146,8 +146,6 @@ open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
                 changedProperty.add("fileProperty")
             }
         
-        override fun hasNewValue(field: Field<in ListVFUEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ListVFUEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
         override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
     }

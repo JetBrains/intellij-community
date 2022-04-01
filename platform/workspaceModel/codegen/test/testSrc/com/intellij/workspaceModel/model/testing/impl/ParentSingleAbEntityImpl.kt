@@ -173,8 +173,6 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
                 
             }
         
-        override fun hasNewValue(field: Field<in ParentSingleAbEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ParentSingleAbEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ParentSingleAbEntityData = result ?: super.getEntityData() as ParentSingleAbEntityData
         override fun getEntityClass(): Class<ParentSingleAbEntity> = ParentSingleAbEntity::class.java
     }

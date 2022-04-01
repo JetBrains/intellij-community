@@ -128,8 +128,6 @@ open class OneEntityWithPersistentIdImpl: OneEntityWithPersistentId, WorkspaceEn
                 
             }
         
-        override fun hasNewValue(field: Field<in OneEntityWithPersistentId, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in OneEntityWithPersistentId, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): OneEntityWithPersistentIdData = result ?: super.getEntityData() as OneEntityWithPersistentIdData
         override fun getEntityClass(): Class<OneEntityWithPersistentId> = OneEntityWithPersistentId::class.java
     }

@@ -1,17 +1,19 @@
 package com.intellij.workspace.model.api
 
+import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.workspaceModel.codegen.storage.url.VirtualFileUrl
 import org.jetbrains.deft.*
 import org.jetbrains.deft.bytes.*
 import org.jetbrains.deft.collections.*
@@ -23,9 +25,9 @@ import org.jetbrains.deft.impl.fields.Field
 open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        private val LIBRARYPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-        private val LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryFilesPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
+        internal val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val LIBRARYPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryFilesPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
     
     override val factory: ObjType<*, *>
@@ -97,8 +99,53 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 applyRef(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, __libraryFilesPackagingElement)
                 this._libraryFilesPackagingElement = null
             }
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
+            }
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -125,6 +172,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         override var name: String
             get() = getEntityData().name
             set(value) {
+                checkModificationAllowed()
                 getEntityData().name = value
                 changedProperty.add("name")
             }
@@ -132,6 +180,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -140,6 +189,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         override var tableId: LibraryTableId
             get() = getEntityData().tableId
             set(value) {
+                checkModificationAllowed()
                 getEntityData().tableId = value
                 changedProperty.add("tableId")
                 
@@ -148,6 +198,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         override var roots: List<LibraryRoot>
             get() = getEntityData().roots
             set(value) {
+                checkModificationAllowed()
                 getEntityData().roots = value
                 
                 val _diff = diff
@@ -169,6 +220,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         override var excludedRoots: List<VirtualFileUrl>
             get() = getEntityData().excludedRoots
             set(value) {
+                checkModificationAllowed()
                 getEntityData().excludedRoots = value
                 val _diff = diff
                 if (_diff != null) index(this, "excludedRoots", value.toHashSet())
@@ -186,7 +238,15 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is SdkEntityImpl.Builder) {
+                            value._library = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
                     }
@@ -212,7 +272,15 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is LibraryPropertiesEntityImpl.Builder) {
+                            value._library = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(LIBRARYPROPERTIES_CONNECTION_ID, this, value)
                     }
@@ -238,7 +306,15 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is LibraryFilesPackagingElementEntityImpl.Builder) {
+                            value._library = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneChildOfParent(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
                     }
@@ -253,8 +329,6 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     changedProperty.add("libraryFilesPackagingElement")
                 }
         
-        override fun hasNewValue(field: Field<in LibraryEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in LibraryEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): LibraryEntityData = result ?: super.getEntityData() as LibraryEntityData
         override fun getEntityClass(): Class<LibraryEntity> = LibraryEntity::class.java
     }
@@ -276,10 +350,12 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<LibraryEntity> {
         val modifiable = LibraryEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

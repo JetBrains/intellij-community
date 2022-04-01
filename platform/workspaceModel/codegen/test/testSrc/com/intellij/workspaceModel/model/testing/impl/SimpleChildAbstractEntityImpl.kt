@@ -182,8 +182,6 @@ open class SimpleChildAbstractEntityImpl: SimpleChildAbstractEntity, WorkspaceEn
                 
             }
         
-        override fun hasNewValue(field: Field<in SimpleChildAbstractEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in SimpleChildAbstractEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): SimpleChildAbstractEntityData = result ?: super.getEntityData() as SimpleChildAbstractEntityData
         override fun getEntityClass(): Class<SimpleChildAbstractEntity> = SimpleChildAbstractEntity::class.java
     }

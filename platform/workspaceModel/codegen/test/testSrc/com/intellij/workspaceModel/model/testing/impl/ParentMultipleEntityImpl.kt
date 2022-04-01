@@ -190,8 +190,6 @@ open class ParentMultipleEntityImpl: ParentMultipleEntity, WorkspaceEntityBase()
                     changedProperty.add("children")
                 }
         
-        override fun hasNewValue(field: Field<in ParentMultipleEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ParentMultipleEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ParentMultipleEntityData = result ?: super.getEntityData() as ParentMultipleEntityData
         override fun getEntityClass(): Class<ParentMultipleEntity> = ParentMultipleEntity::class.java
     }

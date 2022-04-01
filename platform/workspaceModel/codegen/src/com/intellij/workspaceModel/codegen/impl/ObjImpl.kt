@@ -231,17 +231,4 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
     open fun estimateMaxSize(): Int = name.outputMaxBytes +
             ObjId.bytesCount +
             extensionsEstimateMaxSize()
-
-    open fun storeTo(output: Output) {
-        output.writeString(name ?: "")
-        output.writeId(_parentId)
-        extensionsStoreTo(output)
-    }
-
-    open fun loadFrom(data: Input) {
-        val name = data.readString()
-        if (name.isNotEmpty()) this._name = name
-        _parentId = data.readInt()
-        extensionsLoadFrom(data, factory.module)
-    }
 }

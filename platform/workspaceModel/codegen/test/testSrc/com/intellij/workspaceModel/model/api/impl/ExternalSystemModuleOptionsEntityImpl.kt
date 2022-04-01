@@ -2,9 +2,11 @@ package com.intellij.workspace.model.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -21,7 +23,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
     
     override val factory: ObjType<*, *>
@@ -80,6 +82,33 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
             val __module = _module
@@ -87,11 +116,30 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
                 builder.addEntity(__module)
             }
             if (__module != null && (__module is ModifiableWorkspaceEntityBase<*>) && __module.diff != null) {
+                // Set field to null (in referenced entity)
                 (__module as ModuleEntityImpl.Builder)._exModuleOptions = null
             }
             if (__module != null) {
                 applyParentRef(MODULE_CONNECTION_ID, __module)
                 this._module = null
+            }
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
             }
             checkInitialization() // TODO uncomment and check failed tests
         }
@@ -125,7 +173,15 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ModuleEntityImpl.Builder) {
+                            value._exModuleOptions = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
                     }
@@ -143,6 +199,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -151,6 +208,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var externalSystem: String?
             get() = getEntityData().externalSystem
             set(value) {
+                checkModificationAllowed()
                 getEntityData().externalSystem = value
                 changedProperty.add("externalSystem")
             }
@@ -158,6 +216,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var externalSystemModuleVersion: String?
             get() = getEntityData().externalSystemModuleVersion
             set(value) {
+                checkModificationAllowed()
                 getEntityData().externalSystemModuleVersion = value
                 changedProperty.add("externalSystemModuleVersion")
             }
@@ -165,6 +224,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var linkedProjectPath: String?
             get() = getEntityData().linkedProjectPath
             set(value) {
+                checkModificationAllowed()
                 getEntityData().linkedProjectPath = value
                 changedProperty.add("linkedProjectPath")
             }
@@ -172,6 +232,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var linkedProjectId: String?
             get() = getEntityData().linkedProjectId
             set(value) {
+                checkModificationAllowed()
                 getEntityData().linkedProjectId = value
                 changedProperty.add("linkedProjectId")
             }
@@ -179,6 +240,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var rootProjectPath: String?
             get() = getEntityData().rootProjectPath
             set(value) {
+                checkModificationAllowed()
                 getEntityData().rootProjectPath = value
                 changedProperty.add("rootProjectPath")
             }
@@ -186,6 +248,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var externalSystemModuleGroup: String?
             get() = getEntityData().externalSystemModuleGroup
             set(value) {
+                checkModificationAllowed()
                 getEntityData().externalSystemModuleGroup = value
                 changedProperty.add("externalSystemModuleGroup")
             }
@@ -193,12 +256,11 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
         override var externalSystemModuleType: String?
             get() = getEntityData().externalSystemModuleType
             set(value) {
+                checkModificationAllowed()
                 getEntityData().externalSystemModuleType = value
                 changedProperty.add("externalSystemModuleType")
             }
         
-        override fun hasNewValue(field: Field<in ExternalSystemModuleOptionsEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ExternalSystemModuleOptionsEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ExternalSystemModuleOptionsEntityData = result ?: super.getEntityData() as ExternalSystemModuleOptionsEntityData
         override fun getEntityClass(): Class<ExternalSystemModuleOptionsEntity> = ExternalSystemModuleOptionsEntity::class.java
     }
@@ -219,10 +281,12 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity> {
         val modifiable = ExternalSystemModuleOptionsEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

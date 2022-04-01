@@ -2,9 +2,11 @@ package com.intellij.workspace.model.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -21,7 +23,7 @@ import org.jetbrains.deft.impl.fields.Field
 open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEntityBase() {
     
     companion object {
-        private val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
     
     override val factory: ObjType<*, *>
@@ -60,6 +62,33 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
             
             // Adding parents and references to the parent
             val __artifact = _artifact
@@ -67,6 +96,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                 builder.addEntity(__artifact)
             }
             if (__artifact != null && (__artifact is ModifiableWorkspaceEntityBase<*>) && __artifact.diff != null) {
+                // Set field to null (in referenced entity)
                 val __mutCustomProperties = (__artifact as ArtifactEntityImpl.Builder)._customProperties?.toMutableList()
                 __mutCustomProperties?.remove(this)
                 __artifact._customProperties = if (__mutCustomProperties.isNullOrEmpty()) null else __mutCustomProperties
@@ -74,6 +104,24 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
             if (__artifact != null) {
                 applyParentRef(ARTIFACT_CONNECTION_ID, __artifact)
                 this._artifact = null
+            }
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
             }
             checkInitialization() // TODO uncomment and check failed tests
         }
@@ -110,7 +158,15 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                     }
                 }
                 set(value) {
+                    checkModificationAllowed()
                     val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is ArtifactEntityImpl.Builder) {
+                            value._customProperties = (value._customProperties ?: emptyList()) + this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                         _diff.updateOneToManyParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
                     }
@@ -128,6 +184,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
+                checkModificationAllowed()
                 getEntityData().entitySource = value
                 changedProperty.add("entitySource")
                 
@@ -136,6 +193,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
         override var providerType: String
             get() = getEntityData().providerType
             set(value) {
+                checkModificationAllowed()
                 getEntityData().providerType = value
                 changedProperty.add("providerType")
             }
@@ -143,12 +201,11 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
         override var propertiesXmlTag: String?
             get() = getEntityData().propertiesXmlTag
             set(value) {
+                checkModificationAllowed()
                 getEntityData().propertiesXmlTag = value
                 changedProperty.add("propertiesXmlTag")
             }
         
-        override fun hasNewValue(field: Field<in ArtifactPropertiesEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in ArtifactPropertiesEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): ArtifactPropertiesEntityData = result ?: super.getEntityData() as ArtifactPropertiesEntityData
         override fun getEntityClass(): Class<ArtifactPropertiesEntity> = ArtifactPropertiesEntity::class.java
     }
@@ -165,10 +222,12 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ArtifactPropertiesEntity> {
         val modifiable = ArtifactPropertiesEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.snapshot = diff
-        modifiable.id = createEntityId()
-        modifiable.entitySource = this.entitySource
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
         return modifiable
     }
 

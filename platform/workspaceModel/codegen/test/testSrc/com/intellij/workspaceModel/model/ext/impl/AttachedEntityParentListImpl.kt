@@ -127,8 +127,6 @@ open class AttachedEntityParentListImpl: AttachedEntityParentList, WorkspaceEnti
                 
             }
         
-        override fun hasNewValue(field: Field<in AttachedEntityParentList, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in AttachedEntityParentList, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): AttachedEntityParentListData = result ?: super.getEntityData() as AttachedEntityParentListData
         override fun getEntityClass(): Class<AttachedEntityParentList> = AttachedEntityParentList::class.java
     }

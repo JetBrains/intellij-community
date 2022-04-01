@@ -138,8 +138,6 @@ open class WithListSoftLinksEntityImpl: WithListSoftLinksEntity, WorkspaceEntity
                 changedProperty.add("links")
             }
         
-        override fun hasNewValue(field: Field<in WithListSoftLinksEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in WithListSoftLinksEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): WithListSoftLinksEntityData = result ?: super.getEntityData() as WithListSoftLinksEntityData
         override fun getEntityClass(): Class<WithListSoftLinksEntity> = WithListSoftLinksEntity::class.java
     }

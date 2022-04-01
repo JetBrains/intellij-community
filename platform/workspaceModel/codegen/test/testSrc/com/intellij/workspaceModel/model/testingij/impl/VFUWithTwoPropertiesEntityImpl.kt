@@ -164,8 +164,6 @@ open class VFUWithTwoPropertiesEntityImpl: VFUWithTwoPropertiesEntity, Workspace
                 if (_diff != null) index(this, "secondFileProperty", value)
             }
         
-        override fun hasNewValue(field: Field<in VFUWithTwoPropertiesEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in VFUWithTwoPropertiesEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): VFUWithTwoPropertiesEntityData = result ?: super.getEntityData() as VFUWithTwoPropertiesEntityData
         override fun getEntityClass(): Class<VFUWithTwoPropertiesEntity> = VFUWithTwoPropertiesEntity::class.java
     }

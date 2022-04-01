@@ -143,8 +143,6 @@ open class NullableVFUEntityImpl: NullableVFUEntity, WorkspaceEntityBase() {
                 if (_diff != null) index(this, "fileProperty", value)
             }
         
-        override fun hasNewValue(field: Field<in NullableVFUEntity, *>): Boolean = TODO("Not yet implemented")                                                                     
-        override fun <V> setValue(field: Field<in NullableVFUEntity, V>, value: V) = TODO("Not yet implemented")
         override fun getEntityData(): NullableVFUEntityData = result ?: super.getEntityData() as NullableVFUEntityData
         override fun getEntityClass(): Class<NullableVFUEntity> = NullableVFUEntity::class.java
     }
