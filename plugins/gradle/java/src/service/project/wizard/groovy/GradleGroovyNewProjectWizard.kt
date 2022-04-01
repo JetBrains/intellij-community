@@ -9,6 +9,14 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep.Companion.withJavaSampleCodeAsset
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
@@ -16,6 +24,8 @@ import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -29,7 +39,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal: Int = 2
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step): GradleNewProjectWizardStep<GroovyNewProjectWizard.Step> = Step(parent)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     GradleNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
@@ -94,6 +104,16 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
+    }
+  }
+
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
+      addAssets(StandardAssetsProvider().getGradlewAssets())
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      }
     }
   }
 }
