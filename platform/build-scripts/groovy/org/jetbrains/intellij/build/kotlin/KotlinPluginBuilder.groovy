@@ -36,6 +36,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.util",
     "kotlin.base.indices",
     "kotlin.base.compiler-configuration",
+    "kotlin.base.plugin",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",

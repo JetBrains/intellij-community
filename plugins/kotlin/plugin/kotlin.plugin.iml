@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.common" scope="PROVIDED" />

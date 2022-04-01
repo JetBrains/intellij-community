@@ -11,12 +11,12 @@ import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
+import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import java.awt.EventQueue
 import java.io.File
 
@@ -58,7 +58,7 @@ object KotlinArtifactsDownloader {
         KOTLIN_DIST_ARTIFACT_ID,
         version,
         indicator,
-        KotlinBundle.message("progress.text.downloading.kotlinc.dist"),
+        KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist"),
         onError
     )?.let { lazyUnpackJar(it, getUnpackedKotlinDistPath(version)) }
 

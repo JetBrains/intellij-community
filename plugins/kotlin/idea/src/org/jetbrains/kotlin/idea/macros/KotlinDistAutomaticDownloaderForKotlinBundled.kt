@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -60,7 +61,7 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
     private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, version: String, project: Project) {
         if (version.isNotBlank() && isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
             ProgressManager.getInstance()
-                .run(object : Task.Backgroundable(project, KotlinBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
+                .run(object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
                     override fun run(indicator: ProgressIndicator) {
                         KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(project, version, indicator, onError = { errorMsg ->
                             NotificationGroupManager.getInstance()
