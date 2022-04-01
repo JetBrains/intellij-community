@@ -3,9 +3,11 @@ package com.intellij.cce.processor
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
 
 class CallCompletionProcessor(private val text: String,
                               private val strategy: CompletionStrategy,
+                              private val language: Language,
                               textStart: Int) : GenerateActionsProcessor() {
   private var previousTextStart = textStart
 
@@ -26,9 +28,11 @@ class CallCompletionProcessor(private val text: String,
 
       val remainingText = this.text.substring(IntRange(previousTextStart, code.offset + code.length - 1))
 
-      val scopes = TextScopes(remainingText)
-      if (scopes.closedCount != 0) {
-        addAction(DeleteRange(previousTextStart, previousTextStart + scopes.closedCount))
+      if (language.curlyBracket) {
+        val scopes = TextScopes(remainingText)
+        if (scopes.closedCount != 0) {
+          addAction(DeleteRange(previousTextStart, previousTextStart + scopes.closedCount))
+        }
       }
 
       addAction(MoveCaret(previousTextStart))
@@ -81,17 +85,21 @@ class CallCompletionProcessor(private val text: String,
     if (previousTextStart <= token.offset) {
       val previousText = text.substring(IntRange(previousTextStart, token.offset - 1))
 
-      val scopes = TextScopes(previousText)
+      if (language.curlyBracket) {
+        val scopes = TextScopes(previousText)
+        if (scopes.closedCount != 0) {
+          addAction(DeleteRange(previousTextStart, previousTextStart + scopes.closedCount))
+        }
 
-      if (scopes.closedCount != 0) {
-        addAction(DeleteRange(previousTextStart, previousTextStart + scopes.closedCount))
-      }
+        addAction(MoveCaret(previousTextStart))
+        addAction(PrintText(previousText))
 
-      addAction(MoveCaret(previousTextStart))
-      addAction(PrintText(previousText))
-
-      if (scopes.reversedOpened.isNotEmpty()) {
-        addAction(PrintText(scopes.reversedOpened))
+        if (scopes.reversedOpened.isNotEmpty()) {
+          addAction(PrintText(scopes.reversedOpened))
+        }
+      } else {
+        addAction(MoveCaret(previousTextStart))
+        addAction(PrintText(previousText))
       }
 
       previousTextStart = token.offset + token.length

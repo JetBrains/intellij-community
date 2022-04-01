@@ -1,12 +1,13 @@
 package com.intellij.cce.actions
 
 import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.Language
 import com.intellij.cce.processor.CallCompletionProcessor
 import com.intellij.cce.processor.CodeGolfProcessor
 import com.intellij.cce.processor.DeleteScopesProcessor
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 
-class ActionsGenerator(val strategy: CompletionStrategy) {
+class ActionsGenerator(val strategy: CompletionStrategy, private val language: Language) {
 
   fun generate(code: CodeFragment): FileActions {
     val deletionVisitor = DeleteScopesProcessor()
@@ -14,7 +15,7 @@ class ActionsGenerator(val strategy: CompletionStrategy) {
 
     val completionVisitor =
       if (strategy.codeGolf) CodeGolfProcessor()
-      else CallCompletionProcessor(code.text, strategy, code.offset)
+      else CallCompletionProcessor(code.text, strategy, language, code.offset)
 
     completionVisitor.process(code)
 

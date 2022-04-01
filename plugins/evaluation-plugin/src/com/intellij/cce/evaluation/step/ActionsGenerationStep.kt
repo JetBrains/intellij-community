@@ -1,10 +1,7 @@
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.actions.*
-import com.intellij.cce.core.JvmProperties
-import com.intellij.cce.core.PropertyAdapters
-import com.intellij.cce.core.SymbolLocation
-import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.core.*
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -37,7 +34,7 @@ class ActionsGenerationStep(
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
                               strategy: CompletionStrategy, evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(strategy)
+    val actionsGenerator = ActionsGenerator(strategy, Language.resolve(languageName))
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
 
     val errors = mutableListOf<FileErrorInfo>()
