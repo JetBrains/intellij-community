@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -16,7 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinClassPath
+import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerClasspathProvider
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -83,7 +82,7 @@ class KotlinConsoleKeeper(val project: Project) {
             }
 
             javaParameters.classPath.apply {
-                val classPath = KotlinClassPath.CompilerWithScripting.computeClassPath()
+                val classPath = KotlinCompilerClasspathProvider.compilerWithScriptingClasspath.value
                 addAll(classPath.map { file ->
                     val path = file.toPath()
                     val absolutePath = path.absolutePathString()
