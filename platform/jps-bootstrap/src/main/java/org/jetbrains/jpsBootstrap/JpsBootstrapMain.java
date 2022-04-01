@@ -228,7 +228,7 @@ public class JpsBootstrapMain {
     // so download them all
     //
     // In case of running from read-to-use classes we need all dependent libraries as well
-    // Instead of calculating what libraries are exacly required, download them all
+    // Instead of calculating what libraries are exactly required, download them all
     jpsBuild.resolveProjectDependencies();
 
     if (manifestJsonUrl != null) {

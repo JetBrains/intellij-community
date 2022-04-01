@@ -75,6 +75,8 @@ public class JpsBuild {
   }
 
   public void resolveProjectDependencies() throws Exception {
+    info("Resolving project dependencies...");
+
     final long buildStart = System.currentTimeMillis();
 
     List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes = new ArrayList<>();
@@ -84,6 +86,11 @@ public class JpsBuild {
 
     JpsMessageHandler messageHandler = new JpsMessageHandler();
 
+    if (!underTeamCity) {
+      // Show downloading process on local run, very handy
+      messageHandler.setExplicitlyVerbose();
+    }
+
     Standalone.runBuild(
       () -> myModel,
       myDataStorageRoot,
@@ -92,7 +99,7 @@ public class JpsBuild {
       false
     );
 
-    System.out.println("Finished resolving project dependencies in " + (System.currentTimeMillis() - buildStart) + " ms");
+    info("Finished resolving project dependencies in " + (System.currentTimeMillis() - buildStart) + " ms");
 
     messageHandler.assertNoErrors();
   }
@@ -125,7 +132,14 @@ public class JpsBuild {
   }
 
   private class JpsMessageHandler implements MessageHandler {
+    private boolean myExplicitlyVerbose;
+
     private final AtomicReference<String> myFirstError = new AtomicReference<>();
+    private final AtomicReference<String> myLastMessage = new AtomicReference<>();
+
+    public void setExplicitlyVerbose() {
+      myExplicitlyVerbose = true;
+    }
 
     @Override
     public void processMessage(BuildMessage msg) {
@@ -135,8 +149,22 @@ public class JpsBuild {
       switch (kind) {
         case PROGRESS:
         case WARNING:
-          // Warnings mean little for bootstrapping
-          verbose(text);
+          String lastMessage = myLastMessage.get();
+          if (text.equals(lastMessage)) {
+            // Quick and dirty way to remove duplicate verbose messages
+            return;
+          }
+          else {
+            myLastMessage.set(text);
+          }
+
+          if (myExplicitlyVerbose) {
+            info(text);
+          }
+          else {
+            // Warnings mean little for bootstrapping
+            verbose(text);
+          }
           break;
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
