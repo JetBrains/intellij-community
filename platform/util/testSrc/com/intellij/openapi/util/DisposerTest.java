@@ -8,12 +8,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,8 +28,8 @@ public class DisposerTest extends TestCase {
   private MyLoggingDisposable myFolder2;
   private MyLoggingDisposable myLeaf1;
   private MyLoggingDisposable myLeaf2;
-  private final List<MyLoggingDisposable> myDisposedObjects = new ArrayList<>();
-  @NonNls private final List<String> myDisposeActions = new ArrayList<>();
+  private final List<MyLoggingDisposable> myDisposedObjects = Collections.synchronizedList(new ArrayList<>());
+  @NonNls private final List<String> myDisposeActions = Collections.synchronizedList(new ArrayList<>());
 
   @Override
   protected void setUp() throws Exception {
@@ -250,7 +252,7 @@ public class DisposerTest extends TestCase {
 
     @Override
     public String toString() {
-      return myName;
+      return myName +"; myDisposed="+myDisposed;
     }
   }
 
@@ -305,7 +307,7 @@ public class DisposerTest extends TestCase {
     Disposer.register(child, grand);
 
     try {
-      Disposer.disposeChildren(parent, null);
+      Disposer.disposeChildren(parent, __->true);
       assertFalse(Disposer.isDisposed(parent));
       Disposer.dispose(parent);
       assertTrue(Disposer.isDisposed(parent));
@@ -404,17 +406,24 @@ public class DisposerTest extends TestCase {
   }
 
   public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
+    LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
 
-    for (int i = 0; i < 100; i++) {
-      MyLoggingDisposable parent = new MyLoggingDisposable("parent");
-      Future<?> future = executor.submit(() -> Disposer.tryRegister(parent, new MyLoggingDisposable("child")));
+    for (int i = 0; i < 1000; i++) {
+      myDisposeActions.clear();
+      myDisposedObjects.clear();
+      MyLoggingDisposable parent = new MyLoggingDisposable("parent"+i);
+      MyLoggingDisposable child = new MyLoggingDisposable("child" + i);
+      Future<Boolean> future = executor.submit(() -> Disposer.tryRegister(parent, child));
 
       Disposer.dispose(parent);
 
-      future.get();
-
+      boolean registered = future.get();
+      assertTrue(parent.isDisposed());
+      assertEquals(registered, child.isDisposed());
       LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+      ObjectUtils.reachabilityFence(parent);
+      ObjectUtils.reachabilityFence(child);
     }
   }
 
@@ -563,5 +572,16 @@ public class DisposerTest extends TestCase {
     LeakHunter.checkLeak(Disposer.getTree(), MyChildDisposable.class);
     Disposer.dispose(parent);
     LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+  }
+
+  public void testTryRegisterMustCheckInvariantsToo() {
+    Disposable parent = new MyLoggingDisposable("parent");
+    Disposable child = new MyLoggingDisposable("child");
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.tryRegister(parent, parent));
+    assertTrue(Disposer.tryRegister(parent, child));
+    UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.tryRegister(child, parent));
+    Disposer.dispose(parent);
+    assertFalse(Disposer.tryRegister(parent, child));
+    Disposer.dispose(child);
   }
 }

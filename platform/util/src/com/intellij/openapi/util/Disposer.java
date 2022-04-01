@@ -4,7 +4,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -115,8 +114,7 @@ public final class Disposer {
    *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
-    RuntimeException e = ourTree.register(parent, child);
-    if (e != null) throw e;
+    ourTree.register(parent, child);
   }
 
   /**
@@ -124,7 +122,7 @@ public final class Disposer {
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    return ourTree.register(parent, child) == null;
+    return ourTree.tryRegister(parent, child);
   }
 
   /**
@@ -179,7 +177,7 @@ public final class Disposer {
    */
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
-    return ourTree.getDisposalInfo(disposable) != null;
+    return ourTree.isDisposed(disposable);
   }
 
   /**
@@ -211,7 +209,7 @@ public final class Disposer {
    * {@code predicate} is used only for direct children.
    */
   @ApiStatus.Internal
-  public static void disposeChildren(@NotNull Disposable disposable, @Nullable Predicate<? super Disposable> predicate) {
+  public static void disposeChildren(@NotNull Disposable disposable, @NotNull Predicate<? super Disposable> predicate) {
     ourTree.executeAllChildren(disposable, predicate);
   }
 
@@ -220,6 +218,7 @@ public final class Disposer {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public static ObjectTree getTree() {
     return ourTree;
   }
@@ -251,7 +250,7 @@ public final class Disposer {
   }
 
   public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
-    return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
+    return getTree().getDisposalTrace(disposable);
   }
 
   /**
