@@ -193,6 +193,8 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testSpockTableWithLongTableParts() throws Throwable { doTest() }
 
+  void testSpockTableSeparatedByUnderscores() throws Throwable { doTest() }
+
   void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false
     doTest()

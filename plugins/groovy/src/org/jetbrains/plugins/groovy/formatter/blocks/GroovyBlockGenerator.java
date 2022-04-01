@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.intellij.formatting.Indent.*;
 import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.flattenQualifiedReference;
@@ -484,7 +485,7 @@ public class GroovyBlockGenerator {
       else {
         if (shouldSkip(classLevel, psi)) continue;
         alignGroup(currentGroup, spock, classLevel);
-        currentGroup = null;
+        currentGroup = psi instanceof GrReferenceExpression && Pattern.matches("^__+$", psi.getText()) ? new ArrayList<>() : null;
       }
     }
 

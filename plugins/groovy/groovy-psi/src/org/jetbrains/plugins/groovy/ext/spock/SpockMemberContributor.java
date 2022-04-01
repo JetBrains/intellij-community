@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.psi.PsiClass;
@@ -11,10 +11,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Sergey Evdokimov
@@ -47,6 +50,10 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
         if (spockVar != null && spockVar.getNavigationElement() != place) {
           processor.execute(spockVar.getVariable(), state);
         }
+        if (UNDERSCORES.matcher(nameHint).matches()) {
+          GrLightVariable variable = new GrLightVariable(place.getManager(), nameHint, PsiType.NULL, List.of(), method);
+          processor.execute(variable, state);
+        }
       }
     }
   }
@@ -55,4 +62,6 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
   public String getParentClassName() {
     return SpockUtils.SPEC_CLASS_NAME;
   }
+
+  private static final Pattern UNDERSCORES = Pattern.compile("^__+$");
 }
