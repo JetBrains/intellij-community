@@ -538,33 +538,28 @@ public final class Utils {
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
-          Ref<UpdateSession> sessionRef = Ref.create();
           Runnable runnable = () -> {
+            UpdateSession session = null;
             Set<String> missedKeys = Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
             if (missedKeys != null) {
-              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-              T fastResult = function.apply(fastSession);
-              ref.set(fastResult);
-              sessionRef.set(fastSession);
+              session = actionUpdater.asFastUpdateSession(missedKeys::add, null);
+              ref.set(function.apply(session));
             }
             if (ref.isNull() && (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)))) {
-              UpdateSession slowSession = actionUpdater.asUpdateSession();
-              T slowResult = function.apply(slowSession);
-              ref.set(slowResult);
-              sessionRef.set(slowSession);
+              session = actionUpdater.asUpdateSession();
+              ref.set(function.apply(session));
             }
+            queue.offer(ActionUpdater.getActionUpdater(Objects.requireNonNull(session))::applyPresentationChanges);
           };
           ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
-          ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(() ->
-              ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+          ProgressManager.getInstance().executeProcessUnderProgress(
+            ProgressManager.getInstance().computePrioritized(() ->
+              () -> ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
                 applicationEx,
                 () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
-                () -> applicationEx.tryRunReadAction(runnable)), indicator);
-            return ref.get();
-          });
-          queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
+                () -> applicationEx.tryRunReadAction(runnable))),
+            indicator);
           queue.offer(() -> promise.setResult(ref.get()));
         }
         catch (Throwable e) {
