@@ -14,6 +14,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiRecordHeaderStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
@@ -46,7 +47,8 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @Override
   public PsiElement @NotNull [] getChildren() {
     List<PsiElement> children = new ArrayList<>();
-    ContainerUtil.addAll(children, getChildren(getDocComment(), getModifierListInternal(), getNameIdentifier(), getExtendsList(), getImplementsList()));
+    ContainerUtil.addAll(children, getChildren(getDocComment(), getModifierListInternal(), getNameIdentifier(),
+                                               getExtendsList(), getImplementsList(), getPermitsList()));
     children.addAll(getOwnFields());
     children.addAll(getOwnMethods());
     children.addAll(getOwnInnerClasses());
@@ -99,6 +101,12 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @NotNull
   public PsiReferenceList getExtendsList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_LIST)).getPsi();
+  }
+
+  @Override
+  public @Nullable PsiReferenceList getPermitsList() {
+    PsiClassReferenceListStub type = getStub().findChildStubByType(JavaStubElementTypes.PERMITS_LIST);
+    return type == null ? null : type.getPsi();
   }
 
   @Override
@@ -357,6 +365,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     appendText(getTypeParameterList(), indentLevel, buffer, " ");
     appendText(getExtendsList(), indentLevel, buffer, " ");
     appendText(getImplementsList(), indentLevel, buffer, " ");
+    appendText(getPermitsList(), indentLevel, buffer, " ");
 
     buffer.append('{');
 
