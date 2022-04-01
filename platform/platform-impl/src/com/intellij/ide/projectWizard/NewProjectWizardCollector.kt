@@ -76,8 +76,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", sessionIdField, screenNumField, groovySourceTypeField, groovyVersionField)
 
     //logs
-    @JvmStatic fun logOpen(context: WizardContext) = open.log(context.project,screenNumField with context.screen)
-    @JvmStatic fun logFinish(context: WizardContext, success: Boolean, duration: Long) = finish.log(context.project,screenNumField with context.screen, isSucceededField with success, EventFields.DurationMs with duration)
+    @JvmStatic fun logOpen(context: WizardContext) = open.log(context.project,sessionIdField with context.sessionId.id, screenNumField with context.screen)
+    @JvmStatic fun logFinish(context: WizardContext, success: Boolean, duration: Long) = finish.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, isSucceededField with success, EventFields.DurationMs with duration)
     @JvmStatic fun logSearchChanged(context: WizardContext, chars: Int, results: Int) = search.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, typedCharsField with min(chars, 10), hitsField with results)
     @JvmStatic fun logLocationChanged(context: WizardContext, generator: Class<*>) = location.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
     @JvmStatic fun logNameChanged(context: WizardContext, generator: Class<*>) = name.log(context.project, sessionIdField with context.sessionId.id,screenNumField with context.screen, generatorTypeField with generator)
