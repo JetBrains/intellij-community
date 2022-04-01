@@ -427,13 +427,13 @@
     <action id="Vcs.Diff.IncludeOnlyChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Vcs.Diff.ExcludeChangedLinesFromCommit" anchor="after"/>
     </action>
-    <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
-      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
-      <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
-    </action>
     <action id="Vcs.Diff.ToggleDiffAligningMode" class="com.intellij.diff.actions.impl.ToggleDiffAligningModeAction">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
       <override-text place="popup@DiffToolbar"/>
+    </action>
+    <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+      <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
     </action>
     <group>
       <action id="Vcs.Diff.ShowDiffInNewWindow"
