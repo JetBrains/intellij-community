@@ -868,10 +868,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="CheckedExceptionClass" bundle="messages.InspectionGadgetsBundle" key="checked.exception.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.CheckedExceptionClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ContinueOrBreakFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
+    <!--<localInspection groupPath="Java" language="JAVA" shortName="ContinueOrBreakFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
                      key="continue.or.break.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.ContinueOrBreakFromFinallyBlockInspection"/>
+                     implementationClass="com.siyeh.ig.errorhandling.ContinueOrBreakFromFinallyBlockInspection"/>-->
     <inspectionElementsMerger implementation="com.siyeh.ig.errorhandling.CatchMayIgnoreExceptionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CatchMayIgnoreException" bundle="messages.InspectionGadgetsBundle" key="inspection.catch.ignores.exception.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
@@ -889,7 +889,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="exception.from.catch.which.doesnt.wrap.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ExceptionFromCatchWhichDoesntWrapInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="finally" shortName="FinallyBlockCannotCompleteNormally" bundle="messages.InspectionGadgetsBundle"
+    <!--
+    <inspectionElementsMerger implementation="com.siyeh.ig.errorhandling.FinallyBlockCannotCompleteNormallyMerger"/>
+    -->
+    <localInspection groupPath="Java" language="UAST" suppressId="finally" shortName="FinallyBlockCannotCompleteNormally" bundle="messages.InspectionGadgetsBundle"
                      key="finally.block.cannot.complete.normally.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.FinallyBlockCannotCompleteNormallyInspection"/>
@@ -904,10 +907,10 @@
                      key="non.final.field.of.exception.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NonFinalFieldOfExceptionInspection"/>
-    <localInspection groupPath="Java" language="UAST" suppressId="ReturnInsideFinallyBlock" shortName="ReturnFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
+    <!--<localInspection groupPath="Java" language="UAST" suppressId="ReturnInsideFinallyBlock" shortName="ReturnFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
                      key="return.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.ReturnFromFinallyBlockInspection"/>
+                     implementationClass="com.siyeh.ig.errorhandling.ReturnFromFinallyBlockInspection"/>-->
     <localInspection groupPath="Java" language="JAVA" suppressId="ThreadDeathNotRethrown" shortName="ThreadDeathRethrown" bundle="messages.InspectionGadgetsBundle"
                      key="thread.death.rethrown.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling"
                      enabledByDefault="false" level="WARNING"
@@ -915,10 +918,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ThrowCaughtLocally" bundle="messages.InspectionGadgetsBundle" key="throw.caught.locally.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ThrowCaughtLocallyInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ThrowFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
+    <!--<localInspection groupPath="Java" language="JAVA" shortName="ThrowFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
                      key="throw.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.ThrowFromFinallyBlockInspection"/>
+                     implementationClass="com.siyeh.ig.errorhandling.ThrowFromFinallyBlockInspection"/>-->
     <localInspection groupPath="Java" language="JAVA" shortName="NullThrown" bundle="messages.InspectionGadgetsBundle" key="null.thrown.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NullThrownInspection"/>
@@ -1879,7 +1882,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CallToSimpleSetterInClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionContainsUrl" bundle="messages.InspectionGadgetsBundle" key="collection.contains.url.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CollectionContainsUrlInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CollectionWithoutInitialCapacity" shortName="CollectionsMustHaveInitialCapacity"
                      bundle="messages.InspectionGadgetsBundle" key="collections.must.have.initial.capacity.display.name"
@@ -1891,7 +1894,7 @@
                      implementationClass="com.siyeh.ig.performance.DynamicRegexReplaceableByCompiledPatternInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsHashCodeCalledOnUrl" bundle="messages.InspectionGadgetsBundle"
                      key="equals.hashcode.called.on.url.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.EqualsHashCodeCalledOnUrlInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldMayBeStatic" bundle="messages.InspectionGadgetsBundle" key="field.may.be.static.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
@@ -2749,6 +2752,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="local.variable.hides.member.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.LocalVariableHidingMemberVariableInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="PatternVariableHidesField" shortName="PatternVariableHidesField"
+                     bundle="messages.InspectionGadgetsBundle" key="pattern.variable.hides.field.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.visibility.PatternVariableHidesFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodOverloadsMethodOfSuperclass" shortName="MethodOverloadsParentMethod"
                      bundle="messages.InspectionGadgetsBundle" key="method.overloads.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.visibility.issues" enabledByDefault="false" level="WARNING"

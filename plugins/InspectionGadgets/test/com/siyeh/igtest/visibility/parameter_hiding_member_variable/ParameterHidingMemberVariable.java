@@ -46,7 +46,11 @@ public class ParameterHidingMemberVariable
 }
 
 record R(int i) {
-    public R( int i){
+    R(int i) {
         this.i = i;
+    }
+
+    R(String <warning descr="Parameter 'i' hides field in class 'R'">i</warning>) {
+        this(Integer.parseInt(i) );
     }
 }

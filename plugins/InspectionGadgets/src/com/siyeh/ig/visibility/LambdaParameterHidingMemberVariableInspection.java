@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -83,34 +81,12 @@ public class LambdaParameterHidingMemberVariableInspection extends BaseInspectio
       if (!(declarationScope instanceof PsiLambdaExpression)) {
         return;
       }
-      final PsiClass aClass = checkFieldName(variable);
+      final PsiClass aClass = LocalVariableHidingMemberVariableInspection
+        .findSurroundingClassWithHiddenField(variable, m_ignoreInvisibleFields, true);
       if (aClass ==  null) {
         return;
       }
       registerVariableError(variable, aClass);
-    }
-
-    @Nullable
-    private PsiClass checkFieldName(PsiVariable variable) {
-      final String variableName = variable.getName();
-      if (variableName == null) {
-        return null;
-      }
-      PsiClass aClass = ClassUtils.getContainingClass(variable);
-      while (aClass != null) {
-        final PsiField field = aClass.findFieldByName(variableName, true);
-        if (field != null) {
-          if (!m_ignoreInvisibleFields){
-            return aClass;
-          }
-          else if (ClassUtils.isFieldVisible(field, aClass) &&
-                   (PsiUtil.getEnclosingStaticElement(variable, aClass) == null) || field.hasModifierProperty(PsiModifier.STATIC)){
-            return aClass;
-          }
-        }
-        aClass = ClassUtils.getContainingClass(aClass);
-      }
-      return null;
     }
   }
 }
