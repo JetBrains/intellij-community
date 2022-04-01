@@ -8,6 +8,13 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
@@ -23,7 +30,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "Maven"
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent)
+    override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
@@ -65,6 +72,15 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             groupIdProperty.afterChange { logGroupIdChanged() }
             artifactIdProperty.afterChange { logArtifactIdChanged() }
             versionProperty.afterChange { logVersionChanged() }
+        }
+    }
+
+    private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+        override fun setupAssets(project: Project) {
+            outputDirectory = "$path/$name"
+            if (gitData?.git == true) {
+                addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+            }
         }
     }
 }
