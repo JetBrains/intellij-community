@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.util.LightProjectTest
 
 abstract class SpockTestBase extends LightProjectTest {
 
-  private static final LightProjectDescriptor SPOCK_PROJECT = new LibraryLightProjectDescriptor(
+  static final LightProjectDescriptor SPOCK_PROJECT = new LibraryLightProjectDescriptor(
     GroovyProjectDescriptors.LIB_GROOVY_2_4 + new RepositoryTestLibrary("org.spockframework:spock-core:2.0-groovy-3.0")
   )
 

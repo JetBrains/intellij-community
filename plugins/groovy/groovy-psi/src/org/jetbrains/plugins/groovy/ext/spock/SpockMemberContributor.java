@@ -41,7 +41,13 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
     if (!shouldProcessMethods && !shouldProcessProperties) return;
     GrMethod method = PsiTreeUtil.getParentOfType(place, GrMethod.class);
     if (method == null) return;
-    if (shouldProcessProperties && ContainerUtil.exists(aClass.getSuperTypes(), it -> Objects.equals(it.getClassName(), SpockUtils.SPEC_CLASS_NAME)) && aClass == method.getContainingClass()) {
+    if (shouldProcessProperties && ContainerUtil.exists(aClass.getSuperTypes(), superType -> {
+      PsiClass superClass = superType.resolve();
+      if (superClass == null) {
+        return false;
+      }
+      return Objects.equals(superClass.getQualifiedName(), SpockUtils.SPEC_CLASS_NAME);
+    }) && aClass == method.getContainingClass()) {
       Map<String, SpockVariableDescriptor> cachedValue = SpockUtils.getVariableMap(method);
 
       String nameHint = ResolveUtil.getNameHint(processor);
@@ -62,14 +68,14 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
       }
     }
     if (shouldProcessMethods) {
-      processUseAnnotation(qualifierType, place, processor, state, method);
+      processUseAnnotation(qualifierType, place, processor, state);
     }
   }
 
   private static void processUseAnnotation(@NotNull PsiType qualifierType,
                                            @NotNull PsiElement place,
                                            @NotNull PsiScopeProcessor processor,
-                                           @NotNull ResolveState state, GrMethod method) {
+                                           @NotNull ResolveState state) {
     List<PsiAnnotation> annotations = new ArrayList<>();
     List<PsiModifierListOwner> parents = PsiTreeUtil.collectParents(place, PsiModifierListOwner.class, true, (element) -> false);
     for (PsiModifierListOwner parent : parents) {

@@ -467,8 +467,8 @@ public class GroovyBlockGenerator {
         if (((GrLabeledStatement)psi).getLabel().getText().equals("where")) {
           alignGroup(currentGroup, spock, classLevel);
           currentGroup = new ArrayList<>();
+          spock = true;
         }
-        spock = true;
       }
       else if (currentGroup != null && spock && isTablePart(psi)) {
         currentGroup.add((GrStatement)psi);

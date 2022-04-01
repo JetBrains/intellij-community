@@ -185,18 +185,6 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testAlignMultipleVariablesLabeled() throws Throwable { doTest() }
 
-  void testSpockTableWithStringComment() throws Throwable { doTest() }
-
-  void testSpockTableWithComments() throws Throwable { doTest() }
-
-  void testSpockTableWithFullwidthCharacters() throws Throwable { doTest() }
-
-  void testSpockTableWithLongTableParts() throws Throwable { doTest() }
-
-  void testSpockTableSeparatedByUnderscores() throws Throwable { doTest() }
-
-  void testSpockTableWithUndefinedLabel() throws Throwable { doTest() }
-
   void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false
     doTest()

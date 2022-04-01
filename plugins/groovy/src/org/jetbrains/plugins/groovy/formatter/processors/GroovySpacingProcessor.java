@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.ext.spock.SpecificationKt;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
@@ -898,7 +899,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                           isLeftOrRight(SHIFT_OPERATORS) ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
                           isLeftOrRight(REGEX_OPERATORS) ? myGroovySettings.SPACE_AROUND_REGEX_OPERATORS :
                           isLeftOrRight(KW_IN) || isLeftOrRight(T_NOT_IN);
-    if ((myType2 == GroovyTokenTypes.mBOR || myType2 == GroovyTokenTypes.mLOR) && GroovyBlockGenerator.isTablePart(expression)) {
+    if ((myType2 == GroovyTokenTypes.mBOR || myType2 == GroovyTokenTypes.mLOR) && GroovyBlockGenerator.isTablePart(expression) &&
+        SpecificationKt.isInsideSpecification(expression)) {
       createSpaceBeforeSpockDelimiter(spaceAround);
     }
     else if (BINARY_OPERATORS.contains(myType2)) {
