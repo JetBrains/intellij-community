@@ -30,8 +30,6 @@ private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Bo
         val libXmlName = it.name.jpsEntityNameToFilename() + ".xml"
         libraries.resolve(libXmlName).writeText(it.generateXml())
     }
-
-    generateRunConfigurations(dotIdea, args.kotlincArtifactsMode, args.kotlincVersion)
 }
 
 private fun patchProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
