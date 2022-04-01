@@ -130,5 +130,6 @@ enum class TypeProperty {
   METHOD_CALL,
   FIELD,
   ARGUMENT_NAME,
+  PARAMETER_MEMBER,
   UNKNOWN
 }

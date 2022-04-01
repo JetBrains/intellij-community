@@ -90,7 +90,7 @@ class ActionsGeneratorTest {
                      emulateUser: Boolean = false,
                      codeGolf: Boolean = false,
                      filters: Map<String, EvaluationFilter> = emptyMap()) {
-    val actionsGenerator = ActionsGenerator(CompletionStrategy(prefix, context, emulateUser, codeGolf, filters))
+    val actionsGenerator = ActionsGenerator(CompletionStrategy(prefix, context, emulateUser, codeGolf, filters), Language.JAVA)
     val actions = actionsGenerator.generate(file)
     val actual = ActionSerializer.serialize(actions).prettifyJson()
     val expected = FileReader(testData.resolve(outputFile)).use { it.readText() }
