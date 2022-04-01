@@ -9,6 +9,10 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.EntitySource
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.fields.*
+
 
 
 
@@ -33,13 +37,13 @@ interface SampleEntity : WorkspaceEntity {
         override var children: List<ChildSampleEntity>
     }
     
-    companion object: ObjType<SampleEntity, Builder>(IntellijWsTestIj, 14) {
+    companion object: ObjType<SampleEntity, Builder>(IntellijWsTestIj, 17) {
         val booleanProperty: Field<SampleEntity, Boolean> = Field(this, 0, "booleanProperty", TBoolean)
         val entitySource: Field<SampleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val stringProperty: Field<SampleEntity, String> = Field(this, 0, "stringProperty", TString)
         val stringListProperty: Field<SampleEntity, List<String>> = Field(this, 0, "stringListProperty", TList(TString))
         val fileProperty: Field<SampleEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
-        val children: Field<SampleEntity, List<ChildSampleEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 18, child = true)))
+        val children: Field<SampleEntity, List<ChildSampleEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 21, child = true)))
     }
     //@formatter:on
     //endregion
@@ -84,7 +88,7 @@ interface SecondSampleEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SecondSampleEntity, Builder>(IntellijWsTestIj, 15) {
+    companion object: ObjType<SecondSampleEntity, Builder>(IntellijWsTestIj, 18) {
         val intProperty: Field<SecondSampleEntity, Int> = Field(this, 0, "intProperty", TInt)
         val entitySource: Field<SecondSampleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -108,10 +112,10 @@ interface SourceEntity : WorkspaceEntity {
         override var children: List<ChildSourceEntity>
     }
     
-    companion object: ObjType<SourceEntity, Builder>(IntellijWsTestIj, 16) {
+    companion object: ObjType<SourceEntity, Builder>(IntellijWsTestIj, 19) {
         val data: Field<SourceEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<SourceEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val children: Field<SourceEntity, List<ChildSourceEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 17, child = true)))
+        val children: Field<SourceEntity, List<ChildSourceEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 20, child = true)))
     }
     //@formatter:on
     //endregion
@@ -146,10 +150,10 @@ interface ChildSourceEntity : WorkspaceEntity {
         override var parentEntity: SourceEntity
     }
     
-    companion object: ObjType<ChildSourceEntity, Builder>(IntellijWsTestIj, 17) {
+    companion object: ObjType<ChildSourceEntity, Builder>(IntellijWsTestIj, 20) {
         val data: Field<ChildSourceEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<ChildSourceEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildSourceEntity, SourceEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTestIj", 16))
+        val parentEntity: Field<ChildSourceEntity, SourceEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTestIj", 19))
     }
     //@formatter:on
     //endregion
@@ -170,10 +174,10 @@ interface ChildSampleEntity : WorkspaceEntity {
         override var parentEntity: SampleEntity?
     }
     
-    companion object: ObjType<ChildSampleEntity, Builder>(IntellijWsTestIj, 18) {
+    companion object: ObjType<ChildSampleEntity, Builder>(IntellijWsTestIj, 21) {
         val data: Field<ChildSampleEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<ChildSampleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildSampleEntity, SampleEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWsTestIj", 14)))
+        val parentEntity: Field<ChildSampleEntity, SampleEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWsTestIj", 17)))
     }
     //@formatter:on
     //endregion
@@ -206,7 +210,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<PersistentIdEntity, Builder>(IntellijWsTestIj, 19) {
+    companion object: ObjType<PersistentIdEntity, Builder>(IntellijWsTestIj, 22) {
         val data: Field<PersistentIdEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<PersistentIdEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val persistentId: Field<PersistentIdEntity, LinkedListEntityId> = Field(this, 0, "persistentId", TBlob("LinkedListEntityId"))
@@ -241,7 +245,7 @@ interface VFUEntity : WorkspaceEntity {
         override var fileProperty: VirtualFileUrl
     }
     
-    companion object: ObjType<VFUEntity, Builder>(IntellijWsTestIj, 20) {
+    companion object: ObjType<VFUEntity, Builder>(IntellijWsTestIj, 23) {
         val data: Field<VFUEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<VFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val fileProperty: Field<VFUEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
@@ -265,7 +269,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
         override var secondFileProperty: VirtualFileUrl
     }
     
-    companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(IntellijWsTestIj, 21) {
+    companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(IntellijWsTestIj, 24) {
         val data: Field<VFUWithTwoPropertiesEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<VFUWithTwoPropertiesEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val fileProperty: Field<VFUWithTwoPropertiesEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
@@ -288,7 +292,7 @@ interface NullableVFUEntity : WorkspaceEntity {
         override var fileProperty: VirtualFileUrl?
     }
     
-    companion object: ObjType<NullableVFUEntity, Builder>(IntellijWsTestIj, 22) {
+    companion object: ObjType<NullableVFUEntity, Builder>(IntellijWsTestIj, 25) {
         val data: Field<NullableVFUEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<NullableVFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val fileProperty: Field<NullableVFUEntity, VirtualFileUrl?> = Field(this, 0, "fileProperty", TOptional(TBlob("VirtualFileUrl")))
@@ -310,7 +314,7 @@ interface ListVFUEntity : WorkspaceEntity {
         override var fileProperty: List<VirtualFileUrl>
     }
     
-    companion object: ObjType<ListVFUEntity, Builder>(IntellijWsTestIj, 23) {
+    companion object: ObjType<ListVFUEntity, Builder>(IntellijWsTestIj, 26) {
         val data: Field<ListVFUEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<ListVFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val fileProperty: Field<ListVFUEntity, List<VirtualFileUrl>> = Field(this, 0, "fileProperty", TList(TBlob("VirtualFileUrl")))

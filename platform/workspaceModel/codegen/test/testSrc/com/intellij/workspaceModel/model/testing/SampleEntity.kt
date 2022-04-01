@@ -25,7 +25,7 @@ interface SampleEntity : WorkspaceEntity {
         override var boolData: Boolean
     }
     
-    companion object: ObjType<SampleEntity, Builder>(IntellijWsTest, 18) {
+    companion object: ObjType<SampleEntity, Builder>(IntellijWsTest, 35) {
         val data: Field<SampleEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<SampleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val boolData: Field<SampleEntity, Boolean> = Field(this, 0, "boolData", TBoolean)
@@ -50,7 +50,7 @@ interface VFUEntity : WorkspaceEntity {
         override var notNullRoots: List<VirtualFileUrl>
     }
     
-    companion object: ObjType<VFUEntity, Builder>(IntellijWsTest, 19) {
+    companion object: ObjType<VFUEntity, Builder>(IntellijWsTest, 36) {
         val data: Field<VFUEntity, String> = Field(this, 0, "data", TString)
         val entitySource: Field<VFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val filePath: Field<VFUEntity, VirtualFileUrl?> = Field(this, 0, "filePath", TOptional(TBlob("VirtualFileUrl")))

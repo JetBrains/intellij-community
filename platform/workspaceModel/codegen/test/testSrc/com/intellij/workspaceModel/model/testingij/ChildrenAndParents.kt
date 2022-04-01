@@ -31,12 +31,12 @@ interface ParentEntity : WorkspaceEntity {
         override var optionalChildren: List<ChildWithOptionalParentEntity>
     }
     
-    companion object: ObjType<ParentEntity, Builder>(IntellijWsTestIj, 10) {
+    companion object: ObjType<ParentEntity, Builder>(IntellijWsTestIj, 35) {
         val parentProperty: Field<ParentEntity, String> = Field(this, 0, "parentProperty", TString)
         val entitySource: Field<ParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val children: Field<ParentEntity, List<ChildEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 11, child = true)))
-        val childrenChildren: Field<ParentEntity, List<ChildChildEntity>> = Field(this, 0, "childrenChildren", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 13, child = true)))
-        val optionalChildren: Field<ParentEntity, List<ChildWithOptionalParentEntity>> = Field(this, 0, "optionalChildren", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 12, child = true)))
+        val children: Field<ParentEntity, List<ChildEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 36, child = true)))
+        val childrenChildren: Field<ParentEntity, List<ChildChildEntity>> = Field(this, 0, "childrenChildren", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 38, child = true)))
+        val optionalChildren: Field<ParentEntity, List<ChildWithOptionalParentEntity>> = Field(this, 0, "optionalChildren", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 37, child = true)))
     }
     //@formatter:on
     //endregion
@@ -77,12 +77,12 @@ interface ChildEntity : WorkspaceEntity {
         override var parentEntity: ParentEntity
     }
     
-    companion object: ObjType<ChildEntity, Builder>(IntellijWsTestIj, 11) {
+    companion object: ObjType<ChildEntity, Builder>(IntellijWsTestIj, 36) {
         val childProperty: Field<ChildEntity, String> = Field(this, 0, "childProperty", TString)
         val entitySource: Field<ChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val dataClass: Field<ChildEntity, DataClass?> = Field(this, 0, "dataClass", TOptional(TBlob("DataClass")))
-        val childrenChildren: Field<ChildEntity, List<ChildChildEntity>> = Field(this, 0, "childrenChildren", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 13, child = true)))
-        val parentEntity: Field<ChildEntity, ParentEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTestIj", 10))
+        val childrenChildren: Field<ChildEntity, List<ChildChildEntity>> = Field(this, 0, "childrenChildren", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 38, child = true)))
+        val parentEntity: Field<ChildEntity, ParentEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTestIj", 35))
     }
     //@formatter:on
     //endregion
@@ -119,10 +119,10 @@ interface ChildWithOptionalParentEntity : WorkspaceEntity {
         override var optionalParent: ParentEntity?
     }
     
-    companion object: ObjType<ChildWithOptionalParentEntity, Builder>(IntellijWsTestIj, 12) {
+    companion object: ObjType<ChildWithOptionalParentEntity, Builder>(IntellijWsTestIj, 37) {
         val childProperty: Field<ChildWithOptionalParentEntity, String> = Field(this, 0, "childProperty", TString)
         val entitySource: Field<ChildWithOptionalParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val optionalParent: Field<ChildWithOptionalParentEntity, ParentEntity?> = Field(this, 0, "optionalParent", TOptional(TRef("org.jetbrains.deft.IntellijWsTestIj", 10)))
+        val optionalParent: Field<ChildWithOptionalParentEntity, ParentEntity?> = Field(this, 0, "optionalParent", TOptional(TRef("org.jetbrains.deft.IntellijWsTestIj", 35)))
     }
     //@formatter:on
     //endregion
@@ -156,10 +156,10 @@ interface ChildChildEntity : WorkspaceEntity {
         override var parent2: ChildEntity
     }
     
-    companion object: ObjType<ChildChildEntity, Builder>(IntellijWsTestIj, 13) {
-        val parent1: Field<ChildChildEntity, ParentEntity> = Field(this, 0, "parent1", TRef("org.jetbrains.deft.IntellijWsTestIj", 10))
+    companion object: ObjType<ChildChildEntity, Builder>(IntellijWsTestIj, 38) {
+        val parent1: Field<ChildChildEntity, ParentEntity> = Field(this, 0, "parent1", TRef("org.jetbrains.deft.IntellijWsTestIj", 35))
         val entitySource: Field<ChildChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parent2: Field<ChildChildEntity, ChildEntity> = Field(this, 0, "parent2", TRef("org.jetbrains.deft.IntellijWsTestIj", 11))
+        val parent2: Field<ChildChildEntity, ChildEntity> = Field(this, 0, "parent2", TRef("org.jetbrains.deft.IntellijWsTestIj", 36))
     }
     //@formatter:on
     //endregion

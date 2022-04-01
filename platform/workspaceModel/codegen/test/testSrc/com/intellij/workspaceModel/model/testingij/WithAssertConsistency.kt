@@ -20,7 +20,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<AssertConsistencyEntity, Builder>(IntellijWsTestIj, 31) {
+  companion object: ObjType<AssertConsistencyEntity, Builder>(IntellijWsTestIj, 39) {
       val passCheck: Field<AssertConsistencyEntity, Boolean> = Field(this, 0, "passCheck", TBoolean)
       val entitySource: Field<AssertConsistencyEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }

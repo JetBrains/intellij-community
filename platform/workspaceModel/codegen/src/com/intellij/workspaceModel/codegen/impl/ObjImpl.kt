@@ -13,6 +13,8 @@ import org.jetbrains.deft.bytes.writeString
 import org.jetbrains.deft.collections.*
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
+import org.jetbrains.deft.writeId
+
 //import org.jetbrains.deft.writeId
 
 @Suppress("PropertyName")
@@ -232,7 +234,7 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
 
     open fun storeTo(output: Output) {
         output.writeString(name ?: "")
-        //output.writeId(_parentId)
+        output.writeId(_parentId)
         extensionsStoreTo(output)
     }
 

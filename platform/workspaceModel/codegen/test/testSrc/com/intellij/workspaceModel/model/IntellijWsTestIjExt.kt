@@ -38,18 +38,10 @@ object IntellijWsTestIjExt: ObjModule(ObjModule.Id("org.jetbrains.deft.IntellijW
         add(AttachedEntityParentList)
         add(MainEntityToParent)
         add(AttachedEntityToParent)
-        add(MainEntityList)
-        add(AttachedEntityList)
         add(MainEntity)
         add(AttachedEntity)
-        
-        /*
-        beginExtFieldsInit(4)
-        registerExtField(AttachedEntityParentList.ref)
-        registerExtField(AttachedEntityToParent.ref)
-        registerExtField(MainEntityList.child)
-        registerExtField(MainEntity.child)        
-        */
+        add(MainEntityList)
+        add(AttachedEntityList)
     }
 }
 
@@ -99,31 +91,6 @@ var AttachedEntityToParent.Builder.ref: MainEntityToParent
         }
     }
 
-var MainEntityList.Builder.child: @Child List<AttachedEntityList>
-    get() {
-        return referrersx(AttachedEntityList::ref)
-    }
-    set(value) {
-        val diff = (this as MainEntityListImpl.Builder).diff
-        if (diff != null) {
-            for (item in value) {
-                if ((item as AttachedEntityListImpl.Builder).diff == null) {
-                    item._ref = this
-                    diff.addEntity(item)
-                }
-            }
-            diff.updateOneToManyChildrenOfParent(AttachedEntityListImpl.REF_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("AttachedEntityList", "ref", true, AttachedEntityListImpl.REF_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            for (item in value) {
-                (item as AttachedEntityListImpl.Builder)._ref = this
-            }
-        }
-    }
-
 var MainEntity.Builder.child: @Child AttachedEntity?
     get() {
         return referrersx(AttachedEntity::ref).singleOrNull()
@@ -149,12 +116,37 @@ var MainEntity.Builder.child: @Child AttachedEntity?
         }
     }
 
+var MainEntityList.Builder.child: @Child List<AttachedEntityList>
+    get() {
+        return referrersx(AttachedEntityList::ref)
+    }
+    set(value) {
+        val diff = (this as MainEntityListImpl.Builder).diff
+        if (diff != null) {
+            for (item in value) {
+                if ((item as AttachedEntityListImpl.Builder).diff == null) {
+                    item._ref = this
+                    diff.addEntity(item)
+                }
+            }
+            diff.updateOneToManyChildrenOfParent(AttachedEntityListImpl.REF_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("AttachedEntityList", "ref", true, AttachedEntityListImpl.REF_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            for (item in value) {
+                (item as AttachedEntityListImpl.Builder)._ref = this
+            }
+        }
+    }
+
 
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityParentList, modification: MainEntityParentList.Builder.() -> Unit) = modifyEntity(MainEntityParentListImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityParentList, modification: AttachedEntityParentList.Builder.() -> Unit) = modifyEntity(AttachedEntityParentListImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityToParent, modification: MainEntityToParent.Builder.() -> Unit) = modifyEntity(MainEntityToParentImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityToParent, modification: AttachedEntityToParent.Builder.() -> Unit) = modifyEntity(AttachedEntityToParentImpl.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(MainEntityListImpl.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(AttachedEntityListImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(MainEntityImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntity, modification: AttachedEntity.Builder.() -> Unit) = modifyEntity(AttachedEntityImpl.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(MainEntityListImpl.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(AttachedEntityListImpl.Builder::class.java, entity, modification)

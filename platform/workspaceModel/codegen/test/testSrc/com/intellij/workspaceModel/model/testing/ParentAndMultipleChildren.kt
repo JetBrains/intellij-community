@@ -25,10 +25,10 @@ interface ParentMultipleEntity : WorkspaceEntity {
         override var children: List<ChildMultipleEntity>
     }
     
-    companion object: ObjType<ParentMultipleEntity, Builder>(IntellijWsTest, 35) {
+    companion object: ObjType<ParentMultipleEntity, Builder>(IntellijWsTest, 39) {
         val parentData: Field<ParentMultipleEntity, String> = Field(this, 0, "parentData", TString)
         val entitySource: Field<ParentMultipleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val children: Field<ParentMultipleEntity, List<ChildMultipleEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTest", 36, child = true)))
+        val children: Field<ParentMultipleEntity, List<ChildMultipleEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTest", 40, child = true)))
     }
     //@formatter:on
     //endregion
@@ -47,10 +47,10 @@ interface ChildMultipleEntity : WorkspaceEntity {
         override var parentEntity: ParentMultipleEntity
     }
     
-    companion object: ObjType<ChildMultipleEntity, Builder>(IntellijWsTest, 36) {
+    companion object: ObjType<ChildMultipleEntity, Builder>(IntellijWsTest, 40) {
         val childData: Field<ChildMultipleEntity, String> = Field(this, 0, "childData", TString)
         val entitySource: Field<ChildMultipleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildMultipleEntity, ParentMultipleEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTest", 35))
+        val parentEntity: Field<ChildMultipleEntity, ParentMultipleEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTest", 39))
     }
     //@formatter:on
     //endregion

@@ -23,8 +23,8 @@ interface BaseEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<BaseEntity, Builder>(IntellijWsTestIj, 32) {
-      val parentEntity: Field<BaseEntity, CompositeBaseEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWsTestIj", 33)))
+  companion object: ObjType<BaseEntity, Builder>(IntellijWsTestIj, 40) {
+      val parentEntity: Field<BaseEntity, CompositeBaseEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWsTestIj", 41)))
       val entitySource: Field<BaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
   //@formatter:on
@@ -43,8 +43,8 @@ interface CompositeBaseEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<CompositeBaseEntity, Builder>(IntellijWsTestIj, 33, BaseEntity) {
-      val children: Field<CompositeBaseEntity, List<BaseEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 32, child = true)))
+  companion object: ObjType<CompositeBaseEntity, Builder>(IntellijWsTestIj, 41, BaseEntity) {
+      val children: Field<CompositeBaseEntity, List<BaseEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTestIj", 40, child = true)))
       val entitySource: Field<CompositeBaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
   //@formatter:on
@@ -62,7 +62,7 @@ interface MiddleEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<MiddleEntity, Builder>(IntellijWsTestIj, 34, BaseEntity) {
+  companion object: ObjType<MiddleEntity, Builder>(IntellijWsTestIj, 42, BaseEntity) {
       val property: Field<MiddleEntity, String> = Field(this, 0, "property", TString)
       val entitySource: Field<MiddleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
@@ -91,7 +91,7 @@ interface LeftEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<LeftEntity, Builder>(IntellijWsTestIj, 35, CompositeBaseEntity) {
+    companion object: ObjType<LeftEntity, Builder>(IntellijWsTestIj, 43, CompositeBaseEntity) {
     }
     //@formatter:on
     //endregion
@@ -117,7 +117,7 @@ interface RightEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<RightEntity, Builder>(IntellijWsTestIj, 36, CompositeBaseEntity) {
+    companion object: ObjType<RightEntity, Builder>(IntellijWsTestIj, 44, CompositeBaseEntity) {
     }
     //@formatter:on
     //endregion

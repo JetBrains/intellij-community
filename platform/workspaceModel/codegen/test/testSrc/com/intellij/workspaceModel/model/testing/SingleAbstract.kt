@@ -24,8 +24,8 @@ interface ParentSingleAbEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ParentSingleAbEntity, Builder>(IntellijWsTest, 37) {
-        val child: Field<ParentSingleAbEntity, ChildSingleAbstractBaseEntity> = Field(this, 0, "child", TRef("org.jetbrains.deft.IntellijWsTest", 38, child = true))
+    companion object: ObjType<ParentSingleAbEntity, Builder>(IntellijWsTest, 15) {
+        val child: Field<ParentSingleAbEntity, ChildSingleAbstractBaseEntity> = Field(this, 0, "child", TRef("org.jetbrains.deft.IntellijWsTest", 16, child = true))
         val entitySource: Field<ParentSingleAbEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
     //@formatter:on
@@ -46,10 +46,10 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
         override var parentEntity: ParentSingleAbEntity
     }
     
-    companion object: ObjType<ChildSingleAbstractBaseEntity, Builder>(IntellijWsTest, 38) {
+    companion object: ObjType<ChildSingleAbstractBaseEntity, Builder>(IntellijWsTest, 16) {
         val commonData: Field<ChildSingleAbstractBaseEntity, String> = Field(this, 0, "commonData", TString)
         val entitySource: Field<ChildSingleAbstractBaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildSingleAbstractBaseEntity, ParentSingleAbEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTest", 37))
+        val parentEntity: Field<ChildSingleAbstractBaseEntity, ParentSingleAbEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWsTest", 15))
     }
     //@formatter:on
     //endregion
@@ -67,7 +67,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ChildSingleFirstEntity, Builder>(IntellijWsTest, 39, ChildSingleAbstractBaseEntity) {
+    companion object: ObjType<ChildSingleFirstEntity, Builder>(IntellijWsTest, 17, ChildSingleAbstractBaseEntity) {
         val firstData: Field<ChildSingleFirstEntity, String> = Field(this, 0, "firstData", TString)
         val entitySource: Field<ChildSingleFirstEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -87,7 +87,7 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ChildSingleSecondEntity, Builder>(IntellijWsTest, 40, ChildSingleAbstractBaseEntity) {
+    companion object: ObjType<ChildSingleSecondEntity, Builder>(IntellijWsTest, 18, ChildSingleAbstractBaseEntity) {
         val secondData: Field<ChildSingleSecondEntity, String> = Field(this, 0, "secondData", TString)
         val entitySource: Field<ChildSingleSecondEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
