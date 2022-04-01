@@ -354,7 +354,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                          "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
                                          " but the path part points to " + node.myFS);
     }
-    assert fs == node.myFS : "fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file;
+    assert fs == node.myFS : "fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node;
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
     if (pointer == null) {
@@ -530,7 +530,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           if (VirtualFile.PROP_NAME.equals(change.getPropertyName()) && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
             VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)change.getFile();
             VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
-            // e.g. for LightVirtualFiles
+            // e.g., for LightVirtualFiles
             if (parent != null) {
               int newNameId = toNameId(change.getNewValue().toString());
               addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
