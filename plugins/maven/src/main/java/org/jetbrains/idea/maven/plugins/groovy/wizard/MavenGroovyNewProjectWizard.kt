@@ -9,6 +9,13 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -35,7 +42,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val ordinal: Int = 1
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step) = Step(parent)
+  override fun createStep(parent: GroovyNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     MavenNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
@@ -126,6 +133,15 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   companion object {
     @JvmField
     val MAVEN = MavenUtil.SYSTEM_ID.readableName
+  }
+
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
+    }
   }
 }
 
