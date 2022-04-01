@@ -5,17 +5,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.util.io.delete
 import com.intellij.util.io.inputStream
-import com.jetbrains.cloudconfig.CloudConfigFileClientV2
-import com.jetbrains.cloudconfig.Configuration
-import com.jetbrains.cloudconfig.ETagStorage
-import com.jetbrains.cloudconfig.HeaderStorage
+import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
-import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -29,11 +24,15 @@ private const val TIMEOUT = 10000
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
+
   private val _client = lazy {
     val conf = createConfiguration()
-    CloudConfigFileClientV2(url.value, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
+    CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
   }
-  private val url = lazy {
+
+  internal val url get() = _url.value
+
+  private val _url = lazy {
     val explicitUrl = System.getProperty(URL_PROPERTY)
     if (explicitUrl != null) {
       LOG.info("Using URL from properties: $explicitUrl")
@@ -183,23 +182,30 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  fun downloadSnapshot(): File? {
-    val stream = receiveSnapshotFile()
-    if (stream == null) {
-      LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
-      return null
+  fun downloadSnapshot(version: FileVersionInfo): InputStream? {
+    val stream = clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, version.versionId) {
+      client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
     }
 
-    try {
-      val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
-      val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
-      FileUtil.writeToFile(tempFile, stream.readAllBytes())
-      return tempFile
+    if (stream == null) {
+      LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
     }
-    catch (e: Throwable) {
-      LOG.error(e)
-      return null
-    }
+
+    return stream
+  }
+
+  fun getLatestVersion(): FileVersionInfo? {
+    return client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)
+  }
+
+  @Throws(IOException::class)
+  fun delete() {
+    client.delete(SETTINGS_SYNC_SNAPSHOT_ZIP)
+  }
+
+  @Throws(Exception::class)
+  fun fetchHistory(): List<FileVersionInfo> {
+    return client.getVersions(SETTINGS_SYNC_SNAPSHOT_ZIP)
   }
 
   private inner class VersionContext : HeaderStorage {
