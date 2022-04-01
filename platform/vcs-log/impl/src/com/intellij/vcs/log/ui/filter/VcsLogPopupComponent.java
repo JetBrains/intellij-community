@@ -20,6 +20,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   public JComponent initUi() {
-    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + ": ") : null;
+    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + (isValueSelected() ? ": " : "")) : null;
     myValueLabel = new DynamicLabel(this::getCurrentText);
     setDefaultForeground();
     setFocusable(true);
@@ -62,6 +63,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     add(new JLabel(AllIcons.General.ArrowDown));
 
     installChangeListener(() -> {
+      setDefaultForeground();
       myValueLabel.revalidate();
       myValueLabel.repaint();
     });
@@ -77,12 +79,16 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   public abstract String getCurrentText();
 
-  public abstract void installChangeListener(@NotNull Runnable onChange);
-
+  /**
+   * @return text that shows when filter value not selected (e.g. "All")
+   */
   @NotNull
-  protected Color getDefaultSelectorForeground() {
-    return StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor().darker().darker();
-  }
+  @Nls
+  public abstract String getEmptyFilterValue();
+
+  protected abstract boolean isValueSelected();
+
+  public abstract void installChangeListener(@NotNull Runnable onChange);
 
   protected boolean shouldIndicateHovering() {
     return true;
@@ -148,9 +154,9 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   private void setDefaultForeground() {
     if (myNameLabel != null) {
-      myNameLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+      myNameLabel.setForeground(isValueSelected() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground());
     }
-    myValueLabel.setForeground(getDefaultSelectorForeground());
+    myValueLabel.setForeground(UIUtil.getLabelForeground());
   }
 
   private void setOnHoverForeground() {
@@ -231,7 +237,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   private static final class DynamicLabel extends JLabel {
     private final Supplier<@NlsContexts.Label String> myText;
 
-    private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) {myText = text;}
+    private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) { myText = text; }
 
     @Override
     @NlsContexts.Label
