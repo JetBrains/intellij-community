@@ -301,10 +301,9 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
       PsiElement element = ref.getElement();
       PsiFile file = element.getContainingFile();
       TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
-      PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-      Document document = manager.getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       assert document != null;
-      manager.doPostponedOperationsAndUnblockDocument(document);
+      PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(document);
       document.deleteString(range.getStartOffset(), range.getEndOffset());
     }
 
