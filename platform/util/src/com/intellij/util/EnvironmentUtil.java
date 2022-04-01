@@ -108,7 +108,7 @@ public final class EnvironmentUtil {
     ourEnvGetter.set(envFuture);
     Boolean result = Boolean.TRUE;
     try {
-      Map<String, String> env = getShellEnv();
+      Map<String, String> env = getShellEnv(Long.getLong("ij.load.shell.env.timeout", DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS));
       setCharsetVar(env);
       envFuture.complete(Collections.unmodifiableMap(env));
     }
@@ -214,8 +214,8 @@ public final class EnvironmentUtil {
   public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
-  private static @NotNull Map<String, String> getShellEnv() throws IOException {
-    return new ShellEnvReader().readShellEnv(null, null);
+  private static @NotNull Map<String, String> getShellEnv(long timeoutMillis) throws IOException {
+    return new ShellEnvReader(timeoutMillis).readShellEnv(null, null);
   }
 
   public static class ShellEnvReader {
@@ -574,7 +574,7 @@ public final class EnvironmentUtil {
 
   @TestOnly
   static Map<String, String> testLoader() throws IOException {
-    return getShellEnv();
+    return getShellEnv(DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS);
   }
 
   @TestOnly
