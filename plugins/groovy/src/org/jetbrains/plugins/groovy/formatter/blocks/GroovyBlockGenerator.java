@@ -593,7 +593,7 @@ public class GroovyBlockGenerator {
     return result;
   }
 
-  private static boolean isTablePart(PsiElement psi) {
+  public static boolean isTablePart(PsiElement psi) {
     return psi instanceof GrBinaryExpression &&
            (GroovyTokenTypes.mBOR == ((GrBinaryExpression)psi).getOperationTokenType() ||
             GroovyTokenTypes.mLOR == ((GrBinaryExpression)psi).getOperationTokenType());
