@@ -150,11 +150,14 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * {@code iconPath} is not specified and some "unknown" icon should be used
    * to represent the {@link ComponentItem} in UI.
    */
-  void setIconPath(@Nullable final String iconPath){
+  void setIconPath(@Nullable final String iconPath) {
     myIcon = null; // reset cached icon
     mySmallIcon = null; // reset cached icon
 
     myIconPath = iconPath;
+    if (iconPath != null && iconPath.startsWith("/com/intellij/uiDesigner/icons/") && iconPath.endsWith(".png")) {
+      myIconPath = iconPath.substring(0, iconPath.length() - 4) + ".svg";
+    }
   }
 
   /**
