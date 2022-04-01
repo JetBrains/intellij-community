@@ -351,20 +351,26 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     @Override
     synchronized public void close() {
-      myCollectingStopped = true;
+      if (!myCollectingStopped) {
+        myCollectingStopped = true;
+        notifyFinished();
+      }
     }
 
-    synchronized private void notifyFinished() {
-      if (myTaskNotification != null) {
-        myTaskNotification.finished(new ProjectTaskResult(myAborted, myErrors, myWarnings));
+    private void notifyFinished() {
+      if (myCollectingStopped && myNotifications.isEmpty()) {
+        if (myTaskNotification != null) {
+          myTaskNotification.finished(new ProjectTaskResult(myAborted, myErrors, myWarnings));
+        }
+        myOnFinished.run();
       }
-      myOnFinished.run();
     }
 
     synchronized private void appendJpsBuildResult(boolean aborted, int errors, int warnings,
                                                    @NotNull CompileContext compileContext,
                                                    @NotNull MyCompileStatusNotification notification) {
-      if (!myNotifications.remove(notification)) {
+      final boolean notificationRemoved = myNotifications.remove(notification);
+      if (!notificationRemoved) {
         LOG.error("Multiple invocation of the same callback");
       }
       myErrors += errors;
@@ -373,7 +379,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
       MyJpsBuildData jpsBuildData = (MyJpsBuildData)JPS_BUILD_DATA_KEY.get(myContext);
       jpsBuildData.add(compileContext);
 
-      if (myCollectingStopped && myNotifications.isEmpty()) {
+      if (notificationRemoved) {
         notifyFinished();
       }
     }
