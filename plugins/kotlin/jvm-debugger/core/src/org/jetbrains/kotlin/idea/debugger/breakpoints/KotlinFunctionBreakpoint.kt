@@ -24,12 +24,12 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle.message
-import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getNavigationElement
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getOriginalElement
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread

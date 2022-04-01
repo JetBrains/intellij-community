@@ -13,9 +13,9 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsClassFinder.isKotlinInternalCompiledFile
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.RunningCoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
-import org.jetbrains.kotlin.idea.decompiler.classFile.isKotlinInternalCompiledFile
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
