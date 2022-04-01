@@ -195,6 +195,8 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testSpockTableSeparatedByUnderscores() throws Throwable { doTest() }
 
+  void testSpockTableWithUndefinedLabel() throws Throwable { doTest() }
+
   void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false
     doTest()
