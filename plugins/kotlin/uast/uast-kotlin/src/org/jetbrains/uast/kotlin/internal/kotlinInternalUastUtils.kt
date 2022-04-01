@@ -14,7 +14,7 @@ import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.backend.jvm.serialization.DisabledDescriptorMangler.signatureString
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryPackageSourceElement
@@ -36,7 +35,6 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMemberSignature
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -47,6 +45,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstr
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
+import org.jetbrains.kotlin.resolve.calls.util.isFakePsiElement
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
@@ -74,9 +73,6 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }
-
-internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
-    (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
 internal fun KotlinType.toPsiType(
     source: UElement?,
@@ -296,6 +292,13 @@ internal fun resolveToPsiMethod(
         return resolveToPsiMethod(context, descriptor.underlyingConstructorDescriptor)
     }
 
+    // For synthetic members in enum classes, `source` points to their containing enum class.
+    if (source is KtClass && source.isEnum() && descriptor is SimpleFunctionDescriptor) {
+        val lightClass = source.toLightClass() ?: return null
+        lightClass.methods.find { it.name == descriptor.name.identifier }?.let { return it }
+    }
+
+    // Default primary constructor
     if (descriptor is ConstructorDescriptor && descriptor.isPrimary
         && source is KtClassOrObject && source.primaryConstructor == null
         && source.secondaryConstructors.isEmpty()
@@ -356,7 +359,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
         declarationDescriptor = declarationDescriptor.callableFromObject
     }
     if (declarationDescriptor is SyntheticJavaPropertyDescriptor) {
-        declarationDescriptor = when (sourcePsi.readWriteAccess(useResolveForReadWrite = false)) {
+        declarationDescriptor = when (sourcePsi.readWriteAccess()) {
             ReferenceAccess.WRITE, ReferenceAccess.READ_WRITE ->
                 declarationDescriptor.setMethod ?: declarationDescriptor.getMethod
             ReferenceAccess.READ -> declarationDescriptor.getMethod
@@ -394,7 +397,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
             ?.let { return it }
     }
 
-    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess(useResolveForReadWrite = false))?.let { return it }
+    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
 
     return null
 }

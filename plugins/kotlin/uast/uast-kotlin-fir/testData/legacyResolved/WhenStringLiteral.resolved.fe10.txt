@@ -1,2 +1,0 @@
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:readLine) -> USimpleNameReferenceExpression (identifier = readLine) -> PsiMethod:readLine: readLine
-USwitchExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: getA

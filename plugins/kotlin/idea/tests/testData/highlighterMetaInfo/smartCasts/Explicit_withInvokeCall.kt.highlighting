@@ -1,0 +1,20 @@
+// FIR_IDENTICAL
+interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>()
+}
+
+object <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>One<!> {
+    object <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Two<!> {
+        val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>staticVal<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Any<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_CONSTRUCTOR'")!>Any<!>()
+    }
+}
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>param<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Any<!>) {
+    if (<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>param<!> is <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!>) {
+        <!HIGHLIGHTING("descr='Smart cast to WithInvoke'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>param<!>()
+    }
+
+    if (<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>One<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Two<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>staticVal<!> is <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!>) {
+        <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>One<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Two<!>.<!HIGHLIGHTING("descr='Smart cast to WithInvoke'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>staticVal<!>()
+    }
+}

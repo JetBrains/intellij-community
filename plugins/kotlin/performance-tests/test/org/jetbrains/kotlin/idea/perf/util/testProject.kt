@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 import java.io.File
 
 class ExternalProject(val path: String, val openWith: ProjectOpenAction) {

@@ -68,39 +68,38 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
-//import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractKotlinIdeAnnotationsResolverTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
+import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
+import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
+import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
+import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.AbstractHLGotoSuperActionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
+import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
+import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
+import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
+import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
+import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
+import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
+import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
+import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
+import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+import org.jetbrains.kotlin.idea.fir.uast.*
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
-//import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
-//import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
-//import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
-//import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
-//import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
-//import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.AbstractHLGotoSuperActionHandlerTest
-//import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
-//import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
-//import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
-//import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
-//import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
-//import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
-//import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
-//import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
-//import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
-//import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
-//import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
-//import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
-//import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
-//import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
-//import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
-//import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
-//import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
-//import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
-//import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
-//import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
-//import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
-//import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
-//import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
-//import org.jetbrains.kotlin.idea.fir.uast.*
-//import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
@@ -170,8 +169,7 @@ import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeQuickFixTest
 import org.jetbrains.kotlin.psi.patternMatching.AbstractPsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
-//import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
-//import org.jetbrains.kotlin.idea.fir.uast.*
+import org.jetbrains.kotlin.idea.fir.uast.*
 import org.jetbrains.kotlin.shortenRefs.AbstractShortenRefsTest
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
@@ -816,10 +814,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("decompiler/decompiledTextJs", pattern = Patterns.forRegex("""^([^\.]+)$"""), targetBackend = TargetBackend.JS)
         }
 
-        testClass<AbstractClsStubBuilderTest> {
-            model("decompiler/stubBuilder", pattern = DIRECTORY, isRecursive = false)
-        }
-
         testClass<AbstractAutoImportTest> {
             model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
             model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
@@ -1013,21 +1007,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    /*testGroup("fir", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData")) {
-        testClass<AbstractFirLightClassTest> {
-            model("asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractFirClassLoadingTest> {
-            model("asJava/ultraLightClasses", pattern = KT_OR_KTS)
-        }
-
-        testClass<AbstractFirLightFacadeClassTest> {
-            model("asJava/ultraLightFacades", pattern = KT_OR_KTS)
-        }
-    }*/
-
-    /*testGroup("analysis-api-providers-ide-impl") {
+    testGroup("analysis-api-providers-ide-impl") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide")
         }
@@ -1039,13 +1019,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
         }
+
+        testClass<AbstractKotlinIdeAnnotationsResolverTest> {
+            model("annotationsResolver", pattern = KT_WITHOUT_DOTS)
+        }
     }
 
     testGroup("fir-low-level-api-ide-impl") {
         testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
             model("libraryModuleResolve", isRecursive = false)
         }
-    }*/
+    }
 
     /*testGroup("idea/idea-fir-performance-tests/tests", "idea") {
          testClass<AbstractFirHighlightingPerformanceTest> {
@@ -1059,7 +1043,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
          }
      }*/
 
-    /*testGroup("fir", testDataPath = "../idea/tests/testData") {
+    testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
@@ -1123,6 +1107,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("intentions/importMember", pattern = pattern)
             model("intentions/convertToBlockBody", pattern = pattern)
             model("intentions/addWhenRemainingBranches", pattern = pattern)
+            model("../../../fir/testData/intentions/useExpressionBody", pattern=pattern)
         }
 
         testClass<AbstractFirShortenRefsTest> {
@@ -1140,18 +1125,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
-    }*/
+    }
 
-    /*testGroup("fir", testDataPath = "..") {
+    testGroup("fir", testDataPath = "..") {
         testClass<AbstractHLLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("idea/tests/testData/inspectionsLocal/unusedVariable", pattern = pattern)
             model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("fir/testData/inspectionsLocal", pattern = pattern)
         }
-    }*/
+    }
 
-    /*testGroup("fir", testDataPath = "../completion/tests/testData") {
+    testGroup("fir", testDataPath = "../completion/tests/testData") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
@@ -1183,9 +1168,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 pattern = KT_WITHOUT_FIR_PREFIX
             )
         }
-    }*/
+    }
 
-    /*testGroup("fir", testDataPath = "../idea/tests/testData/findUsages") {
+    testGroup("fir", testDataPath = "../idea/tests/testData/findUsages") {
         testClass<AbstractFindUsagesFirTest> {
             model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
             model("java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""))
@@ -1203,9 +1188,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractKotlinFindUsagesWithStdlibFirTest> {
             model("stdlibUsages", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""))
         }
-    }*/
+    }
 
-    /*testGroup("fir") {
+    testGroup("fir") {
         testClass<AbstractHLGotoSuperActionHandlerTest> {
             model("codeInsight/handlers/gotoSuperActionHandler", pattern = KT_WITHOUT_DOTS)
         }
@@ -1213,7 +1198,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
         }
-    }*/
+    }
 
 
     /*testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
@@ -1497,7 +1482,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    /*testGroup("uast/uast-kotlin-fir") {
+    testGroup("uast/uast-kotlin-fir") {
         testClass<AbstractFirUastDeclarationTest> {
             model("declaration")
             model("legacy")
@@ -1506,9 +1491,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirUastTypesTest> {
             model("type")
         }
-    }*/
+    }
 
-    /*testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/tests/testData") {
+    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/tests/testData") {
         testClass<AbstractFirLegacyUastDeclarationTest> {
             model("")
         }
@@ -1528,7 +1513,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirLegacyUastValuesTest> {
             model("")
         }
-    }*/
+    }
 
     testGroup("uast/uast-kotlin/tests", testDataPath = "../../uast-kotlin-fir/testData") {
         testClass<AbstractFE1UastDeclarationTest> {

@@ -1,5 +1,5 @@
 // "Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Add '-opt-in=PropertyTypeMarker' to module light_idea_test_case compiler arguments
 // ACTION: Convert to secondary constructor

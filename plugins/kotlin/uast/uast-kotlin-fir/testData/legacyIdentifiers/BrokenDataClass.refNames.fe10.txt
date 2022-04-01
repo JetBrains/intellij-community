@@ -1,5 +1,0 @@
-Long -> USimpleNameReferenceExpression (identifier = Long) from KtNameReferenceExpression
-Long -> USimpleNameReferenceExpression (identifier = Long) from KtNameReferenceExpression
-a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
-a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
-a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression

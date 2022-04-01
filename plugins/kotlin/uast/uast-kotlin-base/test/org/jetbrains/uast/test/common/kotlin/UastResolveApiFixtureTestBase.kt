@@ -5,9 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
@@ -344,6 +347,24 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("bar", resolved.name)
     }
 
+    fun checkResolveLocalDefaultConstructor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            fun foo() {
+                class LocalClass
+
+                val lc = Local<caret>Class()
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertTrue("Not resolved to local class default constructor", resolved.isConstructor)
+        TestCase.assertEquals("LocalClass", resolved.name)
+    }
 
     fun checkResolveCompiledAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
@@ -357,6 +378,27 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolved = (compiledAnnotationParameter.resolve() as? PsiMethod)
             .orFail("cant resolve annotation parameter")
         TestCase.assertEquals("message", resolved.name)
+    }
+
+    fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            class Foo {
+                @JvmSynthetic
+                fun bar() {}
+            }
+
+            fun test() {
+                Foo().ba<caret>r()
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertEquals("bar", resolved.name)
     }
 
     fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
@@ -405,6 +447,11 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             fun test1() { }
             @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
             fun test2() { }
+            
+            class Test(private val parameter: Int)  {
+                @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+                constructor() : this(42)
+            }
         """
         )
 
@@ -421,6 +468,85 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertTrue("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
         TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
         TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+
+        val testClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        TestCase.assertNotNull("can't convert class Test", testClass)
+        testClass.methods.forEach { mtd ->
+            if (mtd.sourcePsi is KtConstructor<*>) {
+                TestCase.assertTrue("$mtd should be marked as a constructor", mtd.isConstructor)
+            }
+        }
     }
+
+    fun checkSyntheticEnumMethods(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            enum class MyEnum  {
+                FOO,
+                BAR;
+            }
+            
+            fun testValueOf() {
+              MyEnum.valueOf("FOO")
+            }
+            
+            fun testValues() {
+              MyEnum.values()
+            }
+        """
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val myEnum = uFile.findElementByTextFromPsi<UClass>("MyEnum", strict = false)
+        TestCase.assertNotNull("can't convert enum class MyEnum", myEnum)
+
+        val syntheticMethods = setOf(ENUM_VALUES.identifier, ENUM_VALUE_OF.identifier)
+        var metValues = false
+        var metValueOf = false
+        myEnum.methods.forEach { mtd ->
+            if (!mtd.isConstructor) {
+                TestCase.assertNotNull("Null return type of $mtd", mtd.returnType)
+            }
+            if (mtd.name in syntheticMethods) {
+                when (mtd.name) {
+                    ENUM_VALUES.identifier -> metValues = true
+                    ENUM_VALUE_OF.identifier -> metValueOf = true
+                }
+                TestCase.assertTrue(
+                    "Missing nullness annotations on $mtd",
+                    mtd.javaPsi.modifierList.annotations.any { it.isNullnessAnnotation }
+                )
+            }
+        }
+        TestCase.assertTrue("Expect to meet synthetic values() methods in an enum class", metValues)
+        TestCase.assertTrue("Expect to meet synthetic valueOf(String) methods in an enum class", metValueOf)
+
+        val testValueOf = uFile.findElementByTextFromPsi<UMethod>("testValueOf", strict = false)
+        TestCase.assertNotNull("testValueOf should be successfully converted", testValueOf)
+        val valueOfCall = testValueOf.findElementByText<UElement>("valueOf").uastParent as KotlinUFunctionCallExpression
+        val resolvedValueOfCall = valueOfCall.resolve()
+        TestCase.assertNotNull("Unresolved MyEnum.valueOf(String)", resolvedValueOfCall)
+        TestCase.assertNotNull("Null return type of $resolvedValueOfCall", resolvedValueOfCall?.returnType)
+        TestCase.assertTrue(
+            "Missing nullness annotations on $resolvedValueOfCall",
+            resolvedValueOfCall!!.annotations.any { it.isNullnessAnnotation }
+        )
+
+        val testValues = uFile.findElementByTextFromPsi<UMethod>("testValues", strict = false)
+        TestCase.assertNotNull("testValues should be successfully converted", testValues)
+        val valuesCall = testValues.findElementByText<UElement>("values").uastParent as KotlinUFunctionCallExpression
+        val resolvedValuesCall = valuesCall.resolve()
+        TestCase.assertNotNull("Unresolved MyEnum.values()", resolvedValuesCall)
+        TestCase.assertNotNull("Null return type of $resolvedValuesCall", resolvedValuesCall?.returnType)
+        TestCase.assertTrue(
+            "Missing nullness annotations on $resolvedValuesCall",
+            resolvedValuesCall!!.annotations.any { it.isNullnessAnnotation }
+        )
+    }
+
+    private val PsiAnnotation.isNullnessAnnotation: Boolean
+        get() {
+            return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
+        }
 
 }

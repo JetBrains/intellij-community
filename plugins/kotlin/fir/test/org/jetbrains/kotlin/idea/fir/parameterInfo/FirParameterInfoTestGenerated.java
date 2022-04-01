@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.parameterInfo;
 
@@ -265,6 +265,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("NoCandidatesSelfDelegatedConstructorCall.kt")
         public void testNoCandidatesSelfDelegatedConstructorCall() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/NoCandidatesSelfDelegatedConstructorCall.kt");
+        }
+
+        @TestMetadata("NoCandidatesWrongImplicitReceiver.kt")
+        public void testNoCandidatesWrongImplicitReceiver() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/NoCandidatesWrongImplicitReceiver.kt");
         }
 
         @TestMetadata("NoCandidatesWrongReceiver.kt")

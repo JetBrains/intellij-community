@@ -3,12 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.uast.*
@@ -47,6 +49,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override val baseKotlinConverter: BaseKotlinConverter
         get() = KotlinConverter
+
+    override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        return ktElement.actionUnderSafeAnalyzeBlock({ ktElement.toLightAnnotation() }, { null })
+    }
 
     private fun getResolvedCall(sourcePsi: KtCallElement): ResolvedCall<*>? {
         val annotationEntry = sourcePsi.getParentOfType<KtAnnotationEntry>(false) ?: return null
@@ -152,6 +158,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
     }
 
+    override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
+        return psiElement.actionUnderSafeAnalyzeBlock({ psiElement.annotations }, { emptyArray() })
+    }
+
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
         val other = UastBinaryOperator.OTHER
         val ref = ktBinaryExpression.operationReference
@@ -172,7 +182,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         val resolvedCall = ktSimpleNameExpression.getResolvedCall(ktSimpleNameExpression.analyze()) ?: return null
         val resultingDescriptor = resolvedCall.resultingDescriptor as? SyntheticJavaPropertyDescriptor ?: return null
-        val access = ktSimpleNameExpression.readWriteAccess(useResolveForReadWrite = false)
+        val access = ktSimpleNameExpression.readWriteAccess()
         val descriptor = (if (access.isWrite) resultingDescriptor.setMethod else resultingDescriptor.getMethod) ?: return null
         return resolveToPsiMethod(ktSimpleNameExpression, descriptor)
     }

@@ -101,12 +101,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
         try {
             checkCallback(normalizedFile.toString(), uFile as UFile)
-        } catch (e: AssertionError) {
-            if (isExpectedToFail(filePath, fileContent))
-                return
-            else
-                throw e
-        } catch (e: AssertionFailedError) {
+        } catch (e: Throwable) {
             if (isExpectedToFail(filePath, fileContent))
                 return
             else

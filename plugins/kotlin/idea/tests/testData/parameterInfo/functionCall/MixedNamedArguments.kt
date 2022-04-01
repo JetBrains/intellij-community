@@ -1,4 +1,3 @@
-// IGNORE_FIR
 open class A(x: Int) {
     fun m(x: Boolean, y: Int) = 1
     fun m(x: Boolean, y: Int, z: Int) = 2
