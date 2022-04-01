@@ -49,20 +49,13 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   public void processElementsWithName(@NotNull String name,
                                       @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
-    processElementsWithNames(Set.of(name), processor, parameters);
-  }
-
-  @Override
-  public void processElementsWithNames(@NotNull Set<String> name,
-                                       @NotNull Processor<? super NavigationItem> processor,
-                                       @NotNull FindSymbolParameters parameters) {
     boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
     boolean directoriesOnly = isDirectoryOnlyPattern(parameters);
     boolean withFiles = !directoriesOnly;
     boolean withDirs = directoriesOnly || Registry.is("ide.goto.file.include.directories");
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
     FilenameIndex.processFilesByNames(
-      name, true, parameters.getSearchScope(), parameters.getIdFilter(), file -> {
+      Set.of(name), true, parameters.getSearchScope(), parameters.getIdFilter(), file -> {
         if (!file.isValid()) return true;
         boolean isDir = file.isDirectory();
         if (!withFiles && !isDir || !withDirs && isDir) return true;

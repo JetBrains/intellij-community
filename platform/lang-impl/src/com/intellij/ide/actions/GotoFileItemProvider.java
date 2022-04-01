@@ -26,7 +26,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FindSymbolParameters;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 import java.util.function.Function;
 
@@ -231,16 +229,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   @NotNull
   private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
                                                                             @NotNull List<? extends MatchResult> matchResults,
-                                                                            @NotNull Function<String, Object> indexResult) {
+                                                                            @NotNull Function<String, Object[]> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();
     for (MatchResult matchResult : matchResults) {
-      Object val = indexResult.apply(matchResult.elementName);
-      if (val == null) continue;
+      Object[] items = indexResult.apply(matchResult.elementName);
       ProgressManager.checkCanceled();
-      List<PsiFileSystemItem> items = val instanceof List ? (List<PsiFileSystemItem>)val : Collections.singletonList((PsiFileSystemItem)val);
-      for (PsiFileSystemItem psiItem : items) {
+      for (Object item : items) {
+        if (!(item instanceof PsiFileSystemItem)) continue;
+        PsiFileSystemItem psiItem = (PsiFileSystemItem)item;
         if (!scope.contains(psiItem.getVirtualFile())) continue;
         String qualifier = getParentPath(psiItem);
         if (qualifier != null) {
@@ -407,50 +405,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       FindSymbolParameters parametersAdjusted = parameters.withScope(scope);
 
       List<List<MatchResult>> groups = group(matchingNames, comparator1);
-      // 10 index calls max, batch size is doubled each time
-      int batchSizeInitial = Math.max(matchingNames.size() / 511 + 1, 50);
-      Function<String, Object> indexResult = new Function<>() {
-        int batchSize = batchSizeInitial;
-        int groupIndex, groupSubIndex;
-        final Map<String, Object> indexInnerMap = new HashMap<>();
-
-        @Override
-        public Object apply(String key) {
-          Object result = indexInnerMap.get(key);
-          if (result == ObjectUtils.NULL) return null;
-          if (result != null) return result;
-          Set<String> names = new HashSet<>(batchSize);
-          while (groupIndex < groups.size()) {
-            List<MatchResult> group = sortGroup.apply(groups.get(groupIndex));
-            int lastIndex = Math.min(group.size(), groupSubIndex + batchSize - names.size());
-            for (MatchResult mr : group.subList(groupSubIndex, lastIndex)) {
-              names.add(mr.elementName);
-            }
-            boolean nextGroup = lastIndex == group.size();
-            groupSubIndex = nextGroup ? 0 : lastIndex;
-            groupIndex = nextGroup ? groupIndex + 1 : groupIndex;
-            if (names.size() >= batchSize) break;
-          }
-          batchSize *= 2;
-
-          indexInnerMap.clear(); // clear the prev batch result
-          LOG.assertTrue(names.contains(key), "'" + key + "' is not in the current batch");
-          Object[] items = myModel.getElementsByNames(names, parametersAdjusted, indicator);
-          for (Object o : items) {
-            if (!(o instanceof PsiFileSystemItem)) continue;
-            String name = ((PsiFileSystemItem)o).getName();
-            Object val = indexInnerMap.get(name);
-            if (val == null) indexInnerMap.put(name, o);
-            else if (val instanceof List) ((List<Object>)val).add(o);
-            else indexInnerMap.put(name, ContainerUtil.newArrayList(val, o));
-            names.remove(name);
-          }
-          for (String name : names) {
-            indexInnerMap.put(name, ObjectUtils.NULL);
-          }
-          return ObjectUtils.nullizeIfDefaultValue(indexInnerMap.get(key), ObjectUtils.NULL);
-        }
-      };
+      Function<String, Object[]> indexResult = key -> myModel.getElementsByName(key, parametersAdjusted, indicator);
 
       for (List<MatchResult> group : groups) {
         List<List<MatchResult>> sortedNames = group(sortGroup.apply(group), comparator2);
@@ -484,12 +439,14 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, myProject, true);
       GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());
       FindSymbolParameters adjusted = parameters.withScope(scope);
-      for (Object o : myModel.getElementsByNames(ContainerUtil.map2Set(group, o -> o.elementName), adjusted, indicator)) {
-        ProgressManager.checkCanceled();
-        if (o instanceof PsiFileSystemItem) {
-          PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
-          String qualifier = getParentPath(psiItem);
-          if (qualifier != null) return true;
+      for (MatchResult matchResult : group) {
+        for (Object o : myModel.getElementsByName(matchResult.elementName, adjusted, indicator)) {
+          ProgressManager.checkCanceled();
+          if (o instanceof PsiFileSystemItem) {
+            PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
+            String qualifier = getParentPath(psiItem);
+            if (qualifier != null) return true;
+          }
         }
       }
       return false;
