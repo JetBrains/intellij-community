@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift
 
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,6 +19,9 @@ import git4idea.repo.GitRepositoryManager
 import training.project.FileUtils
 import training.project.ProjectUtils
 import java.io.File
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 object GitProjectUtil {
   private const val remoteProjectName = "RemoteLearningProject"
@@ -36,7 +41,7 @@ object GitProjectUtil {
     val root = gitProjectRoot.toNioPath().toFile()
     if (copyGitProject(root)) {
       checkout(root, branch)
-      GitInit.refreshAndConfigureVcsMappings(project, gitProjectRoot, gitProjectRoot.path)
+      addVcsMappingSynchronously(project, gitProjectRoot)
     }
     else error("Failed to copy git project")
   }
@@ -46,6 +51,26 @@ object GitProjectUtil {
     handler.addParameters(branch)
     handler.endOptions()
     Git.getInstance().runCommand(handler).throwOnError()
+  }
+
+  private fun addVcsMappingSynchronously(project: Project, gitRoot: VirtualFile) {
+    val updateFinishedFuture = CompletableFuture<Boolean>()
+    val connection = project.messageBus.connect()
+    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
+      updateFinishedFuture.complete(true)
+    })
+
+    GitInit.refreshAndConfigureVcsMappings(project, gitRoot, gitRoot.path)
+
+    try {
+      updateFinishedFuture.get(3, TimeUnit.SECONDS)
+    }
+    catch (ex: TimeoutException) {
+      thisLogger().warn("Repository mappings update didn't happened", ex)
+    }
+    finally {
+      connection.disconnect()
+    }
   }
 
   fun createRemoteProject(remoteName: String, project: Project): File {
