@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
@@ -23,6 +24,8 @@ import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
+import java.util.stream.Collectors
+import kotlin.streams.toList
 
 /**
  * Prepares data for [com.intellij.codeInsight.codeVision.CodeVisionHost].
@@ -88,7 +91,11 @@ class CodeVisionPass(
   private val currentIndicator = ProgressManager.getGlobalProgressIndicator()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    collect(progress, editor, myFile, providerIdToLenses, DaemonBoundCodeVisionProvider.extensionPoint.extensionList)
+    val settings = CodeVisionSettings.instance()
+    val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensions()
+      .filter {  settings.isProviderEnabled(it.groupId) }
+      .collect(Collectors.toList())
+    collect(progress, editor, myFile, providerIdToLenses, providers)
   }
 
   override fun doApplyInformationToEditor() {
