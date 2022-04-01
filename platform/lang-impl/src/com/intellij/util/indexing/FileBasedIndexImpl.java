@@ -1005,20 +1005,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                             @NotNull final ID<?, ?> requestedIndexId,
                             @NotNull Project project,
                             @NotNull final VirtualFile vFile) {
-    final PsiFile dominantContentFile = findLatestKnownPsiForUncomittedDocument(document, project);
+    PsiFile dominantContentFile = findLatestKnownPsiForUncomittedDocument(document, project);
 
-    final DocumentContent content;
-    // TODO seems we should choose the source with highest stamp!
-    if (dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()) {
-      content = new PsiContent(document, dominantContentFile);
-    }
-    else {
-      content = new AuthenticContent(document);
-    }
+    DocumentContent content = findLatestContent(document, dominantContentFile);
 
-    final long currentDocStamp = PsiDocumentManager.getInstance(project).getLastCommittedStamp(document);
+    long currentDocStamp = PsiDocumentManager.getInstance(project).getLastCommittedStamp(document);
 
-    final long previousDocStamp = myLastIndexedDocStamps.get(document, requestedIndexId);
+    long previousDocStamp = myLastIndexedDocStamps.get(document, requestedIndexId);
     if (previousDocStamp == currentDocStamp) return;
 
     final CharSequence contentText = content.getText();
@@ -1026,33 +1019,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       IndexedFileImpl indexedFile = new IndexedFileImpl(vFile, project);
       if (getAffectedIndexCandidates(indexedFile).contains(requestedIndexId) &&
           acceptsInput(requestedIndexId, indexedFile)) {
-        final int inputId = getFileId(vFile);
+        int inputId = getFileId(vFile);
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
-          // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
-          WeakReference<Pair<FileContentImpl, Long>> previousContentAndStampRef = document.getUserData(ourFileContentKey);
-          Pair<FileContentImpl, Long> previousContentAndStamp = SoftReference.dereference(previousContentAndStampRef);
-          final FileContentImpl newFc;
-          if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
-            newFc = previousContentAndStamp.getFirst();
-          }
-          else {
-            newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
-            document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
-          }
-
-          initFileContent(newFc, dominantContentFile);
-          newFc.ensureThreadSafeLighterAST();
-
-          if (content instanceof AuthenticContent) {
-            newFc.putUserData(PlatformIdTableBuilding.EDITOR_HIGHLIGHTER,
-                              EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
-          }
+          FileContentImpl newFc = getUnsavedDocContent(document, project, vFile, currentDocStamp, contentText);
+          tuneFileContent(document, dominantContentFile, content, newFc);
 
           markFileIndexed(vFile, newFc);
           try {
-            Computable<Boolean> update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc);
-            ProgressManager.getInstance().executeNonCancelableSection(update::compute);
+            updateIndexInNonCancellableSection(requestedIndexId, inputId, newFc);
           }
           finally {
             unmarkBeingIndexed();
@@ -1060,14 +1035,57 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
         else { // effectively wipe the data from the indices
-          Computable<Boolean> update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, null);
-          ProgressManager.getInstance().executeNonCancelableSection(update::compute);
+          updateIndexInNonCancellableSection(requestedIndexId, inputId, null);
         }
       }
 
       long previousState = myLastIndexedDocStamps.set(document, requestedIndexId, currentDocStamp);
       assert previousState == previousDocStamp;
     });
+  }
+
+  @NotNull
+  private static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
+    // TODO seems we should choose the source with highest stamp!
+    return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()
+           ? new PsiContent(document, dominantContentFile)
+           : new AuthenticContent(document);
+  }
+
+  private void updateIndexInNonCancellableSection(@NotNull ID<?, ?> requestedIndexId, int inputId, FileContentImpl newFc) {
+    Computable<Boolean> update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc);
+    ProgressManager.getInstance().executeNonCancelableSection(update::compute);
+  }
+
+  private static void tuneFileContent(@NotNull Document document,
+                                      PsiFile dominantContentFile,
+                                      DocumentContent content,
+                                      FileContentImpl newFc) {
+    initFileContent(newFc, dominantContentFile);
+    newFc.ensureThreadSafeLighterAST();
+    if (content instanceof AuthenticContent) {
+      newFc.putUserData(PlatformIdTableBuilding.EDITOR_HIGHLIGHTER,
+                        EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
+    }
+  }
+
+  private static @NotNull FileContentImpl getUnsavedDocContent(@NotNull Document document,
+                                                               @NotNull Project project,
+                                                               @NotNull VirtualFile vFile,
+                                                               long currentDocStamp,
+                                                               @NotNull CharSequence contentText) {
+    // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
+    WeakReference<Pair<FileContentImpl, Long>> previousContentAndStampRef = document.getUserData(ourFileContentKey);
+    Pair<FileContentImpl, Long> previousContentAndStamp = SoftReference.dereference(previousContentAndStampRef);
+
+    if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
+      return previousContentAndStamp.getFirst();
+    }
+    else {
+      FileContentImpl newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
+      document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
+      return newFc;
+    }
   }
 
   @NotNull
