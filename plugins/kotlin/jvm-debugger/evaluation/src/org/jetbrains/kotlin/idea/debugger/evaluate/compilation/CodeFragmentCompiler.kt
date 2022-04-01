@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -49,16 +50,9 @@ class CodeFragmentCodegenException(val reason: Exception) : Exception()
 class CodeFragmentCompiler(private val executionContext: ExecutionContext, private val status: EvaluationStatus) {
 
     companion object {
-        enum class FragmentCompilerBackend {
-            JVM,
-            JVM_IR
-        }
 
-        val KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND: Key<FragmentCompilerBackend> =
-            Key.create("KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND")
-
-        fun useIRFragmentCompiler(debugProcess: DebugProcess): Boolean =
-            debugProcess.getUserData(KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND) == Companion.FragmentCompilerBackend.JVM_IR
+        fun useIRFragmentCompiler(): Boolean =
+            Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend").asBoolean()
     }
 
     data class CompilationResult(
@@ -85,7 +79,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
     }
 
     private fun initBackend(codeFragment: KtCodeFragment): FragmentCompilerCodegen {
-        return if (useIRFragmentCompiler(executionContext.debugProcess)) {
+        return if (useIRFragmentCompiler()) {
             IRFragmentCompilerCodegen()
         } else {
             OldFragmentCompilerCodegen(codeFragment)
