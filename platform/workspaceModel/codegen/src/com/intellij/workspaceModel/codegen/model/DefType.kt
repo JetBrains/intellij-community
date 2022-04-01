@@ -2,11 +2,9 @@ package storage.codegen.patcher
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import deft.storage.codegen.implCode
 import org.jetbrains.deft.annotations.Object
 import org.jetbrains.deft.codegen.ijws.IjWsType
 import org.jetbrains.deft.codegen.ijws.ijWsType
-import org.jetbrains.deft.codegen.utils.fileContents
 import org.jetbrains.deft.impl.ObjModule
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.fields.Field
@@ -36,10 +34,6 @@ class DefType(
 
     val singleton get() = Object::class in def.annotations
     val declaredIjWsType: IjWsType? by lazy { ijWsType() }
-
-    fun implFileContents(): String {
-        return fileContents(def.file!!.pkg.fqn, implCode())
-    }
 
     fun verify(diagnostics: Diagnostics) {
         val base = base

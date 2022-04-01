@@ -37,14 +37,14 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
         override var underlyingFacet: FacetEntity?
     }
     
-    companion object: ObjType<FacetEntity, Builder>(IntellijWsTest, 40) {
+    companion object: ObjType<FacetEntity, Builder>(IntellijWs, 40) {
         val nameField: Field<FacetEntity, String> = Field(this, 0, "name", TString)
         val entitySource: Field<FacetEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val moduleField: Field<FacetEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWsTest", 41))
+        val moduleField: Field<FacetEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWs", 41))
         val facetType: Field<FacetEntity, String> = Field(this, 0, "facetType", TString)
         val configurationXmlTag: Field<FacetEntity, String?> = Field(this, 0, "configurationXmlTag", TOptional(TString))
         val moduleId: Field<FacetEntity, ModuleId> = Field(this, 0, "moduleId", TBlob("ModuleId"))
-        val underlyingFacet: Field<FacetEntity, FacetEntity?> = Field(this, 0, "underlyingFacet", TOptional(TRef("org.jetbrains.deft.IntellijWsTest", 40, child = true)))
+        val underlyingFacet: Field<FacetEntity, FacetEntity?> = Field(this, 0, "underlyingFacet", TOptional(TRef("org.jetbrains.deft.IntellijWs", 40, child = true)))
         val persistentId: Field<FacetEntity, FacetId> = Field(this, 0, "persistentId", TBlob("FacetId"))
     }
     //@formatter:on

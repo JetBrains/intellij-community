@@ -22,66 +22,6 @@ val Field<*, *>.suspendableGetterName: String
 val Field<*, *>.javaMetaName: String
     get() = if (javaName in reservedObjTypeNames) "${javaName}Field" else javaName
 
-val Field<*, *>.implCode: String
-    get() = buildString {
-        if (hasSetter) {
-            if (isOverride) append(implBlockingCodeOverride)
-            else append(implBlockingCode)
-
-            if (suspendable == true) append("\n").append(implSuspendableCode)
-        } else {
-            when (hasDefault) {
-                Field.Default.none -> unreachable()
-                Field.Default.plain -> append(
-                    """
-                        override val $javaName: ${type.javaType}
-                            get() = super<${owner.javaFullName}>.$javaName
-                                                                                           
-                    """.trimIndent()
-                )
-                Field.Default.suspend -> append(
-                    """
-                        @Deprecated("Use suspendable getter")
-                        override val $javaName: ${type.javaType}
-                            get() = runBlocking { $suspendableGetterName() }
-                            
-                        override suspend fun $suspendableGetterName(): ${type.javaType} = 
-                            super<${owner.javaFullName}>.$suspendableGetterName() 
-                                                                       
-                    """.trimIndent()
-                )
-            }
-        }
-    }
-
-val Field<*, *>.builderImplCode: String
-    get() = buildString {
-        if (hasSetter) {
-            append(builderImplBlockingCode)
-        } else {
-            if (suspendable == true) {
-                append(
-                    """
-                        @Deprecated("Use suspendable getter")                
-                        override val $javaName: ${type.javaType}
-                            get() = result.$javaName
-                                
-            """.trimIndent()
-                )
-            } else {
-                append(
-                    """                
-                        override val $javaName: ${type.javaType}
-                            get() = result.$javaName
-                                
-            """.trimIndent()
-                )
-            }
-        }
-
-        if (suspendable == true) append("\n").append(builderImplSuspendableCode)
-    }
-
 val Field<*, *>.isOverride: Boolean
     get() = base != null
             || name == "parent"

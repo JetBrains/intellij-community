@@ -42,15 +42,15 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
         override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
     }
     
-    companion object: ObjType<ArtifactEntity, Builder>(IntellijWsTest, 23) {
+    companion object: ObjType<ArtifactEntity, Builder>(IntellijWs, 23) {
         val nameField: Field<ArtifactEntity, String> = Field(this, 0, "name", TString)
         val entitySource: Field<ArtifactEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val artifactType: Field<ArtifactEntity, String> = Field(this, 0, "artifactType", TString)
         val includeInProjectBuild: Field<ArtifactEntity, Boolean> = Field(this, 0, "includeInProjectBuild", TBoolean)
         val outputUrl: Field<ArtifactEntity, VirtualFileUrl?> = Field(this, 0, "outputUrl", TOptional(TBlob("VirtualFileUrl")))
-        val rootElement: Field<ArtifactEntity, CompositePackagingElementEntity> = Field(this, 0, "rootElement", TRef("org.jetbrains.deft.IntellijWsTest", 26, child = true))
-        val customProperties: Field<ArtifactEntity, List<ArtifactPropertiesEntity>> = Field(this, 0, "customProperties", TList(TRef("org.jetbrains.deft.IntellijWsTest", 24, child = true)))
-        val artifactOutputPackagingElement: Field<ArtifactEntity, ArtifactOutputPackagingElementEntity?> = Field(this, 0, "artifactOutputPackagingElement", TOptional(TRef("org.jetbrains.deft.IntellijWsTest", 30, child = true)))
+        val rootElement: Field<ArtifactEntity, CompositePackagingElementEntity> = Field(this, 0, "rootElement", TRef("org.jetbrains.deft.IntellijWs", 26, child = true))
+        val customProperties: Field<ArtifactEntity, List<ArtifactPropertiesEntity>> = Field(this, 0, "customProperties", TList(TRef("org.jetbrains.deft.IntellijWs", 24, child = true)))
+        val artifactOutputPackagingElement: Field<ArtifactEntity, ArtifactOutputPackagingElementEntity?> = Field(this, 0, "artifactOutputPackagingElement", TOptional(TRef("org.jetbrains.deft.IntellijWs", 30, child = true)))
         val persistentId: Field<ArtifactEntity, ArtifactId> = Field(this, 0, "persistentId", TBlob("ArtifactId"))
     }
     //@formatter:on
@@ -72,8 +72,8 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: ObjType<ArtifactPropertiesEntity, Builder>(IntellijWsTest, 24) {
-        val artifact: Field<ArtifactPropertiesEntity, ArtifactEntity> = Field(this, 0, "artifact", TRef("org.jetbrains.deft.IntellijWsTest", 23))
+    companion object: ObjType<ArtifactPropertiesEntity, Builder>(IntellijWs, 24) {
+        val artifact: Field<ArtifactPropertiesEntity, ArtifactEntity> = Field(this, 0, "artifact", TRef("org.jetbrains.deft.IntellijWs", 23))
         val entitySource: Field<ArtifactPropertiesEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val providerType: Field<ArtifactPropertiesEntity, String> = Field(this, 0, "providerType", TString)
         val propertiesXmlTag: Field<ArtifactPropertiesEntity, String?> = Field(this, 0, "propertiesXmlTag", TOptional(TString))
@@ -92,8 +92,8 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<PackagingElementEntity, Builder>(IntellijWsTest, 25) {
-        val compositePackagingElement: Field<PackagingElementEntity, CompositePackagingElementEntity> = Field(this, 0, "compositePackagingElement", TRef("org.jetbrains.deft.IntellijWsTest", 26))
+    companion object: ObjType<PackagingElementEntity, Builder>(IntellijWs, 25) {
+        val compositePackagingElement: Field<PackagingElementEntity, CompositePackagingElementEntity> = Field(this, 0, "compositePackagingElement", TRef("org.jetbrains.deft.IntellijWs", 26))
         val entitySource: Field<PackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
     //@formatter:on
@@ -114,10 +114,10 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var children: List<PackagingElementEntity>
     }
     
-    companion object: ObjType<CompositePackagingElementEntity, Builder>(IntellijWsTest, 26, PackagingElementEntity) {
-        val artifact: Field<CompositePackagingElementEntity, ArtifactEntity> = Field(this, 0, "artifact", TRef("org.jetbrains.deft.IntellijWsTest", 23))
+    companion object: ObjType<CompositePackagingElementEntity, Builder>(IntellijWs, 26, PackagingElementEntity) {
+        val artifact: Field<CompositePackagingElementEntity, ArtifactEntity> = Field(this, 0, "artifact", TRef("org.jetbrains.deft.IntellijWs", 23))
         val entitySource: Field<CompositePackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val children: Field<CompositePackagingElementEntity, List<PackagingElementEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWsTest", 25, child = true)))
+        val children: Field<CompositePackagingElementEntity, List<PackagingElementEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs", 25, child = true)))
     }
     //@formatter:on
     //endregion
@@ -136,7 +136,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<DirectoryPackagingElementEntity, Builder>(IntellijWsTest, 27, CompositePackagingElementEntity) {
+    companion object: ObjType<DirectoryPackagingElementEntity, Builder>(IntellijWs, 27, CompositePackagingElementEntity) {
         val directoryName: Field<DirectoryPackagingElementEntity, String> = Field(this, 0, "directoryName", TString)
         val entitySource: Field<DirectoryPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -157,7 +157,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ArchivePackagingElementEntity, Builder>(IntellijWsTest, 28, CompositePackagingElementEntity) {
+    companion object: ObjType<ArchivePackagingElementEntity, Builder>(IntellijWs, 28, CompositePackagingElementEntity) {
         val fileName: Field<ArchivePackagingElementEntity, String> = Field(this, 0, "fileName", TString)
         val entitySource: Field<ArchivePackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -176,7 +176,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
         override var children: List<PackagingElementEntity>
     }
     
-    companion object: ObjType<ArtifactRootElementEntity, Builder>(IntellijWsTest, 29, CompositePackagingElementEntity) {
+    companion object: ObjType<ArtifactRootElementEntity, Builder>(IntellijWs, 29, CompositePackagingElementEntity) {
     }
     //@formatter:on
     //endregion
@@ -193,8 +193,8 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ArtifactOutputPackagingElementEntity, Builder>(IntellijWsTest, 30, PackagingElementEntity) {
-        val artifact: Field<ArtifactOutputPackagingElementEntity, ArtifactEntity?> = Field(this, 0, "artifact", TOptional(TRef("org.jetbrains.deft.IntellijWsTest", 23)))
+    companion object: ObjType<ArtifactOutputPackagingElementEntity, Builder>(IntellijWs, 30, PackagingElementEntity) {
+        val artifact: Field<ArtifactOutputPackagingElementEntity, ArtifactEntity?> = Field(this, 0, "artifact", TOptional(TRef("org.jetbrains.deft.IntellijWs", 23)))
         val entitySource: Field<ArtifactOutputPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
     //@formatter:on
@@ -212,7 +212,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ModuleOutputPackagingElementEntity, Builder>(IntellijWsTest, 31, PackagingElementEntity) {
+    companion object: ObjType<ModuleOutputPackagingElementEntity, Builder>(IntellijWs, 31, PackagingElementEntity) {
         val moduleField: Field<ModuleOutputPackagingElementEntity, ModuleId?> = Field(this, 0, "module", TOptional(TBlob("ModuleId")))
         val entitySource: Field<ModuleOutputPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -231,8 +231,8 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<LibraryFilesPackagingElementEntity, Builder>(IntellijWsTest, 32, PackagingElementEntity) {
-        val library: Field<LibraryFilesPackagingElementEntity, LibraryEntity?> = Field(this, 0, "library", TOptional(TRef("org.jetbrains.deft.IntellijWsTest", 46)))
+    companion object: ObjType<LibraryFilesPackagingElementEntity, Builder>(IntellijWs, 32, PackagingElementEntity) {
+        val library: Field<LibraryFilesPackagingElementEntity, LibraryEntity?> = Field(this, 0, "library", TOptional(TRef("org.jetbrains.deft.IntellijWs", 46)))
         val entitySource: Field<LibraryFilesPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
     //@formatter:on
@@ -250,7 +250,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ModuleSourcePackagingElementEntity, Builder>(IntellijWsTest, 33, PackagingElementEntity) {
+    companion object: ObjType<ModuleSourcePackagingElementEntity, Builder>(IntellijWs, 33, PackagingElementEntity) {
         val moduleField: Field<ModuleSourcePackagingElementEntity, ModuleId?> = Field(this, 0, "module", TOptional(TBlob("ModuleId")))
         val entitySource: Field<ModuleSourcePackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -269,7 +269,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ModuleTestOutputPackagingElementEntity, Builder>(IntellijWsTest, 34, PackagingElementEntity) {
+    companion object: ObjType<ModuleTestOutputPackagingElementEntity, Builder>(IntellijWs, 34, PackagingElementEntity) {
         val moduleField: Field<ModuleTestOutputPackagingElementEntity, ModuleId?> = Field(this, 0, "module", TOptional(TBlob("ModuleId")))
         val entitySource: Field<ModuleTestOutputPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -288,7 +288,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<FileOrDirectoryPackagingElementEntity, Builder>(IntellijWsTest, 35, PackagingElementEntity) {
+    companion object: ObjType<FileOrDirectoryPackagingElementEntity, Builder>(IntellijWs, 35, PackagingElementEntity) {
         val filePath: Field<FileOrDirectoryPackagingElementEntity, String> = Field(this, 0, "filePath", TString)
         val entitySource: Field<FileOrDirectoryPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -306,7 +306,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<DirectoryCopyPackagingElementEntity, Builder>(IntellijWsTest, 36, FileOrDirectoryPackagingElementEntity) {
+    companion object: ObjType<DirectoryCopyPackagingElementEntity, Builder>(IntellijWs, 36, FileOrDirectoryPackagingElementEntity) {
     }
     //@formatter:on
     //endregion
@@ -324,7 +324,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ExtractedDirectoryPackagingElementEntity, Builder>(IntellijWsTest, 37, FileOrDirectoryPackagingElementEntity) {
+    companion object: ObjType<ExtractedDirectoryPackagingElementEntity, Builder>(IntellijWs, 37, FileOrDirectoryPackagingElementEntity) {
         val pathInArchive: Field<ExtractedDirectoryPackagingElementEntity, String> = Field(this, 0, "pathInArchive", TString)
         val entitySource: Field<ExtractedDirectoryPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -344,7 +344,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<FileCopyPackagingElementEntity, Builder>(IntellijWsTest, 38, FileOrDirectoryPackagingElementEntity) {
+    companion object: ObjType<FileCopyPackagingElementEntity, Builder>(IntellijWs, 38, FileOrDirectoryPackagingElementEntity) {
         val renamedOutputFileName: Field<FileCopyPackagingElementEntity, String?> = Field(this, 0, "renamedOutputFileName", TOptional(TString))
         val entitySource: Field<FileCopyPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -367,7 +367,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: ObjType<CustomPackagingElementEntity, Builder>(IntellijWsTest, 39, CompositePackagingElementEntity) {
+    companion object: ObjType<CustomPackagingElementEntity, Builder>(IntellijWs, 39, CompositePackagingElementEntity) {
         val typeId: Field<CustomPackagingElementEntity, String> = Field(this, 0, "typeId", TString)
         val entitySource: Field<CustomPackagingElementEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val propertiesXmlTag: Field<CustomPackagingElementEntity, String> = Field(this, 0, "propertiesXmlTag", TString)
