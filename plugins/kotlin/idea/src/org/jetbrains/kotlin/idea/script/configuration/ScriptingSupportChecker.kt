@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.script.configuration
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -20,7 +22,7 @@ import javax.swing.JComponent
 
 class ScriptingSupportChecker: EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
-        if (!Registry.`is`("kotlin.scripting.support.warning") || file.isNonScript()) {
+        if (!Registry.`is`("kotlin.scripting.support.warning") || file.isNonScript() || ScratchUtil.isScratch(file)) {
             return EditorNotificationProvider.CONST_NULL
         }
 
