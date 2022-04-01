@@ -111,6 +111,11 @@ public final class JavaModuleGraphUtil {
                             : valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, false));
     return javaModule != null && javaModule.isValid() ? javaModule : null;
   }
+  
+  public static @Nullable PsiJavaModule findNonAutomaticDescriptorByModule(@Nullable Module module, boolean inTests) {
+    PsiJavaModule javaModule = findDescriptorByModule(module, inTests);
+    return javaModule instanceof LightJavaModule ? null : javaModule;
+  }
 
   @NotNull
   private static Result<PsiJavaModule> createModuleCacheResult(@NotNull Module module,
