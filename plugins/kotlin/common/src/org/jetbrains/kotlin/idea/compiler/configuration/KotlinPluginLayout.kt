@@ -118,10 +118,19 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
     }
 
     override val kotlinc: File by lazy {
-        lazyUnpackJar(
-            getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion),
-            KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
-        )
+        val stdlibFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
+            ?: error("Can't find kotlin-stdlib.jar in Maven Local")
+
+        // Such a weird algorithm because you can't use getMavenArtifactJarPath in this code. That's the only reliable way to find a
+        // maven artifact in Maven local
+        val packedDist = generateSequence(stdlibFile) { it.parentFile }
+            .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
+            .firstOrNull { it.exists() }
+            ?: error(
+                "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion' in Maven Local"
+            )
+
+        lazyUnpackJar(packedDist, KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources"))
     }
 
     override val jpsPluginJar: File by lazy {
