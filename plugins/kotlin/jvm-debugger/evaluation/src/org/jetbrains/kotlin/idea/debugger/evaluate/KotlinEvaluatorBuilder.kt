@@ -228,7 +228,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val (bindingContext, filesToCompile) = runReadAction {
             val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
             try {
-                val filesToCompile = if (!CodeFragmentCompiler.useIRFragmentCompiler(debugProcess)) {
+                val filesToCompile = if (!CodeFragmentCompiler.useIRFragmentCompiler()) {
                     analyzeInlinedFunctions(
                         resolutionFacade,
                         codeFragment,

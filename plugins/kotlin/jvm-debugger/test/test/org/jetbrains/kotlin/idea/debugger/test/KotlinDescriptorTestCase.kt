@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndGet
@@ -82,8 +83,25 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         super.runBare(testRunnable)
     }
 
+    var originalUseIrBackendForEvaluation = true
+
+    private fun registerEvaluatorBackend() {
+        val useIrBackendForEvaluation = Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend")
+        originalUseIrBackendForEvaluation = useIrBackendForEvaluation.asBoolean()
+        useIrBackendForEvaluation.setValue(
+            fragmentCompilerBackend() == FragmentCompilerBackend.JVM_IR
+        )
+    }
+
+    private fun restoreEvaluatorBackend() {
+        Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend")
+            .setValue(originalUseIrBackendForEvaluation)
+    }
+
     override fun setUp() {
         super.setUp()
+
+        registerEvaluatorBackend()
 
         KotlinDebuggerCaches.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
@@ -97,6 +115,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             ThrowableRunnable { detachLibraries() },
             ThrowableRunnable { logPropagator?.detach() },
             ThrowableRunnable { logPropagator = null },
+            ThrowableRunnable { restoreEvaluatorBackend() },
             ThrowableRunnable { super.tearDown() }
         )
     }
@@ -111,13 +130,18 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     open fun useIrBackend() = false
 
-    open fun fragmentCompilerBackend() = CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM
+    enum class FragmentCompilerBackend {
+        JVM,
+        JVM_IR
+    }
+
+    open fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM_IR
 
     protected open fun targetBackend(): TargetBackend =
         when (fragmentCompilerBackend()) {
-            CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM ->
+            FragmentCompilerBackend.JVM ->
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else TargetBackend.JVM_WITH_OLD_EVALUATOR
-            CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM_IR ->
+            FragmentCompilerBackend.JVM_IR ->
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else TargetBackend.JVM_WITH_IR_EVALUATOR
         }
 
