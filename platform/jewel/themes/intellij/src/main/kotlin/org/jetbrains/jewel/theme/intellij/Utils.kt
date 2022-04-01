@@ -9,7 +9,7 @@ import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 internal fun Modifier.appendIf(condition: Boolean, transformer: Modifier.() -> Modifier): Modifier =
     if (!condition) this else transformer()
 
-private val EmptyClickContext = MouseClickScope(
+internal val EmptyClickContext = MouseClickScope(
     PointerButtons(0), PointerKeyboardModifiers(0)
 )
 
