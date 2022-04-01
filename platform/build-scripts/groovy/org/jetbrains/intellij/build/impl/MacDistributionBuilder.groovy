@@ -164,7 +164,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       osAndArchSpecificDistPath,
       buildContext.getDistFiles(),
       getExecutableFilePatterns(customizer),
-      publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED)
+      publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED,
+      { buildContext.messages.warning(it) })
     ProductInfoValidator.checkInArchive(buildContext, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {
@@ -388,6 +389,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
              "bin/fsnotifier",
              "bin/printenv",
              "bin/restarter",
+             "bin/repair",
              "MacOS/*"
            ] + customizer.extraExecutables
   }

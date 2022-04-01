@@ -5,7 +5,9 @@ package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.io.writeNewFile
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 
 fun buildMacZip(targetFile: Path,
                 zipRoot: String,
@@ -14,7 +16,8 @@ fun buildMacZip(targetFile: Path,
                 macDist: Path,
                 extraFiles: Collection<Map.Entry<Path, String>>,
                 executableFilePatterns: List<String>,
-                compressionLevel: Int) {
+                compressionLevel: Int,
+                errorsConsumer: (String) -> Unit) {
   tracer.spanBuilder("build zip archive for macOS")
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
@@ -24,9 +27,13 @@ fun buildMacZip(targetFile: Path,
       val fs = targetFile.fileSystem
       val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
 
-      val entryCustomizer: EntryCustomizer = { entry, _, relativeFile ->
-        if (patterns.any { it.matches(relativeFile) }) {
-          entry.unixMode = executableFileUnixMode
+      val entryCustomizer: EntryCustomizer = { entry, file, relativeFile ->
+        when {
+          patterns.any { it.matches(relativeFile) } -> entry.unixMode = executableFileUnixMode
+          PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file) -> {
+            errorsConsumer("Executable permissions of $relativeFile won't be set in $targetFile. " +
+                           "Please make sure that executable file patterns are updated.")
+          }
         }
       }
 

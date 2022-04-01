@@ -18,6 +18,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.function.Consumer
 
+import static java.nio.file.attribute.PosixFilePermission.*
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
@@ -82,7 +83,7 @@ final class RepairUtilityBuilder {
         Path repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
         Span.current().addEvent("copy $path to $repairUtilityTarget")
         Files.createDirectories(repairUtilityTarget.parent)
-        Files.copy(path, repairUtilityTarget)
+        Files.copy(path, repairUtilityTarget, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
       }
     })
   }
@@ -191,10 +192,14 @@ final class RepairUtilityBuilder {
         Map<Binary, Path> binaries = BINARIES.collectEntries {
           [(it): projectHome.resolve(it.relativeSourcePath)]
         }
+        def executablePermissions = Set.of(
+          OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE
+        )
         for (Path file in binaries.values()) {
           if (Files.notExists(file)) {
             buildContext.messages.error("$file doesn't exist")
           }
+          Files.setPosixFilePermissions(file, executablePermissions)
         }
         return binaries
       }

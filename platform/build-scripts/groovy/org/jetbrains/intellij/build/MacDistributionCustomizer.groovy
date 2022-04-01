@@ -94,10 +94,7 @@ abstract class MacDistributionCustomizer {
   /**
    * Relative paths to files in macOS distribution which should be signed
    */
-  List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) {
-    RepairUtilityBuilder.Binary binary = RepairUtilityBuilder.binaryFor(context, OsFamily.MACOS, arch)
-    return binary == null ? Collections.<String>emptyList() : List.of(binary.relativeTargetPath)
-  }
+  List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) { [] }
 
   /**
    * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
