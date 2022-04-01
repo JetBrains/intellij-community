@@ -8,6 +8,7 @@ import com.intellij.codeInsight.codeVision.ui.CodeVisionView
 import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
@@ -37,7 +38,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
@@ -153,6 +156,17 @@ open class CodeVisionHost(val project: Project) {
                            recollectAndRearrangeProviders()
                          }
                        })
+          project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+            .subscribe(CodeVisionSettings.CODE_LENS_SETTINGS_CHANGED, object : CodeVisionSettings.CodeVisionSettingsListener {
+              override fun groupPositionChanged(id: String, position: CodeVisionAnchorKind) {
+
+              }
+
+              override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
+                PsiManager.getInstance(project).dropPsiCaches()
+                DaemonCodeAnalyzer.getInstance(project).restart()
+              }
+            })
         }
       }
     }
