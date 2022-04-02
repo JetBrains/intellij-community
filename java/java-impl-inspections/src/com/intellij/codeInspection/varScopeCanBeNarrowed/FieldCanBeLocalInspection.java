@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -13,7 +13,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.*;
 
 public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -93,17 +92,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
           fixes.add(quickFix);
           return true;
         });
-        final LocalQuickFix fix = createFix(refs);
-        if (fix != null) {
-          fixes.add(fix);
-        }
+        fixes.add(new ConvertFieldToLocalQuickFix(refs));
         holder.registerProblem(field.getNameIdentifier(), message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
-  }
-
-  protected LocalQuickFix createFix(@NotNull Map<PsiCodeBlock, Collection<PsiReference>> refs) {
-    return new ConvertFieldToLocalQuickFix(refs);
   }
 
   @Nullable
@@ -230,23 +222,22 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
                                      boolean ignoreFieldsUsedInMultipleMethods,
                                      Set<? super PsiField> ignored) {
     try {
-      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<>();
       final ControlFlow controlFlow = ControlFlowFactory
           .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), ControlFlowOptions.NO_CONST_EVALUATE);
-      final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
-      for (PsiVariable usedVariable : usedVars) {
-        if (usedVariable instanceof PsiField) {
-          final PsiField usedField = (PsiField)usedVariable;
-          if (!getWrittenVariables(controlFlow, writtenVariables).contains(usedField)) {
-            ignored.add(usedField);
-          }
+      final List<PsiField> usedVars = ContainerUtil.filterIsInstance(
+        ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()), PsiField.class);
+      if (usedVars.isEmpty()) return;
 
-          if (!usedFields.add(usedField) && (ignoreFieldsUsedInMultipleMethods || ignored.contains(usedField))) {
-            candidates.remove(usedField); //used in more than one code block
-          }
+      final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false);
+      for (PsiField usedVariable : usedVars) {
+        if (!writtenVariables.contains(usedVariable)) {
+          ignored.add(usedVariable);
+        }
+
+        if (!usedFields.add(usedVariable) && (ignoreFieldsUsedInMultipleMethods || ignored.contains(usedVariable))) {
+          candidates.remove(usedVariable); //used in more than one code block
         }
       }
-
       if (candidates.isEmpty()) return;
 
       final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
@@ -254,7 +245,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
-          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)) {
+          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || writtenVariables.contains(field)) {
             PsiElement parent = body.getParent();
             if (!(parent instanceof PsiMethod) ||
                 !((PsiMethod)parent).isConstructor() ||
@@ -276,13 +267,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     return type instanceof PsiPrimitiveType ||
            PsiPrimitiveType.getUnboxedType(type) != null ||
            Comparing.strEqual(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
-  }
-
-  private static Collection<PsiVariable> getWrittenVariables(ControlFlow controlFlow, Ref<Collection<PsiVariable>> writtenVariables) {
-    if (writtenVariables.get() == null) {
-      writtenVariables.set(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
-    }
-    return writtenVariables.get();
   }
 
   private static boolean hasImplicitReadOrWriteUsage(final PsiField field, List<? extends ImplicitUsageProvider> implicitUsageProviders) {
