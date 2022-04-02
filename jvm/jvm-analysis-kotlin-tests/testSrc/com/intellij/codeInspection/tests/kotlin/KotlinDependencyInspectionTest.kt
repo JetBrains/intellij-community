@@ -23,6 +23,18 @@ class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
       }
     """.trimIndent())
 
+  fun `test illegal imported dependency Kotlin API in Java`() = dependencyViolationTest(kotlinFooFile, "ImportClientKotlin.java", """
+      package pkg.client;
+      
+      import <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'ImportClientKotlin'.' is violated">pkg.api.KotlinFoo</error>;
+
+      class Client {
+        public static void main(String[] args) {
+          new <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'ImportClientKotlin'.' is violated">KotlinFoo</error>();
+        } 
+      }    
+    """.trimIndent())
+
   fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFooFile, "FqClientJava.kt", """
       package pkg.client
       
@@ -37,5 +49,15 @@ class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
       fun main() {
         <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'FqClientKotlin'.' is violated">pkg.api.KotlinFoo()</error>
       }
+    """.trimIndent())
+
+  fun `test illegal fully qualified dependency Kotlin API in Java`() = dependencyViolationTest(kotlinFooFile, "FqClientKotlin.java", """
+      package pkg.client;
+      
+      class Client {
+        public static void main(String[] args) {
+          new  <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'FqClientKotlin'.' is violated">pkg.api.KotlinFoo</error>();
+        } 
+      }      
     """.trimIndent())
 }
