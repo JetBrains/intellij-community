@@ -52,11 +52,12 @@
     </plugins>
   </build>
 
-  #if (${SHOULD_SET_LANG_LEVEL})
-    <properties>
-      <maven.compiler.source>${COMPILER_LEVEL_SOURCE}</maven.compiler.source>
-      <maven.compiler.target>${COMPILER_LEVEL_TARGET}</maven.compiler.target>
-    </properties>
-  #end
+  <properties>
+    #if (${SHOULD_SET_LANG_LEVEL})
+    <maven.compiler.source>${COMPILER_LEVEL_SOURCE}</maven.compiler.source>
+    <maven.compiler.target>${COMPILER_LEVEL_TARGET}</maven.compiler.target>
+    #end
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   ${END}
 </project>
