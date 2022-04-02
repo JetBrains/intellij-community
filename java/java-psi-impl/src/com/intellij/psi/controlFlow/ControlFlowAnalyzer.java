@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -1423,7 +1423,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     myStartStatementStack.pushStatement(rExpr == null ? expression : rExpr, false);
     myEndStatementStack.pushStatement(rExpr == null ? expression : rExpr, false);
 
-    boolean generatedWriteInstruction = false;
+    int pc = myCurrentFlow.getSize();
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
       if (!myImplicitCompactConstructorAssignments.isEmpty()) {
@@ -1450,7 +1450,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
           rExpr.accept(this);
         }
         generateWriteInstruction(variable);
-        generatedWriteInstruction = true;
 
         if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
@@ -1461,22 +1460,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         lExpr.accept(this); //?
       }
     }
-    else if (lExpr instanceof PsiArrayAccessExpression &&
-             ((PsiArrayAccessExpression)lExpr).getArrayExpression() instanceof PsiReferenceExpression){
-      PsiVariable variable = getUsedVariable((PsiReferenceExpression)((PsiArrayAccessExpression)lExpr).getArrayExpression());
-      if (variable != null) {
-        generateReadInstruction(variable);
-        final PsiExpression indexExpression = ((PsiArrayAccessExpression)lExpr).getIndexExpression();
-        if (indexExpression != null) {
-          indexExpression.accept(this);
-        }
-      } else {
-        lExpr.accept(this);
-      }
-      if (rExpr != null) {
-        rExpr.accept(this);
-      }
-    }
     else if (lExpr != null) {
       lExpr.accept(this);
       if (rExpr != null) {
@@ -1484,7 +1467,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     //each statement should contain at least one instruction in order to getElement(offset) work
-    if (!generatedWriteInstruction) emitEmptyInstruction();
+    if (pc == myCurrentFlow.getSize()) emitEmptyInstruction();
 
     myStartStatementStack.popStatement();
     myEndStatementStack.popStatement();
