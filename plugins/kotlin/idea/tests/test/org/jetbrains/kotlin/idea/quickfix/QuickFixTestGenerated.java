@@ -1271,34 +1271,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/addPropertyToSupertype")
-    public static class AddPropertyToSupertype extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("abstractClass.kt")
-        public void testAbstractClass() throws Exception {
-            runTest("testData/quickfix/addPropertyToSupertype/abstractClass.kt");
-        }
-
-        @TestMetadata("hasAnnotations.kt")
-        public void testHasAnnotations() throws Exception {
-            runTest("testData/quickfix/addPropertyToSupertype/hasAnnotations.kt");
-        }
-
-        @TestMetadata("interface.kt")
-        public void testInterface() throws Exception {
-            runTest("testData/quickfix/addPropertyToSupertype/interface.kt");
-        }
-
-        @TestMetadata("openClass.kt")
-        public void testOpenClass() throws Exception {
-            runTest("testData/quickfix/addPropertyToSupertype/openClass.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addReifiedToTypeParameterOfFunctionFix")
     public static class AddReifiedToTypeParameterOfFunctionFix extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -10563,6 +10535,26 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("addParameterTwoSupertypes.kt")
             public void testAddParameterTwoSupertypes() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addParameterTwoSupertypes.kt");
+            }
+
+            @TestMetadata("addPropertyAbstractClass.kt")
+            public void testAddPropertyAbstractClass() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addPropertyAbstractClass.kt");
+            }
+
+            @TestMetadata("addPropertyHasAnnotations.kt")
+            public void testAddPropertyHasAnnotations() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addPropertyHasAnnotations.kt");
+            }
+
+            @TestMetadata("addPropertyInterface.kt")
+            public void testAddPropertyInterface() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addPropertyInterface.kt");
+            }
+
+            @TestMetadata("addPropertyOpenClass.kt")
+            public void testAddPropertyOpenClass() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addPropertyOpenClass.kt");
             }
 
             @TestMetadata("addTypeParameter.kt")

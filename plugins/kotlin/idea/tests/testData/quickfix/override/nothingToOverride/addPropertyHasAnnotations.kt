@@ -1,15 +1,12 @@
-// "Add 'val bar: Int' to 'I'" "true"
+// "Add 'abstract val bar: Int' to 'I'" "true"
 annotation class A(vararg val names: String)
 annotation class B(val i: Int)
 
 interface I {
-    @A("x", "y")
-    @B(1)
-    val bar: Int
 }
 
 class C : I {
     @A("x", "y")
     @B(1)
-    override val bar = 1
+    <caret>override val bar = 1
 }
