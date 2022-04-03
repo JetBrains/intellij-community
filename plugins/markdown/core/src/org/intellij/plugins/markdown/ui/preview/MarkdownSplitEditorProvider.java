@@ -13,8 +13,11 @@ public class MarkdownSplitEditorProvider extends SplitTextEditorProvider {
 
   @Override
   protected FileEditor createSplitEditor(@NotNull final FileEditor firstEditor, @NotNull FileEditor secondEditor) {
-    if (!(firstEditor instanceof TextEditor) || !(secondEditor instanceof MarkdownPreviewFileEditor)) {
+    if (!(firstEditor instanceof TextEditor)) {
       throw new IllegalArgumentException("Main editor should be TextEditor");
+    }
+    if (!(secondEditor instanceof MarkdownPreviewFileEditor)) {
+      throw new IllegalArgumentException("Secondary editor should be MarkdownPreviewFileEditor");
     }
     return new MarkdownEditorWithPreview(((TextEditor)firstEditor), ((MarkdownPreviewFileEditor)secondEditor));
   }
