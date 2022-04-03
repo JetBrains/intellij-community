@@ -110,7 +110,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
-      addAssets(StandardAssetsProvider().getGradlewAssets())
       if (gitData?.git == true) {
         addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
