@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
@@ -71,6 +72,7 @@ class AddFunctionToSupertypeFix private constructor(
             val classBody = functionData.targetClass.getOrCreateBody()
 
             val functionElement = KtPsiFactory(project).createFunction(functionData.sourceCode)
+            functionElement.copyAnnotationEntriesFrom(element)
             val insertedFunctionElement = classBody.addBefore(functionElement, classBody.rBrace) as KtNamedFunction
 
             ShortenReferences.DEFAULT.process(insertedFunctionElement)
@@ -87,6 +89,10 @@ class AddFunctionToSupertypeFix private constructor(
             it.defaultValue?.delete()
             it.equalsToken?.delete()
         }
+    }
+
+    private fun KtNamedFunction.copyAnnotationEntriesFrom(function: KtFunction?) {
+        function?.annotationEntries?.reversed()?.forEach { addAnnotationEntry(it) }
     }
 
     private fun createFunctionPopup(project: Project): ListPopupStep<*> {
@@ -128,7 +134,8 @@ class AddFunctionToSupertypeFix private constructor(
 
         private fun createFunctionData(functionDescriptor: FunctionDescriptor, project: Project): FunctionData? {
             val classDescriptor = functionDescriptor.containingDeclaration as ClassDescriptor
-            var sourceCode = IdeDescriptorRenderers.SOURCE_CODE.withDefaultValueOption(project).render(functionDescriptor)
+            var sourceCode =
+                IdeDescriptorRenderers.SOURCE_CODE.withNoAnnotations().withDefaultValueOption(project).render(functionDescriptor)
             if (classDescriptor.kind != ClassKind.INTERFACE && functionDescriptor.modality != Modality.ABSTRACT) {
                 val returnType = functionDescriptor.returnType
                 sourceCode += if (returnType == null || !KotlinBuiltIns.isUnit(returnType)) {
@@ -151,6 +158,12 @@ class AddFunctionToSupertypeFix private constructor(
                 sourceCode,
                 targetClass
             )
+        }
+
+        private fun DescriptorRenderer.withNoAnnotations(): DescriptorRenderer {
+            return withOptions {
+                modifiers -= DescriptorRendererModifier.ANNOTATIONS
+            }
         }
 
         private fun DescriptorRenderer.withDefaultValueOption(project: Project): DescriptorRenderer {

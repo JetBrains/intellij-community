@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
@@ -60,6 +62,7 @@ class AddPropertyToSupertypeFix private constructor(
             val classBody = propertyData.targetClass.getOrCreateBody()
 
             val propertyElement = KtPsiFactory(project).createProperty(propertyData.sourceCode)
+            propertyElement.copyAnnotationEntriesFrom(element)
             val insertedPropertyElement = classBody.addBefore(propertyElement, classBody.rBrace) as KtProperty
 
             ShortenReferences.DEFAULT.process(insertedPropertyElement)
@@ -69,6 +72,10 @@ class AddPropertyToSupertypeFix private constructor(
                 RemoveModifierFix(insertedPropertyElement, modifierToken, true).invoke()
             }
         }
+    }
+
+    private fun KtProperty.copyAnnotationEntriesFrom(property: KtProperty?) {
+        property?.annotationEntries?.reversed()?.forEach { addAnnotationEntry(it) }
     }
 
     private fun createPropertyPopup(project: Project): ListPopupStep<*> {
@@ -116,13 +123,19 @@ class AddPropertyToSupertypeFix private constructor(
                 signaturePreview = signaturePreview.substring("abstract ".length)
             }
 
-            var sourceCode = IdeDescriptorRenderers.SOURCE_CODE.render(propertyDescriptor)
+            var sourceCode = IdeDescriptorRenderers.SOURCE_CODE.withNoAnnotations().render(propertyDescriptor)
             if (classDescriptor.kind == ClassKind.CLASS && classDescriptor.modality == Modality.OPEN && initializer != null) {
                 sourceCode += " = ${initializer.text}"
             }
 
             val targetClass = DescriptorToSourceUtilsIde.getAnyDeclaration(project, classDescriptor) as? KtClass ?: return null
             return PropertyData(signaturePreview, sourceCode, targetClass)
+        }
+
+        private fun DescriptorRenderer.withNoAnnotations(): DescriptorRenderer {
+            return withOptions {
+                modifiers -= DescriptorRendererModifier.ANNOTATIONS
+            }
         }
 
         private fun generatePropertiesToAdd(propertyElement: KtProperty): List<PropertyDescriptor> {
