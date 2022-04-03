@@ -524,10 +524,15 @@ class InternalDecoratorImpl internal constructor(
     get() = toolWindow.isActive
 
   fun updateActiveAndHoverState() {
+    val narrow = this.divider?.bounds?.x?.let { it < JBUI.scale(120)} ?: false
     val toolbar = headerToolbar
     if (toolbar is AlphaAnimated) {
       val alpha = toolbar as AlphaAnimated
-      alpha.alphaAnimator.setVisible(!toolWindow.toolWindowManager.isNewUi || isWindowHovered || header.isPopupShowing || toolWindow.isActive)
+      alpha.alphaAnimator.setVisible(narrow
+                                     || !toolWindow.toolWindowManager.isNewUi
+                                     || isWindowHovered
+                                     || header.isPopupShowing
+                                     || toolWindow.isActive)
     }
   }
 
