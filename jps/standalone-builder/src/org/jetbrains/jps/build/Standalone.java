@@ -20,9 +20,12 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.plugin.JpsPluginManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,6 +47,9 @@ public class Standalone {
 
   @Argument(value = "modules", prefix = "--", delimiter = ",", description = "Comma-separated list of modules to compile")
   public String[] modules = ArrayUtilRt.EMPTY_STRING_ARRAY;
+
+  @Argument(value = "plugins", prefix = "--", delimiter = ",", description = "Comma-separated list of JPS plugins (paths to .jar files)")
+  public String[] plugins = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
   @Argument(value = "all-modules", prefix = "--", description = "Compile all modules")
   public boolean allModules;
@@ -101,6 +107,10 @@ public class Standalone {
       }
       globalOptionsPath = optionsDir.getAbsolutePath();
     }
+
+    List<Path> pluginPaths = ContainerUtil.map(plugins, stringPath -> Paths.get(stringPath));
+    StandaloneJpsPluginManager pluginManager = new StandaloneJpsPluginManager(pluginPaths);
+    JpsPluginManager.setInstance(pluginManager);
 
     ParameterizedRunnable<JpsModel> initializer = null;
     String scriptPath = initializationScriptPath;

@@ -788,7 +788,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-action-model"),
     jetbrainsLibrary("find-action-model-experimental"),
     jetbrainsLibrary("find-file-model"),
-    jetbrainsLibrary("fixed.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),

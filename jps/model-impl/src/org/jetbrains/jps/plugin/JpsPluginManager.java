@@ -15,17 +15,71 @@
  */
 package org.jetbrains.jps.plugin;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 
 @ApiStatus.Internal
 public abstract class JpsPluginManager {
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  @Nullable
+  private static JpsPluginManager ourInstance = null;
+
+  private static final Object ourSyncRoot = new Object();
+
   @NotNull
   public static JpsPluginManager getInstance() {
-    return JpsServiceManager.getInstance().getService(JpsPluginManager.class);
+    JpsPluginManager instance = ourInstance;
+    if (instance != null && instance.isFullyLoaded()) {
+      return instance;
+    }
+
+    synchronized (ourSyncRoot) {
+      JpsPluginManager pluginManager;
+
+      Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
+      if (managers.hasNext()) {
+        try {
+          pluginManager = managers.next();
+        }
+        catch (ServiceConfigurationError e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)cause;
+          }
+          throw e;
+        }
+        if (managers.hasNext()) {
+          throw new ServiceConfigurationError("More than one implementation of " + JpsPluginManager.class + " found: " + pluginManager.getClass() + " and " + managers.next().getClass());
+        }
+      }
+      else {
+        pluginManager = new SingleClassLoaderPluginManager();
+      }
+
+      ourInstance = pluginManager;
+      return pluginManager;
+    }
+  }
+
+  public static void setInstance(JpsPluginManager instance) {
+    synchronized (ourSyncRoot) {
+      if (ourInstance != null) {
+        throw new IllegalStateException("JpsPluginManager instance was already initialized to " + ourInstance.getClass().getName());
+      }
+
+      ourInstance = instance;
+    }
+  }
+
+  public static JpsPluginManager tryGetInstance() {
+    return ourInstance;
   }
 
   @NotNull
