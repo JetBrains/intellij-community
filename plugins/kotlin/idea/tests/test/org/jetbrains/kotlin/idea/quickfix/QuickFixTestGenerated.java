@@ -1282,6 +1282,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addPropertyToSupertype/abstractClass.kt");
         }
 
+        @TestMetadata("hasAnnotations.kt")
+        public void testHasAnnotations() throws Exception {
+            runTest("testData/quickfix/addPropertyToSupertype/hasAnnotations.kt");
+        }
+
         @TestMetadata("interface.kt")
         public void testInterface() throws Exception {
             runTest("testData/quickfix/addPropertyToSupertype/interface.kt");
@@ -10518,6 +10523,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("addFunctionTwoTraits.kt")
             public void testAddFunctionTwoTraits() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionTwoTraits.kt");
+            }
+
+            @TestMetadata("addFunctionWithAnnotations.kt")
+            public void testAddFunctionWithAnnotations() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addFunctionWithAnnotations.kt");
             }
 
             @TestMetadata("addFunctionWithoutDefaultValue.kt")
