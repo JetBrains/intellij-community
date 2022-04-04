@@ -348,6 +348,58 @@ public class MavenJUnitPatcherTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void ArgLineLateReplacementParentProperty() {
+    createProjectPom(
+        "<groupId>test</groupId>\n"
+            + "<artifactId>project</artifactId>\n"
+            + "<version>1</version>\n"
+            + "<packaging>pom</packaging>\n"
+            + "<properties>\n"
+            + "  <parentProp>parent.value</parentProp>\n"
+            + "</properties>\n"
+            + "<modules>\n"
+            + "  <module>m1</module>\n"
+            + "</modules>\n");
+
+    createModulePom(
+        "m1",
+        "<groupId>test</groupId>\n"
+            + "<artifactId>m1</artifactId>\n"
+            + "<version>1</version>\n"
+            + "<properties>\n"
+            + "  <moduleProp>module.value</moduleProp>\n"
+            + "</properties>\n"
+            + "<parent>\n"
+            + "  <groupId>test</groupId>\n"
+            + "  <artifactId>project</artifactId>\n"
+            + "  <version>1</version>\n"
+            + "</parent>\n"
+            + "<build>\n"
+            + "  <plugins>\n"
+            + "    <plugin>\n"
+            + "      <groupId>org.apache.maven.plugins</groupId>\n"
+            + "      <artifactId>maven-surefire-plugin</artifactId>\n"
+            + "      <version>2.16</version>\n"
+            + "      <configuration>\n"
+            + "        <argLine>@{moduleProp} @{parentProp}</argLine>\n"
+            + "      </configuration>\n"
+            + "    </plugin>\n"
+            + "  </plugins>\n"
+            + "</build>\n");
+
+    importProject();
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().add("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(
+        asList("-ea", "module.value", "parent.value"),
+        javaParameters.getVMParametersList().getList());
+  }
+
+  @Test
   public void ArgLineRefersAnotherProperty() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
