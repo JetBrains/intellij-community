@@ -16,6 +16,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -29,6 +30,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TreeTraversal;
@@ -128,6 +130,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
     installCommitSessionEventsListeners();
+
+    if (Registry.is("vcs.changes.tree.use.fixed.height.renderer")) {
+      putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
+      ChangesBrowserFilePathNode sampleNode = new ChangesBrowserFilePathNode(VcsUtil.getFilePath("ChangesTreeDummy.java"), null);
+      Component component = nodeRenderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
+      setRowHeight(component.getPreferredSize().height);
+      setLargeModel(true);
+    }
   }
 
   /**
