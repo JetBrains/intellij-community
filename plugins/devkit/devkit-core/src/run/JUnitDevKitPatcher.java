@@ -74,7 +74,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
         if (resource != null) {
           try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-            FileUtil.loadLines(reader).forEach(l -> vm.add("--add-opens=" + l));
+            FileUtil.loadLines(reader);
           }
           catch (ProcessCanceledException e) {
             throw e; //unreachable

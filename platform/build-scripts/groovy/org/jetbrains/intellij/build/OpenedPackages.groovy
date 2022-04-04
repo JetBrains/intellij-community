@@ -14,7 +14,5 @@ final class OpenedPackages {
   static final List<String> getCommandLineArguments(CompilationContext compilationContext) {
     return Files.readAllLines(compilationContext.paths.communityHomeDir
                                 .resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt"))
-      .stream()
-      .collect { "--add-opens=${it.toString()}".toString() }
   }
 }
