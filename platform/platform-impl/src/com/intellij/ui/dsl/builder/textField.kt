@@ -5,6 +5,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextComponent
@@ -44,7 +45,7 @@ fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bin
 
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
-  return applyToComponent { bind(property) }
+  return applyToComponent { bind(property.trim()) }
 }
 
 fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
