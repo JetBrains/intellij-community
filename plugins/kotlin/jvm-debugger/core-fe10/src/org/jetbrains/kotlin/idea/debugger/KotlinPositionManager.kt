@@ -509,13 +509,13 @@ private fun Location.hasVisibleInlineLambdasOnLines(lines: IntRange): Boolean {
     return method.getInlineFunctionAndArgumentVariablesToBordersMap()
         .asSequence()
         .filter { (variable, _) ->
-            variable.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) &&
-                    variable is LocalVariableImpl &&
-                    variable.isVisible(this)
+            variable is LocalVariableImpl &&
+            variable.isVisible(this) &&
+            variable.name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)
         }
         .any { (_, borders) ->
             borders.start.getZeroBasedLineNumber() in lines &&
-                    borders.endInclusive.getZeroBasedLineNumber() in lines
+            borders.endInclusive.getZeroBasedLineNumber() in lines
         }
 }
 
