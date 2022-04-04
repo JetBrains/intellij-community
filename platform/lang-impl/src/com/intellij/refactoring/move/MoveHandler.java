@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -45,7 +45,7 @@ public class MoveHandler implements RefactoringActionHandler {
       element = file;
     }
 
-    PsiReference reference = findReferenceAtCaret(element, offset);
+    PsiReference reference = TargetElementUtilBase.findReferenceWithoutExpectedCaret(editor);
     if (reference != null) {
       PsiElement refElement = reference.resolve();
       for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
@@ -77,15 +77,6 @@ public class MoveHandler implements RefactoringActionHandler {
 
   private static void logDelegate(@NotNull Project project, @NotNull MoveHandlerDelegate delegate, @Nullable Language language) {
     MoveUsagesCollector.HANDLER_INVOKED.log(project, language, delegate.getClass());
-  }
-
-  private static PsiReference findReferenceAtCaret(PsiElement element, int caretOffset) {
-    final TextRange range = element.getTextRange();
-    if (range != null) {
-      int relative = caretOffset - range.getStartOffset();
-      return element.findReferenceAt(relative);
-    }
-    return null;
   }
 
   /**
@@ -196,7 +187,7 @@ public class MoveHandler implements RefactoringActionHandler {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       if (element == null) element = file;
 
-      PsiReference reference = findReferenceAtCaret(element, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtilBase.findReferenceWithoutExpectedCaret(editor);
       if (reference != null) {
         PsiElement refElement = reference.resolve();
         if (refElement != null) {
