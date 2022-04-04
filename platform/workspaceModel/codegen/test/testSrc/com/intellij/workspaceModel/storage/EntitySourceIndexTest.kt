@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.ChildSourceEntity
 import com.intellij.workspaceModel.storage.entities.SourceEntity
 import com.intellij.workspaceModel.storage.entities.SourceEntityImpl
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
-import com.intellij.workspaceModel.codegen.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.createEntityId
 import org.junit.jupiter.api.Test
@@ -120,7 +120,7 @@ class EntitySourceIndexTest {
     val builder = createEmptyBuilder()
     builder.addSourceEntity("hello", oldSource)
 
-    (builder as WorkspaceEntityStorageBuilderImpl).indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.getInt(SourceEntity::class.java)), oldSource)
+    (builder as WorkspaceEntityStorageBuilderImpl).indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.INSTANCE.getInt(SourceEntity::class.java)), oldSource)
 
     assertThrows<AssertionError> {
       builder.assertConsistency()
