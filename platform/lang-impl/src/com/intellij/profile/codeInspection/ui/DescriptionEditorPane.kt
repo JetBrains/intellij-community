@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ui.HintHint
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -25,7 +26,7 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
     css.addRule("pre {padding:10px;}")
   }
 
-  override fun getBackground(): Color = UIUtil.getLabelBackground()
+  override fun getBackground(): Color = JBColor.PanelBackground
 
   companion object {
     const val EMPTY_HTML = "<html><body></body></html>"
