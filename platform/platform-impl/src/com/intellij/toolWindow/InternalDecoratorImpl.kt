@@ -197,7 +197,7 @@ class InternalDecoratorImpl internal constructor(
         layout = BorderLayout()
         add(dividerAndHeader, BorderLayout.NORTH)
         add(myDecoratorChild, BorderLayout.CENTER)
-        ApplicationManager.getApplication().invokeLater({ border = InnerPanelBorder(toolWindow) }, toolWindow.project.disposed)
+        border = InnerPanelBorder(toolWindow)
         firstDecorator?.let {
           Disposer.dispose(it.contentManager)
         }
