@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 import com.intellij.CommonBundle
 import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.*
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,6 +23,8 @@ import java.nio.file.Paths
  */
 sealed interface WelcomeScreenProjectItem {
   fun name(): String
+
+  fun children(): List<WelcomeScreenProjectItem>
 }
 
 class RecentProjectItem(
@@ -60,7 +61,8 @@ class RecentProjectItem(
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
   }
 
-  override fun name(): String = projectPath
+  override fun name(): String = displayName
+  override fun children(): List<WelcomeScreenProjectItem> = emptyList()
 }
 
 class RecentProjectGroupItem(
@@ -68,9 +70,11 @@ class RecentProjectGroupItem(
   val children: List<RecentProjectItem>
 ) : WelcomeScreenProjectItem {
   override fun name(): String = group.name
+  override fun children(): List<WelcomeScreenProjectItem> = children
 }
 
 // The root node is required for the filtering tree
-class Root(val children: List<WelcomeScreenProjectItem>) : WelcomeScreenProjectItem {
+class Root : WelcomeScreenProjectItem {
   override fun name(): String = ""
+  override fun children(): List<WelcomeScreenProjectItem> = RecentProjectListActionProvider.getInstance().collectProjects()
 }

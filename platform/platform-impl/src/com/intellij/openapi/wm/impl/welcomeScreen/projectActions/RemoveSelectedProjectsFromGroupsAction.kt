@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.util.castSafelyTo
 
 /**
  * @author Konstantin Bulenkov
@@ -14,12 +15,10 @@ class RemoveSelectedProjectsFromGroupsAction : RecentProjectsWelcomeScreenAction
     templatePresentation.setText(IdeBundle.messagePointer("action.presentation.RemoveSelectedProjectsFromGroupsAction.text"))
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val item = getSelectedItem(e)
-    if (item is RecentProjectItem) {
-      for (group in RecentProjectsManager.getInstance().groups) {
-        group.removeProject(item.projectPath)
-      }
+  override fun actionPerformed(event: AnActionEvent) {
+    val item = getSelectedItem(event).castSafelyTo<RecentProjectItem>() ?: return
+    for (group in RecentProjectsManager.getInstance().groups) {
+      group.removeProject(item.projectPath)
     }
   }
 }

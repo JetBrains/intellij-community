@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class RecentProjectsManager {
+  public static final Topic<RecentProjectsChange> RECENT_PROJECTS_CHANGE_TOPIC =
+    Topic.create("Change of recent projects", RecentProjectsChange.class);
+
   public static RecentProjectsManager getInstance() {
     return ApplicationManager.getApplication().getService(RecentProjectsManager.class);
   }
@@ -61,6 +65,9 @@ public abstract class RecentProjectsManager {
   public void removeGroup(@NotNull ProjectGroup group) {
   }
 
+  public void moveProjectToGroup(@NotNull String projectPath, @NotNull ProjectGroup from, @NotNull ProjectGroup to) {
+  }
+
   public boolean hasPath(@SystemIndependent String path) {
     return false;
   }
@@ -71,4 +78,8 @@ public abstract class RecentProjectsManager {
   public abstract CompletableFuture<Boolean> reopenLastProjectsOnStart();
 
   public abstract @NotNull String suggestNewProjectLocation();
+
+  public interface RecentProjectsChange {
+    public void change();
+  }
 }

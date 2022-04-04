@@ -13,9 +13,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGr
  */
 class EditProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
   override fun actionPerformed(event: AnActionEvent) {
-    val group = getSelectedItem(event) as RecentProjectGroupItem
+    val group = getSelectedItem(event).castSafelyTo<ProjectsGroupItem>() ?: return
     val tree = getTree(event) ?: return
-    val model = getDataModel(event)
     val name = Messages.showInputDialog(tree, IdeBundle.message("label.enter.group.name"),
                                         IdeBundle.message("dialog.title.change.group.name"), null, group.name(),
                                         object : InputValidatorEx {
@@ -40,7 +39,7 @@ class EditProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
                                           }
                                         })
 
-    if (name != null && model != null) {
+    if (name != null) {
       group.group.name = name
     }
   }

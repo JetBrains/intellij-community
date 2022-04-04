@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectGroup
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
 
@@ -25,7 +24,7 @@ class CreateNewProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
       }
     }
 
-    val newGroup = Messages.showInputDialog(null as Project?, IdeBundle.message("dialog.message.project.group.name"),
+    val newGroup = Messages.showInputDialog(null, IdeBundle.message("dialog.message.project.group.name"),
                                             IdeBundle.message("dialog.title.create.new.project.group"), null, null, validator)
     if (newGroup != null) {
       RecentProjectsManager.getInstance().addGroup(ProjectGroup(newGroup))

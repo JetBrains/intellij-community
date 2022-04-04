@@ -19,10 +19,12 @@ class CopyProjectPathAction : RecentProjectsWelcomeScreenActionBase() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val item = getSelectedItem(event)
-    val recentProject = (item as RecentProjectItem)
-    val projectPath = FileUtil.toSystemDependentName(recentProject.projectPath)
+    val item = getSelectedItem(event) ?: return
+    val copiedText = when (item)  {
+      is RecentProjectItem -> FileUtil.toSystemDependentName(item.projectPath)
+      else -> item.name()
+    }
 
-    CopyPasteManager.getInstance().setContents(StringSelection(projectPath))
+    CopyPasteManager.getInstance().setContents(StringSelection(copiedText))
   }
 }

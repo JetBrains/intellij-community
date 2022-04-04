@@ -18,6 +18,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -211,6 +213,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           modCounter.incrementAndGet()
         }
       }
+      notifyUI()
     }
   }
 
@@ -581,6 +584,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       if (!state.groups.contains(group)) {
         state.groups.add(group)
+        notifyUI()
       }
     }
   }
@@ -589,16 +593,18 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       for (path in group.projects) {
         state.additionalInfo.remove(path)
-        for (anotherGroup in state.groups) {
-          if (anotherGroup !== group) {
-            group.removeProject(path)
-          }
-        }
       }
 
       state.groups.remove(group)
       modCounter.incrementAndGet()
+      notifyUI()
     }
+  }
+
+  override fun moveProjectToGroup(projectPath: String, from: ProjectGroup, to: ProjectGroup) {
+    from.removeProject(projectPath)
+    to.addProject(projectPath)
+    notifyUI()
   }
 
   override fun getModificationCount(): Long {
@@ -738,6 +744,10 @@ int32 "extendedState"
     }
   }
 
+  private fun notifyUI() {
+    BackgroundTaskUtil.syncPublisher(DefaultProjectFactory.getInstance().defaultProject, RECENT_PROJECTS_CHANGE_TOPIC).change()
+  }
+
   @Internal
   class MyAppLifecycleListener : AppLifecycleListener {
     override fun projectOpenFailed() {
@@ -799,8 +809,7 @@ private fun readProjectName(path: String): String {
   }
 
   val projectDir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
-  return JpsPathUtil.readProjectName(projectDir) ?:
-         JpsPathUtil.getDefaultProjectName(projectDir)
+  return JpsPathUtil.readProjectName(projectDir) ?: JpsPathUtil.getDefaultProjectName(projectDir)
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
