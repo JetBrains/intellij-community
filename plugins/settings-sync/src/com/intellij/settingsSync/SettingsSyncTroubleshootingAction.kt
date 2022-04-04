@@ -42,7 +42,14 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator() as CloudConfigServerCommunicator
+    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
+    if (remoteCommunicator !is CloudConfigServerCommunicator) {
+      Messages.showErrorDialog(e.project,
+                               SettingsSyncBundle.message("troubleshooting.dialog.error.wrong.configuration", remoteCommunicator::class),
+                               SettingsSyncBundle.message("troubleshooting.dialog.title"))
+      return
+    }
+
     try {
       val version =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
@@ -59,11 +66,6 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         ShowLogAction.showLog()
       }
     }
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = SettingsSyncMain.isAvailable() &&
-                                         SettingsSyncMain.getInstance().getRemoteCommunicator() is CloudConfigServerCommunicator
   }
 
   private class TroubleshootingDialog(val project: Project?,
