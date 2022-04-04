@@ -28,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -81,7 +80,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final Project myProject;
   private final Editor myEditor;
   private final Object myUiLock = new Object();
-  private final JBList myList = new JBList<LookupElement>(new CollectionListModel<>()) {
+  private final JBList<LookupElement> myList = new JBList<LookupElement>(new CollectionListModel<>()) {
     // 'myList' is focused when "Screen Reader" mode is enabled
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
@@ -175,7 +174,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private CollectionListModel<LookupElement> getListModel() {
-    //noinspection unchecked
     return (CollectionListModel<LookupElement>)myList.getModel();
   }
 
@@ -523,7 +521,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void finishLookup(final char completionChar) {
-    finishLookup(completionChar, (LookupElement)myList.getSelectedValue());
+    finishLookup(completionChar, myList.getSelectedValue());
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
@@ -876,14 +874,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Nullable
   public LookupElement getCurrentItem(){
     synchronized (myUiLock) {
-      LookupElement item = (LookupElement)myList.getSelectedValue();
+      LookupElement item = myList.getSelectedValue();
       return item instanceof EmptyLookupItem ? null : item;
     }
   }
 
   @Override
   public LookupElement getCurrentItemOrEmpty() {
-    return (LookupElement)myList.getSelectedValue();
+    return myList.getSelectedValue();
   }
 
   @Override
@@ -983,7 +981,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void replacePrefix(final String presentPrefix, final String newPrefix) {
     if (!performGuardedChange(() -> {
-      EditorModificationUtil.deleteSelectedText(myEditor);
+      EditorModificationUtilEx.deleteSelectedText(myEditor);
       int offset = myEditor.getCaretModel().getOffset();
       final int start = offset - presentPrefix.length();
       myEditor.getDocument().replaceString(start, offset, newPrefix);
