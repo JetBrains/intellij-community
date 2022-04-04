@@ -6,8 +6,12 @@ import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -33,6 +37,14 @@ internal class ChooseProgrammingLanguageForLearningAction(private val learnToolW
       e.presentation.text = getDisplayName(langSupport)
     }
     e.presentation.description = LearnBundle.message("learn.choose.language.description.combo.box")
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return super.createCustomComponent(presentation, place).also {
+      if (ExperimentalUI.isNewUI()) {
+        UIUtil.setBackgroundRecursively(it, JBUI.CurrentTheme.ToolWindow.background())
+      }
+    }
   }
 
   private inner class SelectLanguageAction(private val languageId: String, @NlsSafe displayName: String) : AnAction(displayName) {
