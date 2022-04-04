@@ -2,8 +2,9 @@ package com.intellij.ide.starter.di
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.NoCIServer
-import com.intellij.ide.starter.ide.CodeInjector
-import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.ide.starter.community.PublicIdeResolver
+import com.intellij.ide.starter.ide.*
+import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.InstallerGlobalPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
@@ -29,4 +30,12 @@ var di = DI {
   bindSingleton<CIServer> { NoCIServer }
   bindSingleton<CodeInjector> { CodeBuilderHost() }
   bindFactory<IDETestContext, PluginConfigurator> { testContext: IDETestContext -> PluginConfigurator(testContext) }
+  bindSingleton<IDEResolver> { PublicIdeResolver }
+  bindFactory<IdeInfo ,IdeInstallator> { ideInfo ->
+    if(ideInfo.productCode == "AI") {
+       AndroidInstallator()
+    } else {
+       SimpleInstallator()
+    }
+  }
 }

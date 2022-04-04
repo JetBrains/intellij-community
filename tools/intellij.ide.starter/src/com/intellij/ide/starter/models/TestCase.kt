@@ -19,40 +19,4 @@ data class TestCase(
 
   fun markReusable(isReusable: Boolean = true) = copy(projectInfo = (projectInfo as ProjectInfo).copy(isReusable = isReusable))
 
-  fun makeEap(product: String = "Idea"): TestCase {
-    return copy(
-      ideInfo = IdeInfo.new(
-        this.ideInfo.productCode,
-        this.ideInfo.platformPrefix,
-        this.ideInfo.executableFileName,
-        "ijplatform_IJPlatform221_${product}_InstallersForEapRelease",
-        tag = "EAP",
-      )
-    )
-  }
-
-  fun makeSpecificBuild(buildNumber: String): TestCase {
-    return copy(
-      ideInfo = IdeInfo.new(
-        productCode = this.ideInfo.productCode,
-        platformPrefix = this.ideInfo.platformPrefix,
-        executableFileName = this.ideInfo.executableFileName,
-        jetBrainsCIBuildType = this.ideInfo.buildType,
-        buildNumber = buildNumber
-      )
-    )
-  }
-
-  @Suppress("unused")
-  fun makeRelease(branch: String, product: String = "Idea"): TestCase {
-    return copy(
-      ideInfo = IdeInfo.new(
-        this.ideInfo.productCode,
-        this.ideInfo.platformPrefix,
-        this.ideInfo.executableFileName,
-        "ijplatform_IJPlatform${branch}_${product}_InstallersForEapRelease",
-        tag = "RELEASE",
-      )
-    )
-  }
 }

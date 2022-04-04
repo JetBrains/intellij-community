@@ -20,7 +20,7 @@ import kotlin.io.path.*
 import kotlin.time.Duration
 
 
-fun resolveInstalledIDE(unpackDir: File, executableFileName: String): InstalledIDE = when {
+fun installIDE(unpackDir: File, executableFileName: String): InstalledIDE = when {
   SystemInfo.isMac -> resolveMacOSIDE(unpackDir)
   SystemInfo.isWindows -> resolveWindowsIDE(unpackDir.toPath(), executableFileName)
   SystemInfo.isLinux -> resolveLinuxIDE(unpackDir, executableFileName)
@@ -340,7 +340,7 @@ fun resolveWindowsIDE(unpackDir: Path, executableFileName: String): InstalledIDE
   }
 }
 
-fun extractIDEIfNeeded(ideInstallerFile: File, unpackDir: File) {
+fun unpackIDEIfNeeded(ideInstallerFile: File, unpackDir: File) {
   if (unpackDir.isDirectory && unpackDir.listFiles()?.isNotEmpty() == true) {
     logOutput("Build directory $unpackDir already exists for the binary $ideInstallerFile")
     return
