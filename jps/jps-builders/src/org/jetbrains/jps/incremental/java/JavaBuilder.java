@@ -1153,6 +1153,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         // current javac compiler does support required language level
         return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
+      LOG.warn("Target bytecode version " + targetLanguageLevel + " is not supported by SDK version " + sdkVersion);
     }
     final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
     if (fallbackJdkHome == null) {
