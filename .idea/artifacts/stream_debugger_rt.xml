@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="stream-debugger-rt">
+    <output-path>$PROJECT_DIR$/out/artifacts/stream_debugger_rt</output-path>
+    <root id="archive" name="stream-debugger-rt.jar">
+      <element id="module-output" name="intellij.java.debugger.streams.rt" />
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/plugins/stream-debugger/support-lib/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>

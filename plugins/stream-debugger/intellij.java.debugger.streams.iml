@@ -22,5 +22,8 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
   </component>
 </module>

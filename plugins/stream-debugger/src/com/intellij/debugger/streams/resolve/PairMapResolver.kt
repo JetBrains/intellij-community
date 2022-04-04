@@ -36,8 +36,8 @@ class PairMapResolver : ValuesOrderResolver {
 
     return of(direct, reverse)
   }
+}
 
-  fun <K, V> MutableMap<K, MutableList<V>>.add(key: K, value: V) {
-    computeIfAbsent(key, { mutableListOf() }) += value
-  }
+fun <K, V> MutableMap<K, MutableList<V>>.add(key: K, value: V) {
+  computeIfAbsent(key, { mutableListOf() }) += value
 }

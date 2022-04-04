@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.trace;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.StreamDebuggerBundle;
+import com.intellij.debugger.streams.trace.breakpoint.TracerUtils;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.xdebugger.XDebugSession;
@@ -68,7 +69,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
                 }
 
                 if (classType != null) {
-                  final String exceptionMessage = tryExtractExceptionMessage((ObjectReference)reference);
+                  final String exceptionMessage = TracerUtils.tryExtractExceptionMessage((ObjectReference)reference);
                   final String description = "Evaluation failed: " + type.name() + " exception thrown";
                   final String descriptionWithReason = exceptionMessage == null ? description : description + ": " + exceptionMessage;
                   callback.evaluationFailed(streamTraceExpression, descriptionWithReason);
@@ -87,18 +88,5 @@ public class EvaluateExpressionTracer implements StreamTracer {
         }
       }, stackFrame.getSourcePosition());
     }
-  }
-
-  @Nullable
-  private static String tryExtractExceptionMessage(@NotNull ObjectReference exception) {
-    final ReferenceType type = exception.referenceType();
-    final Field messageField = type.fieldByName("detailMessage");
-    if (messageField == null) return null;
-    final Value message = exception.getValue(messageField);
-    if (message instanceof StringReference) {
-      return ((StringReference)message).value();
-    }
-
-    return null;
   }
 }
