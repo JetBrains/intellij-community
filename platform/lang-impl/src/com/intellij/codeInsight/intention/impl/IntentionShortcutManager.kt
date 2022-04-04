@@ -37,7 +37,7 @@ class IntentionShortcutManager : Disposable {
 
   /** Get possible shortcuts assigned to intention */
   fun getShortcutSet(intention: IntentionAction): ShortcutSet? =
-    findIntentionWrapper(intention)?.shortcutSet
+    ActionManager.getInstance().findIntentionWrapper(intention)?.shortcutSet
 
   /** Remove the first shortcuts assigned to intention and unregister the wrapping [IntentionActionAsAction] if no shortcuts remain */
   fun removeFirstIntentionShortcut(intention: IntentionAction) {
@@ -48,14 +48,14 @@ class IntentionShortcutManager : Disposable {
     }
 
     if (shortcuts.size <= 1) {
-      unregister(intention)
+      ActionManager.getInstance().unregister(intention)
     }
   }
 
   /** Show the keyboard shortcut panel to assign a shortcut */
   fun promptForIntentionShortcut(intention: IntentionAction, project: Project) {
 
-    register(intention)
+    ActionManager.getInstance().register(intention)
 
     val km = KeymapManager.getInstance()
     val activeKeymap = km?.activeKeymap ?: return // not available
@@ -68,56 +68,56 @@ class IntentionShortcutManager : Disposable {
     }
   }
 
-  private fun register(intention: IntentionAction) {
+  private fun ActionManager.register(intention: IntentionAction) {
     if (findIntentionWrapper(intention) == null) {
-      ActionManager.getInstance().registerAction(intention.wrappedActionId, IntentionActionAsAction(intention))
+      registerAction(intention.wrappedActionId, IntentionActionAsAction(intention))
     }
   }
 
-  private fun unregister(intention: IntentionAction) {
-    ActionManager.getInstance().unregisterAction(intention.wrappedActionId)
+  private fun ActionManager.unregister(intention: IntentionAction) {
+    unregisterAction(intention.wrappedActionId)
   }
 
-  private fun findIntentionWrapper(intention: IntentionAction): AnAction? =
-    ActionManager.getInstance().getAction(intention.wrappedActionId)
+  private fun ActionManager.findIntentionWrapper(intention: IntentionAction): AnAction? =
+    getAction(intention.wrappedActionId)
 
   internal fun findIntention(wrappedActionId: String): IntentionAction? =
     IntentionManager.getInstance().availableIntentions.firstOrNull { it.wrappedActionId == wrappedActionId }
 
    /** Register all intentions with shortcuts and keep them up to date */
-  private fun registerIntentionsInActiveKeymap() {
-    registerIntentionsInKeymap(KeymapManager.getInstance().activeKeymap)
+  private fun registerIntentionsInActiveKeymap(actionManager: ActionManager) {
+     actionManager.registerIntentionsInKeymap(KeymapManager.getInstance().activeKeymap)
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
     busConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
       override fun activeKeymapChanged(keymap: Keymap?) {
-        unregisterIntentionsInKeymap()
-        registerIntentionsInKeymap(keymap)
+        actionManager.unregisterIntentionsInKeymap()
+        actionManager.registerIntentionsInKeymap(keymap)
       }
     })
 
     IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(object : ExtensionPointListener<IntentionActionBean> {
       override fun extensionAdded(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
-        registerIntentionsInKeymap(registeredKeymap)
+        actionManager.registerIntentionsInKeymap(registeredKeymap)
       }
 
       override fun extensionRemoved(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
-        unregisterIntentionsInExtension(extension)
+        actionManager.unregisterIntentionsInExtension(extension)
       }
     }, this)
   }
 
-  private fun registerIntentionsInKeymap(keymap: Keymap?) {
+  private fun ActionManager.registerIntentionsInKeymap(keymap: Keymap?) {
     keymap?.wrappedIntentionActions()?.forEach { register(it) }
     registeredKeymap = keymap
   }
 
-  private fun unregisterIntentionsInKeymap() {
+  private fun ActionManager.unregisterIntentionsInKeymap() {
     registeredKeymap?.wrappedIntentionActions()?.forEach { unregister(it) }
     registeredKeymap = null
   }
 
-  private fun unregisterIntentionsInExtension(extension: IntentionActionBean) {
+  private fun ActionManager.unregisterIntentionsInExtension(extension: IntentionActionBean) {
     registeredKeymap?.wrappedIntentionActions()?.forEach { intention ->
       if (intention is IntentionActionWrapper && intention.implementationClassName == extension.className) {
         unregister(intention)
@@ -138,7 +138,7 @@ class IntentionShortcutManager : Disposable {
 
   class InitListener : ActionConfigurationCustomizer {
     override fun customize(actionManager: ActionManager) {
-      getInstance().registerIntentionsInActiveKeymap()
+      getInstance().registerIntentionsInActiveKeymap(actionManager)
     }
   }
 
