@@ -102,7 +102,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    */
   private static final class ForwardWalker implements Iterator<Namespace> {
     private final Namespace[] namespaces;
-    int cursor = 0;
+    private int cursor = 0;
 
     private ForwardWalker(Namespace[] namespaces) {
       this.namespaces = namespaces;
@@ -135,7 +135,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    */
   private static final class BackwardWalker implements Iterator<Namespace> {
     private final Namespace[] namespaces;
-    int cursor;
+    private int cursor;
 
     BackwardWalker(Namespace[] namespaces) {
       this.namespaces = namespaces;
@@ -172,7 +172,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
     private final boolean forward;
     private final Namespace[] namespaces;
 
-    NamespaceIterable(Namespace[] data, boolean forward) {
+    private NamespaceIterable(Namespace[] data, boolean forward) {
       this.forward = forward;
       this.namespaces = data;
     }
@@ -227,12 +227,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
   /**
    * A comparator that sorts Namespaces by their prefix.
    */
-  private static final Comparator<Namespace> NSCOMP = new Comparator<Namespace>() {
-    @Override
-    public int compare(Namespace ns1, Namespace ns2) {
-      return ns1.getPrefix().compareTo(ns2.getPrefix());
-    }
-  };
+  private static final Comparator<Namespace> NSCOMP = Comparator.comparing(Namespace::getPrefix);
   private static final Namespace[] DEFAULTSEED = new Namespace[]{
     Namespace.NO_NAMESPACE, Namespace.XML_NAMESPACE};
 
@@ -371,7 +366,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
       // the prefix is the previous scope's primary prefix. This means
       // that we know for sure that the input namespace is new-to-scope.
       store.add(namespace);
-      final Namespace[] nscope = Arrays.copyOf(scope, scope.length);
+      final Namespace[] nscope = scope.clone();
       nscope[0] = namespace;
       return nscope;
     }
@@ -385,7 +380,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
     if (ip >= 0) {
       // a different namespace with the same prefix as us is in-scope.
       // replace it....
-      final Namespace[] nscope = Arrays.copyOf(scope, scope.length);
+      final Namespace[] nscope = scope.clone();
       nscope[ip] = namespace;
       return nscope;
     }
@@ -422,8 +417,6 @@ public final class NamespaceStack implements Iterable<Namespace> {
    *     the added Namespaces follows the same rules as above: first the
    *     Element Namespace (only if that Namespace is actually added) followed
    *     by the other added namespaces in alphabetical-by-prefix order.
-   * <li>The same added namespaces are also available in reverse order in
-   *     the {@link #addedReverse()} Iterable.
    * </ul>
    *
    * @param element The element at the new level of the stack.
@@ -496,7 +489,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
       added[depth] = EMPTY;
     }
     else {
-      added[depth] = toadd.toArray(new Namespace[toadd.size()]);
+      added[depth] = toadd.toArray(new Namespace[0]);
       if (added[depth][0] == mns) {
         Arrays.sort(added[depth], 1, added[depth].length, NSCOMP);
       }
@@ -509,7 +502,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
       if (toadd.isEmpty()) {
         // we need to make newscope a copy of the previous level's
         // scope, because it is not yet a copy.
-        newscope = Arrays.copyOf(newscope, newscope.length);
+        newscope = newscope.clone();
       }
       // we need to take the Namespace at position 0, and insert it
       // in it's place later in the array.
@@ -561,20 +554,6 @@ public final class NamespaceStack implements Iterable<Namespace> {
   }
 
   /**
-   * Return an Iterable containing all the Namespaces introduced to the
-   * current-level's scope but in reverse order to {@link #addedForward()}.
-   *
-   * @return A read-only Iterable containing added Namespaces (may be empty);
-   * @see #push(Element) for the details on the data order.
-   */
-  public Iterable<Namespace> addedReverse() {
-    if (added[depth].length == 0) {
-      return EMPTYITER;
-    }
-    return new NamespaceIterable(added[depth], false);
-  }
-
-  /**
    * Get all the Namespaces in-scope at the current level of the stack.
    *
    * @return A read-only Iterator containing added Namespaces (may be empty);
@@ -592,7 +571,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    * @return a copy of the current scope.
    */
   public Namespace[] getScope() {
-    return Arrays.copyOf(scope[depth], scope[depth].length);
+    return scope[depth].clone();
   }
 
   /**

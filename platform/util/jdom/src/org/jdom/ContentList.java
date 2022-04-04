@@ -613,7 +613,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
    * @param comp - the Comparator used to compare list elements. A null value indicates that the elements' natural ordering should be used
    * @Since 2.0.6
    */
-  // @Override - only in Java8
+  @Override
   public void sort(Comparator<? super Content> comp) {
 
     if (comp == null) {
@@ -1239,6 +1239,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
      * @Since 2.0.6
      */
     //Not till Java8 @Override
+    @Override
     public void sort(final Comparator<? super F> comp) {
       // this size() forces a full scan/update of the list.
       if (comp == null) {

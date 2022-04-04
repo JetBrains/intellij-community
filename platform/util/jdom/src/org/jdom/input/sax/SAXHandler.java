@@ -316,7 +316,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
   }
 
   /**
-   * Specifies whether or not the parser should eliminate text() nodes
+   * Specifies whether the parser should eliminate text() nodes
    * containing only whitespace when building the document. See
    * {@link SAXBuilder#setIgnoringBoundaryWhitespace(boolean)}.
    *
@@ -529,7 +529,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
 
   /**
    * This reports the occurrence of an actual element. It will include the
-   * element's attributes, with the exception of XML vocabulary specific
+   * element's attributes, except XML vocabulary specific
    * attributes, such as <code>xmlns:[namespace prefix]</code> and
    * <code>xsi:schemaLocation</code>.
    *

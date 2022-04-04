@@ -67,13 +67,13 @@ import java.util.List;
  * can be changed. But new variables may not be added.
  * <p>
  * <p>
- * XPathExpression is not thread-safe. XPath libraries allow variable values to
+ * XPathExpression is not thread-safe. XPath's libraries allow variable values to
  * change between calls to their query routines, but require that the variable
  * value is constant for the duration of any particular evaluation. It is easier
  * to simply have separate XPathExpression instances in each thread than it is
  * to manage the synchronization of a single instance. XPathExpression thus
  * supports Cloneable to easily create another XPathExpression instance. It is
- * the responsibility of the JDOM caller to ensure appropriate synchronisation
+ * the responsibility of the JDOM caller to ensure appropriate synchronization
  * of the XPathExpression if it is accessed from multiple threads.
  *
  * @param <T> The generic type of the results of the XPath query after being

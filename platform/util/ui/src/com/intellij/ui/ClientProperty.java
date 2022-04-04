@@ -2,14 +2,17 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import javax.swing.RootPaneContainer;
-import java.awt.Component;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class ClientProperty {
   /**
@@ -187,5 +190,33 @@ public final class ClientProperty {
    */
   public static boolean isFalseInHierarchy(@Nullable Component component, @NotNull Object key) {
     return isSetInHierarchy(component, key, Boolean.FALSE);
+  }
+
+  public static @NotNull Map<Object, Object> getAllClientProperties(Object component) {
+    Map<Object, Object> map = new LinkedHashMap<>();
+    if (component instanceof RootPaneContainer) component = ((RootPaneContainer)component).getRootPane();
+    if (component instanceof JComponent) {
+      try {
+        Method method = ReflectionUtil.getDeclaredMethod(JComponent.class, "getClientProperties");
+        if (method == null) {
+          return Collections.emptyMap();
+        }
+        method.setAccessible(true);
+        Object table = method.invoke(component);
+        method = ReflectionUtil.getDeclaredMethod(table.getClass(), "getKeys", Object[].class);
+        if (method == null) return Collections.emptyMap();
+        method.setAccessible(true);
+        Object arr = method.invoke(table, new Object[1]);
+        if (arr instanceof Object[]) {
+          for (Object key : (Object[])arr) {
+            map.put(key, ((JComponent)component).getClientProperty(key));
+          }
+        }
+        return Collections.unmodifiableMap(map);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return Collections.emptyMap();
   }
 }

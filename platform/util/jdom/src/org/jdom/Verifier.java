@@ -80,7 +80,7 @@ public final class Verifier {
    * There are 7 major tests for characters in JDOM and one special case.
    * Can the character be a regular character, can it be part of an XML Name
    * (element, attribute, entity-ref, etc.), does it represent a letter,
-   * digit, or combining character. Finally can a character be the first
+   * digit, or combining character. Finally, can a character be the first
    * character in a name, or can the character be part of a URI. The special
    * case is that Attributes and Element names in JDOM do not include the
    * namespace prefix, thus, for Attribute and Elements, the name is the

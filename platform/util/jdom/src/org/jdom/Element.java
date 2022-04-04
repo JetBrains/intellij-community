@@ -58,7 +58,6 @@ import org.jdom.filter.AbstractFilter;
 import org.jdom.filter.Filter;
 import org.jdom.filter2.ElementFilter;
 import org.jdom.filter2.Filters;
-import org.jdom.output.XMLOutputter2;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -1286,18 +1285,6 @@ public class Element extends Content implements Parent, Serializable {
     return getAttributeList().remove(attribute);
   }
 
-  /**
-   * <p>
-   * This returns a <code>String</code> representation of the
-   * <code>Element</code>, suitable for debugging. If the XML
-   * representation of the <code>Element</code> is desired,
-   * {@link XMLOutputter2#outputString(Element)}
-   * should be used.
-   * </p>
-   *
-   * @return <code>String</code> - information about the
-   * <code>Element</code>
-   */
   @Override
   public String toString() {
     final StringBuilder stringForm = new StringBuilder(64)

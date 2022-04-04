@@ -93,8 +93,7 @@ public final class DOMOutputter {
    *
    * @author Rolf Lear
    */
-  private static final class DefaultDOMOutputProcessor extends
-                                                       AbstractDOMOutputProcessor {
+  private static final class DefaultDOMOutputProcessor extends AbstractDOMOutputProcessor {
     // add nothing except make it final.
   }
 
@@ -135,6 +134,7 @@ public final class DOMOutputter {
    *                  default).
    * @since JDOM2
    */
+  @SuppressWarnings("WeakerAccess")
   public DOMOutputter(DOMAdapter adapter, Format format,
                       DOMOutputProcessor processor) {
     this.adapter = adapter == null ? DEFAULT_ADAPTER : adapter;

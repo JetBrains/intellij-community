@@ -137,21 +137,6 @@ final class XPathDiagnosticImpl<T> implements XPathDiagnostic<T> {
   }
 
   @Override
-  public List<Object> getFilteredResults() {
-    return dfiltered;
-  }
-
-  @Override
-  public List<Object> getRawResults() {
-    return draw;
-  }
-
-  @Override
-  public boolean isFirstOnly() {
-    return dfirstonly;
-  }
-
-  @Override
   public String toString() {
     return String.format("[XPathDiagnostic: '%s' evaluated (%s) against " +
                          "%s produced  raw=%d discarded=%d returned=%d]",

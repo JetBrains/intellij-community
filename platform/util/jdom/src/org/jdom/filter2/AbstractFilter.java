@@ -89,7 +89,7 @@ public abstract class AbstractFilter<T> implements Filter<T> {
           result.add(c);
         }
       }
-      return result.isEmpty() ? Collections.<T>emptyList() : result;
+      return result.isEmpty() ? Collections.emptyList() : result;
     }
 
     List<T> result = new ArrayList<T>();
@@ -99,7 +99,7 @@ public abstract class AbstractFilter<T> implements Filter<T> {
         result.add(c);
       }
     }
-    return result.isEmpty() ? Collections.<T>emptyList() : result;
+    return result.isEmpty() ? Collections.emptyList() : result;
   }
 
   @Override

@@ -66,7 +66,7 @@ import java.lang.reflect.Method;
 
 /**
  * A DOMAdapter utility abstract base class. Uses the concrete implementation
- * to build a org.w3c.dom.Document instance, which in turn is used to apply
+ * to build an org.w3c.dom.Document instance, which in turn is used to apply
  * the DocType.
  * <p>
  * Special attention should be paid to the setInternalSubset protected method,

@@ -54,7 +54,6 @@
 
 package org.jdom;
 
-import org.jdom.output.LineSeparator;
 import org.jdom.xpath.XPathFactory;
 
 /**
@@ -96,11 +95,11 @@ public final class JDOMConstants {
   /**
    * Defined as {@value}
    */
-  public static final String NS_PREFIX_XML = "xml";
+  static final String NS_PREFIX_XML = "xml";
   /**
    * Defined as {@value}
    */
-  public static final String NS_URI_XML = "http://www.w3.org/XML/1998/namespace";
+  static final String NS_URI_XML = "http://www.w3.org/XML/1998/namespace";
 
   /**
    * Defined as {@value}
@@ -127,24 +126,10 @@ public final class JDOMConstants {
   public static final String SAX_PROPERTY_LEXICAL_HANDLER_ALT = "http://xml.org/sax/handlers/LexicalHandler";
 
   /**
-   * Defined as {@value}
-   */
-  public static final String SAX_FEATURE_EXTERNAL_ENT = "http://xml.org/sax/features/external-general-entities";
-
-  /**
    * System Property queried to obtain an alternate default XPathFactory.
    * Defined as {@value}
    *
    * @see XPathFactory
    */
   public static final String JDOM2_PROPERTY_XPATH_FACTORY = "org.jdom.xpath.XPathFactory";
-
-  /**
-   * System Property queried to obtain an alternate default Line Separator.
-   * <p>
-   * Defined as {@value}
-   *
-   * @see LineSeparator
-   */
-  public static final String JDOM2_PROPERTY_LINE_SEPARATOR = "org.jdom.output.LineSeparator";
 }

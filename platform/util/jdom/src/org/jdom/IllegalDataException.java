@@ -62,11 +62,6 @@ package org.jdom;
  */
 public final class IllegalDataException extends IllegalArgumentException {
   /**
-   * Standard JDOM2 Exception Serialization. Default.
-   */
-  private static final long serialVersionUID = 200L;
-
-  /**
    * This will create an <code>Exception</code> indicating
    * that the specified data is illegal for the construct
    * it was supplied to.

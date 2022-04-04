@@ -55,7 +55,7 @@
 package org.jdom;
 
 import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter2;
+import org.jdom.output.XMLOutputter;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -218,7 +218,7 @@ public final class ProcessingInstruction extends Content {
   public String toString() {
     StringWriter out = new StringWriter();
     try {
-      XMLOutputter2.DEFAULT_PROCESSOR.process(out, Format.getRawFormat(), this);
+      XMLOutputter.DEFAULT_PROCESSOR.process(out, Format.getRawFormat(), this);
       out.flush();
     }
     catch (IOException ignore) {

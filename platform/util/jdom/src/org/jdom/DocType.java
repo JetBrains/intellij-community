@@ -54,7 +54,7 @@
 
 package org.jdom;
 
-import org.jdom.output.XMLOutputter2;
+import org.jdom.output.XMLOutputter;
 
 /**
  * An XML DOCTYPE declaration.  Method allows the user to get and set the
@@ -63,7 +63,7 @@ import org.jdom.output.XMLOutputter2;
  * @author Brett McLaughlin
  * @author Jason Hunter
  */
-public class DocType extends Content {
+public final class DocType extends Content {
   /**
    * JDOM2 Serialization. In this case, DocType is simple.
    */
@@ -74,35 +74,28 @@ public class DocType extends Content {
    *
    * @serialField The root element name
    */
-  protected String elementName;
+  private String elementName;
 
   /**
    * The public ID of the DOCTYPE
    *
    * @serialField The PublicID, may be null
    */
-  protected String publicID;
+  private String publicID;
 
   /**
    * The system ID of the DOCTYPE
    *
    * @serialField The SystemID, may be null
    */
-  protected String systemID;
+  private String systemID;
 
   /**
    * The internal subset of the DOCTYPE
    *
    * @serialField The InternalSubset, may be null
    */
-  protected String internalSubset;
-
-  /**
-   * Default, no-args constructor for implementations to use if needed.
-   */
-  protected DocType() {
-    super(CType.DocType);
-  }
+  private String internalSubset;
 
   /*
    * XXX:
@@ -183,7 +176,7 @@ public class DocType extends Content {
    *                              legal XML element name.
    */
   public DocType setElementName(String elementName) {
-    // This can contain a colon so we use checkXMLName()
+    // This can contain a colon, so we use checkXMLName()
     // instead of checkElementName()
     String reason = Verifier.checkXMLName(elementName);
     if (reason != null) {
@@ -255,7 +248,7 @@ public class DocType extends Content {
   }
 
   /**
-   * Returns the empty string since doctypes don't have an XPath
+   * Returns the empty string since types don't have an XPath
    * 1.0 string value.
    *
    * @return the empty string
@@ -293,9 +286,7 @@ public class DocType extends Content {
    */
   @Override
   public String toString() {
-    return "[DocType: " +
-           new XMLOutputter2().outputString(this) +
-           "]";
+    return "[DocType: " + new XMLOutputter().outputString(this) + "]";
   }
 
   @Override

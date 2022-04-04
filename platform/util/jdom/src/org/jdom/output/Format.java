@@ -73,10 +73,6 @@ import java.util.Locale;
  * <p>
  * <b>Note about Line Separator:</b>
  * <p>
- * By default, JDOM will always use the CRNL sequence "\r\n" for output. This
- * can be changed in a number of different ways. See the {@link LineSeparator}
- * enumeration for more information.
- * <p>
  * <b>Note about XML Character Escaping:</b>
  * <p>
  * JDOM will escape characters in the output based on the EscapeStrategy that
@@ -87,11 +83,10 @@ import java.util.Locale;
  *
  * @author Jason Hunter
  * @author Rolf Lear
- * @see LineSeparator
  */
 public final class Format implements Cloneable {
   /**
-   * An EscapeStrategy suitable for UTF-8 an UTF-16
+   * An EscapeStrategy suitable for UTF-8 a UTF-16
    */
   private static final EscapeStrategy UTFEscapeStrategy = new EscapeStrategy() {
     @Override
@@ -123,14 +118,11 @@ public final class Format implements Cloneable {
   /**
    * An EscapeStrategy suitable for 'unknown' charsets
    */
-  private static final EscapeStrategy DefaultEscapeStrategy = new EscapeStrategy() {
+  private static final EscapeStrategy DEFAULT_ESCAPE_STRATEGY = new EscapeStrategy() {
     @Override
     public boolean shouldEscape(char ch) {
-      if (Verifier.isHighSurrogate(ch)) {
-        return true;  // Safer this way per http://unicode.org/faq/utf_bom.html#utf8-4
-      }
-
-      return false;
+      // Safer this way per http://unicode.org/faq/utf_bom.html#utf8-4
+      return Verifier.isHighSurrogate(ch);
     }
   };
 
@@ -307,7 +299,6 @@ public final class Format implements Cloneable {
     return str.substring(left, right + 1);
   }
 
-
   /**
    * This will take the three pre-defined entities in XML 1.0 ('&lt;', '&gt;',
    * and '&amp;' - used specifically in XML elements) as well as CR/NL, tabs,
@@ -323,8 +314,7 @@ public final class Format implements Cloneable {
    * @return The value appropriately escaped.
    * @throws IllegalDataException if an entity can not be escaped
    */
-  public static String escapeAttribute(final EscapeStrategy strategy,
-                                       final String value) {
+  public static String escapeAttribute(EscapeStrategy strategy, String value) {
     final int len = value.length();
     int idx = 0;
 
@@ -423,7 +413,7 @@ public final class Format implements Cloneable {
    * internal newlines will be replaced with the specified eol sequence.
    *
    * @param strategy The EscapeStrategy
-   * @param eol      The End-Of-Line sequence to be used (may be null).
+   * @param eol      The End-Of-Line sequence to be used (maybe null).
    * @param value    The String to escape
    * @return The input value escaped.
    * @throws IllegalDataException if an entity can not be escaped
@@ -463,7 +453,7 @@ public final class Format implements Cloneable {
             + Integer.toHexString(ch));
         }
         int chp = Verifier.decodeSurrogatePair(highsurrogate, ch);
-        sb.append("&#x" + Integer.toHexString(chp) + ";");
+        sb.append("&#x").append(Integer.toHexString(chp)).append(";");
         highsurrogate = 0;
         continue;
       }
@@ -498,7 +488,7 @@ public final class Format implements Cloneable {
               highsurrogate = ch;
             }
             else {
-              sb.append("&#x" + Integer.toHexString(ch) + ";");
+              sb.append("&#x").append(Integer.toHexString(ch)).append(";");
             }
           }
           else {
@@ -540,7 +530,7 @@ public final class Format implements Cloneable {
     catch (Exception e) {
       // swallow that... and assume false.
     }
-    return DefaultEscapeStrategy;
+    return DEFAULT_ESCAPE_STRATEGY;
   }
 
 
@@ -552,13 +542,12 @@ public final class Format implements Cloneable {
   /**
    * standard string with which to end a line
    */
-  private static final String STANDARD_LINE_SEPARATOR = LineSeparator.DEFAULT.value();
+  private static final String STANDARD_LINE_SEPARATOR = System.lineSeparator();
 
   /**
    * standard encoding
    */
   private static final String STANDARD_ENCODING = "UTF-8";
-
 
   /**
    * The default indent is no spaces (as original document)
@@ -568,7 +557,7 @@ public final class Format implements Cloneable {
   /**
    * New line separator
    */
-  String lineSeparator = STANDARD_LINE_SEPARATOR;
+  String lineSeparator = "\n";
 
   /**
    * The encoding format
@@ -576,13 +565,12 @@ public final class Format implements Cloneable {
   String encoding = STANDARD_ENCODING;
 
   /**
-   * Whether or not to output the XML declaration
-   * - default is <code>false</code>
+   * Whether to output the XML declaration
    */
   boolean omitDeclaration = false;
 
   /**
-   * Whether or not to output the encoding in the XML declaration
+   * Whether to output the encoding in the XML declaration
    * - default is <code>false</code>
    */
   boolean omitEncoding = false;
@@ -607,7 +595,7 @@ public final class Format implements Cloneable {
   /**
    * entity escape logic
    */
-  EscapeStrategy escapeStrategy = DefaultEscapeStrategy;
+  EscapeStrategy escapeStrategy = DEFAULT_ESCAPE_STRATEGY;
 
   /**
    * Creates a new Format instance with default (raw) behavior.
@@ -625,85 +613,9 @@ public final class Format implements Cloneable {
     return escapeStrategy;
   }
 
-  /**
-   * This will set the newline separator (<code>LineSeparator</code>).
-   * The default is <code>\r\n</code>.
-   * <p>
-   * Use the {@link #setLineSeparator(LineSeparator)} method to set
-   * standard separators in an easier way.
-   * <p>
-   * To make it output the system default line ending string, call
-   * <code>setLineSeparator(System.getProperty("line.separator"))</code>.
-   *
-   * <p>
-   * To output "UNIX-style" documents, call
-   * <code>setLineSeparator("\n")</code>.  To output "Mac-style"
-   * documents, call <code>setLineSeparator("\r")</code>.  DOS-style
-   * documents use CR-LF ("\r\n"), which is the default.
-   * </p>
-   *
-   * <p>
-   * Note that this only applies to newlines generated by the
-   * outputter.  All XML parsers are required to 'normalize' all the
-   * combinations of line seperators to just '\n'. As a result, if any JDOM
-   * component has an end-of-line-like value (e.g. '\r') in it then that value
-   * must be the result of an escaped value in the XML source document
-   * <code>&amp;#xD;</code> or a value explicitly set with one of the Text
-   * value setters. Values in JDOM content that were explicitly set to be
-   * '\r' will always be escaped on XML Output.
-   * <p>
-   * The actual newline separator itself though can be set with this method.
-   * Any internal newlines in Text output will be represented by this
-   * end-of-line sequence. For example, the following code:
-   * <p>
-   * <pre>
-   *   Text txt = new Text("\r\n");
-   *   XMLOutputter xout = new XMLOutputter();
-   *   String result = xout.outputString(txt);
-   * </pre>
-   * will produce the literal String sequence "&amp;#xD;\r\n" because the
-   * original \r is escaped to be <code>&amp;#xD;</code> and the original \n
-   * is replaced with the JDOM default Line Separator "\r\n".
-   *
-   * <p>
-   * If the format's "indent" property is null (as is the default
-   * for the Raw and Compact formats), then this value only effects the
-   * newlines written after the declaration and doctype, as well as any
-   * newlines embedded within existing text content.
-   * </p>
-   * Setting the indent to be null will disable end-of-line processing
-   * for any formatting, but will not affect substitution of embedded \n.
-   * Setting this value to null or the empty string will disable all
-   * end-of-line modifications.
-   *
-   * @param separator <code>String</code> line separator to use.
-   * @return a pointer to this Format for chaining
-   * @see #setTextMode
-   * @see #setLineSeparator(LineSeparator)
-   */
   public Format setLineSeparator(String separator) {
-    this.lineSeparator = "".equals(separator) ? null : separator;
+    lineSeparator = separator == null ? STANDARD_LINE_SEPARATOR : separator;
     return this;
-  }
-
-  /**
-   * This will set the newline separator sequence.
-   * <p>
-   * This method differes from {@link #setLineSeparator(String)} slightly in
-   * that, to disable end-of-line processing you should call:
-   * <pre>
-   * Format.setLinewSeparator(LineSeparator.NONE);
-   * </pre>
-   *
-   * @param separator {@link LineSeparator} line separator to us
-   * @return a pointer to this Format for chaining
-   * @see #setLineSeparator(String) for comprehensive notes.
-   * @since JDOM2
-   */
-  public Format setLineSeparator(LineSeparator separator) {
-    return setLineSeparator(separator == null ?
-                            STANDARD_LINE_SEPARATOR :
-                            separator.value());
   }
 
   /**

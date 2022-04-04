@@ -65,31 +65,11 @@ import org.xml.sax.SAXParseException;
  * @author Laurent Bihanic
  */
 public final class JDOMParseException extends JDOMException {
-
-  /**
-   * Standard JDOM2 Exception Serialization. Default.
-   */
-  private static final long serialVersionUID = 200L;
-
   /**
    * The portion of the document that was successfully built before
    * the parse error occurred.
    */
   private final Document partialDocument;
-
-  /**
-   * This will create a parse <code>Exception</code> with the given
-   * message and wrap the <code>Exception</code> that cause a document
-   * parse to fail.
-   *
-   * @param message <code>String</code> message indicating
-   *                the problem that occurred.
-   * @param cause   <code>Throwable</code> that caused this
-   *                to be thrown.
-   */
-  public JDOMParseException(String message, Throwable cause) {
-    this(message, cause, null);
-  }
 
   /**
    * This will create a parse <code>Exception</code> with the given

@@ -91,15 +91,12 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
    */
   private final Element parent;
 
-  private static final Comparator<Attribute> ATTRIBUTE_NATURAL = new Comparator<Attribute>() {
-    @Override
-    public int compare(Attribute a1, Attribute a2) {
-      int comp = a1.getNamespacePrefix().compareTo(a2.getNamespacePrefix());
-      if (comp != 0) {
-        return comp;
-      }
-      return a1.getName().compareTo(a2.getName());
+  private static final Comparator<Attribute> ATTRIBUTE_NATURAL = (a1, a2) -> {
+    int comp = a1.getNamespacePrefix().compareTo(a2.getNamespacePrefix());
+    if (comp != 0) {
+      return comp;
     }
+    return a1.getName().compareTo(a2.getName());
   };
 
   /**
@@ -589,6 +586,7 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
    *
    * @param comp The Comparator to use for sorting.
    */
+  @Override
   public void sort(Comparator<? super Attribute> comp) {
     if (comp == null) {
       comp = ATTRIBUTE_NATURAL;

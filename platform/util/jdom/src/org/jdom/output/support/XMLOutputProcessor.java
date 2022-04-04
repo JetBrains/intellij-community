@@ -56,7 +56,6 @@ package org.jdom.output.support;
 
 import org.jdom.*;
 import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter2;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -84,7 +83,6 @@ import java.util.List;
  * re-implementation of this interface.
  *
  * @author Rolf Lear
- * @see XMLOutputter2
  * @see XmlOutputProcessorImpl
  * @since JDOM2
  */

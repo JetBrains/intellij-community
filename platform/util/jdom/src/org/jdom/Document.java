@@ -56,7 +56,6 @@ package org.jdom;
 
 import org.jdom.filter.AbstractFilter;
 import org.jdom.filter.Filter;
-import org.jdom.output.XMLOutputter2;
 import org.jdom.util.IteratorIterable;
 
 import java.io.IOException;
@@ -598,16 +597,6 @@ public final class Document extends CloneBase implements Parent {
     return this;
   }
 
-  /**
-   * This returns a <code>String</code> representation of the
-   * <code>Document</code>, suitable for debugging. If the XML
-   * representation of the <code>Document</code> is desired,
-   * {@link XMLOutputter2#outputString(Document)}
-   * should be used.
-   *
-   * @return <code>String</code> - information about the
-   * <code>Document</code>
-   */
   @Override
   public String toString() {
     StringBuilder stringForm = new StringBuilder()

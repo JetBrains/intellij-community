@@ -61,6 +61,8 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -307,13 +309,13 @@ class JDOMCoreNavigator extends DefaultNavigator {
     return JaxenConstants.EMPTY_ITERATOR;
   }
 
-  private void readObject(java.io.ObjectInputStream in)
+  private void readObject(ObjectInputStream in)
     throws IOException, ClassNotFoundException {
     in.defaultReadObject();
     emtnsmap = new IdentityHashMap<Element, NamespaceContainer[]>();
   }
 
-  private void writeObject(java.io.ObjectOutputStream out)
+  private void writeObject(ObjectOutputStream out)
     throws IOException {
     out.defaultWriteObject();
   }

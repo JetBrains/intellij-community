@@ -78,9 +78,9 @@ public final class UIUtil {
   }
 
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
-  @NlsSafe public static final String BR = "<br/>";
-  @NlsSafe public static final String HR = "<hr/>";
-  @NlsSafe public static final String LINE_SEPARATOR = "\n";
+  public static final @NlsSafe String BR = "<br/>";
+  public static final @NlsSafe String HR = "<hr/>";
+  public static final @NlsSafe String LINE_SEPARATOR = "\n";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
@@ -326,22 +326,22 @@ public final class UIUtil {
   public enum FontColor {NORMAL, BRIGHTER}
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
-  @NlsSafe public static final String HTML_MIME = "text/html";
-  @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
-  @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
+  public static final @NlsSafe String HTML_MIME = "text/html";
+  public static final @NonNls String JSLIDER_ISFILLED = "JSlider.isFilled";
+  public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
    * Prevent component DataContext from returning parent editor
    * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
    *
    * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
    */
-  @NonNls public static final String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
-  @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
-  @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
+  public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
+  public static final @NonNls String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
+  public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  @NonNls private static final String FOCUS_PROXY_KEY = "isFocusProxy";
+  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
@@ -393,7 +393,7 @@ public final class UIUtil {
 
   public static final Insets PANEL_SMALL_INSETS = JBInsets.create(5, 8);
 
-  @NonNls private static final String ROOT_PANE = "JRootPane.future";
+  private static final @NonNls String ROOT_PANE = "JRootPane.future";
 
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfoRt.isMac ? null : false);
 
@@ -486,33 +486,6 @@ public final class UIUtil {
   @Deprecated
   public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
-  }
-
-  @NotNull
-  public static Map<Object, Object> getAllClientProperties(Object component) {
-    Map<Object, Object> map = new LinkedHashMap<>();
-    if (component instanceof RootPaneContainer) component = ((RootPaneContainer)component).getRootPane();
-    if (component instanceof JComponent) {
-      try {
-        Method method = ReflectionUtil.getDeclaredMethod(JComponent.class, "getClientProperties");
-        if (method == null) return Collections.emptyMap();
-        method.setAccessible(true);
-        Object table = method.invoke(component);
-        method = ReflectionUtil.getDeclaredMethod(table.getClass(), "getKeys", Object[].class);
-        if (method == null) return Collections.emptyMap();
-        method.setAccessible(true);
-        Object arr = method.invoke(table, new Object[1]);
-        if (arr instanceof Object[]) {
-          for (Object key : (Object[])arr) {
-            map.put(key, ((JComponent)component).getClientProperty(key));
-          }
-        }
-        return Collections.unmodifiableMap(map);
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return Collections.emptyMap();
   }
 
   /**
@@ -1405,13 +1378,11 @@ public final class UIUtil {
     drawSearchMatch(g, startX, endX, height, getSearchMatchGradientStartColor(), getSearchMatchGradientEndColor());
   }
 
-  @NotNull
-  public static JBColor getSearchMatchGradientStartColor() {
+  public static @NotNull JBColor getSearchMatchGradientStartColor() {
     return JBColor.namedColor("SearchMatch.startBackground", JBColor.namedColor("SearchMatch.startColor", new Color(0xb3ffeaa2, true)));
   }
 
-  @NotNull
-  public static JBColor getSearchMatchGradientEndColor() {
+  public static @NotNull JBColor getSearchMatchGradientEndColor() {
     return JBColor.namedColor("SearchMatch.endBackground", JBColor.namedColor("SearchMatch.endColor", new Color(0xb3ffd042, true)));
   }
 
@@ -2076,7 +2047,7 @@ public final class UIUtil {
   }
 
   public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
-    @NlsSafe final String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
+    final @NlsSafe String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : JBUIScale.scale(11);
@@ -2851,18 +2822,15 @@ public final class UIUtil {
     }, "play sound").start();
   }
 
-  @NlsSafe
-  public static @NotNull String leftArrow() {
+  public static @NlsSafe @NotNull String leftArrow() {
     return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
   }
 
-  @NlsSafe
-  public static @NotNull String rightArrow() {
+  public static @NlsSafe @NotNull String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
 
-  @NlsSafe
-  public static @NotNull String upArrow(@NotNull String defaultValue) {
+  public static @NlsSafe @NotNull String upArrow(@NotNull String defaultValue) {
     return FontUtil.upArrow(StartupUiUtil.getLabelFont(), defaultValue);
   }
 

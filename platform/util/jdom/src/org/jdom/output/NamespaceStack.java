@@ -59,33 +59,23 @@ import org.jdom.Namespace;
 
 import java.util.Stack;
 
-/**
- * A non-public utility class used by both <code>{@link XMLOutputter}</code> and
- * <code>{@link SAXOutputter}</code> to manage namespaces in a JDOM Document
- * during output.
- *
- * @author Elliotte Rusty Harolde
- * @author Fred Trimble
- * @author Brett McLaughlin
- * @version $Revision: 1.14 $, $Date: 2007/11/10 05:29:01 $
- */
 class NamespaceStack {
   /**
    * The prefixes available
    */
-  private final Stack prefixes;
+  private final Stack<String> prefixes;
 
   /**
    * The URIs available
    */
-  private final Stack uris;
+  private final Stack<String> uris;
 
   /**
    * This creates the needed storage.
    */
   NamespaceStack() {
-    prefixes = new Stack();
-    uris = new Stack();
+    prefixes = new Stack<>();
+    uris = new Stack<>();
   }
 
   /**
@@ -106,7 +96,7 @@ class NamespaceStack {
    * @return <code>String</code> - the popped namespace prefix.
    */
   public String pop() {
-    String prefix = (String)prefixes.pop();
+    String prefix = prefixes.pop();
     uris.pop();
 
     return prefix;
@@ -133,8 +123,7 @@ class NamespaceStack {
     if (index == -1) {
       return null;
     }
-    String uri = (String)uris.elementAt(index);
-    return uri;
+    return uris.elementAt(index);
   }
 
   /**
@@ -144,10 +133,9 @@ class NamespaceStack {
    */
   public String toString() {
     StringBuilder buf = new StringBuilder();
-    String sep = System.getProperty("line.separator");
-    buf.append("Stack: " + prefixes.size() + sep);
+    buf.append("Stack: ").append(prefixes.size()).append('\n');
     for (int i = 0; i < prefixes.size(); i++) {
-      buf.append(prefixes.elementAt(i) + "&" + uris.elementAt(i) + sep);
+      buf.append(prefixes.elementAt(i)).append("&").append(uris.elementAt(i)).append('\n');
     }
     return buf.toString();
   }

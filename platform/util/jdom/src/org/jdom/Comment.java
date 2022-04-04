@@ -53,7 +53,10 @@
  */
 package org.jdom;
 
-import org.jdom.output.XMLOutputter2;
+import org.jdom.output.XMLOutputter;
+
+import java.io.IOException;
+import java.io.StringWriter;
 
 /**
  * An XML comment. Methods allow the user to get and set the text of the
@@ -137,18 +140,14 @@ public final class Comment extends Content {
     return (Comment)super.setParent(parent);
   }
 
-  /**
-   * This returns a <code>String</code> representation of the
-   * <code>Comment</code>, suitable for debugging. If the XML
-   * representation of the <code>Comment</code> is desired,
-   * {@link XMLOutputter2#outputString(Comment)}
-   * should be used.
-   *
-   * @return <code>String</code> - information about the
-   * <code>Comment</code>
-   */
   @Override
   public String toString() {
-    return "[Comment: " + new XMLOutputter2().outputString(this) + "]";
+    StringWriter out = new StringWriter();
+    try {
+      new XMLOutputter().output(this, out);
+    }
+    catch (IOException ignored) {
+    }
+    return "[Comment: " + out + "]";
   }
 }

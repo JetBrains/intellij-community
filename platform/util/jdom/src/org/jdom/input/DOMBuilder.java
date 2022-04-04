@@ -100,7 +100,7 @@ import static org.jdom.JDOMConstants.*;
  * @author Dan Schaffer
  * @author Bradley S. Huffman
  */
-public class DOMBuilder {
+public final class DOMBuilder {
 
   /**
    * The factory for creating new JDOM objects

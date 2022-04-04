@@ -1,10 +1,8 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater.impl
 
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
-import org.jdom.output.Format
-import org.jdom.output.XMLOutputter
-import java.io.ByteArrayOutputStream
 import java.io.File
 
 fun String.trimMarginWithInterpolations(): String {
@@ -52,25 +50,6 @@ fun String.readXml(): Element {
 }
 
 fun String.jpsEntityNameToFilename(): String = replace(".", "_").replace("-", "_").replace(" ", "_")
-
-fun Element.writeXml(): String {
-    val bos = ByteArrayOutputStream()
-
-    bos.writer().use { writer ->
-        val format = Format.getCompactFormat()
-            .setIndent("  ")
-            .setTextMode(Format.TextMode.TRIM)
-            .setEncoding("UTF-8")
-            .setOmitEncoding(false)
-            .setOmitDeclaration(false)
-            .setLineSeparator("\n")
-
-        val outputter = XMLOutputter(format)
-        outputter.output(this, writer)
-    }
-
-    return bos.toString()
-}
 
 private suspend fun SequenceScope<Element>.visit(element: Element) {
     element.children.forEach { visit(it) }

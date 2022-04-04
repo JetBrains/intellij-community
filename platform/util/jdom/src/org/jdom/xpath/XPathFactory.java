@@ -59,8 +59,6 @@ import org.jdom.JDOMConstants;
 import org.jdom.Namespace;
 import org.jdom.filter2.Filter;
 import org.jdom.filter2.Filters;
-import org.jdom.internal.ReflectionConstructor;
-import org.jdom.internal.SystemProperty;
 import org.jdom.xpath.jaxen.JaxenXPathFactory;
 
 import java.util.Collection;
@@ -78,12 +76,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * A JDOM XPathFactory instance is able to create JDOM XPathExpression instances
  * that can be used to evaluate XPath expressions against JDOM Content.
  * <p>
- * The XPathFactory allows either default or custom XPathFactory instances to be
- * created. If you use the {@link #newInstance(String)} method then an
- * XPathFactory of that specific type will be created. If you use the
- * {@link #instance()} method then a default XPathFactory instance will be
- * returned.
- * <p>
  * Instances of XPathFactory are specified to be thread-safe. You can reuse an
  * XPathFactory in multiple threads. Instances of XPathExpression are
  * <strong>NOT</strong> thread-safe.
@@ -98,9 +90,6 @@ public abstract class XPathFactory {
    * An atomic reference storing an instance of the default XPathFactory.
    */
   private static final AtomicReference<XPathFactory> defaultreference = new AtomicReference<XPathFactory>();
-
-  private static final String DEFAULTFACTORY = SystemProperty.get(
-    JDOMConstants.JDOM2_PROPERTY_XPATH_FACTORY, null);
 
   /**
    * Obtain an instance of an XPathFactory using the default mechanisms to
@@ -120,31 +109,13 @@ public abstract class XPathFactory {
     if (ret != null) {
       return ret;
     }
-    XPathFactory fac = DEFAULTFACTORY == null ? new JaxenXPathFactory()
-                                              : newInstance(DEFAULTFACTORY);
+    XPathFactory fac = new JaxenXPathFactory();
     if (defaultreference.compareAndSet(null, fac)) {
       return fac;
     }
     // someone else installed a different instance before we added ours.
     // return that other instance.
     return defaultreference.get();
-  }
-
-  /**
-   * Create a new instance of an explicit XPathFactory. A new instance of the
-   * specified XPathFactory is created each time. The target XPathFactory
-   * needs to have a no-argument default constructor.
-   * <p>
-   * This method is a convenience mechanism only, and JDOM users are free to
-   * create a custom XPathFactory instance and use a simple: <br>
-   * <code>   XPathFactory fac = new MyXPathFactory(arg1, arg2, ...)</code>
-   *
-   * @param factoryclass The name of the XPathFactory class to create.
-   * @return An XPathFactory of the specified class.
-   */
-  public static XPathFactory newInstance(String factoryclass) {
-    return ReflectionConstructor
-      .construct(factoryclass, XPathFactory.class);
   }
 
   /**

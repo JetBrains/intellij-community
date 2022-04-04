@@ -69,11 +69,6 @@ import org.w3c.dom.Document;
  * You should never need to implement this interface unless you have a specific
  * need to use something other than the default JAXP-based mechanism.
  * <p>
- * JDOM only provides one 'concrete' implementation of the DOMAdapter: the
- * {@link JAXPDOMAdapter} class. That implementation is a thread-safe and
- * efficient implementation. It can be used as a template for building your own
- * custom DOMAdapter implementation, if you need it.
- * <p>
  * The {@link AbstractDOMAdapter} class could help you by implementing the
  * DocType-based method which leverages the base createDocument() method.
  * <p>

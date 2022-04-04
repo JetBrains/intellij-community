@@ -61,7 +61,7 @@ import java.util.List;
  * whether an item returned from an XPath query is subsequently filtered by the
  * coercion filter attached to the {@link XPathExpression};
  *
- * @param <T> The generic type of the results retruend by the expression.
+ * @param <T> The generic type of the results returned by the expression.
  * @author Rolf Lear
  */
 public interface XPathDiagnostic<T> {
@@ -83,30 +83,4 @@ public interface XPathDiagnostic<T> {
    * @return the regular evaluated results.
    */
   List<T> getResult();
-
-  /**
-   * Returns the XPath results which are not returned by the regular evaluate
-   * process.
-   *
-   * @return those results which were returned by the XPath query but were
-   * filtered out by the JDOM Filter.
-   */
-  List<Object> getFilteredResults();
-
-  /**
-   * Returns the XPath results before any were filtered.
-   *
-   * @return those results which were returned by the XPath query before any
-   * filtering.
-   */
-  List<Object> getRawResults();
-
-  /**
-   * Indicate whether the query was evaluated as a first-only evaluation.
-   * XPath libraries are allowed to stop processing the results after the
-   * first result is retrieved if first-only processing is set.
-   *
-   * @return true if the evaluation was a first-only evaluation.
-   */
-  boolean isFirstOnly();
 }

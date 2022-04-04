@@ -185,7 +185,7 @@ public interface NamespaceAware {
   /**
    * Obtain a list of all namespaces that are introduced to the XML tree by
    * this node. Only Elements and Attributes can introduce namespaces, so all
-   * other Content types will return an empty list.
+   * others Content types will return an empty list.
    * <p>
    * The contents of this list will always be a subset (but in the same order)
    * of getNamespacesInScope(), and will never intersect

@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("IOStreamConstructor")
 public final class JDOMUtil {
   private static final @NonNls String X = "x";
   private static final @NonNls String Y = "y";
@@ -131,7 +131,8 @@ public final class JDOMUtil {
       sb.append(each == '<' ? "&lt;" : "&gt;");
     }
     else if (!Verifier.isXMLCharacter(each)) {
-      sb.append("0x").append(Strings.toUpperCase(Long.toHexString(each)));
+      String s = Long.toHexString(each);
+      sb.append("0x").append(s.toUpperCase(Locale.ENGLISH));
     }
     else {
       sb.append(each);
@@ -382,22 +383,14 @@ public final class JDOMUtil {
     write(document, file, lineSeparator);
   }
 
-  /**
-   * @deprecated Use {@link #write(Element, Path)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void write(@NotNull Element element, @NotNull File file) throws IOException {
-    FileUtilRt.createParentDirs(file);
-    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-      writeElement(element, writer, createOutputter("\n"));
-    }
-  }
-
   public static void write(@NotNull Element element, @NotNull Path file) throws IOException {
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      writeElement(element, writer, createOutputter("\n"));
+      createOutputter("\n").output(element, writer);
+    }
+    catch (NullPointerException ex) {
+      getLogger().error(ex);
+      printDiagnostics(element, "");
     }
   }
 
@@ -417,6 +410,10 @@ public final class JDOMUtil {
     write(document, stream, lineSeparator);
   }
 
+  public static void write(@NotNull Parent element, @NotNull OutputStream stream) throws IOException {
+    write(element, stream, "\n");
+  }
+
   public static void write(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
     try (OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
       if (element instanceof Document) {
@@ -430,7 +427,7 @@ public final class JDOMUtil {
 
   public static @NotNull String writeDocument(@NotNull Document document, String lineSeparator) {
     try {
-      final StringWriter writer = new StringWriter();
+      StringWriter writer = new StringWriter();
       writeDocument(document, writer, lineSeparator);
       return writer.toString();
     }
@@ -446,12 +443,12 @@ public final class JDOMUtil {
 
   public static @NotNull String write(@NotNull Parent element, String lineSeparator) {
     try {
-      final StringWriter writer = new StringWriter();
+      StringWriter writer = new StringWriter();
       write(element, writer, lineSeparator);
       return writer.toString();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new UncheckedIOException(e);
     }
   }
 
@@ -465,12 +462,8 @@ public final class JDOMUtil {
   }
 
   public static void writeElement(@NotNull Element element, Writer writer, String lineSeparator) throws IOException {
-    writeElement(element, writer, createOutputter(lineSeparator));
-  }
-
-  public static void writeElement(@NotNull Element element, @NotNull Writer writer, @NotNull XMLOutputter xmlOutputter) throws IOException {
     try {
-      xmlOutputter.output(element, writer);
+      createOutputter(lineSeparator).output(element, writer);
     }
     catch (NullPointerException ex) {
       getLogger().error(ex);
@@ -483,18 +476,22 @@ public final class JDOMUtil {
   }
 
   public static @NotNull String writeElement(@NotNull Element element, String lineSeparator) {
+    StringWriter writer = new StringWriter();
     try {
-      final StringWriter writer = new StringWriter();
-      writeElement(element, writer, lineSeparator);
-      return writer.toString();
+      createOutputter(lineSeparator).output(element, writer);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new UncheckedIOException(e);
     }
+    catch (NullPointerException ex) {
+      getLogger().error(ex);
+      printDiagnostics(element, "");
+    }
+    return writer.toString();
   }
 
-  public static @NotNull String writeChildren(final @NotNull Element element, final @NotNull String lineSeparator) throws IOException {
-    final StringWriter writer = new StringWriter();
+  public static @NotNull String writeChildren(@NotNull Element element, @NotNull String lineSeparator) throws IOException {
+    StringWriter writer = new StringWriter();
     for (Element child : element.getChildren()) {
       writeElement(child, writer, lineSeparator);
       writer.append(lineSeparator);
@@ -517,12 +514,10 @@ public final class JDOMUtil {
     return Format.getCompactFormat()
       .setIndent("  ")
       .setTextMode(Format.TextMode.TRIM)
-      .setEncoding(CharsetToolkit.UTF8)
-      .setOmitEncoding(false)
-      .setOmitDeclaration(false)
       .setLineSeparator(lineSeparator);
   }
 
+  @ApiStatus.Internal
   public static @NotNull XMLOutputter createOutputter(String lineSeparator) {
     return new MyXMLOutputter(createFormat(lineSeparator));
   }
@@ -579,7 +574,7 @@ public final class JDOMUtil {
   }
 
   private static final class MyXMLOutputter extends XMLOutputter {
-    MyXMLOutputter(@NotNull Format format) {
+    private MyXMLOutputter(@NotNull Format format) {
       super(format);
     }
 
@@ -681,8 +676,8 @@ public final class JDOMUtil {
   }
 
   private static final class ElementInfo {
-    final @NotNull CharSequence name;
-    final boolean hasNullAttributes;
+    private final @NotNull CharSequence name;
+    private final boolean hasNullAttributes;
 
     private ElementInfo(@NotNull CharSequence name, boolean attributes) {
       this.name = name;

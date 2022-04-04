@@ -57,61 +57,20 @@
 package org.jdom.output;
 
 import org.jdom.*;
+import org.jdom.output.support.XMLOutputProcessor;
+import org.jdom.output.support.XmlOutputProcessorImpl;
 
 import javax.xml.transform.Result;
 import java.io.*;
 import java.util.List;
 
 /**
- * Outputs a JDOM document as a stream of bytes. The outputter can manage many
- * styles of document formatting, from untouched to pretty printed. The default
- * is to output the document content exactly as created, but this can be changed
- * by setting a new Format object. For pretty-print output, use
- * <code>{@link Format#getPrettyFormat()}</code>. For whitespace-normalized
- * output, use <code>{@link Format#getCompactFormat()}</code>.
- * <p>
- * There are <code>{@link #output output(...)}</code> methods to print any of
- * the standard JDOM classes, including Document and Element, to either a Writer
- * or an OutputStream. <b>Warning</b>: When outputting to a Writer, make sure
- * the writer's encoding matches the encoding setting in the Format object. This
- * ensures the encoding in which the content is written (controlled by the
- * Writer configuration) matches the encoding placed in the document's XML
- * declaration (controlled by the XMLOutputter). Because a Writer cannot be
- * queried for its encoding, the information must be passed to the Format
- * manually in its constructor or via the
- * <code>{@link Format#setEncoding}</code> method. The default encoding is
- * UTF-8.
- * <p>
- * The methods <code>{@link #outputString outputString(...)}</code> are for
- * convenience only; for top performance you should call one of the <code>{@link
- * #output output(...)}</code> methods and pass in your own Writer or
- * OutputStream if possible.
- * <p>
- * XML declarations are always printed on their own line followed by a line
- * seperator (this doesn't change the semantics of the document). To omit
- * printing of the declaration use
- * <code>{@link Format#setOmitDeclaration}</code>. To omit printing of the
- * encoding in the declaration use <code>{@link Format#setOmitEncoding}</code>.
- * Unfortunatly there is currently no way to know the original encoding of the
- * document.
- * <p>
- * Empty elements are by default printed as &lt;empty/&gt;, but this can be
- * configured with <code>{@link Format#setExpandEmptyElements}</code> to cause
- * them to be expanded to &lt;empty&gt;&lt;/empty&gt;.
- *
- * @author Brett McLaughlin
- * @author Jason Hunter
- * @author Jason Reid
- * @author Wolfgang Werner
- * @author Elliotte Rusty Harold
- * @author David &amp; Will (from Post Tool Design)
- * @author Dan Schaffer
- * @author Alex Chaffee
- * @author Bradley S. Huffman
- * @version $Revision: 1.117 $, $Date: 2009/07/23 05:54:23 $
+ * @deprecated Do not use directly. Use JDOMUtil.write instead.
  */
-
+@Deprecated
 public class XMLOutputter implements Cloneable {
+  public static final XMLOutputProcessor DEFAULT_PROCESSOR = new XmlOutputProcessorImpl();
+
   // For normal output
   private Format userFormat = Format.getRawFormat();
 
@@ -619,23 +578,6 @@ public class XMLOutputter implements Cloneable {
 
 
   /**
-   * Return a string representing a comment. Warning: a String is
-   * Unicode, which may not match the outputter's specified
-   * encoding.
-   *
-   * @param comment <code>Comment</code> to format.
-   */
-  public String outputString(Comment comment) {
-    StringWriter out = new StringWriter();
-    try {
-      output(comment, out);  // output() flushes
-    }
-    catch (IOException ignored) {
-    }
-    return out.toString();
-  }
-
-  /**
    * Return a string representing a PI. Warning: a String is
    * Unicode, which may not match the outputter's specified
    * encoding.
@@ -741,7 +683,7 @@ public class XMLOutputter implements Cloneable {
    * @param comment <code>Comment</code> to write.
    * @param out     <code>Writer</code> to use.
    */
-  protected void printComment(Writer out, Comment comment)
+  private static void printComment(Writer out, Comment comment)
     throws IOException {
     out.write("<!--");
     out.write(comment.getText());
@@ -754,7 +696,7 @@ public class XMLOutputter implements Cloneable {
    * @param pi  <code>ProcessingInstruction</code> to write.
    * @param out <code>Writer</code> to use.
    */
-  protected void printProcessingInstruction(Writer out, ProcessingInstruction pi
+  private void printProcessingInstruction(Writer out, ProcessingInstruction pi
   ) throws IOException {
     String target = pi.getTarget();
     boolean piProcessed = false;

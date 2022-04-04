@@ -57,7 +57,6 @@ package org.jdom.output.support;
 import org.jdom.*;
 import org.jdom.output.Format;
 import org.jdom.output.Format.TextMode;
-import org.jdom.output.XMLOutputter2;
 import org.jdom.util.NamespaceStack;
 
 import javax.xml.transform.Result;
@@ -68,9 +67,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class provides a concrete implementation of {@link XMLOutputProcessor}
- * for supporting the {@link XMLOutputter2}.
- * <p>
  * <h2>Overview</h2>
  * <p>
  * This class is marked abstract even though all methods are fully implemented.

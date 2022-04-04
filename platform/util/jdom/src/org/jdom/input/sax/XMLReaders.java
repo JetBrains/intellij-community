@@ -86,12 +86,7 @@ public enum XMLReaders implements XMLReaderJDOMFactory {
   /**
    * The DTD-validating Singleton
    */
-  DTDVALIDATING(1),
-
-  /**
-   * The XSD-validating Singleton
-   */
-  XSDVALIDATING(2);
+  DTDVALIDATING(1);
 
   private interface FactorySupplier {
     SAXParserFactory supply() throws Exception;
