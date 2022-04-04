@@ -259,6 +259,9 @@ public final class CoreFormatterUtil {
       return false;
     }
     Character.UnicodeBlock block = Character.UnicodeBlock.of(codePoint);
+    if (block == null) {
+      return false;
+    }
     return FULLWIDTH_BLOCKS.contains(block);
   }
 }
