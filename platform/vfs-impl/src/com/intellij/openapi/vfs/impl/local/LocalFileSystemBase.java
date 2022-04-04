@@ -46,6 +46,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @ApiStatus.Internal
   public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
+  @ApiStatus.Internal
+  public static final ExtensionPointName<PluggableLocalFileSystemVerifier> PLUGGABLE_VERIFIER_EP_NAME =
+    ExtensionPointName.create("com.intellij.vfs.local.pluggableVerifier");
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private final FileAttributes FAKE_ROOT_ATTRIBUTES =
@@ -329,6 +332,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     File ioParent = convertToIOFile(parent);
     if (!ioParent.isDirectory()) {
       throw new IOException(IdeCoreBundle.message("target.not.directory.error", ioParent.getPath()));
+    }
+
+    for (PluggableLocalFileSystemVerifier verifier : PLUGGABLE_VERIFIER_EP_NAME.getExtensionList()) {
+      verifier.validateChildFile(parent, name);
     }
 
     if (!auxCreateFile(parent, name)) {
