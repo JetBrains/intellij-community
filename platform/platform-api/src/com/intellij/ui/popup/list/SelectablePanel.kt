@@ -13,8 +13,26 @@ import javax.swing.JPanel
 @ApiStatus.Experimental
 open class SelectablePanel(background: Color? = null) : JPanel() {
 
+  enum class SelectionArcCorners {
+    /**
+     * Arc corners for top-left and bottom-left corners
+     */
+    LEFT,
+
+    /**
+     * Arc corners for top-right and bottom-right corners
+     */
+    RIGHT,
+
+    /**
+     * All corners are rounded
+     */
+    ALL
+  }
+
   companion object {
     @JvmStatic
+    @JvmOverloads
     fun wrap(component: Component, background: Color? = null): SelectablePanel {
       val result = SelectablePanel(background)
       result.layout = BorderLayout()
@@ -24,6 +42,7 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   var selectionArc: Int = 0
+  var selectionArcCorners = SelectionArcCorners.ALL
   var selectionColor: Color? = null
   var selectionInsets: Insets = JBUI.emptyInsets()
 
@@ -48,9 +67,25 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
     // Paint selection
     g.color = selectionColor
     val config = GraphicsUtil.setupAAPainting(g)
-    g.fillRoundRect(selectionInsets.left, selectionInsets.top,
-                    width - selectionInsets.left - selectionInsets.right,
-                    height - selectionInsets.top - selectionInsets.bottom, selectionArc, selectionArc)
+    val rectX = selectionInsets.left
+    val rectY = selectionInsets.top
+    val rectWidth = width - rectX - selectionInsets.right
+    val rectHeight = height - rectY - selectionInsets.bottom
+    g.fillRoundRect(rectX, rectY, rectWidth, rectHeight, selectionArc, selectionArc)
+
+    if (selectionArc != 0) {
+      when (selectionArcCorners) {
+        SelectionArcCorners.LEFT -> {
+          g.fillRect(rectX + rectWidth - selectionArc, rectY, selectionArc, rectHeight)
+        }
+
+        SelectionArcCorners.RIGHT -> {
+          g.fillRect(rectX, rectY, selectionArc, rectHeight)
+        }
+
+        SelectionArcCorners.ALL -> {}
+      }
+    }
     config.restore()
   }
 }

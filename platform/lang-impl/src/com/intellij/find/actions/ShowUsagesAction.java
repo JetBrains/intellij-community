@@ -82,6 +82,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -918,6 +919,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     AbstractPopup popup = (AbstractPopup)builder.createPopup();
     JComponent content = popup.getContent();
     Disposer.register(popup, contentDisposable);
+
+    if (ExperimentalUI.isNewUI()) {
+      Insets insets = JBUI.CurrentTheme.Popup.headerInsets();
+      //noinspection UseDPIAwareBorders
+      statusPanel.getLabel().setBorder(new EmptyBorder(insets.top, 0, insets.bottom, JBUI.scale(10)));
+    }
 
     // Set title text alignment
     CaptionPanel caption = popup.getTitle();
