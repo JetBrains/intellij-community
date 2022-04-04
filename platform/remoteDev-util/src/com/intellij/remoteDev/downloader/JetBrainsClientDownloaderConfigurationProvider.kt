@@ -47,7 +47,13 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientDownloadUrl: URI = RemoteDevSystemSettings.getClientDownloadUrl().value
   override val jreDownloadUrl: URI = RemoteDevSystemSettings.getJreDownloadUrl().value
-  override val clientCachesDir: Path = getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+  override val clientCachesDir: Path get () {
+    val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
+    if (downloadDestination.value != null) {
+      Path(downloadDestination.value)
+    }
+    return getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+  }
   override val verifySignature: Boolean = true
 
   override fun patchVmOptions(vmOptionsFile: Path) { }
