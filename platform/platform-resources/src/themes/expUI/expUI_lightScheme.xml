@@ -24,6 +24,7 @@
     <option name="LOOKUP_COLOR" value="ffffff" />
     <option name="MATCHED_BRACES_INDENT_GUIDE_COLOR" value="62b3b3" />
     <option name="MODIFIED_LINES_COLOR" value="88adf7" />
+    <option name="RIGHT_MARGIN_COLOR" value="ebecf0" />
     <option name="SELECTED_INDENT_GUIDE" value="aeb3c2" />
     <option name="SELECTION_BACKGROUND" value="a6d2ff" />
     <option name="SELECTION_FOREGROUND" value="" />
@@ -33,10 +34,39 @@
     <option name="VCS_ANNOTATIONS_COLOR_3" value="dee8fc" />
     <option name="VCS_ANNOTATIONS_COLOR_4" value="edf2fa" />
     <option name="VCS_ANNOTATIONS_COLOR_5" value="f7f8fa" />
+    <option name="VISUAL_INDENT_GUIDE" value="dae6fd" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="f7e2cb" />
+    <option name="METHOD_SEPARATORS_COLOR" value="dfe1e5" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
+    <option name="BREADCRUMBS_CURRENT">
+      <value>
+        <option name="FOREGROUND" value="0" />
+        <option name="BACKGROUND" value="ebecf0" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_DEFAULT">
+      <value>
+        <option name="FOREGROUND" value="6c707e" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_HOVERED">
+      <value>
+        <option name="FOREGROUND" value="0" />
+        <option name="BACKGROUND" value="ebecf0" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_INACTIVE">
+      <value>
+        <option name="FOREGROUND" value="a8adbd" />
+      </value>
+    </option>
+    <option name="CODE_LENS_BORDER_COLOR">
+      <value>
+        <option name="EFFECT_COLOR" value="818594" />
+      </value>
+    </option>
     <option name="CTRL_CLICKABLE">
       <value>
         <option name="FOREGROUND" value="6dcc" />

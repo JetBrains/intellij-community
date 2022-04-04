@@ -227,27 +227,13 @@
     },
 
     "Menu": {
-      "background": "Grey2",
-      "borderColor": "Grey4",
-      "foreground": "Grey13",
-      "disabledForeground": "Grey6",
-      "separatorColor": "Grey4",
-      "selectionBackground": "Blue5",
-      "selectionForeground": "Grey13"
+      "background": "Grey13",
+      "borderColor": "Grey11"
     },
 
-    "PopupMenu": {
-      "background": "Grey2",
-      "foreground": "Grey13",
-      "selectionForeground": "Grey13"
-    },
+    "PopupMenu.background": "Grey13",
 
-    "MenuItem": {
-      "background": "Grey2",
-      "foreground": "Grey13",
-      "disabledForeground": "Grey6",
-      "selectionForeground": "Grey13"
-    },
+    "MenuItem.background": "Grey13",
 
     "MemoryIndicator": {
       "allocatedBackground": "Grey10",
