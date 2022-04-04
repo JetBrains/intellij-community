@@ -113,6 +113,11 @@ public final class EnvironmentUtil {
     catch (Throwable t) {
       result = Boolean.FALSE;
       LOG.warn("can't get shell environment", t);
+      if (t instanceof ExceptionWithAttachments) {
+        for (Attachment attachment : ((ExceptionWithAttachments)t).getAttachments()) {
+          LOG.warn(attachment.getPath() + ":\n" + attachment.getDisplayText());
+        }
+      }
     }
     finally {
       activity.end();
