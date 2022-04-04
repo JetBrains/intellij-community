@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
@@ -35,7 +36,15 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             return jpsPluginSettings
         }
 
+        /**
+         * [getInstance] returns always initialized [JpsPluginSettings]. Contrary, [getInstanceUnsafe] returns "bare" [JpsPluginSettings]
+         * value. [getInstanceUnsafe] is needed for cases when it's important to preserve "not initialized" state
+         */
+        fun getInstanceUnsafe(project: Project): KotlinJpsPluginSettings? =
+            if (isUnbundledJpsExperimentalFeatureEnabled(project)) project.getServiceSafe() else null
+
         fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
-            !project.isDefault && project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true
+            isUnitTestMode() || !project.isDefault &&
+                    project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true
     }
 }
