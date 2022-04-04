@@ -21,22 +21,6 @@ fun <V> ValueType<V>.wrapperView(obj: ObjImpl?): ValueView<V, Any?> =
         else -> ValueView.id
     } as ValueView<V, Any?>
 
-fun <V> ValueType<V>.estimateMaxSize(value: Any?): Int = when (this) {
-    TBoolean -> 1
-    TInt -> Int.SIZE_BYTES
-    TString -> (value as String).outputMaxBytes
-    is TList<*> -> (value as ListView<*, *>?).outputMaxBytes { elementType.estimateMaxSize(it) }
-    is TMap<*, *> -> (value as MapView<*, *, *, *>?).outputMaxBytes(
-        { keyType.estimateMaxSize(it) },
-        { valueType.estimateMaxSize(it) }
-    )
-    is TRef<*> -> ObjId.bytesCount
-    is TOptional<*> -> if (value == null) 1 else type.estimateMaxSize(value) + 1
-    is TBlob<*> -> TODO("Not yet implemented")
-    is TStructure<*, *> -> allFields.sumOf { it.type.estimateMaxSize((value as Obj).getValue(it)) }
-    else -> unexpected()
-}
-
 
 private fun <V> ValueType<V>.unexpected(): Nothing {
     error("unexpected value type ${this.javaClass}") //code compiles without this line, but IDE shows error (KT-47835)

@@ -52,15 +52,6 @@ abstract class ExtensibleImpl : Extensible {
             field.type.updateRefIds(value)
         }
     }
-    
-    fun extensionsEstimateMaxSize(): Int {
-        var result = intBytesCount
-        extensionsSchema.forEach { field, index ->
-            field as ExtField<Obj, Any>
-            result += field.name.outputMaxBytes + field.type.estimateMaxSize(extensions[index]!!)
-        }
-        return result
-    }
 
     override fun <R> unsafeGetExtension(field: ExtField<*, R>): R? {
         val i = extensionsSchema[field] ?: return null

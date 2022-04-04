@@ -46,8 +46,6 @@ class TestObj : ObjImpl() {
         if (_a != null) _aId = _a!!._id
     }
 
-    override fun estimateMaxSize(): Int = (name?.outputMaxBytes ?: 0) + ObjId.bytesCount
-
     class Builder : ObjBuilderImpl<TestObj>() {
         override val result = TestObj()
 

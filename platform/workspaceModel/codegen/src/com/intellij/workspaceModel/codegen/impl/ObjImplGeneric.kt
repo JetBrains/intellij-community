@@ -54,10 +54,6 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
         forEach { field, value -> field.type.moveIntoGraph(graph, value) }
     }
 
-    override fun estimateMaxSize(): Int =
-        super.estimateMaxSize() +
-                factory.structure.allFields.sumOf { it.type.estimateMaxSize(values[it.index]) }
-
     override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
         return when (method.name) {
             "getImpl" -> this

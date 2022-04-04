@@ -1,5 +1,6 @@
 package com.intellij.workspace.model.api
 
+import com.intellij.workspace.model.api.FacetEntity.Companion.underlyingFacet
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId

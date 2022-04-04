@@ -114,11 +114,3 @@ class RefView<T : Obj>(val src: ObjImpl?, val onLink: OnLink<Any?, T>? = null) :
         onLink?.remove(src, it.get(src?.graph!!) as T)
     }
 }
-
-fun Output.writeRef(obj: Ref<*>) {
-    writeId(obj.id)
-}
-
-fun <T : Obj> Input.readRef(): Ref<T> {
-    return Ref<T>(readId() as ObjId<T>)
-}

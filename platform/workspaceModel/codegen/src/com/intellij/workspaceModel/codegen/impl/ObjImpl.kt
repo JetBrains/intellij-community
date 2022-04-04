@@ -199,21 +199,6 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
         }
     }
 
-    protected fun refsBuilder(existed: Refs?): Refs {
-        if (existed != null) return existed
-        return Refs(this)
-    }
-
-    protected fun childrenBuilder(existed: Children?): Children {
-        if (existed != null) return existed
-        return Children(this)
-    }
-
-    protected fun relsBuilder(existed: Rels?, relFactory: ObjType1<*, ObjBuilder<*>, *>): Rels {
-        if (existed != null) return existed
-        return Rels(this, relFactory as ObjType1<ObjImpl, ObjBuilder<ObjImpl>, ObjImpl>)
-    }
-
     private fun <T> load(id: ObjId<T>): T {
         val graph = graph ?: error("graph is not defined for $this")
         return graph.getOrLoad(id)
@@ -227,8 +212,4 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
         if (_parent != null) _parentId = _parent!!._id.n
         extensionsUpdateRefIds()
     }
-
-    open fun estimateMaxSize(): Int = name.outputMaxBytes +
-            ObjId.bytesCount +
-            extensionsEstimateMaxSize()
 }
