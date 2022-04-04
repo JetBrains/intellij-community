@@ -7,12 +7,10 @@ import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 import com.siyeh.ig.LightJavaInspectionTestCase
-import org.junit.Ignore
 
 private const val inspectionPath = "/codeInspection/junit5MalformedParameterized"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
-@Ignore // enable when kotlin compiler works
 class KotlinJUnit5MalformedParameterizedUsageTest : LightJavaInspectionTestCase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
