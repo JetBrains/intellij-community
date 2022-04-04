@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.style.ConditionalExpressionGenerator;
 import com.siyeh.ig.style.ConditionalModel;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +83,13 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
       if (model == null) return;
       ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
       if (generator == null || generator.getTokenType().equals("?:")) return;
+      if (PsiType.BOOLEAN.equals(model.getType()) &&
+          ExpressionUtils.nonStructuralChildren(expression).anyMatch(ExpressionUtils::isNullLiteral)) {
+        // Something like Boolean res = cond1 ? true : cond2 ? false : null
+        // While warning is technically correct, it masks more serious "possible NPE" problem
+        // and the applied fix makes it more confusing
+        return;
+      }
       PsiExpression replacement = generator.getReplacement();
       if (replacement != null) {
         PsiElement parent = expression.getParent();

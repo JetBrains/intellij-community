@@ -28,6 +28,11 @@ class UnnecessaryConditionalExpression {
   boolean cond(int a, int b, int c) {
     return <warning descr="'a > 0 ? b < c : b >= c' can be simplified to '(a > 0) == (b < c)'">a > 0 ? b < c : b >= c</warning>;
   }
+
+  // IDEA-267511
+  void confusing() {
+    Boolean x = Math.random() > 0.5 ? true : Math.random() > 0.5 ? false : null;
+  }
 }
 
 class InsideLambdaInOverloadedMethod {
