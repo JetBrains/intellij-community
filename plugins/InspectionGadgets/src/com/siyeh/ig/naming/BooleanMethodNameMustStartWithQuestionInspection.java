@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends NonBoolean
     writeOption(element, "ignoreBooleanMethods");
     writeOption(element, "ignoreInAnnotationInterface");
     writeOption(element, "onlyWarnOnBaseMethods");
+    questionString = formatString(questionList);
     writeOption(element, "questionString");
   }
 
