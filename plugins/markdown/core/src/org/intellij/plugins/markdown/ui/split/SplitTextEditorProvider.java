@@ -17,15 +17,15 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider, DumbAware {
 
-  private static final String FIRST_EDITOR = "first_editor";
-  private static final String SECOND_EDITOR = "second_editor";
-  private static final String SPLIT_LAYOUT = "split_layout";
+  protected static final String FIRST_EDITOR = "first_editor";
+  protected static final String SECOND_EDITOR = "second_editor";
+  protected static final String SPLIT_LAYOUT = "split_layout";
 
   @NotNull
   protected final FileEditorProvider myFirstProvider;
@@ -73,31 +73,63 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
     };
   }
 
-  @NotNull
-  @Override
-  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-    Element child = sourceElement.getChild(FIRST_EDITOR);
-    FileEditorState firstState = null;
+  @Nullable
+  protected FileEditorState readFirstProviderState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    final var child = sourceElement.getChild(FIRST_EDITOR);
     if (child != null) {
-      firstState = myFirstProvider.readState(child, project, file);
+      return myFirstProvider.readState(child, project, file);
     }
-    child = sourceElement.getChild(SECOND_EDITOR);
-    FileEditorState secondState = null;
+    return null;
+  }
+
+  @Nullable
+  protected FileEditorState readSecondProviderState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    final var child = sourceElement.getChild(SECOND_EDITOR);
     if (child != null) {
-      secondState = mySecondProvider.readState(child, project, file);
+      return mySecondProvider.readState(child, project, file);
     }
+    return null;
+  }
 
-    final Attribute attribute = sourceElement.getAttribute(SPLIT_LAYOUT);
-
-    final String layoutName;
+  @Nullable
+  protected String readSplitLayoutState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    final var attribute = sourceElement.getAttribute(SPLIT_LAYOUT);
+    String layoutName = null;
     if (attribute != null) {
       layoutName = attribute.getValue();
     }
-    else {
-      layoutName = null;
-    }
+    return layoutName;
+  }
 
+  @NotNull
+  @Override
+  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    final var firstState = readFirstProviderState(sourceElement, project, file);
+    final var secondState = readSecondProviderState(sourceElement, project, file);
+    final var layoutName = readSplitLayoutState(sourceElement, project, file);
     return new SplitFileEditor.MyFileEditorState(layoutName, firstState, secondState);
+  }
+
+  protected void writeFirstProviderState(@Nullable FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+    final var child = new Element(FIRST_EDITOR);
+    if (state != null) {
+      myFirstProvider.writeState(state, project, child);
+      targetElement.addContent(child);
+    }
+  }
+
+  protected void writeSecondProviderState(@Nullable FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+    final var child = new Element(SECOND_EDITOR);
+    if (state != null) {
+      mySecondProvider.writeState(state, project, child);
+      targetElement.addContent(child);
+    }
+  }
+
+  protected void writeSplitLayoutState(@Nullable String splitLayout, @NotNull Project project, @NotNull Element targetElement) {
+    if (splitLayout != null) {
+      targetElement.setAttribute(SPLIT_LAYOUT, splitLayout);
+    }
   }
 
   @Override
@@ -105,23 +137,10 @@ public abstract class SplitTextEditorProvider implements AsyncFileEditorProvider
     if (!(state instanceof SplitFileEditor.MyFileEditorState)) {
       return;
     }
-    final SplitFileEditor.MyFileEditorState compositeState = (SplitFileEditor.MyFileEditorState)state;
-
-    Element child = new Element(FIRST_EDITOR);
-    if (compositeState.getFirstState() != null) {
-      myFirstProvider.writeState(compositeState.getFirstState(), project, child);
-      targetElement.addContent(child);
-    }
-
-    child = new Element(SECOND_EDITOR);
-    if (compositeState.getSecondState() != null) {
-      mySecondProvider.writeState(compositeState.getSecondState(), project, child);
-      targetElement.addContent(child);
-    }
-
-    if (compositeState.getSplitLayout() != null) {
-      targetElement.setAttribute(SPLIT_LAYOUT, compositeState.getSplitLayout());
-    }
+    final var compositeState = (SplitFileEditor.MyFileEditorState)state;
+    writeFirstProviderState(compositeState.getFirstState(), project, targetElement);
+    writeSecondProviderState(compositeState.getSecondState(), project, targetElement);
+    writeSplitLayoutState(compositeState.getSplitLayout(), project, targetElement);
   }
 
   protected abstract FileEditor createSplitEditor(@NotNull FileEditor firstEditor, @NotNull FileEditor secondEditor);
