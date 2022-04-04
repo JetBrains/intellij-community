@@ -43,10 +43,22 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator() as CloudConfigServerCommunicator
-    val version = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      remoteCommunicator.getLatestVersion()
-    }, SettingsSyncBundle.message("troubleshooting.loading.info.progress.dialog.title"), false, e.project)
-    TroubleshootingDialog(e.project, remoteCommunicator, version).show()
+    try {
+      val version =
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+          remoteCommunicator.getLatestVersion()
+        }, SettingsSyncBundle.message("troubleshooting.loading.info.progress.dialog.title"), false, e.project)
+      TroubleshootingDialog(e.project, remoteCommunicator, version).show()
+    }
+    catch (ex: Exception) {
+      LOG.error(ex)
+      if (Messages.OK == Messages.showOkCancelDialog(e.project,
+                                                     SettingsSyncBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
+                                                     SettingsSyncBundle.message("troubleshooting.dialog.error.loading.info.failed"),
+                                                     ShowLogAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
+        ShowLogAction.showLog()
+      }
+    }
   }
 
   override fun update(e: AnActionEvent) {
@@ -150,11 +162,10 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         showFileDownloadedMessage(zipFile, SettingsSyncBundle.message("troubleshooting.dialog.successfully.downloaded.message"))
       }
       else {
-        val result = Messages.showOkCancelDialog(contentPane,
-                                                 SettingsSyncBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
-                                                 SettingsSyncBundle.message("troubleshooting.dialog.error.download.zip.file.failed"),
-                                                 ShowLogAction.getActionName(), CommonBundle.getCancelButtonText(), null)
-        if (result == Messages.OK) {
+        if (Messages.OK == Messages.showOkCancelDialog(contentPane,
+                                                       SettingsSyncBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
+                                                       SettingsSyncBundle.message("troubleshooting.dialog.error.download.zip.file.failed"),
+                                                       ShowLogAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
           ShowLogAction.showLog()
         }
       }
