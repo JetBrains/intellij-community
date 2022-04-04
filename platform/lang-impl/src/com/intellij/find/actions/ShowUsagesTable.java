@@ -22,7 +22,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +35,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-@ApiStatus.Internal
-class ShowUsagesTable extends JBTable implements DataProvider {
+public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
