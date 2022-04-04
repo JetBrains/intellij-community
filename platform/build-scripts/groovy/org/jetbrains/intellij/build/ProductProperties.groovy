@@ -213,7 +213,7 @@ abstract class ProductProperties {
    */
   List<String> modulesToCompileTests = []
 
-  JetBrainsRuntimeDistribution runtimeDistribution = JetBrainsRuntimeDistribution.DCEVM
+  JetBrainsRuntimeDistribution runtimeDistribution = JetBrainsRuntimeDistribution.JCEF
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK

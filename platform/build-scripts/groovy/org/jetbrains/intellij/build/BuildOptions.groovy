@@ -215,7 +215,7 @@ final class BuildOptions {
 
   /**
    * Specifies a prefix to use when looking for an artifact of a {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} to be bundled with distributions.
-   * If {@code null}, {@code "jbr_dcevm-"} will be used.
+   * If {@code null}, {@code "jbr_jcef-"} will be used.
    */
   String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 

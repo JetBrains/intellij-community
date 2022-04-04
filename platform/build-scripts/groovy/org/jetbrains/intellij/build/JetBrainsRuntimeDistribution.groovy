@@ -6,14 +6,9 @@ import groovy.transform.CompileStatic
 @CompileStatic
 enum JetBrainsRuntimeDistribution {
   /**
-   * JBR with JCEF
+   * JBR with JCEF and DCEVM
    */
   JCEF('jcef'),
-
-  /**
-   * JBR with DCEVM and JCEF
-   */
-  DCEVM('dcevm'),
 
   /**
    * JBR without JCEF and DCEVM

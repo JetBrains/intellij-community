@@ -41,7 +41,7 @@ final class BundledRuntime {
 
   @NotNull
   Path getHomeForCurrentOsAndArch() {
-    String prefix = "jbr_dcevm-"
+    String prefix = "jbr_jcef-"
     def os = OsFamily.currentOs
     def arch = JvmArchitecture.currentJvmArch
     if (os == OsFamily.LINUX && arch == JvmArchitecture.aarch64) {
