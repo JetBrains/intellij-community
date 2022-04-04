@@ -138,7 +138,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testProjectWithFacetWithRuntime11WithLanguageLevel10() {
         assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(
-                LanguageVersion.LATEST_STABLE,
+                KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getLanguageVersion(),
                 PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion()
         );
     }
