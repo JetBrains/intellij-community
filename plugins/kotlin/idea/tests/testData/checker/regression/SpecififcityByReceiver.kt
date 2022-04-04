@@ -6,6 +6,6 @@ fun main(<warning>args</warning>: Array<String>) {
 
     val command : Any = 1
 
-    command<warning>?.</warning>equals(null)
+    <warning>command<warning>?.</warning>equals(null)</warning>
     command.equals(null)
 }
