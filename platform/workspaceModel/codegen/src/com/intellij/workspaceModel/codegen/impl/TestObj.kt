@@ -3,7 +3,6 @@ package org.jetbrains.deft.impl
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.outputMaxBytes
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.runtime.Runtime
 
@@ -40,11 +39,6 @@ class TestObj : ObjImpl() {
             _a = _setRef(value)
             _aId = value?._id ?: ObjId.nothing
         }
-
-    override fun updateRefIds() {
-        super.updateRefIds()
-        if (_a != null) _aId = _a!!._id
-    }
 
     class Builder : ObjBuilderImpl<TestObj>() {
         override val result = TestObj()

@@ -235,31 +235,6 @@ fun <V> CollectionView<*, V>?.freezeCheck(field: Field<*, *>, f: (V) -> Boolean)
     return true
 }
 
-inline fun <V> Output.writeListView(
-    list: ListView<*, V>?,
-    value: (V) -> Unit,
-) {
-    if (list == null) {
-        writeInt(0)
-    } else {
-        writeInt(list.size)
-        list.src.forEach {
-            value(it)
-        }
-    }
-}
-
-inline fun <A, B> Input.readListView(
-    new: () -> ListView<A, B>,
-    value: () -> B,
-): ListView<A, B>? {
-    val size = readInt()
-    if (size == 0) return null
-    val result = new()
-    repeat(size) { result.src.add(value()) }
-    return result
-}
-
 class MapEntryView<K1, K2, V1, V2>(
     obj: ObjImpl?,
     val key: ValueView<K1, K2>,

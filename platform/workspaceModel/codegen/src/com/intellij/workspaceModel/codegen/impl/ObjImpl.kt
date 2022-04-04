@@ -2,18 +2,13 @@ package org.jetbrains.deft.impl
 
 import com.intellij.workspaceModel.codegen.impl.Mutation
 import com.intellij.workspaceModel.codegen.impl.ObjGraph
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.ObjId
-import org.jetbrains.deft.bytes.outputMaxBytes
-import org.jetbrains.deft.bytes.readString
-import org.jetbrains.deft.bytes.writeString
-import org.jetbrains.deft.collections.*
+import org.jetbrains.deft.collections.Ref
+import org.jetbrains.deft.collections.WithRefs
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
-import org.jetbrains.deft.writeId
 
 //import org.jetbrains.deft.writeId
 
@@ -207,9 +202,4 @@ abstract class ObjImpl : ExtensibleImpl(), Obj, WithRefs, ObjImplWrapper {
     override fun toString(): String = (if (name?.isEmpty() == true) "$factory" else "$name") + " ($_id $graph)"
 
     open fun builder(): ObjBuilder<*> = TODO()
-
-    override fun updateRefIds() {
-        if (_parent != null) _parentId = _parent!!._id.n
-        extensionsUpdateRefIds()
-    }
 }

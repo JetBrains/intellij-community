@@ -1,12 +1,7 @@
 package org.jetbrains.deft.impl
 
 import com.intellij.workspaceModel.codegen.impl.ObjGraph
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
 import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.outputMaxBytes
-import org.jetbrains.deft.bytes.readString
-import org.jetbrains.deft.bytes.writeString
 import org.jetbrains.deft.collections.*
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
@@ -21,27 +16,6 @@ fun <V> ValueType<V>.wrapperView(obj: ObjImpl?): ValueView<V, Any?> =
         else -> ValueView.id
     } as ValueView<V, Any?>
 
-
-private fun <V> ValueType<V>.unexpected(): Nothing {
-    error("unexpected value type ${this.javaClass}") //code compiles without this line, but IDE shows error (KT-47835)
-}
-
-fun <V> ValueType<V>.updateRefIds(v: Any?) {
-    when (this) {
-        is TOptional<*> -> if (v != null) type.updateRefIds(v)
-        is TRef<*> -> (v as Ref<*>).updateRefIds()
-        is TList<*> -> (v as ListView<Any?, Any?>?)?.src?.forEach {
-            elementType.updateRefIds(it)
-        }
-        is TMap<*, *> -> (v as MapView<Any?, Any?, Any?, Any?>?)?.src?.forEach {
-            keyType.updateRefIds(it.key)
-            valueType.updateRefIds(it.value)
-        }
-        is TStructure<*, *> -> TODO()
-        is TBlob<*> -> TODO()
-        else -> Unit
-    }
-}
 
 fun <V> ValueType<V>.moveIntoGraph(graph: ObjGraph?, v: Any?) {
     when (this) {

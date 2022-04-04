@@ -7,8 +7,6 @@ import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.io.core.Input
 import kotlinx.io.core.Output
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.bytes.intBytesCount
-import org.jetbrains.deft.bytes.outputMaxBytes
 import org.jetbrains.deft.impl.fields.ExtField
 import org.jetbrains.deft.impl.fields.ExtFieldId
 import org.jetbrains.deft.obj.api.extensible.Extensible
@@ -44,12 +42,6 @@ abstract class ExtensibleImpl : Extensible {
     fun extensionsMoveIntoGraph(graph: ObjGraph?) {
         _forEachExtensionRaw { field, value ->
             field.type.moveIntoGraph(graph, value)
-        }
-    }
-
-    fun extensionsUpdateRefIds() {
-        _forEachExtensionRaw { field, value ->
-            field.type.updateRefIds(value)
         }
     }
 

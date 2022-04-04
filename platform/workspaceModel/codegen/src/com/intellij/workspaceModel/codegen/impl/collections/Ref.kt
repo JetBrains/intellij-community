@@ -9,7 +9,6 @@ import org.jetbrains.deft.impl._implObj
 import org.jetbrains.deft.obj.impl.ObjImplWrapper
 
 interface WithRefs {
-    fun updateRefIds()
     fun ensureInGraph(value: ObjGraph?)
 }
 
@@ -33,11 +32,6 @@ open class Ref<T : Obj>(
 
     val isNull: Boolean
         get() = id == ObjId.nothing
-
-    override fun updateRefIds() {
-        val cached = cached
-        if (cached != null) id = cached.impl._id as ObjId<T>
-    }
 
     override fun ensureInGraph(value: ObjGraph?) {
         cached?.impl?.ensureInGraph(value)

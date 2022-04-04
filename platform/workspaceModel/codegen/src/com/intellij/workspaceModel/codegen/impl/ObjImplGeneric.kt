@@ -1,8 +1,6 @@
 package org.jetbrains.deft.impl
 
 import com.intellij.workspaceModel.codegen.impl.ObjGraph
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.fields.Field
@@ -42,11 +40,6 @@ class ObjImplGeneric<T : Obj, B : ObjBuilder<T>>(
     override fun hasNewValue(field: Field<*, *>): Boolean {
         @Suppress("UNCHECKED_CAST")
         return values[(field as Field<out T, *>).index] != null
-    }
-
-    override fun updateRefIds() {
-        super.updateRefIds()
-        forEach { field, value -> field.type.updateRefIds(value) }
     }
 
     override fun moveIntoGraph(graph: ObjGraph?) {
