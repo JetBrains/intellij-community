@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import org.jetbrains.annotations.Nls;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.xml.DomElement;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public class MockDomInspection<T extends DomElement> extends BasicDomElementsInspection<T> {
   public MockDomInspection(Class<? extends T> domClass) {
     super(domClass);
