@@ -107,16 +107,9 @@ public class GitContentRevision implements ByteBackedContentRevision {
 
   @Nullable
   public static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    if (file == null) { // NB: deletion of a submodule is not supported yet
-      return null;
-    }
-    if (!file.isDirectory()) {
-      return null;
-    }
-
+    // NB: deletion of a submodule is not supported yet
     GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
-    GitRepository candidate = repositoryManager.getRepositoryForRootQuick(file);
+    GitRepository candidate = repositoryManager.getRepositoryForRootQuick(path);
     if (candidate == null) { // not a root
       return null;
     }
