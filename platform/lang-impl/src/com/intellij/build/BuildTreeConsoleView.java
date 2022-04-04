@@ -60,6 +60,7 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
@@ -148,6 +149,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
     myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.NONE), TREE);
+
+    if (ExperimentalUI.isNewUI()) {
+      setBackgroundRecursively(myContentPanel, JBUI.CurrentTheme.ToolWindow.background());
+    }
 
     myPanel.setLayout(new BorderLayout());
     OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.33f);
@@ -949,6 +954,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
       myToolbar.setTargetComponent(myView);
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+
+      if (ExperimentalUI.isNewUI()) {
+        setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
+      }
+
       tree.addTreeSelectionListener(e -> {
         if (Disposer.isDisposed(myView)) return;
         TreePath path = e.getPath();
