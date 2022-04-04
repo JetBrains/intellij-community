@@ -2,7 +2,6 @@ package storage.codegen.patcher
 
 import org.jetbrains.deft.annotations.*
 import org.jetbrains.deft.annotations.Enum
-import org.jetbrains.deft.intellijWs.IjFile
 import kotlin.reflect.KClass
 
 class KtAnnotations {
