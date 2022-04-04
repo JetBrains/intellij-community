@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.emptyText
@@ -38,14 +37,14 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
       val descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
-        .bindText(locationProperty.trim())
+        .bindText(locationProperty)
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
         .textValidation(CHECK_NON_EMPTY, CHECK_MAVEN_CATALOG)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
-        .bindText(nameProperty.trim())
+        .bindText(nameProperty)
         .columns(COLUMNS_MEDIUM)
         .textValidation(CHECK_NON_EMPTY)
     }

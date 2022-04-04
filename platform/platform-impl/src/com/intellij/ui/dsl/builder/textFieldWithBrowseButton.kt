@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextFieldWithBrowseButton
@@ -22,7 +23,7 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: GraphProperty<Str
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
-  return applyToComponent { bind(property) }
+  return applyToComponent { bind(property.trim()) }
 }
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
