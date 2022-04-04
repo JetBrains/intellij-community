@@ -35,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -1194,7 +1193,7 @@ public final class HighlightClassUtil {
                            .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
                            .create());
             }
-            else if (!hasPermittedSubclassModifier(inheritorClass)) {
+            else if (!(inheritorClass instanceof PsiCompiledElement || hasPermittedSubclassModifier(inheritorClass))) {
               HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(permitted)
                 .descriptionAndTooltip(JavaErrorBundle.message("permitted.subclass.must.have.modifier"))
@@ -1258,13 +1257,6 @@ public final class HighlightClassUtil {
   }
 
   private static boolean hasPermittedSubclassModifier(@NotNull PsiClass psiClass) {
-    if (psiClass instanceof ClsClassImpl) {
-      /*
-      When we build stub for compiled class there's no way for us to understand if source file contained non-sealed modifier or not.
-      But since code is already compiled then compiler already checked that we have all required modifiers in place.  
-       */
-      return true;
-    }
     PsiModifierList modifiers = psiClass.getModifierList();
     if (modifiers == null) return false;
     return modifiers.hasModifierProperty(PsiModifier.SEALED) ||
