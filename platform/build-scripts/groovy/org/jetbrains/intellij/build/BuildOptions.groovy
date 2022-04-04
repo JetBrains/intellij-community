@@ -204,9 +204,9 @@ final class BuildOptions {
   List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",")
 
   /**
-   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} version to be bundled with distributions, 11 by default.
+   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} version to be bundled with distributions, 17 by default.
    */
-  int bundledRuntimeVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
+  int bundledRuntimeVersion = System.getProperty("intellij.build.bundled.jre.version", "17").toInteger()
 
   /**
    * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} build to be bundled with distributions. If {@code null} then {@code runtimeBuild} from gradle.properties will be used.
