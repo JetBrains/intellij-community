@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
@@ -15,7 +16,8 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-private const val DEFAULT_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+private const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
 private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
 private const val TIMEOUT = 10000
@@ -34,12 +36,13 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val _url = lazy {
     val explicitUrl = System.getProperty(URL_PROPERTY)
-    if (explicitUrl != null) {
-      LOG.info("Using URL from properties: $explicitUrl")
-      explicitUrl
-    }
-    else {
-      DEFAULT_URL
+    when {
+      explicitUrl != null -> {
+        LOG.info("Using URL from properties: $explicitUrl")
+        explicitUrl
+      }
+      isRunningFromSources() -> DEFAULT_DEBUG_URL
+      else -> DEFAULT_PRODUCTION_URL
     }
   }
 
