@@ -250,6 +250,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       if (choice == Messages.OK) {
         try {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+            SettingsSyncSettings.getInstance().syncEnabled = false
             remoteCommunicator.delete()
           }, SettingsSyncBundle.message("troubleshooting.delete.file.from.server.progress.title"), false, project)
         }
