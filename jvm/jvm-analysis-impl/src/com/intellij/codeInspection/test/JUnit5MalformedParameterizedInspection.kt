@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
@@ -404,7 +403,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
     else {
       processArrayInAnnotationParameter(annotationMemberValue) { attributeValue ->
         for (reference in attributeValue.references) {
-          if (reference is MethodSourceReference) {
+          if (reference is PsiReferenceBase<*>) {
             val resolve = reference.resolve()
             if (resolve !is PsiMethod) {
               highlightAbsentSourceProvider(containingClass, attributeValue, reference.value, method)
