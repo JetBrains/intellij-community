@@ -255,6 +255,18 @@
         "background": "Grey1",
         "innerBorderColor": "Grey4",
         "foreground": "Grey10"
+      },
+      "ToolWindow": {
+        "errorForeground": "Grey1",
+        "warningForeground": "Grey1",
+        "informativeForeground": "Grey1",
+
+        "errorBackground": "Red10",
+        "errorBorderColor": "Red9",
+        "warningBackground": "Yellow9",
+        "warningBorderColor": "Yellow8",
+        "informativeBackground": "Green9",
+        "informativeBorderColor": "Green8"
       }
     },
 
