@@ -180,26 +180,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
       if (submodule != null) {
         return GitSubmoduleContentRevision.createRevision(submodule, revisionNumber);
       }
-      return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
+      return new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, project, charset);
     }
     else if (submodule != null) {
       return GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
     }
     else {
-      return CurrentContentRevision.create(filePath);
-    }
-  }
-
-  @NotNull
-  private static GitContentRevision createRevisionImpl(@NotNull FilePath path,
-                                                       @NotNull GitRevisionNumber revisionNumber,
-                                                       @NotNull Project project,
-                                                       @Nullable Charset charset) {
-    if (path.getFileType().isBinary()) {
-      return new GitBinaryContentRevision(path, revisionNumber, project);
-    }
-    else {
-      return new GitContentRevision(path, revisionNumber, project, charset);
+      return new CurrentContentRevision(filePath);
     }
   }
 

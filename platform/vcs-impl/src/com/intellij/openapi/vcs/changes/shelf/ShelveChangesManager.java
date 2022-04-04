@@ -429,7 +429,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       if (ChangesUtil.getFilePath(change).isDirectory()) {
         continue;
       }
-      if (change.getBeforeRevision() instanceof BinaryContentRevision || change.getAfterRevision() instanceof BinaryContentRevision) {
+      if (IdeaTextPatchBuilder.isBinaryRevision(change.getBeforeRevision()) ||
+          IdeaTextPatchBuilder.isBinaryRevision(change.getAfterRevision())) {
         binaryFiles.add(shelveBinaryFile(schemePatchDir, change));
       }
       else {

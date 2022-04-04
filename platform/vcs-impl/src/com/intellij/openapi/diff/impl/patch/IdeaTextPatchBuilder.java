@@ -98,6 +98,12 @@ public final class IdeaTextPatchBuilder {
     return convertRevision(cr, null);
   }
 
+  public static boolean isBinaryRevision(@Nullable ContentRevision cr) {
+    if (cr == null) return false;
+    if (cr instanceof BinaryContentRevision) return true;
+    return cr.getFile().getFileType().isBinary();
+  }
+
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
     if (cr == null) {
@@ -108,7 +114,7 @@ public final class IdeaTextPatchBuilder {
     if (actualTextContent != null) {
       return new PartialTextAirContentRevision(actualTextContent, cr, filePath);
     }
-    else if (cr instanceof BinaryContentRevision) {
+    else if (isBinaryRevision(cr)) {
       return new BinaryAirContentRevision((BinaryContentRevision)cr, filePath);
     }
     else {
