@@ -183,12 +183,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       PsiElement directParent = typeElement.getParent();
-      if (directParent instanceof PsiVariable) {
-        if (directParent instanceof PsiPatternVariable) return;
-        if (getSuggestedType((PsiVariable)directParent) != null) {
-          reportProblem(typeElement);
-          return;
-        }
+      if (directParent instanceof PsiVariable && getSuggestedType((PsiVariable)directParent) != null) {
+        reportProblem(typeElement);
+        return;
       }
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiClassType)) {
