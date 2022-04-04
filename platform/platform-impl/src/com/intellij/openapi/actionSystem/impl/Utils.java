@@ -21,10 +21,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -34,6 +31,7 @@ import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -515,7 +513,7 @@ public final class Utils {
       LOG.warn("Recursive shortcut processing invocation is ignored");
       return null;
     }
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
     // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
@@ -538,27 +536,25 @@ public final class Utils {
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
-          Runnable runnable = () -> {
-            UpdateSession session = null;
+          ThrowableComputable<Void, RuntimeException> computable = () -> {
             Set<String> missedKeys = Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
             if (missedKeys != null) {
-              session = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-              ref.set(function.apply(session));
+              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
+              ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(fastSession);
+              fastUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(fastSession)));
+              if (!ref.isNull()) queue.offer(fastUpdater::applyPresentationChanges);
             }
             if (ref.isNull() && (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)))) {
-              session = actionUpdater.asUpdateSession();
-              ref.set(function.apply(session));
+              UpdateSession session = actionUpdater.asUpdateSession();
+              actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session)));
+              queue.offer(actionUpdater::applyPresentationChanges);
             }
-            queue.offer(ActionUpdater.getActionUpdater(Objects.requireNonNull(session))::applyPresentationChanges);
+            return null;
           };
           ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().executeProcessUnderProgress(
-            ProgressManager.getInstance().computePrioritized(() ->
-              () -> ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-                applicationEx,
-                () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
-                () -> applicationEx.tryRunReadAction(runnable))),
+            () -> ProgressManager.getInstance().computePrioritized(computable),
             indicator);
           queue.offer(() -> promise.setResult(ref.get()));
         }
@@ -582,9 +578,9 @@ public final class Utils {
       result = function.apply(actionUpdater.asUpdateSession());
       actionUpdater.applyPresentationChanges();
     }
-    long time = System.currentTimeMillis() - start;
-    if (time > 500) {
-      LOG.debug("runUpdateSessionForKeyEvent() took: " + time + " ms");
+    long elapsed = TimeoutUtil.getDurationMillis(start);
+    if (elapsed > 1000) {
+      LOG.warn(elapsed + " ms to update actions for " + place);
     }
     return result;
   }
