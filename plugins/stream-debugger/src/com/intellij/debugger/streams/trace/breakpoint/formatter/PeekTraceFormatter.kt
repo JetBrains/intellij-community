@@ -1,0 +1,19 @@
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.debugger.streams.trace.breakpoint.formatter
+
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.streams.trace.breakpoint.ValueManager
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.sun.jdi.Value
+
+/**
+ * @author Shumaf Lovpache
+ */
+class PeekTraceFormatter(
+  valueManager: ValueManager,
+  evaluationContext: EvaluationContextImpl
+) : TraceFormatterBase(valueManager, evaluationContext), IntermediateOperationTraceFormatter {
+  override fun format(streamCall: IntermediateStreamCall, beforeValues: Value?, afterValues: Value?): Value {
+    return formatBeforeAfter(beforeValues, streamCall.typeBefore.variableTypeName, afterValues, streamCall.typeAfter.variableTypeName)
+  }
+}

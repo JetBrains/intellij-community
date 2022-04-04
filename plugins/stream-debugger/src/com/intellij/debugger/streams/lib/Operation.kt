@@ -5,6 +5,9 @@ import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.ValueManager
+import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.RuntimeIntermediateCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.RuntimeTerminalCallHandler
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
@@ -24,8 +27,16 @@ interface Operation {
 
 interface IntermediateOperation : Operation {
   fun getTraceHandler(callOrder: Int, call: IntermediateStreamCall, dsl: Dsl): IntermediateCallHandler
+
+  fun getRuntimeTraceHandler(callOrder: Int, call: IntermediateStreamCall, valueManager: ValueManager): RuntimeIntermediateCallHandler? {
+    return null
+  }
 }
 
 interface TerminalOperation : Operation {
   fun getTraceHandler(call: TerminatorStreamCall, resultExpression: String, dsl: Dsl): TerminatorCallHandler
+
+  fun getRuntimeTraceHandler(call: TerminatorStreamCall, valueManager: ValueManager): RuntimeTerminalCallHandler? {
+    return null
+  }
 }

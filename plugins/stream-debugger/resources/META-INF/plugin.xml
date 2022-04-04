@@ -36,6 +36,11 @@
     <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider" dynamic="true"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="debugger.streams.tracing.engine" defaultValue="[Evaluate expression|Method breakpoints*]"
+                 description="Stream debugger tracing engine"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.debugger.streams">
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>

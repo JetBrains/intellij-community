@@ -2,12 +2,15 @@
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.diagnostic.ex.DebuggerLocationNotFoundException;
+import com.intellij.debugger.streams.diagnostic.ex.LibraryNotSupportedException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.lib.LibrarySupportProvider;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.trace.*;
+import com.intellij.debugger.streams.trace.breakpoint.*;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.ChooserOption;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
@@ -24,8 +27,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -44,6 +50,10 @@ public final class TraceStreamAction extends AnAction {
 
   private static final ChainResolver CHAIN_RESOLVER = new ChainResolver();
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
+
+  private static final String TRACING_ENGINE_REGISTRY_KEY = "debugger.streams.tracing.engine";
+  private static final String EVALUATE_EXPRESSION_TRACER = "Evaluate expression";
+  private static final String METHOD_BREAKPOINTS_TRACER = "Method breakpoints";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -79,6 +89,7 @@ public final class TraceStreamAction extends AnAction {
     XSourcePosition position = session == null ? null : session.getCurrentPosition();
     PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
 
+    // TODO: breakpoint based debugger needs the breakpoint to be on the first method of the stream chain
     if (element == null || position == null) {
       LOG.info("element at cursor not found");
       return;
@@ -110,9 +121,7 @@ public final class TraceStreamAction extends AnAction {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
-    final TraceExpressionBuilder expressionBuilder = provider.getExpressionBuilder(project);
-    final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(provider.getLibrarySupport().getInterpreterFactory());
-    final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
+    final StreamTracer tracer = getStreamTracer(session, project, provider);
     tracer.trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
@@ -137,6 +146,36 @@ public final class TraceStreamAction extends AnAction {
         ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
       }
     });
+  }
+
+  @NotNull
+  private static StreamTracer getStreamTracer(@NotNull XDebugSession session, @NotNull Project project, @NotNull LibrarySupportProvider provider) {
+    final TraceResultInterpreter resultInterpreter = new TraceResultInterpreterImpl(provider.getLibrarySupport().getInterpreterFactory());
+
+    String tracingEngine = Registry.get(TRACING_ENGINE_REGISTRY_KEY).getSelectedOption();
+    if (tracingEngine == null) {
+      tracingEngine = EVALUATE_EXPRESSION_TRACER;
+    }
+
+    switch (tracingEngine) {
+      case METHOD_BREAKPOINTS_TRACER:
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        final XSourcePosition currentPosition = session.getCurrentPosition();
+        if (currentPosition == null) {
+          throw new DebuggerLocationNotFoundException("Cannot find current debugger location");
+        }
+        final PsiFile currentFile = psiManager.findFile(currentPosition.getFile());
+        if (currentFile == null) {
+          throw new DebuggerLocationNotFoundException("Cannot find current file PSI representation");
+        }
+        final BreakpointResolver breakpointResolver = new JavaBreakpointResolver(currentFile);
+        return new MethodBreakpointTracer(session, breakpointResolver, resultInterpreter);
+      case EVALUATE_EXPRESSION_TRACER:
+        final TraceExpressionBuilder expressionBuilder = provider.getExpressionBuilder(project);
+        return new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
+      default:
+        throw new LibraryNotSupportedException("Unknown tracing method: " + tracingEngine);
+    }
   }
 
   private static final class MyStreamChainChooser extends ElementChooserImpl<StreamChainOption> {

@@ -115,7 +115,6 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     final DebuggerPositionResolver positionResolver = getPositionResolver();
     final StreamChainBuilder chainBuilder = getChainBuilder();
     final TraceResultInterpreter resultInterpreter = getResultInterpreter();
-    final TraceExpressionBuilder expressionBuilder = getExpressionBuilder();
 
     session.addSessionListener(new XDebugSessionListener() {
       @Override
@@ -150,7 +149,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
           return;
         }
 
-        new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter).trace(chain, new TracingCallback() {
+        StreamTracer tracer = getStreamTracer(session, resultInterpreter);
+        tracer.trace(chain, new TracingCallback() {
           @Override
           public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
             complete(chain, result, null, null);
@@ -196,6 +196,11 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         ApplicationManager.getApplication().invokeLater(session::resume);
       }
     }, getTestRootDisposable());
+  }
+
+  protected StreamTracer getStreamTracer(XDebugSession session, TraceResultInterpreter resultInterpreter) {
+    final TraceExpressionBuilder expressionBuilder = getExpressionBuilder();
+    return new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
   }
 
   @SuppressWarnings("WeakerAccess")
