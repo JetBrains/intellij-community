@@ -389,7 +389,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         // AllIcons.Actions.Restart is more preferred
         // Other icons are the most preferred ones (like ExecutionUtil.getLiveIndicator())
         for (RunnerAndConfigurationSettings config : runnableConfigs) {
-          Icon anotherIcon = getInformativeIcon(project, runnableConfigs.get(0));
+          Icon anotherIcon = getInformativeIcon(project, config);
           if (icon == myExecutor.getIcon() || (anotherIcon != myExecutor.getIcon() && anotherIcon != AllIcons.Actions.Restart)) {
             icon = anotherIcon;
           }
