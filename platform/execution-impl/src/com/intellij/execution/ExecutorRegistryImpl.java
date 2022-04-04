@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
@@ -351,10 +354,22 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       presentation.setText(text);
     }
 
-    private RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e) {
+    private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e) {
       Project project = Objects.requireNonNull(e.getProject());
       if (DumbService.isDumb(project)) {
         return new RunCurrentFileActionStatus(false, myExecutor.getStartActionText(), myExecutor.getIcon());
+      }
+
+      VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+      if (files.length == 1) {
+        // There's only one visible editor, let's use the file from this editor, even if the editor is not in focus.
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(files[0]);
+        if (psiFile == null) {
+          String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
+          return new RunCurrentFileActionStatus(false, tooltip, myExecutor.getIcon());
+        }
+
+        return getRunCurrentFileActionStatus(psiFile);
       }
 
       Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -364,11 +379,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (psiFile == null) {
-        String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
+      VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
+      if (psiFile == null || vFile == null || !ArrayUtil.contains(vFile, files)) {
+        // This is probably a special editor, like Python Console, which we don't want to use for the 'Run Current File' feature.
+        String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.no.focused.editor");
         return new RunCurrentFileActionStatus(false, tooltip, myExecutor.getIcon());
       }
 
+      return getRunCurrentFileActionStatus(psiFile);
+    }
+
+    private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull PsiFile psiFile) {
       List<RunnerAndConfigurationSettings> runConfigs = getRunConfigsForCurrentFile(psiFile, false);
       if (runConfigs.isEmpty()) {
         String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
@@ -382,14 +403,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       Icon icon = myExecutor.getIcon();
       if (runnableConfigs.size() == 1) {
-        icon = getInformativeIcon(project, runnableConfigs.get(0));
+        icon = getInformativeIcon(psiFile.getProject(), runnableConfigs.get(0));
       }
       else {
         // myExecutor.getIcon() is the least preferred icon
         // AllIcons.Actions.Restart is more preferred
         // Other icons are the most preferred ones (like ExecutionUtil.getLiveIndicator())
         for (RunnerAndConfigurationSettings config : runnableConfigs) {
-          Icon anotherIcon = getInformativeIcon(project, config);
+          Icon anotherIcon = getInformativeIcon(psiFile.getProject(), config);
           if (icon == myExecutor.getIcon() || (anotherIcon != myExecutor.getIcon() && anotherIcon != AllIcons.Actions.Restart)) {
             icon = anotherIcon;
           }
