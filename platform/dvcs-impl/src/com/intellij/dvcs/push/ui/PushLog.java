@@ -4,10 +4,12 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.dvcs.push.PushSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -15,9 +17,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -58,12 +60,13 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
-public final class PushLog extends JPanel implements DataProvider {
+public final class PushLog extends JPanel implements Disposable, DataProvider {
   @NonNls private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   @NonNls private static final String START_EDITING = "startEditing";
   @NonNls private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
   @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
-  private final SimpleChangesBrowser myChangesBrowser;
+  private final PushLogChangesBrowser myChangesBrowser;
+  private final JBLoadingPanel myChangesLoadingPane;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
@@ -207,7 +210,7 @@ public final class PushLog extends JPanel implements DataProvider {
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        updateChangesView();
+        onSelectionChanges();
       }
     });
     myTree.addFocusListener(new FocusAdapter() {
@@ -231,7 +234,10 @@ public final class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupMenu(myTree, VcsLogActionIds.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
+                                              ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+
+    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane);
     myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
@@ -248,7 +254,8 @@ public final class PushLog extends JPanel implements DataProvider {
     detailsContentPanel.addToCenter(detailsScrollPane);
 
     JBSplitter detailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.67f);
-    detailsSplitter.setFirstComponent(myChangesBrowser);
+    detailsSplitter.setFirstComponent(myChangesLoadingPane);
+    myChangesLoadingPane.add(myChangesBrowser);
 
     myShowDetailsAction = new MyShowDetailsAction(project, (state) -> {
       detailsSplitter.setSecondComponent(state ? detailsContentPanel : null);
@@ -289,6 +296,10 @@ public final class PushLog extends JPanel implements DataProvider {
     setLayout(new BorderLayout());
     add(splitter);
     myTree.setRowHeight(0);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {
@@ -340,7 +351,7 @@ public final class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -400,15 +411,28 @@ public final class PushLog extends JPanel implements DataProvider {
     return sorted;
   }
 
-  private void updateChangesView() {
+  public void setBusyLoading(boolean paintBusy) {
+    myTree.setPaintBusy(paintBusy);
+  }
+
+  private void onSelectionChanges() {
     List<CommitNode> commitNodes = getSelectedCommitNodes();
+    updateChangesView(commitNodes);
+    updateDetailsPanel(commitNodes);
+  }
+
+  private void updateChangesView(@NotNull List<CommitNode> commitNodes) {
     if (!commitNodes.isEmpty()) {
       myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.differences"));
     }
     else {
       setDefaultEmptyText();
     }
-    myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
+
+    myChangesBrowser.setCommitsToDisplay(commitNodes);
+  }
+
+  private void updateDetailsPanel(@NotNull List<CommitNode> commitNodes) {
     if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
       VcsFullCommitDetails commitDetails = commitNodes.get(0).getUserObject();
       CommitPresentationUtil.CommitPresentation presentation =
@@ -542,7 +566,7 @@ public final class PushLog extends JPanel implements DataProvider {
       refreshNode(parentNode);
       TreePath path = TreeUtil.getPathFromRoot(parentNode);
       if (myTree.getSelectionModel().isPathSelected(path)) {
-        updateChangesView();
+        onSelectionChanges();
       }
     }
     else {

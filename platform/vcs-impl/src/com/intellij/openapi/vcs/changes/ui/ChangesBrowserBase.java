@@ -401,6 +401,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       DefaultTreeModel newModel = myViewer.buildTreeModel();
       updateTreeModel(newModel);
     }
+
+    @Override
+    public void updateTreeModel(@NotNull DefaultTreeModel model) {
+      super.updateTreeModel(model);
+    }
   }
 }
 
