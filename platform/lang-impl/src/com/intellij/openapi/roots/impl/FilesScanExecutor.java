@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -56,7 +58,7 @@ public final class FilesScanExecutor {
   private static class StopWorker extends ProcessCanceledException { }
 
   public static void runOnAllThreads(@NotNull Runnable runnable) {
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     List<Future<?>> results = new ArrayList<>();
     for (int i = 0; i < THREAD_COUNT; i++) {
       results.add(ourExecutor.submit(() -> {
@@ -73,24 +75,37 @@ public final class FilesScanExecutor {
     }
   }
 
-  public static boolean processDequeueOnAllThreadsInReadAction(@NotNull ConcurrentLinkedDeque<Object> deque,
-                                                               @NotNull Processor<Object> consumer) {
+  public static <T> boolean processOnAllThreadsInReadActionWithRetries(@NotNull ConcurrentLinkedDeque<T> deque,
+                                                                       @NotNull Processor<? super T> consumer) {
+    return doProcessOnAllThreadsInReadAction(deque, consumer, true);
+  }
+
+  public static <T> boolean processOnAllThreadsInReadActionNoRetries(@NotNull ConcurrentLinkedDeque<T> deque,
+                                                                     @NotNull Processor<? super T> consumer) {
+    return doProcessOnAllThreadsInReadAction(deque, consumer, false);
+  }
+
+  private static <T> boolean doProcessOnAllThreadsInReadAction(@NotNull ConcurrentLinkedDeque<T> deque,
+                                                               @NotNull Processor<? super T> consumer,
+                                                               boolean retryCanceled) {
     ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
-    return processDequeOnAllThreads(deque, o -> {
+    return processOnAllThreads(deque, o -> {
       if (application.isReadAccessAllowed()) {
         return consumer.process(o);
       }
       Ref<Boolean> result = Ref.create(true);
-      if (!application.tryRunReadAction(
-        () -> result.set(consumer.process(o)))) {
-        throw new StopWorker();
+      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
+        () -> result.set(consumer.process(o)),
+        indicator == null ? null : new SensitiveProgressWrapper(indicator))) {
+        throw retryCanceled ? new ProcessCanceledException() : new StopWorker();
       }
       return result.get();
     });
   }
 
-  public static <T> boolean processDequeOnAllThreads(@NotNull ConcurrentLinkedDeque<T> deque,
-                                                     @NotNull Processor<? super T> processor) {
+  public static <T> boolean processOnAllThreads(@NotNull ConcurrentLinkedDeque<T> deque,
+                                                @NotNull Processor<? super T> processor) {
     ProgressManager.checkCanceled();
     if (deque.isEmpty()) return true;
     AtomicInteger runnersCount = new AtomicInteger();
@@ -211,7 +226,7 @@ public final class FilesScanExecutor {
       return true;
     };
     long start = System.nanoTime();
-    boolean result = processDequeueOnAllThreadsInReadAction(deque, consumer);
+    boolean result = processOnAllThreadsInReadActionNoRetries(deque, consumer);
     if (LOG.isDebugEnabled()) {
       LOG.debug(processedCount.get() + " files processed (" + skippedCount.get() + " skipped)" +
                " in " + TimeoutUtil.getDurationMillis(start) + " ms");
