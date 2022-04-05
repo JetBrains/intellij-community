@@ -75,6 +75,7 @@
     <orderEntry type="module" module-name="kotlin.project-model" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.fe10-analyze.safe-analyze-utils" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" />

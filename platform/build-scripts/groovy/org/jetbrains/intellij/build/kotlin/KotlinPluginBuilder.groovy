@@ -106,6 +106,7 @@ final class KotlinPluginBuilder {
     "kotlin.i18n",
     "kotlin.project-model",
     "kotlin.features-trainer",
+    "kotlin.fe10-analyze.safe-analyze-utils"
     )
 
   @SuppressWarnings('SpellCheckingInspection')
