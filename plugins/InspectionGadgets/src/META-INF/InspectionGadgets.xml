@@ -1333,10 +1333,6 @@
                      implementationClass="com.siyeh.ig.jdk.VarargParameterInspection"/>
 
     <!--group.names.junit.issues-->
-    <localInspection groupPath="Java" language="JAVA" shortName="AssertBetweenInconvertibleTypes" bundle="messages.InspectionGadgetsBundle"
-                     key="assertequals.between.inconvertible.types.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MaskedAssertion" bundle="messages.InspectionGadgetsBundle"
                      key="masked.assertion.display.name" groupBundle="messages.InspectionsBundle"

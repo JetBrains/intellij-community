@@ -128,6 +128,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
                      implementationClass="com.intellij.codeInspection.JavaApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="AssertBetweenInconvertibleTypes"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="assertequals.between.inconvertible.types.display.name"
+                     implementationClass="com.intellij.codeInspection.AssertBetweenInconvertibleTypesInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
@@ -145,3 +149,4 @@
     </group>
   </actions>
 </idea-plugin>
+
