@@ -630,7 +630,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
-  public void testSameArguments() { doTest(); }
   public void testMaxLoop() { doTest(); }
   public void testExplicitBoxing() { doTest(); }
   public void testBoxedBoolean() { doTest(); }
