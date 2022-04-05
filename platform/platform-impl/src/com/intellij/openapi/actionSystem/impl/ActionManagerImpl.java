@@ -352,7 +352,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   private static void reportKeymapNotFoundWarning(@NotNull PluginDescriptor module, @NotNull String keymapName) {
-    if (!DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)) {
+    Application app = ApplicationManager.getApplication();
+    if (
+      !app.isHeadlessEnvironment() &&
+      !app.isCommandLine() &&
+      !DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)
+    ) {
       LOG.warn("keymap \"" + keymapName + "\" not found" + " " + module);
     }
   }
