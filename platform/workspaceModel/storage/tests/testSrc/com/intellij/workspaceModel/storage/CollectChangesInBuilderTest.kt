@@ -2,6 +2,10 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.newentities.addChildEntity
+import com.intellij.workspaceModel.storage.newentities.addParentEntity
+import com.intellij.workspaceModel.storage.newentities.api.XChildEntity
+import com.intellij.workspaceModel.storage.newentities.api.XParentEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -104,8 +108,8 @@ class CollectChangesInBuilderTest {
     val parent = builder.addParentEntity("added")
     builder.addChildEntity(parent, "added")
     val changes = builder.collectChanges(initialStorage)
-    val childChange = changes.getValue(ChildEntity::class.java).single() as EntityChange.Added<ChildEntity>
-    val parentChange = changes.getValue(ParentEntity::class.java).single() as EntityChange.Added<ParentEntity>
+    val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Added<XChildEntity>
+    val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Added<XParentEntity>
     assertEquals("added", childChange.entity.childProperty)
     assertEquals("added", parentChange.entity.parentProperty)
   }
@@ -118,8 +122,8 @@ class CollectChangesInBuilderTest {
     val newBuilder = createBuilderFrom(storage)
     newBuilder.removeEntity(parent)
     val changes = newBuilder.collectChanges(storage)
-    val childChange = changes.getValue(ChildEntity::class.java).single() as EntityChange.Removed<ChildEntity>
-    val parentChange = changes.getValue(ParentEntity::class.java).single() as EntityChange.Removed<ParentEntity>
+    val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Removed<XChildEntity>
+    val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Removed<XParentEntity>
     assertEquals("to remove", childChange.entity.childProperty)
     assertEquals("to remove", parentChange.entity.parentProperty)
   }

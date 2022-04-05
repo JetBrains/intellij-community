@@ -1,0 +1,233 @@
+package com.intellij.workspaceModel.storage.newentities.api
+
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.*
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.impl.ObjType
+
+    
+
+open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, WorkspaceEntityBase() {
+    
+    companion object {
+        internal val OPTIONALPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildWithOptionalParentEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    }
+    
+    override val factory: ObjType<*, *>
+        get() = XChildWithOptionalParentEntity
+        
+    @JvmField var _childProperty: String? = null
+    override val childProperty: String
+        get() = _childProperty!!
+                        
+    override val optionalParent: XParentEntity?
+        get() = snapshot.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this)
+
+    class Builder(val result: XChildWithOptionalParentEntityData?): ModifiableWorkspaceEntityBase<XChildWithOptionalParentEntity>(), XChildWithOptionalParentEntity.Builder {
+        constructor(): this(XChildWithOptionalParentEntityData())
+                 
+        override val factory: ObjType<XChildWithOptionalParentEntity, *> get() = TODO()
+        override fun build(): XChildWithOptionalParentEntity = this
+        
+        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+            if (this.diff != null) {
+                if (existsInBuilder(builder)) {
+                    this.diff = builder
+                    return
+                }
+                else {
+                    error("Entity XChildWithOptionalParentEntity is already created in a different builder")
+                }
+            }
+            
+            this.diff = builder
+            this.snapshot = builder
+            addToBuilder()
+            this.id = getEntityData().createEntityId()
+            
+            // Process entities from extension fields
+            val keysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (!key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    for (item in entity) {
+                        if (item is ModifiableWorkspaceEntityBase<*>) {
+                            builder.addEntity(item)
+                        }
+                    }
+                    entity as List<WorkspaceEntity>
+                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+                    applyRef(key.getConnectionId(), withBuilder_entity)
+                    keysToRemove.add(key)
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyRef(key.getConnectionId(), entity)
+                    keysToRemove.add(key)
+                }
+            }
+            for (key in keysToRemove) {
+                extReferences.remove(key)
+            }
+            
+            // Adding parents and references to the parent
+            val __optionalParent = _optionalParent
+            if (__optionalParent != null && (__optionalParent is ModifiableWorkspaceEntityBase<*>) && __optionalParent.diff == null) {
+                builder.addEntity(__optionalParent)
+            }
+            if (__optionalParent != null && (__optionalParent is ModifiableWorkspaceEntityBase<*>) && __optionalParent.diff != null) {
+                // Set field to null (in referenced entity)
+                val __mutOptionalChildren = (__optionalParent as XParentEntityImpl.Builder)._optionalChildren?.toMutableList()
+                __mutOptionalChildren?.remove(this)
+                __optionalParent._optionalChildren = if (__mutOptionalChildren.isNullOrEmpty()) null else __mutOptionalChildren
+            }
+            if (__optionalParent != null) {
+                applyParentRef(OPTIONALPARENT_CONNECTION_ID, __optionalParent)
+                this._optionalParent = null
+            }
+            val parentKeysToRemove = ArrayList<ExtRefKey>()
+            for ((key, entity) in extReferences) {
+                if (key.isChild()) {
+                    continue
+                }
+                if (entity is List<*>) {
+                    error("Cannot have parent lists")
+                }
+                else {
+                    entity as WorkspaceEntity
+                    builder.addEntity(entity)
+                    applyParentRef(key.getConnectionId(), entity)
+                    parentKeysToRemove.add(key)
+                }
+            }
+            for (key in parentKeysToRemove) {
+                extReferences.remove(key)
+            }
+            checkInitialization() // TODO uncomment and check failed tests
+        }
+    
+        fun checkInitialization() {
+            val _diff = diff
+            if (!getEntityData().isChildPropertyInitialized()) {
+                error("Field XChildWithOptionalParentEntity#childProperty should be initialized")
+            }
+            if (!getEntityData().isEntitySourceInitialized()) {
+                error("Field XChildWithOptionalParentEntity#entitySource should be initialized")
+            }
+        }
+    
+        
+        override var childProperty: String
+            get() = getEntityData().childProperty
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().childProperty = value
+                changedProperty.add("childProperty")
+            }
+            
+        override var entitySource: EntitySource
+            get() = getEntityData().entitySource
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().entitySource = value
+                changedProperty.add("entitySource")
+                
+            }
+            
+            var _optionalParent: XParentEntity? = null
+            override var optionalParent: XParentEntity?
+                get() {
+                    val _diff = diff
+                    return if (_diff != null) {
+                        _diff.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this) ?: _optionalParent
+                    } else {
+                        _optionalParent
+                    }
+                }
+                set(value) {
+                    checkModificationAllowed()
+                    val _diff = diff
+                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        if (value is XParentEntityImpl.Builder) {
+                            value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        _diff.addEntity(value)
+                    }
+                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                        _diff.updateOneToManyParentOfChild(OPTIONALPARENT_CONNECTION_ID, this, value)
+                    }
+                    else {
+                        if (value is XParentEntityImpl.Builder) {
+                            value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                        
+                        this._optionalParent = value
+                    }
+                    changedProperty.add("optionalParent")
+                }
+        
+        override fun getEntityData(): XChildWithOptionalParentEntityData = result ?: super.getEntityData() as XChildWithOptionalParentEntityData
+        override fun getEntityClass(): Class<XChildWithOptionalParentEntity> = XChildWithOptionalParentEntity::class.java
+    }
+    
+    // TODO: Fill with the data from the current entity
+    fun builder(): ObjBuilder<*> = Builder(XChildWithOptionalParentEntityData())
+}
+    
+class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptionalParentEntity>() {
+    lateinit var childProperty: String
+
+    fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
+
+    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<XChildWithOptionalParentEntity> {
+        val modifiable = XChildWithOptionalParentEntityImpl.Builder(null)
+        modifiable.allowModifications {
+          modifiable.diff = diff
+          modifiable.snapshot = diff
+          modifiable.id = createEntityId()
+          modifiable.entitySource = this.entitySource
+        }
+        return modifiable
+    }
+
+    override fun createEntity(snapshot: WorkspaceEntityStorage): XChildWithOptionalParentEntity {
+        val entity = XChildWithOptionalParentEntityImpl()
+        entity._childProperty = childProperty
+        entity.entitySource = entitySource
+        entity.snapshot = snapshot
+        entity.id = createEntityId()
+        return entity
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other == null) return false
+        if (this::class != other::class) return false
+        
+        other as XChildWithOptionalParentEntityData
+        
+        if (this.childProperty != other.childProperty) return false
+        if (this.entitySource != other.entitySource) return false
+        return true
+    }
+
+    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+        if (other == null) return false
+        if (this::class != other::class) return false
+        
+        other as XChildWithOptionalParentEntityData
+        
+        if (this.childProperty != other.childProperty) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = entitySource.hashCode()
+        result = 31 * result + childProperty.hashCode()
+        return result
+    }
+}

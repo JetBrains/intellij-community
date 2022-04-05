@@ -4,9 +4,14 @@ package com.intellij.workspaceModel.storage.propertyBased
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
+import com.intellij.workspaceModel.storage.newentities.addChildEntity
+import com.intellij.workspaceModel.storage.newentities.addChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.newentities.addParentEntity
+import com.intellij.workspaceModel.storage.newentities.api.*
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert
@@ -132,8 +137,13 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
   abstract fun modifyEntity(env: ImperativeCommand.Environment): List<M.() -> Unit>
 
   final override fun performCommand(env: ImperativeCommand.Environment) {
-    @Suppress("UNCHECKED_CAST")
-    val modifiableClass = ClassConversion.entityDataToModifiableEntity(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
+    val modifiableClass: Class<M>
+    if (isOldApi(entityClass.java)) {
+      @Suppress("UNCHECKED_CAST")
+      modifiableClass = ClassConversion.entityDataToModifiableEntity(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
+    } else {
+      modifiableClass = ClassConversion.entityDataToModifiableEntityNew(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
+    }
 
     val entityId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, entityClass.java.toClassId()), null)
     if (entityId == null) return
@@ -154,6 +164,18 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
     }
 
     env.logMessage("----------------------------------")
+  }
+
+
+  private fun <E: WorkspaceEntity> isOldApi(entityClass: Class<E>): Boolean {
+    val entityData: KClass<WorkspaceEntityData<E>> = ClassConversion.entityToEntityData(entityClass.kotlin)
+    val modifiableEntity: KClass<ModifiableWorkspaceEntity<E>> = try {
+      ClassConversion.entityDataToModifiableEntity(entityData)
+    }
+    catch (e: Exception) {
+      return false
+    }
+    return !entityClass.isAssignableFrom(modifiableEntity.java)
   }
 }
 
@@ -192,24 +214,24 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        val classId = ParentEntity::class.java.toClassId()
+        val classId = XParentEntity::class.java.toClassId()
         val parentId = env.generateValue(Generator.anyOf(
           Generator.constant(null),
           EntityIdOfFamilyGenerator.create(storage, classId)
         ), null)
-        val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as ParentEntity }
+        val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as XParentEntity }
         return storage.addChildWithOptionalParentEntity(parentEntity, someProperty, source) to "Select parent for child: $parentId"
       }
     }
   }
 
-  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<ChildWithOptionalParentEntity, ModifiableChildWithOptionalParentEntity> {
-    return object : ModifyEntity<ChildWithOptionalParentEntity, ModifiableChildWithOptionalParentEntity>(
-      ChildWithOptionalParentEntity::class, storage) {
-      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableChildWithOptionalParentEntity.() -> Unit> {
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<XChildWithOptionalParentEntity, XChildWithOptionalParentEntityImpl.Builder> {
+    return object : ModifyEntity<XChildWithOptionalParentEntity, XChildWithOptionalParentEntityImpl.Builder>(
+      XChildWithOptionalParentEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<XChildWithOptionalParentEntityImpl.Builder.() -> Unit> {
         return listOf(
-          modifyStringProperty(ModifiableChildWithOptionalParentEntity::childProperty, env),
-          modifyNullableProperty(ModifiableChildWithOptionalParentEntity::optionalParent, parentGenerator(storage), env)
+          modifyStringProperty(XChildWithOptionalParentEntityImpl.Builder::childProperty, env),
+          modifyNullableProperty(XChildWithOptionalParentEntityImpl.Builder::optionalParent, parentGenerator(storage), env)
         )
       }
     }
@@ -390,21 +412,21 @@ private object ChildEntityManipulation : EntityManipulation {
     }
   }
 
-  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<ChildEntity, ModifiableChildEntity> {
-    return object : ModifyEntity<ChildEntity, ModifiableChildEntity>(ChildEntity::class, storage) {
-      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableChildEntity.() -> Unit> {
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<XChildEntity, XChildEntityImpl.Builder> {
+    return object : ModifyEntity<XChildEntity, XChildEntityImpl.Builder>(XChildEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<XChildEntityImpl.Builder.() -> Unit> {
         return listOf(
-          modifyStringProperty(ModifiableChildEntity::childProperty, env),
-          modifyNotNullProperty(ModifiableChildEntity::parent, parentGenerator(storage), env)
+          modifyStringProperty(XChildEntityImpl.Builder::childProperty, env),
+          modifyNotNullProperty(XChildEntityImpl.Builder::parentEntity, parentGenerator(storage), env)
         )
       }
     }
   }
 
-  private fun selectParent(storage: WorkspaceEntityStorageBuilderImpl, env: ImperativeCommand.Environment): ParentEntity? {
-    val classId = ParentEntity::class.java.toClassId()
+  private fun selectParent(storage: WorkspaceEntityStorageBuilderImpl, env: ImperativeCommand.Environment): XParentEntity? {
+    val classId = XParentEntity::class.java.toClassId()
     val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), null) ?: return null
-    return storage.entityDataByIdOrDie(parentId).createEntity(storage) as ParentEntity
+    return storage.entityDataByIdOrDie(parentId).createEntity(storage) as XParentEntity
   }
 }
 
@@ -419,13 +441,13 @@ private object ParentEntityManipulation : EntityManipulation {
     }
   }
 
-  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<ParentEntity, ModifiableParentEntity> {
-    return object : ModifyEntity<ParentEntity, ModifiableParentEntity>(ParentEntity::class, storage) {
-      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableParentEntity.() -> Unit> {
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<XParentEntity, XParentEntityImpl.Builder> {
+    return object : ModifyEntity<XParentEntity, XParentEntityImpl.Builder>(XParentEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<XParentEntityImpl.Builder.() -> Unit> {
         return listOf(
-          modifyStringProperty(ModifiableParentEntity::parentProperty, env),
-          swapElementsInSequence(ModifiableParentEntity::children, env),
-          removeInSequence(ModifiableParentEntity::optionalChildren, env)
+          modifyStringProperty(XParentEntityImpl.Builder::parentProperty, env),
+          swapElementsInList(XParentEntityImpl.Builder::children, env),
+          removeInList(XParentEntityImpl.Builder::optionalChildren, env)
         )
       }
     }
@@ -527,6 +549,21 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> swapEleme
   }
 }
 
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> swapElementsInList(property: KMutableProperty1<A, List<T>>,
+                                                                                              env: ImperativeCommand.Environment): A.() -> Unit {
+  return {
+    val propertyList = property.getter.call(this).toMutableList()
+    if (propertyList.size > 2) {
+      val index1 = env.generateValue(Generator.integers(0, propertyList.lastIndex), null)
+      val index2 = env.generateValue(Generator.integers(0, propertyList.lastIndex), null)
+      env.logMessage(
+        "Change ${property.name}. Swap 2 elements: idx1: $index1, idx2: $index2, value1: ${propertyList[index1]}, value2: ${propertyList[index2]}")
+
+      property.set(this, propertyList.also { it.swap(index1, index2) })
+    }
+  }
+}
+
 private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInSequence(property: KMutableProperty1<A, Sequence<T>>,
                                                                                         env: ImperativeCommand.Environment): A.() -> Unit {
   return {
@@ -537,6 +574,20 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInS
       env.logMessage("Remove item from ${property.name}. Index: $i, Element ${valueList[i]}")
       valueList.removeAt(i)
       property.set(this, valueList.asSequence())
+    }
+  }
+}
+
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInList(property: KMutableProperty1<A, List<T>>,
+                                                                                        env: ImperativeCommand.Environment): A.() -> Unit {
+  return {
+    val value = property.getter.call(this)
+    if (value.any()) {
+      val valueList = value.toMutableList()
+      val i = env.generateValue(Generator.integers(0, valueList.lastIndex), null)
+      env.logMessage("Remove item from ${property.name}. Index: $i, Element ${valueList[i]}")
+      valueList.removeAt(i)
+      property.set(this, valueList)
     }
   }
 }

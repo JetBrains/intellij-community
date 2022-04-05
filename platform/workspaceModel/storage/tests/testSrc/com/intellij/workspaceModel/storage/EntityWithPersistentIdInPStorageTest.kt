@@ -6,6 +6,9 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.newentities.addChildEntity
+import com.intellij.workspaceModel.storage.newentities.addParentEntity
+import com.intellij.workspaceModel.storage.newentities.api.XChildEntity
 import org.hamcrest.CoreMatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -76,7 +79,7 @@ class EntityWithPersistentIdInPStorageTest {
     builder.assertConsistency()
     builder.removeEntity(parent)
     builder.assertConsistency()
-    assertEmpty(builder.entities(ChildEntity::class.java).toList())
+    assertEmpty(builder.entities(XChildEntity::class.java).toList())
   }
 
   @Test

@@ -7,7 +7,14 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.newentities.addChildEntity
+import com.intellij.workspaceModel.storage.newentities.addChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.newentities.addParentEntity
+import com.intellij.workspaceModel.storage.newentities.api.XChildEntity
+import com.intellij.workspaceModel.storage.newentities.api.XChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.newentities.api.XParentEntity
 import org.hamcrest.CoreMatchers
+import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -94,18 +101,18 @@ class DiffBuilderTest {
     val child = target.addChildEntity(parent, "child")
     val source = createBuilderFrom(target)
     target.removeEntity(child)
-    source.modifyEntity(ModifiableParentEntity::class.java, parent) {
+    source.modifyEntity(parent) {
       this.parentProperty = "new property"
     }
-    source.modifyEntity(ModifiableChildEntity::class.java, child) {
+    source.modifyEntity(child) {
       this.childProperty = "new property"
     }
 
     val res = target.applyDiff(source) as WorkspaceEntityStorageImpl
     res.assertConsistency()
 
-    assertOneElement(res.entities(ParentEntity::class.java).toList())
-    assertTrue(res.entities(ChildEntity::class.java).toList().isEmpty())
+    assertOneElement(res.entities(XParentEntity::class.java).toList())
+    assertTrue(res.entities(XChildEntity::class.java).toList().isEmpty())
   }
 
   @Test
@@ -206,7 +213,7 @@ class DiffBuilderTest {
     source.addChildEntity(parent)
 
     val target = createBuilderFrom(source)
-    target.modifyEntity(ModifiableParentEntity::class.java, parent) {
+    target.modifyEntity(parent) {
       this.parentProperty = "anotherValue"
     }
     source.addChildEntity(parent)
@@ -234,7 +241,7 @@ class DiffBuilderTest {
     val optionalChild = source.addChildWithOptionalParentEntity(null)
 
     val target = createBuilderFrom(source)
-    target.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, optionalChild) {
+    target.modifyEntity(optionalChild) {
       this.optionalParent = parent
     }
 
@@ -364,7 +371,7 @@ class DiffBuilderTest {
 
     target.addDiff(source)
 
-    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedParent = assertOneElement(target.entities(XParentEntity::class.java).toList())
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
@@ -378,13 +385,13 @@ class DiffBuilderTest {
     val source = createEmptyBuilder()
     val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
     val parent = source.addParentEntity(parentAndChildProperty)
-    source.modifyEntity(ModifiableParentEntity::class.java, parent) {
+    source.modifyEntity(parent) {
       this.optionalChildren = this.optionalChildren + child
     }
 
     target.addDiff(source)
 
-    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedParent = assertOneElement(target.entities(XParentEntity::class.java).toList())
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
@@ -398,13 +405,13 @@ class DiffBuilderTest {
     val source = createEmptyBuilder()
     val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
     val parent = source.addParentEntity(parentAndChildProperty)
-    source.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
+    source.modifyEntity(child) {
       this.optionalParent = parent
     }
 
     target.addDiff(source)
 
-    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedParent = assertOneElement(target.entities(XParentEntity::class.java).toList())
     val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
     assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
   }
@@ -436,20 +443,20 @@ class DiffBuilderTest {
 
     val source = createBuilderFrom(initial)
 
-    source.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, childEntity) {
+    source.modifyEntity(childEntity) {
       this.childProperty = "newProp"
     }
 
-    source.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
-      this.optionalChildren = emptySequence()
+    source.modifyEntity(parentEntity) {
+      this.optionalChildren = emptyList()
     }
 
     source.removeEntity(childEntity)
 
     val res = initial.applyDiff(source)
 
-    assertTrue(res.entities(ChildWithOptionalParentEntity::class.java).toList().isEmpty())
-    val newParent = assertOneElement(res.entities(ParentEntity::class.java).toList())
+    assertTrue(res.entities(XChildWithOptionalParentEntity::class.java).toList().isEmpty())
+    val newParent = assertOneElement(res.entities(XParentEntity::class.java).toList())
     assertTrue(newParent.optionalChildren.toList().isEmpty())
   }
 
@@ -462,14 +469,14 @@ class DiffBuilderTest {
 
     source.addChildWithOptionalParentEntity(parentEntity)
 
-    source.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
-      this.optionalChildren = emptySequence()
+    source.modifyEntity(parentEntity) {
+      this.optionalChildren = emptyList()
     }
 
     val res = initial.applyDiff(source)
 
-    assertEquals(2, res.entities(ChildWithOptionalParentEntity::class.java).toList().size)
-    val newParent = assertOneElement(res.entities(ParentEntity::class.java).toList())
+    assertEquals(2, res.entities(XChildWithOptionalParentEntity::class.java).toList().size)
+    val newParent = assertOneElement(res.entities(XParentEntity::class.java).toList())
     assertTrue(newParent.optionalChildren.toList().isEmpty())
   }
 }

@@ -47,6 +47,14 @@ internal object ClassConversion {
     } as KClass<ModifiableWorkspaceEntity<T>>
   }
 
+  @Suppress("UNCHECKED_CAST")
+  fun <D : WorkspaceEntityData<T>, T : WorkspaceEntity> entityDataToModifiableEntityNew(clazz: KClass<out D>): KClass<ModifiableWorkspaceEntity<T>> {
+    return entityDataToModifiableEntityCache.getOrPut(clazz) {
+      Class.forName(getPackage(clazz) + clazz.java.simpleName.dropLast(4) + "\$Builder", true,
+                    clazz.java.classLoader).kotlin as KClass<ModifiableWorkspaceEntity<T>>
+    } as KClass<ModifiableWorkspaceEntity<T>>
+  }
+
   private fun getPackage(clazz: KClass<*>): String = packageCache.getOrPut(clazz) { clazz.java.name.dropLastWhile { it != '.' } }
 }
 

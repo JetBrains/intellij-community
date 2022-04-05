@@ -42,6 +42,7 @@ class PropertyTest {
   }
 
   @Test
+  @Ignore("Baga in code generation detected")
   fun testAddDiff() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->

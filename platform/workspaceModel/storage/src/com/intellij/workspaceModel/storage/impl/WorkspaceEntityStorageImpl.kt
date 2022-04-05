@@ -91,12 +91,22 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   private fun <E: WorkspaceEntity> isOldApi(entityClass: Class<E>): Boolean {
     val entityData: KClass<WorkspaceEntityData<E>> = ClassConversion.entityToEntityData(entityClass.kotlin)
-    val modifiableEntity: KClass<ModifiableWorkspaceEntity<E>> = ClassConversion.entityDataToModifiableEntity(entityData)
+    val modifiableEntity: KClass<ModifiableWorkspaceEntity<E>> = try {
+      ClassConversion.entityDataToModifiableEntity(entityData)
+    }
+    catch (e: Exception) {
+      return false
+    }
     return !entityClass.isAssignableFrom(modifiableEntity.java)
   }
 
   private fun <E: WorkspaceEntityData<WorkspaceEntity>> isOldApiFromData(entityData: Class<E>): Boolean {
-    val modifiableEntity: KClass<ModifiableWorkspaceEntity<WorkspaceEntity>> = ClassConversion.entityDataToModifiableEntity(entityData.kotlin)
+    val modifiableEntity: KClass<ModifiableWorkspaceEntity<WorkspaceEntity>> = try {
+      ClassConversion.entityDataToModifiableEntity(entityData.kotlin)
+    }
+    catch (e: Exception) {
+      return false
+    }
     val entityClass = ClassConversion.entityDataToEntity(entityData)
     return !entityClass.isAssignableFrom(modifiableEntity.java)
   }
