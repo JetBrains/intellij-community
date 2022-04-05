@@ -8,6 +8,8 @@
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
 
+  <depends optional="true" config-file="settingsSyncWithGit.xml">Git4Idea</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
@@ -44,7 +46,6 @@
       <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
       <action class="com.intellij.settingsSync.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot" icon="AllIcons.General.Settings"/>
-      <action class="com.intellij.settingsSync.SettingsSyncHistoryAction" id="settingsSync.history" icon="AllIcons.Vcs.History"/>
     </group>
 
     <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">
