@@ -3,9 +3,9 @@ package com.intellij.execution
 
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
@@ -23,12 +23,16 @@ class UpdateRCInArbitraryFilesAfterProjectModelChangesTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
+
+  @JvmField
+  @Rule
+  val logging = TestLoggerFactory.createTestWatcher()
   @Test
   fun `add and remove module`() {
-    val file = projectModel.baseProjectDir.newFile("m/a.run.xml", generateRunXmlFileText("a"))
+    val file = projectModel.baseProjectDir.newVirtualFile("m/a.run.xml", generateRunXmlFileText("a"))
     assertThat(runConfigurations).isEmpty()
     val module = projectModel.createModule("m")
-    ModuleRootModificationUtil.addContentRoot(module, file.parentFile.systemIndependentPath)
+    ModuleRootModificationUtil.addContentRoot(module, file.parent.path)
     assertThat(runConfigurations.single().name).isEqualTo("a")
     projectModel.removeModule(module)
     runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
