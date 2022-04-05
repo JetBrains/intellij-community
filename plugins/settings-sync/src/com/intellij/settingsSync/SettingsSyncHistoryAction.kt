@@ -16,7 +16,7 @@ class SettingsSyncHistoryAction : DumbAwareAction() {
       Messages.showErrorDialog(SettingsSyncBundle.message("history.error.message"), SettingsSyncBundle.message("history.dialog.title"))
       return
     }
-    showExternalGitLogInDialog(project, GitVcs.getInstance(project), listOf(virtualFile))
+    showExternalGitLogInDialog(project, GitVcs.getInstance(project), listOf(virtualFile), SettingsSyncBundle.message("history.dialog.title"))
   }
 
   override fun update(e: AnActionEvent) {

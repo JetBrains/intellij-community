@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.ui.WindowWrapperBuilder
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -63,7 +64,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
-      showExternalGitLogInDialog(project, vcs, roots)
+      showExternalGitLogInDialog(project, vcs, roots, GitBundle.message("git.log.external.window.title"))
       return
     }
     val showContent = {
@@ -89,8 +90,8 @@ class GitShowExternalLogAction : DumbAwareAction() {
   }
 }
 
-fun showExternalGitLogInDialog(project: Project, vcs: GitVcs, roots: List<VirtualFile>) {
-  ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs))
+fun showExternalGitLogInDialog(project: Project, vcs: GitVcs, roots: List<VirtualFile>, dialogTitle: @DialogTitle String) {
+  ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs, dialogTitle))
 }
 
 private class MyContentComponent(actualComponent: JComponent,
@@ -102,7 +103,7 @@ private class MyContentComponent(actualComponent: JComponent,
   }
 }
 
-private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
+private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs, @DialogTitle val dialogTitle: String) :
   Backgroundable(project, @Suppress("DialogTitleCapitalization") GitBundle.message("git.log.external.loading.process"), true) {
   override fun run(indicator: ProgressIndicator) {
     if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
@@ -115,7 +116,7 @@ private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>
       val content = createManagerAndContent(project, vcs, roots, false)
       val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
         .setProject(project)
-        .setTitle(GitBundle.message("git.log.external.window.title"))
+        .setTitle(dialogTitle)
         .setPreferredFocusedComponent(content)
         .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
         .build()
