@@ -45,6 +45,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     checkBox(message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
                 }.topGap(TopGap.SMALL)
+
+                kmpWizardLink(context)
             }
         }
 

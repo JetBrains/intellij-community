@@ -6,10 +6,14 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logB
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
-import com.intellij.ide.wizard.util.LinkNewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
@@ -70,20 +74,9 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
 
-    override fun createStep(parent: NewProjectWizardLanguageStep) =
-        CommentStep(parent)
-            .chain(::Step)
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-    class CommentStep(parent: NewProjectWizardLanguageStep) : LinkNewProjectWizardStep(parent), LanguageNewProjectWizardData by parent {
-
-        override val isFullWidth: Boolean = false
-
-        override val builderId: String = NewProjectWizardModuleBuilder.MODULE_BUILDER_ID
-
-        override val comment: String = KotlinBundle.message("project.wizard.new.project.kotlin.comment")
-    }
-
-    class Step(parent: CommentStep) :
+    class Step(parent: NewProjectWizardLanguageStep) :
         AbstractNewProjectWizardMultiStep<Step, BuildSystemKotlinNewProjectWizard>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
         LanguageNewProjectWizardData by parent,
         BuildSystemKotlinNewProjectWizardData {
@@ -104,5 +97,18 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
             buildSystemProperty.afterChange { logBuildSystemChanged() }
         }
+    }
+}
+
+fun Panel.kmpWizardLink(context: WizardContext) {
+    this.row {
+        text(KotlinBundle.message("project.wizard.new.project.kotlin.comment"),
+             action = HyperlinkEventAction {
+                 context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID) { }
+             })
+            .applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
+
+        topGap(TopGap.SMALL)
+        bottomGap(BottomGap.SMALL)
     }
 }
