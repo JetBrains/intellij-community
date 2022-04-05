@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -32,15 +33,23 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getNavigationElement
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper.getOriginalElement
+import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class KotlinFunctionBreakpoint(project: Project, breakpoint: XBreakpoint<*>) : MethodBreakpoint(project, breakpoint) {
+interface SourcePositionRefiner {
+    fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
+}
+
+class KotlinFunctionBreakpoint(project: Project, breakpoint: XBreakpoint<*>) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
     override fun getPsiClass(): PsiClass? {
         val sourcePosition = sourcePosition
         val declaration = PositionUtil.getPsiElementAt(
@@ -52,6 +61,16 @@ class KotlinFunctionBreakpoint(project: Project, breakpoint: XBreakpoint<*>) : M
         return DumbService.getInstance(myProject).runReadActionInSmartMode<KtLightClass?> {
             declaration.toLightClass()
         }
+    }
+
+    override fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition {
+        val declaration = sourcePosition.elementAt.parentOfType<KtDeclaration>(withSelf = true) ?: return sourcePosition
+        if (declaration.isExpectDeclaration()) {
+            val actualDeclaration = declaration.getActualJvmDeclaration() ?: return sourcePosition
+            return SourcePosition.createFromElement(actualDeclaration) ?: sourcePosition
+        }
+
+        return sourcePosition
     }
 
     override fun reload() {
@@ -127,11 +146,7 @@ private fun getMethodDescriptorInReadActionInSmartMode(
 private fun PsiMethod.hasAppropriateKotlinOrigin(sourcePosition: SourcePosition, document: Document): Boolean {
     val kotlinOrigin = this.safeAs<KtLightMethod>()?.getSourceOrigin() ?: return true
     val offset = kotlinOrigin.textOffset
-    if (!DocumentUtil.isValidOffset(offset, document) || document.getLineNumber(offset) < sourcePosition.line) {
-        return false
-    }
-
-    return true
+    return DocumentUtil.isValidOffset(offset, document) && document.getLineNumber(offset) >= sourcePosition.line
 }
 
 private fun PsiMethod.getMethodDescriptor(): MethodDescriptor? =
@@ -160,6 +175,10 @@ private fun KtLightMethod.getSourceOrigin(): KtDeclaration? {
 
 private fun resolveJvmMethodFromKotlinDeclaration(project: Project, sourcePosition: SourcePosition): PsiMethod? {
     var declaration = PositionUtil.getPsiElementAt(project, KtDeclaration::class.java, sourcePosition) ?: return null
+    if (declaration.isExpectDeclaration()) {
+        declaration = declaration.getActualJvmDeclaration() ?: return null
+    }
+
     if (declaration is KtClass) {
         val constructor = declaration.primaryConstructor
         if (constructor == null) {
@@ -172,3 +191,6 @@ private fun resolveJvmMethodFromKotlinDeclaration(project: Project, sourcePositi
     val originalDeclaration = getOriginalElement(declaration)
     return originalDeclaration.toLightElements().firstIsInstanceOrNull()
 }
+
+fun KtDeclaration.getActualJvmDeclaration(): KtDeclaration? =
+    actualsForExpected().firstOrNull { it.platform.isJvm() }

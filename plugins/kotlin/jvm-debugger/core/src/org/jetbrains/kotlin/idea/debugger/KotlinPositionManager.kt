@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
+import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
@@ -466,8 +467,14 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun createKotlinClassPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<ClassPrepareRequest> {
+        val actualPosition =
+            if (requestor is SourcePositionRefiner)
+                requestor.refineSourcePosition(position)
+            else
+                position
         val classNames =
-            DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope).getOuterClassNamesForPosition(position)
+            DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
+                .getOuterClassNamesForPosition(actualPosition)
 
         return classNames.flatMap { name ->
             listOfNotNull(
