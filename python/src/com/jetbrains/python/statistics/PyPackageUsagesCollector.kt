@@ -58,8 +58,7 @@ private fun getPackages(project: Project): Set<MetricEvent> {
 }
 
 class PyPackageUsagesValidationRule : CustomValidationRule() {
-
-  override fun acceptRuleId(ruleId: String?) = "python_packages" == ruleId
+  override fun getRuleId(): String = "python_packages"
 
   override fun doValidate(data: String, context: EventContext) =
     if (PyPIPackageCache.getInstance().containsPackage(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED

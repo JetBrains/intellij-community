@@ -105,11 +105,8 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
 }
 
 class GotItIDValidator : CustomValidationRule() {
+  override fun getRuleId(): String = GotItTooltip.PROPERTY_PREFIX
+
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (GotItUsageCollector.instance.toPrefix(data) == data) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-
-
-  override fun acceptRuleId(ruleId: String?): Boolean {
-    return GotItTooltip.PROPERTY_PREFIX == ruleId
-  }
 }

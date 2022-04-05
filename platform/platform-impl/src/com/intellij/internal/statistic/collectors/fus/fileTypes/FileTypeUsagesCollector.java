@@ -88,9 +88,10 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   }
 
   public static class ValidationRule extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "file_type".equals(ruleId);
+    public String getRuleId() {
+      return "file_type";
     }
 
     @NotNull

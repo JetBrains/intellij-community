@@ -47,11 +47,11 @@ class FeatureSuggesterStatistics : CounterUsagesCollector() {
 }
 
 class FeatureSuggesterIdRuleValidator : CustomValidationRule() {
+  override fun getRuleId(): String = SUGGESTER_ID_VALIDATION_RULE
+
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val suggesterIds = FeatureSuggester.suggesters.filter { getPluginInfo(it::class.java).isDevelopedByJetBrains() }
       .map(FeatureSuggester::id)
     return if (suggesterIds.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
-
-  override fun acceptRuleId(ruleId: String?) = ruleId == SUGGESTER_ID_VALIDATION_RULE
 }

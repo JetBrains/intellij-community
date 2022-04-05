@@ -76,9 +76,10 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
   }
 
   public static class RegistryUtilValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "registry_key".equals(ruleId);
+    public String getRuleId() {
+      return "registry_key";
     }
 
     @NotNull

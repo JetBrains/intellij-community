@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalFileCustomValidationRule extends CustomValidationRule {
   private final AllowedItemsResourceStorageBase storage;
@@ -20,9 +19,10 @@ public abstract class LocalFileCustomValidationRule extends CustomValidationRule
     this.storage = storage;
   }
 
+  @NotNull
   @Override
-  public boolean acceptRuleId(@Nullable String ruleId) {
-    return this.ruleId.equals(ruleId);
+  public String getRuleId() {
+    return ruleId;
   }
 
   private boolean isAllowed(@NotNull String value) {

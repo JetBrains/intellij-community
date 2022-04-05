@@ -211,9 +211,15 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   }
 
   public static class RunConfigurationUtilValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "run_config_id";
+    }
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config_id".equals(ruleId) || "run_config_factory".equals(ruleId);
+      return getRuleId().equals(ruleId) || "run_config_factory".equals(ruleId);
     }
 
     @NotNull

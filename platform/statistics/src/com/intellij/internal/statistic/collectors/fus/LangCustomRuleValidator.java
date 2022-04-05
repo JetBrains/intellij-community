@@ -7,12 +7,12 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class LangCustomRuleValidator extends CustomValidationRule {
+  @NotNull
   @Override
-  public boolean acceptRuleId(@Nullable String ruleId) {
-    return "lang".equals(ruleId);
+  public String getRuleId() {
+    return "lang";
   }
 
   @NotNull

@@ -166,10 +166,11 @@ public final class ToolWindowCollector {
     return null;
   }
 
-  static final class ToolWindowUtilValidator extends CustomValidationRule {
+  public static final class ToolWindowUtilValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "toolwindow".equals(ruleId);
+    public String getRuleId() {
+      return "toolwindow";
     }
 
     @Override

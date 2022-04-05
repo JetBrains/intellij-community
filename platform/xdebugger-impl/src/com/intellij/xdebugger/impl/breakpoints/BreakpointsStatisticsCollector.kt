@@ -108,8 +108,8 @@ fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
 }
 
 class BreakpointsUtilValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean {
-    return "breakpoint" == ruleId
+  override fun getRuleId(): String {
+    return "breakpoint"
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

@@ -8,8 +8,10 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
 class SettingsComponentNameValidator : CustomValidationRule() {
+  override fun getRuleId(): String = "component_name"
+
   override fun acceptRuleId(ruleId: String?): Boolean {
-    return "component_name" == ruleId || "option_name" == ruleId
+    return getRuleId() == ruleId || "option_name" == ruleId
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
@@ -26,7 +28,7 @@ class SettingsComponentNameValidator : CustomValidationRule() {
 }
 
 class SettingsValueValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = "setting_value" == ruleId
+  override fun getRuleId(): String = "setting_value"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     @Suppress("HardCodedStringLiteral")

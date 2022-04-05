@@ -49,9 +49,10 @@ public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
   public static class StatusBarWidgetFactoryValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "status_bar_widget_factory";
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return RULE_ID.equals(ruleId);
+    public String getRuleId() {
+      return RULE_ID;
     }
 
     @NotNull

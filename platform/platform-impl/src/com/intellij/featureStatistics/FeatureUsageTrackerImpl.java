@@ -240,10 +240,15 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   public static class ProductivityUtilValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "productivity";
+    }
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "productivity".equals(ruleId) || "productivity_group".equals(ruleId);
+      return getRuleId().equals(ruleId) || "productivity_group".equals(ruleId);
     }
 
     @NotNull

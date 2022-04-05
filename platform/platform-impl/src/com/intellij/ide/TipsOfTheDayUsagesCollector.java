@@ -73,9 +73,10 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   public static class TipInfoValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "tip_info";
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return RULE_ID.equals(ruleId);
+    public String getRuleId() {
+      return RULE_ID;
     }
 
     @NotNull

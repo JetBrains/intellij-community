@@ -32,9 +32,10 @@ public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
     private static final String ID = "update_dialog_rule_id";
     private static final List<String> JB_DOMAINS = Arrays.asList("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.org", "jb.gg");
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return ID.equals(ruleId);
+    public String getRuleId() {
+      return ID;
     }
 
     @Override

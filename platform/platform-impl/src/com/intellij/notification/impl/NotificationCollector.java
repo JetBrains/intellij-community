@@ -173,9 +173,10 @@ public final class NotificationCollector {
   }
 
   static final class NotificationGroupValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_group".equals(ruleId);
+    public String getRuleId() {
+      return "notification_group";
     }
 
     @Override
@@ -193,9 +194,10 @@ public final class NotificationCollector {
   }
 
   static final class NotificationIdValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_display_id".equals(ruleId);
+    public String getRuleId() {
+      return "notification_display_id";
     }
 
     @Override

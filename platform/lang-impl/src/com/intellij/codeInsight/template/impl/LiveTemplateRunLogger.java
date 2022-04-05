@@ -88,9 +88,15 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
   }
 
   public static class LiveTemplateValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "live_template";
+    }
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "live_template".equals(ruleId) || "live_template_group".equals(ruleId) ;
+      return getRuleId().equals(ruleId) || "live_template_group".equals(ruleId) ;
     }
 
     @NotNull

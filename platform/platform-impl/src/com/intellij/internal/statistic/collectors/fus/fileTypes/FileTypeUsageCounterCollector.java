@@ -200,10 +200,11 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
-  static final class FileTypeSchemaValidator extends CustomValidationRule {
+  public static final class FileTypeSchemaValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "file_type_schema".equals(ruleId);
+    public String getRuleId() {
+      return "file_type_schema";
     }
 
     @NotNull

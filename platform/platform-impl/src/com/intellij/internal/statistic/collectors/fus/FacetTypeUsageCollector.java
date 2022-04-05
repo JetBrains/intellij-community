@@ -54,10 +54,10 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
   }
 
   public static class FacetTypeUtilValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "facets_type".equals(ruleId);
+    public String getRuleId() {
+      return "facets_type";
     }
 
     @NotNull

@@ -118,10 +118,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   }
 
   public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config_executor".equals(ruleId);
+    public String getRuleId() {
+      return "run_config_executor";
     }
 
     @NotNull
@@ -140,9 +140,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   public static class RunTargetValidator extends CustomValidationRule {
     public static final String RULE_ID = "run_target";
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return RULE_ID.equals(ruleId);
+    public String getRuleId() {
+      return RULE_ID;
     }
 
     @NotNull

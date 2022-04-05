@@ -55,10 +55,15 @@ public final class PostfixTemplateLogger extends CounterUsagesCollector {
   }
 
   public static class PostfixTemplateValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "completion_template";
+    }
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "completion_template".equals(ruleId) || "completion_provider_template".equals(ruleId);
+      return getRuleId().equals(ruleId) || "completion_provider_template".equals(ruleId);
     }
 
     @NotNull

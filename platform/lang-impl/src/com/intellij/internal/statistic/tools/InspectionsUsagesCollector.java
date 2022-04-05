@@ -294,10 +294,10 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   }
 
   public static class InspectionToolValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "tool".equals(ruleId);
+    public String getRuleId() {
+      return "tool";
     }
 
     @NotNull

@@ -17,7 +17,6 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -72,9 +71,10 @@ final class RunDashboardUsagesCollector extends ProjectUsagesCollector {
 
 
   public static class RunConfigurationTypeValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config".equals(ruleId);
+    public String getRuleId() {
+      return "run_config";
     }
 
     @NotNull

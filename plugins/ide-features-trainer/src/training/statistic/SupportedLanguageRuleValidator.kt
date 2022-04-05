@@ -8,8 +8,8 @@ import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import training.lang.LangManager
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 
-private class SupportedLanguageRuleValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = (LANGUAGE == ruleId)
+class SupportedLanguageRuleValidator : CustomValidationRule() {
+  override fun getRuleId(): String = LANGUAGE
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val langSupport = LangManager.getInstance().supportedLanguagesExtensions.find {

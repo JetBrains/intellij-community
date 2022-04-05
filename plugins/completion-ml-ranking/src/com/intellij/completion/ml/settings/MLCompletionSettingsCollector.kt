@@ -61,7 +61,7 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
   }
 
   class MLRankingSettingsValidationRule : CustomValidationRule() {
-    override fun acceptRuleId(ruleId: String?): Boolean = ruleId == "ml_completion_ranker_id"
+    override fun getRuleId(): String = "ml_completion_ranker_id"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
       if (ExperimentModelProvider.availableProviders().any { it.id == data }) {

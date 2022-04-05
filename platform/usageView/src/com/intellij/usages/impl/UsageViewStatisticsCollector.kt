@@ -189,5 +189,5 @@ class ScopeRuleValidator : CustomValidationRule() {
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (ScopeIdMapper.standardNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
 
-  override fun acceptRuleId(ruleId: String?): Boolean = ruleId == UsageViewStatisticsCollector.SCOPE_RULE_ID
+  override fun getRuleId(): String = UsageViewStatisticsCollector.SCOPE_RULE_ID
 }
