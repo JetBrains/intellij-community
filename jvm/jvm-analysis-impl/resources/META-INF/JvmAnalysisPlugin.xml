@@ -7,6 +7,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
+    <psi.referenceContributor implementation="com.intellij.codeInspection.test.junit.references.JUnitReferenceContributor"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestOnlyProblems"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -21,32 +22,32 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.rule.display.name"
-                     implementationClass="com.intellij.codeInspection.test.JUnitRuleInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnitRuleInspection"/>
     <localInspection language="JVM" enabledByDefault="true" level="WARNING" shortName="JUnit5MalformedNestedClass"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.nested.test.display.name"
-                     implementationClass="com.intellij.codeInspection.test.JUnit5MalformedNestedClassInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit5MalformedNestedClassInspection"/>
     <localInspection language="JVM" enabledByDefault="true" level="WARNING" shortName="JUnit5MalformedExtensions"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.extensions.display.name"
-                     implementationClass="com.intellij.codeInspection.test.JUnit5MalformedExtensionsInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit5MalformedExtensionsInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="Junit5MalformedParameterized"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.malformed.parameterized.display.name"
-                     implementationClass="com.intellij.codeInspection.test.JUnit5MalformedParameterizedInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit5MalformedParameterizedInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.assertions.converter.display.name"
-                     implementationClass="com.intellij.codeInspection.test.JUnit5AssertionsConverterInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit5AssertionsConverterInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="JUnit5Converter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.converter.display.name"
-                     implementationClass="com.intellij.codeInspection.test.JUnit5ConverterInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit5ConverterInspection"/>
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"

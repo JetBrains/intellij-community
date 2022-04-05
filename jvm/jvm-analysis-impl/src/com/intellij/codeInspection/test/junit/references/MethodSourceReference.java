@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.junit.codeInsight.references;
+package com.intellij.codeInspection.test.junit.references;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLanguageInjectionHost;

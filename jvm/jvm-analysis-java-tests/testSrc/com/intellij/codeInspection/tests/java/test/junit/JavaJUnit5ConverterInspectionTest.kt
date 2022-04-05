@@ -1,4 +1,4 @@
-package com.intellij.codeInspection.tests.java.test
+package com.intellij.codeInspection.tests.java.test.junit
 
 import com.intellij.codeInspection.tests.JUnit5ConverterInspectionTestBase
 import com.intellij.codeInspection.tests.ULanguage

@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.tests.java.test
+package com.intellij.codeInspection.tests.java.test.junit
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.test.JUnit5MalformedNestedClassInspection
+import com.intellij.codeInspection.test.junit.JUnit5MalformedNestedClassInspection
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase

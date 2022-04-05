@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests
 
-import com.intellij.codeInspection.test.JUnitRuleInspection
+import com.intellij.codeInspection.test.junit.JUnitRuleInspection
 
 abstract class JUnitRuleInspectionTestBase : UastInspectionTestBase() {
   override val inspection = JUnitRuleInspection()

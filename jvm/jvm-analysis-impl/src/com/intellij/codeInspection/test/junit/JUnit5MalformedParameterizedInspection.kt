@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.test
+package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.MetaAnnotationUtil
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.test.junit.references.MethodSourceReference
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
@@ -403,7 +404,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
     else {
       processArrayInAnnotationParameter(annotationMemberValue) { attributeValue ->
         for (reference in attributeValue.references) {
-          if (reference is PsiReferenceBase<*>) {
+          if (reference is MethodSourceReference) {
             val resolve = reference.resolve()
             if (resolve !is PsiMethod) {
               highlightAbsentSourceProvider(containingClass, attributeValue, reference.value, method)

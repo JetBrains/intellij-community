@@ -1,7 +1,7 @@
-package com.intellij.codeInspection.tests.kotlin.test
+package com.intellij.codeInspection.tests.kotlin.test.junit
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.test.JUnit5MalformedParameterizedInspection
+import com.intellij.codeInspection.test.junit.JUnit5MalformedParameterizedInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.LightProjectDescriptor

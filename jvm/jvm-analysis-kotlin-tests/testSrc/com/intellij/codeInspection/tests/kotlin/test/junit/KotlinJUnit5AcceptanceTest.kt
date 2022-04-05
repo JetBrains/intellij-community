@@ -1,4 +1,4 @@
-package com.intellij.codeInspection.tests.kotlin.test
+package com.intellij.codeInspection.tests.kotlin.test.junit
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.execution.junit.JUnitConfiguration

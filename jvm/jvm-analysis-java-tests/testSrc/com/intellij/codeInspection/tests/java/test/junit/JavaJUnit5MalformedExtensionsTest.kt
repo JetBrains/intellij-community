@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.tests.java.test
+package com.intellij.codeInspection.tests.java.test.junit
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.test.JUnit5MalformedExtensionsInspection
+import com.intellij.codeInspection.test.junit.JUnit5MalformedExtensionsInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
