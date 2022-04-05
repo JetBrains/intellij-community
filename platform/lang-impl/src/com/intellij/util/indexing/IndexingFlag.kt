@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import org.jetbrains.annotations.ApiStatus
@@ -61,7 +62,7 @@ object IndexingFlag {
 
   @JvmStatic
   fun unlockFile(file: VirtualFile) {
-    if (file is VirtualFileSystemEntry) {
+    if (file is VirtualFileWithId) {
       hashes.releaseHash(file.id)
     }
   }
