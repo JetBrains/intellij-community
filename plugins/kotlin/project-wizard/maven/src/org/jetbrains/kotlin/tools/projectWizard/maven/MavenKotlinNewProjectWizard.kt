@@ -24,13 +24,16 @@ import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
+import org.jetbrains.kotlin.tools.projectWizard.kmpWizardLink
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "Maven"
 
-    override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
+    override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep {
+        return Step(parent).chain(::AssetsStep)
+    }
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
@@ -46,6 +49,8 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
                     checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
                 }.topGap(TopGap.SMALL)
+
+                kmpWizardLink(context)
             }
         }
 

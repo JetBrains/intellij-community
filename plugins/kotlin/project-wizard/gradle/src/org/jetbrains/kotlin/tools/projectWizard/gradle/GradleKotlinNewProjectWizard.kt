@@ -24,6 +24,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
+import org.jetbrains.kotlin.tools.projectWizard.kmpWizardLink
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleGroovyDsl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
@@ -52,6 +53,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
                 }.topGap(TopGap.SMALL)
+
+                kmpWizardLink(context)
             }
         }
 
