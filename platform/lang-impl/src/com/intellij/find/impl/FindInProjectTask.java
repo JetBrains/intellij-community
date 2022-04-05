@@ -150,8 +150,8 @@ final class FindInProjectTask {
       ConcurrentLinkedDeque<VirtualFile> deque = new ConcurrentLinkedDeque<>(
         ContainerUtil.sorted(filesForFastWordSearch, SEARCH_RESULT_FILE_COMPARATOR));
       AtomicInteger processedFastFiles = new AtomicInteger();
-      FilesScanExecutor.processDequeOnAllThreads(deque, o -> {
-        boolean result = ReadAction.nonBlocking(() -> fileProcessor.process(o)).executeSynchronously();
+      FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(deque, o -> {
+        boolean result = fileProcessor.process(o);
         if (myProgress.isRunning()) {
           double fraction = (double)processedFastFiles.incrementAndGet() / filesForFastWordSearch.size();
           myProgress.setFraction(fraction);
@@ -401,10 +401,7 @@ final class FindInProjectTask {
       }
       return true;
     };
-    FilesScanExecutor.processDequeOnAllThreads(deque, o ->
-      ReadAction.nonBlocking(() -> consumer.process(o))
-        .expireWith(myProject)
-        .executeSynchronously());
+    FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(deque, consumer);
   }
 
   private boolean canRelyOnSearchers() {
