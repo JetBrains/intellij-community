@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
@@ -8,7 +8,6 @@ import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-public class JsonSingleFileInspectionsReportConverter extends JsonInspectionsReportConverter {
+public final class JsonSingleFileInspectionsReportConverter extends JsonInspectionsReportConverter {
   @Override
   public String getFormatName() {
     return "json-single-file";
@@ -49,7 +47,7 @@ public class JsonSingleFileInspectionsReportConverter extends JsonInspectionsRep
         File patches = ContainerUtil.find(inspectionsResults,
                                           (file) -> FileUtil.getNameWithoutExtension(file).equals("fixes"));
         if (patches != null) {
-          Element patchesElement = JDOMUtil.loadDocument(patches).getRootElement();
+          Element patchesElement = JDOMUtil.load(patches);
           jsonWriter.name("patch").value(patchesElement.getTextTrim());
           jsonWriter.name("patchedFiles");
           jsonWriter.beginArray();
@@ -70,8 +68,8 @@ public class JsonSingleFileInspectionsReportConverter extends JsonInspectionsRep
         for (File result : inspectionsResults) {
           if (!FileUtil.getNameWithoutExtension(result).equals(InspectionsResultUtil.DESCRIPTIONS)) {
             seenProblemIds.add(FileUtil.getNameWithoutExtension(result));
-            Document doc = JDOMUtil.loadDocument(result);
-            for (Element problem : doc.getRootElement().getChildren(PROBLEM)) {
+            var element = JDOMUtil.load(result);
+            for (Element problem : element.getChildren(PROBLEM)) {
               convertProblem(jsonWriter, problem);
             }
           }
@@ -81,7 +79,7 @@ public class JsonSingleFileInspectionsReportConverter extends JsonInspectionsRep
         File descriptionsFile = ContainerUtil.find(inspectionsResults,
                                                    (file) -> FileUtil.getNameWithoutExtension(file).equals(InspectionsResultUtil.DESCRIPTIONS));
         if (descriptionsFile != null) {
-          convertDescriptionsContents(jsonWriter, JDOMUtil.loadDocument(descriptionsFile), (id) -> seenProblemIds.contains(id));
+          convertDescriptionsContents(jsonWriter, JDOMUtil.load(descriptionsFile), (id) -> seenProblemIds.contains(id));
         }
 
         jsonWriter.endObject();

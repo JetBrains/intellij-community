@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
@@ -209,9 +208,9 @@ public final class JDOMUtil {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
-  private static @NotNull Document loadDocumentUsingStaX(@NotNull Reader reader) throws JDOMException, IOException {
+  private static @NotNull Document loadDocumentUsingStaX(@NotNull InputStream stream) throws JDOMException, IOException {
     try {
-      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(reader);
+      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream);
       try {
         return SafeStAXStreamBuilder.buildDocument(xmlStreamReader);
       }
@@ -223,7 +222,7 @@ public final class JDOMUtil {
       throw new JDOMException(e.getMessage(), e);
     }
     finally {
-      reader.close();
+      stream.close();
     }
   }
 
@@ -247,18 +246,11 @@ public final class JDOMUtil {
   }
 
   /**
-   * @deprecated Use {@link #load(CharSequence)}
-   * <p>
-   * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
+   * @deprecated Use {@link #load(Path)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
-    return loadDocumentUsingStaX(reader);
-  }
-
   public static @NotNull Document loadDocument(@NotNull File file) throws JDOMException, IOException {
-    return loadDocumentUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file))), StandardCharsets.UTF_8));
+    return loadDocumentUsingStaX(new FileInputStream(file));
   }
 
   public static @NotNull Element load(@NotNull File file) throws JDOMException, IOException {
@@ -274,9 +266,6 @@ public final class JDOMUtil {
     }
   }
 
-  /**
-   * Internal use only.
-   */
   @ApiStatus.Internal
   public static @NotNull Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new FileInputStream(file), factory);
@@ -299,7 +288,7 @@ public final class JDOMUtil {
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    return loadDocumentUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    return loadDocumentUsingStaX(stream);
   }
 
   @Contract("null -> null; !null -> !null")
@@ -356,13 +345,13 @@ public final class JDOMUtil {
   }
 
   /**
-   * @deprecated Use {@link #load(CharSequence)}
+   * @deprecated Use {@link #load(InputStream)}
    * <p>
    * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull URL url) throws JDOMException, IOException {
-    return loadDocument(URLUtil.openStream(url));
+    return loadDocumentUsingStaX(URLUtil.openStream(url));
   }
 
   public static @NotNull Element load(@NotNull URL url) throws JDOMException, IOException {

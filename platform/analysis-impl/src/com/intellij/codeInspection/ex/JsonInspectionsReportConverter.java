@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
@@ -7,12 +7,11 @@ import com.google.gson.stream.JsonWriter;
 import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,24 +90,23 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
       throw new ConversionException("Cannot create dirs in output path: " + outputPath + " error: " + e.getMessage());
     }
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    SAXBuilder builder = new SAXBuilder();
     for (File inspectionDataFile : inspectionsResults) {
       String fileNameWithoutExt = FileUtil.getNameWithoutExtension(inspectionDataFile);
       File jsonFile = new File(outputPath, fileNameWithoutExt + JSON_EXTENSION);
       try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), StandardCharsets.UTF_8);
            JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
-        Document doc = builder.build(inspectionDataFile);
+        Element element = JDOMUtil.load(inspectionDataFile);
         if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {
-          convertDescriptions(jsonWriter, doc);
+          convertDescriptions(jsonWriter, element);
         }
         else if (DUPLICATED_CODE_AGGREGATE.equals(fileNameWithoutExt)) {
-          convertDuplicatedCode(jsonWriter, doc);
+          convertDuplicatedCode(jsonWriter, element);
         }
         else if (PHP_VULNERABLE_PATHS_AGGREGATE.equals(fileNameWithoutExt)) {
-          convertPhpVulnerablePaths(jsonWriter, doc);
+          convertPhpVulnerablePaths(jsonWriter, element);
         }
         else {
-          convertProblems(jsonWriter, doc);
+          convertProblems(jsonWriter, element);
         }
       }
       catch (IOException | JDOMException e) {
@@ -117,11 +115,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     }
   }
 
-  private static void convertDuplicatedCode(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
+  private static void convertDuplicatedCode(@NotNull JsonWriter jsonWriter, @NotNull Element problems) throws IOException {
     jsonWriter.beginObject();
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
-    for (Element duplicates : problems.getRootElement().getChildren("duplicate")) {
+    for (Element duplicates : problems.getChildren("duplicate")) {
       convertDuplicates(jsonWriter, duplicates);
     }
     jsonWriter.endArray();
@@ -163,11 +161,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.name("end").value(Integer.parseInt(end));
   }
 
-  public static void convertPhpVulnerablePaths(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
+  public static void convertPhpVulnerablePaths(@NotNull JsonWriter jsonWriter, @NotNull Element problems) throws IOException {
     jsonWriter.beginObject();
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
-    for (Element problem : problems.getRootElement().getChildren(PROBLEM)) {
+    for (Element problem : problems.getChildren(PROBLEM)) {
       convertPhpVulnerablePath(jsonWriter, problem);
     }
     jsonWriter.endArray();
@@ -324,11 +322,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
                              vulnerability -> vulnerability.getAttributeValue("name"));
   }
 
-  private static void convertProblems(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
+  private static void convertProblems(@NotNull JsonWriter jsonWriter, @NotNull Element problems) throws IOException {
     jsonWriter.beginObject();
     jsonWriter.name(PROBLEMS);
     jsonWriter.beginArray();
-    for (Element problem : problems.getRootElement().getChildren(PROBLEM)) {
+    for (Element problem : problems.getChildren(PROBLEM)) {
       convertProblem(jsonWriter, problem);
     }
     jsonWriter.endArray();
@@ -408,16 +406,15 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     writer.endArray();
   }
 
-  private static void convertDescriptions(@NotNull JsonWriter writer, @NotNull Document descriptions) throws IOException {
+  private static void convertDescriptions(@NotNull JsonWriter writer, @NotNull Element descriptions) throws IOException {
     writer.beginObject();
     convertDescriptionsContents(writer, descriptions, null);
     writer.endObject();
   }
 
   protected static void convertDescriptionsContents(@NotNull JsonWriter writer,
-                                                    @NotNull Document descriptions,
+                                                    @NotNull Element inspectionsElement,
                                                     @Nullable Predicate<? super String> inspectionFilter) throws IOException {
-    Element inspectionsElement = descriptions.getRootElement();
     writer.name(InspectionsResultUtil.PROFILE).value(inspectionsElement.getAttributeValue(InspectionsResultUtil.PROFILE));
     writer.name(GROUPS);
     writer.beginArray();
