@@ -1706,11 +1706,19 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean endsWith(@NotNull CharSequence text, int start, int end, @NotNull CharSequence suffix) {
+    if (start < 0 || end > text.length()) {
+      throw new IllegalArgumentException("invalid offsets: start="+start+"; end="+end+"; text.length()="+text.length());
+    }
     int suffixLen = suffix.length();
-    if (end < suffixLen) return false;
+    int delta = end - suffixLen;
+    if (delta < start) {
+      return false;
+    }
 
-    for (int i = end - 1; i >= end - suffixLen && i >= start; i--) {
-      if (text.charAt(i) != suffix.charAt(i + suffixLen - end)) return false;
+    for (int i = 0; i < suffixLen; i++) {
+      if (text.charAt(delta + i) != suffix.charAt(i)) {
+        return false;
+      }
     }
 
     return true;
