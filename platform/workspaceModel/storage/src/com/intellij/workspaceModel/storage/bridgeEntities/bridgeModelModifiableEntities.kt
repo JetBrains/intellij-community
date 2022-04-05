@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.ModuleDependencyEntityDataDelegation
@@ -20,13 +20,13 @@ private val LOG = logger<WorkspaceEntityStorage>()
 
 class ModifiableModuleEntity : ModifiableWorkspaceEntityBase<ModuleEntity>() {
   internal var dependencyChanged = false
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var type: String? by EntityDataDelegation()
   var dependencies: List<ModuleDependencyItem> by ModuleDependencyEntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource,
-                                                      type: String? = null): ModuleEntity {
+fun WorkspaceEntityStorageBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource,
+                                                  type: String? = null): ModuleEntity {
   LOG.debug { "Add moduleEntity: $name" }
   return addEntity(ModifiableModuleEntity::class.java, source) {
     this.name = name
@@ -45,7 +45,7 @@ class ModifiableJavaModuleSettingsEntity : ModifiableWorkspaceEntityBase<JavaMod
   var module: ModuleEntity by MutableOneToOneChild.NotNull(JavaModuleSettingsEntity::class.java, ModuleEntity::class.java)
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
+fun WorkspaceEntityStorageBuilder.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
                                                                   excludeOutput: Boolean,
                                                                   compilerOutput: VirtualFileUrl?,
                                                                   compilerOutputForTests: VirtualFileUrl?,
@@ -65,9 +65,12 @@ class ModifiableModuleCustomImlDataEntity : ModifiableWorkspaceEntityBase<Module
   var rootManagerTagCustomData: String? by EntityDataDelegation()
   var customModuleOptions: MutableMap<String, String> by EntityDataDelegation()
   var module: ModuleEntity by MutableOneToOneChild.NotNull(ModuleCustomImlDataEntity::class.java, ModuleEntity::class.java)
+  override fun getEntityClass(): Class<ModuleCustomImlDataEntity> {
+    return ModuleCustomImlDataEntity::class.java
+  }
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String?,
+fun WorkspaceEntityStorageBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String?,
                                                                    customModuleOptions: Map<String, String>,
                                                                    module: ModuleEntity,
                                                                    source: EntitySource) = addEntity(
@@ -80,9 +83,12 @@ fun WorkspaceEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTa
 class ModifiableModuleGroupPathEntity : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity>() {
   var path: List<String> by EntityDataDelegation()
   var module: ModuleEntity by MutableOneToOneChild.NotNull(ModuleGroupPathEntity::class.java, ModuleEntity::class.java)
+  override fun getEntityClass(): Class<ModuleGroupPathEntity> {
+    return ModuleGroupPathEntity::class.java
+  }
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String>,
+fun WorkspaceEntityStorageBuilder.addModuleGroupPathEntity(path: List<String>,
                                                                module: ModuleEntity, source: EntitySource) = addEntity(
   ModifiableModuleGroupPathEntity::class.java, source) {
   this.path = path
@@ -95,7 +101,7 @@ class ModifiableSourceRootEntity : ModifiableWorkspaceEntityBase<SourceRootEntit
   var rootType: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addSourceRootEntity(contentRoot: ContentRootEntity,
+fun WorkspaceEntityStorageBuilder.addSourceRootEntity(contentRoot: ContentRootEntity,
                                                           url: VirtualFileUrl,
                                                           rootType: String, source: EntitySource) = addEntity(
   ModifiableSourceRootEntity::class.java, source) {
@@ -108,6 +114,9 @@ class ModifiableJavaSourceRootEntity : ModifiableWorkspaceEntityBase<JavaSourceR
   var sourceRoot: SourceRootEntity by MutableManyToOne.NotNull(JavaSourceRootEntity::class.java, SourceRootEntity::class.java)
   var generated: Boolean by EntityDataDelegation()
   var packagePrefix: String by EntityDataDelegation()
+  override fun getEntityClass(): Class<JavaSourceRootEntity> {
+    return JavaSourceRootEntity::class.java
+  }
 }
 
 /**
@@ -115,7 +124,7 @@ class ModifiableJavaSourceRootEntity : ModifiableWorkspaceEntityBase<JavaSourceR
  * [JavaSourceRootEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
  *   entities.
  */
-fun WorkspaceEntityStorageDiffBuilder.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
+fun WorkspaceEntityStorageBuilder.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                               generated: Boolean,
                                                               packagePrefix: String) = addEntity(
   ModifiableJavaSourceRootEntity::class.java, sourceRoot.entitySource) {
@@ -128,9 +137,12 @@ class ModifiableJavaResourceRootEntity : ModifiableWorkspaceEntityBase<JavaResou
   var sourceRoot: SourceRootEntity by MutableManyToOne.NotNull(JavaResourceRootEntity::class.java, SourceRootEntity::class.java)
   var generated: Boolean by EntityDataDelegation()
   var relativeOutputPath: String by EntityDataDelegation()
+  override fun getEntityClass(): Class<JavaResourceRootEntity> {
+    return JavaResourceRootEntity::class.java
+  }
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
+fun WorkspaceEntityStorageBuilder.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                                 generated: Boolean,
                                                                 relativeOutputPath: String) = addEntity(
   ModifiableJavaResourceRootEntity::class.java, sourceRoot.entitySource) {
@@ -142,9 +154,12 @@ fun WorkspaceEntityStorageDiffBuilder.addJavaResourceRootEntity(sourceRoot: Sour
 class ModifiableCustomSourceRootPropertiesEntity : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>() {
   var sourceRoot: SourceRootEntity by MutableManyToOne.NotNull(CustomSourceRootPropertiesEntity::class.java, SourceRootEntity::class.java)
   var propertiesXmlTag: String by EntityDataDelegation()
+  override fun getEntityClass(): Class<CustomSourceRootPropertiesEntity> {
+    return CustomSourceRootPropertiesEntity::class.java
+  }
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity, propertiesXmlTag: String) = addEntity(
+fun WorkspaceEntityStorageBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity, propertiesXmlTag: String) = addEntity(
   ModifiableCustomSourceRootPropertiesEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.propertiesXmlTag = propertiesXmlTag
@@ -155,9 +170,12 @@ class ModifiableContentRootEntity : ModifiableWorkspaceEntityBase<ContentRootEnt
   var excludedUrls: List<VirtualFileUrl> by VirtualFileUrlListProperty()
   var excludedPatterns: List<String> by EntityDataDelegation()
   var module: ModuleEntity by MutableManyToOne.NotNull(ContentRootEntity::class.java, ModuleEntity::class.java)
+  override fun getEntityClass(): Class<ContentRootEntity> {
+    return ContentRootEntity::class.java
+  }
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
+fun WorkspaceEntityStorageBuilder.addContentRootEntity(url: VirtualFileUrl,
                                                            excludedUrls: List<VirtualFileUrl>,
                                                            excludedPatterns: List<String>,
                                                            module: ModuleEntity): ContentRootEntity {
@@ -168,7 +186,7 @@ fun WorkspaceEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
  * Entity source of content root is *almost* the same as the entity source of the corresponding module.
  * Please update assertConsistency in [ContentRootEntityData] if you're using this method.
  */
-fun WorkspaceEntityStorageDiffBuilder.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
+fun WorkspaceEntityStorageBuilder.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
                                                                                  excludedUrls: List<VirtualFileUrl>,
                                                                                  excludedPatterns: List<String>,
                                                                                  module: ModuleEntity, source: EntitySource) = addEntity(
@@ -181,12 +199,12 @@ fun WorkspaceEntityStorageDiffBuilder.addContentRootEntityWithCustomEntitySource
 
 class ModifiableLibraryEntity : ModifiableWorkspaceEntityBase<LibraryEntity>() {
   var tableId: LibraryTableId by EntityDataDelegation()
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var roots: List<LibraryRoot> by VirtualFileUrlLibraryRootProperty()
   var excludedRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
+fun WorkspaceEntityStorageBuilder.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                                        excludedRoots: List<VirtualFileUrl>, source: EntitySource) = addEntity(
   ModifiableLibraryEntity::class.java, source) {
   this.tableId = tableId
@@ -206,7 +224,7 @@ class ModifiableLibraryPropertiesEntity : ModifiableWorkspaceEntityBase<LibraryP
  * [LibraryPropertiesEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
  *   entities.
  */
-fun WorkspaceEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: LibraryEntity,
+fun WorkspaceEntityStorageBuilder.addLibraryPropertiesEntity(library: LibraryEntity,
                                                                  libraryType: String,
                                                                  propertiesXmlTag: String?) = addEntity(
   ModifiableLibraryPropertiesEntity::class.java, library.entitySource) {
@@ -220,7 +238,7 @@ class ModifiableSdkEntity : ModifiableWorkspaceEntityBase<SdkEntity>() {
   var homeUrl: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
+fun WorkspaceEntityStorageBuilder.addSdkEntity(library: LibraryEntity,
                                                    homeUrl: VirtualFileUrl, source: EntitySource) = addEntity(ModifiableSdkEntity::class.java,
                                                                                                               source) {
   this.library = library
@@ -240,14 +258,14 @@ class ModifiableExternalSystemModuleOptionsEntity : ModifiableWorkspaceEntityBas
   var externalSystemModuleType: String? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.getOrCreateExternalSystemModuleOptions(module: ModuleEntity,
+fun WorkspaceEntityStorageBuilder.getOrCreateExternalSystemModuleOptions(module: ModuleEntity,
                                                                              source: EntitySource): ExternalSystemModuleOptionsEntity =
   module.externalSystemOptions ?: addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, source) {
     this.module = module
   }
 
 class ModifiableFacetEntity : ModifiableWorkspaceEntityBase<FacetEntity>() {
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var facetType: String by EntityDataDelegation()
   var configurationXmlTag: String? by EntityDataDelegation()
   var moduleId: ModuleId by EntityDataDelegation()
@@ -256,7 +274,7 @@ class ModifiableFacetEntity : ModifiableWorkspaceEntityBase<FacetEntity>() {
   var underlyingFacet: FacetEntity? by MutableManyToOne.Nullable(FacetEntity::class.java, FacetEntity::class.java)
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: String, configurationXmlTag: String?, module: ModuleEntity,
+fun WorkspaceEntityStorageBuilder.addFacetEntity(name: String, facetType: String, configurationXmlTag: String?, module: ModuleEntity,
                                                      underlyingFacet: FacetEntity?, source: EntitySource) =
   addEntity(ModifiableFacetEntity::class.java, source) {
     this.name = name
@@ -264,11 +282,11 @@ fun WorkspaceEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: St
     this.configurationXmlTag = configurationXmlTag
     this.module = module
     this.underlyingFacet = underlyingFacet
-    this.moduleId = module.persistentId()
+    this.moduleId = module.persistentId
   }
 
 class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>() {
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var artifactType: String by EntityDataDelegation()
   var includeInProjectBuild: Boolean by EntityDataDelegation()
   var outputUrl: VirtualFileUrl? by VirtualFileUrlNullableProperty()
@@ -281,7 +299,7 @@ class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>()
   }
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addArtifactEntity(name: String,
+fun WorkspaceEntityStorageBuilder.addArtifactEntity(name: String,
                                                         artifactType: String,
                                                         includeInProjectBuild: Boolean,
                                                         outputUrl: VirtualFileUrl?,
@@ -302,7 +320,7 @@ class ModifiableArtifactPropertiesEntity : ModifiableWorkspaceEntityBase<Artifac
   var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addArtifactPropertiesEntity(artifact: ArtifactEntity,
+fun WorkspaceEntityStorageBuilder.addArtifactPropertiesEntity(artifact: ArtifactEntity,
                                                                   providerType: String,
                                                                   propertiesXmlTag: String?,
                                                                   source: EntitySource): ArtifactPropertiesEntity {
@@ -321,7 +339,7 @@ class ModifiableArtifactRootElementEntity : ModifiableCompositePackagingElementE
   ArtifactRootElementEntity::class.java
 )
 
-fun WorkspaceEntityStorageDiffBuilder.addArtifactRootElementEntity(children: List<PackagingElementEntity>,
+fun WorkspaceEntityStorageBuilder.addArtifactRootElementEntity(children: List<PackagingElementEntity>,
                                                                    source: EntitySource): ArtifactRootElementEntity {
   return addEntity(ModifiableArtifactRootElementEntity::class.java, source) {
     this.children = children.asSequence()
@@ -333,7 +351,7 @@ class ModifiableDirectoryPackagingElementEntity : ModifiableCompositePackagingEl
   var directoryName: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addDirectoryPackagingElementEntity(directoryName: String,
+fun WorkspaceEntityStorageBuilder.addDirectoryPackagingElementEntity(directoryName: String,
                                                                          children: List<PackagingElementEntity>,
                                                                          source: EntitySource): DirectoryPackagingElementEntity {
   return addEntity(ModifiableDirectoryPackagingElementEntity::class.java, source) {
@@ -347,7 +365,7 @@ class ModifiableArchivePackagingElementEntity : ModifiableCompositePackagingElem
   var fileName: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addArchivePackagingElementEntity(fileName: String,
+fun WorkspaceEntityStorageBuilder.addArchivePackagingElementEntity(fileName: String,
                                                                        children: List<PackagingElementEntity>,
                                                                        source: EntitySource): ArchivePackagingElementEntity {
   return addEntity(ModifiableArchivePackagingElementEntity::class.java, source) {
@@ -360,7 +378,7 @@ class ModifiableArtifactOutputPackagingElementEntity : ModifiableWorkspaceEntity
   var artifact: ArtifactId? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addArtifactOutputPackagingElementEntity(artifact: ArtifactId?, source: EntitySource): ArtifactOutputPackagingElementEntity {
+fun WorkspaceEntityStorageBuilder.addArtifactOutputPackagingElementEntity(artifact: ArtifactId?, source: EntitySource): ArtifactOutputPackagingElementEntity {
   return addEntity(ModifiableArtifactOutputPackagingElementEntity::class.java, source) {
     this.artifact = artifact
   }
@@ -370,7 +388,7 @@ class ModifiableModuleOutputPackagingElementEntity : ModifiableWorkspaceEntityBa
   var module: ModuleId? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addModuleOutputPackagingElementEntity(module: ModuleId?, source: EntitySource): ModuleOutputPackagingElementEntity {
+fun WorkspaceEntityStorageBuilder.addModuleOutputPackagingElementEntity(module: ModuleId?, source: EntitySource): ModuleOutputPackagingElementEntity {
   return addEntity(ModifiableModuleOutputPackagingElementEntity::class.java, source) {
     this.module = module
   }
@@ -380,7 +398,7 @@ class ModifiableLibraryFilesPackagingElementEntity : ModifiableWorkspaceEntityBa
   var library: LibraryId? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addLibraryFilesPackagingElementEntity(library: LibraryId?, source: EntitySource): LibraryFilesPackagingElementEntity {
+fun WorkspaceEntityStorageBuilder.addLibraryFilesPackagingElementEntity(library: LibraryId?, source: EntitySource): LibraryFilesPackagingElementEntity {
   return addEntity(ModifiableLibraryFilesPackagingElementEntity::class.java, source) {
     this.library = library
   }
@@ -390,7 +408,7 @@ class ModifiableModuleSourcePackagingElementEntity : ModifiableWorkspaceEntityBa
   var module: ModuleId? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addModuleSourcePackagingElementEntity(module: ModuleId?, source: EntitySource): ModuleSourcePackagingElementEntity {
+fun WorkspaceEntityStorageBuilder.addModuleSourcePackagingElementEntity(module: ModuleId?, source: EntitySource): ModuleSourcePackagingElementEntity {
   return addEntity(ModifiableModuleSourcePackagingElementEntity::class.java, source) {
     this.module = module
   }
@@ -400,7 +418,7 @@ class ModifiableModuleTestOutputPackagingElementEntity : ModifiableWorkspaceEnti
   var module: ModuleId? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addModuleTestOutputPackagingElementEntity(module: ModuleId?, source: EntitySource): ModuleTestOutputPackagingElementEntity {
+fun WorkspaceEntityStorageBuilder.addModuleTestOutputPackagingElementEntity(module: ModuleId?, source: EntitySource): ModuleTestOutputPackagingElementEntity {
   return addEntity(ModifiableModuleTestOutputPackagingElementEntity::class.java, source) {
     this.module = module
   }
@@ -412,7 +430,7 @@ abstract class ModifiableFileOrDirectoryPackagingElement<T : FileOrDirectoryPack
 
 class ModifiableDirectoryCopyPackagingElementEntity : ModifiableFileOrDirectoryPackagingElement<DirectoryCopyPackagingElementEntity>()
 
-fun WorkspaceEntityStorageDiffBuilder.addDirectoryCopyPackagingElementEntity(filePath: VirtualFileUrl, source: EntitySource): DirectoryCopyPackagingElementEntity {
+fun WorkspaceEntityStorageBuilder.addDirectoryCopyPackagingElementEntity(filePath: VirtualFileUrl, source: EntitySource): DirectoryCopyPackagingElementEntity {
   return addEntity(ModifiableDirectoryCopyPackagingElementEntity::class.java, source) {
     this.filePath = filePath
   }
@@ -422,7 +440,7 @@ class ModifiableExtractedDirectoryPackagingElementEntity : ModifiableFileOrDirec
   var pathInArchive: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addExtractedDirectoryPackagingElementEntity(filePath: VirtualFileUrl,
+fun WorkspaceEntityStorageBuilder.addExtractedDirectoryPackagingElementEntity(filePath: VirtualFileUrl,
                                                                                   pathInArchive: String,
                                                                                   source: EntitySource): ExtractedDirectoryPackagingElementEntity {
   return addEntity(ModifiableExtractedDirectoryPackagingElementEntity::class.java, source) {
@@ -435,7 +453,7 @@ class ModifiableFileCopyPackagingElementEntity : ModifiableFileOrDirectoryPackag
   var renamedOutputFileName: String? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addFileCopyPackagingElementEntity(filePath: VirtualFileUrl,
+fun WorkspaceEntityStorageBuilder.addFileCopyPackagingElementEntity(filePath: VirtualFileUrl,
                                                                         renamedOutputFileName: String?,
                                                                         source: EntitySource): FileCopyPackagingElementEntity {
   return addEntity(ModifiableFileCopyPackagingElementEntity::class.java, source) {
@@ -449,7 +467,7 @@ class ModifiableCustomPackagingElementEntity : ModifiableCompositePackagingEleme
   var propertiesXmlTag: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addCustomPackagingElementEntity(typeId: String,
+fun WorkspaceEntityStorageBuilder.addCustomPackagingElementEntity(typeId: String,
                                                                       propertiesXmlTag: String,
                                                                       children: List<PackagingElementEntity>,
                                                                       source: EntitySource): CustomPackagingElementEntity {

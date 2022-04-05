@@ -27,7 +27,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jdom.Element
@@ -46,7 +45,7 @@ class LibraryBridgeImpl(
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  private var targetBuilder: WorkspaceEntityStorageDiffBuilder?
+  private var targetBuilder: WorkspaceEntityStorageBuilder?
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module

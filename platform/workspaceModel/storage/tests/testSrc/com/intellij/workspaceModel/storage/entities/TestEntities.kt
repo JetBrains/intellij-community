@@ -68,7 +68,7 @@ class MyConcreteImpl(myData: MyContainer) : MyData(myData) {
 
 data class MyContainer(val info: String)
 
-fun WorkspaceEntityStorageDiffBuilder.addSampleEntity(stringProperty: String,
+fun WorkspaceEntityStorageBuilder.addSampleEntity(stringProperty: String,
                                                       source: EntitySource = SampleEntitySource("test"),
                                                       booleanProperty: Boolean = false,
                                                       stringListProperty: MutableList<String> = ArrayList(),
@@ -136,12 +136,12 @@ class ChildSourceEntityData : WorkspaceEntityData<ChildSourceEntity>() {
 }
 
 class ChildSourceEntity(val data: String) : WorkspaceEntityBase() {
-  val parent: SourceEntity by ManyToOne.NotNull(SourceEntity::class.java)
+  override val parent: SourceEntity by ManyToOne.NotNull(SourceEntity::class.java)
 }
 
 class ModifiableChildSourceEntity : ModifiableWorkspaceEntityBase<ChildSourceEntity>() {
   var data: String by EntityDataDelegation()
-  var parent: SourceEntity by MutableManyToOne.NotNull(ChildSourceEntity::class.java, SourceEntity::class.java)
+  override var parent: SourceEntity by MutableManyToOne.NotNull(ChildSourceEntity::class.java, SourceEntity::class.java)
 }
 
 // ---------------------------------------
@@ -156,12 +156,12 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
 class ChildSampleEntity(
   val data: String
 ) : WorkspaceEntityBase() {
-  val parent: SampleEntity? by ManyToOne.Nullable(SampleEntity::class.java)
+  override val parent: SampleEntity? by ManyToOne.Nullable(SampleEntity::class.java)
 }
 
 class ModifiableChildSampleEntity : ModifiableWorkspaceEntityBase<ChildSampleEntity>() {
   var data: String by EntityDataDelegation()
-  var parent: SampleEntity? by MutableManyToOne.Nullable(ChildSampleEntity::class.java, SampleEntity::class.java)
+  override var parent: SampleEntity? by MutableManyToOne.Nullable(ChildSampleEntity::class.java, SampleEntity::class.java)
 }
 
 fun WorkspaceEntityStorageBuilder.addChildSampleEntity(stringProperty: String,
@@ -183,7 +183,7 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
 }
 
 class PersistentIdEntity(val data: String) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  override fun persistentId(): LinkedListEntityId = LinkedListEntityId(data)
+  override val persistentId: LinkedListEntityId = LinkedListEntityId(data)
 }
 
 class ModifiablePersistentIdEntity : ModifiableWorkspaceEntityBase<PersistentIdEntity>() {

@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -70,7 +70,7 @@ class ModifiableEclipseProjectPropertiesEntity : ModifiableWorkspaceEntityBase<E
   var module: ModuleEntity by MutableOneToOneChild.NotNull(EclipseProjectPropertiesEntity::class.java, ModuleEntity::class.java)
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addEclipseProjectPropertiesEntity(module: ModuleEntity, source: EntitySource)
+fun WorkspaceEntityStorageBuilder.addEclipseProjectPropertiesEntity(module: ModuleEntity, source: EntitySource)
   = addEntity(ModifiableEclipseProjectPropertiesEntity::class.java, source) {
   this.module = module
   variablePaths = LinkedHashMap()

@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImp
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.annotations.Open
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -76,23 +76,19 @@ import kotlin.reflect.KProperty1
  * entityAOne != entityATwo
  * ```
  */
-interface WorkspaceEntity {
+
+@Open interface WorkspaceEntity : Obj {
   val entitySource: EntitySource
 
-  /**
-   * Returns `true` if this entity and [e] have the same type and the same properties. Properties of type [WorkspaceEntity] are compared by
-   * internal IDs of the corresponding entities.
-   */
-  fun hasEqualProperties(e: WorkspaceEntity): Boolean
-
   fun <E : WorkspaceEntity> createReference(): EntityReference<E>
+//  fun <E : WorkspaceEntity> getEntityClass(): Class<E>
 }
 
 /**
  * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][WorkspaceEntityStorageBuilder.addEntity]
  * or [modify an existing value][WorkspaceEntityStorageBuilder.modifyEntity].
  *
- * Currently the class must inherit from ModifiableWorkspaceEntityBase. 
+ * Currently the class must inherit from ModifiableWorkspaceEntityBase.
  */
 interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity
 
@@ -138,8 +134,16 @@ interface ReferableWorkspaceEntity : WorkspaceEntity {
 /**
  * Returns all entities of type [R] which [property] refers to this entity.
  */
-inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrers(property: KProperty1<R, E?>): Sequence<R> {
+inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
   return referrers(R::class.java, property.name)
+}
+
+inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
+  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
+}
+
+inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
+  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
 }
 
 /**
@@ -163,21 +167,20 @@ abstract class EntityReference<out E : WorkspaceEntity> {
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-abstract class PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
+interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
   /** Text which can be shown in an error message if id cannot be resolved */
-  abstract val presentableName: String
+  val presentableName: String
 
   fun resolve(storage: WorkspaceEntityStorage): E? = storage.resolve(this)
-  abstract override fun toString(): String
+  override fun toString(): String
 }
 
-interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
-  // TODO Make it a property
-  fun persistentId(): PersistentEntityId<*>
+@Open interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
+  val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
 }
 
 /**
- * Read-only interface to a storage. Use [WorkspaceEntityStorageBuilder] or [WorkspaceEntityStorageDiffBuilder] to modify it.
+ * Read-only interface to a storage. Use [WorkspaceEntityStorageBuilder] to modify it.
  */
 interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
@@ -201,16 +204,21 @@ interface WorkspaceEntityStorage {
 
 /**
  * Writeable interface to a storage. Use it if you need to build a storage from scratch or modify an existing storage in a way which requires
- * reading its state after modifications. For simple modifications use [WorkspaceEntityStorageDiffBuilder] instead.
+ * reading its state after modifications.
  */
-interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntityStorageDiffBuilder {
-  override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
-                                                                                 source: EntitySource,
-                                                                                 initializer: M.() -> Unit): T
+interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage {
+  fun isEmpty(): Boolean
+  fun <T : WorkspaceEntity> addEntity(entity: T)
+  @Deprecated("This method was deprecated no need to pass an `EntitySource` method parameter any more")
+  fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
+                                                                        source: EntitySource,
+                                                                        initializer: M.() -> Unit): T
 
-  override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
-  override fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
-  override fun removeEntity(e: WorkspaceEntity)
+  fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
+
+  @Deprecated("This method was deprecated due to the movement of method's logic to the `modifyEntity`")
+  fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
+  fun removeEntity(e: WorkspaceEntity)
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage)
 
   /**
@@ -218,8 +226,16 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
    * and removed entities.
    */
   fun collectChanges(original: WorkspaceEntityStorage): Map<Class<*>, List<EntityChange<*>>>
-
+  fun addDiff(diff: WorkspaceEntityStorageBuilder)
   fun toStorage(): WorkspaceEntityStorage
+
+  /**
+   * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
+   */
+  fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
+  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
+
+  val modificationCount: Long
 
   companion object {
     @JvmStatic
@@ -238,40 +254,4 @@ sealed class EntityChange<T : WorkspaceEntity> {
   data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
   data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
   data class Replaced<T : WorkspaceEntity>(val oldEntity: T, val newEntity: T) : EntityChange<T>()
-}
-
-/**
- * Write-only interface to a storage. 
- */
-interface WorkspaceEntityStorageDiffBuilder {
-  fun isEmpty(): Boolean
-
-  fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>, source: EntitySource, initializer: M.() -> Unit): T
-  fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
-  fun removeEntity(e: WorkspaceEntity)
-  fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
-
-  fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
-
-  fun <T : WorkspaceEntity> addEntity(entity: T, source: EntitySource): T
-
-  /**
-   * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
-   */
-  fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
-
-  /**
-   * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
-   */
-  fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
-  fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
-  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
-
-
-  val modificationCount: Long
-
-  companion object {
-    @JvmStatic
-    fun create(underlyingStorage: WorkspaceEntityStorage): WorkspaceEntityStorageDiffBuilder = WorkspaceEntityStorageBuilder.from(underlyingStorage)
-  }
 }

@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jetbrains.jps.model.JpsElement
@@ -16,7 +16,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
                                   val sourceRootEntities: List<SourceRootEntity>,
                                   val entity: ContentRootEntity,
-                                  val updater: (((WorkspaceEntityStorageDiffBuilder) -> Unit) -> Unit)?) : ContentEntry {
+                                  val updater: (((WorkspaceEntityStorageBuilder) -> Unit) -> Unit)?) : ContentEntry {
   private val excludeFolders by lazy {
     entity.excludedUrls.map { ExcludeFolderBridge(this, it) }
   }

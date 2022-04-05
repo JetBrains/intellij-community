@@ -17,7 +17,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
@@ -37,7 +36,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   }
 
   @Synchronized
-  private fun editEntity(moduleDiff: WorkspaceEntityStorageDiffBuilder?, action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
+  private fun editEntity(moduleDiff: WorkspaceEntityStorageBuilder?, action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
     module as ModuleBridge
     if (moduleDiff != null) {
       val moduleEntity = (moduleDiff as WorkspaceEntityStorage).findModuleEntity(module) ?: return

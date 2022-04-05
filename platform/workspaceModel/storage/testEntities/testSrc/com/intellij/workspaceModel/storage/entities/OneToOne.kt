@@ -54,12 +54,12 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 
 @Suppress("unused")
 class OoChildEntity(val childProperty: String) : WorkspaceEntityBase() {
-  val parent: OoParentEntity by OneToOneChild.NotNull(OoParentEntity::class.java)
+  override val parent: OoParentEntity by OneToOneChild.NotNull(OoParentEntity::class.java)
 }
 
 class ModifiableOoChildEntity : ModifiableWorkspaceEntityBase<OoChildEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: OoParentEntity by MutableOneToOneChild.NotNull(OoChildEntity::class.java, OoParentEntity::class.java)
+  override var parent: OoParentEntity by MutableOneToOneChild.NotNull(OoChildEntity::class.java, OoParentEntity::class.java)
 }
 
 
@@ -82,11 +82,11 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
 }
 
 class OoChildWithNullableParentEntity : WorkspaceEntityBase() {
-  val parent: OoParentEntity? by OneToOneChild.Nullable(OoParentEntity::class.java)
+  override val parent: OoParentEntity? by OneToOneChild.Nullable(OoParentEntity::class.java)
 }
 
 class ModifiableOoChildWithNullableParentEntity : ModifiableWorkspaceEntityBase<OoChildWithNullableParentEntity>() {
-  var parent: OoParentEntity? by MutableOneToOneChild.Nullable(OoChildWithNullableParentEntity::class.java, OoParentEntity::class.java)
+  override var parent: OoParentEntity? by MutableOneToOneChild.Nullable(OoChildWithNullableParentEntity::class.java, OoParentEntity::class.java)
 }
 
 fun WorkspaceEntityStorageBuilder.addOoChildWithNullableParentEntity(OoParentEntity: OoParentEntity,
@@ -99,7 +99,7 @@ fun WorkspaceEntityStorageBuilder.addOoChildWithNullableParentEntity(OoParentEnt
 
 //region ------------------- Parent Entity with PersistentId --------------------------------
 
-data class OoParentEntityId(val name: String) : PersistentEntityId<OoParentWithPidEntity>() {
+data class OoParentEntityId(val name: String) : PersistentEntityId<OoParentWithPidEntity> {
   override val presentableName: String
     get() = name
 }
@@ -117,7 +117,7 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
 }
 
 class OoParentWithPidEntity(val parentProperty: String) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  override fun persistentId(): OoParentEntityId = OoParentEntityId(parentProperty)
+  override val persistentId: OoParentEntityId = OoParentEntityId(parentProperty)
   val childOne: OoChildForParentWithPidEntity? by OneToOneParent.Nullable<OoParentWithPidEntity, OoChildForParentWithPidEntity>(
     OoChildForParentWithPidEntity::class.java, false)
   val childThree: OoChildAlsoWithPidEntity? by OneToOneParent.Nullable<OoParentWithPidEntity, OoChildAlsoWithPidEntity>(
@@ -151,13 +151,13 @@ class OoChildForParentWithPidEntityData : WorkspaceEntityData<OoChildForParentWi
 }
 
 class OoChildForParentWithPidEntity(val childProperty: String) : WorkspaceEntityBase() {
-  val parent: OoParentWithPidEntity by OneToOneChild.NotNull(OoParentWithPidEntity::class.java)
+  override val parent: OoParentWithPidEntity by OneToOneChild.NotNull(OoParentWithPidEntity::class.java)
 }
 
 class ModifiableOoChildForParentWithPidEntity : ModifiableWorkspaceEntityBase<OoChildForParentWithPidEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: OoParentWithPidEntity by MutableOneToOneChild.NotNull(OoChildForParentWithPidEntity::class.java,
-                                                                    OoParentWithPidEntity::class.java)
+  override var parent: OoParentWithPidEntity by MutableOneToOneChild.NotNull(OoChildForParentWithPidEntity::class.java,
+                                                                             OoParentWithPidEntity::class.java)
 }
 
 
@@ -182,15 +182,15 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
 }
 
 class OoChildAlsoWithPidEntity(val childProperty: String) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  val parent: OoParentWithPidEntity by OneToOneChild.NotNull(OoParentWithPidEntity::class.java)
+  override val parent: OoParentWithPidEntity by OneToOneChild.NotNull(OoParentWithPidEntity::class.java)
 
-  override fun persistentId(): OoChildEntityId = OoChildEntityId(childProperty)
+  override val persistentId: OoChildEntityId = OoChildEntityId(childProperty)
 }
 
 class ModifiableOoChildAlsoWithPidEntity : ModifiableWorkspaceEntityBase<OoChildAlsoWithPidEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: OoParentWithPidEntity by MutableOneToOneChild.NotNull(OoChildAlsoWithPidEntity::class.java,
-                                                                    OoParentWithPidEntity::class.java)
+  override var parent: OoParentWithPidEntity by MutableOneToOneChild.NotNull(OoChildAlsoWithPidEntity::class.java,
+                                                                             OoParentWithPidEntity::class.java)
 }
 
 fun WorkspaceEntityStorageBuilder.addOoChildAlsoWithPidEntity(parentEntity: OoParentWithPidEntity,
@@ -231,7 +231,7 @@ fun WorkspaceEntityStorageBuilder.addOoParentWithoutPidEntity(parentProperty: St
 
 // ---------------- Child entity with PersistentId for Nullable ref----------------------
 
-data class OoChildEntityId(val name: String) : PersistentEntityId<OoChildWithPidEntity>() {
+data class OoChildEntityId(val name: String) : PersistentEntityId<OoChildWithPidEntity> {
   override val presentableName: String
     get() = name
 }
@@ -247,15 +247,15 @@ class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<
 }
 
 class OoChildWithPidEntity(val childProperty: String) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  val parent: OoParentWithoutPidEntity by OneToOneChild.NotNull(OoParentWithoutPidEntity::class.java)
+  override val parent: OoParentWithoutPidEntity by OneToOneChild.NotNull(OoParentWithoutPidEntity::class.java)
 
-  override fun persistentId(): OoChildEntityId = OoChildEntityId(childProperty)
+  override val persistentId: OoChildEntityId = OoChildEntityId(childProperty)
 }
 
 class ModifiableOoChildWithPidEntity : ModifiableWorkspaceEntityBase<OoChildWithPidEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: OoParentWithoutPidEntity by MutableOneToOneChild.NotNull(OoChildWithPidEntity::class.java,
-                                                                       OoParentWithoutPidEntity::class.java)
+  override var parent: OoParentWithoutPidEntity by MutableOneToOneChild.NotNull(OoChildWithPidEntity::class.java,
+                                                                                OoParentWithoutPidEntity::class.java)
 }
 
 fun WorkspaceEntityStorageBuilder.addOoChildWithPidEntity(parentEntity: OoParentWithoutPidEntity,

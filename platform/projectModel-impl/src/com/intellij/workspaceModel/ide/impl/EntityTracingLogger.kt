@@ -52,7 +52,7 @@ class EntityTracingLogger {
     }
 
     private fun printInfo(action: String, entity: WorkspaceEntity) {
-      if ((entity as? WorkspaceEntityWithPersistentId)?.persistentId() == entityId) {
+      if ((entity as? WorkspaceEntityWithPersistentId)?.persistentId == entityId) {
         LOG.info("$action: ${entity.toDebugString()}", Throwable())
       }
     }

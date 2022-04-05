@@ -143,12 +143,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 }
 
 class ModuleEntity(
-  val name: String,
+  override val name: String,
   val type: String?,
   val dependencies: List<ModuleDependencyItem>
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
 
-  override fun persistentId(): ModuleId = ModuleId(name)
+  override val persistentId: ModuleId = ModuleId(name)
 
   val sourceRoots: Sequence<SourceRootEntity>
     get() = contentRoots.flatMap { it.sourceRoots }
@@ -237,7 +237,7 @@ class ModuleGroupPathEntity(
   }
 }
 
-data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
+data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity> {
   override val presentableName: String
     get() = name
 
@@ -341,7 +341,7 @@ class JavaSourceRootEntity(
   }
 }
 
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrersx(JavaSourceRootEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
 class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>(), WithAssertableConsistency {
@@ -379,7 +379,7 @@ class JavaResourceRootEntity(
   }
 }
 
-fun SourceRootEntity.asJavaResourceRoot() = referrers(JavaResourceRootEntity::sourceRoot).firstOrNull()
+fun SourceRootEntity.asJavaResourceRoot() = referrersx(JavaResourceRootEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
 class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>(), WithAssertableConsistency {
@@ -413,7 +413,7 @@ class CustomSourceRootPropertiesEntity(
   }
 }
 
-fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
+fun SourceRootEntity.asCustomSourceRoot() = referrersx(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
 
 class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAssertableConsistency {
   lateinit var url: VirtualFileUrl
@@ -533,19 +533,21 @@ class SourceRootOrderEntity(
 class ModifiableSourceRootOrderEntity : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>() {
   var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
-  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java
-  )
+  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java)
+  override fun getEntityClass(): Class<SourceRootOrderEntity> {
+    return SourceRootOrderEntity::class.java
+  }
 }
 
-fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
+fun ContentRootEntity.getSourceRootOrder() = referrersx(SourceRootOrderEntity::contentRootEntity).firstOrNull()
 
 fun ModuleEntity.getModuleLibraries(storage: WorkspaceEntityStorage): Sequence<LibraryEntity> {
   return storage.entities(
-    LibraryEntity::class.java).filter { (it.persistentId().tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
+    LibraryEntity::class.java).filter { (it.persistentId.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
 }
 
 val WorkspaceEntityStorage.projectLibraries
-  get() = entities(LibraryEntity::class.java).filter { it.persistentId().tableId == LibraryTableId.ProjectLibraryTableId }
+  get() = entities(LibraryEntity::class.java).filter { it.persistentId.tableId == LibraryTableId.ProjectLibraryTableId }
 
 sealed class LibraryTableId : Serializable {
   data class ModuleLibraryTableId(val moduleId: ModuleId) : LibraryTableId() {
@@ -622,14 +624,14 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
 
 class LibraryEntity(
   val tableId: LibraryTableId,
-  val name: String,
+  override val name: String,
   val roots: List<LibraryRoot>,
   val excludedRoots: List<VirtualFileUrl>
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  override fun persistentId(): LibraryId = LibraryId(name, tableId)
+  override val persistentId: LibraryId = LibraryId(name, tableId)
 }
 
-data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity>() {
+data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity> {
   override val presentableName: String
     get() = name
 
@@ -706,7 +708,7 @@ class LibraryPropertiesEntity(
   }
 }
 
-fun LibraryEntity.getCustomProperties() = referrers(LibraryPropertiesEntity::library).firstOrNull()
+fun LibraryEntity.getCustomProperties() = referrersx(LibraryPropertiesEntity::library).firstOrNull()
 
 @Suppress("unused")
 class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
@@ -765,7 +767,7 @@ class ExternalSystemModuleOptionsEntity(
 
 
 val ModuleEntity.externalSystemOptions: ExternalSystemModuleOptionsEntity?
-  get() = referrers(ExternalSystemModuleOptionsEntity::module).firstOrNull()
+  get() = referrersx(ExternalSystemModuleOptionsEntity::module).firstOrNull()
 
 @Suppress("unused")
 class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEntity>(), SoftLinkable {
@@ -809,7 +811,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
 }
 
 class FacetEntity(
-  val name: String,
+  override val name: String,
   val facetType: String,
   val configurationXmlTag: String?,
   val moduleId: ModuleId
@@ -823,22 +825,22 @@ class FacetEntity(
     val facetDelegate = ManyToOne.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java)
   }
 
-  override fun persistentId(): FacetId = FacetId(name, facetType, moduleId)
+  override val persistentId: FacetId = FacetId(name, facetType, moduleId)
 }
 
-data class FacetId(val name: String, val type: String, val parentId: ModuleId) : PersistentEntityId<FacetEntity>() {
+data class FacetId(val name: String, val type: String, val parentId: ModuleId) : PersistentEntityId<FacetEntity> {
   override val presentableName: String
     get() = name
 }
 
 val FacetEntity.subFacets: Sequence<FacetEntity>
-  get() = referrers(FacetEntity::underlyingFacet)
+  get() = referrersx(FacetEntity::underlyingFacet)
 
 val ModuleEntity.facets: Sequence<FacetEntity>
-  get() = referrers(FacetEntity::module)
+  get() = referrersx(FacetEntity::module)
 
 
-data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity>() {
+data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity> {
   override val presentableName: String
     get() = name
 }
@@ -858,12 +860,12 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
 }
 
 class ArtifactEntity(
-  val name: String,
+  override val name: String,
   val artifactType: String,
   val includeInProjectBuild: Boolean,
   val outputUrl: VirtualFileUrl?
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  override fun persistentId(): ArtifactId = ArtifactId(name)
+  override val persistentId: ArtifactId = ArtifactId(name)
 
   val rootElement: CompositePackagingElementEntity? by rootElementDelegate
 

@@ -8,10 +8,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.ObjType
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.memberProperties
 
 
 /**
@@ -100,49 +100,81 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal var id: EntityId = 0
+  var id: EntityId = 0
 
-  internal lateinit var snapshot: AbstractEntityStorage
+  lateinit var snapshot: WorkspaceEntityStorage
 
-  override fun hasEqualProperties(e: WorkspaceEntity): Boolean {
-    if (this.javaClass != e.javaClass) return false
-
-    this::class.memberProperties.forEach {
-      if (it.name == WorkspaceEntityBase::id.name) return@forEach
-      if (it.name == WorkspaceEntityBase::snapshot.name) return@forEach
-      if (it.getter.call(this) != it.getter.call(e)) return false
-    }
-    return true
-  }
+  override val name: String? get() = TODO()
+  override val parent: Obj? get() = TODO()
 
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
-    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass)
-    if (connectionId == null) return emptySequence()
-    return when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) }
-                                                ?: emptySequence()
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id.asParent())
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
-        sequenceOf(it)
-      } ?: emptySequence()
+    val mySnapshot = snapshot as AbstractEntityStorage
+    return getReferences(mySnapshot, entityClass)
+  }
+
+  internal fun <R : WorkspaceEntity> getReferences(
+    mySnapshot: AbstractEntityStorage,
+    entityClass: Class<R>
+  ): Sequence<R> {
+    var connectionId =
+      mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
+    if (connectionId != null) {
+      return when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, id)
+        ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneChild<R>(connectionId, id)
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.extractOneToAbstractManyChildren(
+          connectionId,
+          id.asParent()
+        )
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+          sequenceOf(it)
+        } ?: */emptySequence()
+      }
     }
+    connectionId =
+      mySnapshot.refs.findConnectionId(entityClass, getEntityInterface())
+    if (connectionId != null) {
+      return when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyParent<R>(connectionId, id)?.let { sequenceOf(it) } ?: emptySequence()
+        ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneParent<R>(connectionId, id)
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.extractOneToAbstractManyParent<R>(
+          connectionId,
+          id.asChild()
+        )
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+          sequenceOf(it)
+        } ?: */emptySequence()
+      }
+    }
+    return emptySequence()
   }
 
   override fun <E : WorkspaceEntity> createReference(): EntityReference<E> {
     return EntityReferenceImpl(this.id)
   }
 
+  fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
+
+  override val factory: ObjType<*, *>
+    get() = TODO("Not yet implemented")
+
   override fun toString(): String = id.asString()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
 
     other as WorkspaceEntityBase
 
     if (id != other.id) return false
-    if (this.snapshot.entityDataById(id) !== other.snapshot.entityDataById(other.id)) return false
+    if ((this.snapshot as AbstractEntityStorage).entityDataById(id) !==
+      (other.snapshot as AbstractEntityStorage).entityDataById(other.id)
+    ) return false
 
     return true
   }
@@ -150,14 +182,72 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
+data class ExtRefKey(
+  val className: String,
+  val fieldName: String,
+) {
 
+  constructor(className: String, fieldName: String, isChild: Boolean, connectionId: ConnectionId) : this(className, fieldName) {
+    this.isThisFieldChild = isChild
+    this.connectionId = connectionId
+  }
+
+  private var isThisFieldChild: Boolean? = null
+  private var connectionId: ConnectionId? = null
+
+  fun getConnectionId(): ConnectionId {
+    return connectionId ?: error("")
+  }
+
+  fun isChild(): Boolean {
+    if (isThisFieldChild == null) error("")
+    return isThisFieldChild == true
+  }
+
+  fun setChild(value: Boolean) {
+    isThisFieldChild = value
+  }
+}
+
+abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
   internal lateinit var original: WorkspaceEntityData<T>
-  lateinit var diff: WorkspaceEntityStorageBuilder
+  var diff: WorkspaceEntityStorageBuilder? = null
 
-  internal val modifiable = ThreadLocal.withInitial { false }
+  val modifiable = ThreadLocal.withInitial { false }
+  val changedProperty: MutableSet<String> = mutableSetOf()
 
-  internal inline fun allowModifications(action: () -> Unit) {
+  /**
+   * For the state
+   *
+   * ```
+   * interface RiderEntity {
+   *   val moduleRef: ModuleEntity
+   * }
+   * val ModuleEntity.riderRef: RiderEntity
+   * ```
+   * Here in `ModuleEntity` we store the key in form `RiderEntity::moduleRef`
+   */
+  val extReferences: MutableMap<ExtRefKey, Any?> = HashMap()
+
+  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
+    val myDiff = diff
+    val entitiesFromDiff = if (myDiff != null) {
+      getReferences(myDiff as AbstractEntityStorage, entityClass)
+    } else emptySequence()
+
+    val res = extReferences[ExtRefKey(entityClass.simpleName, propertyName)]
+    return entitiesFromDiff + if (res == null) {
+      emptySequence()
+    } else {
+      if (res is List<*>) {
+        res.asSequence() as Sequence<R>
+      } else {
+        sequenceOf(res as R)
+      }
+    }
+  }
+
+  inline fun allowModifications(action: () -> Unit) {
     modifiable.set(true)
     try {
       action()
@@ -167,31 +257,66 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
     }
   }
 
-  open fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
+  protected fun checkModificationAllowed() {
+    if (diff != null && !modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside `modifyEntity` method only!")
+    }
+  }
 
-  open fun applyToBuilder(builder: WorkspaceEntityStorageBuilder, entitySource: EntitySource) {
+  open fun getEntityClass(): Class<T> = ClassConversion.modifiableEntityToEntity(this::class).java
+
+  open fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
     throw NotImplementedError()
   }
 
   open fun getEntityData(): WorkspaceEntityData<T> {
-    throw NotImplementedError()
+    val actualEntityData = (diff as WorkspaceEntityStorageBuilderImpl).entityDataById(id)
+      ?: error("Requested entity data doesn't exist at entity family")
+    return actualEntityData as WorkspaceEntityData<T>
   }
 
   // For generated entities
   fun addToBuilder() {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
-    builder.putEntity(getEntityData())
+    builder.putEntity(this)
   }
 
   // For generated entities
-  fun applyRef(connectionId: ConnectionId, child: WorkspaceEntityData<*>?, children: List<WorkspaceEntityData<*>>?) {
+  // TODO:: Can be replaced to the direct calls
+  fun applyRef(connectionId: ConnectionId, child: WorkspaceEntity) {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneChildOfParent(connectionId, id, child!!.createEntityId().asChild())
-      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyChildrenOfParent(connectionId, id, children!!.map { it.createEntityId().asChild() }.asSequence())
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, id.asParent(), children!!.map { it.createEntityId().asChild() }.asSequence())
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, id.asParent(), child!!.createEntityId().asChild())
+      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneChildOfParent(connectionId, this, child)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, this, child)
+      else -> error("Unexpected branch")
     }
+  }
+
+  // TODO:: Can be replaced to the direct calls
+  fun applyRef(connectionId: ConnectionId, children: List<WorkspaceEntity>) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyChildrenOfParent(connectionId, this, children)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, this, children.asSequence())
+      else -> error("Unexpected branch")
+    }
+  }
+
+  // TODO:: Can be replaced to the direct calls
+  fun applyParentRef(connectionId: ConnectionId, parent: WorkspaceEntity) {
+    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneParentOfChild(connectionId, this, parent)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneParentOfChild(connectionId, this, parent)
+      ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyParentOfChild(connectionId, this, parent)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyParentOfChild(connectionId, this, parent)
+    }
+  }
+
+  fun existsInBuilder(builder: WorkspaceEntityStorageBuilder): Boolean {
+    builder as WorkspaceEntityStorageBuilderImpl
+    val entityData = getEntityData()
+    return builder.entityDataById(entityData.createEntityId()) != null
   }
 
   // For generated entities
@@ -226,7 +351,9 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createEntityId(): EntityId = createEntityId(id, ClassConversion.entityDataToEntity(javaClass).toClassId())
+  fun isEntitySourceInitialized(): Boolean = ::entitySource.isInitialized
+
+  fun createEntityId(): EntityId = createEntityId(id, ClassConversion.entityDataToEntity(javaClass).toClassId())
 
   abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
 
@@ -242,7 +369,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 
-  internal fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilderImpl): ModifiableWorkspaceEntity<E> {
+  open fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<E> {
     val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
     val res = returnClass.java.getDeclaredConstructor().newInstance()
     res as ModifiableWorkspaceEntityBase

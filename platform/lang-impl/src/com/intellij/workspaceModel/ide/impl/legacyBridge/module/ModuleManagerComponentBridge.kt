@@ -208,8 +208,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
 
       is EntityChange.Replaced -> {
-        val oldId = change.oldEntity.persistentId()
-        val newId = change.newEntity.persistentId()
+        val oldId = change.oldEntity.persistentId
+        val newId = change.newEntity.persistentId
 
         if (oldId != newId) {
           unloadedModules.remove(change.newEntity.name)
@@ -239,8 +239,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
       }
       is EntityChange.Replaced -> {
-        val idBefore = change.oldEntity.persistentId()
-        val idAfter = change.newEntity.persistentId()
+        val idBefore = change.oldEntity.persistentId
+        val idAfter = change.newEntity.persistentId
 
         val newLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as LibraryBridgeImpl?
         if (newLibrary != null) {
@@ -253,7 +253,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       is EntityChange.Added -> {
         val tableId = change.entity.tableId as LibraryTableId.ModuleLibraryTableId
         val moduleEntity = entityStore.current.resolve(tableId.moduleId)
-                           ?: error("Could not find module for module library: ${change.entity.persistentId()}")
+                           ?: error("Could not find module for module library: ${change.entity.persistentId}")
         if (moduleEntity.name !in unloadedModules) {
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
@@ -324,7 +324,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
-                            diff: WorkspaceEntityStorageDiffBuilder?): ModuleBridge {
+                            diff: WorkspaceEntityStorageBuilder?): ModuleBridge {
     return ModuleBridgeImpl(persistentId, name, project, virtualFileUrl, entityStorage, diff)
   }
 

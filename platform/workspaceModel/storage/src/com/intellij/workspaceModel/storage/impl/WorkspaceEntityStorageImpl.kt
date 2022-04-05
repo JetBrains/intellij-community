@@ -60,6 +60,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   internal val changeLog = WorkspaceBuilderChangeLog()
 
+  // Temporal solution for accessing error in deft project.
+  internal var throwExceptionOnError = false
+
   internal fun incModificationCount() {
     this.changeLog.modificationCount++
   }
@@ -78,18 +81,75 @@ internal class WorkspaceEntityStorageBuilderImpl(
   @Volatile
   private var threadName: String? = null
 
-  override fun <T : WorkspaceEntity> addEntity(entity: T, source: EntitySource): T {
+  override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
+    if (isOldApi(entityClass)) {
+      return super.entities(entityClass)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return entitiesByType[entityClass.toClassId()]?.all()?.map { it.wrapAsModifiable(this) } as? Sequence<E> ?: emptySequence()
+  }
+
+  private fun <E: WorkspaceEntity> isOldApi(entityClass: Class<E>): Boolean {
+    val entityData: KClass<WorkspaceEntityData<E>> = ClassConversion.entityToEntityData(entityClass.kotlin)
+    val modifiableEntity: KClass<ModifiableWorkspaceEntity<E>> = ClassConversion.entityDataToModifiableEntity(entityData)
+    return !entityClass.isAssignableFrom(modifiableEntity.java)
+  }
+
+  private fun <E: WorkspaceEntityData<WorkspaceEntity>> isOldApiFromData(entityData: Class<E>): Boolean {
+    val modifiableEntity: KClass<ModifiableWorkspaceEntity<WorkspaceEntity>> = ClassConversion.entityDataToModifiableEntity(entityData.kotlin)
+    val entityClass = ClassConversion.entityDataToEntity(entityData)
+    return !entityClass.isAssignableFrom(modifiableEntity.java)
+  }
+
+  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
+                                                                                    entityClass: Class<R>): Sequence<R> {
+    val classId = entityClass.toClassId()
+
+    @Suppress("UNCHECKED_CAST")
+    return indexes.softLinks.getIdsByEntry(id).asSequence()
+      .filter { it.clazz == classId }
+      .map { entityDataByIdOrDie(it).wrapAsModifiable(this) as R }
+  }
+
+  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
+    val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+    val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity> ?: return null
+    if (isOldApiFromData(entityData::class.java)) {
+      return entityData.createEntity(this) as E?
+    }
+    @Suppress("UNCHECKED_CAST")
+    return entityData.wrapAsModifiable(this) as E?
+  }
+
+  // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
+  @Suppress("USELESS_CAST")
+  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
+    return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
+      indexes.entitySourceIndex
+        .getIdsByEntry(source)!!.map {
+          val entityDataById: WorkspaceEntityData<WorkspaceEntity> = this.entityDataById(it) as? WorkspaceEntityData<WorkspaceEntity>
+                                                                     ?: run {
+                                                                       reportErrorAndAttachStorage("Cannot find an entity by id $it",
+                                                                                                   this@WorkspaceEntityStorageBuilderImpl)
+                                                                       error("Cannot find an entity by id $it")
+                                                                     }
+          if (isOldApiFromData(entityDataById::class.java)) {
+            entityDataById.createEntity(this)
+          } else {
+            entityDataById.wrapAsModifiable(this)
+          }
+        }
+        .groupBy { (it as WorkspaceEntityBase).getEntityInterface() }
+    }
+  }
+
+  override fun <T : WorkspaceEntity> addEntity(entity: T) {
     try {
       lockWrite()
 
-      entity as ModifiableWorkspaceEntityBase<*>
+      entity as ModifiableWorkspaceEntityBase<T>
 
-      entity.applyToBuilder(this, source)
-
-      // Entity adding happens inside of applyToBuilder
-      //entitiesByType.add(newEntityData, entity.getEntityClass().java.toClassId())
-
-      return entity
+      entity.applyToBuilder(this)
     }
     finally {
       unlockWrite()
@@ -97,14 +157,22 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // This should be removed or not extracted into the interface
-  fun <T : WorkspaceEntity, D: WorkspaceEntityData<T>> putEntity(entity: D) {
+  fun <T : WorkspaceEntity, D: ModifiableWorkspaceEntityBase<T>> putEntity(entity: D) {
     try {
       lockWrite()
 
-      entity as ModifiableWorkspaceEntityBase<*>
-
       val newEntityData = entity.getEntityData()
-      entitiesByType.add(newEntityData, entity.getEntityClass().java.toClassId())
+
+      // Check for persistent id uniqueness
+      assertUniquePersistentId(newEntityData)
+
+      entitiesByType.add(newEntityData, entity.getEntityClass().toClassId())
+
+      // Add the change to changelog
+      createAddEvent(newEntityData)
+
+      // Update indexes
+      indexes.entityAdded(newEntityData)
     }
     finally {
       unlockWrite()
@@ -137,25 +205,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
 
       // Check for persistent id uniqueness
-      pEntityData.persistentId()?.let { persistentId ->
-        val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
-        if (ids != null) {
-          // Oh, oh. This persistent id exists already
-          // Fallback strategy: remove existing entity with all it's references
-          val existingEntityData = entityDataByIdOrDie(ids)
-          val existingEntity = existingEntityData.createEntity(this)
-          removeEntity(existingEntity)
-          LOG.error("""
-            addEntity: persistent id already exists. Replacing entity with the new one.
-            Persistent id: $persistentId
-            
-            Existing entity data: $existingEntityData
-            New entity data: $pEntityData
-            
-            Broken consistency: $brokenConsistency
-          """.trimIndent(), PersistentIdAlreadyExistsException(persistentId))
-        }
-      }
+      assertUniquePersistentId(pEntityData)
 
       // Add the change to changelog
       createAddEvent(pEntityData)
@@ -164,14 +214,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
       indexes.entityAdded(pEntityData)
 
       if (LOG.isTraceEnabled) {
-        LOG.trace {
+        LOG.trace(
           "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}. Store: $this.\n${
             currentStackTrace(10)
           }"
-        }
+        )
       }
       else {
-        LOG.debug { "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}." }
+        LOG.debug("New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}.")
       }
 
       return pEntityData.createEntity(this)
@@ -181,6 +231,34 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
+  private fun <T : WorkspaceEntity> assertUniquePersistentId(pEntityData: WorkspaceEntityData<T>) {
+    pEntityData.persistentId()?.let { persistentId ->
+      val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
+      if (ids != null) {
+        // Oh, oh. This persistent id exists already
+        // Fallback strategy: remove existing entity with all it's references
+        val existingEntityData = entityDataByIdOrDie(ids)
+        val existingEntity = existingEntityData.createEntity(this)
+        removeEntity(existingEntity)
+        LOG.error(
+          """
+              addEntity: persistent id already exists. Replacing entity with the new one.
+              Persistent id: $persistentId
+              
+              Existing entity data: $existingEntityData
+              New entity data: $pEntityData
+              
+              Broken consistency: $brokenConsistency
+            """.trimIndent(), PersistentIdAlreadyExistsException(persistentId)
+        )
+        if (throwExceptionOnError) {
+          throw PersistentIdAlreadyExistsException(persistentId)
+        }
+      }
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
   override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
@@ -189,13 +267,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
 
       // Get entity data that will be modified
-      @Suppress("UNCHECKED_CAST")
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
-      @Suppress("UNCHECKED_CAST")
       val modifiableEntity = copiedData.wrapAsModifiable(this) as M
 
-      val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId() else null
+      val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId else null
 
       val originalParents = this.getOriginalParents(entityId.asChild())
       val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
@@ -225,15 +301,21 @@ internal class WorkspaceEntityStorageBuilderImpl(
               
               Broken consistency: $brokenConsistency
             """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
+            if (throwExceptionOnError) {
+              throw PersistentIdAlreadyExistsException(newPersistentId)
+            }
           }
         }
         else {
           LOG.error("Persistent id expected for entity: $copiedData")
         }
       }
+      updateEntitySource(entityId, originalEntityData, copiedData)
 
-      // Add an entry to changelog
-      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
+      if (!modifiableEntity.changedProperty.contains("entitySource") || modifiableEntity.changedProperty.size > 1) {
+        // Add an entry to changelog
+        addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
+      }
 
       val updatedEntity = copiedData.createEntity(this)
 
@@ -246,6 +328,18 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
+  private fun <T : WorkspaceEntity> updateEntitySource(entityId: EntityId, originalEntityData: WorkspaceEntityData<T>,
+                                                       copiedEntityData: WorkspaceEntityData<T>) {
+    val newSource = copiedEntityData.entitySource
+    val originalSource = originalEntityData.entitySource
+    if (originalSource == newSource) return
+
+      this.changeLog.addChangeSourceEvent(entityId, copiedEntityData, originalSource)
+      indexes.entitySourceIndex.index(entityId, newSource)
+      newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
+  }
+
+  @Deprecated("This method was deprecated due to the movement of method's logic to the `modifyEntity`")
   override fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T {
     try {
       lockWrite()
@@ -357,7 +451,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
 
-  override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
+  override fun addDiff(diff: WorkspaceEntityStorageBuilder) {
     try {
       lockWrite()
       diff as WorkspaceEntityStorageBuilderImpl
@@ -625,7 +719,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
             error("Cannot find an entity by id $it")
           }
         }
-        .groupBy { it.javaClass as Class<out WorkspaceEntity> }
+        .groupBy { (it as WorkspaceEntityBase).getEntityInterface() }
     }
   }
 

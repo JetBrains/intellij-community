@@ -172,13 +172,13 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (!librariesPerModuleMap.containsValue(libraryIdentifier)) {
         (library as? RootProvider)?.addRootSetChangedListener(this)
       }
-      librariesPerModuleMap.put(moduleEntity.persistentId(), libraryIdentifier)
+      librariesPerModuleMap.put(moduleEntity.persistentId, libraryIdentifier)
     }
 
     fun unTrackLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      librariesPerModuleMap.remove(moduleEntity.persistentId(), libraryIdentifier)
+      librariesPerModuleMap.remove(moduleEntity.persistentId, libraryIdentifier)
       if (!librariesPerModuleMap.containsValue(libraryIdentifier)) {
         (library as? RootProvider)?.removeRootSetChangedListener(this)
       }
@@ -294,11 +294,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (sdk != null && watchedSdks.add(sdk.rootProvider)) {
         sdk.rootProvider.addRootSetChangedListener(this)
       }
-      sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId())
+      sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId)
     }
 
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
-      sdkDependencies.remove(sdkDependency, moduleEntity.persistentId())
+      sdkDependencies.remove(sdkDependency, moduleEntity.persistentId)
       val sdk = findSdk(sdkDependency)
       if (sdk != null && !hasDependencies(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(this)

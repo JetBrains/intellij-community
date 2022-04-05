@@ -60,6 +60,6 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
  * Do not use io version in production code as FSD filesystems are incompatible with java.io
  */
 @TestOnly
-fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
+fun File.toVirtualFileUrlCodegen(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
 
-fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())
+fun Path.toVirtualFileUrlCodegen(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())

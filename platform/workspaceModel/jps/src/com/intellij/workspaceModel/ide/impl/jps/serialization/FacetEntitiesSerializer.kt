@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
 import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
-import com.intellij.workspaceModel.storage.referrers
+import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
@@ -63,7 +63,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
       val source = if (externalSystemId == null) internalSource else JpsImportedEntitySource(internalSource, externalSystemId, externalStorage)
 
       // Check for existing facet
-      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.persistentId())
+      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.persistentId)
       var facetEntity: FacetEntity? = null
       val existingFacet = builder.resolve(newFacetId)
       if (existingFacet != null && configurationXmlTag != null) {
@@ -180,7 +180,7 @@ internal class ModifiableFacetsOrderEntity : ModifiableWorkspaceEntityBase<Facet
   var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class.java, ModuleEntity::class.java)
 }
 
-private val ModuleEntity.facetsOrderEntity get() = referrers(FacetsOrderEntity::module).firstOrNull()
+private val ModuleEntity.facetsOrderEntity get() = referrersx(FacetsOrderEntity::module).firstOrNull()
 
 /**
  * This property indicates that external-system-id attribute should be stored in facet configuration to avoid unnecessary modifications
@@ -205,4 +205,4 @@ internal class ModifiableFacetExternalSystemIdEntity : ModifiableWorkspaceEntity
   var facet: FacetEntity by MutableOneToOneChild.NotNull(FacetExternalSystemIdEntity::class.java, FacetEntity::class.java)
 }
 
-private val FacetEntity.externalSystemId get() = referrers(FacetExternalSystemIdEntity::facet).firstOrNull()
+private val FacetEntity.externalSystemId get() = referrersx(FacetExternalSystemIdEntity::facet).firstOrNull()

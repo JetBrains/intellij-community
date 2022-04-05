@@ -380,7 +380,7 @@ class ReplaceBySourceTest {
   @Test
   fun `entity with soft reference`() {
     val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithSoftLinkEntity(named.persistentId())
+    val linked = builder.addWithSoftLinkEntity(named.persistentId)
     resetChanges()
     builder.assertConsistency()
 
@@ -401,7 +401,7 @@ class ReplaceBySourceTest {
   @Test
   fun `entity with soft reference remove reference`() {
     val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId()))
+    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId))
     resetChanges()
     builder.assertConsistency()
 
@@ -421,8 +421,8 @@ class ReplaceBySourceTest {
   fun `replace by source with composite id`() {
     val replacement = createEmptyBuilder()
     val namedEntity = replacement.addNamedEntity("MyName")
-    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId())
-    replacement.addWithSoftLinkEntity(composedEntity.persistentId())
+    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId)
+    replacement.addWithSoftLinkEntity(composedEntity.persistentId)
 
     replacement.assertConsistency()
     builder.replaceBySource({ true }, replacement)

@@ -22,7 +22,7 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity entity,
                                                                                                 @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().persistentId());
+    return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getPersistentId());
   }
 
   @Override
@@ -36,7 +36,7 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider
                                                                                                         @NotNull ModuleEntity newEntity,
                                                                                                         @NotNull Project project) {
     if (shouldBeReindexed(newEntity, oldEntity)) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.persistentId());
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getPersistentId());
     }
     return Collections.emptyList();
   }

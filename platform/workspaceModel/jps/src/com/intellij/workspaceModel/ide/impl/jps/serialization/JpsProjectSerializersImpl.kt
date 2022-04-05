@@ -292,15 +292,15 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     builders.forEachIndexed { i, builder ->
       if (enableExternalStorage) {
         builder.entities(ModuleEntity::class.java).forEach { module ->
-          val moduleId = module.persistentId()
+          val moduleId = module.persistentId
           modules.getOrPut(moduleId.name.toLowerCase(Locale.US)) { ArrayList() }.add(Triple(moduleId, builder, serializers[i]))
         }
       }
       builder.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }.forEach { library ->
-        libraries.getOrPut(library.persistentId()) { ArrayList() }.add(builder to serializers[i])
+        libraries.getOrPut(library.persistentId) { ArrayList() }.add(builder to serializers[i])
       }
       builder.entities(ArtifactEntity::class.java).forEach { artifact ->
-        artifacts.getOrPut(artifact.persistentId()) { ArrayList() }.add(builder to serializers[i])
+        artifacts.getOrPut(artifact.persistentId) { ArrayList() }.add(builder to serializers[i])
       }
     }
 
@@ -648,7 +648,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 .flatMap { it.values }
                 .flatten()
                 .filterIsInstance<WorkspaceEntityWithPersistentId>()
-                .joinToString(separator = "||") { "$it (PersistentId: ${it.persistentId()})" }
+                .joinToString(separator = "||") { "$it (PersistentId: ${it.persistentId})" }
               //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
               // as error for now to find real cause of IDEA-265327
               val message = """
@@ -659,7 +659,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
              |Their entity sources: $existingSources
              |Entities with these sources in the storage: ${entitiesWithOldSource.mapValues { (_, value) -> value.values }}
              |Entities with persistent ids: $entitiesPersistentIds
-             |Original entities to save: ${entities.values.flatten().joinToString(separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithPersistentId)?.persistentId()})" }}
+             |Original entities to save: ${entities.values.flatten().joinToString(separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithPersistentId)?.persistentId})" }}
             """.trimMargin()
               reportErrorAndAttachStorage(message, storage)
             }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.url
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
 import com.intellij.workspaceModel.storage.impl.VirtualFileNameStore
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -10,7 +9,6 @@ import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import org.jetbrains.annotations.ApiStatus
 
 open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
@@ -26,7 +24,11 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
-    return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
+    return fromUrl("file://${toSystemIndependentName(path)}")
+  }
+
+  private fun toSystemIndependentName(fileName: String): String {
+    return fileName.replace('\\', '/')
   }
 
   @Synchronized
@@ -75,7 +77,6 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  @ApiStatus.Internal
   fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull { it.getCachedVirtualFileUrl() }
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {

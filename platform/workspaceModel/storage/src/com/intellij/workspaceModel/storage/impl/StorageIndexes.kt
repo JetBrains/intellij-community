@@ -3,9 +3,6 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
@@ -49,7 +46,8 @@ internal open class StorageIndexes(
 
     assertPersistentIdIndex(storage)
 
-    assertSoftLinksIndex(storage)
+    // TODO Should we get this back?
+//    assertSoftLinksIndex(storage)
 
     virtualFileIndex.assertConsistency()
 
@@ -61,6 +59,7 @@ internal open class StorageIndexes(
     }
   }
 
+/*
   private fun assertSoftLinksIndex(storage: AbstractEntityStorage) {
 
     // XXX skipped size check
@@ -84,8 +83,10 @@ internal open class StorageIndexes(
       }
     }
   }
+*/
 
   // XXX: Hack to speed up module links assertion
+/*
   private fun assertModuleSoftLinks(entityData: ModuleEntityData, expectedLinks: Set<PersistentEntityId<*>>) {
     val actualRefs = HashSet<Any>(entityData.dependencies.size)
     entityData.dependencies.forEach { dependency ->
@@ -103,6 +104,7 @@ internal open class StorageIndexes(
     }
     assert(actualRefs.size == expectedLinks.size)
   }
+*/
 
   private fun assertPersistentIdIndex(storage: AbstractEntityStorage) {
 
@@ -198,7 +200,8 @@ internal class MutableStorageIndexes(
   fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>, modifiableEntity: ModifiableWorkspaceEntityBase<*>?) {
     val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
-      if (modifiableEntity is ModifiableModuleEntity && !modifiableEntity.dependencyChanged) return
+//      if (modifiableEntity is ModifiableModuleEntity && !modifiableEntity.dependencyChanged) return
+//      if (modifiableEntity is ModifiableModuleEntity) return
 
       copiedData.updateLinksIndex(this.softLinks.getEntriesById(pid), this.softLinks)
     }
@@ -239,13 +242,13 @@ internal class MutableStorageIndexes(
   }
 
   fun <T : WorkspaceEntity> updatePersistentIdIndexes(builder: WorkspaceEntityStorageBuilderImpl,
-                                                               updatedEntity: WorkspaceEntity,
-                                                               beforePersistentId: PersistentEntityId<*>?,
-                                                               copiedData: WorkspaceEntityData<T>,
-                                                               modifiableEntity: ModifiableWorkspaceEntityBase<*>? = null) {
+                                                      updatedEntity: WorkspaceEntity,
+                                                      beforePersistentId: PersistentEntityId<*>?,
+                                                      copiedData: WorkspaceEntityData<T>,
+                                                      modifiableEntity: ModifiableWorkspaceEntityBase<*>? = null) {
     val entityId = (updatedEntity as WorkspaceEntityBase).id
     if (updatedEntity is WorkspaceEntityWithPersistentId) {
-      val newPersistentId = updatedEntity.persistentId()
+      val newPersistentId = updatedEntity.persistentId
       if (beforePersistentId != null && beforePersistentId != newPersistentId) {
         persistentIdIndex.index(entityId, newPersistentId)
         updateComposedIds(builder, beforePersistentId, newPersistentId)

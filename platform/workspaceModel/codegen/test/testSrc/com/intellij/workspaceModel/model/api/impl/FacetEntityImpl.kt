@@ -1,28 +1,11 @@
 package com.intellij.workspace.model.api
 
 import com.intellij.workspace.model.api.FacetEntity.Companion.underlyingFacet
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
-import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.*
-import org.jetbrains.deft.collections.*
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.impl.ObjType
 
     
 
@@ -311,9 +294,9 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
         if (optionalLink_configurationXmlTag != null) {
         }
         result.add(moduleId)
-        val optionalLink_underlyingFacet = underlyingFacet
-        if (optionalLink_underlyingFacet != null) {
-        }
+        //val optionalLink_underlyingFacet = underlyingFacet
+        //if (optionalLink_underlyingFacet != null) {
+        //}
         return result
     }
 
@@ -322,9 +305,9 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
         if (optionalLink_configurationXmlTag != null) {
         }
         index.index(this, moduleId)
-        val optionalLink_underlyingFacet = underlyingFacet
-        if (optionalLink_underlyingFacet != null) {
-        }
+        //val optionalLink_underlyingFacet = underlyingFacet
+        //if (optionalLink_underlyingFacet != null) {
+        //}
     }
 
     override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
@@ -337,9 +320,9 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
         if (!removedItem_moduleId) {
             index.index(this, moduleId)
         }
-        val optionalLink_underlyingFacet = underlyingFacet
-        if (optionalLink_underlyingFacet != null) {
-        }
+        //val optionalLink_underlyingFacet = underlyingFacet
+        //if (optionalLink_underlyingFacet != null) {
+        //}
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
         }

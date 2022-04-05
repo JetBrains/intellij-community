@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
-data class LinkedListEntityId(val name: String) : PersistentEntityId<LinkedListEntity>() {
+data class LinkedListEntityId(val name: String) : PersistentEntityId<LinkedListEntity> {
   override val presentableName: String
     get() = name
 }
@@ -24,14 +24,14 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
 }
 
 class LinkedListEntity(
-  val name: String,
+  override val name: String,
   val next: LinkedListEntityId
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  override fun persistentId(): LinkedListEntityId = LinkedListEntityId(name)
+  override val persistentId: LinkedListEntityId = LinkedListEntityId(name)
 }
 
 class ModifiableLinkedListEntity : ModifiableWorkspaceEntityBase<LinkedListEntity>() {
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var next: LinkedListEntityId by EntityDataDelegation()
 }
 

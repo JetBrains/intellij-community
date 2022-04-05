@@ -410,4 +410,4 @@ internal class ModifiableArtifactExternalSystemIdEntity : ModifiableWorkspaceEnt
   var artifact: ArtifactEntity by MutableOneToOneChild.NotNull(ArtifactExternalSystemIdEntity::class.java, ArtifactEntity::class.java)
 }
 
-private val ArtifactEntity.externalSystemId get() = referrers(ArtifactExternalSystemIdEntity::artifact).firstOrNull()
+private val ArtifactEntity.externalSystemId get() = referrersx(ArtifactExternalSystemIdEntity::artifact).firstOrNull()

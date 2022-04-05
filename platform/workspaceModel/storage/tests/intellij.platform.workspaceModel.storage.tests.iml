@@ -15,6 +15,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="TEST" name="Kryo" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.workspaceModel.storage" />
 </module>

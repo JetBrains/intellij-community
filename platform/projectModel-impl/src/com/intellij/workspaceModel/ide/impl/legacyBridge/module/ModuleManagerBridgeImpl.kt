@@ -281,7 +281,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   fun createModuleInstance(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
-    diff: WorkspaceEntityStorageDiffBuilder?,
+    diff: WorkspaceEntityStorageBuilder?,
     isNew: Boolean,
     precomputedExtensionModel: PrecomputedExtensionModel?,
   ): ModuleBridge {
@@ -290,7 +290,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
     val module = createModule(
-      persistentId = moduleEntity.persistentId(),
+      persistentId = moduleEntity.persistentId,
       name = moduleEntity.name,
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
@@ -326,7 +326,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     name: String,
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
-    diff: WorkspaceEntityStorageDiffBuilder?,
+    diff: WorkspaceEntityStorageBuilder?,
   ): ModuleBridge
 
   companion object {
@@ -343,7 +343,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       get() = getExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
-    val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
+    val WorkspaceEntityStorageBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
@@ -383,10 +383,10 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       module: ModuleBridge,
       moduleEntityStore: WorkspaceEntityStorage,
       newSource: EntitySource,
-      moduleDiff: WorkspaceEntityStorageDiffBuilder?,
+      moduleDiff: WorkspaceEntityStorageBuilder?,
     ) {
       val oldEntitySource = moduleEntityStore.findModuleEntity(module)?.entitySource ?: return
-      fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
+      fun changeSources(diffBuilder: WorkspaceEntityStorageBuilder, storage: WorkspaceEntityStorage) {
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
           if (it !is FacetEntity) {

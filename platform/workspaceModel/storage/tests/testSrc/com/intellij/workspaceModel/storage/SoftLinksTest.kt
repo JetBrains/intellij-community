@@ -89,7 +89,7 @@ class SoftLinksTest {
   fun `change persistent id part`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    builder.addWithSoftLinkEntity(entity.persistentId())
+    builder.addWithSoftLinkEntity(entity.persistentId)
 
     builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
       this.name = "newName"
@@ -104,7 +104,7 @@ class SoftLinksTest {
   fun `change persistent id part of composed id entity`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId())
+    builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId)
 
     builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
       this.name = "newName"
@@ -112,7 +112,7 @@ class SoftLinksTest {
 
     builder.assertConsistency()
 
-    val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId()
+    val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId
     assertEquals("newName", updatedPersistentId.link.presentableName)
   }
 
@@ -120,8 +120,8 @@ class SoftLinksTest {
   fun `change persistent id part of composed id entity and with linked entity`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    val composedIdEntity = builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId())
-    builder.addWithSoftLinkEntity(composedIdEntity.persistentId())
+    val composedIdEntity = builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId)
+    builder.addWithSoftLinkEntity(composedIdEntity.persistentId)
 
     builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
       this.name = "newName"
@@ -129,7 +129,7 @@ class SoftLinksTest {
 
     builder.assertConsistency()
 
-    val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId()
+    val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId
     assertEquals("newName", updatedPersistentId.link.presentableName)
     assertEquals("newName", (builder.entities(WithSoftLinkEntity::class.java).single().link as ComposedId).link.presentableName)
   }

@@ -23,11 +23,10 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
-                                     private val diff: WorkspaceEntityStorageDiffBuilder,
+                                     private val diff: WorkspaceEntityStorageBuilder,
                                      private val moduleBridge: ModuleBridge,
                                      private val facetManager: FacetManagerBridge)
   : FacetModelBase(), ModifiableFacetModelBridge {
@@ -146,7 +145,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
 
   override fun isNewFacet(facet: Facet<*>): Boolean {
     val entity = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
-    return entity != null && initialStorage.resolve(entity.persistentId()) == null
+    return entity != null && initialStorage.resolve(entity.persistentId) == null
   }
 
   override fun addListener(listener: ModifiableFacetModel.Listener, parentDisposable: Disposable) {

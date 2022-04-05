@@ -237,11 +237,11 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
-    internal fun WorkspaceEntityStorageDiffBuilder.facetMapping(): ExternalEntityMapping<Facet<*>> {
+    internal fun WorkspaceEntityStorageBuilder.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
-    internal fun WorkspaceEntityStorageDiffBuilder.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
+    internal fun WorkspaceEntityStorageBuilder.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
       return this.getMutableExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 

@@ -17,5 +17,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen" exported="" />
   </component>
 </module>

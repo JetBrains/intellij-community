@@ -187,7 +187,7 @@ class ExternalEntityMappingTest {
     val entity3 = builder.addSampleEntity("3")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
     builder.removeEntity(entity1)
-    val diff = WorkspaceEntityStorageDiffBuilder.create(storage)
+    val diff = WorkspaceEntityStorageBuilder.from(storage)
     diff.removeEntity(entity2)
     builder.addDiff(diff)
     builder.removeEntity(entity3)
@@ -222,7 +222,7 @@ class ExternalEntityMappingTest {
     val entity1a = builder.modifyEntity(ModifiableSampleEntity::class.java, entity1) {
       stringProperty = "1a"
     }
-    val diff = WorkspaceEntityStorageDiffBuilder.create(storage)
+    val diff = WorkspaceEntityStorageBuilder.from(storage)
     val entity2a = diff.modifyEntity(ModifiableSampleEntity::class.java, entity2) {
       stringProperty = "2a"
     }
@@ -248,7 +248,7 @@ class ExternalEntityMappingTest {
   @Test
   fun `update mapping when id changes on adding via diff`() {
     val builder = createEmptyBuilder()
-    val diff = WorkspaceEntityStorageDiffBuilder.create(builder.toStorage())
+    val diff = WorkspaceEntityStorageBuilder.from(builder.toStorage())
     val entity1 = builder.addSampleEntity("1")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity1, 1)
     val entity2 = diff.addSampleEntity("2")
@@ -271,10 +271,10 @@ class ExternalEntityMappingTest {
     val initialBuilder = createEmptyBuilder()
     initialBuilder.addSampleEntity("foo")
     val initialStorage = initialBuilder.toStorage()
-    val diff1 = WorkspaceEntityStorageDiffBuilder.create(initialStorage)
+    val diff1 = WorkspaceEntityStorageBuilder.from(initialStorage)
     diff1.addSampleEntity("bar")
 
-    val diff2 = WorkspaceEntityStorageDiffBuilder.create(initialStorage)
+    val diff2 = WorkspaceEntityStorageBuilder.from(initialStorage)
     diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(initialStorage.singleSampleEntity(), 1)
     val updatedBuilder = createBuilderFrom(initialStorage)
     updatedBuilder.addDiff(diff2)

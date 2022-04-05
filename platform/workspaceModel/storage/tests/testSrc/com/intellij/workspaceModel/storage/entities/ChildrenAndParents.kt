@@ -58,13 +58,13 @@ class ChildEntity(
   val childProperty: String,
   val dataClass: DataClass?
 ) : WorkspaceEntityBase() {
-  val parent: ParentEntity by ManyToOne.NotNull(ParentEntity::class.java)
+  override val parent: ParentEntity by ManyToOne.NotNull(ParentEntity::class.java)
 }
 
 class ModifiableChildEntity : ModifiableWorkspaceEntityBase<ChildEntity>() {
   var childProperty: String by EntityDataDelegation()
   var dataClass: DataClass? by EntityDataDelegation()
-  var parent: ParentEntity by MutableManyToOne.NotNull(ChildEntity::class.java, ParentEntity::class.java)
+  override var parent: ParentEntity by MutableManyToOne.NotNull(ChildEntity::class.java, ParentEntity::class.java)
 }
 
 

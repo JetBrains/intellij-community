@@ -168,7 +168,7 @@ private object NamedEntityManipulation : EntityManipulation {
         }
         catch (e: PersistentIdAlreadyExistsException) {
           val persistentId = e.id as NameId
-          assert(storage.entities(NamedEntity::class.java).any { it.persistentId() == persistentId }) {
+          assert(storage.entities(NamedEntity::class.java).any { it.persistentId == persistentId }) {
             "$persistentId reported as existing, but it's not found"
           }
           null to "NamedEntity with this property isn't added because this persistent id already exists"

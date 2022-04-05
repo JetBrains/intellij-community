@@ -79,7 +79,7 @@ class ProjectLibraryTableBridgeImpl(
                       LibraryBridgeImpl(
                         libraryTable = this@ProjectLibraryTableBridgeImpl,
                         project = project,
-                        initialId = change.entity.persistentId(),
+                        initialId = change.entity.persistentId,
                         initialEntityStorage = entityStorage,
                         targetBuilder = null
                       )
@@ -100,8 +100,8 @@ class ProjectLibraryTableBridgeImpl(
                 }
               }
               is EntityChange.Replaced -> {
-                val idBefore = change.oldEntity.persistentId()
-                val idAfter = change.newEntity.persistentId()
+                val idBefore = change.oldEntity.persistentId
+                val idAfter = change.newEntity.persistentId
 
                 if (idBefore != idAfter) {
                   val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
@@ -128,7 +128,7 @@ class ProjectLibraryTableBridgeImpl(
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
           project = project,
-          initialId = libraryEntity.persistentId(),
+          initialId = libraryEntity.persistentId,
           initialEntityStorage = entityStorage,
           targetBuilder = null
         ))
@@ -242,7 +242,7 @@ class ProjectLibraryTableBridgeImpl(
 
     val WorkspaceEntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
       get() = getExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
-    val WorkspaceEntityStorageDiffBuilder.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
+    val WorkspaceEntityStorageBuilder.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
       get() = getMutableExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
 
     fun WorkspaceEntityStorage.findLibraryEntity(library: LibraryBridge) =

@@ -18,7 +18,7 @@ class OneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable)
       }
-      return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id)
+      return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef)
     }
   }
 }
@@ -33,7 +33,7 @@ class OneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, false)
       }
-      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)!!
+      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef)!!
     }
   }
 
@@ -46,7 +46,7 @@ class OneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, true)
       }
-      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)
+      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef)
     }
   }
 }
@@ -75,7 +75,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
       }
-      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneChildOfParent(connectionId!!, thisRef.id, value?.id?.asChild())
+      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneChildOfParent(connectionId!!, thisRef, value)
     }
   }
 }
@@ -101,7 +101,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
-      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
+      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneParentOfChild(connectionId!!, thisRef, value)
     }
   }
 
@@ -125,7 +125,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true)
       }
-      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
+      (thisRef.diff as WorkspaceEntityStorageBuilderImpl).updateOneToOneParentOfChild(connectionId!!, thisRef, value)
     }
   }
 }

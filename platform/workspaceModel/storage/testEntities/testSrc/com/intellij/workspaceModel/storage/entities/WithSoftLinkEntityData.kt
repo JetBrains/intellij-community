@@ -10,21 +10,21 @@ import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
 
 // ------------------------------ Persistent Id ---------------
 
-data class NameId(private val name: String) : PersistentEntityId<NamedEntity>() {
+data class NameId(private val name: String) : PersistentEntityId<NamedEntity> {
   override val presentableName: String
     get() = name
 
   override fun toString(): String = name
 }
 
-data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEntity>() {
+data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEntity> {
   override val presentableName: String
     get() = name
 
   override fun toString(): String = name
 }
 
-data class ComposedId(val name: String, val link: NameId) : PersistentEntityId<ComposedIdSoftRefEntity>() {
+data class ComposedId(val name: String, val link: NameId) : PersistentEntityId<ComposedIdSoftRefEntity> {
   override val presentableName: String
     get() = "$name - ${link.presentableName}"
 }
@@ -52,12 +52,12 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
   }
 }
 
-class NamedEntity(val name: String, val additionalProperty: String?) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
-  override fun persistentId() = NameId(name)
+class NamedEntity(override val name: String, val additionalProperty: String?) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
+  override val persistentId = NameId(name)
 }
 
 class ModifiableNamedEntity : ModifiableWorkspaceEntityBase<NamedEntity>() {
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var additionalProperty: String? by EntityDataDelegation()
 }
 
@@ -69,7 +69,7 @@ fun WorkspaceEntityStorageBuilder.addNamedEntity(name: String, additionalPropert
 
 
 val NamedEntity.children: Sequence<NamedChildEntity>
-  get() = referrers(NamedChildEntity::parent)
+  get() = referrersx(NamedChildEntity::parent)
 
 // ------------------------------ Child of entity with persistent id ------------------
 
@@ -83,12 +83,12 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
 class NamedChildEntity(
   val childProperty: String
 ) : WorkspaceEntityBase() {
-  val parent: NamedEntity by ManyToOne.NotNull(NamedEntity::class.java)
+  override val parent: NamedEntity by ManyToOne.NotNull(NamedEntity::class.java)
 }
 
 class ModifiableNamedChildEntity : ModifiableWorkspaceEntityBase<NamedChildEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: NamedEntity by MutableManyToOne.NotNull(NamedChildEntity::class.java, NamedEntity::class.java)
+  override var parent: NamedEntity by MutableManyToOne.NotNull(NamedChildEntity::class.java, NamedEntity::class.java)
 }
 
 
@@ -189,12 +189,12 @@ class WithListSoftLinksEntityData : SoftLinkable, WorkspaceEntityData.WithCalcul
   override fun persistentId() = AnotherNameId(name)
 }
 
-class WithListSoftLinksEntity(val name: String, val links: List<NameId>) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
-  override fun persistentId(): AnotherNameId = AnotherNameId(name)
+class WithListSoftLinksEntity(override val name: String, val links: List<NameId>) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
+  override val persistentId: AnotherNameId = AnotherNameId(name)
 }
 
 class ModifiableWithListSoftLinksEntity : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity>() {
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var links: List<NameId> by EntityDataDelegation()
 }
 
@@ -255,12 +255,12 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   }
 }
 
-class ComposedIdSoftRefEntity(val name: String, val link: NameId) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
-  override fun persistentId(): ComposedId = ComposedId(name, link)
+class ComposedIdSoftRefEntity(override val name: String, val link: NameId) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
+  override val persistentId: ComposedId = ComposedId(name, link)
 }
 
 class ModifiableComposedIdSoftRefEntity : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity>() {
-  var name: String by EntityDataDelegation()
+  override var name: String by EntityDataDelegation()
   var link: NameId by EntityDataDelegation()
 }
 

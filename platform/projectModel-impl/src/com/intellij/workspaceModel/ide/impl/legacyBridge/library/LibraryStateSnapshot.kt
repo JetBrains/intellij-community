@@ -64,7 +64,7 @@ class LibraryStateSnapshot(
   }
 
   val name: String?
-    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId())
+    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId)
 
   val module: Module?
     get() = (libraryTable as? ModuleLibraryTableBridge)?.module

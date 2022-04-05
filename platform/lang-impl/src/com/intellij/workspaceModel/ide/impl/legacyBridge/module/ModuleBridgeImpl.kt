@@ -32,7 +32,7 @@ internal class ModuleBridgeImpl(
   project: Project,
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
-  override var diff: WorkspaceEntityStorageDiffBuilder?
+  override var diff: WorkspaceEntityStorageBuilder?
 ) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
   init {
     // default project doesn't have modules
@@ -42,7 +42,7 @@ internal class ModuleBridgeImpl(
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.persistentId() != moduleEntityId) return@forEach
+            if (it.entity.persistentId != moduleEntityId) return@forEach
 
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 
@@ -120,7 +120,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun setOption(key: String, value: String?) {
-    fun updateOptionInEntity(diff: WorkspaceEntityStorageDiffBuilder, entity: ModuleEntity) {
+    fun updateOptionInEntity(diff: WorkspaceEntityStorageBuilder, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
         diff.modifyEntity(ModifiableModuleEntity::class.java, entity) { type = value }
       }

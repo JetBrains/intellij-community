@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
@@ -97,7 +96,7 @@ object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
+  internal fun <P : JpsElement> addPropertiesEntity(diff: WorkspaceEntityStorageBuilder,
                                                     sourceRootEntity: SourceRootEntity,
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {

@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,7 +27,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     Disposer.register(moduleBridge, this)
   }
 
-  fun registerModuleLibraryInstances(builder: WorkspaceEntityStorageDiffBuilder?) {
+  fun registerModuleLibraryInstances(builder: WorkspaceEntityStorageBuilder?) {
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
@@ -54,11 +54,11 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     return false
   }
 
-  fun addLibrary(entity: LibraryEntity, storageBuilder: WorkspaceEntityStorageDiffBuilder?): LibraryBridgeImpl {
+  fun addLibrary(entity: LibraryEntity, storageBuilder: WorkspaceEntityStorageBuilder?): LibraryBridgeImpl {
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
-      initialId = entity.persistentId(),
+      initialId = entity.persistentId,
       initialEntityStorage = moduleBridge.entityStorage,
       targetBuilder = null
     )

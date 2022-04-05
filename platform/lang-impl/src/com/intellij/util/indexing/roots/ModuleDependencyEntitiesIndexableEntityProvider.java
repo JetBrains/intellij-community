@@ -43,7 +43,7 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleEntity entity,
                                                                                                 @NotNull Project project) {
     List<IndexableIteratorBuilder> iterators = new SmartList<>();
-    iterators.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.persistentId()));
+    iterators.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getPersistentId()));
     for (ModuleDependencyItem dependency : entity.getDependencies()) {
       iterators.addAll(createIteratorBuildersForDependency(dependency));
     }
