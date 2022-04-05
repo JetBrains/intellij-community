@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -119,15 +119,10 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
             }
           }
 
-          int count = 0;
-          for (int i = method.getParameterList().getParametersCount(); i < args.length; i++) {
-            if (PsiPolyExpressionUtil.isPolyExpression(args[i]) && ++ count > 50) {
-              myHolder.registerProblem(expression.getMethodExpression(),
-                                       JavaAnalysisBundle
-                                         .message("vararg.method.call.with.50.poly.arguments"),
-                                       new MyAddExplicitTypeArgumentsFix());
-              break;
-            }
+          if (isSuspicious(args, method)) {
+            myHolder.registerProblem(expression.getMethodExpression(),
+                                     JavaAnalysisBundle.message("vararg.method.call.with.50.poly.arguments"),
+                                     new MyAddExplicitTypeArgumentsFix());
           }
         }
         if (resolveResult.isValidResult()) {
@@ -157,6 +152,16 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
         }
       }
     }
+  }
+
+  public static boolean isSuspicious(PsiExpression[] args, PsiMethod method) {
+    int count = 0;
+    for (int i = method.getParameterList().getParametersCount(); i < args.length; i++) {
+      if (PsiPolyExpressionUtil.isPolyExpression(args[i]) && ++ count > 50) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
