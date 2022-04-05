@@ -544,7 +544,8 @@ public final class Utils {
               fastUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(fastSession)));
               if (!ref.isNull()) queue.offer(fastUpdater::applyPresentationChanges);
             }
-            if (ref.isNull() && (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)))) {
+            if (!ref.isNull() || promise.isDone()) return null;
+            if (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
               UpdateSession session = actionUpdater.asUpdateSession();
               actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session)));
               queue.offer(actionUpdater::applyPresentationChanges);
