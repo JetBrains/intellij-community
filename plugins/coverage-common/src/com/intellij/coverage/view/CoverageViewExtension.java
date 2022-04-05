@@ -97,7 +97,7 @@ public abstract class CoverageViewExtension {
 
   /**
    * @return extra actions which will be added to {@link CoverageView} toolbar menu
-   * directly after all еру default actions (Flatten Packages, Generate Coverage Report)
+   * directly after all the default actions (Flatten Packages, Generate Coverage Report)
    */
   @ApiStatus.Experimental
   @NotNull
