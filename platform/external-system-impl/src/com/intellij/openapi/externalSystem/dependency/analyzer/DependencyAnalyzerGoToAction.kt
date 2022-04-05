@@ -8,9 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.pom.Navigatable
 
-abstract class DependencyAnalyzerGoToAction : DumbAwareAction() {
-
-  abstract fun getSystemId(e: AnActionEvent): ProjectSystemId
+abstract class DependencyAnalyzerGoToAction(val systemId: ProjectSystemId) : DumbAwareAction() {
 
   abstract fun getNavigatable(e: AnActionEvent): Navigatable?
 
@@ -22,11 +20,13 @@ abstract class DependencyAnalyzerGoToAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val systemId = getSystemId(e)
-    e.presentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.go.to.action.name", systemId.readableName)
-    e.presentation.description = ExternalSystemBundle.message("external.system.dependency.analyzer.go.to.action.description", systemId.readableName)
     e.presentation.isEnabledAndVisible =
       systemId == e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID) &&
       getNavigatable(e) != null
+  }
+
+  init {
+    templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.go.to.action.name", systemId.readableName)
+    templatePresentation.description = ExternalSystemBundle.message("external.system.dependency.analyzer.go.to.action.description", systemId.readableName)
   }
 }

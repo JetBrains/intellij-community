@@ -2,16 +2,16 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 
-abstract class ExternalSystemDependencyAnalyzerOpenConfigAction : DependencyAnalyzerOpenConfigAction() {
+abstract class ExternalSystemDependencyAnalyzerOpenConfigAction(systemId: ProjectSystemId) : DependencyAnalyzerOpenConfigAction(systemId) {
 
   abstract fun getExternalProjectPath(e: AnActionEvent): String?
 
   override fun getConfigFile(e: AnActionEvent): VirtualFile? {
-    val systemId = getSystemId(e)
     val externalProjectPath = getExternalProjectPath(e) ?: return null
 
     val fileSystem = LocalFileSystem.getInstance()
