@@ -18,7 +18,7 @@ enum JetBrainsRuntimeDistribution {
   /**
    * JBR without JCEF and DCEVM
    */
-  LIGHTWEIGHT('nomod'),
+  LIGHTWEIGHT(''),
 
   /**
    * Distinguishes artifacts of different JBR distributions
