@@ -88,6 +88,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final Color HOVERED_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.hoveredBackground",
                                                                      DEFAULT_HOVERED_BACKGROUND);
 
+  private static final Color SELECTION_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.selectionBackground",
+                                                                       UIUtil.getListSelectionBackground(true));
+
+  private static final Color SELECTION_BACKGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveBackground",
+                                                                                UIUtil.getListSelectionBackground(false));
+
+  private static final Color SELECTION_FOREGROUND = JBColor.namedColor("VersionControl.Log.Commit.selectionForeground",
+                                                                       UIUtil.getListSelectionForeground(true));
+
+  private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
+                                                                                UIUtil.getListSelectionForeground(false));
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
@@ -614,7 +625,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
-      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, columnModelIndex, selected));
+      List<VcsCommitStyle> styles =
+        ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, columnModelIndex, selected));
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
@@ -764,8 +776,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @NotNull
     public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
-      Color background = selected ? UIUtil.getListSelectionBackground(myTable.hasFocus()) : UIUtil.getListBackground();
-      return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
+      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : UIUtil.getListBackground();
+      Color foreground = selected ? getSelectionForeground(myTable.hasFocus()) : dummyRendererComponent.getForeground();
+
+      return createStyle(foreground, background, VcsLogHighlighter.TextStyle.NORMAL);
+    }
+
+    @NotNull
+    private static Color getSelectionForeground(boolean hasFocus) {
+      return hasFocus ? SELECTION_FOREGROUND : SELECTION_FOREGROUND_INACTIVE;
+    }
+
+    @NotNull
+    private static Color getSelectionBackground(boolean hasFocus) {
+      return hasFocus ? SELECTION_BACKGROUND : SELECTION_BACKGROUND_INACTIVE;
     }
   }
 

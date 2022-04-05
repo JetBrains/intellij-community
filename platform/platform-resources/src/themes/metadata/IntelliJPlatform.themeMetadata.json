@@ -1426,6 +1426,24 @@
       "since": "2020.3"
     },
     {
+      "key": "VersionControl.Log.Commit.selectionBackground",
+      "description": "Background color for the commit selection in the Version Control | Log tab"
+    },
+    {
+      "key": "VersionControl.Log.Commit.selectionInactiveBackground",
+      "description": "Background color for the commit selection in the unfocused Version Control | Log tab"
+    },
+    {
+      "key": "VersionControl.Log.Commit.selectionForeground",
+      "description": "Foreground color for the commit selection in the Version Control | Log tab",
+      "since": "2022.2"
+    },
+    {
+      "key": "VersionControl.Log.Commit.selectionInactiveForeground",
+      "description": "Foreground color for the commit selection in the unfocused Version Control | Log tab",
+      "since": "2022.2"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"
