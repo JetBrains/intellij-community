@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
@@ -63,7 +63,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
-      ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs))
+      showExternalGitLogInDialog(project, vcs, roots)
       return
     }
     val showContent = {
@@ -87,6 +87,10 @@ class GitShowExternalLogAction : DumbAwareAction() {
       showContent()
     }
   }
+}
+
+fun showExternalGitLogInDialog(project: Project, vcs: GitVcs, roots: List<VirtualFile>) {
+  ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs))
 }
 
 private class MyContentComponent(actualComponent: JComponent,

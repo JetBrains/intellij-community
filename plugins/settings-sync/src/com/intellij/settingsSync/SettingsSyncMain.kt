@@ -99,7 +99,7 @@ internal class SettingsSyncMain : Disposable {
       val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker) {
         componentStore.storageManager.addStreamProvider(ideUpdater, true)
       }
-      return SettingsSyncControls(ideUpdater, updateChecker, bridge, remoteCommunicator)
+      return SettingsSyncControls(ideUpdater, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
 
     private val LOG = logger<SettingsSyncMain>()
@@ -108,5 +108,6 @@ internal class SettingsSyncMain : Disposable {
   internal class SettingsSyncControls(val streamProvider: StreamProvider,
                                       val updateChecker: SettingsSyncUpdateChecker,
                                       val bridge: SettingsSyncBridge,
-                                      val remoteCommunicator: SettingsSyncRemoteCommunicator)
+                                      val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                                      val settingsSyncStorage: Path)
 }
