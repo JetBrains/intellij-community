@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
@@ -10,8 +10,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -177,9 +174,7 @@ class ActionStepBuilder {
       }
       else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
         icon = LafIconLookup.getIcon("checkmark");
-        Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
-        boolean isLightSelectionInLightTheme = JBColor.isBright() && !ColorUtil.isDark(selectionBg);
-        selectedIcon = isLightSelectionInLightTheme ?  icon : LafIconLookup.getSelectedIcon("checkmark");
+        selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
         disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
       }
     }
