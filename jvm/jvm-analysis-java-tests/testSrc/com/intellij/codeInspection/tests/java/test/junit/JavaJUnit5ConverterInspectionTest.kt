@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JUnit5ConverterInspectionTestBase
 import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.test.junit.JUnit5ConverterInspectionTestBase
 
 class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
   fun `test qualified conversion`() {

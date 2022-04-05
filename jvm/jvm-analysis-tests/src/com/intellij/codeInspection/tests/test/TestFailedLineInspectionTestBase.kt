@@ -1,6 +1,7 @@
-package com.intellij.codeInspection.tests
+package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestFailedLineInspection
+import com.intellij.codeInspection.tests.UastInspectionTestBase
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo

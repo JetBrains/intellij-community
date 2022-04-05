@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.test.junit.JUnitRuleInspectionTestBase
 
 class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
   fun `test field @Rule highlighting modifier`() {

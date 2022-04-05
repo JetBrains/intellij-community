@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.TestFailedLineInspectionTestBase
+import com.intellij.codeInspection.tests.test.TestFailedLineInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.testFramework.TestDataPath
 

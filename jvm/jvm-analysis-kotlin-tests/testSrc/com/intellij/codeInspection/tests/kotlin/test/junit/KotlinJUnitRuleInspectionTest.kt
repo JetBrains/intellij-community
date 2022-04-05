@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.test.junit.JUnitRuleInspectionTestBase
 
 class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
   fun `test field @Rule highlighting public`() {

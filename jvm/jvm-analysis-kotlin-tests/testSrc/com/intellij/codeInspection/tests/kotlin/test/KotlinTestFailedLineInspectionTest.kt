@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.TestFailedLineInspectionTestBase
+import com.intellij.codeInspection.tests.test.TestFailedLineInspectionTestBase
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.TestDataPath
 

@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.tests
+package com.intellij.codeInspection.tests.test.junit
 
 import com.intellij.codeInspection.test.junit.JUnit5ConverterInspection
+import com.intellij.codeInspection.tests.UastInspectionTestBase
 
 abstract class JUnit5ConverterInspectionTestBase : UastInspectionTestBase() {
   override val inspection = JUnit5ConverterInspection()
