@@ -101,6 +101,7 @@ class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
+    "kotlin.fe10-analyze.safe-analyze-utils"
   ]
   private static List<String> LIBRARIES = [
     "kotlinc.android-extensions-compiler-plugin",
