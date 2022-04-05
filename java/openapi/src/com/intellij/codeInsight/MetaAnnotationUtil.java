@@ -20,6 +20,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastModificationTracker;
+import com.intellij.util.ForcefulReparseModificationTracker;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -115,7 +116,9 @@ public abstract class MetaAnnotationUtil {
         return findAnnotationTypesWithChildren(List.of(annotationClass), libsScope);
       });
 
-      return Result.createSingleDependency(map, ProjectRootManager.getInstance(module.getProject()));
+      return Result.create(map,
+                           ProjectRootManager.getInstance(module.getProject()),
+                           ForcefulReparseModificationTracker.getInstance()); // PsiClass from libraries may become invalid on reparse
     });
   }
 
