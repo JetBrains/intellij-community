@@ -36,7 +36,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
   @NotNull
   @Override
-  public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, boolean isSelected) {
+  public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, int column, boolean isSelected) {
     if (myShouldHighlightUser) {
       VcsUser currentUser = myLogData.getCurrentUser().get(details.getRoot());
       if (currentUser != null && VcsUserUtil.isSamePerson(currentUser, details.getAuthor())) {

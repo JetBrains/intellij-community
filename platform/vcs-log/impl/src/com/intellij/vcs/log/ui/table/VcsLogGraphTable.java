@@ -613,7 +613,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int commitId = rowInfo.getCommit();
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
     if (details != null) {
-      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
+      int columnModelIndex = convertColumnIndexToModel(column);
+      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, columnModelIndex, selected));
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
