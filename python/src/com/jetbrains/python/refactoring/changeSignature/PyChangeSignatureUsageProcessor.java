@@ -261,6 +261,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @NotNull
   private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
     if (keywordArgument && !value.startsWith("*")) {
+      assert !name.startsWith("*");
       return name + "=" + value;
     }
     else {
