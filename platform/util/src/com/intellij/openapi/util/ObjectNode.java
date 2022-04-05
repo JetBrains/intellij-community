@@ -168,13 +168,4 @@ final class ObjectNode {
   }
 
   // must not override hasCode/equals because ObjectNode must have identity semantics
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return super.equals(obj);
-  }
 }
