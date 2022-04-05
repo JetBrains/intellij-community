@@ -63,13 +63,13 @@ class IdeaModelInfosCache(
 // Workaround for duplicated libraries, see KT-42607
 internal class LibraryWrapper(val library: LibraryEx) {
     private val allRootUrls by lazy {
-            mutableSetOf<String>().apply {
-                for (orderRootType in OrderRootType.getAllTypes()) {
-                    ProgressManager.checkCanceled()
-                    addAll(library.rootProvider.getUrls(orderRootType))
-                }
+        mutableSetOf<String>().apply {
+            for (orderRootType in OrderRootType.getAllTypes()) {
+                ProgressManager.checkCanceled()
+                addAll(library.rootProvider.getUrls(orderRootType))
             }
         }
+    }
 
     private val hashCode by lazy {
         31 + allRootUrls.hashCode()
@@ -134,16 +134,20 @@ private fun mergePlatformModules(
 ): List<IdeaModuleInfo> {
     if (platform.isCommon()) return allModules
 
-    val platformModules =
-        allModules.flatMap { module ->
-            if (module.platform == platform && module.expectedBy.isNotEmpty())
-                listOf(module to module.expectedBy)
-            else emptyList()
-        }.map { (module, expectedBys) ->
-            PlatformModuleInfo(module, expectedBys.closure(preserveOrder = true) { it.expectedBy }.toList())
-        }
+    val knownCommonModules = mutableSetOf<ModuleSourceInfo>()
+    val platformModules = allModules.mapNotNull { module ->
+        if (module.platform != platform || module.expectedBy.isEmpty() || module in knownCommonModules)
+            return@mapNotNull null
 
-    val rest = allModules - platformModules.flatMap { it.containedModules }
+        val commonModules = module.expectedBy
+            .onEach { commonModule -> knownCommonModules.add(commonModule) }
+            .closure { it.expectedBy.onEach { commonModule -> knownCommonModules.add(commonModule) } }
+            .toList()
+
+        PlatformModuleInfo(module, commonModules)
+    }.filter { it.platformModule !in knownCommonModules }
+
+    val rest = allModules - platformModules.flatMapTo(mutableSetOf()) { it.containedModules }
     return rest + platformModules
 }
 
