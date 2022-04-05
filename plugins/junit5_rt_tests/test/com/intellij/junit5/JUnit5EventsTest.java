@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -110,7 +110,7 @@ public class JUnit5EventsTest {
     myExecutionListener.executionFinished(TestIdentifier.from(engineDescriptor), TestExecutionResult.successful());
 
 
-    String lineSeparators = StringUtil.convertLineSeparators(myBuf.toString()).replaceAll("|r", "");
+    String lineSeparators = StringUtil.convertLineSeparators(myBuf.toString()).replaceAll("\\|r", "");
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "##teamcity[rootName name = 'testClass' location = 'java:suite://testClass']\n" +
                             "##teamcity[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +
