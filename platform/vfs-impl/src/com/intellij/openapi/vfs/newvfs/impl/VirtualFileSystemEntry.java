@@ -38,13 +38,20 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
   @ApiStatus.Internal
+  public static void markAllFilesAsUnindexed() {
+    VfsData.markAllFilesAsUnindexed();
+  }
+
+  @ApiStatus.Internal
   static class VfsDataFlags {
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
     /**
      * @see com.intellij.util.indexing.UnindexedFilesFinder
      * @see com.intellij.util.indexing.FileBasedIndexImpl
+     * @deprecated vacant & unused, replaced with {@link VirtualFileSystemEntry#myIndexingStamp}
      */
+    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated
     private static final int INDEXED_FLAG = 0x0400_0000;
     /**
      * true if the line separator for this file was detected to be equal to {@link com.intellij.util.LineSeparator#getSystemLineSeparator()}
@@ -189,11 +196,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public boolean isFileIndexed() {
-    return getFlagInt(VfsDataFlags.INDEXED_FLAG);
+    return getSegment().isIndexed(myId);
   }
 
   public void setFileIndexed(boolean indexed) {
-    setFlagInt(VfsDataFlags.INDEXED_FLAG, indexed);
+    getSegment().setIndexed(myId, indexed);
   }
 
   @Override

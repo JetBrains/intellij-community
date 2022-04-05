@@ -226,10 +226,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
   }
 
-  void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
+  void scheduleFullIndexesRescan(@NotNull String reason) {
     cleanupProcessedFlag();
-    doClearIndices(id -> indexesToRebuild.contains(id));
-    scheduleIndexRebuild(reason);
+    scheduleIndexRescanningForAllProjects(reason);
   }
 
   @VisibleForTesting
@@ -912,7 +911,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myIndexableFilesFilterHolder;
   }
 
-  private static void scheduleIndexRebuild(String reason) {
+  private static void scheduleIndexRescanningForAllProjects(@NotNull String reason) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       new UnindexedFilesUpdater(project, reason).queue(project);
     }
@@ -1277,7 +1276,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (!myRegisteredIndexes.isInitialized()) return;
       advanceIndexVersion(indexId);
 
-      Runnable rebuildRunnable = () -> scheduleIndexRebuild(message);
+      Runnable rebuildRunnable = () -> scheduleIndexRescanningForAllProjects(message);
 
       // we do invoke later since we can have read lock acquired
       AppUIExecutor.onWriteThread().later().expireWith(app).submit(rebuildRunnable);

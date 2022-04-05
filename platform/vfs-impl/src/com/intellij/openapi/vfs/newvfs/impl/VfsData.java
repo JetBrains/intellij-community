@@ -20,12 +20,10 @@ import com.intellij.util.keyFMap.KeyFMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -63,6 +61,17 @@ public final class VfsData {
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
+
+  private static final short NULL_INDEXING_STAMP = 0;
+  private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
+
+  @ApiStatus.Internal
+  static void markAllFilesAsUnindexed() {
+    ourIndexingStamp.updateAndGet(cur -> {
+      int next = cur + 1;
+      return (short)next == NULL_INDEXING_STAMP ? (NULL_INDEXING_STAMP + 1) : next;
+    });
+  }
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
@@ -148,7 +157,7 @@ public final class VfsData {
     int key = id >>> SEGMENT_BITS;
     Segment segment = mySegments.get(key);
     if (segment != null || !create) return segment;
-    return mySegments.cacheOrGet(key, new Segment(this, key));
+    return mySegments.cacheOrGet(key, new Segment(this));
   }
 
   public boolean hasLoadedFile(int id) {
@@ -206,7 +215,6 @@ public final class VfsData {
   }
 
   static final class Segment {
-    private final int myIndex;
     // user data for files, DirectoryData for folders
     private final AtomicReferenceArray<Object> myObjectArray;
 
@@ -219,27 +227,35 @@ public final class VfsData {
     // the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
     @Nullable Segment replacement;
 
-    Segment(@NotNull VfsData vfsData, int index) {
-      this(vfsData, index, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 2));
+    Segment(@NotNull VfsData vfsData) {
+      this(vfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
     }
 
     private Segment(@NotNull VfsData vfsData,
-                    int index,
                     @NotNull AtomicReferenceArray<Object> objectArray,
                     @NotNull AtomicIntegerArray intArray) {
-      myIndex = index;
       myObjectArray = objectArray;
       myIntArray = intArray;
       this.vfsData = vfsData;
     }
 
+    boolean isIndexed(int fileId) {
+      return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
+    }
+
+    void setIndexed(int fileId, boolean indexed) {
+      if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
+      int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
+      myIntArray.set(getOffset(fileId) * 3 + 2, stamp);
+    }
+
     int getNameId(int fileId) {
-      return myIntArray.get(getOffset(fileId) * 2);
+      return myIntArray.get(getOffset(fileId) * 3);
     }
 
     void setNameId(int fileId, int nameId) {
-      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+fileId+"; nameId: "+nameId);
-      myIntArray.set(getOffset(fileId) * 2, nameId);
+      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId + "; nameId: " + nameId);
+      myIntArray.set(getOffset(fileId) * 3, nameId);
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {
@@ -262,7 +278,7 @@ public final class VfsData {
     boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
       BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      return (myIntArray.get(getOffset(id) * 2 + 1) & mask) != 0;
+      return (myIntArray.get(getOffset(id) * 3 + 1) & mask) != 0;
     }
 
     void setFlag(int id, @VirtualFileSystemEntry.Flags int mask, boolean value) {
@@ -270,7 +286,7 @@ public final class VfsData {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      int offset = getOffset(id) * 2 + 1;
+      int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
     void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
@@ -280,23 +296,24 @@ public final class VfsData {
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
                                                     Integer.toHexString(combinedMask)+")";
-      int offset = getOffset(id) * 2 + 1;
+      int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
     long getModificationStamp(int id) {
-      return myIntArray.get(getOffset(id) * 2 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
+      return myIntArray.get(getOffset(id) * 3 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int id, long stamp) {
-      int offset = getOffset(id) * 2 + 1;
+      int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
       assert replacement == null;
-      replacement = new Segment(vfsData, myIndex, myObjectArray, myIntArray);
-      boolean replaced = vfsData.mySegments.replace(myIndex, this, replacement);
+      replacement = new Segment(vfsData, myObjectArray, myIntArray);
+      int key = fileId >>> SEGMENT_BITS;
+      boolean replaced = vfsData.mySegments.replace(key, this, replacement);
       assert replaced;
       vfsData.changeParent(fileId, directory);
     }

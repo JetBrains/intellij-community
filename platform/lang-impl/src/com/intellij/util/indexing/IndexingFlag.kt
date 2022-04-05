@@ -19,12 +19,7 @@ object IndexingFlag {
   val nonExistentHash = StripedIndexingStampLock.NON_EXISTENT_HASH
 
   @JvmStatic
-  fun cleanupProcessedFlag() {
-    val roots = ManagingFS.getInstance().roots
-    for (root in roots) {
-      cleanProcessedFlagRecursively(root)
-    }
-  }
+  fun cleanupProcessedFlag() = VirtualFileSystemEntry.markAllFilesAsUnindexed()
 
   @JvmStatic
   fun cleanProcessedFlagRecursively(file: VirtualFile) {
