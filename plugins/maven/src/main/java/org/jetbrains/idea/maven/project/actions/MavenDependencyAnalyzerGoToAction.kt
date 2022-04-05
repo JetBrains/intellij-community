@@ -8,9 +8,7 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction() {
-
-  override fun getSystemId(e: AnActionEvent) = MavenUtil.SYSTEM_ID
+class MavenDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction(MavenUtil.SYSTEM_ID) {
 
   override fun getNavigatable(e: AnActionEvent): Navigatable? {
     val project = e.project ?: return null

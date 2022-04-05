@@ -16,9 +16,7 @@ import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzer
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
-class GradleDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction() {
-
-  override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
+class GradleDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction(GradleConstants.SYSTEM_ID) {
 
   override fun getNavigatable(e: AnActionEvent): Navigatable? {
     val dependency = getDeclaredDependency(e) ?: return null

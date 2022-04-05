@@ -8,9 +8,7 @@ import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzer
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
-class GradleDependencyAnalyzerOpenConfigAction : ExternalSystemDependencyAnalyzerOpenConfigAction() {
-
-  override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
+class GradleDependencyAnalyzerOpenConfigAction : ExternalSystemDependencyAnalyzerOpenConfigAction(GradleConstants.SYSTEM_ID) {
 
   override fun getExternalProjectPath(e: AnActionEvent): String? {
     val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY) ?: return null

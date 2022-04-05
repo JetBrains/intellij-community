@@ -6,9 +6,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenDependencyAnalyzerOpenConfigAction : DependencyAnalyzerOpenConfigAction() {
-
-  override fun getSystemId(e: AnActionEvent) = MavenUtil.SYSTEM_ID
+class MavenDependencyAnalyzerOpenConfigAction : DependencyAnalyzerOpenConfigAction(MavenUtil.SYSTEM_ID) {
 
   override fun getConfigFile(e: AnActionEvent): VirtualFile? {
     val project = e.project ?: return null
