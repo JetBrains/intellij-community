@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
+import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -233,7 +234,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   // IDEA-288703
-  fun hasNoSerializedJpsModules(): Boolean = !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
+  fun hasNoSerializedJpsModules(): Boolean = !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
+                                             !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
 
   private fun prepareSerializers(): JpsProjectSerializers {
     val existingSerializers = this.serializers.get()
