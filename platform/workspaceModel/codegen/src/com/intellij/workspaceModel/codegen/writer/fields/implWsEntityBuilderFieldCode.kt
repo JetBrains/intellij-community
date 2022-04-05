@@ -1,13 +1,10 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.fields
 
-import deft.storage.codegen.field.builderImplSuspendableCode
+import deft.storage.codegen.*
 import deft.storage.codegen.field.javaMutableType
 import deft.storage.codegen.field.javaType
 import deft.storage.codegen.field.unsupportedTypeError
-import deft.storage.codegen.implFieldName
-import deft.storage.codegen.javaImplBuilderName
-import deft.storage.codegen.javaName
-import deft.storage.codegen.suspendable
 import org.jetbrains.deft.codegen.ijws.classes.`else`
 import org.jetbrains.deft.codegen.ijws.classes.`for`
 import org.jetbrains.deft.codegen.ijws.classes.`if`
@@ -49,6 +46,11 @@ val Field<*, *>.implWsBuilderFieldCode: String
         if (suspendable == true) append("\n").append(builderImplSuspendableCode)
     }
 
+private val Field<*, *>.builderImplSuspendableCode: String
+  get() = """
+        override suspend fun $suspendableGetterName(): ${type.javaType} = 
+                result.$suspendableGetterName()
+    """.trimIndent()
 
 private val Field<*, *>.implWsBuilderBlockingCode: String
     get() = type.implWsBuilderBlockingCode(this)

@@ -2,7 +2,6 @@
 package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.codegen.ijws.model.WsEntityInterface
 import org.jetbrains.deft.impl.*
 
 class KtType(

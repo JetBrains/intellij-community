@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package storage.codegen.patcher
 
-import org.jetbrains.deft.codegen.ijws.model.WsData
-import org.jetbrains.deft.codegen.ijws.model.WsEnum
-import org.jetbrains.deft.codegen.ijws.model.WsSealed
 import org.jetbrains.deft.codegen.model.*
 
 // todo: replace by real kotlin parser

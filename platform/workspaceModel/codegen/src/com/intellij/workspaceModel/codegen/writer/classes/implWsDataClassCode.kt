@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.classes
 
 import deft.storage.codegen.implFieldName
@@ -8,10 +9,10 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.codegen.ijws.fields.implWsDataFieldCode
 import org.jetbrains.deft.codegen.ijws.fields.implWsDataFieldInitializedCode
 import org.jetbrains.deft.codegen.ijws.isRefType
-import org.jetbrains.deft.codegen.ijws.model.WsEntityWithPersistentId
 import org.jetbrains.deft.codegen.ijws.sups
 import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
+import org.jetbrains.deft.codegen.model.WsEntityWithPersistentId
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field

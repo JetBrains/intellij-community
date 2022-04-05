@@ -1,11 +1,12 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.classes
 
 import deft.storage.codegen.javaFullName
 import deft.storage.codegen.javaSuperType
-import org.jetbrains.deft.codegen.ijws.model.WsData
-import org.jetbrains.deft.codegen.ijws.model.WsSealed
 import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
+import org.jetbrains.deft.codegen.model.WsData
+import org.jetbrains.deft.codegen.model.WsSealed
 import org.jetbrains.deft.codegen.utils.LinesBuilder
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*

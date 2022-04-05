@@ -2,11 +2,12 @@
 package deft.storage.codegen
 
 import deft.storage.codegen.field.defCode
-import org.jetbrains.deft.codegen.ijws.interfaces.wsBuilderApi
-import org.jetbrains.deft.codegen.ijws.model.WsEntityInterface
+import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.model.DefType
+import org.jetbrains.deft.codegen.model.WsEntityInterface
 import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
+import org.jetbrains.deft.impl.fields.Field
 import storage.codegen.field.api
 import storage.codegen.field.builderApi
 
@@ -61,4 +62,6 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
     lineNoNl("//endregion")
 }
 
+val Field<*, *>.wsBuilderApi: String
+  get() = "override var $javaName: ${type.javaType}"
 
