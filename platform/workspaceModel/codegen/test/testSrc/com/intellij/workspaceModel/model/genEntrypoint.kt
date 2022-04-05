@@ -3,11 +3,11 @@ package com.intellij.workspace.model
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
 import org.jetbrains.deft.codegen.ijws.wsModuleCode
+import org.jetbrains.deft.codegen.model.DefType
+import org.jetbrains.deft.codegen.model.KtObjModule
 import org.jetbrains.deft.codegen.patcher.rewrite
 import org.jetbrains.deft.codegen.utils.fileContents
 import org.jetbrains.deft.impl.ObjModule
-import storage.codegen.patcher.DefType
-import storage.codegen.patcher.KtObjModule
 import java.io.File
 
 fun main() {

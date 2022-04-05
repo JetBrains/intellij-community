@@ -1,4 +1,4 @@
-package storage.codegen.patcher
+package org.jetbrains.deft.codegen.model
 
 import deft.storage.codegen.suspendable
 import org.jetbrains.deft.impl.TBlob

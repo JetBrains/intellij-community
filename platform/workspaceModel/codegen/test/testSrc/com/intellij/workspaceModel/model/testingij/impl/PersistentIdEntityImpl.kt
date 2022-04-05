@@ -5,8 +5,11 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.ObjType
+import org.jetbrains.deft.*
+import org.jetbrains.deft.bytes.*
+import org.jetbrains.deft.collections.*
+import org.jetbrains.deft.impl.*
+import org.jetbrains.deft.impl.fields.Field
 
     
 

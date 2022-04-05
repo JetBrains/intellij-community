@@ -1,4 +1,4 @@
-package storage.codegen.patcher
+package org.jetbrains.deft.codegen.model
 
 class Src(val name: String, val contents: () -> CharSequence) {
     fun pos(pos: Int) = SrcPos(this, pos)

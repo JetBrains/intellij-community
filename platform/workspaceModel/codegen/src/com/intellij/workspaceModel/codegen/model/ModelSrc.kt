@@ -1,4 +1,4 @@
-package storage.codegen.patcher
+package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.codegen.model.CodegenTypes
 import org.jetbrains.deft.getExtension

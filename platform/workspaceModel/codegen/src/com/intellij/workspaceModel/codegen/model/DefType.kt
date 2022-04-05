@@ -1,4 +1,4 @@
-package storage.codegen.patcher
+package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
