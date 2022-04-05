@@ -91,13 +91,8 @@ final class AttributeList extends AbstractList<Attribute> implements RandomAcces
    */
   private final Element parent;
 
-  private static final Comparator<Attribute> ATTRIBUTE_NATURAL = (a1, a2) -> {
-    int comp = a1.getNamespacePrefix().compareTo(a2.getNamespacePrefix());
-    if (comp != 0) {
-      return comp;
-    }
-    return a1.getName().compareTo(a2.getName());
-  };
+  private static final Comparator<Attribute> ATTRIBUTE_NATURAL =
+    Comparator.comparing(Attribute::getNamespacePrefix).thenComparing(Attribute::getName);
 
   /**
    * Create a new instance of the AttributeList representing <i>parent</i>

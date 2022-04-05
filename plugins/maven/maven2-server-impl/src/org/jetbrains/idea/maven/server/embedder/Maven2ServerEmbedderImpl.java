@@ -279,29 +279,23 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
                                                                @NotNull final Collection<String> activeProfiles,
                                                                @NotNull final Collection<String> inactiveProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
-    return ContainerUtilRt.map2List(files, new Function<File, MavenServerExecutionResult>() {
-      @Override
-      public MavenServerExecutionResult fun(final File file) {
-        try {
-          return doExecute(new Executor<MavenServerExecutionResult>() {
-            @NotNull
-            @Override
-            public MavenServerExecutionResult execute() throws Exception {
-              DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
-              MavenExecutionResult result = myImpl.resolveProject(file,
-                                                                  new ArrayList<String>(activeProfiles),
-                                                                  new ArrayList<String>(inactiveProfiles),
-                                                                  Collections.<ResolutionListener>singletonList(listener));
-              return createExecutionResult(file, result, listener.getRootNode());
-            }
-          });
-        }
-        catch (MavenServerProcessCanceledException e) {
-          throw new RuntimeException(e);
-        }
-        catch (RemoteException e) {
-          throw new RuntimeException(e);
-        }
+    return ContainerUtilRt.map2List(files, file -> {
+      try {
+        return doExecute(new Executor<MavenServerExecutionResult>() {
+          @NotNull
+          @Override
+          public MavenServerExecutionResult execute() throws Exception {
+            DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+            MavenExecutionResult result = myImpl.resolveProject(file,
+                                                                new ArrayList<String>(activeProfiles),
+                                                                new ArrayList<String>(inactiveProfiles),
+                                                                Collections.singletonList(listener));
+            return createExecutionResult(file, result, listener.getRootNode());
+          }
+        });
+      }
+      catch (MavenServerProcessCanceledException | RemoteException e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -393,10 +387,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
       return Maven2ModelConverter.convertArtifacts(myImpl.resolveTransitively(toResolve, convertRepositories(remoteRepositories)),
                                                    new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
-    catch (ArtifactResolutionException e) {
-      Maven2ServerGlobals.getLogger().info(e);
-    }
-    catch (ArtifactNotFoundException e) {
+    catch (ArtifactResolutionException | ArtifactNotFoundException e) {
       Maven2ServerGlobals.getLogger().info(e);
     }
     catch (Exception e) {
@@ -422,16 +413,13 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
                                                    new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile())
         , null);
     }
-    catch (ArtifactResolutionException e) {
-      Maven2ServerGlobals.getLogger().info(e);
-    }
-    catch (ArtifactNotFoundException e) {
+    catch (ArtifactResolutionException | ArtifactNotFoundException e) {
       Maven2ServerGlobals.getLogger().info(e);
     }
     catch (Exception e) {
       throw rethrowException(e);
     }
-    return new MavenArtifactResolveResult(Collections.<MavenArtifact>emptyList(), null);
+    return new MavenArtifactResolveResult(Collections.emptyList(), null);
   }
 
   @NotNull
@@ -609,13 +597,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
 
   @NotNull
   private <T> T doExecute(final Executor<T> executor) throws MavenServerProcessCanceledException, RemoteException {
-    Future<T> future = ExecutorManager.execute(new Callable<T>() {
-      @Override
-      @NotNull
-      public T call() throws Exception {
-        return executor.execute();
-      }
-    });
+    Future<T> future = ExecutorManager.execute(() -> executor.execute());
 
     MavenServerProgressIndicator indicator = myCurrentIndicator;
     while (true) {
@@ -759,12 +741,9 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   @Override
   public void clearCachesFor(final MavenId projectId, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    withProjectCachesDo(new Function<Map, Object>() {
-      @Override
-      public Object fun(Map map) {
-        map.remove(projectId.getKey());
-        return null;
-      }
+    withProjectCachesDo(map -> {
+      map.remove(projectId.getKey());
+      return null;
     });
   }
 

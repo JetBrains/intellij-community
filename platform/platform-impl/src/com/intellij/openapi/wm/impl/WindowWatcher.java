@@ -31,7 +31,7 @@ import java.util.*;
 public final class WindowWatcher implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();
-  private final Map<@NotNull Window, WindowInfo> windowToInfo = new WeakHashMap<>();;
+  private final Map<@NotNull Window, WindowInfo> windowToInfo = new WeakHashMap<>();
   /**
    * Currently focused window (window which has focused component). Can be {@code null} if there is no focused
    * window at all.

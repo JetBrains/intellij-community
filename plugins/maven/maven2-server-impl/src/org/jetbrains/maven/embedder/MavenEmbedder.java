@@ -162,7 +162,7 @@ public final class MavenEmbedder {
   public MavenExecutionResult resolveProject(@NotNull final File file,
                                              @NotNull final List<String> activeProfiles,
                                              @NotNull final List<String> inactiveProfiles) {
-    return resolveProject(file, activeProfiles, inactiveProfiles, Collections.<ResolutionListener>emptyList());
+    return resolveProject(file, activeProfiles, inactiveProfiles, Collections.emptyList());
   }
 
   @NotNull
@@ -170,7 +170,7 @@ public final class MavenEmbedder {
                                              @NotNull final List<String> activeProfiles,
                                              @NotNull final List<String> inactiveProfiles,
                                              List<ResolutionListener> listeners) {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.emptyList());
     ProjectBuilderConfiguration config = request.getProjectBuilderConfiguration();
 
     request.getGlobalProfileManager().loadSettingsProfiles(mySettings);
@@ -216,13 +216,7 @@ public final class MavenEmbedder {
       try {
         extensionManager.addExtension((Extension)each, project, myLocalRepository);
       }
-      catch (PlexusContainerException e) {
-        MavenEmbedderLog.LOG.error(e);
-      }
-      catch (ArtifactResolutionException e) {
-        MavenEmbedderLog.LOG.error(e);
-      }
-      catch (ArtifactNotFoundException e) {
+      catch (PlexusContainerException | ArtifactResolutionException | ArtifactNotFoundException e) {
         MavenEmbedderLog.LOG.error(e);
       }
     }
@@ -304,22 +298,19 @@ public final class MavenEmbedder {
       Method method = maven.getClass().getDeclaredMethod("doExecute", MavenExecutionRequest.class, EventDispatcher.class);
       method.setAccessible(true);
       ReactorManager reactor = (ReactorManager)method.invoke(maven, request, request.getEventDispatcher());
-      return new MavenExecutionResult(reactor.getTopLevelProject(), Collections.<Exception>emptyList());
+      return new MavenExecutionResult(reactor.getTopLevelProject(), Collections.emptyList());
     }
     catch (InvocationTargetException e) {
       return handleException(e.getTargetException());
     }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException(e); // should never happen
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchMethodException | IllegalAccessException e) {
       throw new RuntimeException(e); // should never happen
     }
   }
 
   @NotNull
   public MavenExecutionResult readProjectWithModules(@NotNull final File file, List<String> activeProfiles, List<String> inactiveProfiles) {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.emptyList());
     request.getGlobalProfileManager().loadSettingsProfiles(mySettings);
     request.setRecursive(true);
 
@@ -386,7 +377,7 @@ public final class MavenEmbedder {
   public MavenExecutionResult readProject(@NotNull final File file,
                                           @NotNull final List<String> activeProfiles,
                                           @NotNull final List<String> inactiveProfiles) {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.emptyList());
     request.getGlobalProfileManager().loadSettingsProfiles(mySettings);
     request.setRecursive(false);
 

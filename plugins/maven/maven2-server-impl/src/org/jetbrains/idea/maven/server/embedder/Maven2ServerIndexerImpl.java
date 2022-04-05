@@ -47,12 +47,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
-    MavenServerUtil.registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        release(MavenServerUtil.getToken());
-      }
-    });
+    MavenServerUtil.registerShutdownTask(() -> release(MavenServerUtil.getToken()));
   }
 
   @Override

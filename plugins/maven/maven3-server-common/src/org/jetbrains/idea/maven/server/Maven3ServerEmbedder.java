@@ -135,12 +135,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
           artifact,
           getLocalRepository(),
           convertRepositories(remoteRepositories));
-      return ContainerUtilRt.map2List(versions, new Function<ArtifactVersion, String>() {
-        @Override
-        public String fun(ArtifactVersion version) {
-          return version.toString();
-        }
-      });
+      return ContainerUtilRt.map2List(versions, version -> version.toString());
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
@@ -308,7 +303,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     Map<String, String> result = new HashMap<String, String>();
     readConfigFiles(baseDir, result);
-    return result.isEmpty() ? Collections.<String, String>emptyMap() : result;
+    return result.isEmpty() ? Collections.emptyMap() : result;
   }
 
   static void readConfigFiles(File baseDir, Map<String, String> result) {
@@ -419,7 +414,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   private void notifyAfterSessionStart(MavenSession mavenSession) {
     try {
-      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
+      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.emptyList())) {
         listener.afterSessionStart(mavenSession);
       }
     }
@@ -542,33 +537,30 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     final Map<String, String> result = new HashMap<String, String>();
     final AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
-    executeWithMavenSession(request, new Runnable() {
-      @Override
-      public void run() {
-        MavenArtifactRepository artifactRepository = null;
-        if (url != null) {
-          artifactRepository = new MavenArtifactRepository();
-          artifactRepository.setId("archetype");
-          artifactRepository.setUrl(url);
-          artifactRepository.setLayout(new DefaultRepositoryLayout());
-        }
+    executeWithMavenSession(request, (Runnable)() -> {
+      MavenArtifactRepository artifactRepository = null;
+      if (url != null) {
+        artifactRepository = new MavenArtifactRepository();
+        artifactRepository.setId("archetype");
+        artifactRepository.setUrl(url);
+        artifactRepository.setLayout(new DefaultRepositoryLayout());
+      }
 
-        List<ArtifactRepository> remoteRepositories = request.getRemoteRepositories();
+      List<ArtifactRepository> remoteRepositories = request.getRemoteRepositories();
 
-        ArchetypeArtifactManager archetypeArtifactManager = getComponent(ArchetypeArtifactManager.class);
-        ArchetypeDescriptor descriptor = null;
-        try {
-          descriptor = archetypeArtifactManager.getFileSetArchetypeDescriptor(
-            groupId, artifactId, version, artifactRepository,
-            getLocalRepository(), remoteRepositories);
-        }
-        catch (UnknownArchetype e) {
-          unknownArchetypeError.set(true);
-        }
-        if (descriptor != null && descriptor.getRequiredProperties() != null) {
-          for (RequiredProperty property : descriptor.getRequiredProperties()) {
-            result.put(property.getKey(), property.getDefaultValue() != null ? property.getDefaultValue() : "");
-          }
+      ArchetypeArtifactManager archetypeArtifactManager = getComponent(ArchetypeArtifactManager.class);
+      ArchetypeDescriptor descriptor = null;
+      try {
+        descriptor = archetypeArtifactManager.getFileSetArchetypeDescriptor(
+          groupId, artifactId, version, artifactRepository,
+          getLocalRepository(), remoteRepositories);
+      }
+      catch (UnknownArchetype e) {
+        unknownArchetypeError.set(true);
+      }
+      if (descriptor != null && descriptor.getRequiredProperties() != null) {
+        for (RequiredProperty property : descriptor.getRequiredProperties()) {
+          result.put(property.getKey(), property.getDefaultValue() != null ? property.getDefaultValue() : "");
         }
       }
     });

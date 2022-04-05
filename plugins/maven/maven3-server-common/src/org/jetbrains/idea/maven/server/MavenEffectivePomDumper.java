@@ -51,26 +51,23 @@ public final class MavenEffectivePomDumper {
     try {
       final MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles, null);
 
-      embedder.executeWithMavenSession(request, new Runnable() {
-        @Override
-        public void run() {
-          try {
-            // copied from DefaultMavenProjectBuilder.buildWithDependencies
-            ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-            ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+      embedder.executeWithMavenSession(request, (Runnable)() -> {
+        try {
+          // copied from DefaultMavenProjectBuilder.buildWithDependencies
+          ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
+          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
 
-            MavenProject project = buildingResult.getProject();
+          MavenProject project = buildingResult.getProject();
 
-            XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
-                                                        "\n", null, null);
+          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+                                                      "\n", null, null);
 
-            writeHeader(writer);
+          writeHeader(writer);
 
-            writeEffectivePom(project, writer);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+          writeEffectivePom(project, writer);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
     }
@@ -217,10 +214,7 @@ public final class MavenEffectivePomDumper {
 
       return w.toString();
     }
-    catch (JDOMException e) {
-      return effectiveXml;
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       return effectiveXml;
     }
   }
