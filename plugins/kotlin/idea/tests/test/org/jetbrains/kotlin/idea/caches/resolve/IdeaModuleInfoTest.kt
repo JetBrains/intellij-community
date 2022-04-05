@@ -36,6 +36,9 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
@@ -446,6 +449,263 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
     }
 
+    // KTIJ-20815
+    fun testPlatformModulesForJvm() {
+        val nativePlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val jvmPlatform = JvmPlatforms.jvm8
+
+        val commonMain = module("commonMain", hasTestRoot = false).also {
+            it.setUpPlatform(TargetPlatform(nativePlatform.componentPlatforms + jvmPlatform))
+        }
+        val nativeMain = module("nativeMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(nativePlatform, dependsOnModules = listOf(commonMain))
+        }
+        val intermediateJvmMain = module("intermediateJvmMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(commonMain))
+        }
+        val leafJvmMain = module("leafJvmMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(intermediateJvmMain))
+        }
+
+        val jvmInfos = getIdeaModelInfosCache(project).forPlatform(jvmPlatform)
+
+        Assert.assertEquals(
+            "Exactly one JVM platform module info should be created",
+            1, jvmInfos.filterIsInstance<PlatformModuleInfo>().size,
+        )
+        Assert.assertEquals(
+            "JVM platform module info should be created from the leaf JVM module, not shared JVM",
+            leafJvmMain.production, jvmInfos.filterIsInstance<PlatformModuleInfo>().single().platformModule,
+        )
+        Assert.assertTrue(
+            "Native module info should remain intact after JVM platform module info creation",
+            nativeMain.production in jvmInfos,
+        )
+    }
+
+    fun testPlatformModulesForNative() {
+        val nativePlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val jvmPlatform = JvmPlatforms.jvm8
+
+        val commonMain = module("commonMain", hasTestRoot = false).also {
+            it.setUpPlatform(TargetPlatform(nativePlatform.componentPlatforms + jvmPlatform))
+        }
+        val intermediateJvmMain = module("intermediateJvmMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(commonMain))
+        }
+        val leafJvmMain = module("leafJvmMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(intermediateJvmMain))
+        }
+        val nativeMain = module("nativeMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(nativePlatform, dependsOnModules = listOf(commonMain))
+        }
+
+        val nativeInfos = getIdeaModelInfosCache(project).forPlatform(nativePlatform)
+
+        Assert.assertEquals(
+            "Exactly one Native platform module info should be created",
+            1, nativeInfos.filterIsInstance<PlatformModuleInfo>().size,
+        )
+        Assert.assertEquals(
+            "Native platform module info should be created from the native module",
+            nativeMain.production, nativeInfos.filterIsInstance<PlatformModuleInfo>().single().platformModule,
+        )
+        Assert.assertTrue(
+            "JVM module infos should remain intact after Native platform module info creation",
+            leafJvmMain.production in nativeInfos && intermediateJvmMain.production in nativeInfos,
+        )
+    }
+
+    fun testPlatformModulesForTwoIndependentModules() {
+        val jvmPlatform = JvmPlatforms.jvm8
+        val nativePlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+
+        module("leafJvmMain", hasTestRoot = false).also{ it.setUpPlatform(jvmPlatform) }
+        module("leafNativeMain", hasTestRoot = false).also{ it.setUpPlatform(nativePlatform) }
+
+        val moduleInfos = getIdeaModelInfosCache(project)
+
+        fun assert(platform: TargetPlatform) {
+            Assert.assertTrue(
+                "Platform module infos should only be created for platform modules with shared common modules",
+                moduleInfos.forPlatform(platform).none { it is PlatformModuleInfo }
+            )
+        }
+
+        assert(jvmPlatform)
+        assert(nativePlatform)
+    }
+
+    fun testPlatformModulesForSimpleCommon() {
+        val jvmPlatform = JvmPlatforms.jvm8
+        val nativePlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+
+        val common = module("commonMain", hasTestRoot = false).also {
+            it.setUpPlatform(TargetPlatform(jvmPlatform.componentPlatforms + nativePlatform))
+        }
+        val jvmModule = module("leafJvmMain", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(common))
+        }
+        val nativeModule = module("leafNativeMain", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(nativePlatform, dependsOnModules = listOf(common))
+        }
+
+        assertPlatformModules(jvmPlatform, jvmModule)
+        assertPlatformModules(nativePlatform, nativeModule)
+    }
+
+    fun testPlatformModulesForIntermediateCommon() {
+        val jvmPlatform = JvmPlatforms.jvm8
+        val nativePlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val commonPlatform = TargetPlatform(jvmPlatform.componentPlatforms + nativePlatform)
+
+        val common = module("commonMain", hasTestRoot = false).also { it.setUpPlatform(commonPlatform) }
+        val intermediate = module("intermediateMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(commonPlatform, dependsOnModules = listOf(common))
+        }
+        val jvmModule = module("leafJvmMain", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(intermediate))
+        }
+        val nativeModule = module("leafNativeMain", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(nativePlatform, dependsOnModules = listOf(intermediate))
+        }
+
+        assertPlatformModules(jvmPlatform, jvmModule)
+        assertPlatformModules(nativePlatform, nativeModule)
+    }
+
+    fun testPlatformModulesForDiamond() {
+        val thePlatform = JvmPlatforms.jvm8
+
+        val common = module("commonMain", hasTestRoot = false).also { it.setUpPlatform(thePlatform) }
+        val left = module("leftMain", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(thePlatform, dependsOnModules = listOf(common))
+        }
+        val right = module("rightMain", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(thePlatform, dependsOnModules = listOf(common))
+        }
+        val leaf = module("leafMain", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(thePlatform, dependsOnModules = listOf(left, right))
+        }
+
+        assertPlatformModules(thePlatform, leaf)
+    }
+
+    fun testPlatformModulesForForkedTree() {
+        val jvmPlatform = JvmPlatforms.jvm8
+        val macOsPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val iosPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.IOS_X64)
+        val watchosPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.WATCHOS_X64)
+        val sharedNativePlatform = TargetPlatform(macOsPlatform.componentPlatforms + iosPlatform + watchosPlatform)
+        val commonPlatform = TargetPlatform(sharedNativePlatform.componentPlatforms + jvmPlatform)
+
+        val common = module("common", hasTestRoot = false).also { it.setUpPlatform(commonPlatform) }
+        val sharedNative = module("sharedNative", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(sharedNativePlatform, dependsOnModules = listOf(common))
+        }
+        val watchOs = module("watchOs", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(watchosPlatform, dependsOnModules = listOf(sharedNative))
+        }
+        val ios = module("ios", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(iosPlatform, dependsOnModules = listOf(sharedNative))
+        }
+        val macOs = module("macOs", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(macOsPlatform, dependsOnModules = listOf(sharedNative))
+        }
+        val jvm = module("jvm", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(common))
+        }
+
+        assertPlatformModules(jvmPlatform, jvm)
+        assertPlatformModules(macOsPlatform, macOs)
+        assertPlatformModules(iosPlatform, ios)
+        assertPlatformModules(watchosPlatform, watchOs)
+    }
+
+    fun testPlatformModulesForBambooBranchedTree() {
+        val jvmPlatform = JvmPlatforms.jvm8
+        val macOsPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val iosPlatform = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.IOS_X64)
+        val sharedNativePlatform = TargetPlatform(macOsPlatform.componentPlatforms + iosPlatform)
+        val commonPlatform = TargetPlatform(sharedNativePlatform.componentPlatforms + jvmPlatform)
+
+        val common = module("common", hasTestRoot = false).also { it.setUpPlatform(commonPlatform) }
+        val left = module("left", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(sharedNativePlatform, dependsOnModules = listOf(common))
+        }
+        val leftLeft = module("leftLeft", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(macOsPlatform, dependsOnModules = listOf(left))
+        }
+        val leftRight = module("leftRight", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(iosPlatform, dependsOnModules = listOf(left))
+        }
+        val right = module("right", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(common))
+        }
+        val rightRight = module("farRight", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(right))
+        }
+        val macOsModule = module("macos", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(macOsPlatform, dependsOnModules = listOf(leftLeft))
+        }
+        val iosModule = module("ios", hasTestRoot = false).also {
+            it.setUpPlatformAndDependsOnModules(iosPlatform, dependsOnModules = listOf(leftRight))
+        }
+        val jvmModule = module("jvm", hasTestRoot = false).also{
+            it.setUpPlatformAndDependsOnModules(jvmPlatform, dependsOnModules = listOf(rightRight))
+        }
+
+        assertPlatformModules(jvmPlatform, jvmModule)
+        assertPlatformModules(macOsPlatform, macOsModule)
+        assertPlatformModules(iosPlatform, iosModule)
+    }
+
+    fun testPlatformModulesForTestModules() {
+        val thePlatform = JvmPlatforms.jvm8
+        val common = module("common", hasTestRoot = true).also { it.setUpPlatform(thePlatform) }
+        val intermediate = module("intermediate", hasTestRoot = true).also {
+            it.setUpPlatformAndDependsOnModules(thePlatform, dependsOnModules = listOf(common))
+        }
+        val leaf = module("leaf", hasTestRoot = true).also {
+            it.setUpPlatformAndDependsOnModules(thePlatform, dependsOnModules = listOf(intermediate))
+        }
+
+        val moduleInfosForThePlatform = getIdeaModelInfosCache(project).forPlatform(thePlatform)
+
+        Assert.assertNotNull(
+            "Expect single PlatformModuleInfo for main compilation",
+            moduleInfosForThePlatform.singleOrNull { it is PlatformModuleInfo && it.platformModule == leaf.production }
+        )
+
+        Assert.assertNotNull(
+            "Expect single PlatformModuleInfo for test compilation",
+            moduleInfosForThePlatform.singleOrNull { it is PlatformModuleInfo && it.platformModule == leaf.test }
+        )
+
+        Assert.assertEquals(
+            "Expect only two platform modules, one for main and one for test compilation",
+            2, moduleInfosForThePlatform.filterIsInstance<PlatformModuleInfo>().size
+        )
+    }
+
+    private fun assertPlatformModules(platform: TargetPlatform, leafSourceModule: Module) {
+        val moduleInfos = getIdeaModelInfosCache(project)
+        val moduleInfosForPlatform = moduleInfos.forPlatform(platform)
+        val platformModulesForPlatform = moduleInfosForPlatform.filterIsInstance<PlatformModuleInfo>()
+
+        Assert.assertNotNull(
+            "Expect the only platform module for platform $platform to be based on $leafSourceModule; found: ${platformModulesForPlatform}",
+            platformModulesForPlatform.singleOrNull()?.takeIf {
+                it.platformModule == leafSourceModule.production
+            }
+        )
+
+        Assert.assertTrue(
+            "Expect no unbound modules not covered by a PlatformModuleInfo for platform $platform",
+            moduleInfosForPlatform.none { it is ModuleSourceInfo && it.platform == platform }
+        )
+    }
+
     private fun createFileInModule(module: Module, fileName: String, inTests: Boolean = false): VirtualFile {
         val fileToCopyIO = createTempFile(fileName, "")
 
@@ -540,6 +800,17 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         createMultiplatformFacetM3(
             platformKind = targetPlatform,
             dependsOnModuleNames = listOf(),
+            pureKotlinSourceFolders = listOf(),
+        )
+    }
+
+    private fun Module.setUpPlatformAndDependsOnModules(
+        targetPlatform: TargetPlatform,
+        dependsOnModules: List<Module>,
+    ) {
+        createMultiplatformFacetM3(
+            platformKind = targetPlatform,
+            dependsOnModuleNames = dependsOnModules.map { it.name },
             pureKotlinSourceFolders = listOf(),
         )
     }
