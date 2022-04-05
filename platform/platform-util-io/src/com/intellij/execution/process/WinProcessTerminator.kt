@@ -3,6 +3,7 @@
 
 package com.intellij.execution.process
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import java.util.concurrent.CompletableFuture
 
@@ -24,6 +25,9 @@ internal fun terminateWinProcessGracefully(processHandler: KillableProcessHandle
                                            terminateGracefully: () -> Boolean = {
                                              processService.sendWinProcessCtrlC(processHandler.process)
                                            }): Boolean {
+  if (ApplicationManager.getApplication().isUnitTestMode && isCmdBatchFile(processHandler, processService)) {
+    return false
+  }
   val stdoutMatched: CompletableFuture<Void> = CompletableFuture()
   val processListener = object : ProcessAdapter() {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
