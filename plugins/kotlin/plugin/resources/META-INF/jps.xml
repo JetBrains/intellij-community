@@ -25,7 +25,6 @@
             serviceInterface="org.jetbrains.kotlin.config.KotlinFacetSettingsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetSettingsProviderImpl"/>
 
-    <compileServer.plugin classpath="jps/kotlin-jps-plugin.jar;kotlin-jps-common.jar;kotlin-common.jar"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.KotlinJpsClasspathProvider"/>
   </extensions>
 
