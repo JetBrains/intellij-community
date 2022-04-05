@@ -491,8 +491,14 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   // PY-42682
   public void testAddPositionalVarargToKeywordVararg() {
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "*args", "None", false),
-                                              new PyParameterInfo(0, "**kwargs", "None", false)));
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "*args", null, false),
+                                              new PyParameterInfo(0, "**kwargs", null, false)));
+  }
+
+  // PY-42682
+  public void testAddKeywordVarargAsLastParameter() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", "1", true),
+                                              new PyParameterInfo(NEW_PARAMETER, "**kwargs", null, false)));
   }
 
   public void testPositionalOnlyMarkerAsFirstParameter() {
