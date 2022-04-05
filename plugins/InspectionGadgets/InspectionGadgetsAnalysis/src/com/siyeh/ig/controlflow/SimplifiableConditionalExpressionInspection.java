@@ -41,7 +41,8 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
   @Override
   public @NotNull String buildErrorString(Object... infos) {
     final String replacement = (String)infos[0];
-    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement);
+    final String orig = (String)infos[1];
+    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement, orig);
   }
 
   @Override
@@ -58,7 +59,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      PsiConditionalExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiConditionalExpression.class);
+      PsiConditionalExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiConditionalExpression.class);
       if (expression == null) return;
       ConditionalModel model = ConditionalModel.from(expression);
       if (model == null) return;
@@ -98,7 +99,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
           return;
         }
       }
-      registerError(expression, generator.generate(new CommentTracker()));
+      registerError(expression.getCondition(), generator.generate(new CommentTracker()), expression.getText());
     }
   }
 }
