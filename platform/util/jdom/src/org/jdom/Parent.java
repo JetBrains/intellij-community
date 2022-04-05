@@ -53,8 +53,6 @@
  */
 package org.jdom;
 
-import org.jdom.filter.Filter;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -124,26 +122,6 @@ public interface Parent extends Cloneable, NamespaceAware {
    *                               and the root element is not set
    */
   List<Content> getContent();
-
-  /**
-   * Returns as a {@link List} the content of
-   * this parent that matches the supplied filter. The returned list is
-   * <b>"live"</b> and in document order. Any modifications to it affect
-   * the element's actual contents. Modifications are checked for
-   * conformance to XML 1.0 rules.
-   * <p>
-   * Sequential traversal through the List is best done with an Iterator
-   * since the underlying implement of {@link List#size} may
-   * require walking the entire list and indexed lookups may require
-   * starting at the beginning each time.
-   *
-   * @param <E>    The Generic type of the returned content (the Filter's type)
-   * @param filter filter to apply.
-   * @return a list of the content of the parent matching the filter
-   * @throws IllegalStateException if parent is a Document
-   *                               and the root element is not set
-   */
-  <E extends Content> List<E> getContent(Filter<E> filter);
 
   /**
    * Removes all content from this parent and returns the detached

@@ -295,10 +295,4 @@ public abstract class Content extends CloneBase
   public List<Namespace> getNamespacesIntroduced() {
     return Collections.emptyList();
   }
-
-  @Override
-  public List<Namespace> getNamespacesInherited() {
-    // Element class will override
-    return getNamespacesInScope();
-  }
 }

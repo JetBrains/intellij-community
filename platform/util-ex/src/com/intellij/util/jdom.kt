@@ -9,7 +9,6 @@ import com.intellij.util.xmlb.Constants
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jdom.Parent
 import org.jdom.input.SAXBuilder
 import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
@@ -17,24 +16,6 @@ import org.xml.sax.InputSource
 import java.io.CharArrayReader
 import java.io.IOException
 import java.io.InputStream
-import java.io.OutputStream
-
-//@JvmOverloads
-//fun Parent.write(file: Path, lineSeparator: String = "\n") {
-//  write(file.outputStream(), lineSeparator)
-//}
-
-@JvmOverloads
-fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
-  output.bufferedWriter().use { writer ->
-    if (this is Document) {
-      JDOMUtil.writeDocument(this, writer, lineSeparator)
-    }
-    else {
-      JDOMUtil.writeElement(this as Element, writer, lineSeparator)
-    }
-  }
-}
 
 fun Element.getOrCreate(@NonNls name: String): Element {
   var element = getChild(name)

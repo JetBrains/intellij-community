@@ -57,6 +57,7 @@ package org.jdom;
 import org.jdom.filter2.Filter;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * A non-public list implementation holding only legal JDOM content, including
@@ -429,6 +430,10 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
     return new FilterList<E>(filter);
   }
 
+  public Stream<Content> content() {
+    return Arrays.stream(elementData);
+  }
+
   /**
    * Return the index of the first Element in the list. If the parent is a
    * <code>Document</code> then the element is the root element. If the list
@@ -729,7 +734,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
      *
      * @param start where in the FilterList to start iteration.
      */
-    CLListIterator(final int start) {
+    private CLListIterator(final int start) {
       expectedmod = getModCount();
       // always start list iterators in backward mode ....
       // it makes sense... really.

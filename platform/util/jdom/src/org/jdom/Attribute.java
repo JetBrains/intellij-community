@@ -642,14 +642,13 @@ public class Attribute extends CloneBase implements NamespaceAware, Serializable
    * Note that the Attribute's Namespace will always be reported first.
    * <p>
    * <strong>Description copied from</strong>
-   * {@link NamespaceAware#getNamespacesInScope()}:
    * <p>
    * {@inheritDoc}
    */
   @Override
   public List<Namespace> getNamespacesInScope() {
     if (getParent() == null) {
-      ArrayList<Namespace> ret = new ArrayList<Namespace>(3);
+      List<Namespace> ret = new ArrayList<Namespace>(3);
       ret.add(getNamespace());
       ret.add(Namespace.XML_NAMESPACE);
       return Collections.unmodifiableList(ret);
@@ -663,14 +662,6 @@ public class Attribute extends CloneBase implements NamespaceAware, Serializable
       return Collections.singletonList(getNamespace());
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public List<Namespace> getNamespacesInherited() {
-    if (getParent() == null) {
-      return Collections.singletonList(Namespace.XML_NAMESPACE);
-    }
-    return orderFirst(getNamespace(), getParent().getNamespacesInScope());
   }
 
   private static List<Namespace> orderFirst(final Namespace nsa, final List<Namespace> nsl) {

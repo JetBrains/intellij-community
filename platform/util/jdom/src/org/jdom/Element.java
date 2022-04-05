@@ -64,6 +64,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.jdom.JDOMConstants.NS_PREFIX_DEFAULT;
 import static org.jdom.JDOMConstants.NS_PREFIX_XML;
@@ -660,9 +661,12 @@ public class Element extends Content implements Parent, Serializable {
    * @param filter <code>Filter</code> to apply
    * @return <code>List</code> - filtered Element content
    */
-  @Override
-  public <E extends Content> List<E> getContent(final Filter<E> filter) {
+  public <E extends Content> List<E> getContent(Filter<E> filter) {
     return content.getView(AbstractFilter.toFilter2(filter));
+  }
+
+  public Stream<Content> content() {
+    return content.stream();
   }
 
   /**
@@ -1507,7 +1511,7 @@ public class Element extends Content implements Parent, Serializable {
    * @param ns    <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
    * @return whether deletion occurred
    */
-  public boolean removeChild(final String cname, final Namespace ns) {
+  public boolean removeChild(String cname, final Namespace ns) {
     final ElementFilter filter = new ElementFilter(cname, ns);
     final List<Element> old = content.getView(filter);
     final Iterator<Element> iter = old.iterator();
@@ -1641,38 +1645,6 @@ public class Element extends Content implements Parent, Serializable {
     al.add(getNamespace());
     namespaces.remove(getNamespacePrefix());
     al.addAll(namespaces.values());
-
-    return Collections.unmodifiableList(al);
-  }
-
-  @Override
-  public List<Namespace> getNamespacesInherited() {
-    if (getParentElement() == null) {
-      ArrayList<Namespace> ret = new ArrayList<Namespace>(getNamespacesInScope());
-      for (Iterator<Namespace> it = ret.iterator(); it.hasNext(); ) {
-        Namespace ns = it.next();
-        if (ns == Namespace.NO_NAMESPACE || ns == Namespace.XML_NAMESPACE) {
-          continue;
-        }
-        it.remove();
-      }
-      return Collections.unmodifiableList(ret);
-    }
-
-    // OK, the things we inherit are the prefixes we have in scope that
-    // are also in our parent's scope.
-    HashMap<String, Namespace> parents = new HashMap<String, Namespace>();
-    for (Namespace ns : getParentElement().getNamespacesInScope()) {
-      parents.put(ns.getPrefix(), ns);
-    }
-
-    ArrayList<Namespace> al = new ArrayList<Namespace>();
-    for (Namespace ns : getNamespacesInScope()) {
-      if (ns == parents.get(ns.getPrefix())) {
-        // inherited
-        al.add(ns);
-      }
-    }
 
     return Collections.unmodifiableList(al);
   }

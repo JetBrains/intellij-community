@@ -194,16 +194,4 @@ public interface NamespaceAware {
    * @return a read-only list of Namespaces.
    */
   List<Namespace> getNamespacesIntroduced();
-
-  /**
-   * Obtain a list of all namespaces that are in scope for this content, but
-   * were not introduced by this content.
-   * <p>
-   * The contents of this list will always be a subset (but in the same order)
-   * of getNamespacesInScope(), and will never intersect
-   * getNamspacesIntroduced()
-   *
-   * @return a read-only list of Namespaces.
-   */
-  List<Namespace> getNamespacesInherited();
 }

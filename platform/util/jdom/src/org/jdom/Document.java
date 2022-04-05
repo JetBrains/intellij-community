@@ -54,13 +54,12 @@
 
 package org.jdom;
 
-import org.jdom.filter.AbstractFilter;
-import org.jdom.filter.Filter;
 import org.jdom.util.IteratorIterable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -73,14 +72,14 @@ import java.util.*;
  * @author Bradley S. Huffman
  * @author Rolf Lear
  */
-public final class Document extends CloneBase implements Parent {
+public final class Document extends CloneBase implements Parent, Serializable {
   /**
    * This document's content including comments, PIs, a possible
    * DocType, and a root element.
-   * Subclassers have to track content using their own
+   * Subclasses have to track content using their own
    * mechanism.
    */
-  transient ContentList content = new ContentList(this);
+  private transient ContentList content = new ContentList(this);
 
   private String baseUri;
 
@@ -104,7 +103,7 @@ public final class Document extends CloneBase implements Parent {
    *
    * @param rootElement <code>Element</code> for document root.
    * @param docType     <code>DocType</code> declaration.
-   * @param baseURI     the URI from which this doucment was loaded.
+   * @param baseURI     the URI from which this document was loaded.
    * @throws IllegalAddException if the given docType object
    *                             is already attached to a document or the given
    *                             rootElement already has a parent
@@ -175,23 +174,6 @@ public final class Document extends CloneBase implements Parent {
   public int indexOf(Content child) {
     return content.indexOf(child);
   }
-
-  //    /**
-  //     * Starting at the given index (inclusive), return the index of
-  //     * the first child matching the supplied filter, or -1
-  //     * if none is found.
-  //     *
-  //     * @return index of child, or -1 if none found.
-  //     */
-  //    private int indexOf(int start, Filter filter) {
-  //        int size = getContentSize();
-  //        for (int i = start; i < size; i++) {
-  //            if (filter.matches(getContent(i))) {
-  //                return i;
-  //            }
-  //        }
-  //        return -1;
-  //    }
 
   /**
    * This will return <code>true</code> if this document has a
@@ -388,11 +370,6 @@ public final class Document extends CloneBase implements Parent {
     return content.get(index);
   }
 
-  //    public Content getChild(Filter filter) {
-  //        int i = indexOf(0, filter);
-  //        return (i < 0) ? null : getContent(i);
-  //    }
-
   /**
    * This will return all content for the <code>Document</code>.
    * The returned list is "live" in document order and changes to it
@@ -416,27 +393,6 @@ public final class Document extends CloneBase implements Parent {
   }
 
   /**
-   * Return a filtered view of this <code>Document</code>'s content.
-   *
-   * <p>
-   * Sequential traversal through the List is best done with a Iterator
-   * since the underlying implement of List.size() may require walking the
-   * entire list.
-   * </p>
-   *
-   * @param filter <code>Filter</code> to apply
-   * @return <code>List</code> - filtered Document content
-   * @throws IllegalStateException if the root element hasn't been set
-   */
-  @Override
-  public <F extends Content> List<F> getContent(Filter<F> filter) {
-    if (!hasRootElement()) {
-      throw new IllegalStateException("Root element not set");
-    }
-    return content.getView(AbstractFilter.toFilter2(filter));
-  }
-
-  /**
    * Removes all child content from this parent.
    *
    * @return list of the old children detached from this parent
@@ -452,21 +408,6 @@ public final class Document extends CloneBase implements Parent {
    * This sets the content of the <code>Document</code>.  The supplied
    * List should contain only objects of type <code>Element</code>,
    * <code>Comment</code>, and <code>ProcessingInstruction</code>.
-   *
-   * <p>
-   * When all objects in the supplied List are legal and before the new
-   * content is added, all objects in the old content will have their
-   * parentage set to null (no parent) and the old content list will be
-   * cleared. This has the effect that any active list (previously obtained
-   * with a call to {@link #getContent}) will also
-   * change to reflect the new content.  In addition, all objects in the
-   * supplied List will have their parentage set to this document, but the
-   * List itself will not be "live" and further removals and additions will
-   * have no effect on this document content. If the user wants to continue
-   * working with a "live" list, then a call to setContent should be
-   * followed by a call to {@link #getContent} to
-   * obtain a "live" version of the content.
-   * </p>
    *
    * <p>
    * Passing a null or empty List clears the existing content.
@@ -533,7 +474,7 @@ public final class Document extends CloneBase implements Parent {
   }
 
   /**
-   * Replace the child at the given index whith the supplied
+   * Replace the child at the given index with the supplied
    * collection.
    * <p>
    * In event of an exception the original content will be unchanged and
@@ -567,20 +508,10 @@ public final class Document extends CloneBase implements Parent {
   /**
    * Set this document's content to be the supplied child.
    * <p>
-   * If the supplied child is legal content for a Document and before
+   * If the supplied child is legal content for a Document, and before
    * it is added, all content in the current content list will
    * be cleared and all current children will have their parentage set to
    * null.
-   * <p>
-   * This has the effect that any active list (previously obtained with
-   * a call to one of the {@link #getContent} methods will also change
-   * to reflect the new content.  In addition, all content in the supplied
-   * collection will have their parentage set to this Document.  If the user
-   * wants to continue working with a <b>"live"</b> list of this Document's
-   * child, then a call to setContent should be followed by a call to one
-   * of the {@link #getContent} methods to obtain a <b>"live"</b>
-   * version of the children.
-   * <p>
    * Passing a null child clears the existing content.
    * <p>
    * In event of an exception the original content will be unchanged and
@@ -658,7 +589,7 @@ public final class Document extends CloneBase implements Parent {
     final Document doc = (Document)super.clone();
 
     // The clone has a reference to this object's content list, so
-    // owerwrite with a empty list
+    // overwrite with an empty list
     doc.content = new ContentList(doc);
 
     // Add the cloned content to clone
@@ -800,21 +731,6 @@ public final class Document extends CloneBase implements Parent {
     }
   }
 
-  /**
-   * Get the Namespaces that are in-scope on this Document.
-   * <p>
-   * Document always has exactly two Namespaces in-scope:
-   * {@link Namespace#NO_NAMESPACE} and {@link Namespace#XML_NAMESPACE}.
-   * <p>
-   * These namespaces are always introduced by the Document, and thus they are
-   * both returned by {@link #getNamespacesIntroduced()}, and additionally
-   * {@link #getNamespacesInherited()} will always be empty.
-   * <p>
-   * <strong>Description copied from</strong>
-   * {@link NamespaceAware#getNamespacesInScope()}:
-   * <p>
-   * {@inheritDoc}
-   */
   @Override
   public List<Namespace> getNamespacesInScope() {
     //noinspection SSBasedInspection
@@ -825,11 +741,6 @@ public final class Document extends CloneBase implements Parent {
   public List<Namespace> getNamespacesIntroduced() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(Namespace.NO_NAMESPACE, Namespace.XML_NAMESPACE));
-  }
-
-  @Override
-  public List<Namespace> getNamespacesInherited() {
-    return Collections.emptyList();
   }
 
 

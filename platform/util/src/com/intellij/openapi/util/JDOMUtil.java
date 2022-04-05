@@ -10,7 +10,6 @@ import com.intellij.util.xml.dom.StaxFactory;
 import com.intellij.xml.util.XmlStringUtil;
 import org.codehaus.stax2.XMLStreamReader2;
 import org.jdom.*;
-import org.jdom.filter.Filter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.*;
@@ -25,7 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @SuppressWarnings("IOStreamConstructor")
 public final class JDOMUtil {
@@ -90,18 +91,23 @@ public final class JDOMUtil {
         hashCode = hashCode * 31 * 31 + attribute.getName().hashCode() * 31 + value.hashCode();
       }
     }
-    for (Content content : e.getContent(CONTENT_FILTER)) {
+
+    Iterator<Content> iterator = e.content().filter(CONTENT_FILTER).iterator();
+    while (iterator.hasNext()) {
+      Content content = iterator.next();
       int contentHash = content instanceof Element ? hashCode((Element)content, ignoreEmptyAttrValues) : e.getValue().hashCode();
       hashCode = hashCode * 31 + contentHash;
     }
     return hashCode;
   }
 
-  public static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
-    return contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
+  private static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
+    return contentListsEqual(e1.content().filter(CONTENT_FILTER), e2.content().filter(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
-  private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
+  private static final Predicate<Content> CONTENT_FILTER = content -> {
+    return !(content instanceof Text) || !CharArrayUtil.containsOnlyWhiteSpaces(((Text)content).getText());
+  };
 
   /**
    * @deprecated Use {@link Element#getChildren} instead
@@ -138,19 +144,9 @@ public final class JDOMUtil {
     }
   }
 
-  private static final class EmptyTextFilter implements Filter<Content> {
-    @Override
-    public boolean matches(Object obj) {
-      return !(obj instanceof Text) || !CharArrayUtil.containsOnlyWhiteSpaces(((Text)obj).getText());
-    }
-  }
-
-  private static boolean contentListsEqual(List<Content> c1, List<Content> c2, boolean ignoreEmptyAttrValues) {
-    if (c1 == null && c2 == null) return true;
-    if (c1 == null || c2 == null) return false;
-
-    Iterator<Content> l1 = c1.listIterator();
-    Iterator<Content> l2 = c2.listIterator();
+  private static boolean contentListsEqual(@NotNull Stream<Content> c1, @NotNull Stream<Content> c2, boolean ignoreEmptyAttrValues) {
+    Iterator<Content> l1 = c1.iterator();
+    Iterator<Content> l2 = c2.iterator();
     while (l1.hasNext() && l2.hasNext()) {
       if (!contentsEqual(l1.next(), l2.next(), ignoreEmptyAttrValues)) {
         return false;
@@ -488,7 +484,7 @@ public final class JDOMUtil {
     return writer.toString();
   }
 
-  public static void writeDocument(@NotNull Document document, @NotNull Writer writer, String lineSeparator) throws IOException {
+  private static void writeDocument(@NotNull Document document, @NotNull Writer writer, String lineSeparator) throws IOException {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
     try {
       xmlOutputter.output(document, writer);
@@ -965,11 +961,6 @@ public final class JDOMUtil {
   }
 
   private static boolean hasContent(@NotNull Element element, @NotNull Content content) {
-    if (content instanceof Element) {
-      return !element.getChildren(((Element)content).getName()).isEmpty();
-    }
-    else {
-      return false;
-    }
+    return content instanceof Element && !element.getChildren(((Element)content).getName()).isEmpty();
   }
 }

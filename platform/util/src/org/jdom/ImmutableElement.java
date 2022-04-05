@@ -2,10 +2,8 @@
 package org.jdom;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.filter.Filter;
 import org.jdom.filter2.ElementFilter;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class ImmutableElement extends Element {
   private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,
@@ -59,7 +58,7 @@ final class ImmutableElement extends Element {
     }
   }
 
-  private static @NotNull List<Attribute> internAttributes(@NotNull Element origin, final @NotNull JDOMInterner interner) {
+  private static @NotNull List<Attribute> internAttributes(@NotNull Element origin, @NotNull JDOMInterner interner) {
     List<Attribute> originAttributes = JDOMUtil.getAttributes(origin);
     if (originAttributes.isEmpty()) {
       return EMPTY_LIST;
@@ -76,8 +75,10 @@ final class ImmutableElement extends Element {
       }
       else if (type != origAttribute.getAttributeType() || !origAttribute.getNamespace().equals(namespace)) {
         type = null;
-        break; // no single type/namespace, fallback to ImmutableAttrList
+        // no single type/namespace, fallback to ImmutableAttrList
+        break;
       }
+
       String name = interner.internString(origAttribute.getName());
       String value = interner.internString(origAttribute.getValue());
       nameValues[i * 2] = name;
@@ -85,11 +86,13 @@ final class ImmutableElement extends Element {
     }
 
     if (type == null) {
-      return Collections.unmodifiableList(ContainerUtil.map(originAttributes, attribute -> {
+      //noinspection SSBasedInspection
+      return Collections.unmodifiableList(originAttributes.stream().map(attribute -> {
         return new ImmutableAttribute(interner.internString(attribute.getName()),
                                       interner.internString(attribute.getValue()),
                                       attribute.getAttributeType(), attribute.getNamespace());
-      }));
+
+      }).collect(Collectors.toList()));
     }
     else {
       return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
@@ -109,10 +112,15 @@ final class ImmutableElement extends Element {
   @Override
   public <T extends Content> List<T> getContent(@NotNull Filter<T> filter) {
     //noinspection unchecked
-    return Arrays.stream(myContent)
+    return content()
       .filter(filter::matches)
       .map(it -> (T)it)
       .collect(Collectors.toList());
+  }
+
+  @Override
+  public Stream<Content> content() {
+    return Arrays.stream(myContent);
   }
 
   @Override
@@ -155,13 +163,8 @@ final class ImmutableElement extends Element {
 
     // If we hold only a Text or CDATA, return it directly
     if (myContent.length == 1) {
-      final Object obj = myContent[0];
-      if (obj instanceof Text) {
-        return ((Text)obj).getText();
-      }
-      else {
-        return "";
-      }
+      Content obj = myContent[0];
+      return obj instanceof Text ? ((Text)obj).getText() : "";
     }
 
     // Else build String up
@@ -179,8 +182,8 @@ final class ImmutableElement extends Element {
   }
 
   @Override
-  public int indexOf(final Content child) {
-    return ArrayUtil.indexOf(myContent, child);
+  public int indexOf(Content child) {
+    return ArrayUtilRt.indexOf(myContent, child, 0, myContent.length);
   }
 
   @Override

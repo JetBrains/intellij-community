@@ -12,7 +12,6 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
-import com.intellij.util.write
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
@@ -70,11 +69,7 @@ private fun writeProfileSettings(schemeDir: Path, componentName: String, compone
   val wrapper = Element("component").setAttribute("name", componentName)
   component.name = "settings"
   wrapper.addContent(component)
-
-  val file = schemeDir.resolve("profiles_settings.xml")
-  file.outputStream().use {
-    wrapper.write(it)
-  }
+  JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml"))
 }
 
 private fun convertProfiles(profileIterator: MutableIterator<Element>,
@@ -179,6 +174,6 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   file.outputStream().use {
     it.write(XML_PROLOG)
     it.write(LineSeparator.LF.separatorBytes)
-    wrapper.write(it)
+    JDOMUtil.write(wrapper, it)
   }
 }
