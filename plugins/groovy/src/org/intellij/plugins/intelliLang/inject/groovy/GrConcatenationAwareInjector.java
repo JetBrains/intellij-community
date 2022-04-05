@@ -327,13 +327,14 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
           prefix.append(getStringPresentation(operand));
           if (i == myOperands.length - 1) {
             Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> last = ContainerUtil.getLastItem(list);
-            assert last != null;
-            InjectedLanguage injected = last.second;
-            list.set(list.size() - 1, Trinity.create(last.first, InjectedLanguage.create(injected.getID(), injected.getPrefix(),
-                                                                                         prefix.toString(), false), last.third));
+            if (last != null) {
+              InjectedLanguage injected = last.second;
+              list.set(list.size() - 1, Trinity.create(last.first, InjectedLanguage.create(injected.getID(), injected.getPrefix(),
+                                                                                           prefix.toString(), false), last.third));
+            }
           }
         }
-        else {
+        else if (operand instanceof PsiLanguageInjectionHost) {
           InjectedLanguage injectedLanguage = InjectedLanguage.create(languageID, prefix.toString(), "", false);
           TextRange range = manipulator.getRangeInElement(operand);
           PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)operand;
