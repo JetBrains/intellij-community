@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entitiesx.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.SampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
+import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +30,7 @@ class WorkspaceEntityEqualityTest {
   @Test
   fun `equality modified entity in builder`() {
     val entityOne = builderOne.addSampleEntity("Data")
-    val entityTwo = builderOne.modifyEntity(ModifiableSampleEntity::class.java, entityOne) {
+    val entityTwo = builderOne.modifyEntity(entityOne) {
       stringProperty = "AnotherData"
     }
 
@@ -43,7 +43,7 @@ class WorkspaceEntityEqualityTest {
     val storage = builderOne.toStorage()
     val entityOne = storage.entities(SampleEntity::class.java).single()
     val builder = storage.toBuilder()
-    builder.modifyEntity(ModifiableSampleEntity::class.java, entityOne) {
+    builder.modifyEntity(entityOne) {
       stringProperty = "AnotherData"
     }
     val entityTwo = builder.toStorage().entities(SampleEntity::class.java).single()
@@ -59,7 +59,7 @@ class WorkspaceEntityEqualityTest {
     val entityOne = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
     val entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data2" }
     val builder = storage.toBuilder()
-    builder.modifyEntity(ModifiableSampleEntity::class.java, entityForModification) {
+    builder.modifyEntity(entityForModification) {
       stringProperty = "AnotherData"
     }
     val entityTwo = builder.toStorage().entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
@@ -81,7 +81,7 @@ class WorkspaceEntityEqualityTest {
 
     var entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data2" }
     var builder = storage.toBuilder()
-    builder.modifyEntity(ModifiableSampleEntity::class.java, entityForModification) {
+    builder.modifyEntity(entityForModification) {
       stringProperty = "AnotherData"
     }
     storage = builder.toStorage()
@@ -91,7 +91,7 @@ class WorkspaceEntityEqualityTest {
 
     entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
     builder = storage.toBuilder()
-    builder.modifyEntity(ModifiableSampleEntity::class.java, entityForModification) {
+    builder.modifyEntity(entityForModification) {
       stringProperty = "AnotherData2"
     }
     val entityThree = builder.toStorage().entities(SampleEntity::class.java).single { it.stringProperty == "AnotherData2" }

@@ -3,17 +3,16 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entitiesx.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.SampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.api.XChildEntity
+import com.intellij.workspaceModel.storage.entities.api.XParentEntity
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildEntity
-import com.intellij.workspaceModel.storage.entities.api.XParentEntity
 import org.hamcrest.CoreMatchers.isA
 import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.assertEquals
@@ -168,7 +167,7 @@ class ReplaceBySourceTest {
   fun `entity modification`() {
     val entity = builder.addSampleEntity("hello2")
     val replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(ModifiableSampleEntity::class.java, entity) {
+    replacement.modifyEntity(entity) {
       stringProperty = "Hello Alex"
     }
     builder.replaceBySource({ true }, replacement)

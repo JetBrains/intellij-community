@@ -2,17 +2,16 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entitiesx.*
+import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.addChildSampleEntity
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XParentEntity
 import org.hamcrest.CoreMatchers
 import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.*
@@ -59,7 +58,7 @@ class DiffBuilderTest {
     val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toStorage())
-    source.modifyEntity(ModifiableSampleEntity::class.java, entity) {
+    source.modifyEntity(entity) {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
@@ -87,7 +86,7 @@ class DiffBuilderTest {
     val source = createBuilderFrom(target.toStorage())
     target.removeEntity(entity)
     source.assertConsistency()
-    source.modifyEntity(ModifiableSampleEntity::class.java, entity) {
+    source.modifyEntity(entity) {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
@@ -120,7 +119,7 @@ class DiffBuilderTest {
     val target = createEmptyBuilder()
     val entity = target.addSampleEntity("hello")
     val source = createBuilderFrom(target.toStorage())
-    target.modifyEntity(ModifiableSampleEntity::class.java, entity) {
+    target.modifyEntity(entity) {
       stringProperty = "changed"
     }
     source.removeEntity(entity)
@@ -144,7 +143,7 @@ class DiffBuilderTest {
     assertEquals(2, resultingStorage.entities(SampleEntity::class.java).toList().size)
     assertEquals(1, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).single().parent)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
   }
 
   @Test
@@ -164,11 +163,11 @@ class DiffBuilderTest {
     assertEquals(2, resultingStorage.entities(SampleEntity::class.java).toList().size)
     assertEquals(2, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
-    assertNotNull(resultingStorage.entities(ChildSampleEntity::class.java).first().parent)
-    assertNotNull(resultingStorage.entities(ChildSampleEntity::class.java).last().parent)
+    assertNotNull(resultingStorage.entities(ChildSampleEntity::class.java).first().parentEntity)
+    assertNotNull(resultingStorage.entities(ChildSampleEntity::class.java).last().parentEntity)
 
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).first(), resultingStorage.entities(ChildSampleEntity::class.java).first().parent)
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).last().parent)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).first(), resultingStorage.entities(ChildSampleEntity::class.java).first().parentEntity)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).last().parentEntity)
   }
 
   @Test
@@ -180,8 +179,8 @@ class DiffBuilderTest {
     val target = createBuilderFrom(source)
     val pchild = target.entities(ChildSampleEntity::class.java).single()
     val pparent = target.entities(SampleEntity::class.java).single()
-    target.modifyEntity(ModifiableChildSampleEntity::class.java, pchild) {
-      this.parent = pparent
+    target.modifyEntity(pchild) {
+      this.parentEntity = pparent
     }
 
     source.addDiff(target)
@@ -191,7 +190,7 @@ class DiffBuilderTest {
     assertEquals(1, resultingStorage.entities(SampleEntity::class.java).toList().size)
     assertEquals(1, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).single(), resultingStorage.entities(ChildSampleEntity::class.java).single().parent)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).single(), resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
   }
 
   @Test
@@ -321,7 +320,7 @@ class DiffBuilderTest {
 
     val source = createBuilderFrom(target)
     source.changeSource(sampleEntity, AnotherSource)
-    source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+    source.modifyEntity(sampleEntity) {
       stringProperty = "Prop2"
     }
 
@@ -346,7 +345,7 @@ class DiffBuilderTest {
     val source = createBuilderFrom(target)
     target.changeSource(sampleEntity, AnotherSource)
 
-    source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+    source.modifyEntity(sampleEntity) {
       this.stringProperty = "Updated"
     }
 

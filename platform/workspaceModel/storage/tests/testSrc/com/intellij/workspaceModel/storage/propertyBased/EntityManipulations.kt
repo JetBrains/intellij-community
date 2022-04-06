@@ -3,18 +3,13 @@ package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entitiesx.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.SampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.*
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert
@@ -468,13 +463,13 @@ private object SampleEntityManipulation : EntityManipulation {
     }
   }
 
-  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<SampleEntity, ModifiableSampleEntity> {
-    return object : ModifyEntity<SampleEntity, ModifiableSampleEntity>(SampleEntity::class, storage) {
-      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableSampleEntity.() -> Unit> {
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<SampleEntity, SampleEntityImpl.Builder> {
+    return object : ModifyEntity<SampleEntity, SampleEntityImpl.Builder>(SampleEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<SampleEntityImpl.Builder.() -> Unit> {
         return listOf(
-          modifyBooleanProperty(ModifiableSampleEntity::booleanProperty, env),
-          modifyStringProperty(ModifiableSampleEntity::stringProperty, env),
-          addOrRemoveInList(ModifiableSampleEntity::stringListProperty, randomNames, env)
+          modifyBooleanProperty(SampleEntityImpl.Builder::booleanProperty, env),
+          modifyStringProperty(SampleEntityImpl.Builder::stringProperty, env),
+          addOrRemoveInList(SampleEntityImpl.Builder::stringListProperty, randomNames, env)
         )
       }
     }

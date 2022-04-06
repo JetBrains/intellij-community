@@ -2,11 +2,11 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.workspaceModel.storage.entitiesx.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.SampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.addSampleEntity
-import com.intellij.workspaceModel.storage.entitiesx.addSourceEntity
+import com.intellij.workspaceModel.storage.entities.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -219,15 +219,15 @@ class ExternalEntityMappingTest {
     val builder = createBuilderFrom(storage)
     val entity3 = builder.addSampleEntity("3")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
-    val entity1a = builder.modifyEntity(ModifiableSampleEntity::class.java, entity1) {
+    val entity1a = builder.modifyEntity(entity1) {
       stringProperty = "1a"
     }
     val diff = WorkspaceEntityStorageBuilder.from(storage)
-    val entity2a = diff.modifyEntity(ModifiableSampleEntity::class.java, entity2) {
+    val entity2a = diff.modifyEntity(entity2) {
       stringProperty = "2a"
     }
     builder.addDiff(diff)
-    val entity3a = builder.modifyEntity(ModifiableSampleEntity::class.java, entity3) {
+    val entity3a = builder.modifyEntity(entity3) {
       stringProperty = "3a"
     }
 
@@ -474,7 +474,6 @@ class ExternalEntityMappingTest {
     externalMapping.addMapping(barEntity1, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
-    assertNotEquals(barEntity.id, barEntity1.id)
     val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
     assertEquals(2, mapping.size())
     //suppressed untlil the https://youtrack.jetbrains.com/issue/KTIJ-21754 is being fixed
