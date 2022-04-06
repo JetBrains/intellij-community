@@ -211,11 +211,11 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     int codePoint = -1;
     int endOffset = elementRange == null ? text.length() : elementRange.getEndOffset();
     int startOffset = elementRange == null ? 0 : elementRange.getStartOffset();
-    for (i = startOffset; i < endOffset; i++) {
+    for (i = startOffset; i < endOffset; i += Character.charCount(codePoint)) {
       codePoint = text.codePointAt(i);
       Character.UnicodeScript currentScript = Character.UnicodeScript.of(codePoint);
       if (ignoreScript(currentScript)) {
-        if (i == startOffset) startOffset++;
+        if (i == startOffset) startOffset += Character.charCount(codePoint);
         continue; // ignore '123.(&$'...
       }
       second = currentScript;
@@ -225,32 +225,25 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
       else if (first != second) {
         break;
       }
-      // advance to the next codepoint
-      if (Character.isLowSurrogate((char)codePoint)) {
-        i++;
-      }
     }
+
     if (first == null || first == second) {
       return;
     }
     // found two scripts
     // now [startOffset..i) are of 'first' script
     int j;
-    for (j = Character.isLowSurrogate((char)codePoint) ? i + 1 : i; j < endOffset; j++) {
+    for (j = i + Character.charCount(codePoint); j < endOffset; j += Character.charCount(codePoint)) {
       codePoint = text.codePointAt(j);
       Character.UnicodeScript currentScript = Character.UnicodeScript.of(codePoint);
       if (ignoreScript(currentScript)) continue;
       if (currentScript != second) {
         break;
       }
-      // advance to the next codepoint
-      if (Character.isLowSurrogate((char)codePoint)) {
-        j++;
-      }
     }
     // ignore trailing COMMON script characters
-    for (; j > i; j--) {
-      codePoint = text.codePointAt(j-1);
+    for (; j > i; j -= Character.charCount(codePoint)) {
+      codePoint = text.codePointAt(j-Character.charCount(codePoint));
       if (!ignoreScript(Character.UnicodeScript.of(codePoint))) break;
     }
     // now [i..j) are of 'second' script
