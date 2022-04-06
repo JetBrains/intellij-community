@@ -6,7 +6,8 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.util.castSafelyTo
 
 /**
  * @author Konstantin Bulenkov
@@ -16,7 +17,7 @@ class EditProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
     val group = getSelectedItem(event).castSafelyTo<ProjectsGroupItem>() ?: return
     val tree = getTree(event) ?: return
     val name = Messages.showInputDialog(tree, IdeBundle.message("label.enter.group.name"),
-                                        IdeBundle.message("dialog.title.change.group.name"), null, group.name(),
+                                        IdeBundle.message("dialog.title.change.group.name"), null, group.displayName(),
                                         object : InputValidatorEx {
                                           override fun getErrorText(inputString: String): String? {
                                             val text = inputString.trim()
@@ -27,7 +28,7 @@ class EditProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
 
                                           override fun checkInput(inputString: String): Boolean {
                                             val text = inputString.trim()
-                                            if (text == group.name()) return true
+                                            if (text == group.displayName()) return true
 
                                             for (projectGroup in RecentProjectsManager.getInstance().groups) {
                                               if (projectGroup.name == inputString) {
@@ -46,7 +47,7 @@ class EditProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
 
   override fun update(event: AnActionEvent) {
     val selected = getSelectedItem(event)
-    val enabled = selected != null && selected is RecentProjectGroupItem
+    val enabled = selected != null && selected is ProjectsGroupItem
 
     event.presentation.isEnabledAndVisible = enabled
   }

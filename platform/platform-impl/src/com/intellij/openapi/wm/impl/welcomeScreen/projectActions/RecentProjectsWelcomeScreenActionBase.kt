@@ -6,7 +6,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.WelcomeScreenProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.castSafelyTo
 import javax.swing.tree.DefaultMutableTreeNode
@@ -31,12 +31,12 @@ abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightE
     }
 
     @JvmStatic
-    fun getSelectedItem(event: AnActionEvent): WelcomeScreenProjectItem? {
+    fun getSelectedItem(event: AnActionEvent): RecentProjectTreeItem? {
       val tree = getTree(event)
       val node = tree?.selectionPath?.lastPathComponent.castSafelyTo<DefaultMutableTreeNode>()
                  ?: return null
 
-      return node.userObject as WelcomeScreenProjectItem
+      return node.userObject as RecentProjectTreeItem
     }
 
     @JvmStatic

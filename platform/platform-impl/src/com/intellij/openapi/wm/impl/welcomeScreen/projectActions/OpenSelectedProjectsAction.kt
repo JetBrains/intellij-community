@@ -4,9 +4,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.Root
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
 import java.awt.event.InputEvent
 
 /**
@@ -18,9 +18,9 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
     val newEvent = AnActionEvent(event.inputEvent, event.dataContext, event.place,
                                  event.presentation, event.actionManager, InputEvent.SHIFT_DOWN_MASK)
     when (item) {
-      is RecentProjectGroupItem -> item.children.forEach { child -> child.openProject(newEvent) }
+      is ProjectsGroupItem -> item.children.forEach { child -> child.openProject(newEvent) }
       is RecentProjectItem -> item.openProject(newEvent)
-      is Root -> {}
+      is RootItem -> {}
     }
   }
 
@@ -31,7 +31,7 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
     if (ActionPlaces.WELCOME_SCREEN == event.place) {
       presentation.isEnabledAndVisible = true
       when (item) {
-        is RecentProjectGroupItem -> presentation.setText(
+        is ProjectsGroupItem -> presentation.setText(
           IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group")
         )
         else -> presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.selected"))

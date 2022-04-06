@@ -12,10 +12,10 @@ import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel.FilePathChecker
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.Root
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.WelcomeScreenProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
@@ -43,7 +43,7 @@ internal class RecentProjectPanelComponentFactory(
   private val parentDisposable: Disposable
 ) {
   private val tree = Tree().apply {
-    val filePathChecker = createFilePathChecker(this)
+    val filePathChecker = createFilePathChecker()
     Disposer.register(parentDisposable, filePathChecker)
 
     setEmptyState(IdeBundle.message("empty.text.no.project.open.yet"))
@@ -76,31 +76,31 @@ internal class RecentProjectPanelComponentFactory(
     return filteringTree
   }
 
-  private fun createFilePathChecker(tree: Tree): FilePathChecker {
-    val welcomeScreenProjectItems: List<WelcomeScreenProjectItem> = RecentProjectListActionProvider.getInstance().collectProjects()
-    val recentProjects = welcomeScreenProjectItems.filterIsInstance<RecentProjectGroupItem>()
+  private fun createFilePathChecker(): FilePathChecker {
+    val recentProjectTreeItems: List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
+    val recentProjects = recentProjectTreeItems.filterIsInstance<ProjectsGroupItem>()
       .flatMap { item -> item.children }
       .toMutableList()
-      .apply { addAll(welcomeScreenProjectItems.filterIsInstance<RecentProjectItem>()) }
-      .map { it.name() }
+      .apply { addAll(recentProjectTreeItems.filterIsInstance<RecentProjectItem>()) }
+      .map { it.displayName() }
 
     val treeUpdater = Runnable { filteringTree.searchModel.updateStructure() }
 
     return FilePathChecker(treeUpdater, recentProjects)
   }
 
-  class ProjectActionFilteringTree(tree: Tree) : FilteringTree<DefaultMutableTreeNode, WelcomeScreenProjectItem>(
+  class ProjectActionFilteringTree(tree: Tree) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
     ProjectManager.getInstance().defaultProject,
     tree,
-    DefaultMutableTreeNode(Root())
+    DefaultMutableTreeNode(RootItem)
   ) {
     override fun getNodeClass() = DefaultMutableTreeNode::class.java
 
-    override fun getText(item: WelcomeScreenProjectItem?): String = item?.name().orEmpty()
+    override fun getText(item: RecentProjectTreeItem?): String = item?.displayName().orEmpty()
 
-    override fun getChildren(item: WelcomeScreenProjectItem): Iterable<WelcomeScreenProjectItem> = item.children()
+    override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 
-    override fun createNode(item: WelcomeScreenProjectItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
+    override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
 
     override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
@@ -152,11 +152,10 @@ internal class RecentProjectPanelComponentFactory(
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
         val treeNode = treePath.lastPathComponent as DefaultMutableTreeNode
         when (val project = treeNode.userObject) {
-          is Root -> {} // Specific for root (not visible in tree)
-          is RecentProjectGroupItem -> {
+          is RootItem -> {} // Specific for RootItem (not visible in tree)
+          is ProjectsGroupItem -> {
             if (tree.isExpanded(treePath)) tree.collapsePath(treePath) else tree.expandPath(treePath)
           }
-
           is RecentProjectItem -> {
             val dataContext = DataManager.getInstance().getDataContext(tree)
             val anActionEvent = AnActionEvent.createFromInputEvent(mouseEvent, ActionPlaces.WELCOME_SCREEN, null, dataContext)
@@ -240,9 +239,9 @@ internal class RecentProjectPanelComponentFactory(
     ): Component {
       val isHovered = TreeHoverListener.getHoveredRow(tree) == row
 
-      return when (val item = (value as DefaultMutableTreeNode).userObject as WelcomeScreenProjectItem) {
-        is Root -> JBUI.Panels.simplePanel()
-        is RecentProjectGroupItem -> createProjectGroupComponent(item, isHovered)
+      return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
+        is RootItem -> JBUI.Panels.simplePanel()
+        is ProjectsGroupItem -> createProjectGroupComponent(item, isHovered)
         is RecentProjectItem -> createReopenProjectComponent(item, isHovered)
       }
     }
@@ -265,10 +264,10 @@ internal class RecentProjectPanelComponentFactory(
       projectActions.isVisible = isHovered
     }
 
-    private fun createProjectGroupComponent(item: RecentProjectGroupItem, isHovered: Boolean): JComponent {
+    private fun createProjectGroupComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
       projectGroupLabel.apply {
         clear()
-        append(item.name(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
+        append(item.displayName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
       }
       projectGroupActions.isVisible = isHovered
 

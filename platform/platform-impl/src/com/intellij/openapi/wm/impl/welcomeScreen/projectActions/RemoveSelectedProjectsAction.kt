@@ -3,9 +3,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.Root
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
 
 /**
  * @author Konstantin Bulenkov
@@ -14,9 +14,9 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
   override fun actionPerformed(event: AnActionEvent) {
     val manager = RecentProjectsManager.getInstance()
     when (val item = getSelectedItem(event)) {
-      is RecentProjectGroupItem -> manager.removeGroup(item.group)
+      is ProjectsGroupItem -> manager.removeGroup(item.group)
       is RecentProjectItem -> manager.removePath(item.projectPath)
-      is Root -> {}
+      is RootItem -> {}
     }
   }
 

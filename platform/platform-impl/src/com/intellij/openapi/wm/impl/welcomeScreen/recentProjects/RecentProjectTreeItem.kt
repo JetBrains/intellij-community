@@ -17,21 +17,29 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 /**
- * Items of welcome screen tree
- * - RecentProject: project which can be open
- * - RecentProjectGroup: group of recent projects
+ * Items of recent project tree:
+ * - RootItem: collect all items of interface
+ * - RecentProjectItem: an item project which can be interacted
+ * - ProjectsGroupItem: group of RecentProjectItem
+ *
+ * @see com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.createWelcomeTab
+ * @see com.intellij.ide.ManageRecentProjectsAction
  */
-sealed interface WelcomeScreenProjectItem {
-  fun name(): String
+sealed interface RecentProjectTreeItem {
+  fun displayName(): String
 
-  fun children(): List<WelcomeScreenProjectItem>
+  fun children(): List<RecentProjectTreeItem>
 }
 
-class RecentProjectItem(
+data class RecentProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String
-) : WelcomeScreenProjectItem {
+) : RecentProjectTreeItem {
+  override fun displayName(): String = displayName
+
+  override fun children(): List<RecentProjectTreeItem> = emptyList()
+
   fun openProject(event: AnActionEvent) {
     // Force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
@@ -60,21 +68,20 @@ class RecentProjectItem(
     val options = OpenProjectTask.build().withProjectToClose(null).withForceOpenInNewFrame(forceOpenInNewFrame).withRunConfigurators()
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
   }
-
-  override fun name(): String = displayName
-  override fun children(): List<WelcomeScreenProjectItem> = emptyList()
 }
 
-class RecentProjectGroupItem(
+data class ProjectsGroupItem(
   val group: ProjectGroup,
   val children: List<RecentProjectItem>
-) : WelcomeScreenProjectItem {
-  override fun name(): String = group.name
-  override fun children(): List<WelcomeScreenProjectItem> = children
+) : RecentProjectTreeItem {
+  override fun displayName(): String = group.name
+
+  override fun children(): List<RecentProjectTreeItem> = children
 }
 
 // The root node is required for the filtering tree
-class Root : WelcomeScreenProjectItem {
-  override fun name(): String = ""
-  override fun children(): List<WelcomeScreenProjectItem> = RecentProjectListActionProvider.getInstance().collectProjects()
+object RootItem : RecentProjectTreeItem {
+  override fun displayName(): String = "" // Not visible in tree
+
+  override fun children(): List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
 }

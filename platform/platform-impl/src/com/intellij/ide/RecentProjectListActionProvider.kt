@@ -7,9 +7,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.WelcomeScreenProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.util.containers.ContainerUtil
 
 open class RecentProjectListActionProvider {
@@ -18,20 +18,20 @@ open class RecentProjectListActionProvider {
     fun getInstance() = service<RecentProjectListActionProvider>()
   }
 
-  fun collectProjects(): List<WelcomeScreenProjectItem> {
+  fun collectProjects(): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
     val openedPaths = ProjectUtil.getOpenProjects().mapNotNull { openProject ->
       recentProjectManager.getProjectPath(openProject)
     }.toSet()
 
-    val recentProjects = mutableListOf<WelcomeScreenProjectItem>()
+    val recentProjects = mutableListOf<RecentProjectTreeItem>()
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
     groups.forEach { projectGroup ->
       val children = projectGroup.projects.map { recentProject -> createRecentProject(recentProject, duplicates) }
       allRecentProjectPaths.removeAll(projectGroup.projects.toSet())
-      recentProjects.add(RecentProjectGroupItem(projectGroup, children))
+      recentProjects.add(ProjectsGroupItem(projectGroup, children))
     }
 
     allRecentProjectPaths.forEach { recentProject -> recentProjects.add(createRecentProject(recentProject, duplicates)) }

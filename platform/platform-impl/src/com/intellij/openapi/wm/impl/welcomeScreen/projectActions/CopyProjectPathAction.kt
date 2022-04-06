@@ -22,7 +22,7 @@ class CopyProjectPathAction : RecentProjectsWelcomeScreenActionBase() {
     val item = getSelectedItem(event) ?: return
     val copiedText = when (item)  {
       is RecentProjectItem -> FileUtil.toSystemDependentName(item.projectPath)
-      else -> item.name()
+      else -> item.displayName()
     }
 
     CopyPasteManager.getInstance().setContents(StringSelection(copiedText))
