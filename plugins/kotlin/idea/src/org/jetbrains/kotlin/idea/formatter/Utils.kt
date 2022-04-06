@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -27,6 +27,6 @@ fun PsiFile.adjustLineIndent(startOffset: Int, endOffset: Int) {
     CodeStyleManager.getInstance(project).adjustLineIndent(this, TextRange(startOffset, endOffset))
 }
 
-fun trailingCommaAllowedInModule(source: PsiElement): Boolean =
-    Registry.`is`("kotlin.formatter.allowTrailingCommaInAnyProject", false) ||
-            source.module?.languageVersionSettings?.supportsFeature(LanguageFeature.TrailingCommas) == true
+fun trailingCommaAllowedInModule(source: PsiElement): Boolean = source.module
+    ?.languageVersionSettings
+    ?.supportsFeature(LanguageFeature.TrailingCommas) == true

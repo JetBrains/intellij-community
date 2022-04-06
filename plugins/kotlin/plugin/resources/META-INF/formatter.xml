@@ -16,11 +16,6 @@
     <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle"/>
 
     <registryKey
-            key="kotlin.formatter.allowTrailingCommaInAnyProject"
-            description="Allow a trailing comma regardless of plugin version"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
             key="kotlin.formatter.allowTrailingCommaOnCallSite"
             description="Allow a trailing comma on call-site"
             defaultValue="false"

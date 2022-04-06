@@ -1,25 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.formatter
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import java.io.File
 
 // Based on from com.intellij.psi.formatter.java.AbstractJavaFormatterTest
@@ -51,14 +48,6 @@ abstract class AbstractFormatterTest : LightIdeaTestCase() {
     override fun setUp() {
         super.setUp()
         LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.HIGHEST
-        Registry.get("kotlin.formatter.allowTrailingCommaInAnyProject").setValue(true)
-    }
-
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { Registry.get("kotlin.formatter.allowTrailingCommaInAnyProject").resetToDefault() },
-            ThrowableRunnable { super.tearDown() }
-        )
     }
 
     fun doTextTest(@NonNls text: String, fileAfter: File?, extension: String) {
