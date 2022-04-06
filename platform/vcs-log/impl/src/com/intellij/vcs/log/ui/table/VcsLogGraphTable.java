@@ -776,10 +776,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @NotNull
     public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
-      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : UIUtil.getListBackground();
+      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : getBackground();
       Color foreground = selected ? getSelectionForeground(myTable.hasFocus()) : dummyRendererComponent.getForeground();
 
       return createStyle(foreground, background, VcsLogHighlighter.TextStyle.NORMAL);
+    }
+
+    @NotNull
+    private static Color getBackground() {
+      return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
     }
 
     @NotNull
