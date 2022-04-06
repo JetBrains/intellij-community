@@ -186,7 +186,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
 
   /**
    * Convenience class that makes very fast work for an empty Namespace array.
-   * It doubles up as both Iterator and Interable.
+   * It doubles up as both Iterator and Iterable.
    *
    * @author rolf
    */
