@@ -35,7 +35,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.KotlinBundle;
-import org.jetbrains.kotlin.idea.KotlinVersionVerbose;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.facet.DescriptionListCellRenderer;
@@ -402,8 +401,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                                 List<String> versions = ContainerUtil.filter(
                                         ContainerUtil.intersection(distVersions, jpsClassPathVersions),
                                         it -> {
-                                            KotlinVersionVerbose parsedVersion = KotlinVersionVerbose.parse(it);
-                                            return parsedVersion != null && parsedVersion.getPlainVersion().compareTo(min) >= 0;
+                                            IdeKotlinVersion parsedVersion = IdeKotlinVersion.opt(it);
+                                            return parsedVersion != null && parsedVersion.getKotlinVersion().compareTo(min) >= 0;
                                         });
                                 onFinish.accept(versions);
                             });

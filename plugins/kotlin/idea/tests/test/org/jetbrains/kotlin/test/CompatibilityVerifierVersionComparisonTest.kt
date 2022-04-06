@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.test.util.ignored
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -13,7 +14,7 @@ import org.junit.runner.RunWith
 class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
     fun testValidVersion() {
         testVersion("203-1.4.20-dev-4575-IJ1234.45-1", "1.4.20", "dev", PlatformVersion.Platform.IDEA, "203.1234", "45")
-        testVersion("211-1.4.30-release-AS193", "1.4.30", "release", PlatformVersion.Platform.ANDROID_STUDIO, "211", "193")
+        testVersion("211-1.4.30-release-AS193", "1.4.30", null, PlatformVersion.Platform.ANDROID_STUDIO, "211", "193")
         testVersion("202-1.4.30-AS", "1.4.30", null, PlatformVersion.Platform.ANDROID_STUDIO, "202", null)
         testVersion("1.2.40-dev-193-Studio3.0-1", "1.2.40", "dev", PlatformVersion.Platform.ANDROID_STUDIO, "3.0", "193")
         testVersion("1.4-M1-42-IJ2020.1-1", "1.4", null, PlatformVersion.Platform.IDEA, "2020.1", "42")
@@ -62,7 +63,7 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
 
         assertEquals("1.4.20", version.kotlinVersion)
         assertEquals("dev", version.status)
-        assertEquals(4575, version.kotlinVersionVerbose.buildNumber)
+        assertEquals("4575", version.kotlinCompilerVersion.buildNumber)
         assertEquals("45", version.buildNumber)
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("203.1234", version.platformVersion.version)
@@ -102,19 +103,6 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("2020.1", version.platformVersion.version)
         assertEquals("1", version.patchNumber)
-    }
-
-    fun testKotlinVersionVerbose() {
-        assertKotlinVersionVerbose("1.5.0")
-        assertKotlinVersionVerbose("1.3.10-M1-8132")
-        assertKotlinVersionVerbose("1.4.32-release")
-        assertKotlinVersionVerbose("1.4.32-dev-333")
-        assertKotlinVersionVerbose("1.4.32-333")
-        assertKotlinVersionVerbose("1.4.32-SNAPSHOT")
-    }
-
-    private fun assertKotlinVersionVerbose(version: String, expected: String = version) {
-        assertEquals(expected, KotlinVersionVerbose.parse(version)?.toString())
     }
 
     private fun testVersion(

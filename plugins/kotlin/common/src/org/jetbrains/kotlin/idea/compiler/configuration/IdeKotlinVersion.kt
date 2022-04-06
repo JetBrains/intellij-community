@@ -13,6 +13,9 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.jar.Attributes
 
+/**
+ * Tests - [org.jetbrains.kotlin.IdeKotlinVersionTest] + [org.jetbrains.kotlin.test.CompatibilityVerifierVersionComparisonTest]
+ */
 class IdeKotlinVersion private constructor(
     @get:NlsSafe val rawVersion: String,
     val kotlinVersion: KotlinVersion,

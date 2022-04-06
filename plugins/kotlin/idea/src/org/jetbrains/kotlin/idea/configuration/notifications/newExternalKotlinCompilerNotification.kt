@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.KotlinVersionVerbose
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.findAnyExternalKotlinCompilerVersion
 
@@ -84,7 +84,7 @@ private fun findLastBundledCompilerVersion(): KotlinVersion? {
         PropertiesComponent.getInstance().getValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME)
     } ?: return null
 
-    return KotlinVersionVerbose.parse(lastVersionValue)?.plainVersion
+    return IdeKotlinVersion.opt(lastVersionValue)?.kotlinVersion
 }
 
 private fun createWhatIsNewAction(kotlinVersion: KotlinVersion): AnAction = BrowseNotificationAction(

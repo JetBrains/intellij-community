@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.test
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEquals
-import org.jetbrains.kotlin.idea.KotlinVersionVerbose
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.*
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -114,4 +114,4 @@ private fun assertDowngradedVersion(kotlinVersion: String, downgradedVersion: St
     assertEquals(downgradedVersion, kotlinPlainVersion.dropHotfixPart.toString())
 }
 
-private fun String.toKotlinVersion(): KotlinVersion = KotlinVersionVerbose.parse(this)?.plainVersion ?: error("'$this' can't be parsed")
+private fun String.toKotlinVersion(): KotlinVersion = IdeKotlinVersion.opt(this)?.kotlinVersion ?: error("'$this' can't be parsed")

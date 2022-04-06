@@ -9,19 +9,17 @@ import com.intellij.project.stateStore
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     override fun execute(context: CompileContext): Boolean {
         val version = KotlinJpsPluginSettings.getInstance(context.project)?.settings?.version ?: return true
 
-        val parsed = KotlinVersionVerbose.parse(version)
+        val parsed = IdeKotlinVersion.opt(version)
         if (parsed == null) {
             context.addErrorWithReferenceToKotlincXml(
                 KotlinBundle.message(
@@ -32,7 +30,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             )
             return false
         }
-        if (parsed.plainVersion < jpsMinimumSupportedVersion) {
+        if (parsed.kotlinVersion < jpsMinimumSupportedVersion) {
             context.addErrorWithReferenceToKotlincXml(
                 KotlinBundle.message(
                     "kotlin.jps.compiler.minimum.supported.version.not.satisfied",
@@ -79,7 +77,6 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
 
     companion object {
         @JvmStatic
-        val jpsMinimumSupportedVersion
-            get() = KotlinVersionVerbose.parse("1.5.10").let { it ?: error("JPS Minimum version is not valid") }.plainVersion
+        val jpsMinimumSupportedVersion = IdeKotlinVersion.get("1.5.10").kotlinVersion
     }
 }
