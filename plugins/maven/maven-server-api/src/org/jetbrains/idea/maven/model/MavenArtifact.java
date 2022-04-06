@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class MavenArtifact implements Serializable, MavenCoordinate {
 
@@ -52,12 +53,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   private transient volatile String myLibraryNameCache;
   private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
 
-  private static final Condition<File> ourDefaultFileExists = new Condition<File>() {
-    @Override
-    public boolean value(File f) {
-      return f.exists();
-    }
-  };
+  private static final Condition<File> ourDefaultFileExists = File::exists;
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -240,7 +236,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   public String getPathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     String path = getPath();
 
-    if (extraArtifactClassifier == null && customExtension == null && Comparing.equal(myVersion, myBaseVersion)) {
+    if (extraArtifactClassifier == null && customExtension == null && Objects.equals(myVersion, myBaseVersion)) {
       return path;
     }
 

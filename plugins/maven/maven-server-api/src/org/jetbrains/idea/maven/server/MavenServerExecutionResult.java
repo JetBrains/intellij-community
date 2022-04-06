@@ -36,7 +36,7 @@ public class MavenServerExecutionResult implements Serializable {
   public MavenServerExecutionResult(@Nullable ProjectData projectData,
                                     @NotNull Collection<MavenProjectProblem> problems,
                                     @NotNull Set<MavenId> unresolvedArtifacts) {
-    this(projectData, problems, unresolvedArtifacts, Collections.<MavenProjectProblem>emptyList());
+    this(projectData, problems, unresolvedArtifacts, Collections.emptyList());
   }
 
   public MavenServerExecutionResult(@Nullable ProjectData projectData,

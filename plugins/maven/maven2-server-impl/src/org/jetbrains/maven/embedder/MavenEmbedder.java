@@ -336,10 +336,7 @@ public final class MavenEmbedder {
       Maven maven = getComponent(Maven.class);
       result = getProjectsMethod.invoke(maven, request);
     }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchMethodException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
     catch (InvocationTargetException e) {
@@ -366,7 +363,7 @@ public final class MavenEmbedder {
       }
 
       if (rootProject == null && exceptions.isEmpty()) {
-        throw new RuntimeException("Could't build project for unknown reason");
+        throw new RuntimeException("Couldn't build project for unknown reason");
       }
     }
 
@@ -428,7 +425,7 @@ public final class MavenEmbedder {
     return profileManager;
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <T> T getComponent(Class<T> clazz) {
     try {
       return (T)getContainer().lookup(clazz.getName());
@@ -438,7 +435,7 @@ public final class MavenEmbedder {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <T> T getComponent(Class<T> clazz, String roleHint) {
     try {
       return (T)getContainer().lookup(clazz.getName(), roleHint);
@@ -539,10 +536,7 @@ public final class MavenEmbedder {
     catch (ComponentLookupException e) {
       MavenEmbedderLog.LOG.error(e);
     }
-    catch (IOException e) {
-      MavenEmbedderLog.LOG.warn(e);
-    }
-    catch (XmlPullParserException e) {
+    catch (IOException | XmlPullParserException e) {
       MavenEmbedderLog.LOG.warn(e);
     }
 

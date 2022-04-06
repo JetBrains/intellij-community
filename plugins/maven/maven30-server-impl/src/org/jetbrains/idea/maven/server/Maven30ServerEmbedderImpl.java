@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.commons.cli.ParseException;
@@ -591,7 +590,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                      @NotNull List<String> activeProfiles,
                                      @NotNull List<String> inactiveProfiles,
                                      MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException {
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
     return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
@@ -827,10 +826,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                              @Nullable List<String> inactiveProfiles,
                                              @Nullable List<String> goals)
     throws RemoteException {
-    //Properties executionProperties = myMavenSettings.getProperties();
-    //if (executionProperties == null) {
-    //  executionProperties = new Properties();
-    //}
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
@@ -1029,7 +1024,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                  @NotNull final List<MavenRemoteRepository> repositories,
                                                  int nativeMavenProjectId,
                                                  final boolean transitive, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException {
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       Plugin mavenPlugin = new Plugin();
@@ -1135,7 +1130,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                             @NotNull List<String> selectedProjects,
                                             boolean alsoMake,
                                             boolean alsoMakeDependents, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException {
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
     MavenExecutionResult result =
       doExecute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals, selectedProjects, alsoMake,

@@ -19,7 +19,6 @@ import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
@@ -334,15 +333,13 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+  private static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
 
     List<Profile> profiles = new ArrayList<Profile>();
     while (mavenProject != null) {
-      if (profiles != null) {
-        profiles.addAll(mavenProject.getActiveProfiles());
-      }
+      profiles.addAll(mavenProject.getActiveProfiles());
       mavenProject = mavenProject.getParent();
     }
     return collectProfilesIds(profiles);
@@ -665,7 +662,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
         new DefaultArtifact(groupId, artifactId, VersionRange.createFromVersion(""), Artifact.SCOPE_COMPILE, "pom", null,
                             new DefaultArtifactHandler("pom"));
       ArtifactRepositoryLayout repositoryLayout = getComponent(ArtifactRepositoryLayout.class);
-      List versions = getComponent(ArtifactMetadataSource.class).retrieveAvailableVersions(
+      List<?> versions = getComponent(ArtifactMetadataSource.class).retrieveAvailableVersions(
         artifact,
         new DefaultArtifactRepository(
           "local",
@@ -729,12 +726,9 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   @Override
   public void clearCaches(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    withProjectCachesDo(new Function<Map, Object>() {
-      @Override
-      public Object fun(Map map) {
-        map.clear();
-        return null;
-      }
+    withProjectCachesDo(map -> {
+      map.clear();
+      return null;
     });
   }
 
@@ -765,10 +759,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
       field.setAccessible(true);
       func.fun(((Map)field.get(builder)));
     }
-    catch (NoSuchFieldException e) {
-      Maven2ServerGlobals.getLogger().info(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       Maven2ServerGlobals.getLogger().info(e);
     }
     catch (Exception e) {
@@ -797,7 +788,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return Collections.emptyList();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId,
                                                               @NotNull String artifactId,

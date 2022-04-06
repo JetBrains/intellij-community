@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 public class MavenProjectProblem implements Serializable {
   //todo: this enum values are write-only now
@@ -71,7 +72,7 @@ public class MavenProjectProblem implements Serializable {
   }
 
   public static Collection<MavenProjectProblem> createProblemsList() {
-    return createProblemsList(Collections.<MavenProjectProblem>emptySet());
+    return createProblemsList(Collections.emptySet());
   }
 
   public static Collection<MavenProjectProblem> createProblemsList(Collection<? extends MavenProjectProblem> copyThis) {
@@ -123,9 +124,9 @@ public class MavenProjectProblem implements Serializable {
 
     MavenProjectProblem that = (MavenProjectProblem)o;
 
-    if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
+    if (!Objects.equals(myDescription, that.myDescription)) return false;
     if (myType != that.myType) return false;
-    if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
+    if (!Objects.equals(myPath, that.myPath)) return false;
 
     return true;
   }
