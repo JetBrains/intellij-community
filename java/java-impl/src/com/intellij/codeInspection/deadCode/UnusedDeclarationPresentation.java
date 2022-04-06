@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.reference.KotlinPropertiesDetector;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
@@ -45,7 +44,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
-import org.jetbrains.uast.UElement;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -243,15 +241,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         PsiElement[] elements = Arrays.stream(filteredRefElements).filter(e -> {
           RefEntity owner = e.getOwner();
           return owner == null || !classes.contains(owner);
-        }).map(e -> {
-          if (e instanceof RefJavaElement) {
-            UElement uElement = ((RefJavaElement)e).getUastElement();
-            if (KotlinPropertiesDetector.isPropertyOrAccessor(uElement)) {
-              return e.getPsiElement().getNavigationElement();
-            }
-          }
-            return e.getPsiElement();
-          })
+        }).map(e -> e.getPsiElement())
           .filter(e -> e != null)
           .toArray(PsiElement[]::new);
         SafeDeleteHandler.invoke(project, elements, false,

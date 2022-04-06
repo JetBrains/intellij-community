@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -82,7 +81,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
-    RefElement refParent = parent != null ? manager.getReference(KotlinPropertiesDetector.getPropertyElement(parent)) : null;
+    RefElement refParent = parent != null ? manager.getReference(parent.getSourcePsi()) : null;
     if (refParent != null) {
       setOwner((WritableRefEntity)refParent);
     }
@@ -120,14 +119,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     boolean utilityClass = uMethods.length > 0 || uFields.length > 0;
 
     for (UField uField : uFields) {
-      final RefField field = ObjectUtils.tryCast(manager.getReference(
-        KotlinPropertiesDetector.getPropertyElement(uField)), RefField.class);
+      final RefField field = ObjectUtils.tryCast(getRefManager().getReference(uField.getSourcePsi()), RefField.class);
       if (field != null) addChild(field);
     }
     RefMethod varargConstructor = null;
     for (UMethod uMethod : uMethods) {
-      RefMethod refMethod = ObjectUtils.tryCast(manager.getReference(
-        KotlinPropertiesDetector.getPropertyElement(uMethod)), RefMethod.class);
+      RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(uMethod.getSourcePsi()), RefMethod.class);
+
       if (refMethod != null) {
         addChild(refMethod);
         if (uMethod.isConstructor()) {
@@ -154,7 +152,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
-    new KotlinPropertiesDetector(manager, uClass).setupProperties(getChildren());
     if (!isInterface()) {
       for (int i = 0; i < uFields.length && utilityClass; i++) {
         if (!uFields[i].isStatic()) {
@@ -208,11 +205,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         .filter(Objects::nonNull)
         .filter(c -> getRefJavaManager().belongsToScope(c))
         .forEach(c -> {
-          PsiElement superClass = c;
-          if (superClass instanceof LightElement) {
-            superClass = ((LightElement)superClass).getNavigationElement();
-          }
-          RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(superClass);
+          RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(c);
           if (refClass != null) {
             addBaseClass(refClass);
             getRefManager().executeTask(() -> refClass.addDerivedReference(this));

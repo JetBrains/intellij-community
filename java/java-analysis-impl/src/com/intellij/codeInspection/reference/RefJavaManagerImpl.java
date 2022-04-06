@@ -358,6 +358,12 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
           }
+          else if (element instanceof PsiFunctionalExpression) {
+            RefElement refElement = myRefManager.getReference(element);
+            if (refElement != null) {
+              myRefManager.buildReferences(refElement);
+            }
+          }
         }
 
         private void visitJavaModule(PsiJavaModule module) {
@@ -454,7 +460,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     @Override
     public boolean visitDeclaration(@NotNull UDeclaration node) {
       processComments(node);
-      RefElement refElement = myRefManager.getReference(KotlinPropertiesDetector.getPropertyElement(node));
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement != null) {
         myRefManager.buildReferences(refElement);
       }
@@ -487,24 +493,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         }
       }
       return false;
-    }
-
-    @Override
-    public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
-      return visitFunctionalExpression(node);
-    }
-
-    @Override
-    public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
-      return visitFunctionalExpression(node);
-    }
-
-    private boolean visitFunctionalExpression(@NotNull UExpression expression) {
-      RefElement refElement = myRefManager.getReference(expression.getSourcePsi());
-      if (refElement instanceof RefFunctionalExpressionImpl) {
-        myRefManager.buildReferences(refElement);
-      }
-      return true;
     }
 
     @Override

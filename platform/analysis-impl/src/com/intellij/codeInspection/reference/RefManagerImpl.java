@@ -677,8 +677,7 @@ public class RefManagerImpl extends RefManager {
 
   public @Nullable RefElement getReference(PsiElement elem, final boolean ignoreScope) {
     if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
-                                 (elem instanceof LightElement && !isKotlinLightFieldOrMethod(elem)) ||
-                                 !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
+                                 elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
     }
 
@@ -824,11 +823,5 @@ public class RefManagerImpl extends RefManager {
 
   public boolean isValidPointForReference() {
     return myIsInProcess || myOfflineView || ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  public static boolean isKotlinLightFieldOrMethod(@NotNull PsiElement element) {
-     return false;
-    //return List.of("KtUltraLightMethodForSourceDeclaration", "KtUltraLightFieldForSourceDeclaration")
-    //  .contains(element.getClass().getSimpleName());
   }
 }
