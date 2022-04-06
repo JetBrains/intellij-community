@@ -191,30 +191,6 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstrac
   } as? Sequence<Child> ?: emptySequence()
 }
 
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyParent(
-    connectionId: ConnectionId,
-    child: WorkspaceEntity
-): Parent? {
-    return (this as AbstractEntityStorage).extractOneToAbstractManyParent(
-        connectionId,
-        (child as WorkspaceEntityBase).id.asChild()
-    )
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyParent(
-    connectionId: ConnectionId,
-    child: ChildEntityId
-): Parent? {
-  return refs.getOneToAbstractManyParent(connectionId, child)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Parent }
-}
-
-@Suppress("unused")
-fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
-                                                                                  parent: WorkspaceEntity): Child? {
-  return (this as AbstractEntityStorage).extractOneToAbstractOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
-}
-
 @Suppress("UNCHECKED_CAST")
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
                                                                                           parentId: ParentEntityId): Child? {
@@ -271,6 +247,31 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOnePar
     }
     else parentEntityData.createEntity(this) as Parent
   }
+}
+
+@Suppress("UNCHECKED_CAST")
+internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyParent(
+  connectionId: ConnectionId,
+  child: ChildEntityId
+): Parent? {
+  return refs.getOneToAbstractManyParent(connectionId, child)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Parent }
+}
+
+fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyParent(
+  connectionId: ConnectionId,
+  child: WorkspaceEntity
+): Parent? {
+  return (this as AbstractEntityStorage).extractOneToAbstractManyParent(
+    connectionId,
+    (child as WorkspaceEntityBase).id.asChild()
+  )
+}
+
+
+@Suppress("unused")
+fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
+                                                                                  parent: WorkspaceEntity): Child? {
+  return (this as AbstractEntityStorage).extractOneToAbstractOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
 }
 
 fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractOneParent(

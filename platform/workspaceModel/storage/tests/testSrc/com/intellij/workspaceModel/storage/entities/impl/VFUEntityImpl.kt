@@ -1,14 +1,20 @@
 package com.intellij.workspaceModel.storage.entities.api
 
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.entities.api.VFUEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.ObjType
+import org.jetbrains.deft.*
+import org.jetbrains.deft.bytes.*
+import org.jetbrains.deft.collections.*
+import org.jetbrains.deft.impl.*
+import org.jetbrains.deft.impl.fields.Field
 
     
 

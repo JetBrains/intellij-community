@@ -9,7 +9,6 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
-import org.jetbrains.deft.IntellijWsTest.IntellijWsTest
 
 
 

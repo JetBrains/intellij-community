@@ -2,8 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SampleEntitySource
+import com.intellij.workspaceModel.storage.entities.api.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.IntellijWs.modifyEntity
@@ -12,11 +11,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import org.jetbrains.deft.IntellijWs.ref
 
 internal fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
 class SimplePropertiesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
@@ -149,5 +150,187 @@ class SimplePropertiesInStorageTest {
     anotherBuilder.modifyEntity(sampleEntity) {
       this.stringProperty = "Another prop"
     }
+  }
+}
+
+class ExtensionParentListTest {
+  @Test
+  fun `access by extension without builder`() {
+    val entity = AttachedEntityParentList {
+      this.entitySource = MySource
+      data = "xyz"
+      ref = MainEntityParentList {
+        this.entitySource = MySource
+        this.x = "123"
+      }
+    }
+
+    kotlin.test.assertEquals("xyz", entity.data)
+    val ref = entity.ref
+    val children = ref!!.children
+    kotlin.test.assertEquals("xyz", children.single().data)
+  }
+
+  @Test
+  fun `access by extension without builder on parent`() {
+    val entity = MainEntityParentList {
+      this.entitySource = MySource
+      this.x = "123"
+      this.children = listOf(
+        AttachedEntityParentList {
+          this.entitySource = MySource
+          data = "xyz"
+        }
+      )
+    }
+
+    kotlin.test.assertEquals("123", entity.x)
+    val ref = entity.children.single()
+    val children = ref.ref
+    kotlin.test.assertEquals("123", children!!.x)
+  }
+
+  @Test
+  fun `access by extension without builder on parent with an additional children`() {
+    val entity = MainEntityParentList {
+      this.entitySource = MySource
+      this.x = "123"
+      this.children = listOf(
+        AttachedEntityParentList {
+          this.entitySource = MySource
+          data = "xyz"
+        }
+      )
+    }
+    val newChild = AttachedEntityParentList {
+      this.data = "abc"
+      this.ref = entity
+    }
+
+    kotlin.test.assertEquals("123", entity.x)
+    val ref = entity.children.first()
+    val children = ref.ref
+    kotlin.test.assertEquals("123", children!!.x)
+
+    kotlin.test.assertEquals(2, newChild.ref!!.children.size)
+  }
+
+  @Test
+  fun `access by extension`() {
+    val entity = AttachedEntityParentList {
+      this.entitySource = MySource
+      data = "xyz"
+      ref = MainEntityParentList {
+        this.entitySource = MySource
+        this.x = "123"
+      }
+    }
+    val builder = createEmptyBuilder()
+    builder.addEntity(entity)
+
+    kotlin.test.assertEquals("xyz", entity.data)
+    val ref = entity.ref
+    val children = ref!!.children
+    kotlin.test.assertEquals("xyz", children.single().data)
+
+    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single().data)
+    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single().data)
+    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single().ref!!.x)
+  }
+
+  @Test
+  fun `access by extension on parent`() {
+    val entity = MainEntityParentList {
+      this.entitySource = MySource
+      this.x = "123"
+      this.children = listOf(
+        AttachedEntityParentList {
+          this.entitySource = MySource
+          data = "xyz"
+        }
+      )
+    }
+    val builder = createEmptyBuilder()
+    builder.addEntity(entity)
+
+    kotlin.test.assertEquals("123", entity.x)
+    val ref = entity.children.single()
+    val children = ref.ref
+    kotlin.test.assertEquals("123", children!!.x)
+
+    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single().data)
+    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single().data)
+    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single().ref!!.x)
+  }
+
+  @Test
+  fun `add via single children`() {
+    val child = AttachedEntityParentList {
+      this.entitySource = MySource
+      data = "abc"
+    }
+    val entity = MainEntityParentList {
+      this.entitySource = MySource
+      this.x = "123"
+      this.children = listOf(
+        AttachedEntityParentList {
+          this.entitySource = MySource
+          data = "xyz"
+        },
+        child
+      )
+    }
+    val builder = createEmptyBuilder()
+    builder.addEntity(child)
+
+    kotlin.test.assertEquals("123", entity.x)
+    val ref = entity.children.first()
+    val children2 = ref.ref
+    kotlin.test.assertEquals("123", children2!!.x)
+
+    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.data)
+    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single { it.data == "xyz" }.data)
+    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.ref!!.x)
+  }
+
+  @Test
+  fun `partially in builder`() {
+    val entity = MainEntityParentList {
+      this.entitySource = MySource
+      this.x = "123"
+      this.children = listOf(
+        AttachedEntityParentList {
+          this.entitySource = MySource
+          data = "xyz"
+        },
+      )
+    }
+    val builder = createEmptyBuilder()
+    builder.addEntity(entity)
+    val children = AttachedEntityParentList {
+      this.entitySource = MySource
+      this.data = "abc"
+      this.ref = entity
+    }
+
+    kotlin.test.assertEquals(2, entity.children.size)
+
+    kotlin.test.assertEquals("xyz", entity.children.single { it.data == "xyz" }.data)
+    kotlin.test.assertEquals("abc", entity.children.single { it.data == "abc" }.data)
+
+    kotlin.test.assertEquals("123", children.ref!!.x)
+
+    kotlin.test.assertEquals("123", entity.x)
+    val ref = entity.children.first()
+    val children2 = ref.ref
+    kotlin.test.assertEquals("123", children2!!.x)
+
+    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.data)
+    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single { it.data == "xyz" }.data)
+    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.ref!!.x)
   }
 }

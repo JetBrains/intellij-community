@@ -8,6 +8,7 @@ import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNotNull
 import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
 import org.junit.Test
+import org.junit.jupiter.api.assertAll
 
 /**
  * Soft reference
@@ -140,5 +141,63 @@ class SoftLinksTest {
     val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId
     assertEquals("newName", updatedPersistentId.link.presentableName)
     assertEquals("newName", (builder.entities(ComposedLinkEntity::class.java).single().link as ComposedId).link.presentableName)
+  }
+
+  @Test
+  fun `links change`() {
+    val builder = WorkspaceEntityStorageBuilder.create()
+
+    val entity = OneEntityWithPersistentId {
+      entitySource = MySource
+      myName = "Data"
+    }
+    builder.addEntity(entity)
+    val persistentId = entity.persistentId
+    val softLinkEntity = EntityWithSoftLinks {
+      entitySource = MySource
+      link = persistentId
+      manyLinks = listOf(persistentId)
+      optionalLink = persistentId
+      inContainer = Container(persistentId)
+      inOptionalContainer = Container(persistentId)
+      inContainerList = listOf(Container(persistentId))
+      deepContainer =
+        listOf(TooDeepContainer(listOf(DeepContainer(listOf(Container(persistentId)), persistentId))))
+
+      sealedContainer = SealedContainer.BigContainer(persistentId)
+      listSealedContainer = listOf(SealedContainer.SmallContainer(persistentId))
+
+      justProperty = "Hello"
+      justNullableProperty = "Hello"
+      justListProperty = listOf("Hello")
+    }
+    builder.addEntity(softLinkEntity)
+
+    builder.modifyEntity(OneEntityWithPersistentIdImpl.Builder::class.java, entity) {
+      myName = "AnotherData"
+    }
+
+    val updatedEntity = builder.entities(EntityWithSoftLinks::class.java).single()
+    assertAll(
+      { kotlin.test.assertEquals("AnotherData", updatedEntity.link.name) },
+      { kotlin.test.assertEquals("AnotherData", updatedEntity.manyLinks.single().name) },
+      { kotlin.test.assertEquals("AnotherData", updatedEntity.optionalLink!!.name) },
+      { kotlin.test.assertEquals("AnotherData", updatedEntity.inContainer.id.name) },
+      { kotlin.test.assertEquals("AnotherData", updatedEntity.inOptionalContainer!!.id.name) },
+      { kotlin.test.assertEquals("AnotherData", updatedEntity.inContainerList.single().id.name) },
+      {
+        kotlin.test.assertEquals(
+          "AnotherData",
+          updatedEntity.deepContainer.single().goDeeper.single().goDeep.single().id.name
+        )
+      },
+      { kotlin.test.assertEquals("AnotherData", (updatedEntity.sealedContainer as SealedContainer.BigContainer).id.name) },
+      {
+        kotlin.test.assertEquals(
+          "AnotherData",
+          (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name
+        )
+      },
+    )
   }
 }

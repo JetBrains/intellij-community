@@ -1,17 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.testFramework.assertInstanceOf
 import com.intellij.workspaceModel.storage.createEmptyBuilder
-import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.*
-import org.jetbrains.deft.IntellijWs.modifyEntity
-import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Test
 
 class WorkspaceBuilderChangeLogTest {
 
@@ -24,6 +15,7 @@ class WorkspaceBuilderChangeLogTest {
     another = createEmptyBuilder()
   }
 
+  /*
   @Test
   fun `add plus delete`() {
     val entity = builder.addNamedEntity("Parent")
@@ -511,4 +503,5 @@ class WorkspaceBuilderChangeLogTest {
   }
 
   // ------------- Testing events collapsing end ----
+  */
 }
