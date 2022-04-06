@@ -1,7 +1,6 @@
 <html>
 <body>
 Reports text blocks that can be replaced with regular string literals.
-<p>Occurrences of such text blocks may appear as results of migrating the code back to a Java version earlier than Java 15.</p>
 <p><b>Example:</b></p>
 <pre><code>
   Object obj = engine.eval("""
@@ -21,7 +20,10 @@ Reports text blocks that can be replaced with regular string literals.
                            "hello();\n");
 </code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 15 or higher.</p>
+<p>
+  <i>Text block</i> appeared in Java 15.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 <p><small>New in 2019.3</small></p>
 </body>
 </html>

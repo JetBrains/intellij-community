@@ -3,7 +3,7 @@
 Reports lambda expressions that can be replaced with anonymous classes.
 <p>
   Expanding lambda expressions to anonymous classes may be useful if you need to implement other
-  methods inside an anonymous class or if you need to downgrade to one of the previous Java versions.
+  methods inside an anonymous class.
 </p>
 <p>Example:</p>
 <pre><code>
@@ -17,6 +17,9 @@ Reports lambda expressions that can be replaced with anonymous classes.
   }
 }</code></pre>
 <!-- tooltip end -->
-<p>This inspection is available in Java 8 and later.</p>
+<p>
+  <i>Lambda expression</i> appeared in Java 8.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 </body>
 </html>
