@@ -1,6 +1,7 @@
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.SchemeImportException;
@@ -8,11 +9,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -29,12 +29,17 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
   private static String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("eclipse") + "/testData/import/settings/";
   }
-  
+
+  private static @NotNull VirtualFile findTestInputFile(@NotNull String filename) {
+    Path path = Path.of(getTestDataPath(), filename);
+    VirtualFile found = VfsUtil.findFile(path, false);
+    if (found == null) fail("File '" + path + "' not found." );
+    return found;
+  }
+
   public void testImportCodeStyleSettingsFromXmlProfile() throws Exception {
-    VirtualFile input = VfsUtil.findFile(Path.of(getTestDataPath() + "eclipse_exported.xml"), false);
-    CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
-    CodeStyleScheme scheme = schemes.createNewScheme(getTestName(false), null);
-    CodeStyleSettings settings = scheme.getCodeStyleSettings();
+    VirtualFile input = findTestInputFile("eclipse_exported.xml");
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
     CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
@@ -57,7 +62,7 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
     javaSettings.CATCH_ON_NEW_LINE = true;
     javaSettings.SPACE_BEFORE_WHILE_PARENTHESES = false;
     javaSettings.BLANK_LINES_AFTER_PACKAGE = -1;
-    javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 0;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     javaSettings.BLANK_LINES_BEFORE_PACKAGE = -1;
     javaSettings.SPACE_WITHIN_FOR_PARENTHESES = true;
@@ -243,7 +248,7 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
     javaSettings.RIGHT_MARGIN = 120;
 
     try {
-      EclipseCodeStyleSchemeImporter.importCodeStyleSettings(input, null, scheme.getCodeStyleSettings());
+      EclipseCodeStyleSchemeImporter.importCodeStyleSettings(input, null, settings);
 
       assertTrue(javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
       assertTrue(javaSettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES);
@@ -262,7 +267,7 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
       assertFalse(javaSettings.CATCH_ON_NEW_LINE);
       assertTrue(javaSettings.SPACE_BEFORE_WHILE_PARENTHESES);
       assertEquals(1, javaSettings.BLANK_LINES_AFTER_PACKAGE);
-      assertEquals(8, javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE);
+      assertEquals(8, indentOptions.CONTINUATION_INDENT_SIZE);
       assertFalse(javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       assertEquals(0, javaSettings.BLANK_LINES_BEFORE_PACKAGE);
       assertFalse(javaSettings.SPACE_WITHIN_FOR_PARENTHESES);
@@ -299,6 +304,7 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
       assertFalse(javaSettings.KEEP_FIRST_COLUMN_COMMENT);
       assertFalse(javaSettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
       assertTrue(indentOptions.USE_TAB_CHARACTER);
+      assertEquals(4, indentOptions.TAB_SIZE);
       assertTrue(indentOptions.SMART_TABS);
       assertTrue(settings.FORMATTER_TAGS_ENABLED);
       assertEquals("@off_tag", settings.FORMATTER_OFF_TAG);
@@ -446,22 +452,22 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
       assertEquals(80, javaSettings.RIGHT_MARGIN);
     }
     finally {
-      schemes.deleteScheme(scheme);
       editorSettings.setEnsureNewLineAtEOF(currAddLineFeed);
     }
   }
 
   public void testImportCodeStyleProperties() throws IOException, SchemeImportException {
-    File input = new File(getTestDataPath() + CORE_PREFS_FILE_NAME);
+    VirtualFile input = findTestInputFile(CORE_PREFS_FILE_NAME);
     CodeStyleSettings settings = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
     CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    assertNotNull(indentOptions);
     JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     javaSettings.BLANK_LINES_AFTER_IMPORTS = 0;
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
     javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
 
-    try (InputStream stream = new FileInputStream(input)) {
+    try (InputStream stream = input.getInputStream()) {
       Properties eclipseProperties = new Properties();
       eclipseProperties.load(stream);
       new EclipseCodeStylePropertiesImporter().importProperties(eclipseProperties, settings);
@@ -472,10 +478,64 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
   }
 
   public void testReadXmlWithMultipleProfiles() throws SchemeImportException {
-    VirtualFile input = VfsUtil.findFile(Path.of(getTestDataPath() + "eclipseMultipleProfiles.xml"), false);
+    VirtualFile input = findTestInputFile("eclipseMultipleProfiles.xml");
     Map<String, String> imported =
       EclipseCodeStyleSchemeImporter.readEclipseXmlProfileOptions(input, "profile1");
     assertEquals("80", imported.get("org.eclipse.jdt.core.formatter.lineSplit"));
     assertEquals(1, imported.size());
+  }
+
+  public void testImportCodeStyleSettingsWithTabCharMixed() throws SchemeImportException {
+    VirtualFile input = findTestInputFile("tabCharMixed.xml");
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.USE_TAB_CHARACTER = false;
+    indentOptions.INDENT_SIZE = 0;
+    indentOptions.TAB_SIZE = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 0;
+
+    EclipseCodeStyleSchemeImporter.importCodeStyleSettings(input, null, settings);
+
+    assertTrue(indentOptions.USE_TAB_CHARACTER);
+    assertEquals(4, indentOptions.INDENT_SIZE);
+    assertEquals(3, indentOptions.TAB_SIZE);
+    assertEquals(8, indentOptions.CONTINUATION_INDENT_SIZE);
+  }
+
+  public void testImportCodeStyleSettingsWithTabCharTab() throws SchemeImportException {
+    VirtualFile input = findTestInputFile("tabCharTab.xml");
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.USE_TAB_CHARACTER = false;
+    indentOptions.INDENT_SIZE = 0;
+    indentOptions.TAB_SIZE = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 0;
+
+    EclipseCodeStyleSchemeImporter.importCodeStyleSettings(input, null, settings);
+
+    assertTrue(indentOptions.USE_TAB_CHARACTER);
+    assertEquals(3, indentOptions.INDENT_SIZE);
+    assertEquals(3, indentOptions.TAB_SIZE);
+    assertEquals(6, indentOptions.CONTINUATION_INDENT_SIZE);
+  }
+
+  public void testImportCodeStyleSettingsWithTabCharSpace() throws SchemeImportException {
+    VirtualFile input = findTestInputFile("tabCharSpace.xml");
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.USE_TAB_CHARACTER = true;
+    indentOptions.INDENT_SIZE = 0;
+    indentOptions.TAB_SIZE = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 0;
+
+    EclipseCodeStyleSchemeImporter.importCodeStyleSettings(input, null, settings);
+
+    assertFalse(indentOptions.USE_TAB_CHARACTER);
+    assertEquals(3, indentOptions.INDENT_SIZE);
+    assertEquals(4, indentOptions.TAB_SIZE);
+    assertEquals(6, indentOptions.CONTINUATION_INDENT_SIZE);
   }
 }
