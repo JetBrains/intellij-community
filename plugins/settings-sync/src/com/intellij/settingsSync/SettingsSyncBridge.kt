@@ -152,7 +152,9 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun pushToCloud(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
-    return remoteCommunicator.push(settingsSnapshot)
+    val result = remoteCommunicator.push(settingsSnapshot)
+    SettingsSyncStatusTracker.getInstance().updateStatus(result)
+    return result
   }
 
   private fun pushToIde(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {

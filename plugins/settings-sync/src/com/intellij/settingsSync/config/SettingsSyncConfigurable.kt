@@ -13,6 +13,7 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
 import com.intellij.ui.layout.*
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JButton
 import javax.swing.JCheckBox
@@ -23,6 +24,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   private lateinit var configPanel: DialogPanel
   private lateinit var enableButton: CellBuilder<JButton>
+  private lateinit var statusLabel: JLabel
 
   private val syncEnabler = SettingsSyncEnabler()
 
@@ -89,8 +91,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           label(message("sync.status.disabled")).visibleIf(isSyncEnabled.not())
           @Suppress("DialogTitleCapitalization") // Partial content
           label(message("sync.status.enabled")).visibleIf(isSyncEnabled)
+          val statusCell = label("")
+          statusCell.visibleIf(isSyncEnabled)
+          statusLabel = statusCell.component
+          updateStatusInfo()
           label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
-          // TODO<rv>: Add last sync time and "Sync now" link
         }
       }
       row {
@@ -151,6 +156,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         showError(enableButton.component, message("notification.title.update.error"), result.message)
       }
     }
+    SettingsSyncStatusTracker.getInstance().updateStatus(result)
+    updateStatusInfo()
   }
 
   private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
@@ -196,6 +203,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     if (result != RESULT_CANCEL) {
       SettingsSyncSettings.getInstance().syncEnabled = false
     }
+    updateStatusInfo()
   }
 
   private fun showError(component: JComponent, message: @Nls String, details: @Nls String) {
@@ -205,6 +213,23 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       .setDisposable(disposable!!)
       .createBalloon()
     balloon.showInCenterOf(component)
+  }
+
+  private fun updateStatusInfo() {
+    if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) {
+      statusLabel.text = message("sync.status.last.sync.message", getReadableSyncTime(), getUserName())
+    }
+    else {
+      statusLabel.text = ""
+    }
+  }
+
+  private fun getReadableSyncTime() : String {
+    return DateFormatUtil.formatPrettyDateTime(SettingsSyncStatusTracker.getInstance().getLastSyncTime()).lowercase()
+  }
+
+  private fun getUserName(): String {
+    return SettingsSyncAuthService.getInstance().getUserData()?.loginName ?: "?"
   }
 
 }
