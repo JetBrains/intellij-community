@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -34,7 +33,6 @@ import static com.intellij.history.integration.LocalHistoryUtil.findRevisionInde
 
 public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private static final String DAYS_TO_KEEP = "localHistory.daysToKeep";
-  private int myDaysToKeep = AdvancedSettings.getInt(DAYS_TO_KEEP);
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
@@ -65,14 +63,6 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     ShutDownTracker.getInstance().registerShutdownTask(() -> doDispose());
 
     initHistory();
-    app.getMessageBus().simpleConnect().subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
-      @Override
-      public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
-        if (id.equals(DAYS_TO_KEEP)) {
-          myDaysToKeep = (int) newValue;
-        }
-      }
-    });
     isInitialized.set(true);
   }
 
@@ -111,7 +101,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private void doDispose() {
     if (!isInitialized.getAndSet(false)) return;
 
-    long period = myDaysToKeep * 1000L * 60L * 60L * 24L;
+    long period = AdvancedSettings.getInt(DAYS_TO_KEEP) * 1000L * 60L * 60L * 24L;
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
     myChangeList.close();
