@@ -4,7 +4,7 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.ide.DataManager
+import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
@@ -19,15 +19,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 @JvmField
@@ -58,23 +55,11 @@ internal fun registerBackForwardActions(component: JComponent) {
   ), component)
 }
 
-@VisibleForTesting
-fun documentationTargets(dc: DataContext): List<DocumentationTarget> {
-  val savedTargets = DataManager.getInstance().loadFromDataContext(dc, SAVED_DOCUMENTATION_TARGETS)
-  if (savedTargets != null) {
-    return savedTargets
+class DocumentationTargetsDataRule : GetDataRule {
+  override fun getData(dataProvider: DataProvider): List<DocumentationTarget> {
+    return documentationTargetsInner(dataProvider::getData)
   }
-  val targets = try {
-    documentationTargetsInner(dc)
-  }
-  catch (ignored: IndexNotReadyException) {
-    emptyList()
-  }
-  DataManager.getInstance().saveInDataContext(dc, SAVED_DOCUMENTATION_TARGETS, targets)
-  return targets
 }
-
-private val SAVED_DOCUMENTATION_TARGETS: Key<List<DocumentationTarget>> = Key.create("context.documentation.targets")
 
 private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget> {
   val contextTargets = dc.getData(DOCUMENTATION_TARGETS)
