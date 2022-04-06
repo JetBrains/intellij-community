@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports redundant character escape sequences that can be replaced with unescaped characters preserving the meaning.
-Many escape sequences that are redundant inside square brackets <code>[]</code> of a character class are necessary outside of a character class.
+Many escape sequences that are necessary outside of a character class are redundant inside square brackets <code>[]</code> of a character class.
 <p>
   Although unescaped opening curly braces <code>{</code> outside of character classes are allowed in some dialects (JavaScript, Python, and so on),
   it can cause confusion and make the pattern less portable, because there are dialects that require escaping curly braces as characters.
