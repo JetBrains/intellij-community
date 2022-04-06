@@ -17,7 +17,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
-import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanelComponentFactory.ProjectActionFilteringTree;
+import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanelComponentFactory.RecentProjectFilteringTree;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.PlatformUtils;
@@ -52,8 +52,8 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
         }
         else {
           mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
-          ProjectActionFilteringTree projectActionsTree = new RecentProjectPanelComponentFactory(parentDisposable).createComponent();
-          SearchTextField projectSearch = projectActionsTree.installSearchField();
+          RecentProjectFilteringTree recentProjectTree = RecentProjectPanelComponentFactory.createComponent(parentDisposable);
+          SearchTextField projectSearch = recentProjectTree.installSearchField();
 
           JPanel northPanel =
             JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsBottom(1)) {
@@ -64,12 +64,12 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
             });
 
           ActionToolbar actionsToolbar = createActionsToolbar();
-          actionsToolbar.setTargetComponent(projectActionsTree.getComponent());
+          actionsToolbar.setTargetComponent(recentProjectTree.getComponent());
           JComponent projectActionsPanel = actionsToolbar.getComponent();
           northPanel.add(projectSearch, BorderLayout.CENTER);
           northPanel.add(projectActionsPanel, BorderLayout.EAST);
           mainPanel.add(northPanel, BorderLayout.NORTH);
-          mainPanel.add(projectActionsTree.getComponent(), BorderLayout.CENTER);
+          mainPanel.add(recentProjectTree.getComponent(), BorderLayout.CENTER);
           mainPanel.add(createNotificationPanel(parentDisposable), BorderLayout.SOUTH);
         }
         DnDNativeTarget target = createDropFileTarget();

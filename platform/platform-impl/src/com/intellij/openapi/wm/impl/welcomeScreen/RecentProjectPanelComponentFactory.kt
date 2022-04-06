@@ -39,44 +39,42 @@ import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 
-internal class RecentProjectPanelComponentFactory(
-  private val parentDisposable: Disposable
-) {
-  private val tree = Tree().apply {
-    val filePathChecker = createFilePathChecker()
-    Disposer.register(parentDisposable, filePathChecker)
+internal object RecentProjectPanelComponentFactory {
+  @JvmStatic
+  fun createComponent(parentDisposable: Disposable): RecentProjectFilteringTree {
+    val tree = Tree()
+    val filteringTree = RecentProjectFilteringTree(tree).apply {
+      installSearchField()
+    }
 
-    setEmptyState(IdeBundle.message("empty.text.no.project.open.yet"))
-    addMouseListener(ProjectActionMouseListener(this))
-    putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
-    putClientProperty(
-      RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
-      Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), true, true) }
-    )
+    tree.apply {
+      val filePathChecker = createFilePathChecker(filteringTree)
+      Disposer.register(parentDisposable, filePathChecker)
 
-    SmartExpander.installOn(this)
-    TreeHoverListener.DEFAULT.addTo(this)
+      setEmptyState(IdeBundle.message("empty.text.no.project.open.yet"))
+      addMouseListener(ProjectActionMouseListener(this))
+      putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
+      putClientProperty(
+        RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
+        Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), true, true) }
+      )
 
-    isRootVisible = false
-    cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
-  }
+      SmartExpander.installOn(this)
+      TreeHoverListener.DEFAULT.addTo(this)
 
-  private val filteringTree = ProjectActionFilteringTree(tree).apply {
-    installSearchField()
-  }
+      isRootVisible = false
+      cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
+    }
 
-  init {
     val defaultProject = DefaultProjectFactory.getInstance().defaultProject
     defaultProject.messageBus
       .connect(parentDisposable)
       .subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, RecentProjectsChange { filteringTree.searchModel.updateStructure() })
-  }
 
-  fun createComponent(): ProjectActionFilteringTree {
     return filteringTree
   }
 
-  private fun createFilePathChecker(): FilePathChecker {
+  private fun createFilePathChecker(filteringTree: RecentProjectFilteringTree): FilePathChecker {
     val recentProjectTreeItems: List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
     val recentProjects = recentProjectTreeItems.filterIsInstance<ProjectsGroupItem>()
       .flatMap { item -> item.children }
@@ -89,7 +87,7 @@ internal class RecentProjectPanelComponentFactory(
     return FilePathChecker(treeUpdater, recentProjects)
   }
 
-  class ProjectActionFilteringTree(tree: Tree) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
+  class RecentProjectFilteringTree(tree: Tree) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
     ProjectManager.getInstance().defaultProject,
     tree,
     DefaultMutableTreeNode(RootItem)
@@ -153,9 +151,7 @@ internal class RecentProjectPanelComponentFactory(
         val treeNode = treePath.lastPathComponent as DefaultMutableTreeNode
         when (val project = treeNode.userObject) {
           is RootItem -> {} // Specific for RootItem (not visible in tree)
-          is ProjectsGroupItem -> {
-            if (tree.isExpanded(treePath)) tree.collapsePath(treePath) else tree.expandPath(treePath)
-          }
+          is ProjectsGroupItem -> if (tree.isExpanded(treePath)) tree.collapsePath(treePath) else tree.expandPath(treePath)
           is RecentProjectItem -> {
             val dataContext = DataManager.getInstance().getDataContext(tree)
             val anActionEvent = AnActionEvent.createFromInputEvent(mouseEvent, ActionPlaces.WELCOME_SCREEN, null, dataContext)
@@ -181,7 +177,8 @@ internal class RecentProjectPanelComponentFactory(
   private class ProjectActionRenderer(
     private val isProjectPathValid: (String) -> Boolean
   ) : TreeCellRenderer {
-    private val recentProjectsManager = RecentProjectsManagerBase.instanceEx
+    private val recentProjectsManager: RecentProjectsManagerBase
+      get() = RecentProjectsManagerBase.instanceEx
 
     // Recent project component
     private val projectNameLabel = JLabel()
