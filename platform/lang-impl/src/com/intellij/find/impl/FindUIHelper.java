@@ -128,6 +128,12 @@ public class FindUIHelper implements Disposable {
     myUI.showUI();
   }
 
+  public void closeUI() {
+    if (myUI != null) {
+      myUI.closeIfPossible();
+    }
+  }
+
   @Override
   public void dispose() {
     if (myUI != null && !Disposer.isDisposed(myUI.getDisposable())) {
