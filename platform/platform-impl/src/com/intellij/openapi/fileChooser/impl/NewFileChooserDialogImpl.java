@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,19 +36,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 import static java.util.Objects.requireNonNullElseGet;
 
 final class NewFileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
-  private static final String RECENT_FILES_KEY = "file.chooser.recent.files";  // only local paths, VFS format
-  private static final int RECENT_FILES_LIMIT = 30;
-
   @SuppressWarnings("SpellCheckingInspection") private static final String ZIP_FS_TYPE = "zipfs";
 
   private final FileChooserDescriptor myDescriptor;
-  private final Project myProject;
+  private Project myProject;
   private FileChooserPanelImpl myPanel;
   private final NotNullLazyValue<VirtualFileSystem> myLocalFs =
     lazy(() -> ApplicationManager.getApplication() != null ? StandardFileSystems.local() : new CoreLocalFileSystem());
@@ -72,6 +67,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
 
   @Override
   public VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect) {
+    if (myProject == null) myProject = project;
     myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect.length > 0 ? toSelect[0] : null));
     show();
     return myResults != null ? VfsUtilCore.toVirtualFileArray(myResults) : VirtualFile.EMPTY_ARRAY;
@@ -91,7 +87,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
 
   @Override
   protected JComponent createCenterPanel() {
-    Path[] recentPaths = recentPaths().map(NioFiles::toPath).filter(Objects::nonNull).toArray(Path[]::new);
+    Path[] recentPaths = FileChooserUtil.getRecentPaths().stream().map(NioFiles::toPath).filter(Objects::nonNull).toArray(Path[]::new);
     myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, recentPaths);
     myPanel.setPreferredSize(JBUI.size(400));
 
@@ -143,7 +139,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     }
 
     myResults = results;
-    updateRecentPaths(results.get(0));
+    FileChooserUtil.updateRecentPaths(myProject, results.get(0));
 
     super.doOKAction();
   }
@@ -168,22 +164,6 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     }
 
     return null;
-  }
-
-  private static Stream<String> recentPaths() {
-    List<String> values = PropertiesComponent.getInstance().getList(RECENT_FILES_KEY);
-    return values != null ? values.stream() : Stream.empty();
-  }
-
-  private static void updateRecentPaths(VirtualFile file) {
-    if (file.isInLocalFileSystem()) {
-      List<String> newValues = Stream.concat(Stream.of(file.getPath()), recentPaths())
-        .filter(p -> NioFiles.toPath(p) != null)
-        .distinct()
-        .limit(RECENT_FILES_LIMIT)
-        .collect(Collectors.toList());
-      PropertiesComponent.getInstance().setList(RECENT_FILES_KEY, newValues);
-    }
   }
 
   @Override
