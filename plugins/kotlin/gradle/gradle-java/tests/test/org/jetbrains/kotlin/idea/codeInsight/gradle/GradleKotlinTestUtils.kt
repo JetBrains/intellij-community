@@ -36,6 +36,7 @@ object GradleKotlinTestUtils {
         val V_1_4_32 = KotlinVersion(1, 4, 32)
         val V_1_5_31 = KotlinVersion(1, 5, 31)
         val V_1_6_10 = KotlinVersion(1, 6, 10)
+        val V_1_6_20 = KotlinVersion(1, 6, 20)
 
         val LAST_SNAPSHOT = KotlinVersion(1, 6, 255, "SNAPSHOT")
 
@@ -44,7 +45,8 @@ object GradleKotlinTestUtils {
             V_1_3_72,
             V_1_4_32,
             V_1_5_31,
-            V_1_6_10
+            V_1_6_10,
+            V_1_6_20
         )
     }
 
