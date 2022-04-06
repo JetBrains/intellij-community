@@ -609,6 +609,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static final class AcceptSuggestedAccess implements LocalQuickFix{
+    @SafeFieldForPreview
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
     private final @IntentionName String myName;
