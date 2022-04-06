@@ -3,11 +3,20 @@
   <id>org.jetbrains.plugins.gitlab</id>
   <vendor>JetBrains</vendor>
   <category>Version Controls</category>
+  <description>
+    <![CDATA[
+      <p>Provides integration with GitLab.</p>
+      <p>To configure, open <b>Settings / Preferences</b> and go to Version Control | GitLab.</p>
+      <p>Requires the Git plugin.</p>
+      ]]>
+  </description>
 
   <resource-bundle>messages.GitLabBundle</resource-bundle>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>Git4Idea</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="Git4Idea"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
