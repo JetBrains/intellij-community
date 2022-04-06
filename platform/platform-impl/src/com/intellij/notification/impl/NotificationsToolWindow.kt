@@ -986,6 +986,11 @@ private class NotificationComponent(val project: Project,
         helpLabel.foreground = UIUtil.getLabelDisabledForeground()
         actionPanel.add(helpLabel)
       }
+      if (!notification.hasTitle() && !notification.hasContent() && !notification.isSuggestionType) {
+        titlePanel = JPanel(BorderLayout())
+        titlePanel.isOpaque = false
+        actionPanel.add(titlePanel, HorizontalLayout.RIGHT)
+      }
       centerPanel.add(actionPanel)
     }
 
