@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.psi.statistics.StatisticsInfo
 
 internal class SearchEverywhereActionStatistician : SearchEverywhereStatistician<MatchedValue>() {
-  override fun serialize(element: MatchedValue, location: String): StatisticsInfo? {
+  override fun serializeElement(element: MatchedValue, location: String): StatisticsInfo? {
     val value = getValue(element) ?: return null
     val context = getContext(element) ?: return null
 
