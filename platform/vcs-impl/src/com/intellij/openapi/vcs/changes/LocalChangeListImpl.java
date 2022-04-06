@@ -1,21 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-
 public final class LocalChangeListImpl extends LocalChangeList {
-  private static final Logger LOG = Logger.getInstance(ChangeList.class);
-
   @NotNull private final Project myProject;
   @NonNls @NotNull private final String myId;
   @NlsSafe @NotNull private final String myName;
@@ -141,10 +135,6 @@ public final class LocalChangeListImpl extends LocalChangeList {
     private boolean myIsReadOnly = false;
 
     public Builder(@NotNull Project project, @NlsSafe @NotNull String name) {
-      if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
-        LOG.info("Creating a changelist with empty name");
-      }
-
       myProject = project;
       myName = name;
     }
