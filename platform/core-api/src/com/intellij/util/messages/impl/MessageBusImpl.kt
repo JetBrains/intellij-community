@@ -137,7 +137,7 @@ open class MessageBusImpl : MessageBus {
   fun disposeConnectionChildren() {
     // avoid any work on notifyConnectionTerminated
     disposeState = DISPOSE_IN_PROGRESS
-    Disposer.disposeChildren(connectionDisposable!!, { _ -> true})
+    Disposer.disposeChildren(connectionDisposable!!) { true }
   }
 
   fun disposeConnection() {
